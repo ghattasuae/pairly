@@ -12,7 +12,9 @@
  * Counts live in the `magicLinkEmailLimit` table (schema `auth`, created by the
  * `pairlyMagicLinkLimit` plugin's schema through the normal Better Auth migration). The
  * key is the SHA-256 of the address, so the table holds no email addresses. One atomic
- * upsert counts and decides, so concurrent requests cannot slip past the limit.
+ * upsert counts and decides, so concurrent requests cannot slip past the limit. The same
+ * statement prunes up to `PRUNE_BATCH` expired rows of other addresses, so the table stays
+ * small without a separate job.
  */
 import { createHash } from "node:crypto";
 
@@ -50,9 +52,23 @@ export interface Queryable {
   query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
 }
 
-// A new window starts when the stored one is older than the window length. The id is
-// only used for a first insert.
+/** Most expired rows one request removes, so pruning never makes a request slow. */
+export const PRUNE_BATCH = 100;
+
+// One statement: prune a bounded batch of expired rows (other addresses only, so the two
+// parts never touch the same row), then count this request. A row whose window has
+// passed is useless: the next request for it starts a new window anyway. A new window
+// starts when the stored one is older than the window length. The id is only used for a
+// first insert.
 const UPSERT = `
+WITH pruned AS (
+  DELETE FROM "${LIMIT_TABLE}"
+   WHERE "id" IN (
+     SELECT "id" FROM "${LIMIT_TABLE}"
+      WHERE "windowStart" <= now() - make_interval(secs => $3) AND "key" <> $2
+      LIMIT ${PRUNE_BATCH}
+      FOR UPDATE SKIP LOCKED)
+)
 INSERT INTO "${LIMIT_TABLE}" ("id", "key", "count", "windowStart")
 VALUES ($1, $2, 1, now())
 ON CONFLICT ("key") DO UPDATE SET
@@ -66,6 +82,9 @@ RETURNING "count"`;
  * Count one request for `email` and say whether a link may be sent. Fails closed: if the
  * database cannot count, no link is sent.
  */
+/** The SQL, exported for tests. */
+export const QUOTA_SQL = UPSERT;
+
 export async function takeMagicLinkQuota(db: Queryable, email: string): Promise<boolean> {
   try {
     const result = await db.query(UPSERT, [crypto.randomUUID(), limitKey(email), MAGIC_LINK_EMAIL_WINDOW_SECONDS]);

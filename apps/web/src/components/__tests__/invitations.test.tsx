@@ -16,13 +16,16 @@ vi.mock("@/lib/actions/invitations", () => ({
   revokeInvitation: vi.fn(),
   prepareInviteSignIn: vi.fn(),
   acceptInvitation: vi.fn(),
+  describeInvitation: vi.fn(),
 }));
 vi.mock("@/lib/actions/orgs", () => ({ switchOrganization: vi.fn() }));
 
 const { InvitePanel } = await import("../invite/invite-panel");
+const { InviteLanding, PENDING_INVITE_KEY, PENDING_INVITE_MS } = await import("../invite/invite-landing");
 const { MembersPanel } = await import("../members/members-panel");
 const { SecondFactorNeeded } = await import("../states/second-factor-needed");
 const { NotProvisioned } = await import("../states/not-provisioned");
+const { BackupCodeNotice } = await import("../states/backup-code-notice");
 const { OrgSwitcher } = await import("../shell/org-switcher");
 
 const TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_abcde";
@@ -58,7 +61,8 @@ describe("InvitePanel", () => {
     expect(screen.getByText("Only for Pay.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
     expect(prepare).toHaveBeenCalledWith(TOKEN);
-    expect(sendLink).toHaveBeenCalledWith("sam@example.test", "en", `/en/invite/${TOKEN}`);
+    // The callback has no token: it stays in the fragment and this browser only.
+    expect(sendLink).toHaveBeenCalledWith("sam@example.test", "en", "/en/invite");
     await waitFor(() => expect(routerSpies.push).toHaveBeenCalledWith("/check-email"));
   });
 
@@ -102,6 +106,49 @@ describe("InvitePanel", () => {
     expect(screen.getByText(/kim@example\.test/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "سجّل الخروج وتابع" }));
     expect(signOut).toHaveBeenCalled();
+  });
+});
+
+describe("InviteLanding", () => {
+  const preview2 = { ...preview, workflow: null };
+  afterEach(() => localStorage.clear());
+
+  it("reads the token from the fragment, keeps it for the sign-in trip and hides it", async () => {
+    const replaceState = vi.fn();
+    vi.stubGlobal("location", { ...window.location, hash: `#token=${TOKEN}`, pathname: "/en/invite" });
+    vi.stubGlobal("history", { replaceState });
+    const describe = vi.fn().mockResolvedValue({ kind: "signIn", preview: preview2 });
+    renderWithIntl(<InviteLanding describe={describe} />);
+    expect(await screen.findByRole("heading", { name: "Join Acme" })).toBeInTheDocument();
+    expect(describe).toHaveBeenCalledWith(TOKEN);
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/en/invite");
+    expect(JSON.parse(localStorage.getItem(PENDING_INVITE_KEY) ?? "{}").token).toBe(TOKEN);
+  });
+
+  it("comes back to the stored token after the magic link", async () => {
+    localStorage.setItem(PENDING_INVITE_KEY, JSON.stringify({ token: TOKEN, at: Date.now() }));
+    vi.stubGlobal("location", { ...window.location, hash: "", pathname: "/en/invite" });
+    const describe = vi.fn().mockResolvedValue({ kind: "accept", preview: preview2, currentEmail: "sam@example.test" });
+    renderWithIntl(<InviteLanding describe={describe} />);
+    expect(await screen.findByRole("button", { name: "Accept and join" })).toBeInTheDocument();
+    expect(describe).toHaveBeenCalledWith(TOKEN);
+  });
+
+  it("ignores an old stored token and shows the dead-invitation state", async () => {
+    localStorage.setItem(PENDING_INVITE_KEY, JSON.stringify({ token: TOKEN, at: Date.now() - PENDING_INVITE_MS - 1 }));
+    vi.stubGlobal("location", { ...window.location, hash: "", pathname: "/en/invite" });
+    const describe = vi.fn();
+    renderWithIntl(<InviteLanding describe={describe} />);
+    expect(await screen.findByRole("heading", { name: "This invitation cannot be used" })).toBeInTheDocument();
+    expect(describe).not.toHaveBeenCalled();
+  });
+
+  it("forgets a token the server says is invalid", async () => {
+    vi.stubGlobal("location", { ...window.location, hash: `#token=${TOKEN}`, pathname: "/en/invite" });
+    vi.stubGlobal("history", { replaceState: vi.fn() });
+    renderWithIntl(<InviteLanding describe={vi.fn().mockResolvedValue({ kind: "invalid" })} />);
+    expect(await screen.findByRole("heading", { name: "This invitation cannot be used" })).toBeInTheDocument();
+    expect(localStorage.getItem(PENDING_INVITE_KEY)).toBeNull();
   });
 });
 
@@ -269,5 +316,20 @@ describe("OrgSwitcher", () => {
     await userEvent.click(screen.getByRole("button", { name: "Switch organisation" }));
     await userEvent.click(await screen.findByRole("menuitemradio", { name: "Globex" }));
     expect(onSwitch).toHaveBeenCalledWith("o2");
+  });
+});
+
+describe("BackupCodeNotice", () => {
+  it("says a backup code was used and how many remain", () => {
+    renderWithIntl(<BackupCodeNotice remaining={3} />);
+    expect(screen.getByRole("heading", { name: "You signed in with a backup code" })).toBeInTheDocument();
+    expect(screen.getByText(/You have 3 backup codes left\./)).toBeInTheDocument();
+  });
+
+  it("handles none left and Arabic plurals", () => {
+    renderWithIntl(<BackupCodeNotice remaining={0} />);
+    expect(screen.getByText(/You have no backup codes left\./)).toBeInTheDocument();
+    renderWithIntl(<BackupCodeNotice remaining={2} />, "ar");
+    expect(screen.getByText(/تبقّى لديك رمزان احتياطيان/)).toBeInTheDocument();
   });
 });

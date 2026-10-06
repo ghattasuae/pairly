@@ -12,24 +12,9 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { acceptInvitation, prepareInviteSignIn } from "@/lib/actions/invitations";
 import { authClient } from "@/lib/auth/client";
 import { isolate } from "@/lib/bidi";
+import type { InvitePreview, InviteView } from "@/lib/invite-view";
 
-export interface InvitePreview {
-  org_name: string;
-  email: string;
-  role: string;
-  workflow: string | null;
-  expires_at: string;
-}
-
-export type InviteView =
-  | { kind: "invalid" }
-  | { kind: "unavailable" }
-  /** Not signed in: send a magic link to the invited address, then come back here. */
-  | { kind: "signIn"; preview: InvitePreview }
-  /** Signed in as the invited address. */
-  | { kind: "accept"; preview: InvitePreview; currentEmail: string }
-  /** Signed in as somebody else. */
-  | { kind: "wrongUser"; preview: InvitePreview; currentEmail: string };
+export type { InvitePreview, InviteView } from "@/lib/invite-view";
 
 type Result<T extends object = object> = ({ ok: true } & T) | { ok: false; code: string };
 
@@ -41,6 +26,8 @@ export interface InvitePanelProps {
   sendLink?: (email: string, locale: string, callbackURL: string) => Promise<{ ok: boolean; status?: number }>;
   accept?: (token: string) => Promise<Result<{ orgName: string }>>;
   signOut?: () => Promise<void>;
+  /** Called after a successful accept (the landing forgets the stored token). */
+  onAccepted?: () => void;
 }
 
 const KNOWN_ERRORS = new Set([
@@ -93,6 +80,7 @@ export function InvitePanel({
   sendLink = defaultSendLink,
   accept = acceptInvitation,
   signOut,
+  onAccepted,
 }: InvitePanelProps) {
   const t = useTranslations("Invite");
   const locale = useLocale();
@@ -114,7 +102,9 @@ export function InvitePanel({
   }
 
   const { preview } = view;
-  const callbackURL = `/${locale}/invite/${token}`;
+  // Back to the invite page after signing in. The token is not in this URL: the page keeps
+  // it in this browser (InviteLanding) while the person opens the magic link.
+  const callbackURL = `/${locale}/invite`;
 
   const startSignIn = async () => {
     setPending(true);
@@ -147,6 +137,7 @@ export function InvitePanel({
         setPending(false);
         return;
       }
+      onAccepted?.();
       // The session now points at the new organisation: render home from the server.
       router.replace("/");
       router.refresh();

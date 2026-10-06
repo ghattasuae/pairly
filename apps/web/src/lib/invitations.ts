@@ -16,6 +16,7 @@ import { getPublicApiClient } from "./api/server";
 import { getAuth } from "./auth/config";
 import { serverEnv } from "./env";
 import { isWellFormedInviteToken } from "./invite-token";
+import { inviteLinkPath } from "./invite-view";
 
 export type PreviewResult =
   | { status: "valid"; preview: InvitationPreview }
@@ -48,7 +49,7 @@ export async function ensureInvitedUser(email: string): Promise<void> {
   await internalAdapter.createUser({ email, name: "", emailVerified: false }, { method: "pairly-invitation" });
 }
 
-/** The invite page for `token`. The token is in the path, so the page sends no referrer. */
+/** The invite page for `token`, with the token in the fragment (lib/invite-view.ts). */
 export function inviteUrl(locale: Locale, token: string): string {
-  return new URL(`/${locale}/invite/${encodeURIComponent(token)}`, serverEnv().baseUrl).toString();
+  return new URL(inviteLinkPath(locale, token), serverEnv().baseUrl).toString();
 }

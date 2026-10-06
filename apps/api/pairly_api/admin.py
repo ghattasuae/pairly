@@ -21,7 +21,7 @@ import asyncio
 import os
 import sys
 from collections.abc import Sequence
-from urllib.parse import quote, urlsplit
+from urllib.parse import urlencode, urlsplit
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -37,8 +37,12 @@ LOCALES = ("en", "ar")
 
 
 def accept_link(web_url: str, locale: str, token: str) -> str:
-    """The web app's invite page for ``token``."""
-    return f"{web_url.rstrip('/')}/{locale}/invite/{quote(token, safe='')}"
+    """The web app's invite page, with the token in the URL fragment.
+
+    Browsers never send the fragment to a server, so the token stays out of access logs
+    and Referer headers (the same pattern as the magic link).
+    """
+    return f"{web_url.rstrip('/')}/{locale}/invite#{urlencode({'token': token})}"
 
 
 async def bootstrap(owner_url: str, *, name: str, slug: str, admin_email: str) -> BootstrappedOrg:

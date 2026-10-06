@@ -277,5 +277,11 @@
     "subtitle": "Manage your organisation and your account.",
     "membersBody": "See who is in your organisation and invite people.",
     "securityBody": "Two-step sign-in with an authenticator app."
+  },
+  "BackupCode": {
+    "title": "You signed in with a backup code",
+    "remaining": "{count, plural, =0 {You have no backup codes left.} one {You have # backup code left.} other {You have # backup codes left.}} Use your authenticator app next time.",
+    "unknown": "That code is now used up. Use your authenticator app next time.",
+    "manage": "Two-step sign-in settings"
   }
 }

@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { locales } from "@/i18n/routing";
 import { inviteMember, revokeInvitation, type InviteInput } from "@/lib/actions/invitations";
 import { isolate } from "@/lib/bidi";
+import { formatRole, type Lookup } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
 
 /** Roles people can be invited to. The API still decides who may grant which. */
@@ -78,14 +79,9 @@ const KNOWN_ERRORS = new Set([
 const emailSchema = z.email().max(254);
 
 function useRoleLabel() {
-  const roles = useTranslations("Roles");
-  const workflows = useTranslations("Workflows");
-  return (role: string, workflow: string | null) => {
-    const name = roles.has(role as "admin") ? roles(role as "admin") : role;
-    if (!workflow) return name;
-    const scope = workflows.has(workflow as "pay") ? workflows(workflow as "pay") : workflow;
-    return `${name} · ${scope}`;
-  };
+  const roles = useTranslations("Roles") as unknown as Lookup;
+  const workflows = useTranslations("Workflows") as unknown as Lookup;
+  return (role: string, workflow: string | null) => formatRole(roles, workflows, role, workflow);
 }
 
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id: string }) {

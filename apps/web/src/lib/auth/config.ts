@@ -120,7 +120,14 @@ function createAuth(env: ServerEnv) {
     databaseHooks: {
       session: {
         create: {
-          before: async (session, context) => ({ data: { ...session, amr: amrForPath(context?.path) } }),
+          before: async (session, context) => {
+            const amr = amrForPath(context?.path);
+            if (amr === "backup") {
+              // Audit-visible signal: a backup code was spent. Ids only, no codes.
+              console.warn(JSON.stringify({ event: "auth.backup_code_sign_in", user_id: session.userId }));
+            }
+            return { data: { ...session, amr } };
+          },
         },
       },
     },

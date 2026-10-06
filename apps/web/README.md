@@ -44,7 +44,7 @@ Other scripts:
 src/
   proxy.ts               CSP nonce, sign-in gate (fast path), locale routing
   instrumentation.ts     Better Auth migrations on start (when enabled)
-  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor, invite/[token]
+  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor, invite
   app/[locale]/(app)     signed-in shell: home, inbox, hire, pay, audit, settings (members, security)
   app/api/auth/[...all]  Better Auth (magic link, 2FA, organizations, /token, /jwks)
   app/api/healthz        container liveness
@@ -103,7 +103,9 @@ user, and access comes only from accepting an invitation in the API.
   Settings, Members. This server emails the link (`lib/email.ts`) right after the API
   returns the token, so the raw token is never stored or queued; if SMTP fails, the
   inviter sees the link to share by hand (only the invited address can accept it).
-- **Accepting**: `/[locale]/invite/[token]`. Opening it changes nothing. A signed-out
+- **Accepting**: `/[locale]/invite#token=...`. The token is in the fragment, so it never
+  reaches a server log; the page keeps it in localStorage for an hour so the invitee can
+  come back after the magic link. Opening it changes nothing. A signed-out
   invitee asks for a magic link to the invited address (`prepareInviteSignIn` creates the
   Better Auth user for that address only, after the API confirms the token), comes back
   through 2FA if enabled (`next` survives both steps), and presses "Accept and join". The
@@ -114,15 +116,20 @@ user, and access comes only from accepting an invitation in the API.
   organisation the API just confirmed. Better Auth's `/organization/*` HTTP endpoints are
   blocked. The CLI never writes to the `auth` schema.
 - **Second factor (brief 6.1)**: each session records how it was signed in (`amr`:
-  `otp` only after a TOTP code, else `email`, `sso` or `none`, see `lib/auth/amr.ts`),
+  `otp` after a TOTP code, `otp` plus `backup` after a backup code, else `email`, `sso`
+  or `none`, see `lib/auth/amr.ts`),
   and the JWT carries it. The API refuses any `approve`, `decide`, `manage` or `export`
   permission without `otp`. Pages show "Set up two-factor to continue" (or "sign in
   again") to people who hold such permissions.
 - **Token minting**: `/api/auth/token` is closed to HTTP (route handler plus
   `disabledPaths`). Only this server mints tokens, in-process. `/api/auth/jwks` is public.
 - **Magic link limits**: 5 per 5 minutes per IP (Better Auth) and 3 per 15 minutes per
-  address (`lib/auth/magic-link-limit.ts`). Over the limit, or for an unknown address,
-  the response is the same and no email is sent.
+  address (`lib/auth/magic-link-limit.ts`, which also prunes expired rows in the same
+  statement). Over the limit, or for an unknown address, the response is the same and no
+  email is sent.
+- **Backup codes** count as a second factor: the session's `amr` claim is
+  `["otp", "backup"]`. The sign-in is logged as a structured warning
+  (`auth.backup_code_sign_in`, user id only) and Home tells the user how many codes remain.
 
 ## Design system
 

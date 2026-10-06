@@ -7,12 +7,15 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ActionNeeded } from "@/components/states/action-needed";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { BackupCodeNotice } from "@/components/states/backup-code-notice";
 import { SecondFactorNeeded } from "@/components/states/second-factor-needed";
 import { Unavailable } from "@/components/states/unavailable";
 import { Badge } from "@/components/ui/badge";
 import { toLocale } from "@/i18n/routing";
-import { getSession, twoFactorEnabled } from "@/lib/auth/server";
+import { signedInWithBackupCode } from "@/lib/auth/amr";
+import { getSession, remainingBackupCodes, twoFactorEnabled } from "@/lib/auth/server";
 import { resolveViewer } from "@/lib/provisioning";
+import { formatRole, type Lookup } from "@/lib/role-label";
 import { secondFactorNeed } from "@/lib/viewer-state";
 
 interface Props {
@@ -29,8 +32,11 @@ export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
   setRequestLocale(locale);
   const t = await getTranslations("Home");
+  const roles = (await getTranslations("Roles")) as unknown as Lookup;
+  const workflows = (await getTranslations("Workflows")) as unknown as Lookup;
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   const need = viewer.status === "ready" ? secondFactorNeed(viewer.me, twoFactorEnabled(session)) : null;
+  const backup = session && signedInWithBackupCode(session.session) ? await remainingBackupCodes(session.user.id) : undefined;
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
@@ -44,11 +50,12 @@ export default async function HomePage({ params }: Props) {
               <span className="text-sm">{t("rolesLabel")}</span>
               {viewer.me.roles.map((role) => (
                 <Badge key={`${role.role}:${role.workflow ?? "all"}`} variant="outline">
-                  {role.workflow ? `${role.role} · ${role.workflow}` : role.role}
+                  {formatRole(roles, workflows, role.role, role.workflow)}
                 </Badge>
               ))}
             </div>
           </PageHeader>
+          {backup !== undefined && <BackupCodeNotice remaining={backup} />}
           {need && <SecondFactorNeeded need={need} />}
           <div className="rise" style={{ "--rise-index": 1 } as React.CSSProperties}>
             <ActionNeeded count={0} />

@@ -2,11 +2,13 @@
 // Copyright (c) 2026 Proofly Technology
 import { describe, expect, it, vi } from "vitest";
 
-import { amrClaim, amrForPath } from "./auth/amr";
+import { amrClaim, amrForPath, signedInWithBackupCode } from "./auth/amr";
 import { isBlockedAuthPath } from "./auth/blocked-paths";
 import { callbackFromVerifyUrl, confirmUrl } from "./auth/config";
 import {
   limitKey,
+  PRUNE_BATCH,
+  QUOTA_SQL,
   MAGIC_LINK_EMAIL_MAX,
   MAGIC_LINK_EMAIL_WINDOW_SECONDS,
   type Queryable,
@@ -14,7 +16,9 @@ import {
 } from "./auth/magic-link-limit";
 import { nextFromCallback } from "./auth/two-factor-gate";
 import { isWellFormedInviteToken } from "./invite-token";
+import { inviteLinkPath, inviteViewFor, readInviteToken } from "./invite-view";
 import { isPublicPath } from "./public-paths";
+import { formatRole, type Lookup } from "./role-label";
 import { safeNextPath } from "./safe-path";
 
 const TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_abcde";
@@ -27,8 +31,15 @@ describe("amr", () => {
     expect(amrForPath("/oauth2/callback/:id")).toBe("sso");
   });
 
-  it("fails closed for backup codes, 2FA changes and unknown paths", () => {
-    expect(amrForPath("/two-factor/verify-backup-code")).toBe("none");
+  it("counts a backup code as a second factor, and says so", () => {
+    expect(amrForPath("/two-factor/verify-backup-code")).toBe("backup");
+    expect(amrClaim("backup")).toEqual(["otp", "backup"]);
+    expect(signedInWithBackupCode({ amr: "backup" })).toBe(true);
+    expect(signedInWithBackupCode({ amr: "otp" })).toBe(false);
+    expect(signedInWithBackupCode(null)).toBe(false);
+  });
+
+  it("fails closed for 2FA changes and unknown paths", () => {
     expect(amrForPath("/two-factor/disable")).toBe("none");
     expect(amrForPath("/two-factor/enable")).toBe("none");
     expect(amrForPath("/constructor")).toBe("none");
@@ -149,8 +160,24 @@ describe("invite tokens and pages", () => {
   });
 
   it("lets people open an invitation before signing in", () => {
-    expect(isPublicPath(`/invite/${TOKEN}`)).toBe(true);
+    expect(isPublicPath("/invite")).toBe(true);
     expect(isPublicPath("/invitex")).toBe(false);
+  });
+
+  it("puts the token in the fragment, never the path or query", () => {
+    const url = new URL(inviteLinkPath("ar", TOKEN), "http://localhost:3000");
+    expect(url.pathname).toBe("/ar/invite");
+    expect(url.search).toBe("");
+    expect(readInviteToken(url.hash)).toBe(TOKEN);
+    expect(readInviteToken("#token=short")).toBeNull();
+    expect(readInviteToken("")).toBeNull();
+  });
+
+  it("picks the view from the signed-in address", () => {
+    const preview = { org_name: "Acme", email: "Sam@example.test", role: "admin", workflow: null, expires_at: "" };
+    expect(inviteViewFor(preview, null).kind).toBe("signIn");
+    expect(inviteViewFor(preview, "sam@example.test").kind).toBe("accept");
+    expect(inviteViewFor(preview, "kim@example.test").kind).toBe("wrongUser");
   });
 });
 
@@ -184,8 +211,30 @@ describe("magic link per-address limit", () => {
     expect(await takeMagicLinkQuota(empty, "sam@example.test")).toBe(false);
   });
 
+  it("prunes a bounded batch of expired rows of other addresses in the same statement", () => {
+    expect(QUOTA_SQL).toContain(`LIMIT ${PRUNE_BATCH}`);
+    expect(QUOTA_SQL).toContain(`"key" <> $2`);
+    expect(QUOTA_SQL).toContain("SKIP LOCKED");
+  });
+
   it("treats addresses that differ only in case or spaces as one", () => {
     expect(limitKey(" SAM@example.TEST")).toBe(limitKey("sam@example.test"));
     expect(limitKey("sam@example.test")).not.toBe(limitKey("sam2@example.test"));
+  });
+});
+
+describe("formatRole", () => {
+  const lookup = (table: Record<string, string>): Lookup =>
+    Object.assign((key: string) => table[key] ?? key, { has: (key: string) => key in table });
+  const roles = lookup({ approver: "معتمِد", admin: "Admin" });
+  const workflows = lookup({ pay: "المدفوعات" });
+
+  it("localizes role and workflow names", () => {
+    expect(formatRole(roles, workflows, "approver", "pay")).toBe("معتمِد · المدفوعات");
+    expect(formatRole(roles, workflows, "admin", null)).toBe("Admin");
+  });
+
+  it("shows unknown keys as they are", () => {
+    expect(formatRole(roles, workflows, "custom_role", "payroll")).toBe("custom_role · payroll");
   });
 });

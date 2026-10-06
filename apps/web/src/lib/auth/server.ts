@@ -35,3 +35,13 @@ export const getApiToken = cache(async (): Promise<string | null> => {
 export function twoFactorEnabled(session: Session | null): boolean {
   return Boolean((session?.user as { twoFactorEnabled?: boolean | null } | undefined)?.twoFactorEnabled);
 }
+
+/** Backup codes the user has left, or null if unknown. Count only; codes never leave here. */
+export async function remainingBackupCodes(userId: string): Promise<number | null> {
+  try {
+    const result = await getAuth().api.viewBackupCodes({ body: { userId } });
+    return Array.isArray(result.backupCodes) ? result.backupCodes.length : null;
+  } catch {
+    return null;
+  }
+}

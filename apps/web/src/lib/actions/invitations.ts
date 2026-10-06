@@ -16,6 +16,7 @@ import { getSession } from "../auth/server";
 import { sendInvitationEmail } from "../email";
 import { ensureInvitedUser, inviteUrl, previewInvitation } from "../invitations";
 import { isWellFormedInviteToken } from "../invite-token";
+import { inviteViewFor, type InviteView } from "../invite-view";
 import { activateOrganization } from "../org-mirror";
 import { resolveViewer } from "../provisioning";
 
@@ -80,6 +81,18 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
   } catch (err) {
     return fail(err instanceof NotSignedInError ? "not_signed_in" : "unavailable");
   }
+}
+
+/**
+ * What the invite page shows. The token lives in the URL fragment, which never reaches
+ * the server, so the page sends it here.
+ */
+export async function describeInvitation(token: string): Promise<InviteView> {
+  const found = await previewInvitation(token);
+  if (found.status !== "valid") return { kind: found.status };
+  const session = await getSession();
+  const preview = { ...found.preview, expires_at: String(found.preview.expires_at) };
+  return inviteViewFor(preview, session?.user.email ?? null);
 }
 
 /**

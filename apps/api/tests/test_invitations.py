@@ -564,8 +564,19 @@ async def test_me_orgs_needs_a_token(live: Live) -> None:
         ([], 403),
         (["otp"], 200),
         (["email", "otp"], 200),
+        (["otp", "backup"], 200),
+        (["backup"], 403),
     ],
-    ids=["missing", "magic-link", "sso", "empty", "totp", "email+totp"],
+    ids=[
+        "missing",
+        "magic-link",
+        "sso",
+        "empty",
+        "totp",
+        "email+totp",
+        "backup-code",
+        "backup-only",
+    ],
 )
 async def test_approve_needs_totp_sign_in(
     live: Live, orgs: TwoTenants, amr: list[str] | None, status: int
@@ -639,9 +650,9 @@ def test_cli_bootstrap_org(
     assert code == 0, out
     org_id = uuid.UUID(re.search(r"id: ([0-9a-f-]{36})", out).group(1))  # type: ignore[union-attr]
     created_orgs.append(org_id)
-    link = re.search(r"(https://pairly\.example/ar/invite/[A-Za-z0-9_-]{43})", out)
+    link = re.search(r"https://pairly\.example/ar/invite#token=([A-Za-z0-9_-]{43})\s", out)
     assert link is not None
-    token = link.group(1).rsplit("/", 1)[1]
+    token = link.group(1)
 
     async def check() -> tuple[Any, ...]:
         engine = create_async_engine(migrated.owner, pool_size=1, max_overflow=0)
@@ -716,4 +727,4 @@ async def test_bootstrapped_admin_can_accept_and_manage(
 
 def test_accept_link_format() -> None:
     link = admin_cli.accept_link("http://localhost:3000/", "en", "a" * 43)
-    assert link == "http://localhost:3000/en/invite/" + "a" * 43
+    assert link == "http://localhost:3000/en/invite#token=" + "a" * 43
