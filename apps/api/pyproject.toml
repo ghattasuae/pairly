@@ -9,7 +9,20 @@ readme = "README.md"
 license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Proofly Technology" }]
-dependencies = ["pairly-core"]
+dependencies = [
+    "alembic>=1.14",
+    "fastapi>=0.121",
+    "httpx>=0.28",
+    "opentelemetry-api>=1.28",
+    "opentelemetry-exporter-otlp-proto-http>=1.28",
+    "opentelemetry-instrumentation-fastapi>=0.49b0",
+    "opentelemetry-sdk>=1.28",
+    "pairly-core",
+    "pyjwt[crypto]>=2.10",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "structlog>=24.4",
+    "uvicorn>=0.32",
+]
 
 [tool.uv.sources]
 pairly-core = { workspace = true }

@@ -1,0 +1,161 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+"""FastAPI dependencies that turn a request into an authenticated, tenant-bound actor.
+
+Per request:
+
+1. Verify the bearer JWT (``Authorization: Bearer ...``). Failure: 401.
+2. Read the organisation from the ``X-Pairly-Org`` header. Missing: 403, malformed: 400.
+3. Open a session whose transaction runs ``set_config('app.org_id', <org>, true)``. From
+   here on RLS only shows that organisation's rows.
+4. Load the organisation, the user (by token subject) and the user's memberships in it.
+   No active organisation, no user or no membership: 403 with one generic message, so
+   the response does not reveal which organisations exist.
+5. Resolve effective permissions through the role registry.
+
+Route handlers then use ``OrgSession`` (the same session, still in that transaction) and
+``require(permission)``. The transaction commits after the handler returns and before
+the response is sent; any error rolls it back.
+"""
+
+from __future__ import annotations
+
+import uuid
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from typing import Annotated
+
+import structlog
+from fastapi import Depends, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+
+from pairly_core.auth import TokenVerifier
+from pairly_core.config import Settings
+from pairly_core.db import set_tenant
+from pairly_core.errors import (
+    BadRequestError,
+    ForbiddenError,
+    ServiceUnavailableError,
+    UnauthenticatedError,
+)
+from pairly_core.models import Membership, Organisation, Role, User
+from pairly_core.rbac import Actor, ActorKind, RoleGrant, RoleRegistry
+
+ORG_HEADER = "X-Pairly-Org"
+_NO_ACCESS = "no access to this organisation"
+
+
+@dataclass(frozen=True, slots=True)
+class AppContext:
+    """Process-wide services, stored on ``app.state.pairly`` by the API factory."""
+
+    settings: Settings
+    engine: AsyncEngine
+    sessionmaker: async_sessionmaker[AsyncSession]
+    verifier: TokenVerifier
+    registry: RoleRegistry
+
+
+def get_context(request: Request) -> AppContext:
+    ctx = getattr(request.app.state, "pairly", None)
+    if not isinstance(ctx, AppContext):
+        raise ServiceUnavailableError("service not initialised")
+    return ctx
+
+
+Context = Annotated[AppContext, Depends(get_context)]
+
+
+def bearer_token(request: Request) -> str:
+    value = request.headers.get("authorization", "")
+    scheme, _, token = value.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        raise UnauthenticatedError("bearer token required")
+    return token.strip()
+
+
+def org_from_header(request: Request) -> uuid.UUID:
+    raw = request.headers.get(ORG_HEADER)
+    if raw is None or not raw.strip():
+        raise ForbiddenError(f"{ORG_HEADER} header required")
+    try:
+        return uuid.UUID(raw.strip())
+    except ValueError:
+        raise BadRequestError(f"{ORG_HEADER} must be an organisation id") from None
+
+
+async def request_session(ctx: Context) -> AsyncIterator[AsyncSession]:
+    """A session for this request. No tenant is set, so RLS shows no tenant rows."""
+    async with ctx.sessionmaker() as session:
+        try:
+            yield session
+        except BaseException:
+            await session.rollback()
+            raise
+        else:
+            if session.in_transaction():
+                await session.commit()
+                # TODO(WP0.5): audit hook. Audit events written during the request share
+                # this transaction, so they commit atomically with the change they record.
+
+
+RequestSession = Annotated[AsyncSession, Depends(request_session, scope="function")]
+
+
+async def load_actor(
+    session: AsyncSession,
+    registry: RoleRegistry,
+    *,
+    subject: str,
+    org_id: uuid.UUID,
+) -> Actor:
+    """Bind ``session`` to ``org_id`` and load the user's actor there, or raise 403."""
+    set_tenant(session, org_id, subject)
+    org = await session.scalar(select(Organisation).where(Organisation.id == org_id))
+    if org is None or org.status != "active":
+        raise ForbiddenError(_NO_ACCESS)
+    user = await session.scalar(select(User).where(User.auth_subject == subject))
+    if user is None:
+        raise ForbiddenError(_NO_ACCESS)
+    rows = (
+        await session.execute(
+            select(Role.key, Membership.workflow)
+            .join(Role, Role.id == Membership.role_id)
+            .where(Membership.user_id == user.id, Membership.org_id == org_id)
+        )
+    ).all()
+    if not rows:
+        raise ForbiddenError(_NO_ACCESS)
+    grants = tuple(sorted({RoleGrant(role=r.key, workflow=r.workflow) for r in rows}, key=str))
+    return Actor(
+        kind=ActorKind.USER,
+        id=user.id,
+        org_id=org_id,
+        grants=grants,
+        permissions=registry.resolve(grants),
+        subject=subject,
+        email=user.email,
+    )
+
+
+async def current_actor(request: Request, ctx: Context, session: RequestSession) -> Actor:
+    token = bearer_token(request)
+    verified = await ctx.verifier.verify(token)
+    org_id = org_from_header(request)
+    actor = await load_actor(session, ctx.registry, subject=verified.subject, org_id=org_id)
+    request.state.actor = actor
+    structlog.contextvars.bind_contextvars(user_id=str(actor.id), org_id=str(actor.org_id))
+    return actor
+
+
+CurrentActor = Annotated[Actor, Depends(current_actor)]
+
+
+async def org_session(actor: CurrentActor, session: RequestSession) -> AsyncSession:
+    """The request session, bound to the authenticated actor's organisation."""
+    del actor  # dependency ordering only: the actor sets the tenant context
+    return session
+
+
+OrgSession = Annotated[AsyncSession, Depends(org_session)]

@@ -26,6 +26,7 @@ dev = [
   "pytest-cov>=7.0",
   "import-linter>=2.5",
   "pre-commit>=4.3",
+  "pytest-asyncio>=1.0",
 ]
 
 [tool.uv]
@@ -112,10 +113,14 @@ minversion = "8.0"
 testpaths = ["packages", "apps", "sdks/python", "scripts/tests"]
 addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra"]
 xfail_strict = true
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 # ---------------------------------------------------------------- coverage
 [tool.coverage.run]
 branch = true
+# SQLAlchemy async runs DB calls in greenlets; trace them too.
+concurrency = ["greenlet", "thread"]
 source = ["pairly_core"]
 
 [tool.coverage.report]

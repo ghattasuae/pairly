@@ -9,7 +9,18 @@ SHELL := /bin/bash
 UV   ?= uv
 PNPM ?= pnpm
 
-.PHONY: help install hooks dev demo test evals lint format typecheck
+# Docker Compose stack (infra/docker-compose.yml). Extra profiles: web, scan, observability.
+#   PROFILES="scan observability" make dev
+PROFILES     ?=
+COMPOSE_FILE := infra/docker-compose.yml
+COMPOSE      := docker compose --env-file .env -f $(COMPOSE_FILE)
+PROFILE_ARGS := $(foreach p,$(PROFILES),--profile $(p))
+# Seconds `make dev` waits for every service to report healthy.
+WAIT_TIMEOUT ?= 300
+# Optional service filter for `make logs`, e.g. SERVICE=api
+SERVICE      ?=
+
+.PHONY: help install hooks env dev demo down logs ps test evals lint format typecheck
 
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-10s %s\n", $$1, $$2}'
@@ -21,12 +32,28 @@ install: ## Install Python (uv) and JS (pnpm) dependencies
 hooks: ## Install the pre-commit git hooks
 	$(UV) run pre-commit install
 
-dev: ## Start the local stack (needs docker compose from WP0.3)
-	@echo "make dev: not implemented yet (WP0.3: docker compose stack)."
+env: ## Create .env with random secrets if it is missing (never overwrites)
+	@$(UV) run python scripts/gen_dev_env.py
 
-demo: ## Boot everything with seed data (WP0.3 infra, seeded demo in M2)
-	@echo "make demo: not implemented yet (WP0.3: docker compose, seed data from M2)." >&2
-	@exit 1
+dev: env ## Start the stack and wait until healthy (PROFILES="scan observability web")
+	$(COMPOSE) $(PROFILE_ARGS) up -d --build --remove-orphans --wait --wait-timeout $(WAIT_TIMEOUT)
+	@$(COMPOSE) $(PROFILE_ARGS) ps
+	@echo ""
+	@echo "Pairly is up. API http://localhost:8000  Mail UI http://localhost:8025  MinIO console http://localhost:9001"
+
+demo: dev ## Boot everything healthy (seed data arrives in M2)
+	@echo ""
+	@echo "make demo: the stack is healthy. Seeded demo data arrives in M2, so there is nothing to explore yet."
+
+down: ## Stop and remove every stack container, all profiles (volumes are kept)
+	@test -f .env || { echo "no .env, nothing to stop"; exit 0; }; \
+	$(COMPOSE) --profile '*' down --remove-orphans
+
+logs: ## Follow logs (SERVICE=api to filter)
+	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)
+
+ps: ## Show stack containers and their health
+	$(COMPOSE) --profile '*' ps -a
 
 test: ## Run Python and JS tests
 	$(UV) run pytest --cov --cov-report=term-missing

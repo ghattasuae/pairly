@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+"""Tests for scripts/gen_dev_env.py."""
+
+from __future__ import annotations
+
+import importlib.util
+import stat
+import sys
+from pathlib import Path
+from types import ModuleType
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "scripts" / "gen_dev_env.py"
+
+
+def _load() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("gen_dev_env", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["gen_dev_env"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+gen = _load()
+
+
+def _parse(text: str) -> dict[str, str]:
+    pairs = {}
+    for line in text.splitlines():
+        if line and not line.startswith("#") and "=" in line:
+            key, _, value = line.partition("=")
+            pairs[key] = value
+    return pairs
+
+
+def test_real_example_fills_every_secret_with_unique_values(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    values = _parse(target.read_text())
+    secrets_ = [values[key] for key in gen.SECRET_GENERATORS]
+    assert all(len(v) >= 32 for v in secrets_)
+    assert len(set(secrets_)) == len(secrets_)
+    assert stat.S_IMODE(target.stat().st_mode) == 0o600
+    # Non-secret keys keep their example values.
+    assert values["POSTGRES_DB"] == "pairly"
+
+
+def test_never_overwrites_existing_env(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    target.write_text("KEEP=me\n")
+    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    assert target.read_text() == "KEEP=me\n"
+
+
+def test_example_with_a_secret_value_is_rejected() -> None:
+    template = "\n".join(f"{key}=" for key in gen.SECRET_GENERATORS)
+    template = template.replace("REDIS_PASSWORD=", "REDIS_PASSWORD=hunter2")
+    with pytest.raises(ValueError, match="REDIS_PASSWORD"):
+        gen.render(template)
+
+
+def test_example_missing_a_secret_is_rejected() -> None:
+    with pytest.raises(ValueError, match="missing secret keys"):
+        gen.render("POSTGRES_PASSWORD=\n")

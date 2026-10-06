@@ -1,0 +1,545 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Pairly local stack. Run it through the Makefile (`make dev`, `make down`, `make logs`,
+# `make ps`), which passes the repo-root `.env` and the selected profiles.
+#
+#   default (no profile)  postgres, redis, minio (+ minio-init job), mailpit,
+#                         migrate (Alembic job), api, worker
+#   profile `web`         Next.js web app (enabled once apps/web is a real Next.js app)
+#   profile `scan`        ClamAV daemon (GPL, separate container, never linked into our code)
+#   profile `observability`  self-hosted LangFuse (web + worker + ClickHouse), reusing our
+#                            Postgres (database `langfuse`), Redis (db 1) and MinIO (bucket `langfuse`)
+#
+#   PROFILES="scan observability" make dev
+#
+# Rules followed here:
+# - Every image is pinned. No `latest`.
+# - Every published port is bound to 127.0.0.1.
+# - Every secret is `${VAR:?missing}`: compose refuses to start without it. No default secrets.
+# - Each service gets only the secrets it needs.
+# - Memory limits keep the default profile near 1.5 GB (the local Docker VM has 2 GB).
+#
+# Image licences (all run as separate processes next to Pairly, nothing is linked):
+#   pgvector/pgvector  PostgreSQL License      redis 7.2      BSD-3-Clause
+#   MinIO              AGPL-3.0                axllent/mailpit  MIT
+#   clamav/clamav      GPL-2.0                 clickhouse      Apache-2.0
+#   langfuse           MIT (ee/ folders unused without a licence key)
+
+name: pairly
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+
+x-app-hardening: &app-hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m
+
+# Runtime settings shared by the API and the worker. Names are the contract with
+# packages/core settings (WP0.4).
+x-app-env: &app-env
+  PAIRLY_ENV: ${PAIRLY_ENV:-development}
+  PAIRLY_LOG_LEVEL: ${PAIRLY_LOG_LEVEL:-INFO}
+  PAIRLY_MODEL_MODE: ${PAIRLY_MODEL_MODE:-recorded}
+  PAIRLY_PUBLIC_API_URL: ${PAIRLY_PUBLIC_API_URL:-http://localhost:8000}
+  PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+  # Runtime role only (not the owner), so Row Level Security applies.
+  PAIRLY_DATABASE_URL: postgresql+asyncpg://pairly_app:${PAIRLY_APP_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+  PAIRLY_REDIS_URL: redis://:${REDIS_PASSWORD:?missing}@redis:6379/0
+  PAIRLY_S3_ENDPOINT_URL: http://minio:9000
+  PAIRLY_S3_PUBLIC_ENDPOINT_URL: http://localhost:${MINIO_API_HOST_PORT:-9000}
+  PAIRLY_S3_REGION: us-east-1
+  PAIRLY_S3_BUCKET: ${PAIRLY_S3_BUCKET:?missing}
+  PAIRLY_S3_ACCESS_KEY: ${PAIRLY_S3_ACCESS_KEY:?missing}
+  PAIRLY_S3_SECRET_KEY: ${PAIRLY_S3_SECRET_KEY:?missing}
+  PAIRLY_SMTP_HOST: mailpit
+  PAIRLY_SMTP_PORT: "1025"
+  PAIRLY_SMTP_FROM: ${PAIRLY_SMTP_FROM:-Pairly <no-reply@pairly.localhost>}
+  # Only reachable with the `scan` profile. Without it, scans error and files go to
+  # the human queue (fail closed), they are never treated as clean.
+  PAIRLY_CLAMAV_HOST: clamav
+  PAIRLY_CLAMAV_PORT: "3310"
+  # Better Auth JWT plugin (apps/web, WP0.6) serves the key set; tokens carry this issuer
+  # and audience.
+  PAIRLY_AUTH_JWKS_URL: http://web:3000/api/auth/jwks
+  PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3000}
+  PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3000}
+  PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3000}
+  PAIRLY_ENCRYPTION_KEY: ${PAIRLY_ENCRYPTION_KEY:?missing}
+  PAIRLY_BLIND_INDEX_KEY: ${PAIRLY_BLIND_INDEX_KEY:?missing}
+  PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  # Only reachable with the `observability` profile; tracing is best effort.
+  LANGFUSE_HOST: http://langfuse-web:3000
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:?missing}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:?missing}
+
+x-app-depends: &app-depends
+  postgres:
+    condition: service_healthy
+  migrate:
+    condition: service_completed_successfully
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+  minio-init:
+    condition: service_completed_successfully
+  mailpit:
+    condition: service_healthy
+
+# LangFuse settings shared by its web and worker containers.
+x-langfuse-env: &langfuse-env
+  DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:?missing}@postgres:5432/langfuse
+  NEXTAUTH_URL: http://localhost:${LANGFUSE_HOST_PORT:-3100}
+  SALT: ${LANGFUSE_SALT:?missing}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:?missing}
+  TELEMETRY_ENABLED: "false"
+  LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: langfuse
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?missing}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  # Our Redis, database 1 (the arq queue uses database 0).
+  REDIS_CONNECTION_STRING: redis://:${REDIS_PASSWORD:?missing}@redis:6379/1
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_S3_ACCESS_KEY:?missing}
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_S3_SECRET_KEY:?missing}
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: us-east-1
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_S3_ACCESS_KEY:?missing}
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_S3_SECRET_KEY:?missing}
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  # Node sizes its heap from the container limit by default, which is too small for
+  # LangFuse at these limits (it crashes with "heap out of memory").
+  NODE_OPTIONS: --max-old-space-size=640
+  # Both images bind to $HOSTNAME, which Docker sets to the container id. Bind to all
+  # interfaces so the in-container healthchecks on 127.0.0.1 can reach them.
+  HOSTNAME: 0.0.0.0
+
+x-langfuse-depends: &langfuse-depends
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+  minio-init:
+    condition: service_completed_successfully
+  clickhouse:
+    condition: service_healthy
+
+services:
+  # ---------------------------------------------------------------- data
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg16-bookworm
+    <<: *hardening
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=160MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - max_connections=60
+      - -c
+      - password_encryption=scram-sha-256
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing}
+      POSTGRES_DB: ${POSTGRES_DB:?missing}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      # Read by infra/postgres/init/*.sql through psql \getenv on first init only.
+      PAIRLY_OWNER_DB_PASSWORD: ${PAIRLY_OWNER_DB_PASSWORD:?missing}
+      PAIRLY_APP_DB_PASSWORD: ${PAIRLY_APP_DB_PASSWORD:?missing}
+      PAIRLY_AUTH_DB_PASSWORD: ${PAIRLY_AUTH_DB_PASSWORD:?missing}
+      LANGFUSE_DB_PASSWORD: ${LANGFUSE_DB_PASSWORD:?missing}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - 127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432
+    healthcheck:
+      # TCP on purpose: the init-time server listens on the socket only, so this stays
+      # unhealthy until the init scripts are done and the real server is up.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  redis:
+    image: redis:7.2.16-alpine
+    <<: *hardening
+    restart: unless-stopped
+    user: redis
+    environment:
+      # redis-cli reads REDISCLI_AUTH, so the healthcheck needs no password on its command line.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?missing}
+    command:
+      - sh
+      - -c
+      - >-
+        exec redis-server
+        --requirepass "$$REDISCLI_AUTH"
+        --appendonly yes
+        --maxmemory 96mb
+        --maxmemory-policy noeviction
+    volumes:
+      - redis_data:/data
+    ports:
+      - 127.0.0.1:${REDIS_HOST_PORT:-6379}:6379
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  minio:
+    # Upstream MinIO no longer publishes community images to Docker Hub or Quay.
+    # Chainguard's build (AGPL-3.0 MinIO, also used by the LangFuse self-host compose)
+    # is only tagged `latest`, so it is pinned by digest. Bump the digest on purpose.
+    # minio RELEASE.2026-09-22T19-25-18Z
+    image: cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
+    <<: *hardening
+    restart: unless-stopped
+    command: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?missing}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?missing}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_HOST_PORT:-9001}
+    volumes:
+      - minio_data:/data
+    ports:
+      - 127.0.0.1:${MINIO_API_HOST_PORT:-9000}:9000
+      - 127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  # One-shot: buckets and least-privilege access keys. Exits 0 when done.
+  minio-init:
+    image: cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
+    <<: *hardening
+    restart: "no"
+    entrypoint: ["/bin/sh", "/pairly/minio-init.sh"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?missing}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?missing}
+      PAIRLY_S3_BUCKET: ${PAIRLY_S3_BUCKET:?missing}
+      PAIRLY_S3_ACCESS_KEY: ${PAIRLY_S3_ACCESS_KEY:?missing}
+      PAIRLY_S3_SECRET_KEY: ${PAIRLY_S3_SECRET_KEY:?missing}
+      LANGFUSE_S3_ACCESS_KEY: ${LANGFUSE_S3_ACCESS_KEY:?missing}
+      LANGFUSE_S3_SECRET_KEY: ${LANGFUSE_S3_SECRET_KEY:?missing}
+    volumes:
+      - ./minio/init.sh:/pairly/minio-init.sh:ro
+    depends_on:
+      minio:
+        condition: service_healthy
+    # No healthcheck: it is a job, not a service. Dependants wait for
+    # `service_completed_successfully` instead.
+    deploy:
+      resources:
+        limits:
+          memory: 192m
+
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    <<: *hardening
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "2000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - 127.0.0.1:${MAILPIT_SMTP_HOST_PORT:-1025}:1025
+      - 127.0.0.1:${MAILPIT_UI_HOST_PORT:-8025}:8025
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+  # ---------------------------------------------------------------- app
+  # One-shot: Alembic migrations as the owner role. The only service that gets the owner
+  # password; the API and worker connect as pairly_app.
+  migrate:
+    build: &python-build
+      context: ..
+      dockerfile: infra/docker/python.Dockerfile
+    image: pairly-local/python-app:dev
+    # Always built locally, never pulled (the tag must not resolve to a registry image).
+    pull_policy: build
+    <<: *app-hardening
+    restart: "no"
+    working_dir: /app/apps/api
+    command: ["alembic", "-c", "/app/apps/api/alembic.ini", "upgrade", "head"]
+    environment:
+      PAIRLY_DATABASE_URL_OWNER: postgresql+asyncpg://pairly_owner:${PAIRLY_OWNER_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # No healthcheck: it is a job. Dependants wait for `service_completed_successfully`.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  api:
+    build: *python-build
+    image: pairly-local/python-app:dev
+    pull_policy: build
+    <<: *app-hardening
+    restart: unless-stopped
+    command: ["uvicorn", "pairly_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--no-server-header"]
+    environment:
+      <<: *app-env
+    depends_on: *app-depends
+    ports:
+      - 127.0.0.1:${PAIRLY_API_PORT:-8000}:8000
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 320m
+
+  worker:
+    build: *python-build
+    image: pairly-local/python-app:dev
+    pull_policy: build
+    <<: *app-hardening
+    restart: unless-stopped
+    command: ["arq", "pairly_worker.main.WorkerSettings"]
+    environment:
+      <<: *app-env
+    depends_on: *app-depends
+    healthcheck:
+      # arq writes a health key to Redis on every poll; --check reads it.
+      test: ["CMD", "arq", "--check", "pairly_worker.main.WorkerSettings"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 320m
+
+  web:
+    profiles: ["web"]
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+    image: pairly-local/web:dev
+    pull_policy: build
+    <<: *app-hardening
+    tmpfs:
+      - /tmp:size=64m
+      # Next.js writes its image and fetch cache here; the rest of the filesystem is read-only.
+      - /app/apps/web/.next/cache:uid=1000,gid=1000,size=128m
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      BETTER_AUTH_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?missing}
+      # Better Auth connects as pairly_auth, which owns only schema `auth` (its search_path)
+      # and runs its own migrations there. It has no rights on the Pairly tables.
+      PAIRLY_AUTH_DATABASE_URL: postgresql://pairly_auth:${PAIRLY_AUTH_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+      PAIRLY_API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_API_URL: ${PAIRLY_PUBLIC_API_URL:-http://localhost:8000}
+      PAIRLY_SMTP_HOST: mailpit
+      PAIRLY_SMTP_PORT: "1025"
+      PAIRLY_SMTP_FROM: ${PAIRLY_SMTP_FROM:-Pairly <no-reply@pairly.localhost>}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:${PAIRLY_WEB_PORT:-3000}:3000
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  # ---------------------------------------------------------------- profile: scan
+  clamav:
+    profiles: ["scan"]
+    image: clamav/clamav:1.5.4
+    <<: *hardening
+    restart: unless-stopped
+    volumes:
+      - clamav_db:/var/lib/clamav
+    ports:
+      - 127.0.0.1:${CLAMAV_HOST_PORT:-3310}:3310
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      # First start downloads the signature databases (a few hundred MB).
+      start_period: 300s
+    deploy:
+      resources:
+        limits:
+          # clamd holds the full signature set in memory (about 1 GB, more during reloads).
+          memory: 1536m
+
+  # ---------------------------------------------------------------- profile: observability
+  clickhouse:
+    profiles: ["observability"]
+    image: clickhouse/clickhouse-server:25.12.11.4
+    <<: *hardening
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?missing}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "0"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  langfuse-worker:
+    profiles: ["observability"]
+    image: langfuse/langfuse-worker:4.53.0
+    <<: *hardening
+    restart: unless-stopped
+    environment:
+      <<: *langfuse-env
+    depends_on: *langfuse-depends
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3030/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 896m
+
+  langfuse-web:
+    profiles: ["observability"]
+    image: langfuse/langfuse:4.53.0
+    <<: *hardening
+    restart: unless-stopped
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:?missing}
+      # The browser uploads media through the host port; containers use the internal name.
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://localhost:${MINIO_API_HOST_PORT:-9000}
+      LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT: http://minio:9000
+      AUTH_DISABLE_SIGNUP: "true"
+      LANGFUSE_INIT_ORG_ID: pairly-local
+      LANGFUSE_INIT_ORG_NAME: Pairly (local)
+      LANGFUSE_INIT_PROJECT_ID: pairly-dev
+      LANGFUSE_INIT_PROJECT_NAME: pairly-dev
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:?missing}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:?missing}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-admin@pairly.localhost}
+      LANGFUSE_INIT_USER_NAME: Local admin
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:?missing}
+    depends_on: *langfuse-depends
+    ports:
+      - 127.0.0.1:${LANGFUSE_HOST_PORT:-3100}:3000
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 1280m
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  clamav_db:
+  clickhouse_data:
+  clickhouse_logs:

@@ -8,7 +8,7 @@ a workflow package directly; it only discovers plugin objects at runtime.
 
 The ``WorkflowPlugin`` protocol is intentionally minimal for now. It grows with the
 engine (entity types, models, extraction schemas, detectors, rules, policy schema,
-graphs, approval types, templates, router, permissions, seed hook).
+graphs, approval types, templates, router, seed hook).
 
 Discovery fails closed: a plugin that cannot be loaded, does not satisfy the protocol,
 has an invalid id, or collides with another plugin raises ``PluginError`` instead of
@@ -18,8 +18,11 @@ being silently skipped.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from importlib.metadata import EntryPoint, entry_points
 from typing import Protocol, runtime_checkable
+
+from pairly_core.rbac import PermissionSpec
 
 ENTRY_POINT_GROUP = "pairly.workflows"
 
@@ -46,6 +49,15 @@ class WorkflowPlugin(Protocol):
         """Human-readable workflow name (for example ``Pairly Hire``)."""
         ...
 
+    @property
+    def permissions(self) -> Sequence[PermissionSpec]:
+        """Permissions this workflow defines, all named ``<id>.<resource>.<action>``.
+
+        Each spec lists the built-in roles that hold it by default. The ``agent`` role
+        may only receive ``read`` and ``propose`` permissions.
+        """
+        ...
+
 
 def _load(ep: EntryPoint) -> WorkflowPlugin:
     try:
@@ -64,7 +76,21 @@ def _load(ep: EntryPoint) -> WorkflowPlugin:
         raise PluginError(
             f"workflow plugin id {plugin_id!r} does not match its entry point name {ep.name!r}"
         )
+    _check_permissions(obj, ep)
     return obj
+
+
+def _check_permissions(obj: WorkflowPlugin, ep: EntryPoint) -> None:
+    perms = obj.permissions
+    if isinstance(perms, str | bytes) or not isinstance(perms, Sequence):
+        raise PluginError(f"workflow plugin {ep.name!r}: permissions must be a sequence")
+    for spec in perms:
+        if not isinstance(spec, PermissionSpec):
+            raise PluginError(f"workflow plugin {ep.name!r}: permissions must be PermissionSpec")
+        if spec.namespace != obj.id:
+            raise PluginError(
+                f"workflow plugin {ep.name!r}: permission {spec.name!r} is outside its namespace"
+            )
 
 
 def discover_plugins(group: str = ENTRY_POINT_GROUP) -> dict[str, WorkflowPlugin]:

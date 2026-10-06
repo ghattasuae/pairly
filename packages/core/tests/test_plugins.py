@@ -14,6 +14,7 @@ import pytest
 
 from pairly_core import plugins
 from pairly_core.plugins import ENTRY_POINT_GROUP, PluginError, discover_plugins
+from pairly_core.rbac import PermissionSpec
 
 _FAKE_MODULE = "_pairly_fake_plugins"
 
@@ -22,6 +23,7 @@ _FAKE_MODULE = "_pairly_fake_plugins"
 class _Plugin:
     id: str
     name: str
+    permissions: tuple[object, ...] = ()
 
 
 class _NotAPlugin:
@@ -37,6 +39,11 @@ def fake_module() -> Iterator[types.ModuleType]:
     module.mismatch = _Plugin(id="other", name="Other")  # type: ignore[attr-defined]
     module.bad_id = _Plugin(id="Bad-Id", name="Bad")  # type: ignore[attr-defined]
     module.not_plugin = _NotAPlugin()  # type: ignore[attr-defined]
+    module.foreign_perm = _Plugin(  # type: ignore[attr-defined]
+        id="alpha", name="Alpha", permissions=(PermissionSpec("beta.thing.read", "x"),)
+    )
+    module.bad_perm = _Plugin(id="alpha", name="Alpha", permissions=("alpha.x.read",))  # type: ignore[attr-defined]
+    module.str_perms = _Plugin(id="alpha", name="Alpha", permissions="alpha.x.read")  # type: ignore[attr-defined, arg-type]
     sys.modules[_FAKE_MODULE] = module
     yield module
     del sys.modules[_FAKE_MODULE]
@@ -81,6 +88,9 @@ def test_no_plugins_returns_empty(monkeypatch: pytest.MonkeyPatch) -> None:
         ([_ep("Bad-Id", "bad_id")], "invalid id"),
         ([_ep("alpha", "mismatch")], "does not match"),
         ([_ep("alpha", "alpha"), _ep("alpha", "alpha_again")], "duplicate"),
+        ([_ep("alpha", "foreign_perm")], "outside its namespace"),
+        ([_ep("alpha", "bad_perm")], "must be PermissionSpec"),
+        ([_ep("alpha", "str_perms")], "must be a sequence"),
     ],
 )
 def test_invalid_plugins_fail_closed(
