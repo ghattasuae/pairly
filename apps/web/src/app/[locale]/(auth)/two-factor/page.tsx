@@ -7,20 +7,24 @@ import { TwoFactorVerify } from "@/components/auth/two-factor-verify";
 import { redirect } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { getSession } from "@/lib/auth/server";
+import { safeNextPath } from "@/lib/safe-path";
 
 interface Props {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ next?: string | string[] }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
   const t = await getTranslations({ locale, namespace: "TwoFactor" });
-  return { title: t("verifyTitle") };
+  // `next` can hold an invitation path: never send it on as a referrer.
+  return { title: t("verifyTitle"), referrer: "no-referrer" };
 }
 
-export default async function TwoFactorPage({ params }: Props) {
+export default async function TwoFactorPage({ params, searchParams }: Props) {
   const locale = toLocale((await params).locale);
   setRequestLocale(locale);
   if (await getSession()) redirect({ href: "/", locale });
-  return <TwoFactorVerify />;
+  const next = safeNextPath((await searchParams).next);
+  return <TwoFactorVerify next={next} />;
 }

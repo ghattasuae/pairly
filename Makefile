@@ -20,7 +20,7 @@ WAIT_TIMEOUT ?= 300
 # Optional service filter for `make logs`, e.g. SERVICE=api
 SERVICE      ?=
 
-.PHONY: help install hooks env dev demo down logs ps test evals lint format typecheck
+.PHONY: help install hooks env dev demo down logs ps test evals lint format typecheck bootstrap-org
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -49,6 +49,13 @@ demo: dev ## Boot everything healthy (seed data arrives in M2)
 down: ## Stop and remove every stack container, all profiles (volumes are kept)
 	@test -f .env || { echo "no .env, nothing to stop"; exit 0; }; \
 	$(COMPOSE) --profile '*' down --remove-orphans
+
+# Runs in the migrate image, the only one that gets the owner database role.
+bootstrap-org: ## Create an org and print its admin invite link (NAME, SLUG, ADMIN_EMAIL)
+	@if [ -z "$(NAME)" ] || [ -z "$(SLUG)" ] || [ -z "$(ADMIN_EMAIL)" ]; then \
+		echo 'usage: make bootstrap-org NAME="Acme Ltd" SLUG=acme ADMIN_EMAIL=you@acme.test'; exit 2; fi
+	$(COMPOSE) run --rm --no-deps migrate pairly-admin bootstrap-org \
+		--name "$(NAME)" --slug "$(SLUG)" --admin-email "$(ADMIN_EMAIL)"
 
 logs: ## Follow logs (SERVICE=api to filter)
 	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)

@@ -407,7 +407,8 @@ class Live:
 
     def headers(self, member: Member) -> dict[str, str]:
         return {
-            "Authorization": f"Bearer {self.tokens.token(member.subject)}",
+            # Signed in with TOTP: exports need it (step-up rule, pairly_core.rbac).
+            "Authorization": f"Bearer {self.tokens.token(member.subject, amr=['otp'])}",
             "X-Pairly-Org": str(member.org_id),
         }
 

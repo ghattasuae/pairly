@@ -17,6 +17,18 @@ export const API_VERSION = "v1" as const;
 /** `GET /v1/me`: the user, the selected organisation, roles and effective permissions. */
 export type Me = components["schemas"]["MeOut"];
 
+/** An organisation the user belongs to (`GET /v1/me/orgs`). */
+export type OrgSummary = components["schemas"]["OrgOut"];
+
+/** `GET /v1/members` item. */
+export type Member = components["schemas"]["MemberOut"];
+
+/** An invitation as listed by `GET /v1/invitations`. */
+export type Invitation = components["schemas"]["InvitationOut"];
+
+/** `POST /v1/invitations/preview`: what an invitation token invites to. */
+export type InvitationPreview = components["schemas"]["InvitationPreviewOut"];
+
 /** Every error body (RFC 9457 problem details). */
 export interface Problem {
   type: string;

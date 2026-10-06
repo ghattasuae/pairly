@@ -318,6 +318,8 @@ services:
     command: ["alembic", "-c", "/app/apps/api/alembic.ini", "upgrade", "head"]
     environment:
       PAIRLY_DATABASE_URL_OWNER: postgresql+asyncpg://pairly_owner:${PAIRLY_OWNER_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+      # For `make bootstrap-org` (pairly-admin), which prints an invite link to the web app.
+      PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -402,9 +404,6 @@ services:
       PAIRLY_AUTH_DATABASE_URL: postgresql://pairly_auth:${PAIRLY_AUTH_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
       # Better Auth applies its own schema migrations (as pairly_auth) before serving.
       PAIRLY_AUTH_MIGRATE_ON_START: "true"
-      # Open sign-up only creates Better Auth users; they see "not provisioned" until the
-      # API knows them. Set to false to allow only existing users.
-      PAIRLY_AUTH_ALLOW_SIGNUP: ${PAIRLY_AUTH_ALLOW_SIGNUP:-true}
       # JWT claims for the API. Must equal the api service's values (same variables).
       PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3000}
       PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3000}

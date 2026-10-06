@@ -22,7 +22,7 @@ from pairly_api import __version__
 from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
-from pairly_api.routes import audit, health, me
+from pairly_api.routes import audit, health, invitations, me, members
 from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import Settings, load_settings
@@ -84,6 +84,8 @@ def create_app(
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
     v1.include_router(audit.router)
+    v1.include_router(invitations.router)
+    v1.include_router(members.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

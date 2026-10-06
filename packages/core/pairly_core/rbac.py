@@ -17,6 +17,13 @@ Rules enforced in code:
   permissions come from memberships that cover every workflow.
 * Every check fails closed: unknown roles grant nothing, unknown permissions are held
   by nobody.
+* Step-up (second factor) rule, brief 6.1: a person may use a permission whose action is
+  ``approve``, ``decide``, ``manage`` or ``export`` only when the sign-in that minted the
+  token included a TOTP code (``amr`` contains ``otp``). The rule is keyed on the action,
+  not on role names, so custom roles and future workflows inherit it, and the people it
+  hits are exactly those who hold such permissions (admins, approvers, finance
+  controllers, and anyone who decides candidates). A token without ``amr`` fails closed.
+* Granting rule (invitations): see ``check_grantable``.
 
 Route handlers use ``require(permission)``; agent tools and services call
 ``authorize(actor, permission, resource)``.
@@ -41,6 +48,11 @@ if TYPE_CHECKING:
 CORE_NAMESPACE = "core"
 AGENT_ROLE = "agent"
 AGENT_ALLOWED_ACTIONS = frozenset({"read", "propose"})
+# Actions that need a second factor (TOTP) in the current sign-in. See the module docstring.
+STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export"})
+# The ``amr`` value (RFC 8176 "one-time password") the web app puts in the token after a
+# successful TOTP verification.
+SECOND_FACTOR_AMR = "otp"
 
 PERMISSION_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}\.[a-z][a-z0-9_]{0,63}\.[a-z][a-z0-9_]{0,31}$")
 
@@ -77,6 +89,13 @@ class PermissionDeniedError(ForbiddenError):
         self.denial = denial
 
 
+class SecondFactorRequiredError(PermissionDeniedError):
+    """The actor holds the permission but did not sign in with a second factor."""
+
+    code = "second_factor_required"
+    title = "Two-factor sign-in required"
+
+
 def validate_permission_name(name: str) -> str:
     if not isinstance(name, str) or not PERMISSION_RE.fullmatch(name):
         raise RBACError(f"invalid permission name {name!r}: expected namespace.resource.action")
@@ -89,6 +108,11 @@ def permission_action(name: str) -> str:
 
 def permission_namespace(name: str) -> str:
     return name.split(".", 1)[0]
+
+
+def requires_second_factor(permission: str) -> bool:
+    """Whether using ``permission`` needs a TOTP sign-in (``amr`` contains ``otp``)."""
+    return permission_action(permission) in STEP_UP_ACTIONS
 
 
 class BuiltinRole(StrEnum):
@@ -238,6 +262,13 @@ class RoleRegistry:
         self._frozen = True
         return self
 
+    @property
+    def workflows(self) -> frozenset[str]:
+        """Namespaces other than core that define at least one permission."""
+        return frozenset(
+            ns for ns in (p.namespace for p in self._permissions.values()) if ns != CORE_NAMESPACE
+        )
+
     def permissions_for_role(self, role: str) -> frozenset[str]:
         return frozenset(self._grants.get(role, ()))
 
@@ -285,9 +316,16 @@ class Actor:
     permissions: frozenset[str]
     subject: str | None = None
     email: str | None = None
+    # Authentication methods of the sign-in behind the token (JWT ``amr``). Empty when the
+    # token had none, which fails the step-up rule closed.
+    amr: frozenset[str] = frozenset()
 
     def has(self, permission: str) -> bool:
         return permission in self.permissions
+
+    @property
+    def has_second_factor(self) -> bool:
+        return SECOND_FACTOR_AMR in self.amr
 
 
 def agent_actor(registry: RoleRegistry, org_id: uuid.UUID, agent_id: uuid.UUID) -> Actor:
@@ -323,6 +361,12 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
         actor.kind is ActorKind.AGENT and permission_action(permission) not in AGENT_ALLOWED_ACTIONS
     ):
         reason = "agent_action_not_allowed"
+    elif (
+        actor.kind is ActorKind.USER
+        and requires_second_factor(permission)
+        and not actor.has_second_factor
+    ):
+        reason = "second_factor_required"
     same_org = isinstance(resource, OrgOwned) and resource.org_id == actor.org_id
     if resource is not None and not same_org:
         reason = "resource_outside_org"
@@ -338,7 +382,51 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
             resource_type=type(resource).__name__ if resource is not None else None,
             resource_id=str(resource_id) if resource_id is not None else None,
         )
+        if reason == "second_factor_required":
+            raise SecondFactorRequiredError(
+                f"{permission} needs a sign-in with two-factor authentication", denial=denial
+            )
         raise PermissionDeniedError(f"missing permission {permission}", denial=denial)
+
+
+def check_grantable(
+    registry: RoleRegistry,
+    granter: Actor,
+    role: str,
+    workflow: str | None,
+) -> frozenset[str]:
+    """Raise ``PermissionDeniedError`` unless ``granter`` may give ``role`` (in ``workflow``).
+
+    Returns the permissions the grant would confer. The rule, in order:
+
+    1. The granter must hold ``core.users.manage`` (the route checks it too).
+    2. The ``agent`` service role is never granted to a person, and a role must be one the
+       registry knows (an unknown role would grant nothing, but inviting someone to it is
+       a mistake worth refusing).
+    3. A workflow scope must name a registered workflow.
+    4. No escalation of core (administrative) power: every ``core.*`` permission the grant
+       confers must already be held by the granter. Workflow permissions (for example
+       ``pay.invoice.approve``) are exempt on purpose: assigning workflow duties is what
+       user managers do, and segregation of duties wants admins to assign approvers
+       without approving themselves (admin does not hold approve permissions).
+    """
+    reason: str | None = None
+    conferred: frozenset[str] = frozenset()
+    if not granter.has("core.users.manage"):
+        reason = "missing_permission"
+    elif role == AGENT_ROLE or role not in registry.roles:
+        reason = "role_not_grantable"
+    elif workflow is not None and workflow not in registry.workflows:
+        reason = "unknown_workflow"
+    else:
+        conferred = registry.resolve((RoleGrant(role, workflow),))
+        core_needed = {p for p in conferred if permission_namespace(p) == CORE_NAMESPACE}
+        if not core_needed <= granter.permissions:
+            reason = "privilege_escalation"
+    if reason is not None:
+        denial = Denial(actor=granter, permission="core.users.manage", reason=reason)
+        raise PermissionDeniedError(f"you cannot grant the role {role!r}", denial=denial)
+    return conferred
 
 
 def require(permission: str) -> Callable[..., Awaitable[Actor]]:

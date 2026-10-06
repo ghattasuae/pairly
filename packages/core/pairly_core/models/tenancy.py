@@ -11,8 +11,18 @@ workflow (``workflow`` NULL means every workflow). Roles are either built in (sh
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pairly_core.db import Base, OrgRoot, OrgScoped, OrgScopedOrShared, Timestamped
@@ -87,3 +97,47 @@ class Membership(Base, OrgScoped, Timestamped):
     )
     # NULL: the role applies to every workflow. Otherwise a workflow plugin id.
     workflow: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+class Invitation(Base, OrgScoped, Timestamped):
+    """An invitation to join one organisation with one role (``pairly_core.invitations``).
+
+    Only the SHA-256 of the token is stored. ``accepted_*`` and ``revoked_*`` are terminal:
+    a database trigger refuses any change to an invitation that is already accepted or
+    revoked, so a token can be used at most once.
+    """
+
+    __tablename__ = "invitations"
+    __table_args__ = (
+        CheckConstraint("token_hash ~ '^[0-9a-f]{64}$'", name="token_hash_format"),
+        CheckConstraint(
+            "workflow IS NULL OR workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"
+        ),
+        CheckConstraint("email = lower(email) AND email = btrim(email)", name="email_normalised"),
+        CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
+        CheckConstraint("(accepted_at IS NULL) = (accepted_by IS NULL)", name="accepted_pair"),
+        CheckConstraint("accepted_at IS NULL OR revoked_at IS NULL", name="single_outcome"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=_UUID_DEFAULT
+    )
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("roles.id", ondelete="RESTRICT"), nullable=False
+    )
+    workflow: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    # NULL when created by the bootstrap CLI (a system action, no inviting user).
+    invited_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    accepted_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )

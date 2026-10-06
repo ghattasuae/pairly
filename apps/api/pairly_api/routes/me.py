@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""``/v1/me``: the authenticated user, the selected organisation, roles and permissions."""
+"""``/v1/me``: the authenticated user, the selected organisation, roles and permissions.
+
+``/v1/me/orgs`` lists the organisations the user belongs to and needs no
+``X-Pairly-Org`` header (the web app's organisation switcher uses it).
+"""
 
 from __future__ import annotations
 
@@ -11,8 +15,10 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from pairly_core.errors import ForbiddenError
-from pairly_core.identity import CurrentActor, OrgSession
+from pairly_core.identity import CurrentActor, OrgSession, SubjectSession
+from pairly_core.invitations import my_organisations
 from pairly_core.models import Organisation, User
+from pairly_core.rbac import requires_second_factor
 
 router = APIRouter(tags=["identity"])
 
@@ -35,6 +41,14 @@ class MeOut(BaseModel):
     org: OrgOut
     roles: list[RoleOut]
     permissions: list[str]
+    # Whether this sign-in included a TOTP code (JWT amr contains "otp").
+    second_factor: bool
+    # The held permissions that are refused until the user signs in with TOTP.
+    second_factor_permissions: list[str]
+
+
+class MyOrgsOut(BaseModel):
+    items: list[OrgOut]
 
 
 @router.get("/me", response_model=MeOut)
@@ -51,4 +65,13 @@ async def me(actor: CurrentActor, session: OrgSession) -> MeOut:
         org=OrgOut(id=org.id, name=org.name, slug=org.slug),
         roles=[RoleOut(role=g.role, workflow=g.workflow) for g in actor.grants],
         permissions=sorted(actor.permissions),
+        second_factor=actor.has_second_factor,
+        second_factor_permissions=sorted(p for p in actor.permissions if requires_second_factor(p)),
     )
+
+
+@router.get("/me/orgs", response_model=MyOrgsOut)
+async def my_orgs(session: SubjectSession) -> MyOrgsOut:
+    """Active organisations where the token's subject has a membership. Only those."""
+    orgs = await my_organisations(session)
+    return MyOrgsOut(items=[OrgOut(id=o.id, name=o.name, slug=o.slug) for o in orgs])

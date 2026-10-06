@@ -25,9 +25,12 @@ const RESTART_CODES = new Set(["INVALID_TWO_FACTOR_COOKIE", "TOO_MANY_ATTEMPTS_R
  */
 export function TwoFactorVerify({
   verify,
+  next,
 }: {
   /** Override for stories and tests. Defaults to Better Auth. */
   verify?: (mode: Mode, code: string) => Promise<{ ok: boolean; code?: string | undefined }>;
+  /** A same-site page to continue to (validated by the page), for example an invitation. */
+  next?: string | null;
 }) {
   const t = useTranslations("TwoFactor");
   const codeId = useId();
@@ -55,7 +58,7 @@ export function TwoFactorVerify({
       const result = await run(mode, code.trim());
       if (result.ok) {
         // Full navigation so the server renders with the new session cookie.
-        window.location.assign(window.location.pathname.replace(/\/two-factor$/, "") || "/");
+        window.location.assign(next ?? (window.location.pathname.replace(/\/two-factor$/, "") || "/"));
         return;
       }
       // The pending sign-in (two_factor cookie) is gone or used up: start again.

@@ -7,6 +7,7 @@ import { useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { safeNextPath } from "@/lib/safe-path";
 
 import { AuthCard, FormError } from "./auth-card";
 
@@ -18,10 +19,15 @@ export function readTokenFromHash(hash: string): string | null {
   return token && /^[A-Za-z0-9_-]{16,256}$/.test(token) ? token : null;
 }
 
-export function verifyHref(token: string, locale: string): string {
+/** Where to land after signing in: a same-site page from the fragment, or home. */
+export function readNextFromHash(hash: string): string | null {
+  return safeNextPath(new URLSearchParams(hash.replace(/^#/, "")).get("next"));
+}
+
+export function verifyHref(token: string, locale: string, next?: string | null): string {
   const params = new URLSearchParams({
     token,
-    callbackURL: `/${locale}`,
+    callbackURL: safeNextPath(next) ?? `/${locale}`,
     errorCallbackURL: `/${locale}/sign-in`,
   });
   return `/api/auth/magic-link/verify?${params.toString()}`;
@@ -40,13 +46,18 @@ export function MagicLinkConfirm() {
     () => readTokenFromHash(window.location.hash),
     () => undefined,
   );
+  const next = useSyncExternalStore(
+    subscribe,
+    () => readNextFromHash(window.location.hash),
+    () => null,
+  );
 
   return (
     <AuthCard title={t("title")} subtitle={token ? t("body") : undefined}>
       {token === undefined ? null : token ? (
         <div className="space-y-4">
           <Button asChild size="lg" className="w-full">
-            <a href={verifyHref(token, locale)} rel="noreferrer">
+            <a href={verifyHref(token, locale, next)} rel="noreferrer">
               {t("button")}
             </a>
           </Button>

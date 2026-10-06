@@ -31,3 +31,16 @@ export function classifyMeResponse(
   }
   return { status: "unavailable" };
 }
+
+/**
+ * Second factor state for the "set up two-factor to continue" notice. `null` when the user
+ * holds no permission that needs it, or already signed in with a TOTP code.
+ *
+ * - `setup`: TOTP is off. They must turn it on (Account, Security).
+ * - `reauth`: TOTP is on, but this session started without a code (it was turned on
+ *   later, or a backup code was used). Signing in again fixes it.
+ */
+export function secondFactorNeed(me: Me, totpEnabled: boolean): "setup" | "reauth" | null {
+  if (me.second_factor || me.second_factor_permissions.length === 0) return null;
+  return totpEnabled ? "reauth" : "setup";
+}

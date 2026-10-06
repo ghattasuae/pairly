@@ -52,7 +52,7 @@ def _app(tokens: TokenFactory) -> FastAPI:
     return app
 
 
-def _actor_with(role: str) -> Actor:
+def _actor_with(role: str, amr: frozenset[str] = frozenset({"otp"})) -> Actor:
     registry = build_registry(PLUGINS)
     grants = (RoleGrant(role),)
     return Actor(
@@ -61,6 +61,7 @@ def _actor_with(role: str) -> Actor:
         org_id=uuid.uuid4(),
         grants=grants,
         permissions=registry.resolve(grants),
+        amr=amr,
     )
 
 
@@ -219,7 +220,7 @@ async def test_require_with_real_memberships(
     a, b = tenants.a, tenants.b  # a is an approver, b is an admin
     for tenant, status in ((a, 403), (b, 200)):
         headers = {
-            "Authorization": f"Bearer {tokens.token(tenant.subject)}",
+            "Authorization": f"Bearer {tokens.token(tenant.subject, amr=['otp'])}",
             "X-Pairly-Org": str(tenant.org_id),
         }
         response = await live.get("/v1/test/manage-users", headers=headers)

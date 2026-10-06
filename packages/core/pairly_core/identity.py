@@ -16,6 +16,12 @@ Per request:
 Route handlers then use ``OrgSession`` (the same session, still in that transaction) and
 ``require(permission)``. The transaction commits after the handler returns and before
 the response is sent; any error rolls it back.
+
+Two routes work before an organisation is chosen, with ``VerifiedSubject`` (the token
+only) and ``SubjectSession`` (a session whose tenant context names the subject and no
+organisation, so tenant policies match nothing): ``GET /v1/me/orgs`` and
+``POST /v1/invitations/accept``. They reach tenant data only through the narrow
+SECURITY DEFINER functions described in ``pairly_core.invitations``.
 """
 
 from __future__ import annotations
@@ -38,7 +44,7 @@ from pairly_core.audit import (
     orm_writes_in_transaction,
     record_denial,
 )
-from pairly_core.auth import TokenVerifier
+from pairly_core.auth import TokenVerifier, VerifiedToken
 from pairly_core.config import Settings
 from pairly_core.db import current_org, set_tenant
 from pairly_core.errors import (
@@ -166,6 +172,7 @@ async def load_actor(
     *,
     subject: str,
     org_id: uuid.UUID,
+    amr: frozenset[str] = frozenset(),
 ) -> Actor:
     """Bind ``session`` to ``org_id`` and load the user's actor there, or raise 403."""
     set_tenant(session, org_id, subject)
@@ -193,14 +200,39 @@ async def load_actor(
         permissions=registry.resolve(grants),
         subject=subject,
         email=user.email,
+        amr=amr,
     )
 
 
-async def current_actor(request: Request, ctx: Context, session: RequestSession) -> Actor:
-    token = bearer_token(request)
-    verified = await ctx.verifier.verify(token)
+async def verified_subject(request: Request, ctx: Context) -> VerifiedToken:
+    """The verified bearer token, cached on the request (one JWKS check per request)."""
+    cached = getattr(request.state, "verified_token", None)
+    if isinstance(cached, VerifiedToken):
+        return cached
+    verified = await ctx.verifier.verify(bearer_token(request))
+    request.state.verified_token = verified
+    return verified
+
+
+VerifiedSubject = Annotated[VerifiedToken, Depends(verified_subject)]
+
+
+async def subject_session(verified: VerifiedSubject, session: RequestSession) -> AsyncSession:
+    """The request session with the subject set and no organisation (no tenant rows)."""
+    set_tenant(session, None, verified.subject)
+    return session
+
+
+SubjectSession = Annotated[AsyncSession, Depends(subject_session)]
+
+
+async def current_actor(
+    request: Request, ctx: Context, session: RequestSession, verified: VerifiedSubject
+) -> Actor:
     org_id = org_from_header(request)
-    actor = await load_actor(session, ctx.registry, subject=verified.subject, org_id=org_id)
+    actor = await load_actor(
+        session, ctx.registry, subject=verified.subject, org_id=org_id, amr=verified.amr
+    )
     request.state.actor = actor
     structlog.contextvars.bind_contextvars(user_id=str(actor.id), org_id=str(actor.org_id))
     return actor

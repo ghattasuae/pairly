@@ -15,10 +15,19 @@ Settings come from the environment and have no defaults for secrets. Required:
 `PAIRLY_ENV` (default `production`), `PAIRLY_CORS_ORIGINS` (comma separated exact origins),
 `PAIRLY_DB_APP_ROLE` (default `pairly_app`), `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
-Endpoints: `/healthz` (liveness), `/readyz` (database check), `/v1/me`,
+Endpoints: `/healthz` (liveness), `/readyz` (database check), `/v1/me`, `/v1/me/orgs`
+(no org header), `/v1/members`, `/v1/invitations` (create, list, revoke, `preview`,
+`accept`; accept needs no org header),
 `/v1/audit/events` (filters, cursor pagination), `/v1/audit/export?format=csv|json`
 (streamed), `/v1/audit/verify`, `/v1/openapi.json`. Every `/v1` call needs `Authorization: Bearer <Better Auth JWT>` and
 `X-Pairly-Org: <organisation id>`. Errors use `application/problem+json`.
 
 Database tests need `PAIRLY_TEST_DATABASE_URL` (app role) and
 `PAIRLY_TEST_DATABASE_URL_OWNER` (owner role); without them they are skipped.
+
+Operator CLI (owner role, `PAIRLY_DATABASE_URL_OWNER`): `uv run pairly-admin bootstrap-org
+--name ... --slug ... --admin-email ...` creates an organisation and prints its admin
+invite link (`make bootstrap-org` runs it in the migrate image).
+
+Second factor: permissions whose action is `approve`, `decide`, `manage` or `export` need
+a token whose `amr` contains `otp` (TOTP sign-in); otherwise 403 `second_factor_required`.

@@ -3,7 +3,7 @@
 import type { Me } from "@pairly/shared-ts";
 import { describe, expect, it } from "vitest";
 
-import { classifyMeResponse } from "./viewer-state";
+import { classifyMeResponse, secondFactorNeed } from "./viewer-state";
 
 const me = {
   id: "7d6f1d1e-1111-4111-8111-111111111111",
@@ -12,6 +12,8 @@ const me = {
   org: { id: "7d6f1d1e-2222-4222-8222-222222222222", name: "Acme", slug: "acme" },
   roles: [{ role: "admin", workflow: null }],
   permissions: ["core.org.manage"],
+  second_factor: false,
+  second_factor_permissions: ["core.org.manage"],
 } satisfies Me;
 
 describe("classifyMeResponse", () => {
@@ -34,5 +36,17 @@ describe("classifyMeResponse", () => {
     expect(classifyMeResponse(500, undefined, {})).toEqual({ status: "unavailable" });
     expect(classifyMeResponse(200, undefined, undefined)).toEqual({ status: "unavailable" });
     expect(classifyMeResponse(undefined, undefined, undefined)).toEqual({ status: "unavailable" });
+  });
+});
+
+describe("secondFactorNeed", () => {
+  it("asks people who can manage or approve to set up TOTP, or to sign in again", () => {
+    expect(secondFactorNeed(me, false)).toBe("setup");
+    expect(secondFactorNeed(me, true)).toBe("reauth");
+  });
+
+  it("asks nothing once the session has TOTP, or when no permission needs it", () => {
+    expect(secondFactorNeed({ ...me, second_factor: true }, false)).toBeNull();
+    expect(secondFactorNeed({ ...me, second_factor_permissions: [] }, false)).toBeNull();
   });
 });

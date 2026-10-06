@@ -6,7 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { TwoFactorSetup } from "@/components/auth/two-factor-setup";
 import { PageHeader } from "@/components/states/page-header";
 import { toLocale } from "@/i18n/routing";
-import { getSession } from "@/lib/auth/server";
+import { getSession, twoFactorEnabled } from "@/lib/auth/server";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -23,7 +23,7 @@ export default async function SecurityPage({ params }: Props) {
   setRequestLocale(toLocale((await params).locale));
   const session = await getSession();
   const nav = await getTranslations("Nav");
-  const enabled = Boolean((session?.user as { twoFactorEnabled?: boolean | null } | undefined)?.twoFactorEnabled);
+  const enabled = twoFactorEnabled(session);
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
       <PageHeader title={nav("security")} />

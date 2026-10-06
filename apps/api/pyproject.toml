@@ -24,6 +24,9 @@ dependencies = [
     "uvicorn>=0.32",
 ]
 
+[project.scripts]
+pairly-admin = "pairly_api.admin:main"
+
 [tool.uv.sources]
 pairly-core = { workspace = true }
 

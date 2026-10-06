@@ -246,3 +246,40 @@ def test_verifier_refuses_symmetric_config(server: JWKSServer) -> None:
     cache = JWKSCache(JWKS_URL, allowed_algorithms=["HS256"], client=server.client())
     with pytest.raises(ValueError, match="asymmetric"):
         TokenVerifier(jwks=cache, issuer=ISSUER, audience=AUDIENCE, algorithms=["HS256"])
+
+
+async def test_amr_and_email_claims(verifier: TokenVerifier, ed_key: Ed25519PrivateKey) -> None:
+    result = await verifier.verify(
+        _sign(ed_key, amr=["otp"], email="a@example.test", email_verified=True)
+    )
+    assert result.amr == frozenset({"otp"})
+    assert result.email == "a@example.test"
+    assert result.email_verified is True
+
+
+async def test_missing_amr_and_email_fail_closed(
+    verifier: TokenVerifier, ed_key: Ed25519PrivateKey
+) -> None:
+    result = await verifier.verify(_sign(ed_key))
+    assert result.amr == frozenset()
+    assert result.email is None
+    assert result.email_verified is False
+
+
+@pytest.mark.parametrize(
+    "amr",
+    ["otp", ["OTP"], [1], ["otp", None], ["x" * 40], ["a"] * 9, {"otp": True}],
+    ids=["string", "upper", "int", "null", "long", "too-many", "object"],
+)
+async def test_malformed_amr_is_empty(
+    verifier: TokenVerifier, ed_key: Ed25519PrivateKey, amr: object
+) -> None:
+    assert (await verifier.verify(_sign(ed_key, amr=amr))).amr == frozenset()
+
+
+@pytest.mark.parametrize("value", ["true", 1, "yes", None])
+async def test_email_verified_must_be_json_true(
+    verifier: TokenVerifier, ed_key: Ed25519PrivateKey, value: object
+) -> None:
+    token = _sign(ed_key, email="a@example.test", email_verified=value)
+    assert (await verifier.verify(token)).email_verified is False

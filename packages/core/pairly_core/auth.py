@@ -7,6 +7,14 @@ the configured allowlist, a key id that is missing or not in the JWKS, an algori
 does not match the key, a bad signature, expired or not-yet-valid tokens, and a wrong
 issuer or audience. ``exp``, ``iat``, ``sub``, ``iss`` and ``aud`` are required.
 
+Optional claims the web app adds (``apps/web/src/lib/auth/config.ts``):
+
+* ``amr``: authentication methods of the sign-in, ``["otp"]`` only after a TOTP code,
+  else ``["email"]`` or ``["sso"]``. Anything malformed is read as "no methods", which
+  fails the step-up rule closed (``pairly_core.rbac``).
+* ``email`` and ``email_verified``: used only to bind invitations to an address. An
+  email counts as verified only when ``email_verified`` is the JSON value ``true``.
+
 Keys are cached for ``auth_jwks_cache_seconds``. An unknown key id triggers one refetch
 (rate limited by ``auth_jwks_min_refresh_seconds``) so key rotation works without a
 restart, while a flood of random key ids cannot hammer the auth server. If the JWKS
@@ -16,6 +24,7 @@ cannot be fetched once the cache is stale, verification fails closed.
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -33,6 +42,9 @@ log = structlog.get_logger(__name__)
 
 MAX_TOKEN_BYTES = 8192
 MAX_JWKS_BYTES = 64 * 1024
+MAX_AMR_VALUES = 8
+_AMR_VALUE_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+MAX_EMAIL_LENGTH = 320
 _SYMMETRIC_KTY = frozenset({"oct"})
 
 
@@ -51,6 +63,24 @@ class VerifiedToken:
     subject: str
     key_id: str
     claims: Mapping[str, Any]
+    amr: frozenset[str] = frozenset()
+    email: str | None = None
+    email_verified: bool = False
+
+
+def parse_amr(value: object) -> frozenset[str]:
+    """The ``amr`` claim as a set. Anything but a short list of short names is empty."""
+    if not isinstance(value, list) or len(value) > MAX_AMR_VALUES:
+        return frozenset()
+    if not all(isinstance(v, str) and _AMR_VALUE_RE.fullmatch(v) for v in value):
+        return frozenset()
+    return frozenset(value)
+
+
+def parse_email(value: object) -> str | None:
+    if not isinstance(value, str) or not 3 <= len(value) <= MAX_EMAIL_LENGTH or "@" not in value:
+        return None
+    return value
 
 
 class JWKSCache:
@@ -226,4 +256,12 @@ class TokenVerifier:
         subject = claims.get("sub")
         if not isinstance(subject, str) or not subject or len(subject) > 255:
             raise TokenError()
-        return VerifiedToken(subject=subject, key_id=kid, claims=claims)
+        return VerifiedToken(
+            subject=subject,
+            key_id=kid,
+            claims=claims,
+            amr=parse_amr(claims.get("amr")),
+            email=parse_email(claims.get("email")),
+            # Strict identity check: only the JSON value true counts.
+            email_verified=claims.get("email_verified") is True,
+        )

@@ -7,11 +7,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ActionNeeded } from "@/components/states/action-needed";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { SecondFactorNeeded } from "@/components/states/second-factor-needed";
 import { Unavailable } from "@/components/states/unavailable";
 import { Badge } from "@/components/ui/badge";
 import { toLocale } from "@/i18n/routing";
-import { getSession } from "@/lib/auth/server";
+import { getSession, twoFactorEnabled } from "@/lib/auth/server";
 import { resolveViewer } from "@/lib/provisioning";
+import { secondFactorNeed } from "@/lib/viewer-state";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -28,6 +30,7 @@ export default async function HomePage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("Home");
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
+  const need = viewer.status === "ready" ? secondFactorNeed(viewer.me, twoFactorEnabled(session)) : null;
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
@@ -46,6 +49,7 @@ export default async function HomePage({ params }: Props) {
               ))}
             </div>
           </PageHeader>
+          {need && <SecondFactorNeeded need={need} />}
           <div className="rise" style={{ "--rise-index": 1 } as React.CSSProperties}>
             <ActionNeeded count={0} />
           </div>

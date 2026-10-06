@@ -3,6 +3,6 @@
 """Core engine ORM models. Importing this package registers them on ``Base.metadata``."""
 
 from pairly_core.models.audit import AuditEvent
-from pairly_core.models.tenancy import Membership, Organisation, Role, User
+from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
 
-__all__ = ["AuditEvent", "Membership", "Organisation", "Role", "User"]
+__all__ = ["AuditEvent", "Invitation", "Membership", "Organisation", "Role", "User"]

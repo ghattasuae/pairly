@@ -51,3 +51,9 @@ class ServiceUnavailableError(PairlyError):
     status = 503
     code = "service_unavailable"
     title = "Service unavailable"
+
+
+class ConflictError(PairlyError):
+    status = 409
+    code = "conflict"
+    title = "Conflict"

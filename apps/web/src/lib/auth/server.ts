@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
 
-/** Server-side session helpers for React Server Components and route handlers. */
+/** Server-side session helpers for React Server Components, server actions and routes. */
 import "server-only";
 
 import { headers } from "next/headers";
@@ -18,7 +18,12 @@ export const getSession = cache(async () => {
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
-/** A fresh short-lived API token (JWT) for the signed-in user. Cached per request. */
+/**
+ * A fresh short-lived API token (JWT) for the signed-in user. Cached per request.
+ *
+ * Minted in-process (`auth.api.getToken` calls the endpoint function directly). The HTTP
+ * route `/api/auth/token` is closed, so browsers can never obtain a token.
+ */
 export const getApiToken = cache(async (): Promise<string | null> => {
   const session = await getSession();
   if (!session) return null;
@@ -26,9 +31,7 @@ export const getApiToken = cache(async (): Promise<string | null> => {
   return token;
 });
 
-/** Organizations the user belongs to in Better Auth (for the org switcher). */
-export const listOrganizations = cache(async () => {
-  const session = await getSession();
-  if (!session) return [];
-  return getAuth().api.listOrganizations({ headers: await headers() });
-});
+/** Whether the signed-in user has turned TOTP on (Better Auth two-factor plugin). */
+export function twoFactorEnabled(session: Session | null): boolean {
+  return Boolean((session?.user as { twoFactorEnabled?: boolean | null } | undefined)?.twoFactorEnabled);
+}

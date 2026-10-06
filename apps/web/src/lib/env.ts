@@ -33,7 +33,6 @@ const schema = z.object({
     password: z.string().optional(),
     from: z.string().min(3),
   }),
-  allowSignUp: z.boolean(),
   migrateOnStart: z.boolean(),
   google: z.object({ clientId: z.string(), clientSecret: z.string() }).optional(),
   microsoft: z
@@ -102,9 +101,6 @@ export function readServerEnv(): ServerEnv {
       password: get("PAIRLY_SMTP_PASSWORD"),
       from: get("PAIRLY_SMTP_FROM") ?? "Pairly <no-reply@pairly.localhost>",
     },
-    // Open sign-up creates Better Auth users only. They still see "not provisioned"
-    // until the API knows them. Off by default outside development.
-    allowSignUp: flag("PAIRLY_AUTH_ALLOW_SIGNUP", dev),
     migrateOnStart: flag("PAIRLY_AUTH_MIGRATE_ON_START", false),
     // SSO stays off unless both halves of the credential exist.
     google:

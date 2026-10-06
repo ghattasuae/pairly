@@ -21,7 +21,8 @@
     "audit": "Audit",
     "settings": "Settings",
     "security": "Security",
-    "goTo": "Go to {section}"
+    "goTo": "Go to {section}",
+    "members": "Members"
   },
   "Shell": {
     "openMenu": "Open menu",
@@ -138,10 +139,10 @@
   "NotProvisioned": {
     "eyebrow": "Almost there",
     "title": "Your account is not set up yet",
-    "body": "You are signed in as {email}. An admin needs to add you to an organisation in Pairly before you can see any work.",
+    "body": "You are signed in as {email}. You can see work in Pairly once you join an organisation, and you join one by accepting an invitation from its admin.",
     "next": "What to do next",
-    "step1": "Ask your Pairly admin to add this email to your organisation.",
-    "step2": "Come back to this page once they confirm.",
+    "step1": "Ask your Pairly admin to send an invitation to this email address.",
+    "step2": "Open the link in the invitation email and accept it. You will land here, ready to work.",
     "reference": "Reference: {code}"
   },
   "Unavailable": {
@@ -165,6 +166,116 @@
       "button": "Sign in to Pairly",
       "expires": "The link works once and expires in {minutes} minutes.",
       "ignore": "If you did not ask for this, you can ignore this email."
+    },
+    "invitation": {
+      "subject": "{inviter} invited you to {org} on Pairly",
+      "greeting": "Hello,",
+      "body": "{inviter} invited you to join {org} on Pairly as {role}. Use the link below to accept.",
+      "button": "Accept the invitation",
+      "expires": "The link works once, only for this email address, and expires in {days} days.",
+      "ignore": "If you were not expecting this, you can ignore this email."
     }
+  },
+  "Roles": {
+    "admin": "Admin",
+    "recruiter": "Recruiter",
+    "hiring_manager": "Hiring manager",
+    "interviewer": "Interviewer",
+    "ap_clerk": "AP clerk",
+    "approver": "Approver",
+    "finance_controller": "Finance controller",
+    "auditor": "Auditor",
+    "read_only": "Read only"
+  },
+  "Workflows": {
+    "all": "All workflows",
+    "hire": "Hire",
+    "pay": "Pay"
+  },
+  "Invite": {
+    "title": "Join {org}",
+    "body": "You are invited to join {org} on Pairly as {role}.",
+    "scope": "Only for {workflow}.",
+    "forEmail": "This invitation is for {email}.",
+    "expires": "It expires on {date}.",
+    "signIn": "Email me a sign-in link",
+    "signInHint": "We send the link to the invited address. Open it on this device to continue.",
+    "sending": "Sending",
+    "accept": "Accept and join",
+    "accepting": "Joining",
+    "acceptHint": "You are signed in as {email}.",
+    "wrongUserTitle": "This invitation is for someone else",
+    "wrongUser": "You are signed in as {current}, but this invitation is for {email}. Sign out, then open the link again.",
+    "signOut": "Sign out and continue",
+    "invalidTitle": "This invitation cannot be used",
+    "invalid": "It may have expired, been used already, or been withdrawn. Ask your admin to send a new one.",
+    "goHome": "Go to Pairly",
+    "errors": {
+      "invitation_invalid": "This invitation cannot be used any more. Ask your admin for a new one.",
+      "invitation_email_mismatch": "This invitation was sent to a different email address.",
+      "email_not_verified": "Sign in with the invited email address first.",
+      "not_signed_in": "Sign in first, then accept.",
+      "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+      "generic": "Something went wrong. Try again."
+    },
+    "titlePlain": "Invitation"
+  },
+  "Members": {
+    "title": "Members",
+    "subtitle": "People in {org} and their roles. New people join by invitation.",
+    "membersHeading": "People",
+    "membersEmpty": "No members yet.",
+    "you": "You",
+    "invitationsHeading": "Invitations",
+    "invitationsEmpty": "No invitations yet.",
+    "status": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "revoked": "Withdrawn",
+      "expired": "Expired"
+    },
+    "expires": "Expires {date}",
+    "revoke": "Withdraw",
+    "revokeLabel": "Withdraw the invitation for {email}",
+    "revoking": "Withdrawing",
+    "inviteHeading": "Invite someone",
+    "inviteBody": "They get an email with a link that works once, for 7 days, and only for that address.",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "workflowLabel": "Applies to",
+    "languageLabel": "Email language",
+    "send": "Send invitation",
+    "sending": "Sending",
+    "sent": "Invitation sent to {email}.",
+    "notEmailed": "The invitation was created but the email could not be sent. Share this link with {email} yourself:",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "readOnly": "You can see members. Ask an admin to invite people or change roles.",
+    "errors": {
+      "invalid_input": "Check the email address and role.",
+      "invitation_pending": "This person already has a pending invitation.",
+      "already_member": "This person already has this role.",
+      "cannot_invite_self": "You cannot invite yourself.",
+      "permission_denied": "You cannot give this role.",
+      "second_factor_required": "Sign in with two-factor authentication to invite people.",
+      "invitation_closed": "This invitation is no longer pending.",
+      "not_found": "This invitation no longer exists.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "SecondFactor": {
+    "eyebrow": "One more step",
+    "setupTitle": "Set up two-factor to continue",
+    "setupBody": "Your role lets you approve, decide or manage. Pairly asks for a code from an authenticator app before you can do that.",
+    "setupAction": "Set up two-factor",
+    "reauthTitle": "Sign in again with your code",
+    "reauthBody": "Two-factor is on, but this session started without a code. Sign in again and enter the code from your authenticator app.",
+    "reauthAction": "Sign out and sign in again",
+    "canStill": "You can still read everything your role allows."
+  },
+  "Settings": {
+    "subtitle": "Manage your organisation and your account.",
+    "membersBody": "See who is in your organisation and invite people.",
+    "securityBody": "Two-step sign-in with an authenticator app."
   }
 }

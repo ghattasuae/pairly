@@ -2,9 +2,13 @@
 // Copyright (c) 2026 Proofly Technology
 
 /**
- * Transactional email for auth flows (magic links). SMTP only: Mailpit locally, any SMTP
- * relay in production. Bodies are built from the locale's message file, plain text plus
- * a minimal HTML version with every interpolated value escaped.
+ * Transactional email for auth flows (magic links, invitations). SMTP only: Mailpit
+ * locally, any SMTP relay in production. Bodies are built from the locale's message file,
+ * plain text plus a minimal HTML version with every interpolated value escaped.
+ *
+ * Invitation emails are sent here, by the web server, right after the API returns the new
+ * invitation's token: the raw token then never has to be stored anywhere (a worker job
+ * would have to put it in the queue), and the link points at this app.
  */
 import nodemailer, { type Transporter } from "nodemailer";
 import { createTranslator } from "next-intl";
@@ -36,6 +40,47 @@ export function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function button(url: string, label: string): string {
+  return `<p><a href="${escapeHtml(url)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#1d5c52;color:#ffffff;text-decoration:none">${escapeHtml(label)}</a></p>`;
+}
+
+/** Days an invitation stays valid. Must match the API (`INVITATION_TTL`). */
+export const INVITATION_DAYS = 7;
+
+export async function sendInvitationEmail(params: {
+  to: string;
+  url: string;
+  locale: Locale;
+  orgName: string;
+  role: string;
+  inviter: string;
+}): Promise<void> {
+  const messages = await loadMessages(params.locale);
+  const t = createTranslator({ locale: params.locale, messages, namespace: "Email.invitation" });
+  const roles = createTranslator({ locale: params.locale, messages, namespace: "Roles" });
+  const role = roles.has(params.role as "admin") ? roles(params.role as "admin") : params.role;
+  const values = { org: params.orgName, inviter: params.inviter, role };
+  const subject = t("subject", values);
+  const text = [
+    t("greeting"),
+    "",
+    t("body", values),
+    "",
+    params.url,
+    "",
+    t("expires", { days: INVITATION_DAYS }),
+    t("ignore"),
+  ].join("\n");
+  const dir = localeDirection[params.locale];
+  const html = `<!doctype html><html lang="${params.locale}" dir="${dir}"><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#1f2a2a">
+<p>${escapeHtml(t("greeting"))}</p>
+<p>${escapeHtml(t("body", values))}</p>
+${button(params.url, t("button"))}
+<p style="color:#5b6766;font-size:14px">${escapeHtml(t("expires", { days: INVITATION_DAYS }))}<br>${escapeHtml(t("ignore"))}</p>
+</body></html>`;
+  await getTransporter().sendMail({ from: serverEnv().smtp.from, to: params.to, subject, text, html });
 }
 
 export async function sendMagicLinkEmail(params: {

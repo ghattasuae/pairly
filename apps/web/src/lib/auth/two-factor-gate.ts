@@ -16,7 +16,8 @@
  *    counter, the exact records the two-factor plugin's `verify-totp` endpoint expects);
  * 3. sets the signed `two_factor` cookie that points at the challenge;
  * 4. redirects to the locale's `/two-factor` page, where the user enters a TOTP or
- *    backup code. Only a valid code creates the real session.
+ *    backup code. Only a valid code creates the real session. A same-site callback page
+ *    (for example an invitation) travels along as `?next=` so the user lands there after.
  *
  * There is no "trust this device" shortcut: every passwordless sign-in asks for the code.
  */
@@ -26,6 +27,8 @@ import { deleteSessionCookie } from "better-auth/cookies";
 import { generateRandomString } from "better-auth/crypto";
 
 import { defaultLocale, isLocale } from "@/i18n/routing";
+
+import { safeNextPath } from "../safe-path";
 
 /** Must match the two-factor plugin's cookie name (`TWO_FACTOR_COOKIE_NAME`). */
 export const TWO_FACTOR_COOKIE = "two_factor";
@@ -45,6 +48,17 @@ export function localeFromCallback(callbackURL: unknown): string {
   }
   const first = path.split("/")[1];
   return isLocale(first) ? first : defaultLocale;
+}
+
+/** The callback page to continue to after the code, when it is more than the locale root. */
+export function nextFromCallback(callbackURL: unknown): string | null {
+  if (typeof callbackURL !== "string") return null;
+  try {
+    const path = safeNextPath(new URL(decodeURIComponent(callbackURL), "http://placeholder.invalid").pathname);
+    return path && path.split("/").length > 2 ? path : null;
+  } catch {
+    return null;
+  }
 }
 
 export const twoFactorGate = () =>
@@ -84,6 +98,8 @@ export const twoFactorGate = () =>
             const query = (ctx.query ?? {}) as Record<string, unknown>;
             const locale = localeFromCallback(query.callbackURL);
             const target = new URL(`/${locale}/two-factor`, ctx.context.baseURL);
+            const next = nextFromCallback(query.callbackURL);
+            if (next) target.searchParams.set("next", next);
             // Returned, not thrown, so the cookie headers set above stay on the response.
             return ctx.redirect(target.toString());
           }),

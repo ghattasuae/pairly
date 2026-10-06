@@ -15,7 +15,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth/client";
+import { switchOrganization } from "@/lib/actions/orgs";
 
 export interface OrgOption {
   id: string;
@@ -23,8 +23,9 @@ export interface OrgOption {
 }
 
 /**
- * Switches the Better Auth active organization. The next server render sends its id to
- * the API as X-Pairly-Org, and the API decides what this user may do there.
+ * Lists the organisations the API says the user belongs to (`GET /v1/me/orgs`) and switches
+ * between them through a server action, which re-checks that list. The next server render
+ * sends the id to the API as X-Pairly-Org, and the API decides what this user may do there.
  */
 export function OrgSwitcher({
   orgs,
@@ -33,7 +34,7 @@ export function OrgSwitcher({
 }: {
   orgs: readonly OrgOption[];
   activeOrgId: string | null;
-  /** Override for stories and tests. Defaults to Better Auth. */
+  /** Override for stories and tests. Defaults to the `switchOrganization` server action. */
   onSwitch?: (orgId: string) => Promise<void>;
 }) {
   const t = useTranslations("Org");
@@ -44,7 +45,7 @@ export function OrgSwitcher({
   const switchTo = (orgId: string) =>
     startTransition(async () => {
       if (onSwitch) await onSwitch(orgId);
-      else await authClient.organization.setActive({ organizationId: orgId });
+      else await switchOrganization(orgId);
       router.refresh();
     });
 

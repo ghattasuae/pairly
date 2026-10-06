@@ -19,7 +19,8 @@ pnpm --filter @pairly/web dev          # http://localhost:3000, reads the repo-r
 Or run everything in containers: `PROFILES=web make dev`. The `web` container applies the
 Better Auth migrations itself on start (`PAIRLY_AUTH_MIGRATE_ON_START=true`).
 
-Sign in with any email address, then open Mailpit at http://localhost:8025 for the link.
+Create an organisation with `make bootstrap-org` (see below), open the printed invite link,
+then open Mailpit at http://localhost:8025 for the sign-in link.
 
 Note: in compose the API fetches signing keys from `http://web:3000/api/auth/jwks`. If you
 run the web app on the host with `pnpm dev` instead, point the API at it with
@@ -43,8 +44,8 @@ Other scripts:
 src/
   proxy.ts               CSP nonce, sign-in gate (fast path), locale routing
   instrumentation.ts     Better Auth migrations on start (when enabled)
-  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor
-  app/[locale]/(app)     signed-in shell: home, inbox, hire, pay, audit, settings
+  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor, invite/[token]
+  app/[locale]/(app)     signed-in shell: home, inbox, hire, pay, audit, settings (members, security)
   app/api/auth/[...all]  Better Auth (magic link, 2FA, organizations, /token, /jwks)
   app/api/healthz        container liveness
   components/ui          primitives (button, input, dropdown, dialog, tooltip, kbd)
@@ -53,7 +54,9 @@ src/
   components/auth        sign-in form, magic link confirm, 2FA verify and setup
   lib/auth               Better Auth config, 2FA gate, server helpers, browser client
   lib/api/server.ts      server-side API client (JWT + X-Pairly-Org)
-  lib/provisioning.ts    /v1/me to viewer state; provisioning placeholder
+  lib/provisioning.ts    /v1/me to viewer state
+  lib/actions            server actions: invitations, organisation switch
+  lib/org-mirror.ts      Better Auth organization mirror (same UUID as the API)
   lib/nav.ts             which sections the sidebar shows
 messages/en.json, ar.json  every UI string
 ```
@@ -71,52 +74,55 @@ messages/en.json, ar.json  every UI string
   Users turn it on under Account, Security.
 - **Google and Microsoft SSO** are configured but stay off until both the client id and
   secret are set.
-- **Organizations plugin** drives the org switcher. Users cannot create organizations from
-  the web app (see the provisioning gap below).
+- **Organizations plugin** only mirrors the API organisation active in the session (see
+  below). Users cannot create organizations from the web app.
 - **JWT plugin**: EdDSA (Ed25519) tokens, 5 minute lifetime, keys at `/api/auth/jwks`.
   Issuer and audience come from `PAIRLY_AUTH_ISSUER` and `PAIRLY_AUTH_AUDIENCE`, the same
-  variables the API checks. Tokens hold only `sub`, `iat`, `exp`, `iss` and `aud`. IDs are
+  variables the API checks. Tokens hold `sub`, `iat`, `exp`, `iss`, `aud`, `amr`, `email` and `email_verified`. IDs are
   UUIDs, so an organization id goes to the API unchanged as `X-Pairly-Org`.
 - **Database**: Postgres as role `pairly_auth`, whose search path is schema `auth`. It has
   no rights on the Pairly tables.
 - **Protections**: secure, http-only, SameSite=Lax cookies (prefix `pairly`), Better Auth's
   origin checks on state-changing requests, rate limits stored in the database (magic link:
-  5 per 5 minutes per IP; 2FA: 5 per minute), a nonce-based Content Security Policy, and
+  5 per 5 minutes per IP plus 3 per 15 minutes per address; 2FA: 5 per minute), a nonce-based Content Security Policy, and
   standard security headers.
 
 Settings are read when the server starts handling requests, never at build time. A missing
 secret stops the server. In development, values the compose stack composes for the
 container (`PAIRLY_AUTH_DATABASE_URL` and friends) are derived from the repo-root `.env`.
 
-## Provisioning gap (decision needed)
+## Identity and provisioning (WP0.8)
 
-Better Auth owns sign-in, its users and its organizations. The API owns `users`,
-`organisations` and `memberships`, and maps a token to a user through
-`users.auth_subject` (the Better Auth user id). **Nothing creates those API rows yet, and
-the API has no endpoint for it.** So today every signed-in user gets `403` from `/v1/me`
-and sees "Your account is not set up yet". That is the expected state for now.
+Staff are invite-only. Nobody can sign up: magic links and SSO never create a Better Auth
+user, and access comes only from accepting an invitation in the API.
 
-The web side is ready for whichever design is picked:
-
-- `lib/provisioning.ts` turns `/v1/me` into one `ViewerState` (`ready`,
-  `not_provisioned`, `unauthenticated`, `unavailable`). Every page uses it.
-- `requestProvisioning()` is a typed placeholder that throws. It is the only function to
-  fill in once the API has an endpoint.
-
-Options to decide between:
-
-1. **Admin-driven**: an admin (or a seed script) creates the API organisation, the user and
-   the membership, then adds the person to the matching Better Auth organization with the
-   same UUID. Simple and explicit; needs an admin API and UI.
-2. **Invitation-driven**: the API issues invitations (email + role + workflow); accepting
-   one in the web app creates the Better Auth membership and calls an API endpoint that
-   creates the user and membership. Best match for the brief's onboarding checklist.
-3. **Just-in-time**: the API creates a `users` row on the first valid token and memberships
-   come from invitations. Fewest steps, but users exist in the API before anyone vouched
-   for them.
-
-Until then, organizations cannot be created from the web app
-(`allowUserToCreateOrganization: false`), so Better Auth and the API cannot drift apart.
+- **First organisation**: `make bootstrap-org NAME="Acme Ltd" SLUG=acme ADMIN_EMAIL=you@acme.test`
+  (or `uv run pairly-admin bootstrap-org ...` with `PAIRLY_DATABASE_URL_OWNER`). It creates
+  the API organisation and an admin invitation, and prints the accept link once.
+- **Invitations**: the API owns them (`/v1/invitations`). An admin invites from
+  Settings, Members. This server emails the link (`lib/email.ts`) right after the API
+  returns the token, so the raw token is never stored or queued; if SMTP fails, the
+  inviter sees the link to share by hand (only the invited address can accept it).
+- **Accepting**: `/[locale]/invite/[token]`. Opening it changes nothing. A signed-out
+  invitee asks for a magic link to the invited address (`prepareInviteSignIn` creates the
+  Better Auth user for that address only, after the API confirms the token), comes back
+  through 2FA if enabled (`next` survives both steps), and presses "Accept and join". The
+  API checks the token and the JWT's verified email, then creates the user and membership.
+- **Organisation mirror**: the API is the source of truth. `GET /v1/me/orgs` drives the
+  org switcher. `lib/org-mirror.ts` creates the Better Auth organization with the SAME
+  UUID and a plain member row, in-process through Better Auth's adapter, only for an
+  organisation the API just confirmed. Better Auth's `/organization/*` HTTP endpoints are
+  blocked. The CLI never writes to the `auth` schema.
+- **Second factor (brief 6.1)**: each session records how it was signed in (`amr`:
+  `otp` only after a TOTP code, else `email`, `sso` or `none`, see `lib/auth/amr.ts`),
+  and the JWT carries it. The API refuses any `approve`, `decide`, `manage` or `export`
+  permission without `otp`. Pages show "Set up two-factor to continue" (or "sign in
+  again") to people who hold such permissions.
+- **Token minting**: `/api/auth/token` is closed to HTTP (route handler plus
+  `disabledPaths`). Only this server mints tokens, in-process. `/api/auth/jwks` is public.
+- **Magic link limits**: 5 per 5 minutes per IP (Better Auth) and 3 per 15 minutes per
+  address (`lib/auth/magic-link-limit.ts`). Over the limit, or for an unknown address,
+  the response is the same and no email is sent.
 
 ## Design system
 

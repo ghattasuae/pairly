@@ -6,7 +6,8 @@ import type * as React from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { redirect } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
-import { getSession, listOrganizations } from "@/lib/auth/server";
+import { getActiveOrgId, listMyOrgs, NotSignedInError } from "@/lib/api/server";
+import { getSession } from "@/lib/auth/server";
 import { visibleNav } from "@/lib/nav";
 import { resolveViewer } from "@/lib/provisioning";
 
@@ -25,17 +26,24 @@ export default async function AppLayout({ children, params }: Props) {
   const session = await getSession();
   if (!session) return redirect({ href: "/sign-in", locale });
 
-  const [viewer, orgs] = await Promise.all([resolveViewer(), listOrganizations()]);
+  // Organisations come from the API (`/v1/me/orgs`), never from Better Auth.
+  const [viewer, orgs, activeOrgId] = await Promise.all([
+    resolveViewer(),
+    listMyOrgs().catch(() => null),
+    getActiveOrgId().catch((err: unknown) => {
+      if (err instanceof NotSignedInError) return null;
+      throw err;
+    }),
+  ]);
   // A token the API rejects (401) is a configuration fault (issuer, audience, keys), not a
   // signed-out user: redirecting to sign-in would loop. Pages show the unavailable state.
   const permissions = viewer.status === "ready" ? viewer.me.permissions : null;
-  const activeOrgId = (session.session as { activeOrganizationId?: string | null }).activeOrganizationId ?? null;
 
   return (
     <AppShell
       items={visibleNav(permissions)}
       user={{ name: session.user.name || null, email: session.user.email }}
-      orgs={orgs.map((org) => ({ id: org.id, name: org.name }))}
+      orgs={(orgs ?? []).map((org) => ({ id: org.id, name: org.name }))}
       activeOrgId={activeOrgId}
     >
       {children}
