@@ -9,7 +9,13 @@ readme = "README.md"
 license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Proofly Technology" }]
-dependencies = ["pairly-core"]
+dependencies = [
+    "arq>=0.28,<0.29",
+    "pairly-core",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "structlog>=24.4",
+]
 
 [tool.uv.sources]
 pairly-core = { workspace = true }

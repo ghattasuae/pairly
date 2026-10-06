@@ -16,7 +16,8 @@ Settings come from the environment and have no defaults for secrets. Required:
 `PAIRLY_DB_APP_ROLE` (default `pairly_app`), `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
 Endpoints: `/healthz` (liveness), `/readyz` (database check), `/v1/me`,
-`/v1/openapi.json`. Every `/v1` call needs `Authorization: Bearer <Better Auth JWT>` and
+`/v1/audit/events` (filters, cursor pagination), `/v1/audit/export?format=csv|json`
+(streamed), `/v1/audit/verify`, `/v1/openapi.json`. Every `/v1` call needs `Authorization: Bearer <Better Auth JWT>` and
 `X-Pairly-Org: <organisation id>`. Errors use `application/problem+json`.
 
 Database tests need `PAIRLY_TEST_DATABASE_URL` (app role) and

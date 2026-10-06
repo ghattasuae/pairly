@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Reviewed exceptions for scripts/check_licenses.py (the CI license gate).
+#
+# A package whose license is denied (GPL, AGPL, SSPL, BUSL, Commons Clause) or unknown
+# fails the build unless it is listed here. Every entry needs:
+#
+#   ecosystem  python or npm
+#   name       the package name (Python names are normalised: lower case, dashes)
+#   license    the exact license string the checker prints. If upstream changes its
+#              license, the entry stops matching and the package needs a new review.
+#   reason     why this is acceptable for AGPL-3.0 and for commercial relicensing.
+#
+# Keep this list short. Prefer replacing a dependency over adding an exception.
+#
+# Not dependencies, so not listed here: container images that run as separate
+# processes and talk to Pairly over the network or a socket. They are never linked into
+# or distributed inside Pairly code:
+#   - ClamAV (GPL-2.0), compose profile `scan`, reached over TCP (clamd protocol).
+#   - MinIO (AGPL-3.0), local S3-compatible storage, reached over HTTP (S3 API).
+#   - LangFuse, Postgres, Redis, Mailpit and ClickHouse images, same reasoning.
+# Pairly only ships its own images (infra/docker/*.Dockerfile); the license gate covers
+# everything installed into them.
+#
+# Example:
+#   - ecosystem: python
+#     name: some-package
+#     license: LicenseRef-Custom
+#     reason: What the license says, why it is compatible, who reviewed it and when.
+
+exceptions:
+  - ecosystem: npm
+    name: caniuse-lite
+    license: CC-BY-4.0
+    reason: >-
+      Browser support data tables, not code. Pulled in at build time by browserslist
+      (Next.js, PostCSS, Babel). CC BY 4.0 asks only for attribution, which NOTICE.md
+      gives. It adds no copyleft terms, so it fits AGPL-3.0 and commercial relicensing.
+      Reviewed 2026-10-07; confirm with legal before the first commercial license.

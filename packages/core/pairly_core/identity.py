@@ -30,9 +30,17 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from pairly_core.audit import (
+    INFO_REQUEST_ID,
+    AuditAction,
+    audit_actor_action,
+    events_in_transaction,
+    orm_writes_in_transaction,
+    record_denial,
+)
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import Settings
-from pairly_core.db import set_tenant
+from pairly_core.db import current_org, set_tenant
 from pairly_core.errors import (
     BadRequestError,
     ForbiddenError,
@@ -40,7 +48,9 @@ from pairly_core.errors import (
     UnauthenticatedError,
 )
 from pairly_core.models import Membership, Organisation, Role, User
-from pairly_core.rbac import Actor, ActorKind, RoleGrant, RoleRegistry
+from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError, RoleGrant, RoleRegistry
+
+log = structlog.get_logger(__name__)
 
 ORG_HEADER = "X-Pairly-Org"
 _NO_ACCESS = "no access to this organisation"
@@ -85,19 +95,66 @@ def org_from_header(request: Request) -> uuid.UUID:
         raise BadRequestError(f"{ORG_HEADER} must be an organisation id") from None
 
 
-async def request_session(ctx: Context) -> AsyncIterator[AsyncSession]:
-    """A session for this request. No tenant is set, so RLS shows no tenant rows."""
+async def request_session(request: Request, ctx: Context) -> AsyncIterator[AsyncSession]:
+    """A session for this request. No tenant is set, so RLS shows no tenant rows.
+
+    Audit hooks (WP0.5):
+
+    * Audit events written during the request (``pairly_core.audit.append_audit``) share
+      this transaction, so they commit atomically with the change they record.
+    * Before committing, if the request flushed ORM changes but recorded no audit event,
+      a generic ``core.request.write`` event is added (safety net) and a warning is
+      logged, so no state change goes unaudited. Reads never write audit events.
+    * A ``PermissionDeniedError`` rolls the request back, then the denial is recorded in
+      a fresh transaction, so it is kept although the denied work is not.
+    """
     async with ctx.sessionmaker() as session:
+        request_id = request.scope.get("state", {}).get("request_id")
+        if isinstance(request_id, str):
+            session.info[INFO_REQUEST_ID] = request_id
         try:
             yield session
+        except PermissionDeniedError as exc:
+            await session.rollback()
+            await _audit_denial(session, exc)
+            raise
         except BaseException:
             await session.rollback()
             raise
         else:
             if session.in_transaction():
+                await _audit_unrecorded_writes(request, session)
                 await session.commit()
-                # TODO(WP0.5): audit hook. Audit events written during the request share
-                # this transaction, so they commit atomically with the change they record.
+
+
+async def _audit_denial(session: AsyncSession, exc: PermissionDeniedError) -> None:
+    """Record a denial in its own transaction. The request is refused either way."""
+    if exc.denial is None or current_org(session) != exc.denial.actor.org_id:
+        return
+    try:
+        async with session.begin():
+            await record_denial(session, exc)
+    except Exception as err:
+        log.error("audit_denial_write_failed", error=type(err).__name__)
+
+
+async def _audit_unrecorded_writes(request: Request, session: AsyncSession) -> None:
+    # Flush first: pending ORM changes would otherwise only be flushed by the commit.
+    await session.flush()
+    if not orm_writes_in_transaction(session) or events_in_transaction(session) > 0:
+        return
+    actor = getattr(request.state, "actor", None)
+    if not isinstance(actor, Actor):
+        return
+    route = request.scope.get("route")
+    path = getattr(route, "path", None)
+    log.warning("unaudited_write", method=request.method, route=path)
+    await audit_actor_action(
+        session,
+        actor,
+        AuditAction.REQUEST_WRITE,
+        payload={"method": request.method, "route": path if isinstance(path, str) else None},
+    )
 
 
 RequestSession = Annotated[AsyncSession, Depends(request_session, scope="function")]

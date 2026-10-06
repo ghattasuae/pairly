@@ -160,7 +160,7 @@ async def test_cross_tenant_writes_rejected(
 async def test_no_org_set_sees_nothing(app_engine: AsyncEngine, tenants: TwoTenants) -> None:
     async with _session(app_engine, None) as s, s.begin():
         for table in ("organisations", "memberships", "users"):
-            assert (await s.execute(text(f"SELECT count(*) FROM {table}"))).scalar_one() == 0  # noqa: S608
+            assert (await s.execute(text(f"SELECT count(*) FROM {table}"))).scalar_one() == 0  # noqa: S608  # nosec B608
         role_orgs = set((await s.execute(text("SELECT org_id FROM roles"))).scalars().all())
         assert role_orgs == {None}
         assert _rows(await s.execute(text("UPDATE memberships SET workflow = 'x'"))) == 0

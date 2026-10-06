@@ -21,9 +21,10 @@ WAIT_TIMEOUT ?= 300
 SERVICE      ?=
 
 .PHONY: help install hooks env dev demo down logs ps test evals lint format typecheck
+.PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
-	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-10s %s\n", $$1, $$2}'
+	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
 
 install: ## Install Python (uv) and JS (pnpm) dependencies
 	$(UV) sync --all-packages
@@ -56,7 +57,7 @@ ps: ## Show stack containers and their health
 	$(COMPOSE) --profile '*' ps -a
 
 test: ## Run Python and JS tests
-	$(UV) run pytest --cov --cov-report=term-missing
+	$(UV) run --frozen pytest --cov --cov-report=term-missing
 	$(PNPM) test
 
 evals: ## Run eval suites (WP2.10)
@@ -77,3 +78,31 @@ typecheck: ## mypy (strict on packages/core) and tsc
 	$(UV) run mypy packages/core
 	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts
 	$(PNPM) typecheck
+
+# ---------------------------------------------------------------- CI checks, run locally
+# Same tools and pinned versions as .github/workflows/ci.yml.
+BANDIT_VERSION   ?= 1.9.4
+PIP_AUDIT_VERSION ?= 2.10.1
+
+ci-licenses: ## License gate: every dependency must be AGPL compatible
+	$(UV) run --frozen python scripts/check_licenses.py
+
+ci-security: ## Bandit, pip-audit, pnpm audit and gitleaks, as in CI
+	uvx --from bandit==$(BANDIT_VERSION) bandit -c scripts/bandit.yaml \
+		--severity-level medium --confidence-level medium -r packages apps sdks/python scripts
+	@tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT; \
+	$(UV) export --frozen --all-packages --no-emit-workspace --format requirements.txt \
+		-o "$$tmp/requirements.txt" -q && \
+	uvx pip-audit==$(PIP_AUDIT_VERSION) -r "$$tmp/requirements.txt" \
+		--disable-pip --require-hashes --progress-spinner off
+	$(PNPM) audit --prod --audit-level high
+	$(PNPM) audit --audit-level critical
+	"$$(scripts/ci_tools.sh gitleaks)" git --redact --no-banner .
+
+ci-actionlint: ## Lint the GitHub Actions workflows
+	"$$(scripts/ci_tools.sh actionlint)"
+
+ci-test: ## pytest with coverage against a throwaway Postgres, as in CI
+	@db_env="$$(scripts/ci_postgres.sh start)" && eval "$$db_env" || exit 1; trap 'scripts/ci_postgres.sh stop' EXIT; \
+	$(UV) run --frozen alembic -c apps/api/alembic.ini upgrade head && \
+	$(UV) run --frozen pytest --cov --cov-report=term-missing

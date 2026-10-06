@@ -21,7 +21,7 @@
 # - Memory limits keep the default profile near 1.5 GB (the local Docker VM has 2 GB).
 #
 # Image licences (all run as separate processes next to Pairly, nothing is linked):
-#   pgvector/pgvector  PostgreSQL License      redis 7.2      BSD-3-Clause
+#   pgvector/pgvector  PostgreSQL License      valkey 8.1     BSD-3-Clause
 #   MinIO              AGPL-3.0                axllent/mailpit  MIT
 #   clamav/clamav      GPL-2.0                 clickhouse      Apache-2.0
 #   langfuse           MIT (ee/ folders unused without a licence key)
@@ -193,19 +193,21 @@ services:
         limits:
           memory: 256m
 
+  # Valkey (BSD-3-Clause), the Linux Foundation fork of Redis 7.2. Speaks the Redis
+  # protocol, so arq and LangFuse use it unchanged. The service keeps the name `redis`.
   redis:
-    image: redis:7.2.16-alpine
+    image: valkey/valkey:8.1.10-alpine
     <<: *hardening
     restart: unless-stopped
-    user: redis
+    user: valkey
     environment:
-      # redis-cli reads REDISCLI_AUTH, so the healthcheck needs no password on its command line.
+      # valkey-cli reads REDISCLI_AUTH, so the healthcheck needs no password on its command line.
       REDISCLI_AUTH: ${REDIS_PASSWORD:?missing}
     command:
       - sh
       - -c
       - >-
-        exec redis-server
+        exec valkey-server
         --requirepass "$$REDISCLI_AUTH"
         --appendonly yes
         --maxmemory 96mb
@@ -215,7 +217,7 @@ services:
     ports:
       - 127.0.0.1:${REDIS_HOST_PORT:-6379}:6379
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -363,11 +365,13 @@ services:
       <<: *app-env
     depends_on: *app-depends
     healthcheck:
-      # arq writes a health key to Redis on every poll; --check reads it.
+      # The worker writes an expiring health key to Valkey every
+      # PAIRLY_WORKER_HEALTH_CHECK_INTERVAL seconds (default 30, the key lives one second
+      # longer); `arq --check` exits 1 once the key is gone, so a stuck worker turns unhealthy.
       test: ["CMD", "arq", "--check", "pairly_worker.main.WorkerSettings"]
       interval: 15s
       timeout: 10s
-      retries: 8
+      retries: 4
       start_period: 20s
     deploy:
       resources:

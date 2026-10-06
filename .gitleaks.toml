@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# gitleaks settings, read by CI (`make ci-security`) and the pre-commit hook.
+# Default rules plus narrow allowlists for proven false positives. Each entry must say
+# why it is safe. Never allowlist a whole file or path to hide a real secret: rotate it.
+
+title = "Pairly gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Type annotations such as `key: Ed25519PrivateKey`: the 'secret' is a class name"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^(Ed25519|Ed448|X25519|RSA|EllipticCurve)(Private|Public)Key$''']

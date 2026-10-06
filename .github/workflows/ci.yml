@@ -1,0 +1,332 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Main CI. The single required status check for `main` is the `ci-ok` job, which
+# passes only when every other job passed (see docs/ci.md for branch protection).
+#
+# Security rules for this file:
+#   - Read-only token everywhere (permissions: contents: read). No job needs more.
+#   - Every third-party action is pinned to a full commit SHA, with the tag in a comment.
+#     Dependabot (github-actions ecosystem) proposes updates.
+#   - Checkouts do not persist the token (persist-credentials: false).
+#   - Only `pull_request` is used, never `pull_request_target`, so fork code never sees
+#     secrets or a write token.
+#   - Downloaded tool binaries are verified against pinned SHA-256 hashes
+#     (scripts/ci_tools.sh).
+#
+# Run the same checks locally: make lint typecheck test ci-licenses ci-security ci-actionlint
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    # bash -eo pipefail
+    shell: bash
+
+env:
+  # Never re-resolve the lockfile in CI; fail if uv.lock is out of date.
+  UV_FROZEN: "1"
+  UV_VERSION: "0.9.28"
+  NODE_VERSION: "22"
+  NEXT_TELEMETRY_DISABLED: "1"
+  FORCE_COLOR: "1"
+
+jobs:
+  # ------------------------------------------------------------------ python
+  python:
+    name: python (lint, types, tests)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install
+        run: uv sync --all-packages
+
+      - name: ruff check
+        run: uv run ruff check --output-format=github .
+
+      - name: ruff format
+        run: uv run ruff format --check .
+
+      - name: import contracts
+        run: uv run lint-imports
+
+      - name: mypy (strict on packages/core)
+        run: uv run mypy packages/core
+
+      - name: mypy (everything else)
+        run: uv run mypy packages/hire packages/pay apps sdks/python scripts
+
+      - name: Start Postgres (roles from infra/postgres/init)
+        env:
+          CI_PG_PORT: "5432"
+        run: scripts/ci_postgres.sh start
+
+      - name: alembic upgrade head
+        run: uv run alembic -c apps/api/alembic.ini upgrade head
+
+      - name: pytest with coverage
+        run: |
+          set +e
+          uv run pytest --cov --cov-report=term-missing --cov-report=xml -rs 2>&1 | tee pytest.log
+          status=${PIPESTATUS[0]}
+          set -e
+          # Fail closed: database tests must run in CI, never skip silently.
+          if grep -q "database tests need" pytest.log; then
+            echo "::error::database tests were skipped; the test database env is missing"
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-python
+          path: coverage.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop Postgres
+        if: always()
+        run: scripts/ci_postgres.sh stop
+
+  # ------------------------------------------------------------------ js
+  js:
+    name: js (lint, types, tests, build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: eslint
+        run: pnpm lint
+
+      - name: Build workspace libraries
+        # Libraries first, so typecheck and the web build see their emitted types.
+        run: pnpm -r --filter '!@pairly/web' --if-present build
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      - name: vitest (root)
+        run: pnpm test
+
+      - name: vitest (workspace packages)
+        run: pnpm -r --if-present test
+
+      - name: Detect the Next.js app
+        id: web
+        # apps/web becomes a Next.js app in WP0.6. Until then there is nothing to build.
+        run: |
+          if node -e '
+            const p = require("./apps/web/package.json");
+            const deps = { ...(p.dependencies || {}), ...(p.devDependencies || {}) };
+            process.exit(p.scripts && p.scripts.build && deps.next ? 0 : 1);
+          ' && { [ -d apps/web/app ] || [ -d apps/web/src/app ]; }; then
+            echo "next=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "next=false" >>"$GITHUB_OUTPUT"
+            echo "::notice title=web build skipped::apps/web is not a Next.js app yet (WP0.6), so the build step is skipped."
+          fi
+
+      - name: Build apps/web
+        if: steps.web.outputs.next == 'true'
+        run: pnpm --filter @pairly/web build
+
+  # ------------------------------------------------------------------ text
+  text:
+    name: text (em dashes, SPDX headers, workflow lint)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Both scripts use the standard library only, so the runner's Python 3.12 is enough.
+      - name: No em dashes
+        run: python3 scripts/check_no_em_dash.py
+
+      - name: SPDX headers
+        run: python3 scripts/spdx_headers.py --check
+
+      - name: actionlint
+        run: |
+          actionlint="$(scripts/ci_tools.sh actionlint)"
+          "$actionlint" -color
+
+  # ------------------------------------------------------------------ security
+  security:
+    name: security (bandit, pip-audit, pnpm audit, gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history, so gitleaks scans every commit, not only the last one.
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Bandit
+        # Fails on medium or higher severity with medium or higher confidence.
+        run: >-
+          uvx --from bandit==1.9.4 bandit -c scripts/bandit.yaml
+          --severity-level medium --confidence-level medium
+          -r packages apps sdks/python scripts
+
+      - name: pip-audit (locked Python dependencies)
+        run: |
+          uv export --all-packages --no-emit-workspace --format requirements.txt \
+            -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit==2.10.1 -r "$RUNNER_TEMP/requirements.txt" \
+            --disable-pip --require-hashes --progress-spinner off
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Threshold (docs/ci.md): production dependencies fail on high or critical;
+      # dev-only dependencies fail on critical. Lower findings show in the log.
+      - name: pnpm audit (production, high and above)
+        run: pnpm audit --prod --audit-level high
+
+      - name: pnpm audit (all, critical only)
+        run: pnpm audit --audit-level critical
+
+      - name: gitleaks (full git history)
+        run: |
+          gitleaks="$(scripts/ci_tools.sh gitleaks)"
+          "$gitleaks" git --redact --no-banner --verbose .
+
+  # ------------------------------------------------------------------ licenses
+  licenses:
+    name: licenses (AGPL compatibility gate)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install
+        run: |
+          uv sync --all-packages
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: License check
+        run: uv run python scripts/check_licenses.py
+
+  # ------------------------------------------------------------------ evals
+  evals:
+    # Placeholder. From WP2.10 this runs the PromptFoo suites and the Python eval
+    # runners, and a score below the thresholds in BRIEF.md 7.2 fails it. It is already
+    # part of `ci-ok`, so it becomes a merge gate with no settings change (BRIEF rule 6).
+    name: evals (merge gate from WP2.10)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: make evals
+        run: make evals
+
+  # ------------------------------------------------------------------ docker
+  docker:
+    name: docker (build python image, no push)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build infra/docker/python.Dockerfile
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/python.Dockerfile
+          push: false
+          tags: pairly-ci/python-app:${{ github.sha }}
+          cache-from: type=gha,scope=python-image
+          cache-to: type=gha,mode=max,scope=python-image
+
+  # ------------------------------------------------------------------ gate
+  ci-ok:
+    # The only required status check. Fails when any job failed, was cancelled or was
+    # skipped, so adding a job here is enough to make it required.
+    name: ci-ok
+    if: always()
+    needs: [python, js, text, security, licenses, evals, docker]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: All required jobs passed
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "job results: $RESULTS"
+          if echo "$RESULTS" | grep -Eq '"(failure|cancelled|skipped)"'; then
+            echo "::error::at least one required job did not pass"
+            exit 1
+          fi

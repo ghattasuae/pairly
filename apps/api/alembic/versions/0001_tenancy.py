@@ -203,7 +203,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE users ENABLE ROW LEVEL SECURITY")
     op.execute("ALTER TABLE users FORCE ROW LEVEL SECURITY")
     op.execute(
-        "CREATE POLICY users_select ON users FOR SELECT USING ("  # noqa: S608
+        "CREATE POLICY users_select ON users FOR SELECT USING ("  # noqa: S608  # nosec B608
         f"auth_subject = {cur_sub} OR EXISTS (SELECT 1 FROM memberships m "
         f"WHERE m.user_id = users.id AND m.org_id = {cur_org}))"
     )
@@ -236,12 +236,12 @@ def upgrade() -> None:
     for stmt in org_rls_statements("memberships", app_role):
         op.execute(stmt)
     op.execute(
-        "CREATE POLICY memberships_role_in_scope ON memberships AS RESTRICTIVE "  # noqa: S608
+        "CREATE POLICY memberships_role_in_scope ON memberships AS RESTRICTIVE "  # noqa: S608  # nosec B608
         "FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM roles r WHERE r.id = role_id "
         f"AND (r.org_id IS NULL OR r.org_id = {cur_org})))"
     )
     op.execute(
-        "CREATE POLICY memberships_role_in_scope_update ON memberships AS RESTRICTIVE "  # noqa: S608
+        "CREATE POLICY memberships_role_in_scope_update ON memberships AS RESTRICTIVE "  # noqa: S608  # nosec B608
         "FOR UPDATE WITH CHECK (EXISTS (SELECT 1 FROM roles r WHERE r.id = role_id "
         f"AND (r.org_id IS NULL OR r.org_id = {cur_org})))"
     )

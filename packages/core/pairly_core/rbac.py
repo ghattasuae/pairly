@@ -53,9 +53,28 @@ class AgentPermissionError(RBACError):
     """Attempt to give the agent service role a permission other than read or propose."""
 
 
+@dataclass(frozen=True, slots=True)
+class Denial:
+    """What ``authorize`` refused, for the audit log. Never shown to the client.
+
+    ``resource_id`` is only kept when the resource belongs to the actor's organisation, so
+    a denial never copies another tenant's identifiers into this tenant's audit log.
+    """
+
+    actor: Actor
+    permission: str
+    reason: str
+    resource_type: str | None = None
+    resource_id: str | None = None
+
+
 class PermissionDeniedError(ForbiddenError):
     code = "permission_denied"
     title = "Permission denied"
+
+    def __init__(self, detail: str | None = None, *, denial: Denial | None = None) -> None:
+        super().__init__(detail)
+        self.denial = denial
 
 
 def validate_permission_name(name: str) -> str:
@@ -297,17 +316,29 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
     ``resource``, when given, must belong to the actor's organisation.
     """
     validate_permission_name(permission)
-    allowed = actor.has(permission)
-    if actor.kind is ActorKind.AGENT and permission_action(permission) not in AGENT_ALLOWED_ACTIONS:
-        allowed = False
-    if resource is not None and (
-        not isinstance(resource, OrgOwned) or resource.org_id != actor.org_id
+    reason: str | None = None
+    if not actor.has(permission):
+        reason = "missing_permission"
+    elif (
+        actor.kind is ActorKind.AGENT and permission_action(permission) not in AGENT_ALLOWED_ACTIONS
     ):
-        allowed = False
-    if not allowed:
-        # TODO(WP0.5): audit hook. Record the denied attempt (actor, permission,
-        # resource reference) in the hash-chained audit log here.
-        raise PermissionDeniedError(f"missing permission {permission}")
+        reason = "agent_action_not_allowed"
+    same_org = isinstance(resource, OrgOwned) and resource.org_id == actor.org_id
+    if resource is not None and not same_org:
+        reason = "resource_outside_org"
+    if reason is not None:
+        # The audit hook: the exception carries the denial; ``pairly_core.identity`` (HTTP)
+        # or ``pairly_core.audit.record_denial`` (agents, jobs) writes it to the audit log
+        # in its own transaction, after the denied work has been rolled back.
+        resource_id = getattr(resource, "id", None) if same_org else None
+        denial = Denial(
+            actor=actor,
+            permission=permission,
+            reason=reason,
+            resource_type=type(resource).__name__ if resource is not None else None,
+            resource_id=str(resource_id) if resource_id is not None else None,
+        )
+        raise PermissionDeniedError(f"missing permission {permission}", denial=denial)
 
 
 def require(permission: str) -> Callable[..., Awaitable[Actor]]:
