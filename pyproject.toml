@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+# Workspace root. Not a package itself: it pulls in every member and the dev tools.
+[project]
+name = "pairly-workspace"
+version = "0.0.0"
+description = "Pairly AI monorepo workspace root."
+license = "AGPL-3.0-only"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "pairly-core",
+  "pairly-hire",
+  "pairly-pay",
+  "pairly-api",
+  "pairly-worker",
+  "pairly-mcp",
+  "pairly",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.16,<0.17",
+  "mypy>=1.18",
+  "pytest>=8.4",
+  "pytest-cov>=7.0",
+  "import-linter>=2.5",
+  "pre-commit>=4.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "packages/core",
+  "packages/hire",
+  "packages/pay",
+  "apps/api",
+  "apps/worker",
+  "apps/mcp",
+  "sdks/python",
+]
+
+[tool.uv.sources]
+pairly-core = { workspace = true }
+pairly-hire = { workspace = true }
+pairly-pay = { workspace = true }
+pairly-api = { workspace = true }
+pairly-worker = { workspace = true }
+pairly-mcp = { workspace = true }
+pairly = { workspace = true }
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["node_modules", "apps/web", "packages/shared-ts", "sdks/typescript"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F",  # pycodestyle, pyflakes
+  "I",            # isort
+  "N",            # pep8-naming
+  "UP",           # pyupgrade
+  "B",            # bugbear
+  "S",            # bandit
+  "C4",           # comprehensions
+  "SIM",          # simplify
+  "PT",           # pytest style
+  "RUF",          # ruff-specific
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+  "pairly_core", "pairly_hire", "pairly_pay",
+  "pairly_api", "pairly_worker", "pairly_mcp", "pairly",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ---------------------------------------------------------------- mypy
+# Normal checking everywhere; strict on packages/core (see override below).
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+warn_redundant_casts = true
+check_untyped_defs = true
+
+# "strict = true" is global-only in mypy, so the strict flag set is spelled out for core.
+[[tool.mypy.overrides]]
+module = ["pairly_core", "pairly_core.*"]
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["packages", "apps", "sdks/python", "scripts/tests"]
+addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra"]
+xfail_strict = true
+
+# ---------------------------------------------------------------- coverage
+[tool.coverage.run]
+branch = true
+source = ["pairly_core"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_also = ["if TYPE_CHECKING:", "\\.\\.\\.$", "raise NotImplementedError"]
+fail_under = 85
+
+# ---------------------------------------------------------------- import-linter
+[tool.importlinter]
+root_packages = [
+  "pairly_core", "pairly_hire", "pairly_pay",
+  "pairly_api", "pairly_worker", "pairly_mcp",
+]
+
+[[tool.importlinter.contracts]]
+name = "Core engine never imports a workflow or an app"
+type = "forbidden"
+source_modules = ["pairly_core"]
+forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_api", "pairly_worker", "pairly_mcp"]
+
+[[tool.importlinter.contracts]]
+name = "Workflows are independent of each other"
+type = "independence"
+modules = ["pairly_hire", "pairly_pay"]

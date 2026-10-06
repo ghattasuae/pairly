@@ -1,0 +1,11 @@
+{
+  "name": "@pairly/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pairly web app (Next.js App Router). Placeholder until WP0.6.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('apps/web: not implemented yet (WP0.6)')\""
+  }
+}
