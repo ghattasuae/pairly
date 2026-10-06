@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(here, "../..");
+
+// `pnpm dev` and the auth scripts read the repo-root .env (created by `make dev`), so the
+// web app talks to the compose stack with no extra setup. Variables already set win.
+// Production builds and containers get their settings from the environment only.
+if (process.env.NODE_ENV !== "production") {
+  try {
+    process.loadEnvFile(path.join(repoRoot, ".env"));
+  } catch {
+    // No .env yet: settings validation reports what is missing on first request.
+  }
+}
+
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+];
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  // Trace from the repo root so workspace packages end up in the standalone bundle.
+  outputFileTracingRoot: repoRoot,
+  turbopack: { root: repoRoot },
+  transpilePackages: ["@pairly/shared-ts"],
+  poweredByHeader: false,
+  // `next dev` would otherwise write AGENTS.md here (its copy contains em dashes).
+  agentRules: false,
+  reactStrictMode: true,
+  // pg and nodemailer are Node-only; keep them out of the bundler.
+  serverExternalPackages: ["pg", "nodemailer"],
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
+};
+
+export default createNextIntlPlugin("./src/i18n/request.ts")(nextConfig);

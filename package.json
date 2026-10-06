@@ -11,13 +11,16 @@
   "scripts": {
     "lint": "eslint .",
     "test": "vitest run",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "gen:api": "pnpm --filter @pairly/shared-ts gen:api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "16.4.0",
     "@types/node": "^22.20.0",
     "@vitest/coverage-v8": "^5.0.3",
     "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.71.1",

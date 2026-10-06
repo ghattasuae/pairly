@@ -1,0 +1,170 @@
+{
+  "Meta": {
+    "title": "Pairly",
+    "description": "AI does the work. You make the call. Together."
+  },
+  "Common": {
+    "appName": "Pairly",
+    "tagline": "AI does the work. You make the call. Together.",
+    "skipToContent": "Skip to main content",
+    "signOut": "Sign out",
+    "tryAgain": "Try again",
+    "backHome": "Back to home",
+    "loading": "Loading"
+  },
+  "Nav": {
+    "label": "Main",
+    "home": "Home",
+    "inbox": "Inbox",
+    "hire": "Hire",
+    "pay": "Pay",
+    "audit": "Audit",
+    "settings": "Settings",
+    "security": "Security",
+    "goTo": "Go to {section}"
+  },
+  "Shell": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "search": "Search or jump to",
+    "account": "Account",
+    "signedInAs": "Signed in as {email}"
+  },
+  "Org": {
+    "label": "Organisation",
+    "none": "No organisation",
+    "switch": "Switch organisation",
+    "switching": "Switching",
+    "noneHint": "You are not in any organisation yet."
+  },
+  "Locale": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "Theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Command": {
+    "title": "Command menu",
+    "description": "Search for a page or an action.",
+    "placeholder": "Type a page or an action",
+    "empty": "Nothing matches.",
+    "navigate": "Go to",
+    "actions": "Actions",
+    "toggleTheme": "Switch light or dark",
+    "switchLanguage": "Switch language",
+    "signOut": "Sign out",
+    "hint": "Press {keys} any time to open this menu."
+  },
+  "Auth": {
+    "signInTitle": "Sign in to Pairly",
+    "signInSubtitle": "We email you a link. No password needed.",
+    "emailLabel": "Work email",
+    "emailPlaceholder": "you@company.com",
+    "submit": "Email me a link",
+    "sending": "Sending",
+    "or": "or",
+    "google": "Continue with Google",
+    "microsoft": "Continue with Microsoft",
+    "footnote": "By signing in you agree to keep candidate and vendor data private.",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+      "generic": "Something went wrong. Try again.",
+      "INVALID_TOKEN": "That link has expired or was already used. Ask for a new one.",
+      "EXPIRED_TOKEN": "That link has expired. Ask for a new one.",
+      "new_user_signup_disabled": "This email has no Pairly account. Ask your admin for an invite.",
+      "signInRequired": "Sign in to continue."
+    }
+  },
+  "CheckEmail": {
+    "title": "Check your email",
+    "body": "We sent a sign-in link to {email}.",
+    "bodyNoEmail": "We sent you a sign-in link.",
+    "expires": "The link works once and expires in 5 minutes.",
+    "devHint": "Running locally? Open Mailpit at localhost:8025.",
+    "useDifferent": "Use a different email"
+  },
+  "Confirm": {
+    "title": "Finish signing in",
+    "body": "Select the button to sign in on this device.",
+    "button": "Sign in to Pairly",
+    "missing": "This link is incomplete. Ask for a new one.",
+    "why": "We ask for this click so that email scanners cannot use your link."
+  },
+  "TwoFactor": {
+    "verifyTitle": "Enter your code",
+    "verifyBody": "Open your authenticator app and enter the 6 digit code for Pairly.",
+    "codeLabel": "Authentication code",
+    "verify": "Verify",
+    "verifying": "Checking",
+    "useBackup": "Use a backup code",
+    "useApp": "Use the authenticator app",
+    "backupLabel": "Backup code",
+    "invalid": "That code did not work. Check the time on your phone and try again.",
+    "expired": "This sign-in has expired. Start again.",
+    "startOver": "Start again",
+    "setupTitle": "Two-step sign-in",
+    "setupBody": "Add a code from an authenticator app each time you sign in. Admins and approvers will need this.",
+    "statusOn": "On",
+    "statusOff": "Off",
+    "enable": "Turn on",
+    "starting": "Preparing",
+    "scan": "Scan this code with your authenticator app.",
+    "manual": "Or enter this key by hand:",
+    "confirmLabel": "Code from the app",
+    "confirm": "Confirm and turn on",
+    "enabled": "Two-step sign-in is on.",
+    "backupTitle": "Save your backup codes",
+    "backupBody": "Each code works once. Keep them somewhere safe. You will not see them again.",
+    "done": "Done",
+    "disable": "Turn off",
+    "disabled": "Two-step sign-in is off.",
+    "freshSession": "For your safety, sign in again before changing this."
+  },
+  "Home": {
+    "greeting": "Good to see you, {name}.",
+    "greetingNoName": "Good to see you.",
+    "orgLine": "You are working in {org}.",
+    "actionNeeded": "Action needed",
+    "emptyTitle": "Nothing needs you right now.",
+    "emptyBody": "New approvals, flags and drafts will show up here first.",
+    "rolesLabel": "Your roles"
+  },
+  "NotProvisioned": {
+    "eyebrow": "Almost there",
+    "title": "Your account is not set up yet",
+    "body": "You are signed in as {email}. An admin needs to add you to an organisation in Pairly before you can see any work.",
+    "next": "What to do next",
+    "step1": "Ask your Pairly admin to add this email to your organisation.",
+    "step2": "Come back to this page once they confirm.",
+    "reference": "Reference: {code}"
+  },
+  "Unavailable": {
+    "title": "We cannot reach Pairly right now",
+    "body": "Your work is safe. Try again in a moment."
+  },
+  "Placeholder": {
+    "title": "{section} is on its way",
+    "body": "This area arrives in a later release. Home shows anything that needs you."
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Page not found",
+    "body": "The page you asked for does not exist or has moved."
+  },
+  "Email": {
+    "magicLink": {
+      "subject": "Your Pairly sign-in link",
+      "greeting": "Hello,",
+      "body": "Use the link below to sign in to Pairly.",
+      "button": "Sign in to Pairly",
+      "expires": "The link works once and expires in {minutes} minutes.",
+      "ignore": "If you did not ask for this, you can ignore this email."
+    }
+  }
+}

@@ -6,7 +6,7 @@
 #
 #   default (no profile)  postgres, redis, minio (+ minio-init job), mailpit,
 #                         migrate (Alembic job), api, worker
-#   profile `web`         Next.js web app (enabled once apps/web is a real Next.js app)
+#   profile `web`         Next.js web app (Better Auth, JWKS for the API at /api/auth/jwks)
 #   profile `scan`        ClamAV daemon (GPL, separate container, never linked into our code)
 #   profile `observability`  self-hosted LangFuse (web + worker + ClickHouse), reusing our
 #                            Postgres (database `langfuse`), Redis (db 1) and MinIO (bucket `langfuse`)
@@ -400,8 +400,15 @@ services:
       # Better Auth connects as pairly_auth, which owns only schema `auth` (its search_path)
       # and runs its own migrations there. It has no rights on the Pairly tables.
       PAIRLY_AUTH_DATABASE_URL: postgresql://pairly_auth:${PAIRLY_AUTH_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+      # Better Auth applies its own schema migrations (as pairly_auth) before serving.
+      PAIRLY_AUTH_MIGRATE_ON_START: "true"
+      # Open sign-up only creates Better Auth users; they see "not provisioned" until the
+      # API knows them. Set to false to allow only existing users.
+      PAIRLY_AUTH_ALLOW_SIGNUP: ${PAIRLY_AUTH_ALLOW_SIGNUP:-true}
+      # JWT claims for the API. Must equal the api service's values (same variables).
+      PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3000}
+      PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3000}
       PAIRLY_API_INTERNAL_URL: http://api:8000
-      NEXT_PUBLIC_API_URL: ${PAIRLY_PUBLIC_API_URL:-http://localhost:8000}
       PAIRLY_SMTP_HOST: mailpit
       PAIRLY_SMTP_PORT: "1025"
       PAIRLY_SMTP_FROM: ${PAIRLY_SMTP_FROM:-Pairly <no-reply@pairly.localhost>}
@@ -409,6 +416,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
       MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+      MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID:-common}
     depends_on:
       postgres:
         condition: service_healthy
@@ -423,7 +431,7 @@ services:
         - CMD
         - node
         - -e
-        - "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"
+        - "fetch('http://127.0.0.1:3000/api/healthz').then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
       interval: 10s
       timeout: 5s
       retries: 12

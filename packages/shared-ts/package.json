@@ -5,17 +5,21 @@
   "description": "TypeScript types generated from the Pairly OpenAPI schema.",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   },
-  "files": ["dist"],
+  "files": ["src", "openapi"],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "gen:api": "node scripts/gen-api.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.3"
   }
 }
