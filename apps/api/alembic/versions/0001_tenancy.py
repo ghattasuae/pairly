@@ -31,7 +31,8 @@ down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-# Fixed ids for built-in roles, so every environment agrees on them.
+# Fixed ids for built-in roles, so every environment agrees on them. These are the roles
+# of this revision; later built-in roles are seeded by later migrations (0015: employee).
 BUILTIN_ROLE_IDS = {
     "admin": "00000000-0000-4000-8000-000000000001",
     "recruiter": "00000000-0000-4000-8000-000000000002",
@@ -57,7 +58,7 @@ def _created_at() -> sa.Column[Any]:
 
 def upgrade() -> None:
     app_role = app_db_role()
-    assert set(BUILTIN_ROLE_IDS) == set(HUMAN_ROLES)  # noqa: S101 (migration sanity check)
+    assert set(BUILTIN_ROLE_IDS) <= set(HUMAN_ROLES)  # noqa: S101 (migration sanity check)
 
     # STABLE SQL functions get inlined by the planner, so policies stay index friendly.
     op.execute(
@@ -176,7 +177,7 @@ def upgrade() -> None:
         roles,
         [
             {"id": BUILTIN_ROLE_IDS[key], "key": key, "name": BUILTIN_ROLE_NAMES[key]}
-            for key in sorted(HUMAN_ROLES)
+            for key in sorted(BUILTIN_ROLE_IDS)
         ],
     )
 

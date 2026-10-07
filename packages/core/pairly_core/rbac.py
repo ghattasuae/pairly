@@ -11,6 +11,11 @@ workflow plugin contributes its own permissions (and their default role grants) 
 Rules enforced in code:
 
 * The ``agent`` service role may only ever hold ``read`` and ``propose`` permissions.
+* The ``employee`` role is a person who only hands work in: it holds no ``core.*``
+  permission, and workflow plugins may grant it ``read``, ``submit``, ``create`` and
+  ``upload`` permissions only (``EMPLOYEE_ALLOWED_ACTIONS``), for example submitting an
+  expense note and reading their own. Anything else raises ``EmployeePermissionError``
+  when the registry is built.
   Granting it anything else raises ``AgentPermissionError`` when the registry is built,
   and ``authorize`` denies such a permission to an agent actor even if it got one.
 * API keys act like agents: their scopes may only name ``read``, ``propose`` and
@@ -52,6 +57,8 @@ if TYPE_CHECKING:
 CORE_NAMESPACE = "core"
 AGENT_ROLE = "agent"
 AGENT_ALLOWED_ACTIONS = frozenset({"read", "propose"})
+# What a plugin may grant the ``employee`` role: hand work in and follow it.
+EMPLOYEE_ALLOWED_ACTIONS = frozenset({"read", "submit", "create", "upload"})
 # API keys (pairly_core.api_keys) act like agents, plus submitting documents.
 API_KEY_ALLOWED_ACTIONS = frozenset({"read", "propose", "upload"})
 # Actions that need a second factor (TOTP) in the current sign-in. See the module docstring.
@@ -69,6 +76,10 @@ class RBACError(Exception):
 
 class AgentPermissionError(RBACError):
     """Attempt to give the agent service role a permission other than read or propose."""
+
+
+class EmployeePermissionError(RBACError):
+    """Attempt to give the employee role a core permission or a non submit-type action."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +142,8 @@ class BuiltinRole(StrEnum):
     FINANCE_CONTROLLER = "finance_controller"
     AUDITOR = "auditor"
     READ_ONLY = "read_only"
+    # A person who submits work (an expense note) and follows it. No core permissions.
+    EMPLOYEE = "employee"
     AGENT = AGENT_ROLE
 
 
@@ -145,6 +158,7 @@ BUILTIN_ROLE_NAMES: Mapping[str, str] = {
     BuiltinRole.FINANCE_CONTROLLER: "Finance controller",
     BuiltinRole.AUDITOR: "Auditor",
     BuiltinRole.READ_ONLY: "Read only",
+    BuiltinRole.EMPLOYEE: "Employee",
     BuiltinRole.AGENT: "AI agent (service)",
 }
 
@@ -178,7 +192,8 @@ def _p(name: str, description: str, *roles: str) -> PermissionSpec:
 
 
 _R = BuiltinRole
-_EVERY_HUMAN = tuple(HUMAN_ROLES)
+# Every person but the employee, who holds no core permission at all.
+_EVERY_HUMAN = tuple(sorted(HUMAN_ROLES - {_R.EMPLOYEE.value}))
 _STAFF = (_R.RECRUITER, _R.HIRING_MANAGER, _R.INTERVIEWER, _R.AP_CLERK)
 _DECIDERS = (_R.APPROVER, _R.FINANCE_CONTROLLER)
 
@@ -254,6 +269,14 @@ class RoleRegistry:
         if role == AGENT_ROLE and permission_action(permission) not in AGENT_ALLOWED_ACTIONS:
             raise AgentPermissionError(
                 f"the agent role may only hold read or propose permissions, not {permission!r}"
+            )
+        if role == BuiltinRole.EMPLOYEE and (
+            permission_namespace(permission) == CORE_NAMESPACE
+            or permission_action(permission) not in EMPLOYEE_ALLOWED_ACTIONS
+        ):
+            raise EmployeePermissionError(
+                f"the employee role may only hold workflow read, submit, create or upload "
+                f"permissions, not {permission!r}"
             )
 
     def freeze(self) -> RoleRegistry:

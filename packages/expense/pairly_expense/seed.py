@@ -8,9 +8,8 @@ Idempotent, in one transaction (the CLI's), as the owner database role:
    (``ensure_policies``), unless the organisation already has a version.
 2. Invite three synthetic people, each limited to the expense workflow:
    a submitter, an approver and a finance controller. Invitations already pending or
-   accepted are left alone. The built-in roles have no plain "employee" role, so the
-   submitter is an ``interviewer`` scoped to ``expense``, which here grants only
-   submitting, reading their own notes and contesting a decision.
+   accepted are left alone. The submitter is an ``employee`` (no core permission;
+   here: submit, read their own notes, contest a decision).
 3. Import the recorded model responses for the synthetic receipts in ``synth/expense``
    (``data/recordings.json``), so the demo runs offline in ``recorded`` mode.
 """
@@ -32,7 +31,7 @@ from pairly_expense.policies import ensure_policies
 SEED_ACTOR: Final = "pairly-admin.seed.expense-demo"
 # (who, built-in role). Every membership is limited to the expense workflow.
 DEMO_PEOPLE: Final = (
-    ("submitter", "interviewer"),
+    ("submitter", "employee"),
     ("approver", "approver"),
     ("finance", "finance_controller"),
 )

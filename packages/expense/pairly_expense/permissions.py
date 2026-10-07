@@ -2,8 +2,10 @@
 # Copyright (c) 2026 Proofly Technology
 """Expense permissions, all ``expense.<resource>.<action>``, with default role grants.
 
-Everyone who works in the organisation (every built-in human role but auditor and read
-only) may submit notes and contest decisions. Reviewers (approver, finance controller,
+Everyone who works in the organisation (the ``employee`` role and every other built-in
+human role but auditor and read only) may submit notes and contest decisions. The
+employee role holds nothing else here (the engine only lets it hold read, submit,
+create and upload permissions). Reviewers (approver, finance controller,
 AP clerk, admin) and auditors see every note, its receipt and what was read from it; a
 submitter sees their own notes through the expense routes. Only approvers and finance
 controllers approve (an ``approve`` action, so the engine asks for the second factor).
@@ -44,6 +46,7 @@ _STAFF = frozenset(
         R.AP_CLERK,
         R.APPROVER,
         R.FINANCE_CONTROLLER,
+        R.EMPLOYEE,
     }
 )
 _REVIEWERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})

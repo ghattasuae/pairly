@@ -198,7 +198,7 @@ make bootstrap-org NAME="Acme Ltd" SLUG=acme ADMIN_EMAIL=you@acme.test
 make demo-expense SLUG=acme
 ```
 
-There is no plain "employee" built-in role yet, so the demo submitter is an interviewer limited to the expense workflow.
+The demo submitter has the built-in `employee` role: no core permission, and only the read, submit, create and upload permissions a workflow grants it.
 
 ## 12. Tests to write
 

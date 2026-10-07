@@ -85,9 +85,9 @@ OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
 # name -> memberships (role, workflow). Everyone is limited to the expense workflow but
 # the outsider (pay only) and the clerk (every workflow).
 PEOPLE: dict[str, tuple[tuple[str, str | None], ...]] = {
-    "submitter": (("interviewer", "expense"),),
-    "submitter2": (("interviewer", "expense"),),
-    "submitter_approver": (("interviewer", "expense"), ("approver", "expense")),
+    "submitter": (("employee", None),),
+    "submitter2": (("employee", "expense"),),
+    "submitter_approver": (("employee", None), ("approver", "expense")),
     "approver": (("approver", "expense"),),
     "approver2": (("approver", "expense"),),
     "finance": (("finance_controller", "expense"),),

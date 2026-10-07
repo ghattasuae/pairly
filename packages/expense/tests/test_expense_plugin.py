@@ -64,7 +64,7 @@ def test_permissions_and_role_grants() -> None:
     approvers = {r for r in BuiltinRole if NOTE_APPROVE in registry.permissions_for_role(r)}
     assert approvers == {BuiltinRole.APPROVER, BuiltinRole.FINANCE_CONTROLLER}
     # A membership limited to expense grants expense permissions only.
-    scoped = registry.resolve([RoleGrant("interviewer", "expense")])
+    scoped = registry.resolve([RoleGrant("employee", None)])
     assert NOTE_SUBMIT in scoped
     assert all(p.startswith("expense.") for p in scoped)
 

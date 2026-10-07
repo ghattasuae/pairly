@@ -186,7 +186,8 @@
     "approver": "Approver",
     "finance_controller": "Finance controller",
     "auditor": "Auditor",
-    "read_only": "Read only"
+    "read_only": "Read only",
+    "employee": "Employee"
   },
   "Workflows": {
     "all": "All workflows",

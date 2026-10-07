@@ -13,8 +13,8 @@
 Downgrade drops the table and removes the seeded template rows that no notification
 references.
 
-Revision ID: 0015
-Revises: 0014
+Revision ID: 0016
+Revises: 0015
 Create Date: 2026-10-08
 """
 
@@ -28,13 +28,13 @@ from sqlalchemy.dialects import postgresql
 
 from pairly_core.migration_helpers import app_db_role, org_rls_statements
 
-revision: str = "0015"
-down_revision: str | None = "0014"
+revision: str = "0016"
+down_revision: str | None = "0015"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 TABLE = "expense_notes"
-_SYSTEM_ACTOR = "pairly.migrations.0015"
+_SYSTEM_ACTOR = "pairly.migrations.0016"
 _TEMPLATE_KEY = "expense.note.decided"
 _STATUSES = (
     "'processing', 'awaiting_approval', 'approved', 'rejected', 'changes_requested', 'failed'"

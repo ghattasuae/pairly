@@ -198,6 +198,17 @@ async def test_workflow_scoped_invitation(live: Live, orgs: TwoTenants) -> None:
     assert "core.approval.decide" not in me["permissions"]
 
 
+async def test_employee_invitation_confers_no_core_permission(live: Live, orgs: TwoTenants) -> None:
+    b = orgs.b
+    email, subject = _new_email(), _new_subject()
+    created = await live.invite(b.subject, b.org_id, email, role="employee")
+    assert created.status_code == 201, created.text
+    assert (await live.accept(created.json()["token"], subject, email)).status_code == 200
+    me = (await live.client.get("/v1/me", headers=live.auth(subject, org=b.org_id))).json()
+    assert me["roles"] == [{"role": "employee", "workflow": None}]
+    assert not [p for p in me["permissions"] if p.startswith("core.")]
+
+
 # ------------------------------------------------------------------ token misuse
 
 
