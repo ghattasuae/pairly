@@ -36,8 +36,15 @@ hooks: ## Install the pre-commit git hooks
 env: ## Create .env with random secrets if it is missing (never overwrites)
 	@$(UV) run python scripts/gen_dev_env.py
 
+# migrate, api and worker share one image (pairly-local/python-app:dev). Building it
+# through `up --build` makes three services build the same tag at once, which races.
+# So the shared image is built once (through `migrate`), plus the web image when the
+# web profile is on, and `up` then starts everything without building.
+BUILD_SERVICES := migrate $(if $(filter web,$(PROFILES)),web,)
+
 dev: env ## Start the stack and wait until healthy (PROFILES="scan observability web")
-	$(COMPOSE) $(PROFILE_ARGS) up -d --build --remove-orphans --wait --wait-timeout $(WAIT_TIMEOUT)
+	$(COMPOSE) $(PROFILE_ARGS) build $(BUILD_SERVICES)
+	$(COMPOSE) $(PROFILE_ARGS) up -d --no-build --remove-orphans --wait --wait-timeout $(WAIT_TIMEOUT)
 	@$(COMPOSE) $(PROFILE_ARGS) ps
 	@echo ""
 	@echo "Pairly is up. API http://localhost:8000  Mail UI http://localhost:8025  MinIO console http://localhost:9001"
