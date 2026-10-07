@@ -76,9 +76,9 @@ the workspace, Dockerfile, mypy and CI lists (configuration, not engine code).
   in a background task). When ClamAV is configured the API scans and parses the receipt
   itself; otherwise the graph waits a bounded time for the worker, then sends the note
   to a person (`PAIRLY_EXPENSE_PARSE_WAIT_SECONDS`, default 30).
-* `pairly-admin seed` looks an organisation up by slug through the owner-only read
-  policy of migration 0004 (`app.inbound_lookup`), the same policy the inbound email
-  lookup uses.
+* `pairly-admin seed` looks an organisation up by slug through
+  `admin_org_id_by_slug(slug)` (core migration 0016): SECURITY DEFINER, its own
+  owner-only read policy flag, EXECUTE for the owner role only.
 * Core keeps its linear chain; workflows ship and version their migrations with their
   package. `alembic heads` and `history` (which do not run `env.py`) only list core's
   chain.
@@ -87,4 +87,6 @@ the workspace, Dockerfile, mypy and CI lists (configuration, not engine code).
 
 * 2026-10-08, on acceptance: workflow migrations moved to per-plugin version locations
   (item 7); the built-in `employee` role (core migration 0015) holds no core permission
-  and plugins may grant it only read, submit, create and upload permissions.
+  and plugins may grant it only read, submit, create and upload permissions; the
+  slug lookup of `pairly-admin seed` got its own owner-only function instead of reusing
+  the inbound email lookup policy.

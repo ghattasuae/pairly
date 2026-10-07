@@ -177,18 +177,15 @@ async def rotate_crypto(
 
 
 async def org_id_by_slug(session: AsyncSession, slug: str) -> uuid.UUID | None:
-    """The organisation with ``slug``, read as the owner role.
+    """The organisation with ``slug``, through ``admin_org_id_by_slug`` (migration 0016).
 
     ``organisations`` forces Row Level Security, so even the owner sees no row without a
-    tenant. Migration 0004 gives the owner role (and only it) a read policy for slug
-    lookups, switched on per transaction by ``app.inbound_lookup``; this uses it and
-    switches it off again. Plain SQL: the ORM's tenant filter would hide the row too.
+    tenant. The function is owner-only (EXECUTE revoked from everyone else) and returns
+    the id alone, or NULL.
     """
-    await session.execute(text("SELECT set_config('app.inbound_lookup', 'on', true)"))
     found = await session.scalar(
-        text("SELECT id FROM organisations WHERE slug = :slug"), {"slug": slug.strip().lower()}
+        text("SELECT admin_org_id_by_slug(:slug)"), {"slug": slug.strip().lower()}
     )
-    await session.execute(text("SELECT set_config('app.inbound_lookup', '', true)"))
     return found if isinstance(found, uuid.UUID) else None
 
 
