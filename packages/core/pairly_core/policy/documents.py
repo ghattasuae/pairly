@@ -8,9 +8,13 @@ hashed, virus scanned, parsed in the sandbox) plus a ``policy_documents`` row na
 name). Uploading a new file under the same name creates the next version; nothing is
 edited in place.
 
-Indexing runs once the document is parsed: the normalized document is chunked by
-headings and paragraphs (``pairly_core.policy.chunking``), embedded and stored in
-``search_chunks`` (kind ``policy``), with page and section on every chunk.
+Indexing runs once the document is parsed: the guardrails scan the normalized document
+first (``pairly_core.policy.guard``), every removed or flagged span is cut out, the rest
+is chunked by headings and paragraphs (``pairly_core.policy.chunking``), embedded and
+stored in ``search_chunks`` (kind ``policy``), with page and section on every chunk. The
+findings are stored on the policy document as warnings for admins. A high-severity
+instruction finding (or a guardrail detector that failed) sets ``needs_review``: nothing
+is indexed and the version can never become active; an admin uploads a corrected file.
 
 Fail closed: a document that failed its scan or parse, or that the parser flagged for
 review, is never indexed (status ``failed`` with the reason). Policy checks only use
@@ -19,6 +23,7 @@ the newest ``indexed`` version of each name; ``archived`` versions are never use
 
 from __future__ import annotations
 
+import dataclasses
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -37,6 +42,7 @@ from pairly_core.ingestion.settings import IngestionSettings, IntakePolicy
 from pairly_core.ingestion.sniff import DOCX, PDF, TEXT
 from pairly_core.ingestion.storage import ObjectStore, StorageError
 from pairly_core.policy.chunking import chunk_document
+from pairly_core.policy.guard import guard_policy_document
 from pairly_core.policy.models import PolicyDocument, PolicyDocumentStatus
 from pairly_core.policy_versions import PolicyError
 from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable
@@ -52,6 +58,7 @@ class PolicyDocumentAction:
     REGISTERED: Final = "core.policy.document_registered"
     INDEXED: Final = "core.policy.document_indexed"
     INDEX_FAILED: Final = "core.policy.document_index_failed"
+    NEEDS_REVIEW: Final = "core.policy.document_needs_review"
     ARCHIVED: Final = "core.policy.document_archived"
 
 
@@ -71,9 +78,10 @@ def policy_intake(settings: IngestionSettings) -> IntakePolicy:
 
 @dataclass(frozen=True, slots=True)
 class IndexOutcome:
-    status: str  # indexed | failed | pending
+    status: str  # indexed | failed | needs_review | pending
     reason: str | None = None
     chunks: int = 0
+    warnings: int = 0
 
 
 async def register_policy_document(
@@ -169,6 +177,11 @@ async def _finish(
             row.embedding_model = embedder.model_id
             row.embedding_version = embedder.version
         action = PolicyDocumentAction.INDEXED
+    elif outcome.status == PolicyDocumentStatus.NEEDS_REVIEW:
+        row.status = PolicyDocumentStatus.NEEDS_REVIEW.value
+        row.status_reason = outcome.reason
+        row.chunk_count = 0
+        action = PolicyDocumentAction.NEEDS_REVIEW
     else:
         row.status = PolicyDocumentStatus.FAILED.value
         row.status_reason = outcome.reason
@@ -186,6 +199,7 @@ async def _finish(
             "version": row.version,
             "chunks": outcome.chunks,
             "reason": outcome.reason,
+            "guardrail_warnings": outcome.warnings,
             "embedding_model": row.embedding_model,
             "embedding_version": row.embedding_version,
         },
@@ -199,14 +213,38 @@ async def index_normalized(
     policy_document_id: uuid.UUID,
     normalized: NormalizedDocument,
     embedder: Embedder,
+    filename: str | None = None,
     actor_type: ActorType = ActorType.SYSTEM,
     actor_id: str = "policy-indexer",
 ) -> IndexOutcome:
-    """Chunk, embed and store ``normalized`` as the content of the policy document."""
+    """Scan, chunk, embed and store ``normalized`` as the content of the policy document."""
     row = await _locked(session, policy_document_id)
     if row.status == PolicyDocumentStatus.ARCHIVED:
         return IndexOutcome("failed", "archived")
-    chunks = chunk_document(normalized)
+    if row.status == PolicyDocumentStatus.NEEDS_REVIEW:
+        return IndexOutcome("needs_review", row.status_reason)
+    guard = guard_policy_document(normalized, filename=filename)
+    row.guardrail_findings = guard.warnings
+    row.guardrail_version = guard.report.version
+    warnings = len(guard.warnings)
+    if guard.review_reason is not None:
+        # No chunk of this version may stay searchable (an empty index replaces any).
+        await index_chunks(
+            session,
+            kind=POLICY_KIND,
+            source_id=row.id,
+            source_version=row.version,
+            chunks=[],
+            embedder=embedder,
+        )
+        return await _finish(
+            session,
+            row,
+            IndexOutcome("needs_review", guard.review_reason, warnings=warnings),
+            actor_type=actor_type,
+            actor_id=actor_id,
+        )
+    chunks = chunk_document(guard.document)
     if not chunks:
         outcome = IndexOutcome("failed", "no_text")
     elif len(chunks) > MAX_CHUNKS:
@@ -227,6 +265,7 @@ async def index_normalized(
             outcome = IndexOutcome("failed", "embedding_unavailable")
         else:
             outcome = IndexOutcome("indexed", chunks=count)
+    outcome = dataclasses.replace(outcome, warnings=warnings)
     return await _finish(
         session, row, outcome, actor_type=actor_type, actor_id=actor_id, embedder=embedder
     )
@@ -256,6 +295,8 @@ async def index_policy_document(
     row = await _locked(session, policy_document_id)
     if row.status == PolicyDocumentStatus.ARCHIVED:
         return IndexOutcome("failed", "archived")
+    if row.status == PolicyDocumentStatus.NEEDS_REVIEW:
+        return IndexOutcome("needs_review", row.status_reason)
     document = await session.scalar(select(Document).where(Document.id == row.document_id))
     if document is None:  # pragma: no cover - foreign key
         raise PolicyDocumentNotFoundError("the policy document's file is missing")
@@ -285,6 +326,7 @@ async def index_policy_document(
         policy_document_id=policy_document_id,
         normalized=normalized,
         embedder=embedder,
+        filename=document.original_filename,
         actor_type=actor_type,
         actor_id=actor_id,
     )

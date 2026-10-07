@@ -22,6 +22,11 @@ Policy documents (``core.policy.read`` / ``core.policy.manage``):
 * ``POST /v1/policies/documents/{id}/archive``      stop using it (final)
 * ``POST /v1/policies/search``                      hybrid search over active versions
 
+Every policy document runs through the guardrails before it is indexed. Its findings
+come back as ``warnings`` to callers holding ``core.policy.manage`` (others see only
+``warning_count``). Status ``needs_review`` (a high-severity instruction found in the
+text) is never indexed and never active: upload a corrected file as a new version.
+
 ``manage`` is a step-up action: it needs a TOTP sign-in. Another organisation's rows are
 404 (Row Level Security hides them).
 """
@@ -179,6 +184,22 @@ class StoredResultOut(RuleResultOut):
     created_at: datetime
 
 
+class PolicyWarningOut(BaseModel):
+    """One guardrail finding on a policy document, for admins."""
+
+    id: str
+    type: str
+    code: str
+    severity: str
+    location: str
+    page: int | None
+    evidence: str
+    excluded: bool
+    blocks_activation: bool
+    explanation: str
+    explanation_ar: str
+
+
 class PolicyDocumentOut(BaseModel):
     id: uuid.UUID
     name: str
@@ -193,9 +214,13 @@ class PolicyDocumentOut(BaseModel):
     created_at: datetime
     indexed_at: datetime | None
     archived_at: datetime | None
+    warning_count: int
+    # Guardrail findings; only for callers who manage policies, else empty.
+    warnings: list[PolicyWarningOut]
 
     @classmethod
-    def of(cls, row: PolicyDocument) -> PolicyDocumentOut:
+    def of(cls, row: PolicyDocument, actor: Actor) -> PolicyDocumentOut:
+        findings = list(row.guardrail_findings or [])
         return cls(
             id=row.id,
             name=row.name,
@@ -210,6 +235,12 @@ class PolicyDocumentOut(BaseModel):
             created_at=row.created_at,
             indexed_at=row.indexed_at,
             archived_at=row.archived_at,
+            warning_count=len(findings),
+            warnings=(
+                [PolicyWarningOut.model_validate(f) for f in findings]
+                if actor.has(POLICY_MANAGE)
+                else []
+            ),
         )
 
 
@@ -471,7 +502,7 @@ async def upload_policy_document(
     if outcome.created:
         background.add_task(enqueue_scan, services.queue, actor.org_id, document.id)
     body = PolicyUploadOut(
-        policy_document=PolicyDocumentOut.of(row),
+        policy_document=PolicyDocumentOut.of(row, actor),
         document=DocumentOut.of(document),
         duplicate=not outcome.created,
     )
@@ -486,7 +517,8 @@ async def list_documents(
     session: OrgSession,
     name: Annotated[str | None, Query(pattern=NAME_PATTERN)] = None,
 ) -> list[PolicyDocumentOut]:
-    return [PolicyDocumentOut.of(r) for r in await list_policy_documents(session, name=name)]
+    rows = await list_policy_documents(session, name=name)
+    return [PolicyDocumentOut.of(r, actor) for r in rows]
 
 
 async def _load_document(session: OrgSession, policy_document_id: uuid.UUID) -> PolicyDocument:
@@ -500,7 +532,7 @@ async def _load_document(session: OrgSession, policy_document_id: uuid.UUID) -> 
 async def get_document(
     policy_document_id: uuid.UUID, actor: ReadActor, session: OrgSession
 ) -> PolicyDocumentOut:
-    return PolicyDocumentOut.of(await _load_document(session, policy_document_id))
+    return PolicyDocumentOut.of(await _load_document(session, policy_document_id), actor)
 
 
 @router.post("/documents/{policy_document_id}/index", response_model=IndexOut)
@@ -532,7 +564,7 @@ async def index_document(
         status=outcome.status,
         reason=outcome.reason,
         chunks=outcome.chunks,
-        policy_document=PolicyDocumentOut.of(row),
+        policy_document=PolicyDocumentOut.of(row, actor),
     )
 
 
@@ -545,7 +577,7 @@ async def archive_document(
     row = await archive_policy_document(
         session, policy_document_id=policy_document_id, actor_type=kind, actor_id=actor_id
     )
-    return PolicyDocumentOut.of(row)
+    return PolicyDocumentOut.of(row, actor)
 
 
 @router.post("/search", response_model=list[SearchHitOut])

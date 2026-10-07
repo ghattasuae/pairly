@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 from pydantic import BaseModel
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -38,7 +38,7 @@ from pairly_core.policy.documents import (
     index_normalized,
     index_policy_document,
 )
-from pairly_core.policy.models import RuleResult
+from pairly_core.policy.models import PolicyDocument, RuleResult
 from pairly_core.policy.rag import (
     CheckOutcome,
     PolicyCheckOutput,
@@ -62,6 +62,7 @@ from .policy_support import (
     ARABIC_POLICY,
     INJECTED_POLICY,
     SPEND_POLICY,
+    TAG_BREAKING_POLICY,
     VENDOR_POLICY,
     add_policy,
     build_document,
@@ -675,7 +676,7 @@ async def test_rag_policy_text_is_delimited_data(
         org.id,
         name="office_policy",
         title="Office",
-        pages=INJECTED_POLICY,
+        pages=TAG_BREAKING_POLICY,
         embedder=EMBEDDER,
     )
     model = StubModel(reply(applicable=False))
@@ -830,3 +831,68 @@ async def test_index_refuses_unusable_files(
             await index_policy_document(
                 s, store, policy_document_id=uuid.uuid4(), embedder=EMBEDDER
             )
+
+
+async def test_needs_review_is_never_indexed_or_activated(
+    pol_engine: AsyncEngine, owner_engine: AsyncEngine
+) -> None:
+    org = await new_org(owner_engine)
+    row = await add_policy(
+        pol_engine,
+        org.id,
+        name="office_policy",
+        title="Office",
+        pages=INJECTED_POLICY,
+        embedder=EMBEDDER,
+        index=False,
+    )
+    async with session_for(pol_engine, org.id) as s, s.begin():
+        outcome = await index_normalized(
+            s,
+            policy_document_id=row.id,
+            normalized=build_document(INJECTED_POLICY),
+            embedder=EMBEDDER,
+        )
+    assert (outcome.status, outcome.reason) == ("needs_review", "guardrails_instruction")
+    async with session_for(pol_engine, org.id) as s, s.begin():
+        stored = await s.get(PolicyDocument, row.id)
+        assert stored is not None
+        assert (stored.status, stored.chunk_count) == ("needs_review", 0)
+        assert any(w["blocks_activation"] for w in stored.guardrail_findings)
+        assert stored.guardrail_version == "1"
+        assert await active_policy_documents(s) == []
+        chunks = await s.scalar(
+            select(func.count()).select_from(SearchChunk).where(SearchChunk.source_id == row.id)
+        )
+        assert chunks == 0
+        # Indexing again is refused without touching the row.
+        again = await index_normalized(
+            s,
+            policy_document_id=row.id,
+            normalized=build_document(SPEND_POLICY),
+            embedder=EMBEDDER,
+        )
+        assert again.status == "needs_review"
+    # The database refuses to activate it, even for a direct UPDATE.
+    with pytest.raises(DBAPIError, match="needs review"):
+        async with session_for(pol_engine, org.id) as s, s.begin():
+            await s.execute(
+                text("UPDATE policy_documents SET status = 'indexed' WHERE id = :i"),
+                {"i": row.id},
+            )
+    # An admin uploads a corrected file: the next version is indexed and active.
+    fixed = await add_policy(
+        pol_engine,
+        org.id,
+        name="office_policy",
+        title="Office",
+        pages=TAG_BREAKING_POLICY,
+        embedder=EMBEDDER,
+    )
+    assert fixed.version == 2
+    async with session_for(pol_engine, org.id) as s, s.begin():
+        assert [d.id for d in await active_policy_documents(s)] == [fixed.id]
+        archived = await archive_policy_document(
+            s, policy_document_id=row.id, actor_type=ActorType.SYSTEM, actor_id="test"
+        )
+        assert archived.status == "archived"

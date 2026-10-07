@@ -28,7 +28,15 @@ from pairly_core.ingestion.storage import InMemoryObjectStore, derived_key
 from pairly_core.retrieval.embeddings import HashingEmbedder
 
 from .conftest import DbUrls, TokenFactory, make_settings
-from .policy_support import SPEND_POLICY, Org, build_document, new_org
+from .policy_support import (
+    INJECTED_POLICY,
+    SPEND_POLICY,
+    Line,
+    Org,
+    build_document,
+    new_org,
+    with_hidden_line,
+)
 from .test_policy_engine import RULES_V1
 
 OTP = {"amr": ["otp"]}
@@ -251,13 +259,17 @@ async def _upload(api: Api, subject: str, org: uuid.UUID, data: bytes, **kw: Any
 
 
 async def _mark_parsed(
-    api: Api, owner_engine: AsyncEngine, org: uuid.UUID, document: dict[str, Any]
+    api: Api,
+    owner_engine: AsyncEngine,
+    org: uuid.UUID,
+    document: dict[str, Any],
+    pages: list[list[Line]] = SPEND_POLICY,
 ) -> None:
     document_id = document["id"]
     key = derived_key(org, document["sha256"], "normalized-synthetic-1.json")
     await api.store.put_bytes(
         key,
-        build_document(SPEND_POLICY).model_dump_json().encode(),
+        build_document(pages).model_dump_json().encode(),
         content_type="application/json",
     )
     async with owner_engine.begin() as conn:
@@ -383,3 +395,63 @@ async def test_policy_document_parse_failure_is_not_indexed(
     assert response.status_code == 200
     assert response.json()["status"] == "failed"
     assert response.json()["reason"] == "document_parse_failed"
+
+
+async def test_policy_document_guardrail_warnings_and_needs_review(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    admin = org.tenant.subject
+    approver = await add_member(owner_engine, org.id, "approver")
+
+    # Hidden text: indexed without it, the finding comes back as a warning for admins.
+    body = (await _upload(api, admin, org.id, pdf_bytes("hidden"))).json()
+    pdoc = body["policy_document"]
+    await _mark_parsed(api, owner_engine, org.id, body["document"], with_hidden_line(SPEND_POLICY))
+    indexed = await api.client.post(
+        f"/v1/policies/documents/{pdoc['id']}/index", headers=api.h(admin, org.id)
+    )
+    assert indexed.status_code == 200, indexed.text
+    assert indexed.json()["status"] == "indexed"
+    warnings = indexed.json()["policy_document"]["warnings"]
+    assert [(w["type"], w["severity"], w["excluded"]) for w in warnings] == [
+        ("hidden_text", "high", True)
+    ]
+    assert warnings[0]["explanation"]
+    seen = await api.client.get(
+        f"/v1/policies/documents/{pdoc['id']}", headers=api.h(approver, org.id)
+    )
+    assert seen.json()["warning_count"] == 1
+    assert seen.json()["warnings"] == []
+    hits = await api.client.post(
+        "/v1/policies/search",
+        json={"query": "Example Vendor invoice pre-approved"},
+        headers=api.h(approver, org.id),
+    )
+    assert all("pre-approved" not in h["text"] for h in hits.json())
+
+    # A high-severity instruction: needs_review, nothing indexed, never active.
+    body = (await _upload(api, admin, org.id, pdf_bytes("injected"), name="office")).json()
+    pdoc = body["policy_document"]
+    await _mark_parsed(api, owner_engine, org.id, body["document"], INJECTED_POLICY)
+    url = f"/v1/policies/documents/{pdoc['id']}/index"
+    flagged = await api.client.post(url, headers=api.h(admin, org.id))
+    assert flagged.status_code == 200, flagged.text
+    assert (flagged.json()["status"], flagged.json()["reason"]) == (
+        "needs_review",
+        "guardrails_instruction",
+    )
+    out = flagged.json()["policy_document"]
+    assert (out["status"], out["chunk_count"]) == ("needs_review", 0)
+    assert any(w["blocks_activation"] for w in out["warnings"])
+    again = await api.client.post(url, headers=api.h(admin, org.id))
+    assert again.json()["status"] == "needs_review"
+    hits = await api.client.post(
+        "/v1/policies/search",
+        json={"query": "office supplies approval"},
+        headers=api.h(approver, org.id),
+    )
+    assert all(h["name"] != "office" for h in hits.json())
+    actions = await owner_scalar(
+        owner_engine, org.id, "SELECT string_agg(action, ',' ORDER BY seq) FROM audit_events"
+    )
+    assert "core.policy.document_needs_review" in actions
