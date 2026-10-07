@@ -67,14 +67,14 @@ checkpointer must use a session-mode pool or a direct connection.
 * Token: 32 random bytes, stored as SHA-256, bound to approval, step, approval state
   version, user and action. Default lifetime 30 minutes, single use, invalidated by any
   approval state change.
-* `GET /v1/approval-links/{token}` only describes what the link would do. Mail scanners
-  that fetch it change nothing.
-* `POST /v1/approval-links/{token}` needs a signed-in session of the bound user and runs
+* `POST /v1/approval-links/describe` only describes what the link would do. Opening
+  the link or a mail scanner fetching it changes nothing.
+* `POST /v1/approval-links/confirm` needs a signed-in session of the bound user and runs
   the same `decide` as the inbox, so approving needs a TOTP-backed sign-in. The link is
   never an anonymous approval. Emails point at the web page `/approvals/link#<token>`
-  (the fragment never reaches a server); the page signs the user in, shows the GET
-  answer and posts on an explicit click. The API redacts the token path segment from
-  access logs and traces.
+  (the fragment never reaches a server); the page signs the user in, calls describe and
+  confirms on an explicit click. The token travels only in JSON bodies, never in a URL,
+  so it stays out of access logs and traces (the same rule as invitations).
 
 ## Consequences
 

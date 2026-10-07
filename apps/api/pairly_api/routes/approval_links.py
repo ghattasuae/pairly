@@ -2,14 +2,15 @@
 # Copyright (c) 2026 Proofly Technology
 """Signed single-use approval links (email and Slack). See ``pairly_core.signed_links``.
 
-* ``GET  /v1/approval-links/{token}``  what the link would do. Never changes state.
-* ``POST /v1/approval-links/{token}``  confirm: the bound user's decision.
+* ``POST /v1/approval-links/describe``  what the link would do. Never changes state.
+* ``POST /v1/approval-links/confirm``   confirm: the bound user's decision.
 
-Both need a bearer JWT of the user the link was sent to; the organisation comes from the
-link, not from a header. Confirming goes through the same checks as the inbox, including
-the TOTP step-up (a sign-in with ``amr`` ``otp``). Any unknown, foreign, used, expired or
-invalidated link gets the same 410. The token path segment is redacted from access logs
-and traces (``pairly_api.middleware``, ``pairly_api.telemetry``).
+The token travels in the JSON body only, never in a URL, so it stays out of access logs,
+traces and browser history (the same rule as invitations). Both need a bearer JWT of the
+user the link was sent to; the organisation comes from the link, not from a header.
+Confirming goes through the same checks as the inbox, including the TOTP step-up (a
+sign-in with ``amr`` ``otp``). Any unknown, foreign, used, expired or invalidated link
+gets the same 410.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from datetime import datetime
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Path, Request
+from fastapi import APIRouter, BackgroundTasks, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +32,8 @@ from pairly_core.signed_links import LinkInvalidError, confirm_link, describe_li
 
 router = APIRouter(prefix="/approval-links", tags=["approvals"])
 
-Token = Annotated[str, Path(min_length=43, max_length=43, pattern=r"^[A-Za-z0-9_-]{43}$")]
+# token_urlsafe(32) is 43 characters; anything else is rejected before any lookup.
+Token = Annotated[str, Field(min_length=43, max_length=43, pattern=r"^[A-Za-z0-9_-]{43}$")]
 
 
 class LinkOut(BaseModel):
@@ -47,7 +49,11 @@ class LinkOut(BaseModel):
     has_second_factor: bool
 
 
-class LinkConfirmIn(BaseModel):
+class LinkTokenIn(BaseModel):
+    token: Token
+
+
+class LinkConfirmIn(LinkTokenIn):
     reason: Annotated[str | None, Field(default=None, max_length=2000)] = None
 
 
@@ -66,16 +72,16 @@ async def _link_actor(
     return actor
 
 
-@router.get("/{token}", response_model=LinkOut)
+@router.post("/describe", response_model=LinkOut)
 async def describe(
-    token: Token,
+    body: LinkTokenIn,
     request: Request,
     ctx: Context,
     session: RequestSession,
     verified: VerifiedSubject,
 ) -> LinkOut:
-    actor = await _link_actor(request, ctx, session, verified, token)
-    view = await describe_link(session, actor, token)
+    actor = await _link_actor(request, ctx, session, verified, body.token)
+    view = await describe_link(session, actor, body.token)
     return LinkOut(
         approval_id=view.approval_id,
         title=view.title,
@@ -90,9 +96,8 @@ async def describe(
     )
 
 
-@router.post("/{token}", response_model=DecisionOut)
+@router.post("/confirm", response_model=DecisionOut)
 async def confirm(
-    token: Token,
     body: LinkConfirmIn,
     request: Request,
     ctx: Context,
@@ -101,7 +106,9 @@ async def confirm(
     runtime: Runtime,
     background: BackgroundTasks,
 ) -> DecisionOut:
-    actor = await _link_actor(request, ctx, session, verified, token)
-    outcome = await confirm_link(session, actor, token, reason=body.reason, hooks=runtime.hooks)
+    actor = await _link_actor(request, ctx, session, verified, body.token)
+    outcome = await confirm_link(
+        session, actor, body.token, reason=body.reason, hooks=runtime.hooks
+    )
     schedule_resume(background, runtime, actor, outcome)
     return decision_out(outcome)

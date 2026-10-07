@@ -132,9 +132,11 @@ def test_authorize_checks_resource_org(registry: RoleRegistry) -> None:
 def test_workflow_scoped_membership(registry: RoleRegistry) -> None:
     pay_only = _actor(registry, RoleGrant("approver", workflow="pay"))
     assert pay_only.has("pay.invoice.approve")
-    assert not pay_only.has("core.approval.decide")
+    assert not pay_only.has("core.approval.read")
     everywhere = _actor(registry, RoleGrant("approver"))
-    assert everywhere.has("core.approval.decide")
+    assert everywhere.has("core.approval.read")
+    # Deciding is per workflow permission only; there is no core decide permission.
+    assert "core.approval.decide" not in registry
 
 
 def test_unknown_role_grants_nothing(registry: RoleRegistry) -> None:
@@ -182,7 +184,6 @@ STEP_UP = [
     ("admin", "core.users.manage"),
     ("admin", "core.org.manage"),
     ("admin", "core.audit.export"),
-    ("admin", "core.approval.decide"),
     ("approver", "pay.invoice.approve"),
     ("finance_controller", "pay.invoice.approve"),
     ("recruiter", "hire.candidate.decide"),

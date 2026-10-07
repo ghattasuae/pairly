@@ -16,9 +16,9 @@ decision invalidates their other links for that step).
 
 Why the link does not approve by itself (documented design choice):
 
-* ``GET /v1/approval-links/{token}`` only describes what the link would do. It never
-  changes state, so mail scanners and link previews that fetch URLs cannot decide.
-* ``POST /v1/approval-links/{token}`` confirms. It needs a signed-in session of the
+* ``POST /v1/approval-links/describe`` only describes what the link would do. It never
+  changes state, so opening the link (or a mail scanner fetching it) decides nothing.
+* ``POST /v1/approval-links/confirm`` confirms. It needs a signed-in session of the
   bound user (bearer JWT), and the decision goes through the same ``decide`` as the
   inbox: workflow permission, segregation of duties, assignment, and the TOTP step-up
   rule (the approve permission is a step-up permission, so the sign-in must carry
@@ -27,9 +27,9 @@ Why the link does not approve by itself (documented design choice):
   that person's sign-in and second factor.
 * The email or Slack button points at the web app's confirmation page with the token in
   the URL fragment (``/approvals/link#<token>``), which browsers never send to a
-  server. The page asks the user to sign in (with TOTP) if needed, shows the GET
-  answer, and POSTs on an explicit click. The API paths carry the token, so the API
-  access log and traces redact that path segment.
+  server. The page asks the user to sign in (with TOTP) if needed, calls describe, and
+  calls confirm on an explicit click. Both API calls carry the token in the JSON body,
+  never in a URL, so it stays out of access logs and traces (same rule as invitations).
 
 Tokens are looked up across organisations through ``approval_link_org_id(hash)``, a
 narrow SECURITY DEFINER function (migration 0006), then read under normal RLS.

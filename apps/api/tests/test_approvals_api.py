@@ -16,7 +16,6 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_api.main import create_app
-from pairly_api.middleware import loggable_path
 from pairly_core.approvals.models import Channel, Decision
 from pairly_core.db import set_tenant
 from pairly_core.signed_links import IssuedLink, issue_link
@@ -89,6 +88,19 @@ class Api:
                 world, name, otp=otp, extra={"Idempotency-Key": key or f"key-{uuid.uuid4().hex}"}
             ),
         )
+
+    async def describe(self, token: str, headers: dict[str, str]) -> httpx.Response:
+        return await self.client.post(
+            "/v1/approval-links/describe", json={"token": token}, headers=headers
+        )
+
+    async def confirm(
+        self, token: str, headers: dict[str, str], *, reason: str | None = None
+    ) -> httpx.Response:
+        body: dict[str, Any] = {"token": token}
+        if reason is not None:
+            body["reason"] = reason
+        return await self.client.post("/v1/approval-links/confirm", json=body, headers=headers)
 
     async def link(
         self, world: World, approval_id: Any, user: str, action: Decision = Decision.APPROVE
@@ -299,17 +311,17 @@ async def test_other_tenant_sees_nothing(api: Api, world: World, other_world: Wo
 # ------------------------------------------------------------------ signed links
 
 
-async def test_link_get_is_safe_and_post_decides_once(
+async def test_link_describe_is_safe_and_confirm_decides_once(
     api: Api, world: World, owner_engine: AsyncEngine
 ) -> None:
     run = await _start(api, world)
     link = await api.link(world, run.pending_approval_id, "appr1")
-    path = f"/v1/approval-links/{link.token}"
+    bound = api.headers(world, "appr1", org=False)
 
     # No sign-in: nothing.
-    assert (await api.client.get(path)).status_code == 401
-    for _ in range(3):  # a mail scanner fetching the link changes nothing
-        seen = await api.client.get(path, headers=api.headers(world, "appr1", org=False))
+    assert (await api.describe(link.token, {})).status_code == 401
+    for _ in range(3):  # opening the link (or a mail scanner) changes nothing
+        seen = await api.describe(link.token, bound)
         assert seen.status_code == 200, seen.text
         assert seen.json()["state"] == "valid"
         assert seen.json()["action"] == "approve"
@@ -324,24 +336,21 @@ async def test_link_get_is_safe_and_post_decides_once(
     assert await _run_status(api, world, run.id) == "waiting_approval"
 
     # Another person's session cannot use it.
-    stranger = await api.client.post(path, json={}, headers=api.headers(world, "appr2", org=False))
+    stranger = await api.confirm(link.token, api.headers(world, "appr2", org=False))
     assert stranger.status_code == 410
     # The bound user without TOTP cannot either.
-    weak = await api.client.post(
-        path, json={}, headers=api.headers(world, "appr1", otp=False, org=False)
-    )
+    weak = await api.confirm(link.token, api.headers(world, "appr1", otp=False, org=False))
     assert weak.status_code == 403
     assert weak.json()["code"] == "second_factor_required"
 
-    used = await api.client.post(path, json={}, headers=api.headers(world, "appr1", org=False))
+    used = await api.confirm(link.token, bound)
     assert used.status_code == 200, used.text
     assert used.json()["approval_status"] == "approved"
-    replay = await api.client.post(path, json={}, headers=api.headers(world, "appr1", org=False))
+    replay = await api.confirm(link.token, bound)
     assert replay.status_code == 200
     assert replay.json()["replayed"] is True
     assert replay.json()["decision_id"] == used.json()["decision_id"]
-    after = await api.client.get(path, headers=api.headers(world, "appr1", org=False))
-    assert after.json()["state"] == "used"
+    assert (await api.describe(link.token, bound)).json()["state"] == "used"
     assert await _run_status(api, world, run.id) == "completed"
     actions = await audit_actions(owner_engine, world.org_id)
     assert "core.approval.link_issued" in actions
@@ -361,33 +370,27 @@ async def test_link_expiry_invalidation_and_unknown(
         {"i": expired.id},
     )
     headers = api.headers(world, "appr1", org=False)
-    gone = await api.client.post(f"/v1/approval-links/{expired.token}", json={}, headers=headers)
+    gone = await api.confirm(expired.token, headers)
     assert gone.status_code == 410
     assert gone.json()["code"] == "link_invalid"
 
     # A state change (someone else approves) kills open links.
     stale = await api.link(world, run.pending_approval_id, "appr1", Decision.REJECT)
     assert (await api.decide(world, "appr2", run.pending_approval_id)).status_code == 200
-    view = await api.client.get(f"/v1/approval-links/{stale.token}", headers=headers)
-    assert view.json()["state"] == "invalidated"
-    refused = await api.client.post(
-        f"/v1/approval-links/{stale.token}", json={"reason": "late"}, headers=headers
-    )
-    assert refused.status_code == 410
+    assert (await api.describe(stale.token, headers)).json()["state"] == "invalidated"
+    assert (await api.confirm(stale.token, headers, reason="late")).status_code == 410
 
-    unknown = "A" * 43
-    assert (
-        await api.client.get(f"/v1/approval-links/{unknown}", headers=headers)
-    ).status_code == 410
-    assert (await api.client.get("/v1/approval-links/short", headers=headers)).status_code == 422
+    assert (await api.describe("A" * 43, headers)).status_code == 410
+    assert (await api.describe("short", headers)).status_code == 422
+    # Tokens are never accepted in the URL.
+    in_url = await api.client.get(f"/v1/approval-links/{expired.token}", headers=headers)
+    assert in_url.status_code in {404, 405}
 
     # A link of org A used by a member of org B: same answer as unknown.
     run2 = await _start(api, world)
     foreign = await api.link(world, run2.pending_approval_id, "appr1")
     outsider = api.headers(other_world, "appr1", org=False)
-    assert (
-        await api.client.post(f"/v1/approval-links/{foreign.token}", json={}, headers=outsider)
-    ).status_code == 410
+    assert (await api.confirm(foreign.token, outsider)).status_code == 410
 
 
 async def test_link_issue_refuses_people_who_cannot_decide(api: Api, world: World) -> None:
@@ -395,11 +398,6 @@ async def test_link_issue_refuses_people_who_cannot_decide(api: Api, world: Worl
     for name in ("clerk", "appr2", "fc1"):
         with pytest.raises(Exception, match=r"cannot decide|not an approver"):
             await api.link(world, run.pending_approval_id, name)
-
-
-def test_token_paths_are_redacted_in_logs() -> None:
-    assert loggable_path("/v1/approval-links/" + "a" * 43) == "/v1/approval-links/[redacted]"
-    assert loggable_path("/v1/approvals") == "/v1/approvals"
 
 
 # ------------------------------------------------------------------ delegations and rules
