@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Tables for ingested documents and inbound emails (migration ``0004_documents``).
+"""Tables for ingested documents and inbound emails (migration ``0004``).
 
 Both are tenant tables (RLS forced, standard tenant policy). The application role may
 SELECT, INSERT and UPDATE; there is no DELETE grant (retention deletion is a later,

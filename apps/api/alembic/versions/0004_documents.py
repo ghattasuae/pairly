@@ -20,7 +20,7 @@ application role has EXECUTE on the functions only.
   retryable error and no attempt for 10 minutes, ``clean`` but not parsed for 10
   minutes. The worker's sweeper re-queues them. Ids and status only, nothing else.
 
-Revision ID: 0004_documents
+Revision ID: 0004
 Revises: 0003
 Create Date: 2026-10-07
 """
@@ -33,7 +33,7 @@ from sqlalchemy.dialects import postgresql
 
 from pairly_core.migration_helpers import app_db_role, org_rls_statements
 
-revision: str = "0004_documents"
+revision: str = "0004"
 down_revision: str | None = "0003"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

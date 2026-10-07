@@ -4,6 +4,7 @@
 
 from pairly_core.ingestion.models import Document, InboundEmail
 from pairly_core.models.audit import AuditEvent
+from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
 
 __all__ = [
@@ -11,7 +12,11 @@ __all__ = [
     "Document",
     "InboundEmail",
     "Invitation",
+    "LLMBudgetAlert",
+    "LLMBudgetReservation",
     "Membership",
+    "ModelCall",
+    "OrgLLMBudget",
     "Organisation",
     "Role",
     "User",
