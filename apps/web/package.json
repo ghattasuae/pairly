@@ -38,6 +38,8 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@storybook/addon-a11y": "^10.6.1",
     "@storybook/addon-themes": "^10.6.1",
     "@storybook/nextjs-vite": "^10.6.1",
