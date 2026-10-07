@@ -2,15 +2,16 @@
 # Copyright (c) 2026 Proofly Technology
 """Inbound email: address scheme, RFC 822 parsing and ``ingest_email``.
 
-Addresses: every organisation gets one address per workflow,
+Addresses: every organisation gets one address per workflow, carrying a secret token
+(see ``pairly_core.ingestion.addresses``),
 
-    <workflow>+<org-slug>@<PAIRLY_INBOUND_EMAIL_DOMAIN>     for example pay+acme@inbound.example.com
+    <workflow>+<org-slug>.<token>@<PAIRLY_INBOUND_EMAIL_DOMAIN>
 
 The recipient is taken from the SMTP envelope when the transport provides it, then from
 ``Delivered-To``, ``X-Original-To``, ``To`` and ``Cc``. The first address on our domain
-that names a registered workflow and an active organisation wins. The organisation is
-found through ``inbound_org_id(slug)``, a narrow SECURITY DEFINER function (migration
-0004) that returns an id for an active organisation slug and nothing else.
+that names a registered workflow and resolves (active organisation, matching token)
+wins. Anything else is dropped and logged without a bounce, so a sender can never learn
+which organisations or addresses exist.
 
 Parsing (``parse_email``) keeps what intake needs: sender, Message-ID, subject, date,
 the text body (HTML converted to text), attachments (including those inside forwarded
@@ -34,7 +35,7 @@ import hashlib
 import re
 import tempfile
 import uuid
-from collections.abc import AsyncIterator, Iterable, Sequence
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from email import policy
@@ -47,11 +48,12 @@ from pathlib import Path
 from typing import Any, Final, Protocol, runtime_checkable
 
 import structlog
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.audit import append_audit
 from pairly_core.db import set_tenant
+from pairly_core.ingestion.addresses import InboundRoute, candidate_routes, lookup_inbound_org
 from pairly_core.ingestion.models import DocumentSource, InboundEmail
 from pairly_core.ingestion.service import (
     AuditBy,
@@ -73,47 +75,6 @@ MAX_FORWARD_DEPTH: Final = 3
 MAX_PART_DEPTH: Final = 25
 MAX_SUBJECT: Final = 998
 MIN_BODY_CHARS: Final = 20
-
-_WORKFLOW_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
-_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,62}$")
-
-
-# ------------------------------------------------------------------ addresses
-
-
-@dataclass(frozen=True, slots=True)
-class InboundRoute:
-    workflow: str
-    org_slug: str
-
-
-def inbound_address(workflow: str, org_slug: str, domain: str) -> str:
-    """The inbound address of one organisation and workflow."""
-    if not _WORKFLOW_RE.fullmatch(workflow) or not _SLUG_RE.fullmatch(org_slug):
-        raise ValueError("invalid workflow or organisation slug")
-    return f"{workflow}+{org_slug}@{domain.lower()}"
-
-
-def parse_inbound_address(address: str, domain: str) -> InboundRoute | None:
-    """``pay+acme@<domain>`` -> ``InboundRoute("pay", "acme")``; anything else -> None."""
-    _, addr = getaddresses([address])[0] if address else ("", "")
-    local, at, host = addr.strip().lower().rpartition("@")
-    if not at or host != domain.lower():
-        return None
-    workflow, plus, slug = local.partition("+")
-    if not plus or not _WORKFLOW_RE.fullmatch(workflow) or not _SLUG_RE.fullmatch(slug):
-        return None
-    return InboundRoute(workflow, slug)
-
-
-def resolve_route(
-    recipients: Iterable[str], domain: str, workflows: frozenset[str]
-) -> InboundRoute | None:
-    for recipient in recipients:
-        route = parse_inbound_address(recipient, domain)
-        if route is not None and route.workflow in workflows:
-            return route
-    return None
 
 
 # ------------------------------------------------------------------ parsed model
@@ -518,14 +479,6 @@ class EmailIngestResult:
     created: list[uuid.UUID] = field(default_factory=list)
 
 
-async def lookup_inbound_org(
-    sessionmaker: async_sessionmaker[AsyncSession], slug: str
-) -> uuid.UUID | None:
-    async with sessionmaker() as session, session.begin():
-        value = await session.scalar(text("SELECT inbound_org_id(:slug)"), {"slug": slug})
-    return value if isinstance(value, uuid.UUID) else None
-
-
 async def ingest_email(
     raw: bytes,
     *,
@@ -538,19 +491,33 @@ async def ingest_email(
 ) -> EmailIngestResult:
     """Route, parse and ingest one raw email. Commits its own transaction.
 
-    Unroutable or oversized messages write nothing (there is no organisation to audit
-    them in) and are logged; the caller decides whether to bounce them.
+    Unroutable messages (no address of ours, unknown organisation, wrong or missing
+    token) and oversized ones write nothing (there is no organisation to audit them in)
+    and are logged. Callers must drop them without a bounce: a bounce would confirm to
+    the sender whether an organisation or address exists.
     """
     if len(raw) > settings.max_email_bytes:
         log.warning("email_too_large", size=len(raw))
         return EmailIngestResult("too_large")
     parsed = parse_email(raw)
-    route = resolve_route(
+    candidates = candidate_routes(
         [*envelope_recipients, *parsed.recipients], settings.inbound_email_domain, workflows
     )
-    org_id = await lookup_inbound_org(sessionmaker, route.org_slug) if route else None
+    route: InboundRoute | None = None
+    org_id: uuid.UUID | None = None
+    for candidate in candidates:
+        org_id = await lookup_inbound_org(sessionmaker, candidate)
+        if org_id is not None:
+            route = candidate
+            break
     if route is None or org_id is None:
-        log.info("email_unroutable", sender_domain=parsed.sender_domain)
+        # Dropped, never bounced. The token is never logged.
+        log.warning(
+            "email_unroutable",
+            reason="no_address" if not candidates else "unknown_address",
+            addresses=[f"{c.workflow}+{c.org_slug}" for c in candidates],
+            sender_domain=parsed.sender_domain,
+        )
         return EmailIngestResult("unroutable", message_id=parsed.message_id)
 
     result = EmailIngestResult(

@@ -9,7 +9,7 @@ from pairly_core.approvals.models import (
     ApprovalLink,
     ApprovalStep,
 )
-from pairly_core.ingestion.models import Document, InboundEmail
+from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
@@ -24,6 +24,7 @@ __all__ = [
     "ApprovalStep",
     "AuditEvent",
     "Document",
+    "InboundAddress",
     "InboundEmail",
     "Invitation",
     "LLMBudgetAlert",

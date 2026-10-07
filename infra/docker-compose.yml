@@ -67,7 +67,8 @@ x-app-env: &app-env
   # the human queue (fail closed), they are never treated as clean.
   PAIRLY_CLAMAV_HOST: clamav
   PAIRLY_CLAMAV_PORT: "3310"
-  # Documents (WP1.1, WP1.2). Inbound email addresses are <workflow>+<org-slug>@<domain>.
+  # Documents (WP1.1, WP1.2). Inbound email addresses are
+  # <workflow>+<org-slug>.<token>@<domain>; tokens come from `pairly-admin inbound rotate`.
   PAIRLY_INBOUND_EMAIL_DOMAIN: ${PAIRLY_INBOUND_EMAIL_DOMAIN:-inbound.pairly.localhost}
   PAIRLY_MAX_UPLOAD_BYTES: ${PAIRLY_MAX_UPLOAD_BYTES:-26214400}
   PAIRLY_INTAKE_POLICIES: ${PAIRLY_INTAKE_POLICIES:-{}}

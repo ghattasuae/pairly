@@ -19,6 +19,12 @@ responses ``make demo`` replays offline in ``recorded`` mode:
 
     uv run pairly-admin recordings export --org <uuid> --out recordings.json [--task t]
     uv run pairly-admin recordings import --org <uuid> --in recordings.json
+
+``inbound rotate`` generates a new secret token for an organisation's inbound email
+address in one workflow and prints the full address once (only the token's hash is
+stored). Mail to the previous address is dropped from then on:
+
+    uv run pairly-admin inbound rotate --org <uuid> --workflow pay
 """
 
 from __future__ import annotations
@@ -29,15 +35,19 @@ import os
 import sys
 import uuid
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from pairly_core.audit import ActorType
 from pairly_core.config import to_asyncpg_url
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.errors import PairlyError
+from pairly_core.ingestion.addresses import WORKFLOW_RE, inbound_address, rotate_inbound_token
 from pairly_core.invitations import INVITATION_TTL, BootstrappedOrg, bootstrap_organisation
 from pairly_core.llm.bundle import (
     BundleError,
@@ -47,8 +57,12 @@ from pairly_core.llm.bundle import (
     import_recordings,
     parse_bundle,
 )
+from pairly_core.models import Organisation
+from pairly_core.plugins import discover_plugins
 
 OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
+INBOUND_DOMAIN_ENV = "PAIRLY_INBOUND_EMAIL_DOMAIN"
+ADMIN_ACTOR = "pairly.admin"
 WEB_URL_ENV = "PAIRLY_PUBLIC_WEB_URL"
 LOCALES = ("en", "ar")
 
@@ -99,6 +113,31 @@ async def import_bundle(owner_url: str, org_id: uuid.UUID, text: str) -> ImportR
         await engine.dispose()
 
 
+@dataclass(frozen=True, slots=True)
+class RotatedInbound:
+    org_slug: str
+    workflow: str
+    token: str = field(repr=False)
+
+
+async def rotate_inbound(owner_url: str, org_id: uuid.UUID, workflow: str) -> RotatedInbound:
+    """New inbound token for ``org_id`` and ``workflow``; raises ``LookupError`` if no org."""
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        session = create_sessionmaker(engine)()
+        set_tenant(session, org_id, None)
+        async with session, session.begin():
+            slug = await session.scalar(select(Organisation.slug).where(Organisation.id == org_id))
+            if slug is None:
+                raise LookupError("organisation not found")
+            token = await rotate_inbound_token(
+                session, workflow=workflow, actor_type=ActorType.SYSTEM, actor_id=ADMIN_ACTOR
+            )
+            return RotatedInbound(slug, workflow, token)
+    finally:
+        await engine.dispose()
+
+
 def _web_url(value: str) -> str:
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
@@ -134,7 +173,38 @@ def _parser() -> argparse.ArgumentParser:
     imp = rec_commands.add_parser("import", help="load a bundle file into an org")
     imp.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
     imp.add_argument("--in", dest="source", required=True, type=Path, help="bundle file to read")
+
+    inbound = commands.add_parser("inbound", help="manage inbound email addresses")
+    inbound_commands = inbound.add_subparsers(dest="inbound_command", required=True)
+    rotate = inbound_commands.add_parser(
+        "rotate", help="new secret token for a workflow's inbound address (prints it once)"
+    )
+    rotate.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
+    rotate.add_argument("--workflow", required=True, help="workflow id, for example 'pay'")
     return parser
+
+
+def _inbound(args: argparse.Namespace, owner_url: str) -> int:
+    workflow = args.workflow.strip().lower()
+    known = set(discover_plugins())
+    if not WORKFLOW_RE.fullmatch(workflow) or workflow not in known:
+        names = ", ".join(sorted(known)) or "none"
+        print(f"pairly-admin: unknown workflow {workflow!r} (known: {names})", file=sys.stderr)
+        return 2
+    try:
+        rotated = asyncio.run(rotate_inbound(owner_url, args.org, workflow))
+    except LookupError as exc:
+        print(f"pairly-admin: {exc}", file=sys.stderr)
+        return 1
+    domain = os.environ.get(INBOUND_DOMAIN_ENV, "").strip()
+    print(f"New inbound address for {rotated.org_slug} / {workflow}.")
+    print("Shown once, keep it private. The previous address no longer receives mail:")
+    if domain:
+        print(f"  {inbound_address(workflow, rotated.org_slug, rotated.token, domain)}")
+    else:
+        local = f"{workflow}+{rotated.org_slug}.{rotated.token}"
+        print(f"  {local}@<inbound domain>   (${INBOUND_DOMAIN_ENV} is not set)")
+    return 0
 
 
 def _recordings(args: argparse.Namespace, owner_url: str) -> int:
@@ -161,6 +231,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     if args.command == "recordings":
         return _recordings(args, owner_url)
+    if args.command == "inbound":
+        return _inbound(args, owner_url)
     try:
         result = asyncio.run(
             bootstrap(owner_url, name=args.name, slug=args.slug, admin_email=args.admin_email)

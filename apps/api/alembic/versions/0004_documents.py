@@ -8,15 +8,20 @@
   unique on ``(org_id, workflow, sha256)``: dedupe is scoped per workflow, so the same
   bytes sent to two workflows are two documents (sharing one stored object, which is
   keyed by org and hash). ``inbound_emails`` is unique on ``(org_id, message_id)``.
+* ``inbound_addresses``: tenant table, one row per organisation and workflow holding the
+  SHA-256 of the secret token in that workflow's inbound address. The application role
+  may only SELECT it; tokens are written by ``pairly-admin inbound rotate`` (owner role).
 
 Two SECURITY DEFINER functions, owned by the migration role, follow the pattern of
 ``audit_org_ids`` (0002): each turns a transaction-local flag on for its own query, and
 one SELECT policy limited to the owner role admits rows while the flag is on. The
 application role has EXECUTE on the functions only.
 
-* ``inbound_org_id(slug)``: the id of the ACTIVE organisation with this slug, else
-  NULL. Inbound email is addressed ``<workflow>+<slug>@<domain>``, so the worker must map
-  a slug to an organisation before it has a tenant context. It returns the id only.
+* ``inbound_org_id(workflow, slug, token_hash)``: the id of the ACTIVE organisation with
+  this slug whose inbound token for this workflow hashes to ``token_hash``, else NULL.
+  Inbound email is addressed ``<workflow>+<slug>.<token>@<domain>``, so the worker must
+  map an address to an organisation before it has a tenant context. A slug alone (which
+  is guessable) never resolves. It returns the id only.
 * ``documents_needing_work(p_limit)``: ``(org_id, id, status)`` of documents that
   stalled: ``received`` for over a minute (scan never queued), ``scanning`` with a
   retryable error and no attempt for 10 minutes, ``clean`` but not parsed for 10
@@ -88,6 +93,33 @@ def upgrade() -> None:
         ),
     )
     op.create_index("ix_inbound_emails_org_id", "inbound_emails", ["org_id"])
+
+    op.create_table(
+        "inbound_addresses",
+        sa.Column("id", sa.Uuid(), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "org_id",
+            sa.Uuid(),
+            sa.ForeignKey(
+                "organisations.id",
+                ondelete="RESTRICT",
+                name="fk_inbound_addresses_org_id_organisations",
+            ),
+            nullable=False,
+        ),
+        sa.Column("workflow", sa.String(32), nullable=False),
+        sa.Column("token_hash", sa.String(64), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
+        sa.Column("rotated_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
+        sa.UniqueConstraint("org_id", "workflow", name="uq_inbound_addresses_org_id_workflow"),
+        sa.CheckConstraint(_WORKFLOW_CHECK, name="ck_inbound_addresses_workflow_format"),
+        sa.CheckConstraint(
+            "token_hash ~ '^[0-9a-f]{64}$'", name="ck_inbound_addresses_token_hash_format"
+        ),
+    )
+    op.create_index("ix_inbound_addresses_org_id", "inbound_addresses", ["org_id"])
+    for stmt in org_rls_statements("inbound_addresses", app_role, privileges="SELECT"):
+        op.execute(stmt)
 
     op.create_table(
         "documents",
@@ -167,14 +199,16 @@ def upgrade() -> None:
         for stmt in org_rls_statements(table, app_role, privileges="SELECT, INSERT, UPDATE"):
             op.execute(stmt)
 
-    # ---------------------------------------------------------------- slug lookup
-    op.execute(
-        "CREATE POLICY organisations_inbound_lookup ON organisations FOR SELECT TO CURRENT_USER "
-        "USING (current_setting('app.inbound_lookup', true) = 'on')"
-    )
+    # ---------------------------------------------------------------- address lookup
+    for table in ("organisations", "inbound_addresses"):
+        op.execute(
+            f"CREATE POLICY {table}_inbound_lookup ON {table} FOR SELECT TO CURRENT_USER "
+            "USING (current_setting('app.inbound_lookup', true) = 'on')"
+        )
     op.execute(
         """
-        CREATE FUNCTION inbound_org_id(p_slug text) RETURNS uuid
+        CREATE FUNCTION inbound_org_id(p_workflow text, p_slug text, p_token_hash text)
+        RETURNS uuid
         LANGUAGE plpgsql VOLATILE
         SECURITY DEFINER
         SET search_path = pg_catalog, public
@@ -183,21 +217,27 @@ def upgrade() -> None:
             previous text := current_setting('app.inbound_lookup', true);
             found uuid;
         BEGIN
-            IF p_slug IS NULL OR p_slug !~ '^[a-z0-9][a-z0-9-]{1,62}$' THEN
+            IF p_workflow IS NULL OR p_workflow !~ '^[a-z][a-z0-9_]{0,31}$'
+               OR p_slug IS NULL OR p_slug !~ '^[a-z0-9][a-z0-9-]{1,62}$'
+               OR p_token_hash IS NULL OR p_token_hash !~ '^[0-9a-f]{64}$' THEN
                 RETURN NULL;
             END IF;
             PERFORM set_config('app.inbound_lookup', 'on', true);
             SELECT o.id INTO found
               FROM public.organisations o
-             WHERE o.slug = p_slug AND o.status = 'active';
+              JOIN public.inbound_addresses a ON a.org_id = o.id
+             WHERE o.slug = p_slug
+               AND o.status = 'active'
+               AND a.workflow = p_workflow
+               AND a.token_hash = p_token_hash;
             PERFORM set_config('app.inbound_lookup', coalesce(previous, ''), true);
             RETURN found;
         END
         $$
         """
     )
-    op.execute("REVOKE ALL ON FUNCTION inbound_org_id(text) FROM PUBLIC")
-    op.execute(f"GRANT EXECUTE ON FUNCTION inbound_org_id(text) TO {app_role}")
+    op.execute("REVOKE ALL ON FUNCTION inbound_org_id(text, text, text) FROM PUBLIC")
+    op.execute(f"GRANT EXECUTE ON FUNCTION inbound_org_id(text, text, text) TO {app_role}")
 
     # ---------------------------------------------------------------- sweeper
     op.execute(
@@ -237,7 +277,8 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS documents_needing_work(integer, integer)")
-    op.execute("DROP FUNCTION IF EXISTS inbound_org_id(text)")
+    op.execute("DROP FUNCTION IF EXISTS inbound_org_id(text, text, text)")
     op.execute("DROP POLICY IF EXISTS organisations_inbound_lookup ON organisations")
     op.drop_table("documents")
+    op.drop_table("inbound_addresses")
     op.drop_table("inbound_emails")

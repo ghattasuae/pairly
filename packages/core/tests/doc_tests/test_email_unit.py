@@ -9,13 +9,16 @@ from email.policy import SMTP
 
 import pytest
 
-from pairly_core.ingestion.email import (
-    html_to_text,
+from pairly_core.ingestion.addresses import (
+    MAX_ROUTE_CANDIDATES,
+    InboundRoute,
+    candidate_routes,
+    hash_inbound_token,
     inbound_address,
-    parse_email,
+    new_inbound_token,
     parse_inbound_address,
-    resolve_route,
 )
+from pairly_core.ingestion.email import html_to_text, parse_email
 
 from . import doc_fixtures as fx
 
@@ -27,30 +30,71 @@ def _raw(msg: EmailMessage) -> bytes:
     return msg.as_bytes(policy=SMTP)
 
 
+TOKEN = "k3m7q2xv7hb4tnwe"  # noqa: S105 (synthetic test token)
+
+
+def test_tokens() -> None:
+    tokens = {new_inbound_token() for _ in range(50)}
+    assert len(tokens) == 50
+    for token in tokens:
+        assert len(token) == 16
+        assert set(token) <= set("abcdefghijklmnopqrstuvwxyz234567")
+    digest = hash_inbound_token(TOKEN)
+    assert len(digest) == 64
+    assert digest != hash_inbound_token(new_inbound_token())
+    for bad in ("short", "UPPERCASE1234567", "has.dot.in.it.xx", ""):
+        with pytest.raises(ValueError, match="invalid inbound token"):
+            hash_inbound_token(bad)
+
+
 def test_addresses() -> None:
-    assert inbound_address("pay", "acme", "Inbound.Example.COM") == "pay+acme@inbound.example.com"
-    with pytest.raises(ValueError, match="invalid"):
-        inbound_address("Pay", "acme", DOMAIN)
-    route = parse_inbound_address(f"Acme AP <PAY+Acme-Ltd@{DOMAIN.upper()}>", DOMAIN)
-    assert route is not None
-    assert (route.workflow, route.org_slug) == ("pay", "acme-ltd")
+    assert (
+        inbound_address("pay", "acme", TOKEN, "Inbound.Example.COM")
+        == f"pay+acme.{TOKEN}@inbound.example.com"
+    )
+    for args in (("Pay", "acme", TOKEN), ("pay", "acme", "short"), ("pay", "a.b", TOKEN)):
+        with pytest.raises(ValueError, match="invalid"):
+            inbound_address(*args, DOMAIN)
+    route = parse_inbound_address(
+        f"Acme AP <PAY+Acme-Ltd.{TOKEN.upper()}@{DOMAIN.upper()}>", DOMAIN
+    )
+    assert route == InboundRoute("pay", "acme-ltd", TOKEN)
+    # The token never shows up in a repr (logs, tracebacks).
+    assert TOKEN not in repr(route)
     for bad in (
         f"pay@{DOMAIN}",
-        "pay+acme@other.example",
-        f"pay+a@{DOMAIN}",
-        f"9pay+acme@{DOMAIN}",
-        f"pay+-acme@{DOMAIN}",
+        f"pay+acme@{DOMAIN}",  # no token: the slug alone never routes
+        f"pay+acme.@{DOMAIN}",
+        f"pay+acme.short@{DOMAIN}",
+        f"pay+acme.{TOKEN}1@{DOMAIN}",  # 1 is not base32
+        f"pay+.{TOKEN}@{DOMAIN}",
+        f"pay+acme.{TOKEN}@other.example",
+        f"pay+a.{TOKEN}@{DOMAIN}",
+        f"9pay+acme.{TOKEN}@{DOMAIN}",
+        f"pay+-acme.{TOKEN}@{DOMAIN}",
         "",
         "not an address",
     ):
-        assert parse_inbound_address(bad, DOMAIN) is None
+        assert parse_inbound_address(bad, DOMAIN) is None, bad
+
+
+def test_candidate_routes() -> None:
     workflows = frozenset({"pay", "hire"})
-    hit = resolve_route(
-        ["someone@example.test", f"toy+acme@{DOMAIN}", f"hire+acme@{DOMAIN}"], DOMAIN, workflows
+    hits = candidate_routes(
+        [
+            "someone@example.test",
+            f"toy+acme.{TOKEN}@{DOMAIN}",
+            f"hire+acme.{TOKEN}@{DOMAIN}",
+            f"Hire+Acme.{TOKEN}@{DOMAIN}",
+            f"pay+acme.{TOKEN}@{DOMAIN}",
+        ],
+        DOMAIN,
+        workflows,
     )
-    assert hit is not None
-    assert hit.workflow == "hire"
-    assert resolve_route([f"toy+acme@{DOMAIN}"], DOMAIN, workflows) is None
+    assert [h.workflow for h in hits] == ["hire", "pay"]
+    assert candidate_routes([f"toy+acme.{TOKEN}@{DOMAIN}"], DOMAIN, workflows) == []
+    many = [f"pay+org-{i}.{TOKEN}@{DOMAIN}" for i in range(20)]
+    assert len(candidate_routes(many, DOMAIN, workflows)) == MAX_ROUTE_CANDIDATES
 
 
 def test_attachments_sender_and_headers() -> None:

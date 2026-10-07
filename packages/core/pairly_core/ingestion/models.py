@@ -2,9 +2,11 @@
 # Copyright (c) 2026 Proofly Technology
 """Tables for ingested documents and inbound emails (migration ``0004``).
 
-Both are tenant tables (RLS forced, standard tenant policy). The application role may
-SELECT, INSERT and UPDATE; there is no DELETE grant (retention deletion is a later,
-audited job).
+``documents`` and ``inbound_emails`` are tenant tables (RLS forced, standard tenant
+policy). The application role may SELECT, INSERT and UPDATE; there is no DELETE grant
+(retention deletion is a later, audited job). ``inbound_addresses`` holds the hashed
+secret token of each organisation's per-workflow inbound address; the application role
+may only SELECT it (tokens are rotated with ``pairly-admin inbound rotate``).
 
 Document status moves forward only:
 
@@ -178,4 +180,28 @@ class Document(Base, OrgScoped, Timestamped):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class InboundAddress(Base, OrgScoped, Timestamped):
+    """The secret token of one organisation's inbound address for one workflow.
+
+    The address is ``<workflow>+<org slug>.<token>@<domain>``. Only the SHA-256 of the
+    token is stored, so the address is shown once, when the token is (re)generated.
+    """
+
+    __tablename__ = "inbound_addresses"
+    __table_args__ = (
+        UniqueConstraint("org_id", "workflow", name="uq_inbound_addresses_org_id_workflow"),
+        CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
+        CheckConstraint("token_hash ~ '^[0-9a-f]{64}$'", name="token_hash_format"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=_UUID_DEFAULT
+    )
+    workflow: Mapped[str] = mapped_column(String(32), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    rotated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )

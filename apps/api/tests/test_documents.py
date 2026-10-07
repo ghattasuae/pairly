@@ -9,8 +9,10 @@ admin in org B. Storage is in memory, the queue records enqueues, the scanner is
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import io
+import re
 import uuid
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -26,11 +28,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from pairly_api.main import create_app
 from pairly_api.routes.documents import DocumentServices
+from pairly_core.audit import ActorType
 from pairly_core.config import Environment
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.documents.pipeline import ParseConfig, parse_document
 from pairly_core.documents.registry import ParseOptions
 from pairly_core.documents.sandbox import SandboxLimits, SandboxResult
+from pairly_core.ingestion.addresses import (
+    ROTATED_ACTION,
+    hash_inbound_token,
+    inbound_address,
+    rotate_inbound_token,
+)
 from pairly_core.ingestion.email import ingest_email
 from pairly_core.ingestion.models import Document
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, RecordingJobQueue
@@ -146,6 +155,7 @@ async def orgs(owner_engine: AsyncEngine, tenants: TwoTenants) -> AsyncIterator[
             await _in_org(conn, org)
             await conn.execute(text("DELETE FROM documents"))
             await conn.execute(text("DELETE FROM inbound_emails"))
+            await conn.execute(text("DELETE FROM inbound_addresses"))
             await conn.execute(
                 text(
                     "DELETE FROM memberships WHERE user_id IN "
@@ -623,6 +633,15 @@ async def _slug(owner_engine: AsyncEngine, org: uuid.UUID) -> str:
         return str(await conn.scalar(text("SELECT slug FROM organisations")))
 
 
+async def _rotate(owner_engine: AsyncEngine, org: uuid.UUID, workflow: str = "pay") -> str:
+    session = create_sessionmaker(owner_engine)()
+    set_tenant(session, org, None)
+    async with session, session.begin():
+        return await rotate_inbound_token(
+            session, workflow=workflow, actor_type=ActorType.SYSTEM, actor_id="pairly.test"
+        )
+
+
 def _email(
     to: str,
     *,
@@ -650,7 +669,8 @@ async def test_ingest_email(
     b = orgs.b
     maker = sessions(app_engine)
     slug = await _slug(owner_engine, b.org_id)
-    address = f"pay+{slug}@{DOMAIN}"
+    token = await _rotate(owner_engine, b.org_id)
+    address = inbound_address("pay", slug, token, DOMAIN)
     raw = _email(
         f"Accounts <{address}>",
         attachments=(("inv.pdf", pdf_bytes("mail")), ("tool.exe", b"MZ\x90\x00 synthetic")),
@@ -684,7 +704,7 @@ async def test_ingest_email(
     in_body = await ingest_email(body_only, **kwargs)
     assert [(i.filename, i.outcome) for i in in_body.items] == [("email-body.txt", "created")]
 
-    unknown_org = await ingest_email(_email(f"pay+no-such-org@{DOMAIN}"), **kwargs)
+    unknown_org = await ingest_email(_email(f"pay+no-such-org.{token}@{DOMAIN}"), **kwargs)
     assert unknown_org.status == "unroutable"
     elsewhere = await ingest_email(_email("someone@example.test"), **kwargs)
     assert elsewhere.status == "unroutable"
@@ -704,25 +724,153 @@ async def test_ingest_email(
     assert "core.document.rejected" in actions
 
 
+async def test_inbound_address_needs_the_current_token(
+    live: Live,
+    orgs: TwoTenants,
+    owner_engine: AsyncEngine,
+    app_engine: AsyncEngine,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    b = orgs.b
+    slug = await _slug(owner_engine, b.org_id)
+    kwargs: dict[str, Any] = {
+        "sessionmaker": sessions(app_engine),
+        "store": live.store,
+        "settings": live.settings,
+        "workflows": WORKFLOWS,
+    }
+
+    def mail(to: str) -> bytes:
+        return _email(
+            to,
+            body="Invoice 77 for consulting, total 900 AED, due in 30 days.",
+            message_id=f"<m-{uuid.uuid4().hex}@vendor.example>",
+        )
+
+    # No token configured yet: even the slug alone never routes.
+    assert (await ingest_email(mail(f"pay+{slug}@{DOMAIN}"), **kwargs)).status == "unroutable"
+    old = await _rotate(owner_engine, b.org_id)
+    new = await _rotate(owner_engine, b.org_id)
+    assert old != new
+    other_workflow = await _rotate(owner_engine, b.org_id, "hire")
+    caplog.clear()
+    for to in (
+        f"pay+{slug}@{DOMAIN}",
+        inbound_address("pay", slug, old, DOMAIN),  # rotated away
+        inbound_address("pay", slug, other_workflow, DOMAIN),  # another workflow's token
+        inbound_address("pay", f"{slug}x", new, DOMAIN),  # another slug
+    ):
+        result = await ingest_email(mail(to), **kwargs)
+        assert (result.status, result.org_id) == ("unroutable", None), to
+    logs = [r.msg for r in caplog.records if isinstance(r.msg, dict)]
+    unroutable = [e for e in logs if e.get("event") == "email_unroutable"]
+    assert [e["reason"] for e in unroutable] == ["no_address"] + ["unknown_address"] * 3
+    # Dropped and logged, never with the token.
+    for token in (old, new, other_workflow):
+        assert token not in repr(logs)
+    assert unroutable[1]["addresses"] == [f"pay+{slug}"]
+    # A stale address next to the current one still delivers to the current one.
+    both = mail(
+        f"{inbound_address('pay', slug, old, DOMAIN)}, {inbound_address('pay', slug, new, DOMAIN)}"
+    )
+    result = await ingest_email(both, **kwargs)
+    assert (result.status, result.org_id, result.workflow) == ("ingested", b.org_id, "pay")
+    assert (await audit_actions(owner_engine, b.org_id)).count(ROTATED_ACTION) == 3
+    async with owner_engine.begin() as conn:
+        await _in_org(conn, b.org_id)
+        rows = (
+            await conn.execute(text("SELECT workflow, token_hash FROM inbound_addresses"))
+        ).all()
+    assert sorted(rows) == sorted(
+        [("pay", hash_inbound_token(new)), ("hire", hash_inbound_token(other_workflow))]
+    )
+
+
+async def test_cli_inbound_rotate(
+    migrated: DbUrls,
+    orgs: TwoTenants,
+    owner_engine: AsyncEngine,
+    app_engine: AsyncEngine,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from pairly_api import admin as admin_cli
+
+    org = orgs.a.org_id
+    slug = await _slug(owner_engine, org)
+    monkeypatch.setenv(admin_cli.OWNER_URL_ENV, migrated.owner)
+    monkeypatch.setenv(admin_cli.INBOUND_DOMAIN_ENV, DOMAIN)
+
+    def run(*argv: str) -> tuple[int, str, str]:
+        code = admin_cli.main(["inbound", "rotate", *argv])
+        captured = capsys.readouterr()
+        return code, captured.out, captured.err
+
+    code, out, err = await asyncio.to_thread(run, "--org", str(org), "--workflow", "pay")
+    assert code == 0, err
+    match = re.search(rf"pay\+{re.escape(slug)}\.([a-z2-7]{{16}})@{re.escape(DOMAIN)}", out)
+    assert match is not None, out
+    first = match.group(1)
+    code, out, _ = await asyncio.to_thread(run, "--org", str(org), "--workflow", "pay")
+    assert code == 0
+    second = re.search(r"\.([a-z2-7]{16})@", out).group(1)  # type: ignore[union-attr]
+    assert second != first
+    # Only the hash is stored, and the newest token is the one that routes.
+    async with owner_engine.begin() as conn:
+        await _in_org(conn, org)
+        stored = (await conn.execute(text("SELECT token_hash FROM inbound_addresses"))).all()
+    assert stored == [(hash_inbound_token(second),)]
+    lookup = text("SELECT inbound_org_id('pay', :s, :h)")
+    async with app_engine.begin() as conn:
+        assert await conn.scalar(lookup, {"s": slug, "h": hash_inbound_token(second)}) == org
+        assert await conn.scalar(lookup, {"s": slug, "h": hash_inbound_token(first)}) is None
+
+    code, _, err = await asyncio.to_thread(run, "--org", str(org), "--workflow", "nope")
+    assert code == 2
+    assert "unknown workflow" in err
+    code, _, err = await asyncio.to_thread(run, "--org", str(uuid.uuid4()), "--workflow", "pay")
+    assert code == 1
+    assert "organisation not found" in err
+
+
 async def test_inbound_org_lookup_is_narrow(
     orgs: TwoTenants, owner_engine: AsyncEngine, app_engine: AsyncEngine
 ) -> None:
-    slug = await _slug(owner_engine, orgs.a.org_id)
+    org = orgs.a.org_id
+    slug = await _slug(owner_engine, org)
+    token_hash = hash_inbound_token(await _rotate(owner_engine, org))
+    lookup = text("SELECT inbound_org_id(:w, :s, :h)")
     async with app_engine.begin() as conn:
-        assert await conn.scalar(text("SELECT inbound_org_id(:s)"), {"s": slug}) == orgs.a.org_id
-        assert await conn.scalar(text("SELECT inbound_org_id(:s)"), {"s": "Bad Slug!"}) is None
+        assert await conn.scalar(lookup, {"w": "pay", "s": slug, "h": token_hash}) == org
+        for w, s_, h in (
+            ("hire", slug, token_hash),
+            ("pay", slug, "0" * 64),
+            ("pay", "Bad Slug!", token_hash),
+            ("pay", slug, "not-a-hash"),
+            ("pay", slug, None),
+        ):
+            assert await conn.scalar(lookup, {"w": w, "s": s_, "h": h}) is None
         # The flag never leaks out of the function.
-        visible = (await conn.execute(text("SELECT id FROM organisations"))).all()
-        assert visible == []
+        assert (await conn.execute(text("SELECT id FROM organisations"))).all() == []
+        assert (await conn.execute(text("SELECT id FROM inbound_addresses"))).all() == []
+    # The application role can read its own org's row but never write a token.
+    async with app_engine.connect() as conn:
+        await _in_org(conn, org)
+        assert len((await conn.execute(text("SELECT id FROM inbound_addresses"))).all()) == 1
+        with pytest.raises(DBAPIError, match="permission denied"):
+            await conn.execute(
+                text("UPDATE inbound_addresses SET token_hash = :h"), {"h": "0" * 64}
+            )
+        await conn.rollback()
     async with owner_engine.begin() as conn:
-        await _in_org(conn, orgs.a.org_id)
+        await _in_org(conn, org)
         await conn.execute(text("UPDATE organisations SET status = 'suspended'"))
     try:
         async with app_engine.begin() as conn:
-            assert await conn.scalar(text("SELECT inbound_org_id(:s)"), {"s": slug}) is None
+            assert await conn.scalar(lookup, {"w": "pay", "s": slug, "h": token_hash}) is None
     finally:
         async with owner_engine.begin() as conn:
-            await _in_org(conn, orgs.a.org_id)
+            await _in_org(conn, org)
             await conn.execute(text("UPDATE organisations SET status = 'active'"))
 
 
