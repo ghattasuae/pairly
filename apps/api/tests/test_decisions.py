@@ -77,7 +77,11 @@ PEOPLE: dict[str, str] = {
     "approver": "approver",
     "fc": "finance_controller",
     "reader": "read_only",
+    # Memberships limited to one workflow (WORKFLOW_SCOPED).
+    "pay_approver": "approver",
+    "hire_manager": "hiring_manager",
 }
+WORKFLOW_SCOPED: dict[str, str] = {"pay_approver": "pay", "hire_manager": "hire"}
 RULES = """\
 schema: pairly.rules/v1
 name: pay.spend
@@ -105,7 +109,7 @@ class Org:
         return self.people[name][0]
 
     def actor(self, name: str, *, otp: bool = True) -> Actor:
-        grants = (RoleGrant(PEOPLE[name], None),)
+        grants = (RoleGrant(PEOPLE[name], WORKFLOW_SCOPED.get(name)),)
         return Actor(
             kind=ActorKind.USER,
             id=self.user(name),
@@ -139,10 +143,11 @@ async def seed_org(owner: AsyncEngine, label: str) -> Org:
             )
             await conn.execute(
                 text(
-                    "INSERT INTO memberships (org_id, user_id, role_id) "
-                    "SELECT :o, :u, r.id FROM roles r WHERE r.key = :role AND r.org_id IS NULL"
+                    "INSERT INTO memberships (org_id, user_id, role_id, workflow) "
+                    "SELECT :o, :u, r.id, :wf FROM roles r "
+                    "WHERE r.key = :role AND r.org_id IS NULL"
                 ),
-                {"o": org.org_id, "u": user_id, "role": role},
+                {"o": org.org_id, "u": user_id, "role": role, "wf": WORKFLOW_SCOPED.get(name)},
             )
             org.people[name] = (user_id, subject)
         doc_id = uuid.uuid4()
@@ -609,9 +614,12 @@ async def test_receipts_are_redacted_by_role(
     assert audit["model_call_ids"]
     assert "INV-2026-0042" not in json.dumps(audit)
 
+    # Read only holds no workflow read permission and no core-wide grant: an audited 403.
     reader = await api.client.get(url, headers=api.headers(org_a, "reader"))
-    assert reader.status_code == 200
-    assert reader.json()["audience"] == "internal"
+    assert reader.status_code == 403
+    # An AP clerk reads pay, not the expense workflow of this record: it does not exist.
+    clerk = await api.client.get(url, headers=api.headers(org_a, "clerk"))
+    assert clerk.status_code == 404
 
     pdf_en = await api.client.get(url + ".pdf", headers=api.headers(org_a, "auditor"))
     assert pdf_en.headers["content-type"] == "application/pdf"
@@ -650,12 +658,14 @@ async def test_replay_api_and_permissions(api: Api, engine: AsyncEngine, org_a: 
     done = await api.client.post(url, json={}, headers=api.headers(org_a, "auditor"))
     assert done.status_code == 201, done.text
     assert done.json()["status"] == "match"
-    listed = await api.client.get(
-        f"/v1/decisions/{record.id}/replays", headers=api.headers(org_a, "reader")
-    )
-    assert [r["status"] for r in listed.json()] == ["match"]
+    # Pay readers (an AP clerk, a pay-only approver) see the pay record's replays.
+    for name in ("clerk", "pay_approver"):
+        listed = await api.client.get(
+            f"/v1/decisions/{record.id}/replays", headers=api.headers(org_a, name)
+        )
+        assert [r["status"] for r in listed.json()] == ["match"]
     found = await api.client.get(
-        "/v1/decisions?entity_type=invoice&entity_id=inv-7", headers=api.headers(org_a, "reader")
+        "/v1/decisions?entity_type=invoice&entity_id=inv-7", headers=api.headers(org_a, "clerk")
     )
     assert [d["id"] for d in found.json()] == [record.id]
 
@@ -712,6 +722,106 @@ async def test_appeal_lifecycle(
         with pytest.raises(DBAPIError):
             async with s.begin():
                 await s.execute(text("UPDATE appeals SET outcome = 'upheld'"))
+
+
+async def hire_record(engine: AsyncEngine, org: Org) -> str:
+    """A hire screening decision (the Hire workflow ships in M2; recorded directly)."""
+    from pairly_core.decisions.models import DecisionKind
+    from pairly_core.decisions.service import DecisionDraft, record_decision
+
+    async with session_for(engine, org.org_id) as s, s.begin():
+        stored = await record_decision(
+            s,
+            DecisionDraft(
+                kind=DecisionKind.SCORE,
+                workflow="hire",
+                entity_type="candidate",
+                entity_id=f"cand-{uuid.uuid4().hex[:8]}",
+                actor_type=ActorType.SYSTEM,
+                actor_id="screening",
+                output={"score": 3},
+            ),
+        )
+    return stored.id
+
+
+async def test_records_and_appeals_are_scoped_per_workflow(
+    api: Api, engine: AsyncEngine, owner_engine: AsyncEngine, org_a: Org
+) -> None:
+    pay = await rules_record(engine, org_a)
+    hire = await hire_record(engine, org_a)
+
+    async def get(path: str, name: str, **kw: Any) -> httpx.Response:
+        return await api.client.get(path, headers=api.headers(org_a, name, **kw))
+
+    async def post(path: str, name: str, body: dict[str, Any], **kw: Any) -> httpx.Response:
+        return await api.client.post(path, json=body, headers=api.headers(org_a, name, **kw))
+
+    # Records and receipts: a pay-only approver sees pay, never hire (404, like another
+    # organisation's record); a hire-only manager the other way round; the auditor both.
+    assert (await get(f"/v1/decisions/{pay.id}/receipt", "pay_approver")).status_code == 200
+    assert (await get(f"/v1/decisions/{hire}/receipt", "pay_approver")).status_code == 404
+    assert (await get(f"/v1/decisions/{hire}/receipt.pdf", "pay_approver")).status_code == 404
+    assert (await get(f"/v1/decisions/{hire}/replays", "pay_approver")).status_code == 404
+    assert (await get(f"/v1/decisions/{hire}/receipt", "hire_manager")).status_code == 200
+    assert (await get(f"/v1/decisions/{pay.id}/receipt", "hire_manager")).status_code == 404
+    for name in ("auditor", "admin"):
+        assert (await get(f"/v1/decisions/{hire}/receipt", name)).status_code == 200
+    (hire_row,) = [r for r in await records(engine, org_a) if r.id == hire]
+    listed = await get(
+        f"/v1/decisions?entity_type=candidate&entity_id={hire_row.entity_id}", "pay_approver"
+    )
+    assert listed.status_code == 200
+    assert listed.json() == []
+    # Replay needs core.decision.replay on top of read access.
+    assert (await post(f"/v1/decisions/{pay.id}/replay", "pay_approver", {})).status_code == 403
+
+    # Appeals: the clerk (pay) cannot even see the hire record to file against it.
+    reason = {"requester_type": "candidate", "requester_id": "cand-1", "reason": "Please review"}
+    assert (await post(f"/v1/decisions/{hire}/appeals", "clerk", reason)).status_code == 404
+    hire_appeal = await post(f"/v1/decisions/{hire}/appeals", "admin", reason)
+    assert hire_appeal.status_code == 201, hire_appeal.text
+    pay_body = {**reason, "requester_type": "vendor", "requester_id": "vendor-9"}
+    pay_appeal = await post(f"/v1/decisions/{pay.id}/appeals", "clerk", pay_body)
+    assert pay_appeal.status_code == 201, pay_appeal.text
+    hire_id, pay_id = hire_appeal.json()["id"], pay_appeal.json()["id"]
+
+    queue = (await get("/v1/appeals", "pay_approver")).json()
+    assert [a["id"] for a in queue] == [pay_id]
+    # A decider of the workflow reads the requester's own words.
+    assert queue[0]["reason"] == "Please review"
+    assert (await get(f"/v1/appeals/{hire_id}", "pay_approver")).status_code == 404
+    assert [a["id"] for a in (await get("/v1/appeals", "hire_manager")).json()] == [hire_id]
+    auditor = (await get("/v1/appeals", "auditor")).json()
+    assert {a["id"] for a in auditor} == {hire_id, pay_id}
+    assert all(a["reason"] == {"redacted": True} for a in auditor)
+    # The clerk reads pay appeals but cannot decide them: the reason stays redacted.
+    clerk_queue = (await get("/v1/appeals", "clerk")).json()
+    assert [(a["id"], a["reason"]) for a in clerk_queue] == [(pay_id, {"redacted": True})]
+
+    outcome = {"outcome": "upheld", "outcome_text": "Reviewed again; the decision stands."}
+    # Outside the approver's workflows the appeal does not exist; inside, step-up applies.
+    hidden = await post(f"/v1/appeals/{hire_id}/resolve", "pay_approver", outcome)
+    assert hidden.status_code == 404
+    no_otp = await post(f"/v1/appeals/{pay_id}/resolve", "pay_approver", outcome, otp=False)
+    assert no_otp.status_code == 403
+    clerk = await post(f"/v1/appeals/{pay_id}/resolve", "clerk", outcome)
+    assert clerk.status_code == 403
+    done = await post(f"/v1/appeals/{pay_id}/resolve", "pay_approver", outcome)
+    assert done.status_code == 200, done.text
+    hire_done = await post(f"/v1/appeals/{hire_id}/resolve", "hire_manager", outcome)
+    assert hire_done.status_code == 200, hire_done.text
+
+    # No workflow at all: an audited 403, never a silent empty list.
+    assert (await get("/v1/appeals", "reader")).status_code == 403
+    denials = await owner_sql(
+        owner_engine,
+        org_a.org_id,
+        "SELECT payload->>'reason' AS reason FROM audit_events "
+        "WHERE action = 'core.authz.denied' AND actor_id = :u",
+        {"u": str(org_a.user("reader"))},
+    )
+    assert "no_workflow_access" in {d.reason for d in denials}
 
 
 async def test_appeal_filer_cannot_resolve_and_sla_escalates(

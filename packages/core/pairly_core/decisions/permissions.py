@@ -2,15 +2,21 @@
 # Copyright (c) 2026 Proofly Technology
 """Decision record permissions (registered via ``pairly_core.rbac.CORE_PERMISSION_MODULES``).
 
-``core.decision.read`` (receipts, history) is defined in ``pairly_core.rbac``. Added here:
+``core.decision.read`` (receipts, history) is defined in ``pairly_core.rbac``. It and
+``core.appeal.read`` / ``core.appeal.decide`` are core-wide grants (every workflow, admin
+and auditor by default). Everyone else reads and decides per workflow, through the
+workflow's own read and decide permissions (``pairly_core.decisions.scope``). Added here:
 
 * ``core.decision.replay``: re-run a decision and store the result (auditor, admin).
 * ``core.decision_personal.read``: see decrypted personal data in records and receipts.
   Admin only by default: an auditor sees everything else, and gets this permission only
   through a role that grants it explicitly.
-* ``core.appeal.read`` / ``core.appeal.create``: the appeals queue, and filing an appeal
-  on behalf of a candidate or vendor (staff, until the portals exist).
-* ``core.appeal.decide``: resolve an appeal with a written outcome (step-up: TOTP).
+* ``core.appeal.read``: the appeals queue of every workflow.
+* ``core.appeal.create``: file an appeal on behalf of a candidate or vendor (staff,
+  until the portals exist), on a record of a workflow the filer may read.
+* ``core.appeal.decide``: resolve any workflow's appeal with a written outcome (step-up:
+  TOTP). Workflow deciders (``hire.candidate.decide``, ``pay.invoice.approve``) resolve
+  their own workflow's appeals without it.
 * ``core.compliance.export``: build and download a compliance pack (step-up: TOTP).
 """
 
@@ -42,9 +48,7 @@ PERMISSIONS: tuple[PermissionSpec, ...] = (
         frozenset({R.ADMIN}),
     ),
     PermissionSpec(
-        APPEAL_READ,
-        "See appeals and their outcomes",
-        frozenset({R.ADMIN, R.AUDITOR, *_STAFF, *_DECIDERS}),
+        APPEAL_READ, "See every workflow's appeals and outcomes", frozenset({R.ADMIN, R.AUDITOR})
     ),
     PermissionSpec(
         APPEAL_CREATE,
@@ -53,8 +57,8 @@ PERMISSIONS: tuple[PermissionSpec, ...] = (
     ),
     PermissionSpec(
         APPEAL_DECIDE,
-        "Resolve an appeal with a written outcome",
-        frozenset({R.ADMIN, R.HIRING_MANAGER, *_DECIDERS}),
+        "Resolve any workflow's appeal with a written outcome",
+        frozenset({R.ADMIN}),
     ),
     PermissionSpec(
         COMPLIANCE_EXPORT,

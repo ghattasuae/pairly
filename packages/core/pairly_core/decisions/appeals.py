@@ -41,6 +41,13 @@ from pairly_core.decisions.models import (
     DecisionRecord,
     RequesterType,
 )
+from pairly_core.decisions.permissions import APPEAL_READ, DECISION_READ
+from pairly_core.decisions.scope import (
+    WorkflowScope,
+    authorize_appeal_decision,
+    decide_scope,
+    read_scope,
+)
 from pairly_core.decisions.service import (
     DecisionDraft,
     chain_head,
@@ -77,9 +84,11 @@ class AppealView:
     sla_due_at: datetime
     escalated_at: datetime | None
     created_at: datetime
+    # The appealed decision's workflow (scoping, pairly_core.decisions.scope).
+    workflow: str | None = None
 
     @classmethod
-    def of(cls, row: Appeal) -> AppealView:
+    def of(cls, row: Appeal, workflow: str | None = None) -> AppealView:
         return cls(
             id=row.id,
             decision_id=row.decision_id,
@@ -96,6 +105,7 @@ class AppealView:
             sla_due_at=row.sla_due_at,
             escalated_at=row.escalated_at,
             created_at=row.created_at,
+            workflow=workflow,
         )
 
 
@@ -130,7 +140,7 @@ async def create_appeal(
     if org is None or org != actor.org_id:
         raise TenantError("appeals need the actor's tenant context")
     record = await get_record(session, decision_id)
-    if record is None:
+    if record is None or not read_scope(actor, DECISION_READ).allows(record.workflow):
         raise NotFoundError("decision not found")
     if not _REQUESTER_RE.fullmatch(requester_id):
         raise BadRequestError("invalid requester id")
@@ -172,20 +182,51 @@ async def create_appeal(
     row = await session.scalar(select(Appeal).where(Appeal.id == appeal_id))
     if row is None:  # pragma: no cover - RLS would have refused the insert
         raise TenantError("appeal not visible after insert")
-    return AppealView.of(row)
+    return AppealView.of(row, record.workflow)
 
 
-async def get_appeal(session: AsyncSession, appeal_id: uuid.UUID) -> Appeal | None:
-    return await session.scalar(select(Appeal).where(Appeal.id == appeal_id))
+def appeal_scope(actor: Actor) -> WorkflowScope:
+    """Workflows whose appeals ``actor`` sees: readers of the workflow and its deciders."""
+    return read_scope(actor, APPEAL_READ).union(decide_scope(actor))
+
+
+async def get_appeal(
+    session: AsyncSession, appeal_id: uuid.UUID, scope: WorkflowScope | None = None
+) -> AppealView | None:
+    """One appeal, or None when it does not exist or lies outside ``scope``."""
+    found = (
+        await session.execute(
+            select(Appeal, DecisionRecord.workflow)
+            .join(DecisionRecord, DecisionRecord.id == Appeal.decision_id)
+            .where(Appeal.id == appeal_id)
+        )
+    ).first()
+    if found is None:
+        return None
+    row, workflow = found
+    if scope is not None and not scope.allows(workflow):
+        return None
+    return AppealView.of(row, workflow)
 
 
 async def list_appeals(
-    session: AsyncSession, *, status: AppealStatus | None = None, limit: int = 100
+    session: AsyncSession,
+    *,
+    scope: WorkflowScope,
+    status: AppealStatus | None = None,
+    limit: int = 100,
 ) -> list[AppealView]:
-    query = select(Appeal).order_by(Appeal.sla_due_at, Appeal.id).limit(max(1, min(limit, 200)))
+    """The appeals queue (by SLA due date), limited to the workflows in ``scope``."""
+    query = (
+        select(Appeal, DecisionRecord.workflow)
+        .join(DecisionRecord, DecisionRecord.id == Appeal.decision_id)
+        .where(scope.clause(DecisionRecord.workflow))
+        .order_by(Appeal.sla_due_at, Appeal.id)
+        .limit(max(1, min(limit, 200)))
+    )
     if status is not None:
         query = query.where(Appeal.status == status.value)
-    return [AppealView.of(r) for r in await session.scalars(query)]
+    return [AppealView.of(row, workflow) for row, workflow in await session.execute(query)]
 
 
 def _deny(actor: Actor, reason: str) -> PermissionDeniedError:
@@ -217,6 +258,11 @@ async def resolve_appeal(
     )
     if record is None:  # pragma: no cover - foreign key
         raise NotFoundError("decision not found")
+    # Outside the actor's workflows the appeal does not exist for them; inside, they need
+    # the workflow's decide permission (or core.appeal.decide) and a second factor.
+    if not appeal_scope(actor).allows(record.workflow):
+        raise NotFoundError("appeal not found")
+    authorize_appeal_decision(actor, record.workflow)
     if row.filed_by == actor.id:
         raise _deny(actor, "segregation_of_duties_filer")
     if record.actor_type == ActorType.USER.value and record.actor_id == str(actor.id):
@@ -273,7 +319,7 @@ async def resolve_appeal(
         select(Appeal).where(Appeal.id == appeal_id).execution_options(populate_existing=True)
     )
     assert refreshed is not None  # noqa: S101
-    return AppealView.of(refreshed)
+    return AppealView.of(refreshed, record.workflow)
 
 
 async def escalate_overdue_appeals(session: AsyncSession, *, limit: int = 200) -> list[uuid.UUID]:

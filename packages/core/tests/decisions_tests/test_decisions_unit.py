@@ -247,6 +247,11 @@ def test_audience_follows_permissions() -> None:
     assert audience_for(actor(DECISION_READ)) is Audience.INTERNAL
     with pytest.raises(NotFoundError):
         audience_for(actor())
+    # A reader of the record's workflow (checked by the caller) gets the internal view.
+    assert audience_for(actor(), workflow_reader=True) is Audience.INTERNAL
+    assert audience_for(actor(DECISION_PERSONAL_READ), workflow_reader=True) is (
+        Audience.INTERNAL_FULL
+    )
 
 
 @pytest.mark.parametrize("lang", ["en", "ar"])

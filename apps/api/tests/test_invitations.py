@@ -597,8 +597,8 @@ async def test_me_reports_second_factor(live: Live, orgs: TwoTenants) -> None:
         await live.client.get("/v1/me", headers=live.auth(a.subject, org=a.org_id, amr=["email"]))
     ).json()
     assert without["second_factor"] is False
-    # Approvers also decide appeals (core.appeal.decide, WP1.10): a step-up action too.
-    assert without["second_factor_permissions"] == ["core.appeal.decide", "pay.invoice.approve"]
+    # Approvers decide pay appeals through pay.invoice.approve (scoped per workflow).
+    assert without["second_factor_permissions"] == ["pay.invoice.approve"]
     with_otp = (
         await live.client.get("/v1/me", headers=live.auth(a.subject, org=a.org_id, amr=OTP))
     ).json()

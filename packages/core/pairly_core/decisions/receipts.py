@@ -12,7 +12,8 @@ Audiences:
 
 * ``internal_full``: staff with ``core.decision_personal.read`` (admin by default).
   Everything, decrypted personal data included.
-* ``internal``: staff with ``core.decision.read`` (auditors and others). Everything
+* ``internal``: staff who may read the record's workflow (``core.decision.read``,
+  or the workflow's own read permission; auditors and others). Everything
   except decrypted personal data and internal notes, which are redacted.
 * ``subject``: the candidate or vendor the decision is about (portals, M2 and M4).
   Only their own decision (``subject_receipt`` checks it), with internal notes, people,
@@ -122,13 +123,17 @@ def visibility(path: str, audience: Audience) -> Visibility:
     return rule[audience] if rule is not None else Visibility.OMIT
 
 
-def audience_for(actor: Actor) -> Audience:
-    """The staff audience of an actor (the caller has checked ``core.decision.read``)."""
+def audience_for(actor: Actor, *, workflow_reader: bool = False) -> Audience:
+    """The staff audience of an actor.
+
+    ``workflow_reader``: the caller checked that the actor may read the record's workflow
+    (``pairly_core.decisions.scope``); otherwise ``core.decision.read`` is required.
+    """
+    if not (workflow_reader or actor.has(DECISION_READ)):
+        raise NotFoundError("decision not found")
     if actor.has(DECISION_PERSONAL_READ):
         return Audience.INTERNAL_FULL
-    if actor.has(DECISION_READ):
-        return Audience.INTERNAL
-    raise NotFoundError("decision not found")
+    return Audience.INTERNAL
 
 
 @dataclass(frozen=True, slots=True)

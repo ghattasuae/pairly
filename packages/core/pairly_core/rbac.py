@@ -189,16 +189,9 @@ CORE_PERMISSIONS: tuple[PermissionSpec, ...] = (
     _p("core.users.manage", "Invite members and change their roles", _R.ADMIN),
     _p("core.audit.read", "Read the audit log", _R.ADMIN, _R.AUDITOR, _R.FINANCE_CONTROLLER),
     _p("core.audit.export", "Export the audit log", _R.ADMIN, _R.AUDITOR),
-    _p(
-        "core.decision.read",
-        "Read decision records",
-        _R.ADMIN,
-        _R.AUDITOR,
-        _R.READ_ONLY,
-        *_STAFF,
-        *_DECIDERS,
-        _R.AGENT,
-    ),
+    # Core-wide: every workflow's records. Everyone else reads the records of the
+    # workflows where they hold a read permission (pairly_core.decisions.scope).
+    _p("core.decision.read", "Read decision records of every workflow", _R.ADMIN, _R.AUDITOR),
     _p("core.decision.propose", "Create proposed decisions", _R.AGENT),
     _p("core.approval.read", "See the approval inbox", _R.ADMIN, _R.AUDITOR, *_STAFF, *_DECIDERS),
 )
