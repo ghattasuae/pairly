@@ -25,6 +25,7 @@ from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
 from pairly_api.routes import approval_links, approvals, audit, health, invitations, me, members
 from pairly_api.routes import documents as document_routes
+from pairly_api.routes import extractions as extraction_routes
 from pairly_api.routes.documents import DocumentServices
 from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
@@ -142,6 +143,7 @@ def create_app(
     v1.include_router(invitations.router)
     v1.include_router(members.router)
     v1.include_router(document_routes.router)
+    v1.include_router(extraction_routes.router)
     v1.include_router(approvals.router)
     v1.include_router(approval_links.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.

@@ -285,7 +285,10 @@ class RoleRegistry:
 
 # Core modules that define more ``core.*`` permissions in a module-level ``PERMISSIONS``
 # tuple. Imported lazily by ``build_registry`` (they import this module).
-CORE_PERMISSION_MODULES: tuple[str, ...] = ("pairly_core.documents.permissions",)
+CORE_PERMISSION_MODULES: tuple[str, ...] = (
+    "pairly_core.documents.permissions",
+    "pairly_core.extraction.permissions",
+)
 
 
 def core_permissions() -> tuple[PermissionSpec, ...]:

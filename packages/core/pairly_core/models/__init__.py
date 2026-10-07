@@ -9,11 +9,13 @@ from pairly_core.approvals.models import (
     ApprovalLink,
     ApprovalStep,
 )
+from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
 from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
+from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.workflow.models import WorkflowRun
 
 __all__ = [
@@ -24,6 +26,9 @@ __all__ = [
     "ApprovalStep",
     "AuditEvent",
     "Document",
+    "Extraction",
+    "ExtractionCorrection",
+    "ExtractionField",
     "InboundAddress",
     "InboundEmail",
     "Invitation",
@@ -34,6 +39,8 @@ __all__ = [
     "OrgLLMBudget",
     "Organisation",
     "PolicyVersion",
+    "RiskAssessment",
+    "RiskSignalRow",
     "Role",
     "User",
     "WorkflowRun",
