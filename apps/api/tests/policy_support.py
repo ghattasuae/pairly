@@ -14,15 +14,28 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from pairly_core.audit import ActorType
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.documents.model import BBox, NormalizedDocument, Page, ParserInfo, Style, TextBlock
 from pairly_core.ingestion.models import Document, DocumentStatus
+from pairly_core.llm.budget import BudgetManager
+from pairly_core.llm.catalog import load_catalog, load_prices
+from pairly_core.llm.prompt_registry import PromptRegistry
+from pairly_core.llm.providers.fake import FakeProvider
+from pairly_core.llm.router import ModelRouter
+from pairly_core.llm.settings import LLMSettings, ModelMode
+from pairly_core.llm.store import DatabaseCallStore
 from pairly_core.policy.documents import POLICY_WORKFLOW, index_normalized, register_policy_document
 from pairly_core.policy.models import PolicyDocument
-from pairly_core.retrieval.embeddings import Embedder
+from pairly_core.retrieval.embeddings import Embedder, HashingEmbedder
+from pairly_core.retrieval.metered import MeteredEmbedder
 
 from .conftest import DbUrls, Tenant, _seed_tenant
 
@@ -162,6 +175,34 @@ async def pol_engine(migrated: DbUrls) -> AsyncIterator[AsyncEngine]:
     engine = create_async_engine(migrated.app, pool_size=5, max_overflow=5)
     yield engine
     await engine.dispose()
+
+
+def router_for(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    *,
+    mode: ModelMode = ModelMode.RECORDED,
+    limit: int = 10_000_000,
+) -> ModelRouter:
+    """A model router with no reachable chat provider: enough to meter embeddings."""
+    prices = load_prices()
+    return ModelRouter(
+        settings=LLMSettings(model_mode=mode),
+        providers={
+            "anthropic": FakeProvider("anthropic", available=False),
+            "openai": FakeProvider("openai", available=False),
+        },
+        catalog=load_catalog(prices),
+        prices=prices,
+        prompts=PromptRegistry(),
+        sessionmaker=sessionmaker,
+        budget=BudgetManager(default_limit_micros=limit),
+        store=DatabaseCallStore(),
+    )
+
+
+def metered_hashing_embedder(sessionmaker: async_sessionmaker[AsyncSession]) -> MeteredEmbedder:
+    """The offline embedder, metered like production: budget check and ``model_calls``."""
+    return MeteredEmbedder(HashingEmbedder(), router_for(sessionmaker))
 
 
 def session_for(engine: AsyncEngine, org: uuid.UUID) -> AsyncSession:

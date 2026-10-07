@@ -14,13 +14,9 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_core.db import create_sessionmaker
-from pairly_core.llm.budget import BudgetManager
-from pairly_core.llm.catalog import load_catalog, load_prices
 from pairly_core.llm.hashing import canonical_json, sha256_hex
-from pairly_core.llm.prompt_registry import PromptRegistry
-from pairly_core.llm.providers.fake import FakeProvider
 from pairly_core.llm.router import EMBED_TASK, ModelRouter
-from pairly_core.llm.settings import LLMSettings, ModelMode
+from pairly_core.llm.settings import ModelMode
 from pairly_core.llm.store import DatabaseCallStore
 from pairly_core.llm.types import PartialUsage
 from pairly_core.models.llm import LLMBudgetReservation
@@ -40,6 +36,7 @@ from .policy_support import (
     build_document,
     new_org,
     pol_engine,
+    router_for,
     session_for,
 )
 
@@ -47,20 +44,7 @@ __all__ = ["pol_engine"]  # fixture
 
 
 def make_router(engine: AsyncEngine, *, mode: ModelMode, limit: int = 10_000_000) -> ModelRouter:
-    prices = load_prices()
-    return ModelRouter(
-        settings=LLMSettings(model_mode=mode),
-        providers={
-            "anthropic": FakeProvider("anthropic", available=False),
-            "openai": FakeProvider("openai", available=False),
-        },
-        catalog=load_catalog(prices),
-        prices=prices,
-        prompts=PromptRegistry(),
-        sessionmaker=create_sessionmaker(engine),
-        budget=BudgetManager(default_limit_micros=limit),
-        store=DatabaseCallStore(),
-    )
+    return router_for(create_sessionmaker(engine), mode=mode, limit=limit)
 
 
 class PricedFake(HashingEmbedder):

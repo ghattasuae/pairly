@@ -25,7 +25,7 @@ from pairly_core.config import Environment
 from pairly_core.ingestion.queue import SCAN_JOB, RecordingJobQueue
 from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import InMemoryObjectStore, derived_key
-from pairly_core.retrieval.embeddings import HashingEmbedder
+from pairly_core.retrieval.metered import MeteredEmbedder
 
 from .conftest import DbUrls, TokenFactory, make_settings
 from .policy_support import (
@@ -34,6 +34,7 @@ from .policy_support import (
     Line,
     Org,
     build_document,
+    metered_hashing_embedder,
     new_org,
     with_hidden_line,
 )
@@ -70,9 +71,11 @@ async def api(migrated: DbUrls, tokens: TokenFactory, tmp_path: Path) -> AsyncIt
     )
     services = DocumentServices(settings=settings, store=store, queue=queue, tmp_dir=tmp_path)
     app = create_app(make_settings(migrated.app), plugins=[], documents=services)
-    app.state.policy_embedder = HashingEmbedder()
     async with app.router.lifespan_context(app):
         app.state.pairly = dataclasses.replace(app.state.pairly, verifier=tokens.verifier())
+        # The production path: every embedding is budget checked and recorded in
+        # model_calls through the model router (offline hashing vectors underneath).
+        app.state.policy_embedder = metered_hashing_embedder(app.state.pairly.sessionmaker)
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://api.test") as client:
             yield Api(app, client, tokens, store, queue)
@@ -316,6 +319,9 @@ async def test_policy_document_lifecycle(api: Api, org: Org, owner_engine: Async
     assert indexed.json()["status"] == "indexed"
     assert indexed.json()["chunks"] >= 4
     assert indexed.json()["policy_document"]["embedding_model"] == "pairly-hashing"
+    assert isinstance(api.app.state.policy_embedder, MeteredEmbedder)
+    embed_calls = "SELECT count(*) FROM model_calls WHERE task = 'core_embed' AND status = 'ok'"
+    assert await owner_scalar(owner_engine, org.id, embed_calls) == 1  # the indexing call
 
     search = await api.client.post(
         "/v1/policies/search",
@@ -323,6 +329,8 @@ async def test_policy_document_lifecycle(api: Api, org: Org, owner_engine: Async
         headers=api.h(approver, org.id, otp=False),
     )
     assert search.status_code == 200, search.text
+    # The query embedding is metered too, and billed to this organisation only.
+    assert await owner_scalar(owner_engine, org.id, embed_calls) == 2
     top = search.json()[0]
     assert top["section"] == "1 Purchasing > 1.1 Software"
     assert (top["name"], top["version"], top["page_start"]) == ("spend_policy", 1, 1)
