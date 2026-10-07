@@ -412,6 +412,7 @@ async def test_worker_refuses_to_start_without_keys(no_keys: None) -> None:
     config = load_worker_config(
         database_url="postgresql://pairly_app:pw@127.0.0.1:1/none",
         redis_url="redis://:pw@127.0.0.1:1/0",
+        audit_signing_key=base64.urlsafe_b64encode(secrets.token_bytes(32)).decode(),
     )
     with pytest.raises(CryptoConfigError, match="PAIRLY_BLIND_INDEX_KEY"):
         await worker_main.startup({"config": config})

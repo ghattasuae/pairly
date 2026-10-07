@@ -5,9 +5,15 @@
 # One-shot MinIO setup, run by the `minio-init` compose service. Idempotent.
 #
 # Creates the buckets and one least-privilege access key per consumer:
-#   PAIRLY_S3_ACCESS_KEY    read/write on PAIRLY_S3_BUCKET only (API and worker)
+#   PAIRLY_S3_ACCESS_KEY    read/write on PAIRLY_S3_BUCKET, and get/list/put (never
+#                           delete) on PAIRLY_AUDIT_ANCHOR_BUCKET (API and worker)
 #   LANGFUSE_S3_ACCESS_KEY  read/write on the `langfuse` bucket only (observability profile)
 # Buckets stay private: no anonymous access. The app hands out presigned URLs.
+#
+# The audit anchor bucket (WP1.10b) is created with S3 Object Lock (which turns on
+# versioning) and a default retention, so a signed chain head cannot be deleted or
+# overwritten until it expires. Object lock can only be chosen when a bucket is
+# created: an anchor bucket that already exists without it is reported, not changed.
 
 set -eu
 
@@ -20,6 +26,9 @@ set -eu
 : "${LANGFUSE_S3_SECRET_KEY:?missing}"
 
 LANGFUSE_BUCKET=langfuse
+ANCHOR_BUCKET="${PAIRLY_AUDIT_ANCHOR_BUCKET:-pairly-audit-anchors}"
+ANCHOR_LOCK_MODE="${PAIRLY_AUDIT_ANCHOR_LOCK_MODE:-GOVERNANCE}"
+ANCHOR_RETENTION_DAYS="${PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS:-2555}"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 export MC_CONFIG_DIR="$WORK/mc"
@@ -67,5 +76,58 @@ setup() {
   echo "ready: bucket $1, access key $2 (policy $4)"
 }
 
-setup "$PAIRLY_S3_BUCKET" "$PAIRLY_S3_ACCESS_KEY" "$PAIRLY_S3_SECRET_KEY" pairly-app-rw
+app_policy() {
+  # The documents bucket read/write, plus the anchor bucket without any delete:
+  # anchors are write once.
+  cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
+      "Resource": ["arn:aws:s3:::$PAIRLY_S3_BUCKET", "arn:aws:s3:::$ANCHOR_BUCKET"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject", "s3:PutObject", "s3:DeleteObject",
+        "s3:AbortMultipartUpload", "s3:ListMultipartUploadParts"
+      ],
+      "Resource": ["arn:aws:s3:::$PAIRLY_S3_BUCKET/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectRetention"],
+      "Resource": ["arn:aws:s3:::$ANCHOR_BUCKET/*"]
+    }
+  ]
+}
+EOF
+}
+
+if [ "$ANCHOR_LOCK_MODE" = "none" ]; then
+  mc mb --ignore-existing "local/$ANCHOR_BUCKET"
+else
+  mc mb --ignore-existing --with-lock "local/$ANCHOR_BUCKET"
+  if mc retention info --default "local/$ANCHOR_BUCKET" >/dev/null 2>&1; then
+    mc retention set --default "$ANCHOR_LOCK_MODE" "${ANCHOR_RETENTION_DAYS}d" \
+      "local/$ANCHOR_BUCKET" >/dev/null
+  else
+    echo "warning: $ANCHOR_BUCKET has no object lock; anchors are write once by policy only"
+  fi
+fi
+mc anonymous set none "local/$ANCHOR_BUCKET" >/dev/null
+
+mc mb --ignore-existing "local/$PAIRLY_S3_BUCKET"
+mc anonymous set none "local/$PAIRLY_S3_BUCKET" >/dev/null
+app_policy > "$WORK/pairly-app-rw.json"
+mc admin policy create local pairly-app-rw "$WORK/pairly-app-rw.json"
+mc admin user add local "$PAIRLY_S3_ACCESS_KEY" "$PAIRLY_S3_SECRET_KEY" >/dev/null
+info=$(mc admin user info local "$PAIRLY_S3_ACCESS_KEY")
+case "$info" in
+  *pairly-app-rw*) ;;
+  *) mc admin policy attach local pairly-app-rw --user "$PAIRLY_S3_ACCESS_KEY" >/dev/null ;;
+esac
+echo "ready: buckets $PAIRLY_S3_BUCKET and $ANCHOR_BUCKET (lock $ANCHOR_LOCK_MODE)"
 setup "$LANGFUSE_BUCKET" "$LANGFUSE_S3_ACCESS_KEY" "$LANGFUSE_S3_SECRET_KEY" langfuse-rw

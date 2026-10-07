@@ -7,6 +7,8 @@ Kept with the API database tests to reuse their migration and tenant fixtures.
 
 from __future__ import annotations
 
+import base64
+import secrets
 import uuid
 from typing import Any
 
@@ -22,6 +24,9 @@ from pairly_worker.main import shutdown, startup
 
 from .conftest import DbUrls, TwoTenants
 from .test_audit import _append, _session, _tamper, _verify
+
+# A fresh Ed25519 seed per run (never a fixed key).
+SIGNING_KEY = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode()
 
 
 async def _broken_events(engine: AsyncEngine, org: uuid.UUID) -> list[Any]:
@@ -70,7 +75,10 @@ async def test_nightly_job_flags_broken_chains(
 async def test_worker_startup_checks_role(migrated: DbUrls, owner_engine: AsyncEngine) -> None:
     # env=test: no object storage here, so the document jobs stay disabled (WP1.1).
     config = load_worker_config(
-        database_url=migrated.app, redis_url="redis://localhost:6379/0", env="test"
+        database_url=migrated.app,
+        redis_url="redis://localhost:6379/0",
+        env="test",
+        audit_signing_key=SIGNING_KEY,
     )
     ctx: dict[str, Any] = {"config": config}
     await startup(ctx)
@@ -88,7 +96,10 @@ async def test_worker_startup_checks_role(migrated: DbUrls, owner_engine: AsyncE
     if is_super:
         bad: dict[str, Any] = {
             "config": load_worker_config(
-                database_url=migrated.owner, redis_url="redis://localhost:6379/0", env="test"
+                database_url=migrated.owner,
+                redis_url="redis://localhost:6379/0",
+                env="test",
+                audit_signing_key=SIGNING_KEY,
             )
         }
         with pytest.raises(UnsafeDatabaseRoleError):

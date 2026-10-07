@@ -42,14 +42,15 @@ from pairly_core.audit import (
     audit_actor_action,
     events_in_transaction,
     orm_writes_in_transaction,
-    record_denial,
 )
+from pairly_core.audit_anchor.denials import record_denial_limited
 from pairly_core.auth import TokenVerifier, VerifiedToken
-from pairly_core.config import Settings
+from pairly_core.config import Environment, Settings
 from pairly_core.db import current_org, set_tenant
 from pairly_core.errors import (
     BadRequestError,
     ForbiddenError,
+    PairlyError,
     ServiceUnavailableError,
     UnauthenticatedError,
 )
@@ -60,6 +61,13 @@ log = structlog.get_logger(__name__)
 
 ORG_HEADER = "X-Pairly-Org"
 _NO_ACCESS = "no access to this organisation"
+
+
+class UnauditedWriteError(PairlyError):
+    """A request changed data without an audit event (development and test only)."""
+
+    code = "unaudited_write"
+    title = "Write without an audit event"
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,11 +116,16 @@ async def request_session(request: Request, ctx: Context) -> AsyncIterator[Async
 
     * Audit events written during the request (``pairly_core.audit.append_audit``) share
       this transaction, so they commit atomically with the change they record.
-    * Before committing, if the request flushed ORM changes but recorded no audit event,
-      a generic ``core.request.write`` event is added (safety net) and a warning is
-      logged, so no state change goes unaudited. Reads never write audit events.
+    * Before committing, if the request flushed ORM changes but recorded no audit event
+      (safety net): in development and test the request fails with
+      ``UnauditedWriteError`` and rolls back, so a route that forgot its audit event is
+      caught by its tests; in production and staging a generic ``core.request.write``
+      event is added and a warning logged, so no state change goes unaudited. Reads
+      never write audit events.
     * A ``PermissionDeniedError`` rolls the request back, then the denial is recorded in
-      a fresh transaction, so it is kept although the denied work is not.
+      a fresh transaction, so it is kept although the denied work is not. Denial events
+      are rate limited per actor (``pairly_core.audit_anchor.denials``): a burst beyond
+      the limit becomes one summary event instead of one event per refusal.
     """
     async with ctx.sessionmaker() as session:
         request_id = request.scope.get("state", {}).get("request_id")
@@ -139,7 +152,7 @@ async def _audit_denial(session: AsyncSession, exc: PermissionDeniedError) -> No
         return
     try:
         async with session.begin():
-            await record_denial(session, exc)
+            await record_denial_limited(session, exc)
     except Exception as err:
         log.error("audit_denial_write_failed", error=type(err).__name__)
 
@@ -154,6 +167,15 @@ async def _audit_unrecorded_writes(request: Request, session: AsyncSession) -> N
         return
     route = request.scope.get("route")
     path = getattr(route, "path", None)
+    ctx = getattr(request.app.state, "pairly", None)
+    env = ctx.settings.env if isinstance(ctx, AppContext) else Environment.PRODUCTION
+    if env in {Environment.DEVELOPMENT, Environment.TEST}:
+        # Fail loudly where the code is written and tested: every write path must
+        # record its own audit event.
+        log.error("unaudited_write", method=request.method, route=path)
+        raise UnauditedWriteError(
+            f"{request.method} {path} changed data without recording an audit event"
+        )
     log.warning("unaudited_write", method=request.method, route=path)
     await audit_actor_action(
         session,

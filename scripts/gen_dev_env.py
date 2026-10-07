@@ -10,6 +10,8 @@ Usage:
 Rules:
 - An existing `.env` is never overwritten or changed. The script exits 0 and says so.
 - Every secret listed in SECRET_GENERATORS gets a fresh value from `secrets`.
+- Every key listed in DERIVED is computed from one of those secrets (the audit anchor
+  public key is derived from the audit signing key, so the pair always matches).
 - Every other key keeps the value from `.env.example` (optional keys stay empty).
 - The file is created with mode 0600 and with O_EXCL, so a race cannot clobber a file.
 
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import os
 import secrets
 import sys
@@ -41,12 +44,68 @@ def _prefixed(prefix: str) -> Callable[[], str]:
     return lambda: f"{prefix}{secrets.token_hex(16)}"
 
 
+# ---------------------------------------------------------------- Ed25519 public key
+# RFC 8032 section 5.1.5 (public key from a 32-byte seed), standard library only. Used
+# for the audit anchor key pair; tested against `cryptography` in scripts/tests.
+_P = 2**255 - 19
+_D = -121665 * pow(121666, _P - 2, _P) % _P
+_SQRT_M1 = pow(2, (_P - 1) // 4, _P)
+
+
+def _recover_x(y: int) -> int:
+    x2 = (y * y - 1) * pow(_D * y * y + 1, _P - 2, _P) % _P
+    x = pow(x2, (_P + 3) // 8, _P)
+    if (x * x - x2) % _P:
+        x = x * _SQRT_M1 % _P
+    return _P - x if x % 2 else x
+
+
+_GY = 4 * pow(5, _P - 2, _P) % _P
+_GX = _recover_x(_GY)
+_BASE = (_GX, _GY, 1, _GX * _GY % _P)
+
+
+def _add(p: tuple[int, int, int, int], q: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+    a = (p[1] - p[0]) * (q[1] - q[0]) % _P
+    b = (p[1] + p[0]) * (q[1] + q[0]) % _P
+    c = 2 * p[3] * q[3] * _D % _P
+    d = 2 * p[2] * q[2] % _P
+    e, f, g, h = b - a, d - c, d + c, b + a
+    return (e * f % _P, g * h % _P, f * g % _P, e * h % _P)
+
+
+def ed25519_public_key(seed: bytes) -> bytes:
+    """The raw 32-byte Ed25519 public key of a 32-byte private seed."""
+    if len(seed) != 32:
+        raise ValueError("an Ed25519 seed is 32 bytes")
+    digest = hashlib.sha512(seed).digest()
+    scalar = int.from_bytes(digest[:32], "little")
+    scalar &= (1 << 254) - 8
+    scalar |= 1 << 254
+    point, addend = (0, 1, 1, 0), _BASE
+    while scalar:
+        if scalar & 1:
+            point = _add(point, addend)
+        addend = _add(addend, addend)
+        scalar >>= 1
+    z_inv = pow(point[2], _P - 2, _P)
+    x, y = point[0] * z_inv % _P, point[1] * z_inv % _P
+    return (y | ((x & 1) << 255)).to_bytes(32, "little")
+
+
+def _public_from_seed(seed_b64: str) -> str:
+    seed = base64.urlsafe_b64decode(seed_b64)
+    return base64.urlsafe_b64encode(ed25519_public_key(seed)).decode("ascii")
+
+
 # Hex values are URL safe, so they can go straight into connection strings.
 SECRET_GENERATORS: dict[str, Callable[[], str]] = {
     # First key encryption key (WP1.14). PAIRLY_KEK_2 stays empty until a rotation.
     "PAIRLY_KEK_1": _b64key,
     "PAIRLY_BLIND_INDEX_KEY": _b64key,
     "PAIRLY_SIGNED_LINK_SECRET": _hex(32),
+    # Ed25519 seed that signs the nightly audit chain anchors (worker only, WP1.10b).
+    "PAIRLY_AUDIT_SIGNING_KEY": _b64key,
     "POSTGRES_PASSWORD": _hex(24),
     "PAIRLY_OWNER_DB_PASSWORD": _hex(24),
     "PAIRLY_APP_DB_PASSWORD": _hex(24),
@@ -67,6 +126,12 @@ SECRET_GENERATORS: dict[str, Callable[[], str]] = {
 }
 
 
+# Keys computed from a generated secret: name -> (source secret, derivation).
+DERIVED: dict[str, tuple[str, Callable[[str], str]]] = {
+    "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY": ("PAIRLY_AUDIT_SIGNING_KEY", _public_from_seed),
+}
+
+
 def render(template: str) -> str:
     """Return the .env text for a .env.example template, with secrets filled in.
 
@@ -75,6 +140,7 @@ def render(template: str) -> str:
     """
     seen: set[str] = set()
     out: list[str] = []
+    values = {key: make() for key, make in SECRET_GENERATORS.items()}
     for line in template.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#") or "=" not in stripped:
@@ -82,11 +148,15 @@ def render(template: str) -> str:
             continue
         key, _, value = stripped.partition("=")
         key = key.strip()
-        if key in SECRET_GENERATORS:
+        if key in SECRET_GENERATORS or key in DERIVED:
             if value.strip():
                 raise ValueError(f".env.example must leave {key} empty")
+            if key in DERIVED:
+                source, derive = DERIVED[key]
+                out.append(f"{key}={derive(values[source])}")
+                continue
             seen.add(key)
-            out.append(f"{key}={SECRET_GENERATORS[key]()}")
+            out.append(f"{key}={values[key]}")
         else:
             out.append(line)
     missing = sorted(set(SECRET_GENERATORS) - seen)

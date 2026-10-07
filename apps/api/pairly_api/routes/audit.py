@@ -6,7 +6,13 @@
 * ``GET /v1/audit/export``  the whole (filtered) log as CSV or JSON, streamed
   (``core.audit.export``). Each export is itself recorded in the audit log.
 * ``GET /v1/audit/verify``  recompute the chain and report the first broken ``seq``
+  (``core.audit.read``), checked against the anchored heads (WP1.10b). A chain longer
+  than the services' ``large_chain_events`` is verified by the worker instead: 202 with
+  a job id, then ``GET /v1/audit/verify/{job_id}`` for the result.
+* ``GET /v1/audit/anchors``  the organisation's anchored heads, verified
   (``core.audit.read``).
+* ``GET /v1/audit/anchor-key``  the Ed25519 public key that signs the anchors. Public
+  (no sign-in): anyone holding an export can check the anchors with it.
 
 Everything is read only: there is no way to change or delete audit events.
 """
@@ -25,24 +31,35 @@ from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from pairly_api.decision_services import DecisionServices, get_decision_services
 from pairly_core.audit import (
     CSV_COLUMNS,
     ActorType,
     AuditAction,
     AuditFilter,
     AuditRecord,
+    actor_ref,
     audit_actor_action,
     canonical_json,
     csv_row,
     format_timestamp,
     select_records,
-    verify_chain,
+)
+from pairly_core.audit_anchor.anchoring import load_anchors, public_keys
+from pairly_core.audit_anchor.signing import AnchorError, encode_key, key_id, public_bytes
+from pairly_core.audit_anchor.store import AnchorStoreError
+from pairly_core.audit_anchor.verification import (
+    chain_length,
+    get_verification,
+    request_verification,
+    verify_with_anchors,
 )
 from pairly_core.db import set_tenant
-from pairly_core.errors import BadRequestError
+from pairly_core.decisions.jobs import VERIFY_AUDIT_CHAIN_JOB
+from pairly_core.errors import BadRequestError, NotFoundError, ServiceUnavailableError
 from pairly_core.identity import AppContext, Context, OrgSession
 from pairly_core.models import AuditEvent
 from pairly_core.rbac import Actor, require
@@ -55,6 +72,7 @@ _EXPORT_CHUNK_ROWS = 200
 
 ReadActor = Annotated[Actor, Depends(require("core.audit.read"))]
 ExportActor = Annotated[Actor, Depends(require("core.audit.export"))]
+Services = Annotated[DecisionServices, Depends(get_decision_services)]
 
 
 class Order(StrEnum):
@@ -97,6 +115,28 @@ class VerifyOut(BaseModel):
     last_hash: str
     broken_seq: int | None
     reason: str | None
+    anchors_checked: bool = False
+    anchored_seq: int | None = None
+
+
+class VerifyJobOut(BaseModel):
+    job_id: uuid.UUID
+    status: str
+    result: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class AnchorOut(BaseModel):
+    seq: int
+    hash: str
+    anchored_at: str
+    key_id: str
+
+
+class AnchorKeyOut(BaseModel):
+    algorithm: str
+    key_id: str
+    public_key: str
 
 
 def _aware(value: datetime | None, name: str) -> datetime | None:
@@ -185,11 +225,64 @@ async def list_events(
     return AuditPage(items=[_out(r) for r in records], next_cursor=next_cursor)
 
 
-@router.get("/verify", response_model=VerifyOut)
-async def verify(actor: ReadActor, session: OrgSession) -> VerifyOut:
-    """Recompute every hash of the organisation's chain."""
-    result = await verify_chain(session, actor.org_id)
-    return VerifyOut.model_validate(result.to_json())
+@router.get(
+    "/verify",
+    response_model=VerifyOut,
+    responses={202: {"model": VerifyJobOut, "description": "Large chain: queued"}},
+)
+async def verify(actor: ReadActor, session: OrgSession, services: Services) -> Any:
+    """Recompute every hash of the organisation's chain, against its anchored heads."""
+    if await chain_length(session) > services.large_chain_events:
+        kind, actor_id = actor_ref(actor)
+        job_id = await request_verification(
+            session, org_id=actor.org_id, actor_type=kind, actor_id=actor_id
+        )
+        await session.commit()
+        await services.queue.enqueue(
+            VERIFY_AUDIT_CHAIN_JOB, str(actor.org_id), str(job_id), job_id=f"verify:{job_id}"
+        )
+        return JSONResponse(
+            status_code=202,
+            content=VerifyJobOut(job_id=job_id, status="pending").model_dump(mode="json"),
+        )
+    result, info = await verify_with_anchors(session, actor.org_id, services.anchor_loader())
+    return VerifyOut.model_validate(result.to_json() | info)
+
+
+@router.get("/verify/{job_id}", response_model=VerifyJobOut)
+async def verify_job(job_id: uuid.UUID, actor: ReadActor, session: OrgSession) -> VerifyJobOut:
+    row = await get_verification(session, job_id)
+    if row is None:
+        raise NotFoundError("verification not found")
+    return VerifyJobOut(job_id=row.id, status=row.status, result=row.result, error=row.error)
+
+
+@router.get("/anchors", response_model=list[AnchorOut])
+async def anchors(actor: ReadActor, services: Services) -> list[AnchorOut]:
+    """The organisation's anchored chain heads, each signature verified."""
+    store, key = services.anchor_store, services.anchor_public_key
+    if store is None or key is None:
+        raise ServiceUnavailableError("audit anchors are not configured")
+    try:
+        heads = await load_anchors(store, actor.org_id, public_keys(key))
+    except AnchorError:
+        raise ServiceUnavailableError("an audit anchor does not verify") from None
+    except AnchorStoreError:
+        raise ServiceUnavailableError("the anchor store is unavailable") from None
+    return [
+        AnchorOut(seq=h.seq, hash=h.hash, anchored_at=h.anchored_at, key_id=h.key_id) for h in heads
+    ]
+
+
+@router.get("/anchor-key", response_model=AnchorKeyOut)
+async def anchor_key(services: Services) -> AnchorKeyOut:
+    """The public key that signs the anchors (no sign-in: it is public by design)."""
+    key = services.anchor_public_key
+    if key is None:
+        raise ServiceUnavailableError("audit anchors are not configured")
+    return AnchorKeyOut(
+        algorithm="Ed25519", key_id=key_id(key), public_key=encode_key(public_bytes(key))
+    )
 
 
 @router.get(

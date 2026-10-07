@@ -23,9 +23,12 @@ triggers reject UPDATE, DELETE and TRUNCATE for every role (owner included), an 
 trigger rejects any row that does not link to the current end of its chain, and Row
 Level Security keeps each organisation's events private.
 
-Known limit: removing the newest events (tail truncation) by someone who can disable
-the triggers leaves a shorter chain that still verifies. Anchoring the chain head
-outside the database closes that gap; it is not part of this module yet.
+Tail truncation (removing the newest events, by someone who can disable the triggers)
+leaves a shorter chain that still links. ``pairly_core.audit_anchor`` closes that gap:
+a nightly job signs each organisation's head (seq, hash) with an Ed25519 key that is
+not in the database and writes it to write-once object storage. ``verify_chain`` and
+``verify_records`` take those anchored heads and fail when the chain no longer holds
+one of them (``anchor_mismatch``) or ends before one (``anchor_truncated``).
 
 Payloads must not hold secrets and should hold as little personal data as possible:
 ids and short facts, never document contents, tokens or passwords. ``append_audit``
@@ -96,6 +99,8 @@ class AuditAction:
     """Action names used by core. Workflows use ``<workflow>.<entity>.<verb>``."""
 
     AUTHZ_DENIED: Final = "core.authz.denied"
+    # Denials over an actor's rate limit, summarised (``pairly_core.audit_anchor.denials``).
+    AUTHZ_DENIALS_SUPPRESSED: Final = "core.authz.denials_suppressed"
     # Safety net: a request changed rows through the ORM but recorded no event itself.
     REQUEST_WRITE: Final = "core.request.write"
     MEMBERSHIP_GRANTED: Final = "core.membership.granted"
@@ -589,6 +594,8 @@ class ChainVerifier:
     checked: int = 0
     broken_seq: int | None = None
     reason: str | None = None
+    # Anchored heads (seq -> hash) signed outside the database (``audit_anchor``).
+    anchors: Mapping[int, str] = field(default_factory=dict)
     _done: bool = field(default=False, repr=False)
 
     def feed(self, record: AuditRecord) -> bool:
@@ -621,23 +628,39 @@ class ChainVerifier:
             return "unhashable_event"
         if recomputed != record.hash:
             return "hash_mismatch"
+        anchored = self.anchors.get(record.seq)
+        if anchored is not None and anchored != record.hash:
+            return "anchor_mismatch"
         return None
 
     def result(self) -> ChainVerification:
+        broken_seq, reason = self.broken_seq, self.reason
+        last_seq = self.expected_seq - 1
+        if broken_seq is None and self.anchors and max(self.anchors) > last_seq:
+            # The chain ends before a head that was anchored: events were removed.
+            broken_seq, reason = last_seq + 1, "anchor_truncated"
         return ChainVerification(
             org_id=self.org_id,
-            ok=self.broken_seq is None,
+            ok=broken_seq is None,
             checked=self.checked,
-            last_seq=self.expected_seq - 1,
+            last_seq=last_seq,
             last_hash=self.prev_hash,
-            broken_seq=self.broken_seq,
-            reason=self.reason,
+            broken_seq=broken_seq,
+            reason=reason,
         )
 
 
-def verify_records(org_id: uuid.UUID, records: Iterable[AuditRecord]) -> ChainVerification:
-    """Verify a full chain from memory, for example a JSON export, starting at ``seq`` 1."""
-    verifier = ChainVerifier(org_id)
+def verify_records(
+    org_id: uuid.UUID,
+    records: Iterable[AuditRecord],
+    *,
+    anchors: Mapping[int, str] | None = None,
+) -> ChainVerification:
+    """Verify a full chain from memory, for example a JSON export, starting at ``seq`` 1.
+
+    ``anchors``: verified anchored heads (seq -> hash) the chain must still contain.
+    """
+    verifier = ChainVerifier(org_id, anchors=dict(anchors or {}))
     for record in records:
         if not verifier.feed(record):
             break
@@ -668,18 +691,25 @@ def select_records() -> Select[Any]:
 
 
 async def verify_chain(
-    session: AsyncSession, org_id: uuid.UUID, *, batch_size: int = 1000
+    session: AsyncSession,
+    org_id: uuid.UUID,
+    *,
+    batch_size: int = 1000,
+    anchors: Mapping[int, str] | None = None,
 ) -> ChainVerification:
     """Recompute the whole chain of ``org_id`` and report the first broken ``seq``.
 
     The session must be bound to ``org_id`` (Row Level Security would otherwise show an
-    empty chain, which would wrongly verify).
+    empty chain, which would wrongly verify). ``anchors``: verified anchored heads
+    (seq -> hash, see ``pairly_core.audit_anchor``) the chain must still contain; a
+    chain that lost an anchored head fails with ``anchor_mismatch`` or
+    ``anchor_truncated``.
     """
     if current_org(session) != org_id:
         raise TenantError("verify_chain needs a session bound to that organisation")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    verifier = ChainVerifier(org_id)
+    verifier = ChainVerifier(org_id, anchors=dict(anchors or {}))
     after = 0
     while True:
         rows = (

@@ -9,6 +9,8 @@ from pairly_core.approvals.models import (
     ApprovalLink,
     ApprovalStep,
 )
+from pairly_core.audit_anchor.models import AuditDenialLimit, AuditVerification
+from pairly_core.decisions.models import Appeal, ComplianceExport, DecisionRecord, DecisionReplay
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
 from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
 from pairly_core.integrations.models import (
@@ -28,12 +30,18 @@ from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.workflow.models import WorkflowRun
 
 __all__ = [
+    "Appeal",
     "Approval",
     "ApprovalDecision",
     "ApprovalDelegation",
     "ApprovalLink",
     "ApprovalStep",
+    "AuditDenialLimit",
     "AuditEvent",
+    "AuditVerification",
+    "ComplianceExport",
+    "DecisionRecord",
+    "DecisionReplay",
     "Document",
     "Extraction",
     "ExtractionCorrection",

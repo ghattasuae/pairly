@@ -532,20 +532,22 @@ async def test_reads_are_not_audited(
         assert (await s.execute(text("SELECT count(*) FROM audit_events"))).scalar_one() == 0
 
 
-async def test_unaudited_write_gets_safety_net_event(
+async def test_unaudited_write_fails_in_test_env(
     live: Live, members: dict[str, Member], app_engine: AsyncEngine
 ) -> None:
+    # Development and test: a write without its own audit event fails and rolls back
+    # (production writes a generic core.request.write event instead, see
+    # test_audit_hardening.py).
     admin = members["admin"]
-    assert (await live.client.post("/v1/test/rename", headers=live.headers(admin))).is_success
-    fallback = await _events(app_engine, admin.org_id, AuditAction.REQUEST_WRITE)
-    assert len(fallback) == 1
-    assert fallback[0].payload == {"method": "POST", "route": "/v1/test/rename"}
-    assert fallback[0].actor_id == str(admin.user_id)
+    response = await live.client.post("/v1/test/rename", headers=live.headers(admin))
+    assert response.status_code == 500
+    assert response.json()["code"] == "unaudited_write"
+    assert await _events(app_engine, admin.org_id, AuditAction.REQUEST_WRITE) == []
 
-    # A route that records its own event gets no generic one.
+    # A route that records its own event passes.
     response = await live.client.post("/v1/test/rename-audited", headers=live.headers(admin))
     assert response.is_success
-    assert len(await _events(app_engine, admin.org_id, AuditAction.REQUEST_WRITE)) == 1
+    assert await _events(app_engine, admin.org_id, AuditAction.REQUEST_WRITE) == []
     renamed = await _events(app_engine, admin.org_id, "core.org.renamed")
     assert [e.entity_id for e in renamed] == [str(admin.org_id)]
 

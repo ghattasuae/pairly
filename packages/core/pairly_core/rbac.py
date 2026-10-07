@@ -290,6 +290,7 @@ CORE_PERMISSION_MODULES: tuple[str, ...] = (
     "pairly_core.extraction.permissions",
     "pairly_core.policy.permissions",
     "pairly_core.notifications.permissions",
+    "pairly_core.decisions.permissions",
 )
 
 

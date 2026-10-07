@@ -24,6 +24,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from pairly_api import __version__
+from pairly_api.decision_services import DecisionServices, build_decision_services
 from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
@@ -31,6 +32,8 @@ from pairly_api.routes import (
     approval_links,
     approvals,
     audit,
+    compliance,
+    decisions,
     health,
     invitations,
     me,
@@ -49,6 +52,7 @@ from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
+from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.integrations.slack.transport import HttpSlackTransport, SlackTransport
 from pairly_core.notifications.approval_hook import NotificationApprovalHook
@@ -97,12 +101,16 @@ def _lifespan(
         engine = create_engine(settings)
         verifier = TokenVerifier.from_settings(settings)
         owned_services = False
+        owned_decisions = False
         try:
             if getattr(app.state, "documents", None) is None:
                 app.state.documents = await _document_services(settings)
                 owned_services = app.state.documents is not None
             await check_app_role(engine)
             sessionmaker = create_sessionmaker(engine)
+            if getattr(app.state, "decision_services", None) is None:
+                app.state.decision_services = await build_decision_services(settings, sessionmaker)
+                owned_decisions = True
             app.state.pairly = AppContext(
                 settings=settings,
                 engine=engine,
@@ -115,7 +123,8 @@ def _lifespan(
                 sessionmaker=sessionmaker,
                 checkpointer=TenantCheckpointer(settings.database_url.get_secret_value()),
                 registry=registry,
-                hooks=hooks,
+                # Decision records first: a hook that raises aborts the change.
+                hooks=ApprovalHooks([DecisionRecordHook(), hooks]),
             )
             await runtime.check()
             app.state.workflow_runtime = runtime
@@ -129,6 +138,10 @@ def _lifespan(
             close_slack = getattr(getattr(app.state, "slack_transport", None), "aclose", None)
             if close_slack is not None:
                 await close_slack()
+            decision_queue = getattr(getattr(app.state, "decision_services", None), "queue", None)
+            close_queue = getattr(decision_queue, "aclose", None)
+            if owned_decisions and close_queue is not None:
+                await close_queue()
             await verifier.aclose()
             await engine.dispose()
 
@@ -152,6 +165,7 @@ def create_app(
     approval_hooks: ApprovalHooks | None = None,
     notification_settings: NotificationSettings | None = None,
     slack_transport: SlackTransport | None = None,
+    decision_services: DecisionServices | None = None,
 ) -> FastAPI:
     settings = settings or load_settings()
     notify = notification_settings or load_notification_settings(env=settings.env)
@@ -178,6 +192,7 @@ def create_app(
     app.state.slack_transport = slack_transport or HttpSlackTransport(
         base_url=notify.slack_api_base_url
     )
+    app.state.decision_services = decision_services
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
@@ -192,6 +207,8 @@ def create_app(
     v1.include_router(notifications.router)
     v1.include_router(notification_templates.router)
     v1.include_router(slack.router)
+    v1.include_router(decisions.router)
+    v1.include_router(compliance.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

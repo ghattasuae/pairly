@@ -40,6 +40,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import TenantError, current_org
+from pairly_core.decisions.recorders import on_policy_checked
 from pairly_core.llm.errors import ModelUnavailable
 from pairly_core.llm.types import CallContext, RouterResult, TaskSpec
 from pairly_core.policy.documents import POLICY_KIND, active_policy_documents
@@ -445,7 +446,7 @@ async def record_policy_check(
         }
     )
     await session.execute(insert(RuleResult), rows)
-    await append_audit(
+    event = await append_audit(
         session,
         action=POLICY_CHECKED,
         actor_type=actor_type,
@@ -461,5 +462,15 @@ async def record_policy_check(
             "model_call_id": str(result.model_call_id) if result.model_call_id else None,
             "policy_documents": [str(d) for d in result.policy_documents],
         },
+    )
+    await on_policy_checked(
+        session,
+        evaluation_id=evaluation_id,
+        result=result,
+        facts=safe_facts,
+        subject=subject,
+        actor_type=actor_type,
+        actor_id=actor_id,
+        audit_event_id=event.id,
     )
     return evaluation_id
