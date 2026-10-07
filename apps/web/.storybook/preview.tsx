@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import type * as React from "react";
 
 import "../src/app/globals.css";
+import { withAppRouter } from "./app-router";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import ar from "../messages/ar.json";
 import en from "../messages/en.json";
@@ -44,7 +45,8 @@ const withLocaleAndTheme: Decorator = (Story, context) => (
 );
 
 const preview: Preview = {
-  decorators: [withLocaleAndTheme],
+  // Decorators wrap outside in from the end: the router is outermost.
+  decorators: [withLocaleAndTheme, withAppRouter],
   globalTypes: {
     locale: {
       description: "Language and direction",
@@ -74,7 +76,8 @@ const preview: Preview = {
   initialGlobals: { locale: "en", theme: "light" },
   parameters: {
     // The App Router wrapper of @storybook/nextjs-vite 10.6 crashes with Next 16.4
-    // (LayoutRouterContext shape). next/navigation is still mocked for every story.
+    // (LayoutRouterContext shape), so `withAppRouter` (./app-router.tsx) provides the
+    // router, pathname and params that next/navigation hooks read.
     nextjs: { appDirectory: false, navigation: { pathname: "/en" } },
     layout: "fullscreen",
     a11y: { test: "error" },

@@ -34,6 +34,7 @@ Other scripts:
 | `pnpm --filter @pairly/web build` | Production build (`output: "standalone"`) |
 | `pnpm --filter @pairly/web typecheck` | `next typegen` then `tsc` |
 | `pnpm --filter @pairly/web storybook` | Storybook on port 6006 |
+| `pnpm test:storybook` (repo root) | Build Storybook, then render every story in headless Chromium; fails on any error |
 | `pnpm --filter @pairly/web auth:schema` | Print pending Better Auth SQL without applying it |
 | `pnpm test` (repo root) | Vitest, web tests run in jsdom as the `web` project |
 | `pnpm gen:api` (repo root) | Regenerate API types in `packages/shared-ts` |
@@ -267,3 +268,11 @@ is the first focusable element on every page.
 
 Storybook shows the shell, states, auth steps and primitives in English and Arabic, light
 and dark (toolbar switches, plus pinned stories for each combination).
+
+Storybook's own App Router wrapper (`nextjs.appDirectory: true` in
+@storybook/nextjs-vite 10.6.1, the newest stable release) crashes every story under
+Next 16.4. Stories therefore run without it, and `.storybook/app-router.tsx` provides
+what `next/navigation` hooks read (router stand-in, pathname, search params, route
+params; set them per story with `parameters.nextjs.navigation`). `pnpm test:storybook`
+(also in CI) builds Storybook and renders every story with
+`scripts/storybook-smoke.mjs`, so a crash like that fails the build instead of shipping.

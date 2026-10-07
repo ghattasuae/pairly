@@ -11,6 +11,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "vitest run",
+    "test:storybook": "pnpm --filter @pairly/web test:storybook",
     "typecheck": "pnpm -r --if-present typecheck",
     "gen:api": "pnpm --filter @pairly/shared-ts gen:api"
   },

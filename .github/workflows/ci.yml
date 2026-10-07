@@ -161,6 +161,11 @@ jobs:
       - name: vitest (workspace packages)
         run: pnpm -r --if-present test
 
+      - name: Storybook build and smoke render of every story
+        run: |
+          pnpm --filter @pairly/web exec playwright install --with-deps chromium
+          pnpm test:storybook
+
       - name: Detect the Next.js app
         id: web
         # apps/web becomes a Next.js app in WP0.6. Until then there is nothing to build.
