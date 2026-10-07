@@ -21,7 +21,7 @@ export default defineConfig({
   use: {
     // The compose web service. Override with PAIRLY_E2E_BASE_URL (that origin must be in
     // PAIRLY_AUTH_TRUSTED_ORIGINS or be PAIRLY_PUBLIC_WEB_URL itself).
-    baseURL: process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3000",
+    baseURL: process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100",
     headless: true,
     screenshot: "off",
     trace: "retain-on-failure",

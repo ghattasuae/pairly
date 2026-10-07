@@ -13,7 +13,7 @@ permissions from `/v1/me` only to hide links nobody could use.
 ```bash
 make dev                               # API, Postgres, Mailpit ... (default profile)
 pnpm --filter @pairly/web auth:migrate # once: create the Better Auth tables (schema auth)
-pnpm --filter @pairly/web dev          # http://localhost:3000, reads the repo-root .env
+pnpm --filter @pairly/web dev          # http://localhost:3100, reads the repo-root .env
 ```
 
 Or run everything in containers: `PROFILES=web make dev`. The `web` container applies the
@@ -24,7 +24,7 @@ then open Mailpit at http://localhost:8025 for the sign-in link.
 
 Note: in compose the API fetches signing keys from `http://web:3000/api/auth/jwks`. If you
 run the web app on the host with `pnpm dev` instead, point the API at it with
-`PAIRLY_AUTH_JWKS_URL=http://host.docker.internal:3000/api/auth/jwks`, or use the `web`
+`PAIRLY_AUTH_JWKS_URL=http://host.docker.internal:3100/api/auth/jwks`, or use the `web`
 profile.
 
 Other scripts:
@@ -138,18 +138,18 @@ copy checks (raw message keys, em dashes) and RTL checks across en/ar and light/
 runs against the compose stack, not a dev server, because the flows need the API,
 Postgres and Mailpit. It is not part of CI yet.
 
-1. Trust the address the browser will use. The suite opens `http://127.0.0.1:3000`, while
-   `BETTER_AUTH_URL` (from `PAIRLY_PUBLIC_WEB_URL`) is `http://localhost:3000`. Add the IP
+1. Trust the address the browser will use. The suite opens `http://127.0.0.1:3100`, while
+   `BETTER_AUTH_URL` (from `PAIRLY_PUBLIC_WEB_URL`) is `http://localhost:3100`. Add the IP
    origin to the repo-root `.env`:
 
    ```bash
-   PAIRLY_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:3000
+   PAIRLY_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:3100
    ```
 
    Without it, sign-in requests from 127.0.0.1 fail the origin check (in development the
    sign-in form says so; in production the message stays generic).
 2. Start the stack with the web profile and wait until it is healthy:
-   `PROFILES=web make dev`. Port 3000 on 127.0.0.1 must be the compose `web` service;
+   `PROFILES=web make dev`. Port 3100 on 127.0.0.1 must be the compose `web` service;
    another local server on that port will answer instead.
 3. Install the browser once: `pnpm --filter @pairly/web exec playwright install chromium`.
 4. Run it:

@@ -27,6 +27,8 @@ dev = [
   "import-linter>=2.5",
   "pre-commit>=4.3",
   "pytest-asyncio>=1.0",
+  "reportlab>=4.2",
+  "types-defusedxml>=0.7.0.20260504",
 ]
 
 [tool.uv]

@@ -14,7 +14,7 @@ from arq.worker import Function
 import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
 from pairly_worker.config import load_worker_config
-from pairly_worker.main import NIGHTLY_AUDIT_JOB, build_worker_settings
+from pairly_worker.main import NIGHTLY_AUDIT_JOB, SWEEP_JOB, build_worker_settings
 
 DB = "postgresql://pairly_app:pw@db:5432/pairly"
 REDIS = "redis://:secret-pass@valkey:6379/0"
@@ -49,7 +49,9 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.redis_settings.password == "secret-pass"  # noqa: S105 (test value)
     assert settings.timezone is UTC
     assert settings.health_check_interval == 30
-    (cron_job,) = settings.cron_jobs
+    crons = {c.name: c for c in settings.cron_jobs}
+    assert set(crons) == {NIGHTLY_AUDIT_JOB, SWEEP_JOB}
+    cron_job = crons[NIGHTLY_AUDIT_JOB]
     assert isinstance(cron_job, CronJob)
     assert (cron_job.name, cron_job.hour, cron_job.minute, cron_job.unique) == (
         NIGHTLY_AUDIT_JOB,
@@ -57,9 +59,10 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         30,
         True,
     )
-    (function,) = settings.functions
-    assert isinstance(function, Function)
-    assert function.name == "verify_audit_chains"
+    functions = {f.name: f for f in settings.functions}
+    assert set(functions) == {"verify_audit_chains", "scan_document", "parse_document"}
+    assert all(isinstance(f, Function) for f in functions.values())
+    assert crons[SWEEP_JOB].unique
     # JSON, never pickle: queue data cannot run code.
     payload = {"a": [1, "x"]}
     assert settings.job_deserializer(settings.job_serializer(payload)) == payload

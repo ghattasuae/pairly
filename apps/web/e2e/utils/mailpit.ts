@@ -23,10 +23,10 @@ interface MailpitMessage {
 }
 
 /** The app's base URL as it appears in emailed links (see infra/docker-compose.yml). */
-const EMAILED_HOST = "localhost:3000";
-/** What we actually navigate to: port 3000 on the host is shared with another process,
- *  the compose `web` service only answers reliably on 127.0.0.1 (see task brief). */
-const REACHABLE_HOST = "127.0.0.1:3000";
+const EMAILED_HOST = "localhost:3100";
+/** What we actually navigate to: the compose `web` service on 127.0.0.1 (host port 3100
+ *  by default, PAIRLY_WEB_PORT), which avoids other local servers on localhost. */
+const REACHABLE_HOST = "127.0.0.1:3100";
 
 /** Rewrite an emailed absolute URL so Playwright hits the right server. */
 export function toReachableUrl(url: string): string {

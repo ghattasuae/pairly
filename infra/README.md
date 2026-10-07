@@ -21,9 +21,9 @@ start if a required secret is missing.
 | Profile | Services | Host ports (127.0.0.1 only) |
 |---|---|---|
 | default | postgres (pgvector), redis (Valkey 8.1), minio, minio-init (job), mailpit, migrate (job), api, worker | 5432, 6379, 9000, 9001, 1025, 8025, 8000 |
-| `web` | web (Next.js) | 3000 |
+| `web` | web (Next.js) | 3100 (`PAIRLY_WEB_PORT`; the container listens on 3000) |
 | `scan` | clamav | 3310 |
-| `observability` | clickhouse, langfuse-worker, langfuse-web | 3100 |
+| `observability` | clickhouse, langfuse-worker, langfuse-web | 3200 (`LANGFUSE_HOST_PORT`) |
 
 LangFuse reuses our Postgres (database `langfuse`, role `langfuse`), our Redis (database 1)
 and our MinIO (bucket `langfuse`, its own access key). The `scan` and `observability`

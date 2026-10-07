@@ -61,6 +61,13 @@ ENV PATH=/app/.venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Tesseract OCR (Apache-2.0) with English and Arabic data, for scanned documents and
+# images (pairly_core.documents.ocr). Runs as a child of the parser sandbox.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr tesseract-ocr-eng tesseract-ocr-ara \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system --gid 10001 pairly \
     && useradd --system --uid 10001 --gid pairly --home-dir /app --shell /usr/sbin/nologin pairly
 

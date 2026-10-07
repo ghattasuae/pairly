@@ -64,6 +64,13 @@ jobs:
       - name: Install
         run: uv sync --all-packages
 
+      # OCR tests (pairly_core.documents.ocr) need the tesseract binary and language data.
+      - name: Install Tesseract OCR
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            tesseract-ocr tesseract-ocr-eng tesseract-ocr-ara
+
       - name: ruff check
         run: uv run ruff check --output-format=github .
 

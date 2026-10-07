@@ -284,10 +284,25 @@ class RoleRegistry:
         return frozenset(result)
 
 
+# Core modules that define more ``core.*`` permissions in a module-level ``PERMISSIONS``
+# tuple. Imported lazily by ``build_registry`` (they import this module).
+CORE_PERMISSION_MODULES: tuple[str, ...] = ("pairly_core.documents.permissions",)
+
+
+def core_permissions() -> tuple[PermissionSpec, ...]:
+    """``CORE_PERMISSIONS`` plus those of every module in ``CORE_PERMISSION_MODULES``."""
+    import importlib
+
+    extra: list[PermissionSpec] = []
+    for name in CORE_PERMISSION_MODULES:
+        extra.extend(importlib.import_module(name).PERMISSIONS)
+    return (*CORE_PERMISSIONS, *extra)
+
+
 def build_registry(plugins: Iterable[WorkflowPlugin] = ()) -> RoleRegistry:
     """Core permissions plus every plugin's permissions, frozen."""
     registry = RoleRegistry()
-    for spec in CORE_PERMISSIONS:
+    for spec in core_permissions():
         registry.register(spec, namespace=CORE_NAMESPACE)
     for plugin in plugins:
         if plugin.id == CORE_NAMESPACE:

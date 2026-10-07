@@ -16,7 +16,6 @@ Hardening:
 
 from __future__ import annotations
 
-import json
 from datetime import UTC
 from typing import Any
 
@@ -26,21 +25,25 @@ from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from pairly_core.db import check_app_role, create_sessionmaker
+from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
 from pairly_worker.config import WorkerConfig, load_worker_config
+from pairly_worker.documents import (
+    parse_document_job,
+    scan_document_job,
+    setup_documents,
+    sweep_documents,
+)
 from pairly_worker.jobs import verify_audit_chains
 from pairly_worker.logs import configure_logging
 
 log = structlog.get_logger("pairly_worker")
 
 NIGHTLY_AUDIT_JOB = "nightly_audit_verify"
+SWEEP_JOB = "sweep_documents"
 
-
-def _dumps(value: Any) -> bytes:
-    return json.dumps(value, separators=(",", ":")).encode("utf-8")
-
-
-def _loads(data: bytes) -> Any:
-    return json.loads(data)
+# Shared with the API's enqueue side (JSON, never pickle).
+_dumps = job_dumps
+_loads = job_loads
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -59,6 +62,11 @@ async def startup(ctx: dict[str, Any]) -> None:
         raise
     ctx["engine"] = engine
     ctx["sessionmaker"] = create_sessionmaker(engine)
+    try:
+        setup_documents(ctx, config.env)
+    except Exception:
+        await engine.dispose()
+        raise
     log.info("worker_startup", env=config.env.value)
 
 
@@ -73,8 +81,20 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
     config = config or load_worker_config()
     attrs: dict[str, Any] = {
         "redis_settings": RedisSettings.from_dsn(config.redis_url.get_secret_value()),
-        "functions": [func(verify_audit_chains, name="verify_audit_chains", max_tries=1)],
+        "functions": [
+            func(verify_audit_chains, name="verify_audit_chains", max_tries=1),
+            # Scan and parse fail closed inside the job; arq retries only crashes.
+            func(scan_document_job, name=SCAN_JOB, max_tries=2, timeout=600),
+            func(parse_document_job, name=PARSE_JOB, max_tries=2, timeout=600),
+        ],
         "cron_jobs": [
+            cron(
+                sweep_documents,
+                name=SWEEP_JOB,
+                run_at_startup=True,
+                unique=True,
+                timeout=120,
+            ),
             cron(
                 verify_audit_chains,
                 name=NIGHTLY_AUDIT_JOB,
@@ -83,7 +103,7 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 run_at_startup=False,
                 unique=True,
                 timeout=3600,
-            )
+            ),
         ],
         "on_startup": startup,
         "on_shutdown": shutdown,
