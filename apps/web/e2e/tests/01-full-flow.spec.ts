@@ -10,6 +10,7 @@ import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 import { totpFresh } from "../utils/totp";
 import { clearMailbox, waitForMessageTo, extractLink, toReachableUrl } from "../utils/mailpit";
 import { AUTH_STATE_DIR, SCREENSHOTS_DIR, logCheck } from "../utils/report";
+import { makeArgs, saveRunState } from "../utils/stack";
 import { auditA11y } from "../utils/axe";
 import { auditCopy } from "../utils/copy";
 
@@ -53,7 +54,7 @@ test.describe("Full flow: bootstrap -> accept -> TOTP -> sign in -> invite secon
   test("bootstrap org and admin invite", async () => {
     const out = execFileSync(
       "make",
-      ["bootstrap-org", `NAME=E2E Org ${RUN_ID}`, `SLUG=${ORG_SLUG}`, `ADMIN_EMAIL=${ADMIN_EMAIL}`],
+      ["bootstrap-org", `NAME=E2E Org ${RUN_ID}`, `SLUG=${ORG_SLUG}`, `ADMIN_EMAIL=${ADMIN_EMAIL}`, ...makeArgs()],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     const m = out.match(/https?:\/\/\S+\/invite#token=\S+/);
@@ -81,7 +82,7 @@ test.describe("Full flow: bootstrap -> accept -> TOTP -> sign in -> invite secon
     await page.goto(confirmHref);
     await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
     await page.getByRole("link", { name: /sign in/i }).click();
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Lands back on the invite page, now signed in as the invited address: "accept" state.
     await page.waitForURL(/\/invite/);
@@ -101,7 +102,7 @@ test.describe("Full flow: bootstrap -> accept -> TOTP -> sign in -> invite secon
     await page.goto(adminInviteLink);
     await page.getByRole("button", { name: /accept and join/i }).click();
     await page.waitForURL((u) => !u.pathname.includes("/invite"), { timeout: 15_000 });
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Admin role needs otp for approve/decide/manage/export: "set up two-factor" banner.
     await expect(page.getByText(/two-factor|two-step/i).first()).toBeVisible({ timeout: 15_000 });
@@ -162,13 +163,15 @@ test.describe("Full flow: bootstrap -> accept -> TOTP -> sign in -> invite secon
     await page.getByLabel(/authentication code/i).fill(code2);
     await page.getByRole("button", { name: /^verify$/i }).click();
     await page.waitForURL((u) => !u.pathname.includes("two-factor"), { timeout: 15_000 });
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Ready, no more "set up two-factor" banner.
     await expect(page.getByText(/set up two-factor|two-step sign-in to continue/i)).toHaveCount(0);
     await capture(page, "home-ready-admin-totp-en-light");
     record("home: ready state, TOTP-verified admin session", true);
     await context.storageState({ path: path.join(AUTH_STATE_DIR, "admin-with-totp.json") });
+    // Later specs (06 and on) seed data for this organisation and admin.
+    saveRunState({ orgSlug: ORG_SLUG, adminEmail: ADMIN_EMAIL, memberEmail: MEMBER_EMAIL });
 
     await page.close();
     await context.close();
@@ -227,7 +230,7 @@ test.describe("Full flow: bootstrap -> accept -> TOTP -> sign in -> invite secon
     await page.waitForURL(/\/invite/);
     await page.getByRole("button", { name: /accept and join/i }).click();
     await page.waitForURL((u) => !u.pathname.includes("/invite"), { timeout: 15_000 });
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await capture(page, "home-ready-second-user-en-light");
     record("second user: accepted invite and reached home", true);
     await context.storageState({ path: path.join(AUTH_STATE_DIR, "second-user.json") });

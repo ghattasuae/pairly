@@ -121,7 +121,7 @@ export function NotificationPreferences({
           </h2>
           <p className="text-sm text-muted-foreground">{t("channelsBody")}</p>
         </div>
-        <div className="overflow-x-auto rounded-xl border bg-surface">
+        <div className="relative overflow-x-auto rounded-xl border bg-surface">
           <table className="w-full min-w-[36rem] text-sm">
             <caption className="sr-only">{t("channelsTitle")}</caption>
             <thead>

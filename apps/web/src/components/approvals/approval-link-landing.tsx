@@ -81,8 +81,14 @@ export function ApprovalLinkLanding({
         }
       })
       .catch(() => !cancelled && setView({ kind: "unavailable" }));
+    // Another link pasted into this tab only changes the fragment: start again with it.
+    const onHash = () => {
+      if (readLinkToken(window.location.hash)) window.location.reload();
+    };
+    window.addEventListener("hashchange", onHash);
     return () => {
       cancelled = true;
+      window.removeEventListener("hashchange", onHash);
     };
   }, [describe]);
 
@@ -125,7 +131,7 @@ export function ApprovalLinkLanding({
       return (
         <AuthCard title={t("doneTitle")}>
           <p role="status" className="flex items-start gap-2 text-sm">
-            <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+            <CircleCheck className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
             {t(`done.${actionKey(view.link.action)}`, { title: view.link.title })}
           </p>
           <p className="text-sm text-muted-foreground">{t("doneBody")}</p>

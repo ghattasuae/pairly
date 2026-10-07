@@ -21,6 +21,7 @@ export const KNOWN_ACTION_CODES = new Set([
   "not_assigned",
   "idempotency_key_reused",
   "too_large",
+  "test_key_not_allowed",
 ]);
 
 /** The message key for an action error code (`generic` when unknown). */

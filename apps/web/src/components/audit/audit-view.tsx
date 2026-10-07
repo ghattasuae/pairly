@@ -272,16 +272,16 @@ function ChainCard({
             {t("queued")}
           </p>
         )}
-        {status?.state === "failed" && <p className="text-destructive">{t("failed")}</p>}
+        {status?.state === "failed" && <p className="text-danger-ink">{t("failed")}</p>}
         {check && check.ok && (
-          <p className="flex items-center gap-2 text-success">
+          <p className="flex items-center gap-2 text-success-ink">
             <ShieldCheck className="size-4" aria-hidden />
             {t("ok", { count: check.checked, seq: check.last_seq })}
             {check.anchors_checked && <span className="text-muted-foreground">· {t("anchorsOk")}</span>}
           </p>
         )}
         {check && !check.ok && (
-          <p className="flex items-center gap-2 text-destructive">
+          <p className="flex items-center gap-2 text-danger-ink">
             <ShieldAlert className="size-4" aria-hidden />
             {check.broken_seq !== null ? t("broken", { seq: check.broken_seq }) : t("brokenNoSeq")}
             {check.reason && <span className="font-mono text-xs">({check.reason})</span>}
@@ -416,7 +416,7 @@ export function AuditView({
         {shown.length === 0 ? (
           <EmptyState icon={<Search aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
         ) : (
-          <div className="overflow-x-auto rounded-xl border bg-surface">
+          <div className="relative overflow-x-auto rounded-xl border bg-surface">
             <table className="w-full min-w-[48rem] text-sm">
               <caption className="sr-only">{t("tableCaption")}</caption>
               <thead>

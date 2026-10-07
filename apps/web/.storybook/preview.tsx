@@ -73,7 +73,9 @@ const preview: Preview = {
   },
   initialGlobals: { locale: "en", theme: "light" },
   parameters: {
-    nextjs: { appDirectory: true, navigation: { pathname: "/en" } },
+    // The App Router wrapper of @storybook/nextjs-vite 10.6 crashes with Next 16.4
+    // (LayoutRouterContext shape). next/navigation is still mocked for every story.
+    nextjs: { appDirectory: false, navigation: { pathname: "/en" } },
     layout: "fullscreen",
     a11y: { test: "error" },
     controls: { matchers: { color: /(background|color)$/i } },

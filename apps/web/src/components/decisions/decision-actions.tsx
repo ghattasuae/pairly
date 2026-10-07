@@ -98,7 +98,7 @@ export function ReplayPanel({
                   <Icon
                     className={cn(
                       "size-4",
-                      r.status === "match" ? "text-success" : r.status === "differs" ? "text-signal-foreground dark:text-signal" : "text-destructive",
+                      r.status === "match" ? "text-success-ink" : r.status === "differs" ? "text-signal-foreground dark:text-signal" : "text-danger-ink",
                     )}
                     aria-hidden
                   />
@@ -113,7 +113,7 @@ export function ReplayPanel({
                 </p>
                 {r.reason && <p className="text-muted-foreground">{r.reason}</p>}
                 {r.diff.length > 0 && (
-                  <div className="overflow-x-auto rounded-lg border">
+                  <div className="relative overflow-x-auto rounded-lg border">
                     <table className="w-full text-xs">
                       <caption className="sr-only">{t("diffCaption")}</caption>
                       <thead>
@@ -127,8 +127,8 @@ export function ReplayPanel({
                         {r.diff.slice(0, 100).map((d, i) => (
                           <tr key={i}>
                             <td className="px-3 py-1.5 break-all">{shown(d.path)}</td>
-                            <td className="px-3 py-1.5 break-all text-destructive">{shown(d.original)}</td>
-                            <td className="px-3 py-1.5 break-all text-success">{shown(d.replayed)}</td>
+                            <td className="px-3 py-1.5 break-all text-danger-ink">{shown(d.original)}</td>
+                            <td className="px-3 py-1.5 break-all text-success-ink">{shown(d.replayed)}</td>
                           </tr>
                         ))}
                       </tbody>

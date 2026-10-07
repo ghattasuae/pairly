@@ -62,7 +62,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <Badge
       variant={status === "needs_review" ? "signal" : "outline"}
-      className={cn(status === "indexed" && "border-success/40 text-success", status === "failed" && "border-destructive/40 text-destructive")}
+      className={cn(status === "indexed" && "border-success/40 text-success-ink", status === "failed" && "border-destructive/40 text-danger-ink")}
     >
       {known ? t(status as "pending") : status}
     </Badge>
@@ -282,7 +282,7 @@ function PolicyRow({
                 {awaitingSecond ? t("approveOverride") : t("override")}
               </Button>
             )}
-            <Button size="sm" variant="ghost" className="text-destructive" disabled={busy} onClick={() => setArchiving(true)}>
+            <Button size="sm" variant="ghost" className="text-danger-ink" disabled={busy} onClick={() => setArchiving(true)}>
               {t("archive")}
             </Button>
           </div>
@@ -292,7 +292,7 @@ function PolicyRow({
       {doc.warning_count > 0 && (
         <div className="space-y-2">
           <p className="flex items-center gap-2 text-sm font-medium">
-            <ShieldAlert className="size-4 text-destructive" aria-hidden />
+            <ShieldAlert className="size-4 text-danger-ink" aria-hidden />
             {t("warnings", { count: doc.warning_count })}
           </p>
           {doc.warnings.length > 0 ? (
@@ -303,7 +303,7 @@ function PolicyRow({
                   <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
                     <span>{t("severity", { severity: w.severity })}</span>
                     {w.page !== null && <span>{t("page", { page: w.page })}</span>}
-                    {w.blocks_activation && <span className="text-destructive">{t("blocks")}</span>}
+                    {w.blocks_activation && <span className="text-danger-ink">{t("blocks")}</span>}
                     {w.excluded && <span>{t("excluded")}</span>}
                   </p>
                 </li>
@@ -585,7 +585,7 @@ function RuleSets({
                           </span>
                           <Badge
                             variant="outline"
-                            className={cn(r.outcome === "pass" && "border-success/40 text-success", r.outcome === "fail" && "border-destructive/40 text-destructive")}
+                            className={cn(r.outcome === "pass" && "border-success/40 text-success-ink", r.outcome === "fail" && "border-destructive/40 text-danger-ink")}
                           >
                             {r.outcome}
                           </Badge>

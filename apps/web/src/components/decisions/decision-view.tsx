@@ -82,8 +82,8 @@ function Outcome({ outcome }: { outcome: string }) {
     <Badge
       variant="outline"
       className={cn(
-        outcome === "pass" && "border-success/40 text-success",
-        outcome === "fail" && "border-destructive/40 text-destructive",
+        outcome === "pass" && "border-success/40 text-success-ink",
+        outcome === "fail" && "border-destructive/40 text-danger-ink",
         outcome === "error" && "border-signal/60",
       )}
     >
@@ -111,7 +111,7 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
       {asArray(rule_results).length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">{t("ruleResults")}</h3>
-          <div className="overflow-x-auto rounded-xl border bg-surface">
+          <div className="relative overflow-x-auto rounded-xl border bg-surface">
             <table className="w-full text-sm">
               <thead className="text-start text-xs text-muted-foreground">
                 <tr className="border-b">
@@ -169,7 +169,7 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
       {asArray(guardrail_findings).length > 0 && (
         <div className="space-y-2">
           <h3 className="flex items-center gap-2 text-sm font-medium">
-            <ShieldAlert className="size-4 text-destructive" aria-hidden />
+            <ShieldAlert className="size-4 text-danger-ink" aria-hidden />
             {t("guardrailFindings")}
           </h3>
           <ul className="space-y-2">
@@ -269,12 +269,12 @@ export function DecisionView({ decisionId, receipt, replays, appeals, can, totpE
             {decisionId}
           </code>
           {intact ? (
-            <Badge variant="outline" className="border-success/40 text-success [&_svg]:size-3">
+            <Badge variant="outline" className="border-success/40 text-success-ink [&_svg]:size-3">
               <ShieldCheck aria-hidden />
               {t("intact")}
             </Badge>
           ) : (
-            <Badge variant="outline" className="border-destructive/40 text-destructive [&_svg]:size-3">
+            <Badge variant="outline" className="border-destructive/40 text-danger-ink [&_svg]:size-3">
               <ShieldAlert aria-hidden />
               {t("notIntact")}
             </Badge>

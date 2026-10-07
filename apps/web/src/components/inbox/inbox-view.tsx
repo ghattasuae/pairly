@@ -418,7 +418,7 @@ export function InboxView({
             </h1>
             <div className="flex items-center gap-1">
               <span
-                className={cn("flex items-center gap-1 text-xs", live ? "text-success" : "text-muted-foreground")}
+                className={cn("flex items-center gap-1 text-xs", live ? "text-success-ink" : "text-muted-foreground")}
                 title={live ? t("live") : t("notLive")}
               >
                 <Radio className="size-3.5" aria-hidden />
@@ -571,6 +571,8 @@ export function InboxView({
         aria-label={t("detailLabel")}
         className={cn("min-w-0 flex-1 overflow-y-auto bg-background", !mobileDetail && "hidden lg:block")}
       >
+        {/* On a phone the list (and its heading) is hidden while an item is open. */}
+        {mobileDetail && <h1 className="sr-only lg:hidden">{t("title")}</h1>}
         {selected && current ? (
           <ApprovalPanel
             key={selected}

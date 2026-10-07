@@ -131,7 +131,7 @@ export function ApprovalPanel({
             {optimistic.state === "sending" ? (
               <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden />
             ) : (
-              <Check className="size-4 text-success" aria-hidden />
+              <Check className="size-4 text-success-ink" aria-hidden />
             )}
             {t(`optimistic.${optimistic.decision}.${optimistic.state}`)}
           </p>
@@ -148,7 +148,7 @@ export function ApprovalPanel({
             </Button>
             <Button
               variant="outline"
-              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="border-destructive/40 text-danger-ink hover:bg-destructive/10 hover:text-danger-ink"
               onClick={() => onDecide("reject")}
               aria-keyshortcuts="R"
             >
@@ -176,7 +176,7 @@ export function ApprovalPanel({
           </p>
         )}
         {state.status === "error" && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {state.code === "not_found" ? t("notFound") : t("loadError")}
           </p>
         )}

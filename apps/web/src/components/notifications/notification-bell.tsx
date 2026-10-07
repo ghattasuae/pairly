@@ -2,13 +2,14 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { Bell, BellRing, Settings2 } from "lucide-react";
+import { Bell, BellRing, CheckCheck, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -37,7 +38,7 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         aria-label={label}
         className="relative flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:size-4"
@@ -54,25 +55,16 @@ export function NotificationBell() {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-          <DropdownMenuLabel className="p-0 normal-case tracking-normal">
-            <span className="text-sm font-medium text-foreground">{t("title")}</span>
-          </DropdownMenuLabel>
-          {unread > 0 && (
-            <button
-              type="button"
-              onClick={() => void markAllRead()}
-              className="rounded-sm text-xs font-medium text-primary underline-offset-4 hover:underline"
-            >
-              {t("markAllRead")}
-            </button>
-          )}
-        </div>
+        <DropdownMenuLabel className="px-3 py-2.5 normal-case tracking-normal">
+          <span className="text-sm font-medium text-foreground">{t("title")}</span>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator className="my-0" />
         {shown.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-muted-foreground">{loaded ? t("empty") : t("loading")}</p>
+          <DropdownMenuLabel className="px-3 py-6 text-center text-sm font-normal normal-case tracking-normal text-muted-foreground">
+            {loaded ? t("empty") : t("loading")}
+          </DropdownMenuLabel>
         ) : (
-          <div className="max-h-96 overflow-y-auto py-1">
+          <DropdownMenuGroup className="max-h-96 overflow-y-auto py-1">
             {shown.map((item) => (
               <DropdownMenuItem
                 key={item.id}
@@ -95,7 +87,16 @@ export function NotificationBell() {
                 </span>
               </DropdownMenuItem>
             ))}
-          </div>
+          </DropdownMenuGroup>
+        )}
+        {unread > 0 && (
+          <>
+            <DropdownMenuSeparator className="my-0" />
+            <DropdownMenuItem className="px-3 py-2.5" onSelect={() => void markAllRead()}>
+              <CheckCheck aria-hidden />
+              {t("markAllRead")}
+            </DropdownMenuItem>
+          </>
         )}
         <DropdownMenuSeparator className="my-0" />
         <DropdownMenuItem asChild className="px-3 py-2.5">

@@ -167,7 +167,7 @@ export function ApiKeysPanel({
   const ids = { name: useId(), mode: useId(), days: useId(), scopes: useId() };
   const [keys, setKeys] = useState(initial);
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<"live" | "test">("test");
+  const [mode, setMode] = useState<"live" | "test">("live");
   const [days, setDays] = useState(90);
   const [chosen, setChosen] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
@@ -230,10 +230,18 @@ export function ApiKeysPanel({
             <label htmlFor={ids.mode} className="text-sm font-medium">
               {t("mode")}
             </label>
-            <Select id={ids.mode} value={mode} onChange={(e) => setMode(e.target.value === "live" ? "live" : "test")}>
-              <option value="test">{t("modes.test")}</option>
+            <Select
+              id={ids.mode}
+              value={mode}
+              onChange={(e) => setMode(e.target.value === "test" ? "test" : "live")}
+              aria-describedby={`${ids.mode}-hint`}
+            >
               <option value="live">{t("modes.live")}</option>
+              <option value="test">{t("modes.test")}</option>
             </Select>
+            <p id={`${ids.mode}-hint`} className="text-xs text-muted-foreground">
+              {t("modeHint")}
+            </p>
           </div>
           <div className="space-y-2">
             <label htmlFor={ids.days} className="text-sm font-medium">
@@ -314,7 +322,7 @@ export function ApiKeysPanel({
                     </p>
                   </div>
                   {!revoked && (
-                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setRevoking(key)}>
+                    <Button variant="ghost" size="sm" className="text-danger-ink" onClick={() => setRevoking(key)}>
                       {t("revoke")}
                     </Button>
                   )}

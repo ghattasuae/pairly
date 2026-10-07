@@ -51,12 +51,15 @@ export default async function InboxPage({ params, searchParams }: Props) {
 
   const filters = parseFilters(query);
   const item = parseItem(query);
-  const [list, detail] = await Promise.all([
+  const loadDetail = (id: string) =>
+    callApi((api) => api.GET("/v1/approvals/{approval_id}", { params: { path: { approval_id: id } } }));
+  const [list, picked] = await Promise.all([
     callApi((api) => api.GET("/v1/approvals", { params: { query: apiQuery(filters, null) } })),
-    item
-      ? callApi((api) => api.GET("/v1/approvals/{approval_id}", { params: { path: { approval_id: item } } }))
-      : Promise.resolve(null),
+    item ? loadDetail(item) : Promise.resolve(null),
   ]);
+  // No item in the URL: render the first one at once too, so the page opens ready to decide.
+  const first = !item && list.ok ? list.data.items[0]?.id : undefined;
+  const detail = picked ?? (first ? await loadDetail(first) : null);
   if (!list.ok) {
     return (
       <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">

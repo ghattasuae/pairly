@@ -17,7 +17,7 @@ export function SlaBadge({ state, className }: { state: SlaState | null | undefi
   const t = useTranslations("Sla");
   if (!state) return null;
   const styles: Record<SlaState, string> = {
-    overdue: "border-destructive/40 bg-destructive/10 text-destructive",
+    overdue: "border-destructive/40 bg-destructive/10 text-danger-ink",
     due_soon: "border-transparent bg-signal-soft text-signal-foreground dark:text-signal",
     on_track: "text-muted-foreground",
   };
@@ -48,8 +48,8 @@ export function ApprovalStatusBadge({ status, className }: { status: string; cla
       variant="outline"
       className={cn(
         "[&_svg]:size-3",
-        status === "approved" && "border-success/40 text-success",
-        status === "rejected" && "border-destructive/40 text-destructive",
+        status === "approved" && "border-success/40 text-success-ink",
+        status === "rejected" && "border-destructive/40 text-danger-ink",
         status === "changes_requested" && "border-signal/50",
         className,
       )}

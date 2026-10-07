@@ -493,7 +493,7 @@ function HighlightList({
                 {h.kind === "evidence" ? (
                   <ScanSearch className="size-4 shrink-0 text-primary" aria-hidden />
                 ) : (
-                  <ShieldAlert className="size-4 shrink-0 text-destructive" aria-hidden />
+                  <ShieldAlert className="size-4 shrink-0 text-danger-ink" aria-hidden />
                 )}
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {h.kind === "evidence" ? humanizeKey(h.label) || t("evidence") : t("guardrailFinding")}

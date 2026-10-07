@@ -41,7 +41,7 @@ for (const descriptor of PAGES) {
         const url = `/${locale}${descriptor.path}`;
         const response = await page.goto(url);
 
-        await page.waitForLoadState("networkidle").catch(() => undefined);
+        await page.waitForLoadState("load").catch(() => undefined);
 
         // Structural (locale-agnostic) checks always apply; English-text checks only for en
         // (the ar page shows the same structure with Arabic copy, asserted separately by

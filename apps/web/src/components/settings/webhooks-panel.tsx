@@ -263,7 +263,7 @@ function EndpointRow({
             ))}
           </div>
           {endpoint.disabled_at && (
-            <p className="text-xs text-destructive">
+            <p className="text-xs text-danger-ink">
               {t("disabled", { reason: endpoint.disabled_reason ?? t("unknownReason") })}
             </p>
           )}
@@ -295,7 +295,7 @@ function EndpointRow({
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label={t("loading")} />}
           {deliveries?.length === 0 && <p className="text-sm text-muted-foreground">{t("noDeliveries")}</p>}
           {deliveries && deliveries.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="relative overflow-x-auto rounded-lg border">
               <table className="w-full min-w-[36rem] text-xs">
                 <caption className="sr-only">{t("deliveries")}</caption>
                 <thead>
@@ -313,7 +313,7 @@ function EndpointRow({
                         {d.event_type}
                       </td>
                       <td className="px-3 py-2">
-                        <Badge variant="outline" className={cn(d.status === "delivered" && "border-success/40 text-success", d.status === "failed" && "border-destructive/40 text-destructive")}>
+                        <Badge variant="outline" className={cn(d.status === "delivered" && "border-success/40 text-success-ink", d.status === "failed" && "border-destructive/40 text-danger-ink")}>
                           {d.status}
                         </Badge>
                         <span className="ms-2 text-muted-foreground">{t("attempts", { count: d.attempts })}</span>

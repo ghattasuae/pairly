@@ -44,18 +44,34 @@ Other scripts:
 src/
   proxy.ts               CSP nonce, sign-in gate (fast path), locale routing
   instrumentation.ts     Better Auth migrations on start (when enabled)
-  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor, invite
-  app/[locale]/(app)     signed-in shell: home, inbox, hire, pay, audit, settings (members, security)
+  app/[locale]/(auth)    sign-in, check-email, sign-in/confirm, two-factor, invite,
+                         approvals/link (signed approval links)
+  app/[locale]/(app)     signed-in shell: home, inbox (+ inbox/[id]), hire, pay, audit,
+                         decisions/[id], documents/[id], settings (notifications,
+                         security, members, policies, flags, api-keys, webhooks)
   app/api/auth/[...all]  Better Auth (magic link, 2FA, organizations, /token, /jwks)
+  app/api/notifications/stream  the notification event stream, passed through (SSE)
+  app/api/decisions/[id]/receipt  receipt PDF, passed through
+  app/api/audit/export   audit export (CSV, JSON), passed through
   app/api/healthz        container liveness
-  components/ui          primitives (button, input, dropdown, dialog, tooltip, kbd)
+  components/ui          primitives (button, input, form controls, dropdown, dialog,
+                         confirm dialog, toaster, tooltip, kbd)
   components/shell       app shell, sidebar, org/locale/theme switchers, command palette
-  components/states      action needed, not provisioned, unavailable, empty state
+  components/states      action needed, not provisioned, unavailable, empty state, step-up
   components/auth        sign-in form, magic link confirm, 2FA verify and setup
+  components/inbox       unified approval inbox (split view, shortcuts, decisions)
+  components/document    document viewer (PDF.js, highlights)
+  components/decisions   decision receipt, replay, appeals
+  components/audit       audit viewer
+  components/settings    settings pages
+  components/notifications  live notifications and the bell
   lib/auth               Better Auth config, 2FA gate, server helpers, browser client
   lib/api/server.ts      server-side API client (JWT + X-Pairly-Org)
+  lib/api/call.ts        one call, one small result (`code` from problem+json)
+  lib/api/bff.ts         helpers for the pass-through route handlers
   lib/provisioning.ts    /v1/me to viewer state
-  lib/actions            server actions: invitations, organisation switch
+  lib/actions            server actions: invitations, organisation switch, approvals and
+                         approval links, decisions, audit, notifications, settings, search
   lib/org-mirror.ts      Better Auth organization mirror (same UUID as the API)
   lib/nav.ts             which sections the sidebar shows
 messages/en.json, ar.json  every UI string
@@ -165,8 +181,69 @@ Postgres and Mailpit. It is not part of CI yet.
    logged there rather than failing the run, so read `axe.ndjson` after each run.
 
 Order matters: `01-full-flow` bootstraps an organisation (`make bootstrap-org`), accepts
-the invite, turns on TOTP and saves sessions that `02-pages` and `03-keyboard` reuse.
-Run `make down` when you are done.
+the invite, turns on TOTP and saves sessions (and `run-state.json`) that the later specs
+reuse. `06-inbox`, `07-approval-link` and `08-audit-decisions-settings` seed approvals
+with `make dev-seed-approval` (development only, see below). Run `make down` when you are
+done.
+
+If magic links come back on `localhost` while the suite opens `127.0.0.1`, the browser
+storage of the two origins differs and the invite step fails: then point the suite at
+the `PAIRLY_PUBLIC_WEB_URL` host (`PAIRLY_E2E_BASE_URL=http://localhost:3100`). Other
+knobs: `MAILPIT_URL`, `PAIRLY_E2E_EMAILED_HOST` (host in emailed links) and
+`PAIRLY_E2E_COMPOSE_FILE` (extra compose files for the `make` calls, for example
+`infra/docker-compose.yml -f my-override.yml`).
+
+Development seed: `make dev-seed-approval ORG=<slug> EMAIL=<member email> ARGS="..."` gives
+the member the `approver` role in Pay, starts a placeholder run and requests one
+`pay.invoice` approval through the real approval service (`--overdue`, `--link approve`
+for a signed link token, `--decision` for a synthetic decision record). It prints JSON and
+refuses to run without `PAIRLY_DEVSEED=1` (the target sets it) or with
+`PAIRLY_ENV=production`. After a decision the API logs that the placeholder run cannot
+resume: expected.
+
+## Inbox, documents, decisions, audit and settings (WP1.13)
+
+- **Inbox** (`/inbox`): every approval the person may decide, across workflows. List on
+  the start side, the open item on the end side; filters, search and the open item live
+  in the URL. Keys: J and K move, Enter opens, A approves, R rejects, C asks for changes,
+  / searches, ? shows help. Approve and reject are confirmed in a dialog (final and
+  external); reject and request changes need a reason. Decisions are optimistic and roll
+  back on error; each attempt has an `Idempotency-Key` (a retry of the same decision reuses
+  it). `second_factor_required` shows the step-up prompt: sign in again with the code and
+  come back to `/inbox/<id>`. The next item is prefetched. New `approvals` and `sla`
+  notifications on the live stream refresh the list.
+- **Approval links** (`/approvals/link#<token>`, as the API builds them): the token is read
+  from the fragment and removed from the address bar, kept in this browser for at most 30
+  minutes, described (no change), and decided only on the confirm button by the bound
+  user signed in with a code. Used, expired, invalid and other people's links look the
+  same.
+- **Approval context convention** (workflow-agnostic): the inbox draws evidence from an
+  approval's `context` when it has `document_id`, `evidence[]` (`label` or `field`,
+  `quote`, `page`, `bboxes` or `bbox`), `guardrail_findings[]` (`type`, `code`,
+  `severity`, `page`, `bbox`, `evidence`) and `decision_id` or `decision_ids[]`. Other
+  keys show as plain data.
+- **Document viewer**: PDF.js (pdfjs-dist, Apache-2.0) renders pages; its worker and
+  standard fonts are copied to `public/pdfjs/` by `scripts/copy-pdfjs.mjs` before `dev`,
+  `build` and Storybook, and load from our own origin (`worker-src 'self'`). The bytes come
+  through the API's short-lived signed URL, so the CSP also allows that one origin
+  (`PAIRLY_DOCUMENT_ORIGIN`, exact origin only; in development the compose MinIO port).
+  Evidence is a solid teal box, a guardrail finding a dashed, striped red box, with a
+  legend and one sentence per finding from the API's explanation keys (en and ar).
+- **Decision viewer** (`/decisions/<id>`): the receipt as a page, PDF in English or Arabic,
+  replay with the difference, appeals (file, resolve with a written outcome and step-up).
+- **Audit viewer** (`/audit`): exact-match filters in the URL, cursor pages, a search of
+  the loaded page, event details with hashes, chain check (queued for long chains) and
+  anchors, CSV or JSON export (step-up).
+- **Settings**: notification preferences (the unsubscribe page links here), feature flags,
+  API keys (secret shown once), webhooks (URLs as the API redacts them, delivery log),
+  policies (documents, guardrail warnings, upload, two-admin override, rule sets and dry
+  run). `Cmd/Ctrl+K` also searches (`/v1/search`); the bell shows unread notifications
+  live.
+
+The browser never talks to the API: pages and server actions call it with the
+server-minted token, and three route handlers pass through what must stream (the event
+stream, receipt PDFs and audit exports). They refuse cross-site requests
+(`Sec-Fetch-Site`), and the export also needs a custom header a link cannot send.
 
 ## Design system
 

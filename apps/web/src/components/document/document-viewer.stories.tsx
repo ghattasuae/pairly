@@ -76,7 +76,8 @@ const highlights: Highlight[] = [
 const meta = {
   title: "Document/Viewer",
   component: DocumentViewer,
-  parameters: { layout: "padded" },
+  parameters: { layout: "fullscreen" },
+  decorators: [(Story) => <div className="p-6"><Story /></div>],
   args: { documentId: "00000000-0000-4000-8000-000000000001", highlights, subject: "document" },
 } satisfies Meta<typeof DocumentViewer>;
 

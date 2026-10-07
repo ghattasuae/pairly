@@ -371,7 +371,8 @@
     "segregation_of_duties": "You prepared or submitted this item, so someone else must decide it.",
     "not_assigned": "This step is not assigned to you.",
     "idempotency_key_reused": "This decision was already sent with different details. Reload and try again.",
-    "too_large": "The file is too large."
+    "too_large": "The file is too large.",
+    "test_key_not_allowed": "Test keys work only in a sandbox organisation. Choose Live."
   },
   "Data": {
     "redacted": "Hidden for your role",
@@ -1003,7 +1004,8 @@
     "revoke": "Revoke",
     "revokeTitle": "Revoke this key?",
     "revokeBody": "\"{name}\" stops working at once. Anything that uses it will fail.",
-    "revoked": "{name} revoked"
+    "revoked": "{name} revoked",
+    "modeHint": "Test keys work only in a sandbox organisation."
   },
   "WebhooksSettings": {
     "createTitle": "Add an endpoint",
