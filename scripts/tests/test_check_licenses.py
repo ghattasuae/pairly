@@ -269,3 +269,53 @@ def test_main_with_pnpm_file(tmp_path: Path, capsys: pytest.CaptureFixture[str])
 
 def test_shipped_exceptions_file_is_valid() -> None:
     cl.load_exceptions(cl.DEFAULT_EXCEPTIONS)
+
+
+def test_review_packages_can_be_recorded_and_npm_names_can_use_a_prefix(tmp_path: Path) -> None:
+    path = _write_exceptions(
+        tmp_path,
+        "exceptions:\n"
+        "  - ecosystem: python\n"
+        "    name: psycopg\n"
+        "    license: LGPL-3.0-only\n"
+        "    reason: Unmodified, dynamically imported library that a user can replace.\n"
+        "  - ecosystem: npm\n"
+        '    name: "@img/sharp-libvips-*"\n'
+        "    license: LGPL-3.0-or-later\n"
+        "    reason: Prebuilt shared library loaded by sharp, distributed unmodified.\n",
+    )
+    exceptions = cl.load_exceptions(path)
+    report = cl.evaluate(
+        [
+            cl.Package("python", "psycopg", "3", "LGPL-3.0-only"),
+            cl.Package("npm", "@img/sharp-libvips-linux-x64", "1", "LGPL-3.0-or-later"),
+            cl.Package("npm", "@img/sharp-libvips-darwin-arm64", "1", "LGPL-3.0-or-later"),
+            cl.Package("npm", "other-lgpl", "1", "LGPL-3.0-or-later"),
+        ],
+        exceptions,
+    )
+    assert report.ok
+    assert [p.name for p, _ in report.excepted] == [
+        "psycopg",
+        "@img/sharp-libvips-linux-x64",
+        "@img/sharp-libvips-darwin-arm64",
+    ]
+    assert [p.name for p in report.review] == ["other-lgpl"]
+    assert report.unused_exceptions == []
+    # A license change upstream needs a fresh review: back to a warning.
+    changed = cl.evaluate([cl.Package("python", "psycopg", "4", "LGPL-2.1-only")], exceptions)
+    assert [p.name for p in changed.review] == ["psycopg"]
+
+
+@pytest.mark.parametrize(
+    ("ecosystem", "name"),
+    [("python", "some-lib*"), ("npm", "some*thing"), ("npm", "a**"), ("npm", "*")],
+)
+def test_bad_exception_globs_are_rejected(tmp_path: Path, ecosystem: str, name: str) -> None:
+    body = (
+        f"exceptions:\n  - ecosystem: {ecosystem}\n"
+        f'    name: "{name}"\n    license: LGPL-3.0\n'
+        "    reason: a long enough reason for the check\n"
+    )
+    with pytest.raises(SystemExit):
+        cl.load_exceptions(_write_exceptions(tmp_path, body))

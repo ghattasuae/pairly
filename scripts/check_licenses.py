@@ -21,7 +21,10 @@ Classes:
     unknown nothing we can recognise. Treated like deny.
 
 A deny or unknown package passes only when scripts/license-exceptions.yaml lists it
-with a written reason. Our own packages (pairly*, @pairly/*) are skipped.
+with a written reason. A review package listed there is a recorded decision: it is
+reported as excepted instead of warned about. An npm exception name may end in `*` to
+cover platform builds of one package (`@img/sharp-libvips-*`). Our own packages
+(pairly*, @pairly/*) are skipped.
 
 SPDX expressions are understood: `A OR B` passes when either side passes, `A AND B`
 only when both pass, `A WITH exception` is judged on A.
@@ -432,6 +435,13 @@ def load_exceptions(path: Path) -> list[LicenseException]:
         if len(str(item["reason"]).strip()) < 20:
             raise SystemExit(f"{path}: exception #{i + 1}: write a real reason (20+ chars)")
         name = str(item["name"])
+        if "*" in name and (
+            item["ecosystem"] != "npm"
+            or name.count("*") > 1
+            or not name.endswith("*")
+            or len(name) < 4
+        ):
+            raise SystemExit(f"{path}: exception #{i + 1}: only npm names may end in a single `*`")
         if item["ecosystem"] == "python":
             name = re.sub(r"[-_.]+", "-", name).lower()
         result.append(
@@ -442,25 +452,41 @@ def load_exceptions(path: Path) -> list[LicenseException]:
     return result
 
 
+def _find_exception(
+    pkg: Package, exceptions: Sequence[LicenseException]
+) -> LicenseException | None:
+    """Exact name first; npm names ending in `*` match by prefix."""
+    for exc in exceptions:
+        if exc.ecosystem == pkg.ecosystem and exc.name == pkg.name:
+            return exc
+    for exc in exceptions:
+        if (
+            exc.ecosystem == pkg.ecosystem == "npm"
+            and exc.name.endswith("*")
+            and pkg.name.startswith(exc.name[:-1])
+        ):
+            return exc
+    return None
+
+
 def evaluate(packages: Sequence[Package], exceptions: Sequence[LicenseException]) -> Report:
     """Classify packages. An exception matches on ecosystem, name and exact license
     string, so a license change upstream needs a fresh review."""
     report = Report()
-    by_key = {(e.ecosystem, e.name): e for e in exceptions}
     used: set[tuple[str, str]] = set()
     for pkg in packages:
         verdict = classify_expression(pkg.license)
         if verdict is Verdict.ALLOW:
             report.allowed.append(pkg)
+            continue
+        exc = _find_exception(pkg, exceptions)
+        if exc is not None and exc.license == pkg.license:
+            report.excepted.append((pkg, exc))
+            used.add((exc.ecosystem, exc.name))
         elif verdict is Verdict.REVIEW:
             report.review.append(pkg)
         else:
-            exc = by_key.get((pkg.ecosystem, pkg.name))
-            if exc is not None and exc.license == pkg.license:
-                report.excepted.append((pkg, exc))
-                used.add((exc.ecosystem, exc.name))
-            else:
-                report.failures.append((pkg, verdict))
+            report.failures.append((pkg, verdict))
     report.unused_exceptions = [e for e in exceptions if (e.ecosystem, e.name) not in used]
     return report
 

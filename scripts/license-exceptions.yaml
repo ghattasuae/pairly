@@ -4,10 +4,13 @@
 # Reviewed exceptions for scripts/check_licenses.py (the CI license gate).
 #
 # A package whose license is denied (GPL, AGPL, SSPL, BUSL, Commons Clause) or unknown
-# fails the build unless it is listed here. Every entry needs:
+# fails the build unless it is listed here. A package under a "review" license (LGPL,
+# EPL) only warns; listing it here records the decision, and the warning goes away.
+# Every entry needs:
 #
 #   ecosystem  python or npm
-#   name       the package name (Python names are normalised: lower case, dashes)
+#   name       the package name (Python names are normalised: lower case, dashes). An
+#              npm name may end in `*` to cover the platform builds of one package.
 #   license    the exact license string the checker prints. If upstream changes its
 #              license, the entry stops matching and the package needs a new review.
 #   reason     why this is acceptable for AGPL-3.0 and for commercial relicensing.
@@ -59,3 +62,38 @@ exceptions:
       documentation. All permissive with attribution only, no copyleft, so it fits AGPL-3.0
       and commercial relicensing. NOTICE.md must carry the attributions. Reviewed
       2026-10-07 (WP1.2). Not PyMuPDF (AGPL), which stays banned.
+  - ecosystem: python
+    name: psycopg
+    license: LGPL-3.0-only
+    reason: >-
+      PostgreSQL driver used by langgraph-checkpoint-postgres (the workflow checkpointer).
+      LGPL-3.0 allows use from software under any license when the library is used
+      unmodified and stays replaceable: Pairly imports it dynamically as a separate,
+      unmodified package installed from PyPI, never vendored or patched, so it fits
+      AGPL-3.0 and commercial relicensing. Source is public. Reviewed 2026-10-07 (WP1.14
+      CI hygiene); confirm with legal before the first commercial license.
+  - ecosystem: python
+    name: psycopg-binary
+    license: LGPL-3.0-only
+    reason: >-
+      Prebuilt C speedups for psycopg (with a bundled libpq under the PostgreSQL license).
+      Same reasoning as psycopg: an unmodified, separately installed shared library that
+      Python loads at run time and that a user can replace with their own build. No
+      Pairly code is linked into it. Reviewed 2026-10-07 (WP1.14 CI hygiene).
+  - ecosystem: python
+    name: psycopg-pool
+    license: LGPL-3.0-only
+    reason: >-
+      Connection pool for psycopg, pulled in by langgraph-checkpoint-postgres. Pure Python,
+      used unmodified and imported dynamically; replaceable. Same reasoning as psycopg.
+      Reviewed 2026-10-07 (WP1.14 CI hygiene).
+  - ecosystem: npm
+    name: "@img/sharp-libvips-*"
+    license: LGPL-3.0-or-later
+    reason: >-
+      Prebuilt libvips shared library (one package per platform, for example
+      darwin-arm64 or linux-x64) that the sharp image library loads at run time; used by
+      Next.js image optimisation in apps/web. It is distributed unmodified as a separate
+      dynamic library and can be replaced by the user's own libvips build, which LGPL-3.0
+      allows for software under any license, so it fits AGPL-3.0 and commercial
+      relicensing. Reviewed 2026-10-07 (WP1.14 CI hygiene).
