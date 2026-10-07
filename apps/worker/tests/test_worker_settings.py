@@ -17,6 +17,8 @@ from pairly_worker.config import load_worker_config
 from pairly_worker.main import (
     APPROVAL_SLA_JOB,
     NIGHTLY_AUDIT_JOB,
+    NOTIFICATION_DELIVERY_JOB,
+    NOTIFICATION_DIGEST_JOB,
     SWEEP_JOB,
     WORKFLOW_RESUME_JOB,
     build_worker_settings,
@@ -46,6 +48,15 @@ def test_invalid_redis_url_is_rejected_without_echoing_it() -> None:
     assert "hunter2" not in str(exc.value)
 
 
+def test_approval_link_ttl_matches_the_api_setting(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PAIRLY_APPROVAL_LINK_TTL_SECONDS", raising=False)
+    assert load_worker_config(database_url=DB, redis_url=REDIS).approval_link_ttl_seconds == 1800
+    monkeypatch.setenv("PAIRLY_APPROVAL_LINK_TTL_SECONDS", "600")
+    assert load_worker_config(database_url=DB, redis_url=REDIS).approval_link_ttl_seconds == 600
+    with pytest.raises(ConfigError):
+        load_worker_config(database_url=DB, redis_url=REDIS, approval_link_ttl_seconds=10)
+
+
 def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PAIRLY_DATABASE_URL", DB)
     monkeypatch.setenv("PAIRLY_REDIS_URL", REDIS)
@@ -56,7 +67,16 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.timezone is UTC
     assert settings.health_check_interval == 30
     jobs = {job.name: job for job in settings.cron_jobs}
-    assert set(jobs) == {NIGHTLY_AUDIT_JOB, SWEEP_JOB, APPROVAL_SLA_JOB, WORKFLOW_RESUME_JOB}
+    assert set(jobs) == {
+        NIGHTLY_AUDIT_JOB,
+        SWEEP_JOB,
+        APPROVAL_SLA_JOB,
+        WORKFLOW_RESUME_JOB,
+        NOTIFICATION_DELIVERY_JOB,
+        NOTIFICATION_DIGEST_JOB,
+    }
+    assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
+    assert jobs[NOTIFICATION_DELIVERY_JOB].unique
     cron_job = jobs[NIGHTLY_AUDIT_JOB]
     assert isinstance(cron_job, CronJob)
     assert jobs[APPROVAL_SLA_JOB].minute == set(range(0, 60, 5))

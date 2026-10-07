@@ -24,9 +24,16 @@ from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
+from pairly_core.config import Environment
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
+from pairly_core.integrations.slack.transport import HttpSlackTransport
+from pairly_core.notifications.approval_hook import NotificationApprovalHook
+from pairly_core.notifications.delivery import Transports
+from pairly_core.notifications.email import email_transport_from_settings
+from pairly_core.notifications.settings import load_notification_settings
 from pairly_core.plugins import discover_plugins
 from pairly_core.rbac import build_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
@@ -40,6 +47,7 @@ from pairly_worker.documents import (
 )
 from pairly_worker.jobs import verify_audit_chains
 from pairly_worker.logs import configure_logging
+from pairly_worker.notification_jobs import deliver_notifications, send_digests
 from pairly_worker.workflow_jobs import escalate_overdue_approvals, resume_decided_runs
 
 log = structlog.get_logger("pairly_worker")
@@ -48,6 +56,8 @@ NIGHTLY_AUDIT_JOB = "nightly_audit_verify"
 SWEEP_JOB = "sweep_documents"
 APPROVAL_SLA_JOB = "approval_sla_escalation"
 WORKFLOW_RESUME_JOB = "workflow_resume_reconcile"
+NOTIFICATION_DELIVERY_JOB = "notification_delivery"
+NOTIFICATION_DIGEST_JOB = "notification_digest"
 
 # Shared with the API's enqueue side (JSON, never pickle).
 _dumps = job_dumps
@@ -78,6 +88,24 @@ async def startup(ctx: dict[str, Any]) -> None:
         # Both fail closed: missing ingestion settings (outside tests) or an invalid
         # workflow plugin stop the worker before it takes any job.
         setup_documents(ctx, config.env)
+        # Fail closed: invalid notification settings stop the worker too.
+        notify = load_notification_settings(env=config.env)
+        ctx["transports"] = Transports(
+            settings=notify,
+            email=email_transport_from_settings(notify),
+            slack=HttpSlackTransport(base_url=notify.slack_api_base_url),
+        )
+        hooks = (
+            NO_HOOKS
+            if config.env is Environment.TEST
+            else ApprovalHooks(
+                [
+                    NotificationApprovalHook(
+                        notify, link_ttl_seconds=config.approval_link_ttl_seconds
+                    )
+                ]
+            )
+        )
         plugins = list(discover_plugins().values())
         registry = build_registry(plugins)
         runtime = WorkflowRuntime.from_plugins(
@@ -85,6 +113,7 @@ async def startup(ctx: dict[str, Any]) -> None:
             sessionmaker=sessionmaker,
             checkpointer=TenantCheckpointer(config.database_url.get_secret_value()),
             registry=registry,
+            hooks=hooks,
         )
         await runtime.check()
     except Exception:
@@ -96,6 +125,11 @@ async def startup(ctx: dict[str, Any]) -> None:
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:
+    transports = ctx.pop("transports", None)
+    for transport in (getattr(transports, "email", None), getattr(transports, "slack", None)):
+        close = getattr(transport, "aclose", None)
+        if close is not None:
+            await close()
     engine = ctx.pop("engine", None)
     if engine is not None:
         await engine.dispose()
@@ -136,6 +170,22 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 run_at_startup=False,
                 unique=True,
                 timeout=240,
+            ),
+            cron(
+                deliver_notifications,
+                name=NOTIFICATION_DELIVERY_JOB,
+                run_at_startup=True,
+                unique=True,
+                timeout=300,
+            ),
+            cron(
+                send_digests,
+                name=NOTIFICATION_DIGEST_JOB,
+                hour=config.digest_hour_utc,
+                minute=0,
+                run_at_startup=False,
+                unique=True,
+                timeout=1800,
             ),
             cron(
                 resume_decided_runs,

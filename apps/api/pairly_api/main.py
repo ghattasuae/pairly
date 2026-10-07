@@ -9,6 +9,9 @@ Startup fails closed: missing settings or encryption keys (``PAIRLY_KEK_*``,
 raises ``PluginError``, and connecting to Postgres as a role that bypasses RLS raises
 ``UnsafeDatabaseRoleError``. Document storage settings (``PAIRLY_S3_*``) are required
 too, except in the test environment, where the document routes answer 503 without them.
+Notification settings (``pairly_core.notifications.settings``) are read at startup as
+well; outside the test environment the approval hooks send approval emails, Slack
+messages and in-app items (``NotificationApprovalHook``).
 """
 
 from __future__ import annotations
@@ -32,7 +35,10 @@ from pairly_api.routes import (
     invitations,
     me,
     members,
+    notification_templates,
+    notifications,
     policies,
+    slack,
 )
 from pairly_api.routes import documents as document_routes
 from pairly_api.routes import extractions as extraction_routes
@@ -44,6 +50,9 @@ from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.identity import ORG_HEADER, AppContext
+from pairly_core.integrations.slack.transport import HttpSlackTransport, SlackTransport
+from pairly_core.notifications.approval_hook import NotificationApprovalHook
+from pairly_core.notifications.settings import NotificationSettings, load_notification_settings
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import RoleRegistry, build_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
@@ -117,10 +126,22 @@ def _lifespan(
             close = getattr(getattr(services, "queue", None), "aclose", None)
             if owned_services and close is not None:
                 await close()
+            close_slack = getattr(getattr(app.state, "slack_transport", None), "aclose", None)
+            if close_slack is not None:
+                await close_slack()
             await verifier.aclose()
             await engine.dispose()
 
     return lifespan
+
+
+def default_approval_hooks(settings: Settings, notify: NotificationSettings) -> ApprovalHooks:
+    """Approval notifications everywhere but in tests, which pass their own hooks."""
+    if settings.env is Environment.TEST:
+        return NO_HOOKS
+    return ApprovalHooks(
+        [NotificationApprovalHook(notify, link_ttl_seconds=settings.approval_link_ttl_seconds)]
+    )
 
 
 def create_app(
@@ -128,9 +149,14 @@ def create_app(
     *,
     plugins: Iterable[WorkflowPlugin] | None = None,
     documents: DocumentServices | None = None,
-    approval_hooks: ApprovalHooks = NO_HOOKS,
+    approval_hooks: ApprovalHooks | None = None,
+    notification_settings: NotificationSettings | None = None,
+    slack_transport: SlackTransport | None = None,
 ) -> FastAPI:
     settings = settings or load_settings()
+    notify = notification_settings or load_notification_settings(env=settings.env)
+    if approval_hooks is None:
+        approval_hooks = default_approval_hooks(settings, notify)
     init_crypto()
     configure_logging(settings.log_level)
     configure_tracing()
@@ -148,6 +174,10 @@ def create_app(
     )
     install_error_handlers(app)
     app.state.documents = documents
+    app.state.notifications = notify
+    app.state.slack_transport = slack_transport or HttpSlackTransport(
+        base_url=notify.slack_api_base_url
+    )
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
@@ -159,6 +189,9 @@ def create_app(
     v1.include_router(approvals.router)
     v1.include_router(approval_links.router)
     v1.include_router(policies.router)
+    v1.include_router(notifications.router)
+    v1.include_router(notification_templates.router)
+    v1.include_router(slack.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

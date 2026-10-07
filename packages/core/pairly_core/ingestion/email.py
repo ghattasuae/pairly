@@ -25,8 +25,9 @@ the body is stored as a ``text/plain`` document (an invoice written in the body)
 workflow's policy allows ``text/plain``.
 
 Transport is not part of this module: an ``InboundEmailSource`` (Mailpit, an SMTP
-receiver, a provider webhook) hands raw bytes to ``ingest_email``.
-TODO(WP1.9): a Mailpit or SMTP based ``InboundEmailSource`` and receipt replies.
+receiver, a provider webhook) hands raw bytes to ``ingest_email``, or to
+``pairly_core.notifications.receipts.ingest_email_with_receipt``, which also replies
+to the sender with a receipt and reference number when the backscatter rules allow it.
 """
 
 from __future__ import annotations
