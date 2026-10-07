@@ -493,6 +493,48 @@ async def test_unsubscribe_refuses_tampered_expired_and_foreign_tokens(
     ) == 1
 
 
+async def test_unsubscribe_landing_tells_an_expired_link_apart(
+    notify_api: NotifyApi, world: World, owner_engine: AsyncEngine
+) -> None:
+    api = notify_api
+    me = world.id("appr1")
+    valid = make_token(LINK_SECRET, UnsubscribeClaim(world.org_id, me, "updates"))
+    expired = make_token(
+        LINK_SECRET,
+        UnsubscribeClaim(world.org_id, me, "updates"),
+        now=time.time() - MAX_AGE_SECONDS - 60,
+    )
+    forged = make_token("another-secret-" + "y" * 30, UnsubscribeClaim(world.org_id, me, "sla"))
+    fixed = make_token(LINK_SECRET, UnsubscribeClaim(world.org_id, me, "receipts"))
+
+    async def land(token: str) -> dict[str, Any]:
+        response = await api.client.get("/v1/notifications/unsubscribe", params={"token": token})
+        assert response.status_code == 200, response.text
+        return dict(response.json())
+
+    manage = f"{WEB_URL}/settings"
+    assert await land(valid) == {"state": "valid", "category": "updates", "manage_url": manage}
+    # Expired: never a silent failure, the person is sent to sign in and manage.
+    assert await land(expired) == {"state": "expired", "category": None, "manage_url": manage}
+    for token in (forged, fixed, "v1." + "a" * 40):
+        assert (await land(token))["state"] == "invalid"
+    # A browser goes to the web page, the token in the fragment only.
+    page = await api.client.get(
+        "/v1/notifications/unsubscribe",
+        params={"token": expired},
+        headers={"Accept": "text/html,application/xhtml+xml"},
+    )
+    assert page.status_code == 303
+    assert page.headers["location"].startswith(f"{WEB_URL}/unsubscribe#token=")
+    assert "?" not in page.headers["location"]
+    # Opening the landing changes nothing (mail scanners open links).
+    assert "core.notification.unsubscribed" not in await audit_actions(owner_engine, world.org_id)
+    # The one-click POST keeps its uniform 204 for an expired link, and changes nothing.
+    response = await api.client.post("/v1/notifications/unsubscribe", params={"token": expired})
+    assert response.status_code == 204
+    assert "core.notification.unsubscribed" not in await audit_actions(owner_engine, world.org_id)
+
+
 # ------------------------------------------------------------------ delivery
 
 

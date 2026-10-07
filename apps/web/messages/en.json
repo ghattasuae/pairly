@@ -284,5 +284,30 @@
     "remaining": "{count, plural, =0 {You have no backup codes left.} one {You have # backup code left.} other {You have # backup codes left.}} Use your authenticator app next time.",
     "unknown": "That code is now used up. Use your authenticator app next time.",
     "manage": "Two-step sign-in settings"
+  },
+  "Unsubscribe": {
+    "titlePlain": "Email preferences",
+    "validTitle": "Stop these emails?",
+    "valid": "You will no longer get {category} emails from Pairly. Other emails and in-app notifications stay on.",
+    "confirm": "Turn off these emails",
+    "confirming": "Turning off",
+    "manageInstead": "Choose in settings instead",
+    "doneTitle": "You are unsubscribed",
+    "done": "We will not send you these emails any more. You can turn them back on in settings.",
+    "expiredTitle": "This link has expired",
+    "expired": "Unsubscribe links work for 60 days. Sign in to manage which emails you get.",
+    "invalidTitle": "This link does not work",
+    "invalid": "It may be incomplete or changed. Sign in to manage which emails you get.",
+    "unavailableTitle": "Something went wrong",
+    "unavailable": "We could not reach Pairly just now. Try again later, or sign in to manage which emails you get.",
+    "manage": "Sign in to manage email settings",
+    "categories": {
+      "approvals": "approval",
+      "sla": "overdue item",
+      "reminders": "reminder",
+      "interviews": "interview",
+      "updates": "update",
+      "digest": "daily summary"
+    }
   }
 }

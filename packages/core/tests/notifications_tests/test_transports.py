@@ -30,7 +30,9 @@ from pairly_core.notifications.email import (
 )
 from pairly_core.notifications.unsubscribe import (
     MAX_AGE_SECONDS,
+    TokenState,
     UnsubscribeClaim,
+    inspect_token,
     make_token,
     read_token,
 )
@@ -265,3 +267,12 @@ def test_unsubscribe_tokens() -> None:
     assert read_token(secret, old, now=issued + MAX_AGE_SECONDS) == claim
     assert read_token(secret, old, now=issued + MAX_AGE_SECONDS + 1) is None
     assert read_token(secret, old, now=issued - 3600) is None
+    # The landing page tells an authentic expired token apart, and nothing else.
+    assert inspect_token(secret, old, now=issued + MAX_AGE_SECONDS + 1) == (
+        TokenState.EXPIRED,
+        None,
+    )
+    assert inspect_token(secret, old, now=issued) == (TokenState.VALID, claim)
+    assert inspect_token("t" * 40, old, now=issued + MAX_AGE_SECONDS + 1)[0] is (TokenState.INVALID)
+    assert inspect_token(secret, forged)[0] is TokenState.INVALID
+    assert inspect_token(secret, old, now=issued - 3600)[0] is TokenState.INVALID

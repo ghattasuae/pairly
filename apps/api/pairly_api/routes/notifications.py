@@ -8,6 +8,10 @@
 * ``GET  /v1/notifications/stream``           server-sent events: new in-app items
 * ``GET|PUT /v1/notifications/preferences``   the caller's preferences
 * ``POST /v1/notifications/unsubscribe``      RFC 8058 one-click unsubscribe (no sign-in)
+* ``GET  /v1/notifications/unsubscribe``      landing state of a link (no sign-in, changes
+                                               nothing): ``valid``, ``expired`` (with a
+                                               sign-in link to manage preferences) or
+                                               ``invalid``
 
 Everything except unsubscribe uses the same bearer JWT and ``X-Pairly-Org`` header as
 the rest of the API, and only ever touches the signed-in user's own rows (RLS scopes to
@@ -28,9 +32,10 @@ import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import Annotated, Any, Literal
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Header, Query, Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select, update
 
@@ -49,7 +54,7 @@ from pairly_core.notifications.preferences import (
 )
 from pairly_core.notifications.service import NotificationActions
 from pairly_core.notifications.settings import NotificationSettings
-from pairly_core.notifications.unsubscribe import read_token
+from pairly_core.notifications.unsubscribe import TokenState, inspect_token, read_token
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -365,6 +370,58 @@ async def put_preferences(
 
 
 # ------------------------------------------------------------------ unsubscribe
+
+
+class UnsubscribeLanding(BaseModel):
+    state: Literal["valid", "expired", "invalid"]
+    # Only for a valid link: the category the one-click POST would turn email off for.
+    category: str | None = None
+    # Where to sign in and manage preferences (always given: an old link must never
+    # leave the person without a way to opt out).
+    manage_url: str
+
+
+@router.get(
+    "/unsubscribe",
+    response_model=UnsubscribeLanding,
+    responses={303: {"description": "A browser: to the web landing page"}},
+)
+async def unsubscribe_landing(
+    request: Request,
+    settings: NotifySettings,
+    token: Annotated[str, Query(min_length=1, max_length=400)],
+) -> Any:
+    """What an unsubscribe link does, for the web landing page. Changes nothing.
+
+    Mail scanners open links, so the GET never unsubscribes: the page asks the person
+    to confirm, which sends the RFC 8058 POST. An expired link (authentic, older than
+    the token lifetime) says so and offers sign-in to manage preferences instead of
+    failing silently. Forged and garbled links are ``invalid``; nothing else is told.
+    """
+    if "text/html" in request.headers.get("accept", ""):
+        # A mail client without one-click support opened the List-Unsubscribe URL in a
+        # browser: show the web page, with the token in the fragment (never sent on).
+        return RedirectResponse(
+            f"{settings.web_url}/unsubscribe#token={quote(token, safe='')}",
+            status_code=303,
+            headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
+        )
+    # Sign-in comes first on any app page, then the settings (notification preferences).
+    manage_url = f"{settings.web_url}/settings"
+    secret = settings.signed_link_secret
+    if secret is None:
+        return UnsubscribeLanding(state="invalid", manage_url=manage_url)
+    state, claim = inspect_token(secret.get_secret_value(), token)
+    if state is TokenState.EXPIRED:
+        return UnsubscribeLanding(state="expired", manage_url=manage_url)
+    if (
+        state is not TokenState.VALID
+        or claim is None
+        or claim.category not in CATEGORIES
+        or not CATEGORIES[claim.category].configurable
+    ):
+        return UnsubscribeLanding(state="invalid", manage_url=manage_url)
+    return UnsubscribeLanding(state="valid", category=claim.category, manage_url=manage_url)
 
 
 @router.post("/unsubscribe", status_code=204)

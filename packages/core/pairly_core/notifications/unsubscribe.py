@@ -23,6 +23,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass
+from enum import StrEnum
 
 _CATEGORY_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
 _PREFIX = "v1"
@@ -53,6 +54,51 @@ def make_token(secret: str, claim: UnsubscribeClaim, *, now: float | None = None
     return f"{body}.{_mac(secret, body)}"
 
 
+class TokenState(StrEnum):
+    VALID = "valid"
+    # Authentic (the MAC matches) but older than MAX_AGE_SECONDS.
+    EXPIRED = "expired"
+    INVALID = "invalid"
+
+
+def inspect_token(
+    secret: str,
+    token: str,
+    *,
+    now: float | None = None,
+    max_age_seconds: int = MAX_AGE_SECONDS,
+) -> tuple[TokenState, UnsubscribeClaim | None]:
+    """The token's state and, when valid, its claim. Never raises on malformed input.
+
+    ``expired`` is only reported for a token whose MAC matches, so it reveals nothing
+    about tokens nobody issued; a forged or garbled token is ``invalid``.
+    """
+    if not isinstance(token, str) or len(token) > 200:
+        return TokenState.INVALID, None
+    parts = token.split(".")
+    if len(parts) != 6 or parts[0] != _PREFIX:
+        return TokenState.INVALID, None
+    body, mac = ".".join(parts[:5]), parts[5]
+    if not hmac.compare_digest(_mac(secret, body), mac):
+        return TokenState.INVALID, None
+    try:
+        org_id, user_id = uuid.UUID(hex=parts[1]), uuid.UUID(hex=parts[2])
+    except ValueError:
+        return TokenState.INVALID, None
+    if not _CATEGORY_RE.fullmatch(parts[3]):
+        return TokenState.INVALID, None
+    issued = parts[4]
+    if not issued.isascii() or not issued.isdigit() or len(issued) > 12:
+        return TokenState.INVALID, None
+    current = time.time() if now is None else now
+    age = current - int(issued)
+    if age < -_SKEW_SECONDS:
+        return TokenState.INVALID, None
+    if age > max_age_seconds:
+        return TokenState.EXPIRED, None
+    return TokenState.VALID, UnsubscribeClaim(org_id, user_id, parts[3])
+
+
 def read_token(
     secret: str,
     token: str,
@@ -61,25 +107,5 @@ def read_token(
     max_age_seconds: int = MAX_AGE_SECONDS,
 ) -> UnsubscribeClaim | None:
     """The claim of a valid, unexpired token, or None. Never raises on malformed input."""
-    if not isinstance(token, str) or len(token) > 200:
-        return None
-    parts = token.split(".")
-    if len(parts) != 6 or parts[0] != _PREFIX:
-        return None
-    body, mac = ".".join(parts[:5]), parts[5]
-    if not hmac.compare_digest(_mac(secret, body), mac):
-        return None
-    try:
-        org_id, user_id = uuid.UUID(hex=parts[1]), uuid.UUID(hex=parts[2])
-    except ValueError:
-        return None
-    if not _CATEGORY_RE.fullmatch(parts[3]):
-        return None
-    issued = parts[4]
-    if not issued.isascii() or not issued.isdigit() or len(issued) > 12:
-        return None
-    current = time.time() if now is None else now
-    age = current - int(issued)
-    if age > max_age_seconds or age < -_SKEW_SECONDS:
-        return None
-    return UnsubscribeClaim(org_id, user_id, parts[3])
+    _, claim = inspect_token(secret, token, now=now, max_age_seconds=max_age_seconds)
+    return claim
