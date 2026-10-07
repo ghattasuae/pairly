@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Risk policy for expense notes, version 1. Hard rules in the engine apply on top: a
+# critical signal (hidden text, an instruction to the model) or a check that could not
+# run always sends the note to a person, whatever this file says.
+schema: pairly.risk_policy/v1
+name: expense.note
+method: noisy_or
+review_threshold: 0.5
+force_review_severity: high
+default_weight: 1.0
+weights:
+  core.amount_outlier: 0.6
+required_detectors:
+  - core.guardrail_findings
+  - core.extraction_confidence
+  - core.duplicate_hash
+levels: {medium: 0.3, high: 0.6, critical: 0.9}

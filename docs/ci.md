@@ -19,7 +19,7 @@ CI runs on GitHub Actions for every pull request and every push to `main`. The w
 
 The `python` job starts a throwaway Postgres with `scripts/ci_postgres.sh`. It uses the same image as `infra/docker-compose.yml` and runs the same init SQL from `infra/postgres/init`, so the `pairly_owner`, `pairly_app` and `pairly_auth` roles match the dev stack. All passwords are random and masked in the logs.
 
-Alembic runs `upgrade head` as `pairly_owner` first. Then pytest runs. Database tests connect as `pairly_app`, so Row Level Security applies to them. If the database tests are skipped for any reason, the job fails: CI never passes with the database tests silently turned off.
+Alembic runs `upgrade heads` (core plus every workflow branch) as `pairly_owner` first. Then pytest runs. Database tests connect as `pairly_app`, so Row Level Security applies to them. If the database tests are skipped for any reason, the job fails: CI never passes with the database tests silently turned off.
 
 The coverage threshold comes from `[tool.coverage.report] fail_under` in `pyproject.toml`. Change it there, not in the workflow.
 

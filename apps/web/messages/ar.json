@@ -186,7 +186,8 @@
     "approver": "معتمِد",
     "finance_controller": "المراقب المالي",
     "auditor": "مدقق",
-    "read_only": "قراءة فقط"
+    "read_only": "قراءة فقط",
+    "employee": "موظف"
   },
   "Workflows": {
     "all": "كل مسارات العمل",

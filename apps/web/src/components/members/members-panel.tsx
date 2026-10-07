@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 /** Roles people can be invited to. The API still decides who may grant which. */
 export const INVITABLE_ROLES = [
   "read_only",
+  "employee",
   "recruiter",
   "hiring_manager",
   "interviewer",

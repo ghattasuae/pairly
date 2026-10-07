@@ -5,7 +5,7 @@ Pairly REST API (`pairly_api`), built with FastAPI.
 Run locally:
 
 ```sh
-uv run alembic -c apps/api/alembic.ini upgrade head      # as the owner role
+uv run alembic -c apps/api/alembic.ini upgrade heads     # as the owner role
 uv run uvicorn pairly_api.main:create_app --factory       # as the app role
 ```
 

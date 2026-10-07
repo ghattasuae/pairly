@@ -245,3 +245,17 @@ def test_search_chunks_are_redacted() -> None:
     assert first.meta == {"k": "v"}
     assert (first.page_start, first.page_end) == (1, 1)
     assert out[1].text == "[EMAIL]"
+
+
+def test_plugin_jobs_with_a_coroutine() -> None:
+    async def run(ctx: Any) -> dict[str, Any]:
+        return {}
+
+    job = JobSpec("pay_sweep", "Sweep", "every 5 minutes", run=run, every_minutes=5)
+    assert job.minutes == set(range(0, 60, 5))
+    assert JobSpec("pay_x", "x", "daily").minutes == set()
+    for every in (0, 7, 61):
+        with pytest.raises(JobRegistryError):
+            JobSpec("pay_sweep", "Sweep", "x", run=run, every_minutes=every)
+    with pytest.raises(JobRegistryError):
+        JobSpec("pay_sweep", "Sweep", "x", run=run)

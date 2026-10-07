@@ -5,14 +5,26 @@
 The schedule is a human description for operators (the platform operations view, brief
 5.2 item 15); the worker owns the exact cron timing. A test keeps the two in step: every
 cron job the worker schedules is declared here, and every declared core job is scheduled.
+
+A workflow plugin declares its own jobs in ``scheduled_jobs`` (named ``<plugin id>_...``).
+A plugin job that sets ``run`` and ``every_minutes`` is scheduled by the worker: every
+``every_minutes`` minutes (a divisor of 60), one run at a time, recorded in ``job_runs``
+like core jobs. ``run`` gets a ``JobContext`` (sessions, the workflow runtime and the
+role registry) and returns a short summary.
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+    from pairly_core.rbac import RoleRegistry
+    from pairly_core.workflow.runtime import WorkflowRuntime
 
 JOB_NAME_RE: Final = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 
@@ -35,16 +47,44 @@ class JobRegistryError(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class JobContext:
+    """What a plugin job gets from the worker."""
+
+    sessionmaker: async_sessionmaker[AsyncSession]
+    runtime: WorkflowRuntime
+    registry: RoleRegistry
+
+
+PluginJob = Callable[[JobContext], Awaitable[Mapping[str, Any]]]
+
+
+@dataclass(frozen=True, slots=True)
 class JobSpec:
     name: str
     description: str
     schedule: str
+    # Plugin jobs only: the coroutine the worker runs, and how often.
+    run: PluginJob | None = None
+    every_minutes: int | None = None
 
     def __post_init__(self) -> None:
         if not JOB_NAME_RE.fullmatch(self.name):
             raise JobRegistryError(f"invalid job name {self.name!r}")
         if not self.description or not self.schedule:
             raise JobRegistryError(f"job {self.name!r} needs a description and a schedule")
+        if (self.run is None) != (self.every_minutes is None):
+            raise JobRegistryError(f"job {self.name!r}: set both run and every_minutes, or none")
+        if self.every_minutes is not None and (
+            not 1 <= self.every_minutes <= 60 or 60 % self.every_minutes
+        ):
+            raise JobRegistryError(f"job {self.name!r}: every_minutes must divide 60")
+
+    @property
+    def minutes(self) -> set[int]:
+        """The minutes of each hour the worker runs it (plugin jobs)."""
+        if self.every_minutes is None:
+            return set()
+        return set(range(0, 60, self.every_minutes))
 
 
 CORE_JOBS: tuple[JobSpec, ...] = (

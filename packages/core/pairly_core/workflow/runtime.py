@@ -7,8 +7,8 @@ Lifecycle of a run (``workflow_runs.status``)::
     running --(interrupt for approval)--> waiting_approval --(decided, resumed)--> running
     running --> completed | failed            any non-terminal --(cancel)--> cancelled
 
-* ``start_run``: the actor must hold the graph's start permission (a ``propose`` or
-  ``create`` action, so agents can start proposals). Inserts the run (thread id
+* ``start_run``: the actor must hold the graph's start permission (a ``propose``,
+  ``create`` or ``submit`` action, so agents can start proposals). Inserts the run (thread id
   ``"<org_id>:<run_id>"``), audits ``core.workflow.run_started`` and invokes the graph.
 * ``resume_run``: the ONLY way to resume a run. It locks the run, checks that it waits
   for an approval that belongs to it and that a human decision on that approval is
@@ -52,6 +52,7 @@ from pairly_core.workflow.checkpoint import TenantCheckpointer, org_of_thread
 from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.models import RunStatus, WorkflowRun, thread_id_for
 from pairly_core.workflow.nodes import INTERRUPT_KIND
+from pairly_core.workflow.services import NO_SERVICES, GraphServices
 from pairly_core.workflow.spec import ApprovalType, GraphSpec, SpecError
 
 log = structlog.get_logger(__name__)
@@ -176,11 +177,13 @@ class WorkflowRuntime:
         registry: RoleRegistry,
         graphs: Iterable[GraphSpec] = (),
         hooks: ApprovalHooks = NO_HOOKS,
+        services: GraphServices = NO_SERVICES,
     ) -> None:
         self.sessionmaker = sessionmaker
         self.checkpointer = checkpointer
         self.registry = registry
         self.hooks = hooks
+        self.services = services
         self._graphs: dict[tuple[str, str], GraphSpec] = {}
         self._approval_types: dict[str, ApprovalType] = {}
         for spec in graphs:
@@ -240,6 +243,7 @@ class WorkflowRuntime:
             sessionmaker=self.sessionmaker,
             registry=self.registry,
             hooks=self.hooks,
+            services=self.services,
         )
 
     async def _audit(

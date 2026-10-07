@@ -7,6 +7,7 @@ members = [
     "pairly",
     "pairly-api",
     "pairly-core",
+    "pairly-expense",
     "pairly-hire",
     "pairly-mcp",
     "pairly-pay",
@@ -1339,6 +1340,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pairly-expense"
+version = "0.0.0"
+source = { editable = "packages/expense" }
+dependencies = [
+    { name = "pairly-api" },
+    { name = "pairly-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pairly-api", editable = "apps/api" },
+    { name = "pairly-core", editable = "packages/core" },
+]
+
+[[package]]
 name = "pairly-hire"
 version = "0.0.0"
 source = { editable = "packages/hire" }
@@ -1400,6 +1416,7 @@ dependencies = [
     { name = "pairly" },
     { name = "pairly-api" },
     { name = "pairly-core" },
+    { name = "pairly-expense" },
     { name = "pairly-hire" },
     { name = "pairly-mcp" },
     { name = "pairly-pay" },
@@ -1425,6 +1442,7 @@ requires-dist = [
     { name = "pairly", editable = "sdks/python" },
     { name = "pairly-api", editable = "apps/api" },
     { name = "pairly-core", editable = "packages/core" },
+    { name = "pairly-expense", editable = "packages/expense" },
     { name = "pairly-hire", editable = "packages/hire" },
     { name = "pairly-mcp", editable = "apps/mcp" },
     { name = "pairly-pay", editable = "packages/pay" },

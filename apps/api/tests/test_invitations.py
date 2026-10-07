@@ -198,6 +198,17 @@ async def test_workflow_scoped_invitation(live: Live, orgs: TwoTenants) -> None:
     assert "core.approval.decide" not in me["permissions"]
 
 
+async def test_employee_invitation_confers_no_core_permission(live: Live, orgs: TwoTenants) -> None:
+    b = orgs.b
+    email, subject = _new_email(), _new_subject()
+    created = await live.invite(b.subject, b.org_id, email, role="employee")
+    assert created.status_code == 201, created.text
+    assert (await live.accept(created.json()["token"], subject, email)).status_code == 200
+    me = (await live.client.get("/v1/me", headers=live.auth(subject, org=b.org_id))).json()
+    assert me["roles"] == [{"role": "employee", "workflow": None}]
+    assert not [p for p in me["permissions"] if p.startswith("core.")]
+
+
 # ------------------------------------------------------------------ token misuse
 
 
@@ -365,6 +376,34 @@ async def test_lookup_function_returns_only_an_org_id(
         assert nothing.scalar() is None
         bad = await conn.execute(text("SELECT invitation_org_id('not-a-hash')"))
         assert bad.scalar() is None
+
+
+async def test_admin_slug_lookup_is_owner_only(
+    app_engine: AsyncEngine, owner_engine: AsyncEngine, orgs: TwoTenants
+) -> None:
+    """``admin_org_id_by_slug`` answers the owner role and refuses the app role."""
+    b = orgs.b
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(b.org_id)})
+        slug = (await conn.execute(text("SELECT slug FROM organisations"))).scalar_one()
+    async with owner_engine.begin() as conn:
+        found = await conn.execute(text("SELECT admin_org_id_by_slug(:s)"), {"s": slug})
+        assert found.scalar() == b.org_id
+        assert (
+            await conn.execute(text("SELECT admin_org_id_by_slug('no-such-org')"))
+        ).scalar() is None
+        assert (
+            await conn.execute(text("SELECT admin_org_id_by_slug('Bad Slug!')"))
+        ).scalar() is None
+        # The flag is switched off again: the owner sees no organisation without a tenant.
+        assert (await conn.execute(text("SELECT count(*) FROM organisations"))).scalar() == 0
+    with pytest.raises(DBAPIError, match="permission denied"):
+        async with app_engine.begin() as conn:
+            await conn.execute(text("SELECT admin_org_id_by_slug(:s)"), {"s": slug})
+    async with app_engine.begin() as conn:
+        # Setting the flag gives the app role nothing: the policy is the owner's only.
+        await conn.execute(text("SELECT set_config('app.admin_slug_lookup', 'on', true)"))
+        assert (await conn.execute(text("SELECT count(*) FROM organisations"))).scalar() == 0
 
 
 # ------------------------------------------------------------------ who may invite whom

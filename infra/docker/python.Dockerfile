@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Proofly Technology
 #
 # One image for the Python services. Compose picks the command:
-#   migrate  alembic -c /app/apps/api/alembic.ini upgrade head   (owner role)
+#   migrate  alembic -c /app/apps/api/alembic.ini upgrade heads  (owner role)
 #   api      uvicorn pairly_api.main:app                          (app role)
 #   worker   arq pairly_worker.main.WorkerSettings                (app role)
 #
@@ -32,6 +32,7 @@ COPY pyproject.toml uv.lock .python-version ./
 COPY packages/core/pyproject.toml packages/core/
 COPY packages/hire/pyproject.toml packages/hire/
 COPY packages/pay/pyproject.toml packages/pay/
+COPY packages/expense/pyproject.toml packages/expense/
 COPY apps/api/pyproject.toml apps/api/
 COPY apps/worker/pyproject.toml apps/worker/
 COPY apps/mcp/pyproject.toml apps/mcp/
@@ -43,6 +44,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY packages/core packages/core
 COPY packages/hire packages/hire
 COPY packages/pay packages/pay
+COPY packages/expense packages/expense
 COPY apps/api apps/api
 COPY apps/worker apps/worker
 COPY apps/mcp apps/mcp

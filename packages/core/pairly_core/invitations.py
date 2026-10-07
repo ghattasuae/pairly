@@ -568,6 +568,71 @@ async def bootstrap_organisation(
     )
 
 
+async def invite_as_system(
+    session: AsyncSession,
+    registry: RoleRegistry,
+    *,
+    email: str,
+    role: str,
+    workflow: str | None,
+    actor_id: str,
+) -> CreatedInvitation | None:
+    """Invite ``email`` to the session's organisation as a system action (seed scripts).
+
+    For the owner database connection (``pairly-admin seed``), like
+    ``bootstrap_organisation``: no person invites, so ``invited_by`` is NULL and the
+    audit event names the system ``actor_id``. Idempotent: returns ``None`` when the
+    address already holds this membership or has a pending invitation. The ``agent``
+    role is never given to a person, and a workflow scope must name a known workflow.
+    """
+    org = current_org(session)
+    if org is None:
+        raise ForbiddenError("invitations need a tenant context")
+    if role == BuiltinRole.AGENT.value or role not in registry.roles:
+        raise BadRequestError("unknown role")
+    if workflow is not None and workflow not in registry.workflows:
+        raise BadRequestError("unknown workflow")
+    address = normalize_email(email)
+    role_row = await _builtin_role(session, role)
+    now = await _db_now(session)
+    member = await session.scalar(
+        select(Membership.id)
+        .join(User, User.id == Membership.user_id)
+        .where(
+            func.lower(User.email) == address,
+            Membership.role_id == role_row.id,
+            Membership.workflow.is_not_distinct_from(workflow),
+        )
+        .limit(1)
+    )
+    pending = await session.scalar(
+        select(Invitation.id)
+        .where(
+            Invitation.email == address,
+            Invitation.accepted_at.is_(None),
+            Invitation.revoked_at.is_(None),
+            Invitation.expires_at > now,
+        )
+        .limit(1)
+    )
+    if member is not None or pending is not None:
+        return None
+    invitation, token = await _insert_invitation(
+        session, email=address, role=role_row, workflow=workflow, invited_by=None
+    )
+    await append_audit(
+        session,
+        action=AuditAction.INVITATION_CREATED,
+        actor_type=ActorType.SYSTEM,
+        actor_id=actor_id,
+        entity_type="invitation",
+        entity_id=invitation.id,
+        workflow=workflow,
+        payload={"role": role_row.key, "workflow": workflow},
+    )
+    return CreatedInvitation(invitation=_view(invitation, role_row.key, now), token=token)
+
+
 __all__ = [
     "INVITATION_TTL",
     "AcceptedInvitation",
@@ -588,6 +653,7 @@ __all__ = [
     "create_invitation",
     "hash_token",
     "invitation_status",
+    "invite_as_system",
     "list_invitations",
     "my_organisations",
     "new_token",

@@ -597,6 +597,82 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/expense/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notes */
+        get: operations["list_notes_v1_expense_notes_get"];
+        put?: never;
+        /** Submit Note */
+        post: operations["submit_note_v1_expense_notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/expense/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Note */
+        get: operations["get_note_v1_expense_notes__note_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/expense/notes/{note_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Note
+         * @description Close a note that needs review, with a written reason. Nothing is reimbursed.
+         */
+        post: operations["close_note_v1_expense_notes__note_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/expense/notes/{note_id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restart Note
+         * @description Start a fresh run for a note that needs review, as its original submitter (only
+         *     while they may still submit). The new run ends at a person's decision as usual.
+         */
+        post: operations["restart_note_v1_expense_notes__note_id__restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/extractions/{extraction_id}": {
         parameters: {
             query?: never;
@@ -2231,6 +2307,341 @@ export type components = {
             /** Key */
             key: string;
         };
+        /** ExpenseApprovalDecisionOut */
+        ExpenseApprovalDecisionOut: {
+            /** Channel */
+            channel: string;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /**
+             * Decided By
+             * Format: uuid
+             */
+            decided_by: string;
+            /** Decision */
+            decision: string;
+            /** Step */
+            step: string;
+        };
+        /** ExpenseApprovalOut */
+        ExpenseApprovalOut: {
+            /** Chain */
+            chain: string;
+            /** Decisions */
+            decisions: components["schemas"]["ExpenseApprovalDecisionOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Steps */
+            steps: components["schemas"]["ExpenseStepOut"][];
+            /** Title */
+            title: string;
+        };
+        /** ExpenseDocumentRef */
+        ExpenseDocumentRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Media Type */
+            media_type: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Sha256 */
+            sha256: string;
+            /** Status */
+            status: string;
+        };
+        /** ExpenseExtractionOut */
+        ExpenseExtractionOut: {
+            /** Fields */
+            fields: components["schemas"]["ExpenseFieldOut"][];
+            /** From Recording */
+            from_recording: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model Name */
+            model_name: string | null;
+            /** Model Provider */
+            model_provider: string | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Reasons */
+            reasons: string[];
+            /** Schema Name */
+            schema_name: string;
+            /** Schema Version */
+            schema_version: string;
+            /** Status */
+            status: string;
+        };
+        /** ExpenseFieldOut */
+        ExpenseFieldOut: {
+            /** Confidence */
+            confidence: number;
+            /** Corrected */
+            corrected: boolean;
+            /** Evidence */
+            evidence: components["schemas"]["ExpenseSpanOut"][];
+            /** Extracted Value */
+            extracted_value: unknown;
+            /** Flags */
+            flags: string[];
+            /** Kind */
+            kind: string;
+            /** Path */
+            path: string;
+            /** Required */
+            required: boolean;
+            /** Threshold */
+            threshold: number;
+            /** Value */
+            value: unknown;
+        };
+        /** ExpenseFindingOut */
+        ExpenseFindingOut: {
+            /** Code */
+            code: string;
+            /** Evidence */
+            evidence: string | null;
+            /** Explanation */
+            explanation: string;
+            /** Id */
+            id: string;
+            /** Location */
+            location: string;
+            /** Page */
+            page: number | null;
+            /** Removed From Model Input */
+            removed_from_model_input: boolean;
+            /** Severity */
+            severity: string;
+            /** Type */
+            type: string;
+        };
+        /** ExpenseGuardrailsOut */
+        ExpenseGuardrailsOut: {
+            /** Errors */
+            errors: string[];
+            /** Findings */
+            findings: components["schemas"]["ExpenseFindingOut"][];
+            /** Flagged */
+            flagged: boolean;
+            /** Removed Spans */
+            removed_spans: number;
+        };
+        /** ExpenseNoteDetail */
+        ExpenseNoteDetail: {
+            /** Amount */
+            amount: string | null;
+            /** Amount Aed */
+            amount_aed: string | null;
+            approval: components["schemas"]["ExpenseApprovalOut"] | null;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Category */
+            category: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision Ids */
+            decision_ids: string[];
+            document: components["schemas"]["ExpenseDocumentRef"];
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Expense Date */
+            expense_date: string | null;
+            extraction: components["schemas"]["ExpenseExtractionOut"] | null;
+            /** Failure Reason */
+            failure_reason: string | null;
+            guardrails: components["schemas"]["ExpenseGuardrailsOut"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Merchant */
+            merchant: string | null;
+            /** Note */
+            note: string;
+            /** Reimbursable */
+            reimbursable: boolean;
+            /** Review Reasons */
+            review_reasons: string[];
+            risk: components["schemas"]["ExpenseRiskOut"] | null;
+            /** Rules */
+            rules: components["schemas"]["ExpenseRuleOut"][];
+            /** Run Id */
+            run_id: string | null;
+            /** Run Status */
+            run_status: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Submitted By
+             * Format: uuid
+             */
+            submitted_by: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ExpenseNoteList */
+        ExpenseNoteList: {
+            /** Items */
+            items: components["schemas"]["ExpenseNoteSummary"][];
+        };
+        /** ExpenseNoteSummary */
+        ExpenseNoteSummary: {
+            /** Amount */
+            amount: string | null;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Category */
+            category: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Expense Date */
+            expense_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Merchant */
+            merchant: string | null;
+            /** Reimbursable */
+            reimbursable: boolean;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Run Id */
+            run_id: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Submitted By
+             * Format: uuid
+             */
+            submitted_by: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ExpenseReviewIn */
+        ExpenseReviewIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** ExpenseRiskOut */
+        ExpenseRiskOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Level */
+            level: string;
+            /** Policy Version */
+            policy_version: number | null;
+            /** Reasons */
+            reasons: string[];
+            /** Requires Human */
+            requires_human: boolean;
+            /** Score */
+            score: number;
+            /** Signals */
+            signals: components["schemas"]["ExpenseSignalOut"][] | null;
+        };
+        /** ExpenseRuleOut */
+        ExpenseRuleOut: {
+            /** Outcome */
+            outcome: string;
+            /** Policy Version */
+            policy_version: number | null;
+            /** Reason */
+            reason: string;
+            /** Reason Ar */
+            reason_ar: string | null;
+            /** Rule Id */
+            rule_id: string;
+            /** Severity */
+            severity: string | null;
+        };
+        /** ExpenseSignalOut */
+        ExpenseSignalOut: {
+            /** Detector */
+            detector: string;
+            /** Explanation Key */
+            explanation_key: string;
+            /** Label */
+            label: string;
+            /** Score */
+            score: number;
+            /** Severity */
+            severity: string;
+            /** Status */
+            status: string;
+            /** Weight */
+            weight: number;
+        };
+        /** ExpenseSpanOut */
+        ExpenseSpanOut: {
+            /** End */
+            end: number;
+            /** Page */
+            page: number | null;
+            /** Quote */
+            quote: string;
+            /** Start */
+            start: number;
+        };
+        /** ExpenseStepOut */
+        ExpenseStepOut: {
+            /** Mode */
+            mode: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Status */
+            status: string;
+        };
         /**
          * ExportFormat
          * @enum {string}
@@ -2634,6 +3045,11 @@ export type components = {
             /** Items */
             items: components["schemas"]["OrgOut"][];
         };
+        /**
+         * NoteStatus
+         * @enum {string}
+         */
+        NoteStatus: "processing" | "awaiting_approval" | "approved" | "rejected" | "changes_requested" | "failed" | "needs_review" | "closed";
         /** NotificationOut */
         NotificationOut: {
             /** Body */
@@ -4558,6 +4974,181 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentUrlOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notes_v1_expense_notes_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                mine?: boolean;
+                status?: components["schemas"]["NoteStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_note_v1_expense_notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteSummary"];
+                };
+            };
+            /** @description Malformed body, empty file or a note that is too long */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Receipt larger than the workflow allows */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Receipt type not allowed, or the body is not multipart */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_note_v1_expense_notes__note_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_note_v1_expense_notes__note_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_note_v1_expense_notes__note_id__restart_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteSummary"];
                 };
             };
             /** @description Validation Error */

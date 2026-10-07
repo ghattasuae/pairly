@@ -35,8 +35,9 @@ if TYPE_CHECKING:
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 _APPROVAL_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}\.[a-z][a-z0-9_]{0,31}$")
 # Actions a run starter may hold. Agents hold ``propose`` only, so they can start runs
-# (proposals) and nothing else.
-START_ACTIONS = frozenset({"propose", "create"})
+# (proposals) and nothing else. ``submit`` is a person handing an item in for processing
+# (an expense note, a request); like ``create`` it is never an agent or API key action.
+START_ACTIONS = frozenset({"propose", "create", "submit"})
 
 
 class SpecError(ValueError):
@@ -117,7 +118,9 @@ class GraphSpec:
             if permission_namespace(perm) != self.workflow:
                 raise SpecError(f"{self.name}: {perm!r} is outside the {self.workflow!r} workflow")
         if permission_action(self.start_permission) not in START_ACTIONS:
-            raise SpecError(f"{self.name}: start_permission must be a propose or create action")
+            raise SpecError(
+                f"{self.name}: start_permission must be a propose, create or submit action"
+            )
         if permission_action(self.read_permission) != "read":
             raise SpecError(f"{self.name}: read_permission must be a read action")
         for approval_type in self.approval_types:

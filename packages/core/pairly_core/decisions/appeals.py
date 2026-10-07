@@ -44,6 +44,7 @@ from pairly_core.decisions.models import (
 from pairly_core.decisions.permissions import APPEAL_READ, DECISION_READ
 from pairly_core.decisions.scope import (
     WorkflowScope,
+    authorize_appeal_creation,
     authorize_appeal_decision,
     decide_scope,
     read_scope,
@@ -135,13 +136,15 @@ async def create_appeal(
     reason: str,
     sla: timedelta = DEFAULT_SLA,
 ) -> AppealView:
-    """File an appeal against ``decision_id`` (staff on behalf of the requester)."""
+    """File an appeal against ``decision_id`` (staff on behalf of the requester, or a
+    person of the workflow who holds its ``<workflow>.appeal.create``)."""
     org = current_org(session)
     if org is None or org != actor.org_id:
         raise TenantError("appeals need the actor's tenant context")
     record = await get_record(session, decision_id)
     if record is None or not read_scope(actor, DECISION_READ).allows(record.workflow):
         raise NotFoundError("decision not found")
+    authorize_appeal_creation(actor, record.workflow)
     if not _REQUESTER_RE.fullmatch(requester_id):
         raise BadRequestError("invalid requester id")
     clean_reason = clean_text(reason, "a reason")

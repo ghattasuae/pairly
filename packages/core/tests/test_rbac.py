@@ -14,6 +14,7 @@ from pairly_core.rbac import (
     Actor,
     ActorKind,
     AgentPermissionError,
+    EmployeePermissionError,
     PermissionDeniedError,
     PermissionSpec,
     RBACError,
@@ -308,3 +309,48 @@ def test_granting_needs_users_manage(registry: RoleRegistry) -> None:
     auditor = _actor(registry, RoleGrant("auditor"))
     with pytest.raises(PermissionDeniedError):
         check_grantable(registry, auditor, "read_only", None)
+
+
+# ------------------------------------------------------------------ employee role
+
+
+def test_employee_holds_no_core_permission(registry: RoleRegistry) -> None:
+    assert "employee" in registry.roles
+    assert not {p for p in registry.permissions_for_role("employee") if p.startswith("core.")}
+
+
+@pytest.mark.parametrize("action", ["read", "submit", "create", "upload"])
+def test_plugins_may_grant_employee_submit_type_permissions(action: str) -> None:
+    plugin = _Plugin(
+        id="claims",
+        name="Claims",
+        permissions=(PermissionSpec(f"claims.claim.{action}", "x", frozenset({"employee"})),),
+    )
+    assert f"claims.claim.{action}" in build_registry([plugin]).permissions_for_role("employee")
+
+
+@pytest.mark.parametrize("action", ["approve", "decide", "manage", "export", "propose", "correct"])
+def test_plugins_cannot_grant_employee_other_actions(action: str) -> None:
+    plugin = _Plugin(
+        id="claims",
+        name="Claims",
+        permissions=(PermissionSpec(f"claims.claim.{action}", "x", frozenset({"employee"})),),
+    )
+    with pytest.raises(EmployeePermissionError):
+        build_registry([plugin])
+
+
+def test_employee_never_gets_core_permissions() -> None:
+    registry = RoleRegistry()
+    registry.register(PermissionSpec("core.thing.read", "x"), namespace="core")
+    with pytest.raises(EmployeePermissionError):
+        registry.grant("employee", "core.thing.read")
+
+
+@pytest.mark.parametrize("workflow", [None, "pay"])
+def test_employee_is_grantable_without_core_power(
+    registry: RoleRegistry, workflow: str | None
+) -> None:
+    # Confers no core permission, so a user manager with nothing else may grant it.
+    conferred = check_grantable(registry, _manager(registry), "employee", workflow)
+    assert not {p for p in conferred if p.startswith("core.")}

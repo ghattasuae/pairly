@@ -14,6 +14,11 @@ workflow permissions the actor holds, never one core permission for everything.
 * Deciding an appeal: a decide-type permission (action ``decide`` or ``approve``) of the
   appealed decision's workflow, or the core-wide ``core.appeal.decide`` (admin by
   default). Both are step-up actions: ``authorize`` checks the second factor.
+* Filing an appeal: the core-wide ``core.appeal.create`` (staff, on behalf of a
+  candidate or vendor), or the workflow's own ``<workflow>.appeal.create`` when the
+  workflow declares it (so a workflow-scoped member can contest a decision of that
+  workflow, for example an employee whose expense note was rejected). Either way the
+  actor must also be able to read the record.
 
 A record or appeal outside the actor's scope is reported as not found (404), like
 another organisation's; an actor with no scope at all gets an audited 403.
@@ -26,7 +31,7 @@ from typing import Any, Final
 
 from sqlalchemy import ColumnElement, true
 
-from pairly_core.decisions.permissions import APPEAL_DECIDE
+from pairly_core.decisions.permissions import APPEAL_CREATE, APPEAL_DECIDE
 from pairly_core.rbac import (
     CORE_NAMESPACE,
     Actor,
@@ -116,6 +121,26 @@ def authorize_appeal_decision(actor: Actor, workflow: str) -> str:
         raise PermissionDeniedError(
             "you cannot resolve this appeal",
             denial=Denial(actor=actor, permission=APPEAL_DECIDE, reason="no_workflow_access"),
+        )
+    authorize(actor, permission)
+    return permission
+
+
+def create_permission(actor: Actor, workflow: str) -> str | None:
+    """The permission that lets ``actor`` file an appeal in ``workflow``, if any."""
+    if actor.has(APPEAL_CREATE):
+        return APPEAL_CREATE
+    own = f"{workflow}.appeal.create"
+    return own if workflow != CORE_NAMESPACE and actor.has(own) else None
+
+
+def authorize_appeal_creation(actor: Actor, workflow: str) -> str:
+    """Raise unless ``actor`` may file an appeal against a ``workflow`` decision."""
+    permission = create_permission(actor, workflow)
+    if permission is None:
+        raise PermissionDeniedError(
+            "you cannot file an appeal here",
+            denial=Denial(actor=actor, permission=APPEAL_CREATE, reason="no_workflow_access"),
         )
     authorize(actor, permission)
     return permission
