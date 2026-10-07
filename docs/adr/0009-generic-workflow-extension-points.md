@@ -1,6 +1,6 @@
 # ADR 0009: Generic extension points for workflow plugins (M1 expense acceptance)
 
-Status: proposed
+Status: accepted
 
 ## Context
 
