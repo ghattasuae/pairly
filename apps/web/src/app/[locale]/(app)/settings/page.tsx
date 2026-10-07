@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
-import { ChevronRight, ShieldCheck, Users } from "lucide-react";
+import { BellRing, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { isNavVisible } from "@/lib/nav";
 import { resolveViewer } from "@/lib/provisioning";
+import { SETTINGS_PAGES } from "@/lib/settings-pages";
 
 import { sectionMetadata } from "../section-placeholder";
 
@@ -21,6 +22,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return sectionMetadata(toLocale((await params).locale), "settings");
 }
 
+const ICONS = {
+  notifications: <BellRing aria-hidden />,
+  security: <ShieldCheck aria-hidden />,
+  members: <Users aria-hidden />,
+  flags: <Flag aria-hidden />,
+  apiKeys: <KeyRound aria-hidden />,
+  webhooks: <Webhook aria-hidden />,
+  policies: <ScrollText aria-hidden />,
+} as const;
+
+/** Settings: personal pages for everyone, organisation pages for who holds their permission. */
 export default async function SettingsPage({ params }: Props) {
   setRequestLocale(toLocale((await params).locale));
   const viewer = await resolveViewer();
@@ -29,12 +41,7 @@ export default async function SettingsPage({ params }: Props) {
   const nav = await getTranslations("Nav");
   const t = await getTranslations("Settings");
 
-  const links = [
-    ...(permissions?.includes("core.users.read")
-      ? [{ href: "/settings/members", title: nav("members"), body: t("membersBody"), icon: <Users aria-hidden /> }]
-      : []),
-    { href: "/settings/security", title: nav("security"), body: t("securityBody"), icon: <ShieldCheck aria-hidden /> },
-  ];
+  const links = SETTINGS_PAGES.filter((page) => page.visible(permissions ?? []));
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
@@ -43,17 +50,17 @@ export default async function SettingsPage({ params }: Props) {
       </PageHeader>
       <ul className="grid gap-3 sm:grid-cols-2">
         {links.map((link) => (
-          <li key={link.href}>
+          <li key={link.key}>
             <Link
               href={link.href}
               className="group flex items-start gap-4 rounded-xl border bg-surface p-5 shadow-soft transition-colors hover:bg-accent"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-primary [&_svg]:size-5">
-                {link.icon}
+                {ICONS[link.key]}
               </span>
               <span className="min-w-0 flex-1 space-y-1">
-                <span className="block font-display text-xl">{link.title}</span>
-                <span className="block text-sm text-muted-foreground">{link.body}</span>
+                <span className="block font-display text-xl">{t(`pages.${link.key}.title`)}</span>
+                <span className="block text-sm text-muted-foreground">{t(`pages.${link.key}.body`)}</span>
               </span>
               <ChevronRight className="mt-1 size-4 text-muted-foreground rtl:rotate-180" aria-hidden />
             </Link>

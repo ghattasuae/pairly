@@ -47,7 +47,7 @@ export function UnsubscribeLanding({
 
   const manage = (
     <Button asChild className="w-full">
-      <Link href="/settings">{t("manage")}</Link>
+      <Link href="/settings/notifications">{t("manage")}</Link>
     </Button>
   );
 
@@ -80,7 +80,7 @@ export function UnsubscribeLanding({
             {busy ? t("confirming") : t("confirm")}
           </Button>
           <Button asChild variant="ghost" className="w-full">
-            <Link href="/settings">{t("manageInstead")}</Link>
+            <Link href="/settings/notifications">{t("manageInstead")}</Link>
           </Button>
         </div>
       </AuthCard>

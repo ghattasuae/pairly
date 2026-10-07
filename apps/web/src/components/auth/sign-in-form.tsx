@@ -26,13 +26,16 @@ export interface SignInFormProps {
   sendLink?: (
     email: string,
     locale: string,
+    next?: string | null,
   ) => Promise<{ ok: boolean; status?: number | undefined; code?: string | undefined }>;
+  /** A same-site page to land on after signing in (validated by the page). Default: home. */
+  next?: string | null;
 }
 
-async function defaultSendLink(email: string, locale: string) {
+async function defaultSendLink(email: string, locale: string, next?: string | null) {
   const { error } = await authClient.signIn.magicLink({
     email,
-    callbackURL: `/${locale}`,
+    callbackURL: next ?? `/${locale}`,
     errorCallbackURL: `/${locale}/sign-in`,
     // Picks the language of the email. Validated against the locale list on the server.
     metadata: { locale },
@@ -40,7 +43,7 @@ async function defaultSendLink(email: string, locale: string) {
   return error ? { ok: false, status: error.status, code: error.code } : { ok: true };
 }
 
-export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps) {
+export function SignInForm({ sso, sendLink = defaultSendLink, next = null }: SignInFormProps) {
   const t = useTranslations("Auth");
   const locale = useLocale();
   const router = useRouter();
@@ -60,7 +63,7 @@ export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps)
     setPending(true);
     setError(null);
     try {
-      const result = await sendLink(parsed.data, locale);
+      const result = await sendLink(parsed.data, locale, next);
       if (result.ok) {
         // The address stays in this tab only (session storage), never in the URL.
         try {
@@ -79,7 +82,7 @@ export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps)
   };
 
   const social = (provider: "google" | "microsoft") => () =>
-    void authClient.signIn.social({ provider, callbackURL: `/${locale}`, errorCallbackURL: `/${locale}/sign-in` });
+    void authClient.signIn.social({ provider, callbackURL: next ?? `/${locale}`, errorCallbackURL: `/${locale}/sign-in` });
 
   return (
     <div className="space-y-5">

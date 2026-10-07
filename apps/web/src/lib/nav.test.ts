@@ -11,12 +11,16 @@ describe("visibleNav", () => {
     expect(keys(null)).toEqual(["home"]);
   });
 
-  it("shows only Home for a member with no section permissions", () => {
-    expect(keys(["core.org.read", "core.decision.read"])).toEqual(["home"]);
+  it("shows Home and personal Settings for a member with no section permissions", () => {
+    expect(keys(["core.org.read", "core.decision.read"])).toEqual(["home", "settings"]);
   });
 
   it("shows Pay and Inbox for a pay-only membership", () => {
-    expect(keys(["pay.invoice.read", "pay.invoice.approve"])).toEqual(["home", "inbox", "pay"]);
+    expect(keys(["pay.invoice.read", "pay.invoice.approve"])).toEqual(["home", "inbox", "pay", "settings"]);
+  });
+
+  it("shows the Inbox to anyone who approves in any workflow", () => {
+    expect(isNavVisible("inbox", ["expense.note.approve"])).toBe(true);
   });
 
   it("shows Audit to auditors and Settings to admins", () => {

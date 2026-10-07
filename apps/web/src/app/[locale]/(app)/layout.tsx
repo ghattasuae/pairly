@@ -45,6 +45,7 @@ export default async function AppLayout({ children, params }: Props) {
       user={{ name: session.user.name || null, email: session.user.email }}
       orgs={(orgs ?? []).map((org) => ({ id: org.id, name: org.name }))}
       activeOrgId={activeOrgId}
+      notifications={viewer.status === "ready"}
     >
       {children}
     </AppShell>

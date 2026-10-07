@@ -10,7 +10,9 @@
     "signOut": "Sign out",
     "tryAgain": "Try again",
     "backHome": "Back to home",
-    "loading": "Loading"
+    "loading": "Loading",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "Nav": {
     "label": "Main",
@@ -59,7 +61,9 @@
     "toggleTheme": "Switch light or dark",
     "switchLanguage": "Switch language",
     "signOut": "Sign out",
-    "hint": "Press {keys} any time to open this menu."
+    "hint": "Press {keys} any time to open this menu.",
+    "searching": "Searching",
+    "results": "Search results"
   },
   "Auth": {
     "signInTitle": "Sign in to Pairly",
@@ -275,9 +279,37 @@
     "canStill": "You can still read everything your role allows."
   },
   "Settings": {
-    "subtitle": "Manage your organisation and your account.",
-    "membersBody": "See who is in your organisation and invite people.",
-    "securityBody": "Two-step sign-in with an authenticator app."
+    "subtitle": "Your own preferences, and the organisation settings your role can change.",
+    "pages": {
+      "notifications": {
+        "title": "Notifications",
+        "body": "Choose how and when Pairly tells you about things: channels, digests, snooze and quiet hours."
+      },
+      "security": {
+        "title": "Security",
+        "body": "Two-step sign-in and backup codes for your account."
+      },
+      "members": {
+        "title": "Members",
+        "body": "People in your organisation, their roles and invitations."
+      },
+      "policies": {
+        "title": "Policies",
+        "body": "Policy documents used to check work, and versioned rule sets."
+      },
+      "flags": {
+        "title": "Feature flags",
+        "body": "Turn optional features on or off for your organisation."
+      },
+      "apiKeys": {
+        "title": "API keys",
+        "body": "Keys for scripts and other systems. They can read, propose and upload, never approve."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "body": "Send signed event notifications to your other systems."
+      }
+    }
   },
   "BackupCode": {
     "title": "You signed in with a backup code",
@@ -308,6 +340,762 @@
       "interviews": "interview",
       "updates": "update",
       "digest": "daily summary"
+    }
+  },
+  "SettingsCommon": {
+    "secretOnce": "Copy it now. You will not see it again.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "savedIt": "I have saved it"
+  },
+  "StepUp": {
+    "title": "Confirm it is you with your authenticator code",
+    "reauthBody": "This action needs a sign-in with your authenticator code. Sign in again and you come straight back here.",
+    "setupBody": "This action needs two-step sign-in. Turn it on under Security, then come back.",
+    "reauthAction": "Sign in again with my code",
+    "setupAction": "Set up two-step sign-in"
+  },
+  "Errors": {
+    "generic": "Something went wrong. Try again.",
+    "not_signed_in": "Your session has ended. Sign in again.",
+    "permission_denied": "Your role does not allow this.",
+    "second_factor_required": "This needs a sign-in with your authenticator code.",
+    "not_found": "We could not find it. It may have been removed, or you may not have access.",
+    "conflict": "Something changed in the meantime. Reload and try again.",
+    "gone": "This link cannot be used any more.",
+    "invalid_input": "Some of the details are not valid. Check them and try again.",
+    "rate_limited": "Too many attempts. Wait a minute and try again.",
+    "unavailable": "Pairly could not be reached. Try again in a moment.",
+    "already_decided": "Someone already decided this item.",
+    "approval_state_conflict": "This item moved on before your decision arrived. It has been reloaded.",
+    "segregation_of_duties": "You prepared or submitted this item, so someone else must decide it.",
+    "not_assigned": "This step is not assigned to you.",
+    "idempotency_key_reused": "This decision was already sent with different details. Reload and try again.",
+    "too_large": "The file is too large."
+  },
+  "Data": {
+    "redacted": "Hidden for your role",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "Sla": {
+    "on_track": "On track",
+    "due_soon": "Due soon",
+    "overdue": "Overdue"
+  },
+  "ApprovalStatus": {
+    "pending": "Waiting",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "changes_requested": "Changes requested",
+    "cancelled": "Cancelled"
+  },
+  "Severity": {
+    "info": "Info",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "DecisionKinds": {
+    "score": "Score",
+    "shortlist_suggestion": "Shortlist suggestion",
+    "fraud_flag": "Fraud flag",
+    "risk_score": "Risk score",
+    "extraction": "Data extraction",
+    "extraction_correction": "Extraction correction",
+    "policy_check": "Policy check",
+    "approval": "Approval",
+    "final_action": "Final action",
+    "appeal_outcome": "Appeal outcome"
+  },
+  "Notifications": {
+    "bell": "Notifications",
+    "bellUnread": "Notifications, {count} unread",
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "You are all caught up.",
+    "loading": "Loading",
+    "unread": "unread",
+    "settings": "Notification settings"
+  },
+  "Explain": {
+    "subjects": {
+      "document": "This document",
+      "cv": "This CV",
+      "invoice": "This invoice",
+      "email": "This email"
+    },
+    "fallback": {
+      "guardrail": "{subject} contains content that may try to manipulate an AI system: \"{evidence}\".",
+      "risk": "This check raised something a person should look at."
+    },
+    "guardrails": {
+      "hidden_text": {
+        "low_contrast": "{subject} contains white or near-background text that a person cannot see: \"{evidence}\".",
+        "background_colour": "{subject} contains text set in the page background colour, so a person cannot see it: \"{evidence}\".",
+        "invisible_render_mode": "{subject} contains invisible text that only software can read: \"{evidence}\".",
+        "tiny_font": "{subject} contains text in a font too small for a person to read: \"{evidence}\".",
+        "off_page": "{subject} contains text placed outside the visible page: \"{evidence}\".",
+        "docx_hidden": "{subject} contains text marked as hidden in Word, so a person does not see it: \"{evidence}\"."
+      },
+      "instruction": {
+        "ignore_instructions": "{subject} contains text that tells an AI system to ignore its instructions: \"{evidence}\".",
+        "role_override": "{subject} contains text that tries to change the role of an AI system: \"{evidence}\".",
+        "system_prompt": "{subject} mentions the hidden instructions of an AI system: \"{evidence}\".",
+        "ranking_manipulation": "{subject} contains text that tells an AI system how to rank or score it: \"{evidence}\".",
+        "approval_manipulation": "{subject} contains text that tells an AI system to approve or mark it as paid: \"{evidence}\".",
+        "bank_change": "{subject} contains text that asks to change bank details: \"{evidence}\".",
+        "review_bypass": "{subject} contains text that asks to skip a check or a review: \"{evidence}\".",
+        "model_addressing": "{subject} contains text written to an AI system rather than to a person: \"{evidence}\".",
+        "role_marker": "{subject} contains chat role markers used to inject instructions: \"{evidence}\".",
+        "tool_directive": "{subject} contains a command or JSON aimed at an AI tool: \"{evidence}\".",
+        "output_control": "{subject} contains text that tells an AI system what to answer: \"{evidence}\".",
+        "hidden_message": "{subject} contains a message hidden in invisible characters: \"{evidence}\"."
+      },
+      "keyword_stuffing": {
+        "repetition": "{subject} repeats the same keyword far more often than normal writing does: {evidence}.",
+        "skill_list": "{subject} contains a long list of keywords with no sentences around them: \"{evidence}\"."
+      },
+      "metadata_injection": {
+        "metadata_instruction": "{subject} hides instructions in its file properties: \"{evidence}\".",
+        "metadata_text": "{subject} keeps a long text in its file properties, where a person does not see it: \"{evidence}\".",
+        "filename_instruction": "{subject} has a file name that contains instructions: \"{evidence}\".",
+        "email_instruction": "{subject} arrived in an email whose subject or headers contain instructions: \"{evidence}\"."
+      },
+      "unusual_unicode": {
+        "bidi_override": "{subject} uses characters that reverse the reading direction to disguise text: \"{evidence}\".",
+        "bidi_control": "{subject} contains text direction control characters: \"{evidence}\".",
+        "zero_width": "{subject} contains invisible zero-width characters inside words: \"{evidence}\".",
+        "tag_characters": "{subject} contains invisible tag characters that can carry a hidden message: \"{evidence}\".",
+        "variation_selectors": "{subject} contains a long run of invisible variation selectors: \"{evidence}\".",
+        "homoglyph": "{subject} contains words that mix look-alike letters from different alphabets: \"{evidence}\"."
+      }
+    },
+    "risk": {
+      "guardrails": {
+        "findings": "The document contains content that may try to manipulate an AI system, so a person must review it.",
+        "clean": "No hidden text or instructions to an AI system were found in the document."
+      },
+      "extraction": {
+        "ok": "Every required field was read with enough confidence.",
+        "low_confidence": "Some fields were read with low confidence, so a person should check them."
+      },
+      "duplicate": {
+        "none": "No other document with the same file was found.",
+        "same_file": "The same file was submitted before, so this may be a duplicate."
+      },
+      "amount": {
+        "insufficient_history": "There is not enough history yet to tell whether the amount is usual.",
+        "usual": "The amount is in line with earlier ones.",
+        "outlier": "The amount is far from earlier ones, so it needs a closer look."
+      },
+      "detector_error": "This check could not run, so a person must review the item.",
+      "detector_failed": "This check could not run, so a person must review the item.",
+      "detector_model_unavailable": "The model behind this check was not available, so a person must review the item."
+    }
+  },
+  "Viewer": {
+    "title": "Document",
+    "toolbar": "Document tools",
+    "pageOf": "Page {page} of {count}",
+    "pageCount": "{count, plural, one {# page} other {# pages}}",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "zoomLevel": "Zoom level",
+    "pages": "Document pages",
+    "loading": "Loading the document",
+    "notScanned": "The document is still being checked for viruses. Try again in a moment.",
+    "notFound": "We could not find this document, or you cannot see it.",
+    "error": "The document could not be shown. Try again.",
+    "unsupported": "{name} cannot be previewed here.",
+    "thisFile": "This file",
+    "legend": "What the highlights mean",
+    "legendEvidence": "Evidence: where a value was read",
+    "legendGuardrail": "Guardrail finding: content that may try to manipulate an AI system",
+    "listLabel": "Highlights in this document",
+    "evidence": "Evidence",
+    "guardrailFinding": "Guardrail finding",
+    "onPage": "Page {page}",
+    "noPosition": "No position in the document",
+    "untitled": "Untitled document",
+    "needsReview": "Needs review",
+    "decisions": "Decision records about this document",
+    "status": {
+      "received": "Received",
+      "scanning": "Being checked",
+      "clean": "Checked",
+      "infected": "Blocked",
+      "rejected": "Rejected",
+      "parsed": "Ready",
+      "parse_failed": "Could not be read",
+      "other": "Unknown"
+    }
+  },
+  "Inbox": {
+    "title": "Inbox",
+    "live": "Live updates on",
+    "notLive": "Live updates paused",
+    "search": "Search this list",
+    "searchPlaceholder": "Search by title or type",
+    "listLabel": "Approvals",
+    "detailLabel": "Selected approval",
+    "pickOne": "Pick an item from the list to see it here.",
+    "emptyTitle": "Nothing waiting for you",
+    "emptyBody": "New approvals show up here as soon as they need you.",
+    "noMatchTitle": "No item matches",
+    "noMatchBody": "Try another word or clear the search.",
+    "loadMore": "Load more",
+    "loadingMore": "Loading",
+    "loadMoreFailed": "More items could not be loaded. Try again.",
+    "hint": "Press <kbd>J</kbd> and <kbd>K</kbd> to move, <kbd>?</kbd> for all shortcuts.",
+    "filters": {
+      "status": "Status",
+      "statuses": {
+        "pending": "Waiting",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "changes_requested": "Changes requested",
+        "cancelled": "Cancelled",
+        "all": "All statuses"
+      },
+      "sla": "Time left",
+      "anySla": "Any time left",
+      "slas": {
+        "on_track": "On track",
+        "due_soon": "Due soon",
+        "overdue": "Overdue"
+      },
+      "workflow": "Workflow",
+      "allWorkflows": "All workflows",
+      "mine": "Assigned to me"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "body": "Shortcuts work when you are not typing in a field.",
+      "next": "Next item",
+      "previous": "Previous item",
+      "open": "Open the item",
+      "approve": "Approve",
+      "reject": "Reject",
+      "changes": "Request changes",
+      "search": "Search the list",
+      "help": "Show this help",
+      "close": "Close a dialog"
+    },
+    "toast": {
+      "approve": "Approved",
+      "reject": "Rejected",
+      "request_changes": "Changes requested",
+      "failed": "Your decision was not saved",
+      "retry": "Try again"
+    },
+    "backToList": "Back to the list",
+    "stepOf": "Step {step} of {count}: {name}",
+    "step": "Step: {name}",
+    "due": "due {when}",
+    "optimistic": {
+      "approve": {
+        "sending": "Approving",
+        "done": "You approved this."
+      },
+      "reject": {
+        "sending": "Rejecting",
+        "done": "You rejected this."
+      },
+      "request_changes": {
+        "sending": "Asking for changes",
+        "done": "You asked for changes."
+      }
+    },
+    "approve": "Approve",
+    "reject": "Reject",
+    "requestChanges": "Request changes",
+    "cannotDecide": "You cannot decide this one. It may not be assigned to you, or you prepared it.",
+    "loadingDetail": "Loading the details",
+    "notFound": "This item is not available to you any more.",
+    "loadError": "The details could not be loaded. Pick the item again to retry.",
+    "whatHappens": "What you are approving",
+    "evidence": "Evidence",
+    "openDocument": "Open the document on its own page",
+    "context": "Context",
+    "shownAbove": "Shown in the document above",
+    "chain": "Approval steps",
+    "stepStatus": {
+      "waiting": "Not started",
+      "active": "Waiting for a decision",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes requested",
+      "cancelled": "Cancelled",
+      "other": "Unknown"
+    },
+    "mode": {
+      "any_of": "One person decides",
+      "all_of": "Everyone must approve"
+    },
+    "assignedToYou": "Assigned to you",
+    "history": "History",
+    "noHistory": "No decisions yet.",
+    "you": "You",
+    "someone": "A colleague",
+    "decided": {
+      "approve": "approved",
+      "reject": "rejected",
+      "request_changes": "asked for changes",
+      "other": "decided"
+    },
+    "viaEscalation": "after escalation",
+    "onBehalf": "on behalf of someone away",
+    "channel": {
+      "web": "in Pairly",
+      "email_link": "from an email link",
+      "slack_link": "from Slack",
+      "other": "from another channel"
+    },
+    "details": "Details",
+    "created": "Created",
+    "submittedBy": "Submitted by",
+    "actorType": {
+      "user": "A person",
+      "agent": "An AI agent",
+      "system": "Pairly",
+      "api_key": "An API key"
+    },
+    "rules": "Approval rules",
+    "payloadHash": "Content fingerprint",
+    "dialog": {
+      "approve": {
+        "title": "Approve this?",
+        "body": "You are approving \"{title}\". This is final and the next step starts at once.",
+        "confirm": "Approve"
+      },
+      "reject": {
+        "title": "Reject this?",
+        "body": "You are rejecting \"{title}\". This is final. The person who submitted it sees your reason.",
+        "confirm": "Reject"
+      },
+      "request_changes": {
+        "title": "Ask for changes",
+        "body": "\"{title}\" goes back to the person who submitted it, with your reason.",
+        "confirm": "Send back"
+      },
+      "reasonLabel": "Reason",
+      "reasonHint": "Required. Say what is wrong or what to change. Press Ctrl and Enter to send."
+    }
+  },
+  "ApprovalLink": {
+    "titlePlain": "Approval link",
+    "loadingTitle": "Checking the link",
+    "loading": "One moment",
+    "signInTitle": "Sign in to continue",
+    "signInBody": "This approval link is for one person. Sign in with your work email, then your authenticator code, to see what it does. Nothing happens until you confirm.",
+    "unavailableTitle": "We cannot check this link right now",
+    "unavailable": "Pairly could not be reached. Try again in a moment.",
+    "tryAgain": "Try again",
+    "action": {
+      "approve": {
+        "title": "Approve this item",
+        "body": "Check the details, then confirm. Nothing happens until you do.",
+        "confirm": "Approve now"
+      },
+      "reject": {
+        "title": "Reject this item",
+        "body": "Check the details, give a reason, then confirm. Nothing happens until you do.",
+        "confirm": "Reject now"
+      },
+      "request_changes": {
+        "title": "Ask for changes",
+        "body": "Check the details, say what to change, then confirm. Nothing happens until you do.",
+        "confirm": "Send back now"
+      }
+    },
+    "item": "Item",
+    "workflow": "Workflow",
+    "step": "Step",
+    "expires": "Link expires",
+    "signedInAs": "Signed in as {email}.",
+    "reasonLabel": "Reason (required)",
+    "confirming": "Saving your decision",
+    "finalNote": "This decision is final and recorded with your name.",
+    "doneTitle": "Done",
+    "done": {
+      "approve": "You approved \"{title}\".",
+      "reject": "You rejected \"{title}\".",
+      "request_changes": "You asked for changes to \"{title}\"."
+    },
+    "doneBody": "The link is used up now. You can see the item and its history in your inbox.",
+    "openInbox": "Open the inbox",
+    "invalidTitle": "This link cannot be used",
+    "invalid": "It may have expired, been used already, or been sent to someone else. You can still decide from your inbox.",
+    "invalidSignedIn": "You are signed in as {email}. If the link was sent to another address, sign out and sign in as that person.",
+    "signOut": "Sign out"
+  },
+  "Decision": {
+    "title": "Decision record",
+    "eyebrow": "Decision record",
+    "intact": "Unchanged since it was recorded",
+    "notIntact": "Changed since it was recorded",
+    "personalHidden": "Personal data hidden for your role",
+    "downloadEn": "Download PDF (English)",
+    "downloadAr": "Download PDF (Arabic)",
+    "summary": "Summary",
+    "about": "About",
+    "document": "Document",
+    "decidedAt": "Decided",
+    "recordedAt": "Recorded",
+    "confidence": "Confidence",
+    "noConfidence": "Not given",
+    "humanAction": "Human action",
+    "noHumanAction": "No person has acted on it yet",
+    "actorType": {
+      "user": "by a person",
+      "agent": "by an AI agent",
+      "system": "by Pairly",
+      "api_key": "by an API key"
+    },
+    "model": "Model",
+    "fromRecording": "Recorded response",
+    "internalNote": "Internal note",
+    "outcome": "Outcome",
+    "versions": "Versions used",
+    "policyVersions": "Policies",
+    "promptVersions": "Prompts",
+    "none": "None",
+    "evidence": "Evidence",
+    "noEvidence": "No evidence was recorded for this decision.",
+    "ruleResults": "Rule results",
+    "rule": "Rule",
+    "result": "Result",
+    "severity": "Severity",
+    "ruleOutcome": {
+      "pass": "Passed",
+      "fail": "Failed",
+      "error": "Could not run",
+      "not_applicable": "Not applicable",
+      "skipped": "Skipped",
+      "warn": "Warning"
+    },
+    "riskSignals": "Risk signals",
+    "severityIs": "Severity: {severity}",
+    "score": "Score {score}",
+    "guardrailFindings": "Guardrail findings",
+    "onPage": "Page {page}",
+    "quoteLocations": "Where values were read",
+    "inputs": "Inputs",
+    "personalData": "Personal data",
+    "links": "Related records",
+    "auditEvents": "{count, plural, one {See # audit event} other {See # audit events}}",
+    "replay": {
+      "title": "Replay",
+      "body": "Run the decision again with the same inputs, policy, prompt and model settings, and see whether the result matches.",
+      "run": "Replay now",
+      "running": "Replaying",
+      "none": "This decision has not been replayed yet.",
+      "status": {
+        "match": "Same result",
+        "differs": "Different result",
+        "failed": "Replay failed"
+      },
+      "mode": {
+        "recorded": "Recorded responses",
+        "live": "Live model"
+      },
+      "deterministic": "Deterministic",
+      "diffCaption": "Differences between the recorded and the replayed result",
+      "path": "Field",
+      "original": "Recorded",
+      "replayed": "Replayed",
+      "fingerprinted": "Personal values are shown as fingerprints, not as text."
+    },
+    "appeals": {
+      "title": "Appeals",
+      "none": "Nobody has appealed this decision.",
+      "status": {
+        "open": "Open",
+        "resolved": "Resolved"
+      },
+      "requester": {
+        "candidate": "Candidate",
+        "vendor": "Vendor",
+        "staff": "Staff member"
+      },
+      "due": "answer due {when}",
+      "reason": "Reason",
+      "outcomeLabel": "Outcome",
+      "outcome": {
+        "upheld": "Decision stands",
+        "partially_overturned": "Partly changed",
+        "overturned": "Decision changed"
+      },
+      "outcomeText": "Written outcome (required)",
+      "resolveTitle": "Answer this appeal",
+      "resolve": "Save the outcome",
+      "resolving": "Saving",
+      "resolved": "Appeal answered",
+      "fileTitle": "File an appeal",
+      "fileBody": "Record a request for human review on someone's behalf. It goes to the appeals queue with a deadline.",
+      "requesterType": "Who is asking",
+      "requesterId": "Their reference",
+      "file": "File the appeal",
+      "filing": "Filing",
+      "filed": "Appeal filed"
+    }
+  },
+  "Audit": {
+    "subtitle": "Every action in your organisation, in order, in a chain that shows any change.",
+    "invalidFilter": "Those filters are not valid. Check the dates and values.",
+    "quick": "Search this page",
+    "quickPlaceholder": "Search this page by action, entity or id",
+    "exportCsv": "Export CSV",
+    "exportJson": "Export JSON",
+    "emptyTitle": "No events match",
+    "emptyBody": "Change the filters or clear them.",
+    "tableCaption": "Audit events",
+    "columns": {
+      "when": "When",
+      "action": "Action",
+      "actor": "Who",
+      "entity": "What",
+      "workflow": "Workflow",
+      "details": "Details"
+    },
+    "toggleDetails": "Show details of event {seq}",
+    "hash": "Hash",
+    "prevHash": "Previous hash",
+    "requestId": "Request id",
+    "pagination": "Pages of events",
+    "showing": "{count, plural, one {# event on this page} other {# events on this page}}",
+    "newest": "Newest",
+    "first": "First",
+    "older": "Older events",
+    "later": "Later events",
+    "filters": {
+      "label": "Search the audit log",
+      "title": "Filters",
+      "active": "On",
+      "action": "Action",
+      "actorType": "Who acted",
+      "any": "Anyone",
+      "actorTypes": {
+        "user": "Person",
+        "agent": "AI agent",
+        "system": "Pairly",
+        "api_key": "API key"
+      },
+      "actorId": "Actor id",
+      "workflow": "Workflow",
+      "entityType": "Entity type",
+      "entityId": "Entity id",
+      "requestId": "Request id",
+      "order": "Order",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "from": "From (UTC)",
+      "to": "To (UTC)",
+      "hint": "Each value must match exactly. Dates are whole days in UTC.",
+      "apply": "Search",
+      "clear": "Clear"
+    },
+    "chain": {
+      "title": "Chain check",
+      "body": "Each event is linked to the one before it by a hash, and the chain head is signed and stored outside the database every night. A check recomputes every link.",
+      "check": "Check the chain",
+      "checking": "Checking",
+      "notChecked": "Not checked in this visit.",
+      "queued": "The chain is long, so the check runs in the background. This page updates when it is done.",
+      "failed": "The check could not finish. Try again.",
+      "ok": "The chain is intact: {count, plural, one {# event} other {# events}} checked, up to event {seq}.",
+      "anchorsOk": "Matches the signed anchors.",
+      "broken": "The chain is broken at event {seq}. Tell your security team.",
+      "brokenNoSeq": "The chain does not match its anchors. Tell your security team.",
+      "anchors": "Signed anchors",
+      "anchorsUnavailable": "The anchors could not be loaded.",
+      "noAnchors": "No anchor yet. The first one is written tonight.",
+      "latestAnchor": "Latest anchor at event {seq}, {when}.",
+      "allAnchors": "{count, plural, one {Show # anchor} other {Show # anchors}}"
+    }
+  },
+  "NotificationSettings": {
+    "channelsTitle": "Where you hear about things",
+    "channelsBody": "Pick the channels for each kind of message, and whether email and Slack arrive at once or in one daily digest.",
+    "category": "Kind of message",
+    "channels": {
+      "email": "Email",
+      "slack": "Slack",
+      "in_app": "In Pairly"
+    },
+    "channelFor": "{channel} for {category}",
+    "delivery": "Email and Slack",
+    "deliveryFor": "Delivery for {category}",
+    "realtime": "At once",
+    "daily": "Daily digest",
+    "alwaysUrgent": "Always sent at once",
+    "urgentNote": "Urgent items, such as missed deadlines and approvals that block others, always arrive at once on the channels you keep on.",
+    "categories": {
+      "approvals": "Approvals",
+      "sla": "Missed deadlines",
+      "reminders": "Reminders",
+      "interviews": "Interviews",
+      "updates": "Updates",
+      "digest": "Daily digest"
+    },
+    "snoozeTitle": "Snooze",
+    "notSnoozed": "Not snoozed.",
+    "snoozedUntil": "Snoozed until {when}.",
+    "snoozeFor": "Pause messages",
+    "noSnooze": "Do not snooze",
+    "keepSnooze": "Keep the current snooze",
+    "snooze": {
+      "1h": "For 1 hour",
+      "4h": "For 4 hours",
+      "tomorrow": "Until tomorrow at 09:00",
+      "week": "For a week"
+    },
+    "endSnooze": "End the snooze now",
+    "quietTitle": "Quiet hours",
+    "quietToggle": "Use quiet hours",
+    "quietBody": "Messages that arrive in quiet hours wait until they end.",
+    "quietStart": "From",
+    "quietEnd": "Until",
+    "quietInvalid": "Quiet hours need a start and an end that differ.",
+    "timezone": "Your time zone",
+    "language": "Language of messages",
+    "save": "Save preferences",
+    "saving": "Saving",
+    "saved": "Preferences saved"
+  },
+  "FlagsSettings": {
+    "empty": "No feature flags yet.",
+    "readOnly": "You can see the flags. Only admins can change them.",
+    "on": "on",
+    "off": "off",
+    "usingDefault": "Using the default.",
+    "overridden": "Changed for your organisation. The default is {value}.",
+    "reset": "Use the default",
+    "toggle": "Turn {key} on or off",
+    "saved": "{key} saved"
+  },
+  "ApiKeysSettings": {
+    "createTitle": "Create a key",
+    "createBody": "Give it a clear name and only the scopes it needs. Keys can read, propose and upload. They can never approve.",
+    "name": "Name",
+    "mode": "Mode",
+    "modes": {
+      "test": "Test",
+      "live": "Live"
+    },
+    "expires": "Expires after",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "scopes": "Scopes",
+    "scopesHint": "Only scopes your own role holds are listed.",
+    "noScopes": "Your role holds no scope a key can have.",
+    "create": "Create key",
+    "creating": "Creating",
+    "created": "Your new API key",
+    "listTitle": "Keys",
+    "empty": "No API keys yet.",
+    "revokedBadge": "Revoked",
+    "expiredBadge": "Expired",
+    "meta": "{scopes, plural, one {# scope} other {# scopes}} · expires {expires} · last used {used}",
+    "never": "never",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke this key?",
+    "revokeBody": "\"{name}\" stops working at once. Anything that uses it will fail.",
+    "revoked": "{name} revoked"
+  },
+  "WebhooksSettings": {
+    "createTitle": "Add an endpoint",
+    "createBody": "Pairly sends a signed POST to this address for each event you pick. Failed deliveries are retried.",
+    "url": "Endpoint URL",
+    "description": "Description (optional)",
+    "events": "Events",
+    "create": "Add endpoint",
+    "creating": "Adding",
+    "secretTitle": "Signing secret for this endpoint",
+    "readOnly": "You can see the endpoints. Only admins can change them.",
+    "listTitle": "Endpoints",
+    "empty": "No endpoints yet.",
+    "urlRedacted": "Part of the address is hidden for your role.",
+    "disabled": "Turned off: {reason}",
+    "unknownReason": "unknown reason",
+    "failures": "{count, plural, one {# failed delivery in a row} other {# failed deliveries in a row}}",
+    "activeFor": "Send events to {url}",
+    "rotate": "New secret",
+    "rotateTitle": "Create a new signing secret?",
+    "rotateBody": "The old secret stops working at once. Update your receiver with the new one.",
+    "rotated": "New secret created",
+    "deliveries": "Delivery log",
+    "loading": "Loading the deliveries",
+    "noDeliveries": "No deliveries yet.",
+    "event": "Event",
+    "status": "Status",
+    "response": "Response",
+    "when": "When",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}"
+  },
+  "PoliciesSettings": {
+    "documentsTitle": "Policy documents",
+    "empty": "No policy documents yet.",
+    "emptyBody": "Upload your expense, travel or hiring policy so checks can cite it.",
+    "uploadTitle": "Upload a policy",
+    "uploadBody": "A file with the same name becomes its next version. Every file is checked for hidden instructions before it is used.",
+    "name": "Name",
+    "nameHint": "Lower case letters, digits, dots and dashes, for example travel-policy.",
+    "docTitle": "Title",
+    "file": "File (PDF, Word or text)",
+    "upload": "Upload",
+    "uploading": "Uploading",
+    "uploaded": "Policy uploaded",
+    "uploadedBody": "It is checked and indexed in the background.",
+    "status": {
+      "pending": "Being prepared",
+      "indexed": "In use",
+      "failed": "Could not be used",
+      "needs_review": "Needs review",
+      "archived": "Archived"
+    },
+    "chunks": "{count, plural, one {# passage} other {# passages}}",
+    "index": "Index now",
+    "indexResult": "Indexing: {status}",
+    "override": "Use it anyway",
+    "approveOverride": "Approve the override",
+    "overrideTitle": "Use this policy anyway?",
+    "approveOverrideTitle": "Approve the override?",
+    "overrideBody": "The flagged passages stay left out. Serious findings need a second admin to agree.",
+    "overrideReason": "Reason",
+    "overrideReasonHint": "At least 10 characters. It is recorded in the audit log.",
+    "overrideRequested": "Override requested",
+    "overrideDone": "Override done. The policy is being indexed.",
+    "secondAdmin": "Another admin must approve it.",
+    "awaitingOther": "You asked to use it anyway. Another admin must approve.",
+    "awaitingYou": "Another admin asked to use it anyway. You can approve the override.",
+    "overriddenOn": "Overridden on {when}.",
+    "archive": "Archive",
+    "archiveTitle": "Archive this policy?",
+    "archiveBody": "\"{title}\" stops being used for checks. This cannot be undone.",
+    "warnings": "{count, plural, one {# guardrail warning} other {# guardrail warnings}}",
+    "warningsHidden": "Only policy managers can see the warnings.",
+    "severity": "Severity: {severity}",
+    "page": "Page {page}",
+    "blocks": "Blocks use until reviewed",
+    "excluded": "Left out of checks",
+    "rules": {
+      "title": "Rule sets",
+      "body": "Rule sets are versioned. Open one by name to see its versions and try it on sample facts.",
+      "name": "Rule set name",
+      "open": "Open",
+      "noVersions": "No versions yet.",
+      "view": "View",
+      "versionContent": "Version {version}",
+      "dryRunTitle": "Dry run",
+      "dryRunBody": "Check sample facts against a version. Nothing is stored.",
+      "version": "Version",
+      "facts": "Facts (JSON)",
+      "run": "Run",
+      "overall": "Overall: {overall}.",
+      "requiresHuman": "Needs a person"
     }
   }
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { confirmUrl } from "./auth/config";
 import { localeFromCallback } from "./auth/two-factor-gate";
-import { buildCsp } from "./csp";
+import { buildCsp, documentOriginFrom } from "./csp";
 import { escapeHtml } from "./email";
 import { isPublicPath } from "./public-paths";
 
@@ -23,6 +23,30 @@ describe("buildCsp", () => {
     expect(csp).toContain("'unsafe-eval'");
     expect(csp).not.toContain("upgrade-insecure-requests");
   });
+
+  it("allows same-origin workers and the document store origin only", () => {
+    const csp = buildCsp({ nonce: "abc", dev: false, https: false, documentOrigin: "https://files.example.com" });
+    expect(csp).toContain("worker-src 'self'");
+    expect(csp).toContain("connect-src 'self' https://files.example.com");
+    expect(csp).toContain("img-src 'self' blob: data: https://files.example.com");
+    expect(buildCsp({ nonce: "abc", dev: false, https: false })).toContain("connect-src 'self';");
+  });
+});
+
+describe("documentOriginFrom", () => {
+  it("accepts exact origins only", () => {
+    expect(documentOriginFrom("https://files.example.com", false)).toBe("https://files.example.com");
+    expect(documentOriginFrom("https://files.example.com/", false)).toBe("https://files.example.com");
+    expect(documentOriginFrom("https://files.example.com/bucket", false)).toBeNull();
+    expect(documentOriginFrom("https://*.example.com", false)).toBeNull();
+    expect(documentOriginFrom("javascript:alert(1)", false)).toBeNull();
+    expect(documentOriginFrom(undefined, false)).toBeNull();
+  });
+
+  it("defaults to the compose MinIO port in development", () => {
+    expect(documentOriginFrom(undefined, true)).toBe("http://localhost:9000");
+    expect(documentOriginFrom("", true, "9100")).toBe("http://localhost:9100");
+  });
 });
 
 describe("isPublicPath", () => {
@@ -33,6 +57,8 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/sign-inx")).toBe(false);
     expect(isPublicPath("/settings/security")).toBe(false);
+    expect(isPublicPath("/approvals/link")).toBe(true);
+    expect(isPublicPath("/approvals")).toBe(false);
   });
 });
 
