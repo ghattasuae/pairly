@@ -3,7 +3,8 @@
 """Generic detectors every workflow can use.
 
 * ``core.guardrail_findings``     guardrail findings on the document (injection, hidden
-  text, ...). A missing report is an ``error`` signal: the check did not run.
+  text, ...). A missing report, a report of another text, or a guardrail detector that
+  failed is an ``error`` signal: the check did not (fully) run.
 * ``core.extraction_confidence``  required fields missing or flagged, other fields
   flagged; an extraction that failed (model down) is an ``error`` signal.
 * ``core.duplicate_hash``         the same file was already seen on another entity.
@@ -15,6 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
+from pairly_core.guardrails.report import Severity as GuardrailSeverity
+from pairly_core.guardrails.report import text_digest
 from pairly_core.risk.stats import DEFAULT_MIN_HISTORY, DEFAULT_THRESHOLD, amount_outlier
 from pairly_core.risk.types import (
     DetectorTools,
@@ -34,12 +37,20 @@ _SEVERITY_SCORE = {
 MAX_EVIDENCE = 50
 
 
-def _severity(value: str) -> Severity:
-    """A guardrail severity; anything unknown counts as high (fail closed)."""
-    try:
-        return Severity(str(value).lower())
-    except ValueError:
-        return Severity.HIGH
+# Guardrail severity to risk severity. A high finding is a manipulation attempt (hidden
+# text, a direct instruction to the model): critical, which the combiner always sends to
+# a person whatever the policy says. A medium finding is "flagged for a person" in the
+# guardrails' own terms, so it maps to high (the default policy forces review on high).
+_GUARDRAIL_SEVERITY = {
+    GuardrailSeverity.LOW: Severity.LOW,
+    GuardrailSeverity.MEDIUM: Severity.HIGH,
+    GuardrailSeverity.HIGH: Severity.CRITICAL,
+}
+
+
+def _severity(value: GuardrailSeverity) -> Severity:
+    """Risk severity of a guardrail finding; anything unknown counts as critical."""
+    return _GUARDRAIL_SEVERITY.get(value, Severity.CRITICAL)
 
 
 def _clean_signal(name: str, version: str, label: str, key: str) -> RiskSignal:
@@ -63,6 +74,13 @@ class GuardrailFindingsDetector:
         report = ctx.guardrail_report
         if report is None:
             return RiskSignal.error(self.name, self.version, "guardrail_report_missing")
+        if ctx.document is not None and (
+            report.text_sha256 != text_digest(ctx.document.text)
+            or report.text_length != len(ctx.document.text)
+        ):
+            return RiskSignal.error(self.name, self.version, "guardrail_report_mismatch")
+        if report.errors:
+            return RiskSignal.error(self.name, self.version, "guardrail_detector_failed")
         findings = list(report.findings)
         if not findings:
             return _clean_signal(self.name, self.version, "clean", "risk.guardrails.clean")
@@ -77,7 +95,15 @@ class GuardrailFindingsDetector:
             evidence=[
                 Evidence(
                     kind="guardrail_finding",
-                    detail={"code": str(f.code)[:64], "severity": s.value},
+                    detail={
+                        "finding": f.id[:16],
+                        "type": f.type.value,
+                        "code": f.code[:64],
+                        "guardrail_severity": f.severity.value,
+                        "severity": s.value,
+                        "location": f.location[:64],
+                        "page": f.page,
+                    },
                 )
                 for f, s in list(zip(findings, severities, strict=True))[:MAX_EVIDENCE]
             ],

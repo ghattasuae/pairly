@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.db import TenantSession
 from pairly_core.documents.model import BBox, NormalizedDocument, Page, ParserInfo, TextBlock, Word
+from pairly_core.extraction.guarded import GuardedInput
 from pairly_core.extraction.types import (
     Extracted,
     ExtractionModel,
@@ -28,6 +29,7 @@ from pairly_core.extraction.types import (
     Rule,
     TrnAE,
 )
+from pairly_core.guardrails import scan_document
 from pairly_core.llm.catalog import load_catalog, load_prices
 from pairly_core.llm.prompt_registry import PromptRegistry
 from pairly_core.llm.providers.fake import FakeProvider
@@ -35,6 +37,31 @@ from pairly_core.llm.resilience import RetryPolicy
 from pairly_core.llm.router import ModelRouter
 from pairly_core.llm.settings import LLMSettings, ModelMode
 from pairly_core.llm.store import OUTPUT_STATUSES, StoredCall
+
+
+def guarded(doc: NormalizedDocument) -> GuardedInput:
+    """The production path: scan the document, then sanitise it with its own report."""
+    return GuardedInput.build(doc, scan_document(doc))
+
+
+@dataclass(frozen=True, slots=True)
+class PassThroughInput:
+    """Identity offset map, for the evidence locator's unit tests only.
+
+    ``extract`` refuses it: production input always comes from the guardrails.
+    """
+
+    text: str
+
+    @classmethod
+    def of(cls, doc: NormalizedDocument) -> PassThroughInput:
+        return cls(doc.text)
+
+    def to_original(self, start: int, end: int) -> tuple[int, int] | None:
+        if 0 <= start <= end <= len(self.text):
+            return start, end
+        return None
+
 
 ORG = uuid.UUID("00000000-0000-4000-8000-0000000000e1")
 HAIKU = "claude-haiku-4-5-20251001"

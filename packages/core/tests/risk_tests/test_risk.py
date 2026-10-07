@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from pairly_core.documents.model import NormalizedDocument, Page, ParserInfo
 from pairly_core.extraction.engine import (
     ExtractionResult,
     ExtractionStatus,
@@ -19,6 +20,10 @@ from pairly_core.extraction.engine import (
     ModelCallInfo,
 )
 from pairly_core.extraction.types import FieldFlag
+from pairly_core.guardrails import Finding as GFinding
+from pairly_core.guardrails import FindingType, GuardrailReport, Span
+from pairly_core.guardrails import Severity as GSeverity
+from pairly_core.guardrails.report import text_digest
 from pairly_core.llm.errors import BudgetExceeded
 from pairly_core.policy_versions import PolicyError, PublishedPolicy
 from pairly_core.risk.combiner import combine, parse_risk_policy, risk_policy_validator
@@ -123,36 +128,90 @@ def test_outlier_constant_history() -> None:
 # ------------------------------------------------------------------ detectors
 
 
-@dataclass(frozen=True)
-class Finding:
-    code: str
-    severity: str
+def make_doc(lines: list[str]) -> NormalizedDocument:
+    return NormalizedDocument(
+        media_type="text/plain",
+        parser=ParserInfo(name="synthetic", version="1"),
+        pages=[Page(number=1, width=612.0, height=792.0, unit="pt", text="\n".join(lines))],
+    )
 
 
-@dataclass(frozen=True)
-class Report:
-    findings: tuple[Finding, ...]
+def _gfinding(kind: FindingType, code: str, severity: GSeverity) -> GFinding:
+    return GFinding(
+        id="",
+        type=kind,
+        code=code,
+        severity=severity,
+        detector="test",
+        evidence="x",
+        spans=(Span(start=0, end=1),),
+    )
+
+
+def _greport(doc: NormalizedDocument, *findings: GFinding, errors: tuple[str, ...] = ()) -> Any:
+    return GuardrailReport(
+        findings=tuple(f.model_copy(update={"id": f"g{i + 1}"}) for i, f in enumerate(findings)),
+        errors=errors,
+        text_sha256=text_digest(doc.text),
+        text_length=len(doc.text),
+    )
 
 
 async def test_guardrail_detector() -> None:
     detector = GuardrailFindingsDetector()
-    missing = await detector.detect(ctx(), TOOLS)
+    doc = make_doc(["Invoice No: INV-1", "Total: AED 10.00"])
+    other = make_doc(["Something else"])
+    missing = await detector.detect(ctx(document=doc), TOOLS)
     assert missing.status is SignalStatus.ERROR
-    clean = await detector.detect(ctx(guardrail_report=Report(())), TOOLS)
+    clean = await detector.detect(ctx(document=doc, guardrail_report=_greport(doc)), TOOLS)
     assert (clean.score, clean.severity) == (0.0, Severity.INFO)
     found = await detector.detect(
         ctx(
-            guardrail_report=Report(
-                (Finding("hidden_text", "medium"), Finding("instruction_like", "critical"))
-            )
+            document=doc,
+            guardrail_report=_greport(
+                doc,
+                _gfinding(FindingType.UNUSUAL_UNICODE, "zero_width", GSeverity.LOW),
+                _gfinding(FindingType.HIDDEN_TEXT, "white_on_white", GSeverity.HIGH),
+            ),
         ),
         TOOLS,
     )
+    # A high guardrail finding is a manipulation attempt: critical, always a person.
     assert found.severity is Severity.CRITICAL
     assert found.score == 1.0
-    assert [e.detail["code"] for e in found.evidence] == ["hidden_text", "instruction_like"]
-    weird = await detector.detect(ctx(guardrail_report=Report((Finding("x", "???"),))), TOOLS)
-    assert weird.severity is Severity.HIGH  # unknown severity fails closed
+    assert [(e.detail["type"], e.detail["code"]) for e in found.evidence] == [
+        ("unusual_unicode", "zero_width"),
+        ("hidden_text", "white_on_white"),
+    ]
+    assert [e.detail["finding"] for e in found.evidence] == ["g1", "g2"]
+    medium = await detector.detect(
+        ctx(
+            document=doc,
+            guardrail_report=_greport(
+                doc, _gfinding(FindingType.KEYWORD_STUFFING, "repeated_terms", GSeverity.MEDIUM)
+            ),
+        ),
+        TOOLS,
+    )
+    assert medium.severity is Severity.HIGH
+    low = await detector.detect(
+        ctx(
+            document=doc,
+            guardrail_report=_greport(
+                doc, _gfinding(FindingType.UNUSUAL_UNICODE, "zero_width", GSeverity.LOW)
+            ),
+        ),
+        TOOLS,
+    )
+    assert low.severity is Severity.LOW
+    # A detector that failed, or a report of another document, is an error (fail closed).
+    failed = await detector.detect(
+        ctx(document=doc, guardrail_report=_greport(doc, errors=("hidden_text: KeyError",))),
+        TOOLS,
+    )
+    assert failed.status is SignalStatus.ERROR
+    mismatch = await detector.detect(ctx(document=doc, guardrail_report=_greport(other)), TOOLS)
+    assert mismatch.status is SignalStatus.ERROR
 
 
 def _field(path: str, flags: tuple[FieldFlag, ...], required: bool, conf: float) -> FieldResult:

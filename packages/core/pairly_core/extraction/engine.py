@@ -3,7 +3,9 @@
 """``extract``: schema-driven extraction with per-field confidence and evidence.
 
 1. The model router runs the ``core_extract`` prompt with the schema description and the
-   sanitized document text. The model answers each field as text with a verbatim quote
+   sanitized document text: a ``GuardedInput`` built from the document's own guardrail
+   report (anything else is refused), sent as the guardrails' nonce-delimited data
+   block. The model answers each field as text with a verbatim quote
    and a confidence (``ExtractionOutput``).
 2. Every answer is checked deterministically: the path must exist in the schema, the
    value must parse as the field's type, the quote must be found in the text the model
@@ -12,7 +14,9 @@
 3. Fields below their threshold are flagged for correction. The extraction goes to the
    human queue when a required field is missing or flagged, when an optional field has
    a value that is flagged (unless the schema opts out), when the document itself needs
-   review, or when the model could not answer (fail closed, never partial acceptance).
+   review (parse warnings, or guardrail findings of medium severity or worse, or a
+   guardrail detector that failed), or when the model could not answer (fail closed,
+   never partial acceptance).
 """
 
 from __future__ import annotations
@@ -27,7 +31,8 @@ import structlog
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from pairly_core.documents.model import REVIEW_WARNINGS, NormalizedDocument
-from pairly_core.extraction.evidence import EvidenceLocator, SanitizedInput
+from pairly_core.extraction.evidence import EvidenceLocator
+from pairly_core.extraction.guarded import GuardedInput, UnguardedInputError
 from pairly_core.extraction.schema import (
     PATH_RE,
     CompiledSchema,
@@ -362,7 +367,7 @@ def _failed[S: ExtractionModel](
 
 async def extract[S: ExtractionModel](
     doc: NormalizedDocument,
-    sanitized_input: SanitizedInput,
+    sanitized_input: GuardedInput,
     schema: type[S],
     task: TaskSpec = DEFAULT_TASK,
     *,
@@ -373,12 +378,17 @@ async def extract[S: ExtractionModel](
 ) -> ExtractionResult[S]:
     """Extract ``schema`` from ``doc``. Never raises for model failures: those give a
     ``needs_human`` result with no data (fail closed). ``SchemaError`` and ``ValueError``
-    are programming errors and do raise."""
+    are programming errors and do raise; ``UnguardedInputError`` (a ``ValueError``) when
+    ``sanitized_input`` is not ``GuardedInput.build(doc, scan_document(doc))`` output for
+    this very document."""
+    if not isinstance(sanitized_input, GuardedInput):
+        raise UnguardedInputError("extract() only accepts a GuardedInput")
+    sanitized_input.check(doc)
     compiled = compile_schema(schema)
     description = compiled.describe()
     inputs: dict[str, Any] = {
         "schema": description,
-        "document": sanitized_input.text,
+        "document": sanitized_input.data_block,
     }
     if hints:
         inputs["reviewer_corrections"] = [h.as_input() for h in hints[:MAX_HINTS]]
@@ -404,6 +414,7 @@ async def extract[S: ExtractionModel](
     review = sorted(set(doc.warning_codes()) & REVIEW_WARNINGS)
     if review:
         reasons.append("document_needs_review:" + ",".join(review))
+    reasons.extend(sanitized_input.review_reasons)
     try:
         instance = schema.model_validate(data)
     except ValidationError:  # pragma: no cover - values are parsed to the field types

@@ -17,11 +17,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from pairly_core.documents.model import NormalizedDocument
+from pairly_core.guardrails.report import GuardrailReport
 
 if TYPE_CHECKING:
     from pairly_core.extraction.engine import ExtractionResult
@@ -93,28 +94,6 @@ class RiskSignal(BaseModel):
         )
 
 
-# ------------------------------------------------------------------ guardrail report
-
-
-@runtime_checkable
-class GuardrailFindingLike(Protocol):
-    """One guardrail finding (WP1.4). Only these attributes are read."""
-
-    @property
-    def code(self) -> str: ...
-
-    @property
-    def severity(self) -> str: ...
-
-
-@runtime_checkable
-class GuardrailReportLike(Protocol):
-    """The guardrail report of a document (WP1.4): a sequence of findings."""
-
-    @property
-    def findings(self) -> Sequence[GuardrailFindingLike]: ...
-
-
 # ------------------------------------------------------------------ context
 
 
@@ -138,7 +117,8 @@ class RiskContext:
     document: NormalizedDocument | None = None
     document_sha256: str | None = None
     extraction: ExtractionResult[Any] | None = None
-    guardrail_report: GuardrailReportLike | None = None
+    # ``scan_document`` of ``document`` (WP1.4); bound to its text by a digest.
+    guardrail_report: GuardrailReport | None = None
     # Same file hash seen on these other entities (see ``service.find_hash_matches``).
     hash_matches: Sequence[EntityRef] = ()
     # The amount under review and past amounts of the same kind (same vendor, ...).

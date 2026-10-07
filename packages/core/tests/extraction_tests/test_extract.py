@@ -13,9 +13,13 @@ import pytest
 
 from pairly_core.documents.model import NormalizedDocument, ParseWarning
 from pairly_core.extraction.engine import ExtractionStatus, FewShotHint, extract
-from pairly_core.extraction.evidence import PassThroughInput
+from pairly_core.extraction.evidence import EvidenceLocator
+from pairly_core.extraction.guarded import GuardedInput, UnguardedInputError
 from pairly_core.extraction.schema import SchemaError, compile_schema
 from pairly_core.extraction.types import Extracted, ExtractionModel, FieldFlag, Money, Rule
+from pairly_core.guardrails import Finding, FindingType, GuardrailReport, Severity, Span
+from pairly_core.guardrails.report import text_digest
+from pairly_core.guardrails.sanitize import ReportMismatchError
 from pairly_core.llm.errors import ErrorKind, ProviderError
 from pairly_core.llm.settings import ModelMode
 from pairly_core.llm.types import CallContext, TaskSpec
@@ -31,7 +35,9 @@ from .conftest import (
     SONNET,
     Harness,
     Invoice,
+    PassThroughInput,
     answer,
+    guarded,
     make_doc,
     make_harness,
     output,
@@ -47,7 +53,7 @@ async def run(
 ) -> Any:
     return await extract(
         doc,
-        sanitized or PassThroughInput.of(doc),
+        sanitized or guarded(doc),
         Invoice,
         router=harness.router,
         org_id=ORG,
@@ -107,7 +113,9 @@ async def test_happy_path_values_spans_and_metadata(
     assert meta.call_ids[0] == harness.store.rows[0]["id"]
     # Inputs carry the schema description and the sanitized text only.
     request = harness.store.rows[0]["request"]["inputs"]
-    assert request["document"] == invoice_doc.text
+    # A clean document: the data block holds the whole text, between nonce tags.
+    assert request["document"] == guarded(invoice_doc).data_block
+    assert invoice_doc.text in request["document"]
     paths = [f["path"] for f in request["schema"]["fields"]]
     assert "line_items[]" in paths
     assert result.field("line_items[1].quantity").value == Decimal("2")
@@ -169,40 +177,66 @@ async def test_normalised_matching_whitespace_case_and_typography(
     assert span.quote == "Invoice\u00a0No:   INV\u20132026\u20130042"
 
 
+def _report_removing(doc: NormalizedDocument, start: int, end: int) -> GuardrailReport:
+    return GuardrailReport(
+        findings=(
+            Finding(
+                id="g1",
+                type=FindingType.HIDDEN_TEXT,
+                code="white_on_white",
+                severity=Severity.HIGH,
+                detector="test",
+                evidence=doc.text[start:end],
+                spans=(Span(start=start, end=end),),
+                remove=True,
+            ),
+        ),
+        text_sha256=text_digest(doc.text),
+        text_length=len(doc.text),
+    )
+
+
 async def test_quote_only_in_removed_content_is_no_evidence(
     harness: Harness, invoice_doc: NormalizedDocument
 ) -> None:
     """Evidence must come from what the model saw, not from content guardrails removed."""
-
-    @dataclass(frozen=True)
-    class Redacted:
-        text: str
-        cut: int
-        removed: int
-
-        def to_original(self, start: int, end: int) -> tuple[int, int] | None:
-            if end <= self.cut:
-                return start, end
-            if start >= self.cut:
-                return start + self.removed, end + self.removed
-            return None
-
     original = invoice_doc.text
     hidden = "TRN: 100123456700003\n"
     cut = original.index(hidden)
-    sanitized = Redacted(original[:cut] + original[cut + len(hidden) :], cut, len(hidden))
+    sanitized = GuardedInput.build(
+        invoice_doc, _report_removing(invoice_doc, cut, cut + len(hidden))
+    )
+    assert hidden not in sanitized.text
     harness.anthropic.script(HAIKU, output(GOOD_FIELDS))
     result = await run(harness, invoice_doc, sanitized=sanitized)
     assert result.field("vendor_trn").flags == (FieldFlag.NO_EVIDENCE,)
-    # Fields after the removed block map back through the offset map correctly.
+    # Fields after the removed block map back through the guardrails' offset map.
     total = result.field("total")
     assert not total.flags
     assert original[total.spans[0].start : total.spans[0].end] == "Total: AED 2,362.50"
+    # A flagged guardrail report always sends the extraction to a person.
+    assert result.status is ExtractionStatus.NEEDS_HUMAN
+    assert "guardrails_flagged:g1" in result.reasons
+    # The model saw the sanitised text as a nonce-delimited data block, never the hidden line.
+    (row,) = harness.store.rows
+    assert row["request"]["inputs"]["document"] == sanitized.data_block
+    assert "100123456700003" not in sanitized.data_block
 
 
-async def test_bad_offset_map_is_never_trusted(
-    harness: Harness, invoice_doc: NormalizedDocument
-) -> None:
+def test_range_straddling_removed_content_maps_to_nothing(invoice_doc: NormalizedDocument) -> None:
+    original = invoice_doc.text
+    hidden = "TRN: 100123456700003\n"
+    cut = original.index(hidden)
+    sanitized = GuardedInput.build(
+        invoice_doc, _report_removing(invoice_doc, cut, cut + len(hidden))
+    )
+    # Sanitised [cut - 3, cut + 3) joins text from both sides of the removed line.
+    assert sanitized.to_original(cut - 3, cut + 3) is None
+    assert sanitized.to_original(0, 5) == (0, 5)
+    assert sanitized.to_original(0, 10_000) is None
+
+
+def test_bad_offset_map_is_never_trusted(invoice_doc: NormalizedDocument) -> None:
     @dataclass(frozen=True)
     class Shifted:
         text: str
@@ -210,9 +244,33 @@ async def test_bad_offset_map_is_never_trusted(
         def to_original(self, start: int, end: int) -> tuple[int, int] | None:
             return start + 3, end + 3
 
-    harness.anthropic.script(HAIKU, output(GOOD_FIELDS))
-    result = await run(harness, invoice_doc, sanitized=Shifted(invoice_doc.text))
-    assert all(FieldFlag.NO_EVIDENCE in f.flags for f in result.fields if f.raw or f.value)
+    locator = EvidenceLocator(invoice_doc, Shifted(invoice_doc.text))
+    assert locator.locate("Total: AED 2,362.50") is None
+    assert (
+        EvidenceLocator(invoice_doc, PassThroughInput.of(invoice_doc)).locate("Total: AED 2,362.50")
+        is not None
+    )
+
+
+async def test_extract_refuses_input_not_from_the_guardrails(
+    harness: Harness, invoice_doc: NormalizedDocument
+) -> None:
+    with pytest.raises(UnguardedInputError):
+        await run(harness, invoice_doc, sanitized=PassThroughInput.of(invoice_doc))
+    other = make_doc(["Another document", "Total: AED 1.00"])
+    with pytest.raises(UnguardedInputError):
+        await run(harness, invoice_doc, sanitized=guarded(other))
+    with pytest.raises(ReportMismatchError):
+        GuardedInput.build(invoice_doc, guarded(other).report)
+    with pytest.raises(TypeError):
+        GuardedInput(  # type: ignore[call-arg]
+            guarded(invoice_doc).model_input,
+            guarded(invoice_doc).report,
+            text_digest(invoice_doc.text),
+            len(invoice_doc.text),
+            object(),
+        )
+    assert harness.anthropic.requests == []
 
 
 async def test_invalid_values_are_dropped_not_guessed(
@@ -395,7 +453,7 @@ async def test_task_confidence_threshold_escalates(invoice_doc: NormalizedDocume
     task = TaskSpec(name="core_extract", prompt_version="v1", confidence_threshold=0.8)
     result = await extract(
         invoice_doc,
-        PassThroughInput.of(invoice_doc),
+        guarded(invoice_doc),
         Invoice,
         task,
         router=harness.router,
@@ -460,7 +518,7 @@ async def test_nested_optional_group_and_integer_range(
     harness.anthropic.script(HAIKU, output([answer("amount", "10", "Printer paper A4 10")]))
     result = await extract(
         invoice_doc,
-        PassThroughInput.of(invoice_doc),
+        guarded(invoice_doc),
         WithGroup,
         router=harness.router,
         org_id=ORG,

@@ -16,8 +16,11 @@ characters dropped); the spans returned always point at the exact original text.
 ``SanitizedInput`` is the contract with the guardrails (WP1.4): ``text`` is what the
 model sees, ``to_original(start, end)`` maps a half-open range of it to the original
 document text (``NormalizedDocument.text``), or ``None`` when the range does not map to
-one contiguous original range. ``PassThroughInput`` is the identity, for tests and for
-documents that need no sanitising.
+one contiguous original range. The production implementation is
+``pairly_core.extraction.guarded.GuardedInput`` (the guardrails' sanitised text and
+offset map); ``extract`` accepts nothing else. There is deliberately no pass-through
+implementation here: an identity map exists only in the tests, for the locator's own
+unit tests.
 """
 
 from __future__ import annotations
@@ -62,22 +65,6 @@ class SanitizedInput(Protocol):
     def text(self) -> str: ...
 
     def to_original(self, start: int, end: int) -> tuple[int, int] | None: ...
-
-
-@dataclass(frozen=True, slots=True)
-class PassThroughInput:
-    """The original document text, unchanged (identity offset map)."""
-
-    text: str
-
-    @classmethod
-    def of(cls, doc: NormalizedDocument) -> PassThroughInput:
-        return cls(doc.text)
-
-    def to_original(self, start: int, end: int) -> tuple[int, int] | None:
-        if 0 <= start <= end <= len(self.text):
-            return start, end
-        return None
 
 
 @dataclass(frozen=True, slots=True)

@@ -12,7 +12,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from pairly_core.extraction.evidence import PassThroughInput, find_normalized, normalize
+from pairly_core.extraction.evidence import find_normalized, normalize
 from pairly_core.extraction.permissions import extraction_permission
 from pairly_core.extraction.schema import StoredSpecs, compile_schema
 from pairly_core.extraction.types import (
@@ -40,7 +40,7 @@ from pairly_core.extraction.validators import (
 from pairly_core.rbac import PermissionSpec, build_registry
 from pairly_core.workflow.spec import GraphSpec
 
-from .conftest import IBAN, Invoice
+from .conftest import IBAN, Invoice, PassThroughInput
 
 
 @pytest.mark.parametrize(

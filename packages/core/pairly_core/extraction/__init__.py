@@ -6,6 +6,8 @@
 * ``schema``       compiles a schema into field specs and the prompt's schema description.
 * ``validators``   deterministic parsers and checks per field type.
 * ``evidence``     ``SanitizedInput`` contract and deterministic quote location.
+* ``guarded``      ``GuardedInput``: guardrails output bound to one document, the only
+                   input ``extract`` accepts.
 * ``engine``       ``extract``: model call, checks, thresholds, human routing.
 * ``models``       ``extractions``, ``extraction_fields``, ``extraction_corrections``.
 * ``service``      storage, corrections (append only) and few-shot hints.
