@@ -258,7 +258,7 @@ async def ingest_spooled(
         )
         return IngestOutcome("rejected", reason=reason, media_type=sniffed)
 
-    existing = await _existing(session, spooled.sha256)
+    existing = await _existing(session, workflow, spooled.sha256)
     if existing is not None:
         await _audit(session, by, DocumentAction.DUPLICATE, existing, {"source": source.value})
         return IngestOutcome("duplicate", document=existing, media_type=existing.media_type)
@@ -284,12 +284,12 @@ async def ingest_spooled(
             submitted_by=submitted_by,
             inbound_email_id=inbound_email_id,
         )
-        .on_conflict_do_nothing(constraint="uq_documents_org_id_sha256")
+        .on_conflict_do_nothing(constraint="uq_documents_org_id_workflow_sha256")
         .returning(Document.id)
     )
     if inserted is None:
-        # Lost a race with a concurrent upload of the same bytes.
-        existing = await _existing(session, spooled.sha256)
+        # Lost a race with a concurrent upload of the same bytes to this workflow.
+        existing = await _existing(session, workflow, spooled.sha256)
         if existing is None:  # pragma: no cover - the conflicting row must be visible
             raise RuntimeError("duplicate document vanished")
         await _audit(session, by, DocumentAction.DUPLICATE, existing, {"source": source.value})
@@ -319,9 +319,12 @@ async def ingest_spooled(
     return IngestOutcome("created", document=document, media_type=sniffed)
 
 
-async def _existing(session: AsyncSession, sha256: str) -> Document | None:
+async def _existing(session: AsyncSession, workflow: str, sha256: str) -> Document | None:
+    """The document with these bytes in this workflow (dedupe never crosses workflows)."""
     result = await session.scalar(
-        select(Document).where(Document.sha256 == sha256).execution_options(populate_existing=True)
+        select(Document)
+        .where(Document.workflow == workflow, Document.sha256 == sha256)
+        .execution_options(populate_existing=True)
     )
     return result
 

@@ -5,7 +5,9 @@
 * ``inbound_emails`` and ``documents``: tenant tables, RLS forced with the standard
   tenant policy. The application role may SELECT, INSERT and UPDATE; there is no
   DELETE grant (retention deletion comes later as an audited job). ``documents`` is
-  unique on ``(org_id, sha256)`` (dedupe), ``inbound_emails`` on ``(org_id, message_id)``.
+  unique on ``(org_id, workflow, sha256)``: dedupe is scoped per workflow, so the same
+  bytes sent to two workflows are two documents (sharing one stored object, which is
+  keyed by org and hash). ``inbound_emails`` is unique on ``(org_id, message_id)``.
 
 Two SECURITY DEFINER functions, owned by the migration role, follow the pattern of
 ``audit_org_ids`` (0002): each turns a transaction-local flag on for its own query, and
@@ -142,7 +144,9 @@ def upgrade() -> None:
         ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
-        sa.UniqueConstraint("org_id", "sha256", name="uq_documents_org_id_sha256"),
+        sa.UniqueConstraint(
+            "org_id", "workflow", "sha256", name="uq_documents_org_id_workflow_sha256"
+        ),
         sa.CheckConstraint(f"status IN ({_STATUSES})", name="ck_documents_status_valid"),
         sa.CheckConstraint(f"source IN ({_SOURCES})", name="ck_documents_source_valid"),
         sa.CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="ck_documents_sha256_format"),

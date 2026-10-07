@@ -116,7 +116,10 @@ class InboundEmail(Base, OrgScoped, Timestamped):
 class Document(Base, OrgScoped, Timestamped):
     __tablename__ = "documents"
     __table_args__ = (
-        UniqueConstraint("org_id", "sha256", name="uq_documents_org_id_sha256"),
+        # Dedupe is per workflow; the stored object (keyed by org and hash) is shared.
+        UniqueConstraint(
+            "org_id", "workflow", "sha256", name="uq_documents_org_id_workflow_sha256"
+        ),
         CheckConstraint(f"status IN ({_in(DocumentStatus)})", name="status_valid"),
         CheckConstraint(f"source IN ({_in(DocumentSource)})", name="source_valid"),
         CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="sha256_format"),

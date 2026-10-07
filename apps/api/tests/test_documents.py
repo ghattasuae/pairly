@@ -229,17 +229,35 @@ async def test_upload_dedupe_and_audit(
     assert actions.count("core.document.duplicate") == 1
 
 
-async def test_duplicate_in_unreadable_workflow_hides_details(
+async def test_dedupe_is_scoped_per_workflow(
     live: Live, orgs: TwoTenants, owner_engine: AsyncEngine
 ) -> None:
     b = orgs.b
     data = pdf_bytes("toy")
-    assert (await live.upload(b.subject, b.org_id, data, workflow="toy")).status_code == 201
+    toy = await live.upload(b.subject, b.org_id, data, workflow="toy")
+    assert toy.status_code == 201
+    toy_id = toy.json()["document"]["id"]
+    # The same bytes in another workflow are a new document there: an upload never
+    # reveals that another workflow (here one the clerk cannot read) holds the file.
     clerk = await add_member(owner_engine, b.org_id, "ap_clerk")
-    response = await live.upload(clerk, b.org_id, data, workflow="pay")
-    assert response.status_code == 200
-    assert response.json()["duplicate"] is True
-    assert response.json()["document"] is None
+    pay = await live.upload(clerk, b.org_id, data, workflow="pay")
+    assert pay.status_code == 201, pay.text
+    pay_doc = pay.json()["document"]
+    assert pay.json()["duplicate"] is False
+    assert pay_doc["id"] != toy_id
+    assert pay_doc["workflow"] == "pay"
+    # Both rows share one stored object, keyed by org and hash.
+    assert live.store.puts == 1
+    rows = await document_rows(owner_engine, b.org_id)
+    assert {r.workflow for r in rows} == {"toy", "pay"}
+    assert len({r.storage_key for r in rows}) == 1
+    # A duplicate inside the same workflow still returns the existing id.
+    again = await live.upload(clerk, b.org_id, data, workflow="pay", filename="again.pdf")
+    assert again.status_code == 200
+    assert again.json()["duplicate"] is True
+    assert again.json()["document_id"] == pay_doc["id"]
+    assert again.json()["document"]["id"] == pay_doc["id"]
+    assert len(await document_rows(owner_engine, b.org_id)) == 2
 
 
 async def test_type_and_size_limits(

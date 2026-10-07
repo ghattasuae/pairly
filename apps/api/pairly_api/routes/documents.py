@@ -6,8 +6,8 @@
   The body is streamed: the file part goes straight to a private temp file while it is
   hashed and counted, and reading stops as soon as the workflow's size limit is passed.
   The type is sniffed from the bytes; the client's type and name are never trusted.
-  201 with the new document, 200 when the same bytes were already submitted in this
-  organisation (dedupe), 413 too large, 415 type not allowed, 400 malformed. Every
+  201 with the new document, 200 when the same bytes were already submitted to this
+  workflow (dedupe is per workflow), 413 too large, 415 type not allowed, 400 malformed. Every
   outcome writes an audit event. The virus scan is queued after the commit.
 * ``GET /v1/documents/{id}``               the document's record.
 * ``GET /v1/documents/{id}/content-url``   a short-lived signed GET URL, only after the
@@ -61,7 +61,6 @@ from pairly_core.ingestion.service import (
 )
 from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import ObjectStore
-from pairly_core.rbac import PermissionDeniedError
 
 log = structlog.get_logger(__name__)
 
@@ -144,8 +143,8 @@ class DocumentOut(BaseModel):
 class UploadOut(BaseModel):
     document_id: uuid.UUID
     duplicate: bool
-    # Omitted when the existing duplicate belongs to a workflow the caller cannot read.
-    document: DocumentOut | None
+    # Dedupe is per workflow, so a duplicate is always a document of the same workflow.
+    document: DocumentOut
 
 
 class ContentUrlOut(BaseModel):
@@ -377,13 +376,7 @@ async def upload_document(
         return UploadOut(
             document_id=document.id, duplicate=False, document=DocumentOut.of(document)
         )
-    visible: DocumentOut | None = DocumentOut.of(document)
-    if document.workflow != workflow:
-        try:
-            authorize_document(actor, ctx.registry, workflow=document.workflow, action="read")
-        except PermissionDeniedError:
-            visible = None
-    body = UploadOut(document_id=document.id, duplicate=True, document=visible)
+    body = UploadOut(document_id=document.id, duplicate=True, document=DocumentOut.of(document))
     return JSONResponse(body.model_dump(mode="json"), status_code=200)
 
 
