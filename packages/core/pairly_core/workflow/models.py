@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, String, Uuid, func, text
+from sqlalchemy import CheckConstraint, DateTime, Index, Integer, String, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pairly_core.db import Base, OrgScoped
@@ -39,6 +39,7 @@ def thread_id_for(org_id: uuid.UUID, run_id: uuid.UUID) -> str:
 class WorkflowRun(Base, OrgScoped):
     __tablename__ = "workflow_runs"
     __table_args__ = (
+        Index("ix_workflow_runs_org_status", "org_id", "status"),
         CheckConstraint(
             "status IN ('running', 'waiting_approval', 'completed', 'failed', 'cancelled')",
             name="status_valid",

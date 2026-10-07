@@ -29,6 +29,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -93,6 +94,7 @@ class DelegationKind(StrEnum):
 class Approval(Base, OrgScoped):
     __tablename__ = "approvals"
     __table_args__ = (
+        Index("ix_approvals_org_inbox", "org_id", "permission", "created_at", "id"),
         UniqueConstraint("run_id", "step_key", "revision", name="uq_approvals_run_step_revision"),
         CheckConstraint(
             "status IN ('pending', 'approved', 'rejected', 'changes_requested', 'cancelled')",
@@ -148,6 +150,7 @@ class Approval(Base, OrgScoped):
 class ApprovalStep(Base, OrgScoped):
     __tablename__ = "approval_steps"
     __table_args__ = (
+        Index("ix_approval_steps_due", "status", "due_at"),
         UniqueConstraint("approval_id", "position", name="uq_approval_steps_position"),
         CheckConstraint("mode IN ('any_of', 'all_of')", name="mode_valid"),
         CheckConstraint(

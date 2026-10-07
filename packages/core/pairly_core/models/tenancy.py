@@ -17,6 +17,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     String,
     Text,
     UniqueConstraint,
@@ -109,6 +110,7 @@ class Invitation(Base, OrgScoped, Timestamped):
 
     __tablename__ = "invitations"
     __table_args__ = (
+        Index("ix_invitations_org_id_email", "org_id", "email"),
         CheckConstraint("token_hash ~ '^[0-9a-f]{64}$'", name="token_hash_format"),
         CheckConstraint(
             "workflow IS NULL OR workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"
