@@ -20,7 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_api.main import create_app
-from pairly_api.routes.documents import DocumentServices
+from pairly_api.uploads import DocumentServices
 from pairly_core.config import Environment
 from pairly_core.ingestion.queue import SCAN_JOB, RecordingJobQueue
 from pairly_core.ingestion.settings import IngestionSettings

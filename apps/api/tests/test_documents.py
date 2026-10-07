@@ -27,7 +27,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from pairly_api.main import create_app
-from pairly_api.routes.documents import DocumentServices
+from pairly_api.uploads import DocumentServices
 from pairly_core.audit import ActorType
 from pairly_core.config import Environment
 from pairly_core.db import create_sessionmaker, set_tenant

@@ -36,8 +36,8 @@ from pairly_api.routes import (
 )
 from pairly_api.routes import documents as document_routes
 from pairly_api.routes import extractions as extraction_routes
-from pairly_api.routes.documents import DocumentServices
 from pairly_api.telemetry import configure_tracing, instrument_app
+from pairly_api.uploads import DocumentServices
 from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings

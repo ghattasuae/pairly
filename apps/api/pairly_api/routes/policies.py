@@ -40,14 +40,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from pairly_api.problems import problem_response
-from pairly_api.routes.documents import (
+from pairly_api.uploads import (
     MULTIPART_OVERHEAD,
     DocumentOut,
-    _enqueue_scan,
-    _receive,
-    _rejected,
-    _UnsupportedBodyError,
+    UnsupportedBodyError,
+    enqueue_scan,
     get_services,
+    receive_upload,
+    rejected_response,
 )
 from pairly_core.audit import actor_ref
 from pairly_core.errors import (
@@ -419,14 +419,14 @@ async def upload_policy_document(
             source=DocumentSource.UPLOAD,
             reason=RejectReason.TOO_LARGE,
         )
-        return _rejected(request, RejectReason.TOO_LARGE, POLICY_WORKFLOW)
+        return rejected_response(request, RejectReason.TOO_LARGE, POLICY_WORKFLOW)
     await session.commit()
     with tempfile.TemporaryDirectory(prefix="pairly-policy-", dir=services.tmp_dir) as tmp:
         try:
-            spooled, filename = await _receive(
+            spooled, filename = await receive_upload(
                 request, Path(tmp), policy.max_bytes, services.settings.upload_timeout_seconds
             )
-        except _UnsupportedBodyError:
+        except UnsupportedBodyError:
             return problem_response(
                 request,
                 415,
@@ -441,7 +441,7 @@ async def upload_policy_document(
                 source=DocumentSource.UPLOAD,
                 reason=RejectReason.TOO_LARGE,
             )
-            return _rejected(request, RejectReason.TOO_LARGE, POLICY_WORKFLOW)
+            return rejected_response(request, RejectReason.TOO_LARGE, POLICY_WORKFLOW)
         outcome = await ingest_spooled(
             session,
             services.store,
@@ -454,7 +454,7 @@ async def upload_policy_document(
             submitted_by=actor.id,
         )
     if outcome.reason is not None or outcome.document is None:
-        return _rejected(request, outcome.reason or RejectReason.EMPTY, POLICY_WORKFLOW)
+        return rejected_response(request, outcome.reason or RejectReason.EMPTY, POLICY_WORKFLOW)
     document: Document = outcome.document
     kind, actor_id = actor_ref(actor)
     try:
@@ -469,7 +469,7 @@ async def upload_policy_document(
     except PolicyError as exc:
         raise BadRequestError(str(exc)) from None
     if outcome.created:
-        background.add_task(_enqueue_scan, services.queue, actor.org_id, document.id)
+        background.add_task(enqueue_scan, services.queue, actor.org_id, document.id)
     body = PolicyUploadOut(
         policy_document=PolicyDocumentOut.of(row),
         document=DocumentOut.of(document),
