@@ -20,6 +20,9 @@ Optional attributes, read with ``getattr`` so a plugin only declares what it use
   that processes without an HTTP API (the worker) never import the routes.
 * ``demo_seeds``: a mapping of seed name (``<plugin id>-<name>``) to an async
   ``DemoSeed``, run by ``pairly-admin seed <name> --org <slug>`` (``demo_seeds``).
+* ``migrations_dir``: the directory of the plugin's Alembic revisions, its own branch
+  (``branch_labels``) that ``depends_on`` the core revision it needs. The Alembic
+  environment adds it to the version locations (``plugin_migration_locations``).
 
 Discovery fails closed: a plugin that cannot be loaded, does not satisfy the protocol,
 has an invalid id, or collides with another plugin raises ``PluginError`` instead of
@@ -33,6 +36,7 @@ import uuid
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from importlib.metadata import EntryPoint, entry_points
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from pairly_core.rbac import PermissionSpec, RoleRegistry
@@ -233,3 +237,21 @@ def demo_seeds(plugins: Iterable[Any]) -> dict[str, DemoSeed]:
                 raise PluginError(f"duplicate demo seed {name!r}")
             seeds[name] = seed
     return seeds
+
+
+# ------------------------------------------------------------------ optional: migrations
+
+
+def plugin_migration_locations(plugins: Iterable[Any]) -> list[str]:
+    """The Alembic version directories plugins declare (``migrations_dir``), sorted by
+    plugin id. Fails closed: a declared directory that does not exist raises."""
+    locations: list[str] = []
+    for plugin in sorted(plugins, key=lambda p: str(p.id)):
+        declared = getattr(plugin, "migrations_dir", None)
+        if declared is None:
+            continue
+        path = Path(declared)
+        if not path.is_dir():
+            raise PluginError(f"workflow plugin {plugin.id!r}: migrations_dir is not a directory")
+        locations.append(str(path.resolve()))
+    return locations

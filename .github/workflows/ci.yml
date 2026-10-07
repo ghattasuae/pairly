@@ -91,8 +91,8 @@ jobs:
           CI_PG_PORT: "5432"
         run: scripts/ci_postgres.sh start
 
-      - name: alembic upgrade head
-        run: uv run alembic -c apps/api/alembic.ini upgrade head
+      - name: alembic upgrade heads
+        run: uv run alembic -c apps/api/alembic.ini upgrade heads
 
       # Fails when the ORM models and the migrated schema disagree (a missing migration).
       - name: alembic check

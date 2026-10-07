@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""The ``expense_notes`` table (migration ``0015``). Org scoped, Row Level Security forced.
+"""The ``expense_notes`` table (migration ``expense_0001``). Org scoped, RLS forced.
 
 One row per submitted expense note: who submitted it, the receipt document, the run that
 processes it, what was read from the receipt and the outcome of every check, and the

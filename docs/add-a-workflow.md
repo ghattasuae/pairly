@@ -2,7 +2,7 @@
 
 Draft. This guide builds a small third workflow, expense notes, and uses it to show every extension point. The finished code is in [`packages/expense`](../packages/expense). It is also the M1 acceptance workflow, so its end to end test ([`apps/api/tests/test_expense_acceptance.py`](../apps/api/tests/test_expense_acceptance.py)) proves each step below.
 
-The point to prove: adding a workflow needs no change in the core engine. You write a Python package, register it under one entry point, add one migration, and the engine finds the rest at runtime. The few generic extension points this needed were added together with this example and are listed in [ADR 0009](adr/0009-generic-workflow-extension-points.md).
+The point to prove: adding a workflow needs no change in the core engine. You write a Python package, register it under one entry point, ship your migrations in it, and the engine finds the rest at runtime. The few generic extension points this needed were added together with this example and are listed in [ADR 0009](adr/0009-generic-workflow-extension-points.md).
 
 ## What the workflow does
 
@@ -46,6 +46,7 @@ packages/expense/
     policy/*.yaml           # policies as code, version 1
     policies.py             # publishes version 1 per organisation
     models.py               # the expense_notes table
+    migrations/             # the Alembic branch "expense"
     graph.py                # the expense_note graph
     actions.py              # the final action
     api.py                  # routes under /v1/expense
@@ -138,7 +139,15 @@ Three YAML documents in `policy/`, all named `expense.note`, published per organ
 
 ## 6. Your table and migration
 
-Tables live in your package (`models.py`) on `pairly_core.db.Base` with `OrgScoped`. The Alembic environment discovers plugins, so your tables are known to `alembic check`. Add the migration to `apps/api/alembic/versions` (next revision number) and always call `org_rls_statements`, which forces Row Level Security and grants the application role only what you list. Point at other tenant rows by `(org_id, id)` where the parent has that key, so a row can never reference another organisation's.
+Tables live in your package (`models.py`) on `pairly_core.db.Base` with `OrgScoped`. Migrations live in your package too, as their own Alembic branch:
+
+* Declare the directory on the plugin: `migrations_dir = Path(__file__).resolve().parent / "migrations"`. The Alembic environment (`apps/api/alembic/env.py`) discovers plugins through the entry points, adds every `migrations_dir` to the version locations, and registers your tables for `alembic check`.
+* The first revision has `down_revision = None`, `branch_labels = ("<plugin id>",)` and `depends_on` the core revision it needs. The expense branch starts at `expense_0001` and depends on core `0015` (the `employee` role). Later revisions chain on your own: `down_revision = "<plugin id>_0001"`.
+* Name revisions `<plugin id>_NNNN` so they never clash with core's numbers or another workflow's.
+* There are several heads now, so migrations always run `alembic upgrade heads` (Makefile, CI, the compose `migrate` job and the tests do). `alembic heads` and `alembic history` do not run the environment file, so they only list core's chain; `alembic current` and `upgrade` see everything.
+* To write a new revision: `uv run alembic -c apps/api/alembic.ini revision --head <plugin id>@head --version-path packages/<plugin>/pairly_<plugin>/migrations -m "..."`, then write the operations by hand.
+
+Always call `org_rls_statements`, which forces Row Level Security and grants the application role only what you list. Point at other tenant rows by `(org_id, id)` where the parent has that key, so a row can never reference another organisation's.
 
 ## 7. The graph
 
@@ -183,7 +192,7 @@ The expense routes: `POST /v1/expense/notes` (multipart receipt plus `note`, 202
 
 ## 9. Notifications and webhooks
 
-System templates are rows with `org_id` NULL, seeded by your migration like core's (`templates.py`, migration 0015). Templates use the locked down Jinja subset, English and Arabic. Declare webhook events in `webhook_events` (names start with your id) and publish them with `publish_event` in the same transaction as the change.
+System templates are rows with `org_id` NULL, seeded by your migration like core's (`templates.py`, migration `expense_0001`). Templates use the locked down Jinja subset, English and Arabic. Declare webhook events in `webhook_events` (names start with your id) and publish them with `publish_event` in the same transaction as the change.
 
 ## 10. Offline demo: recorded model responses
 
@@ -212,7 +221,7 @@ The demo submitter has the built-in `employee` role: no core permission, and onl
 - [ ] Permissions in your namespace; agents read only; approvals use an `approve` action
 - [ ] Extraction schema with thresholds; checks use only evidenced values
 - [ ] Policies as YAML, published as version 1 per organisation
-- [ ] Table with Row Level Security and a migration
+- [ ] Table with Row Level Security, and migrations as your own Alembic branch (`migrations_dir`)
 - [ ] Graph: guardrails before any model, a person before any final action, every failure goes to a person with its reason
 - [ ] Final action re-checks its own row
 - [ ] Routes audited; idempotent submissions

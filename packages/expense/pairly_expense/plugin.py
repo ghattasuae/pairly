@@ -13,6 +13,7 @@ Everything the engine needs to run expense notes, declared on one object
 * ``api_router``   the ``/v1/expense`` routes (imported only when called, so the worker
                    never loads them).
 * ``demo_seeds``   ``expense-demo`` for ``pairly-admin seed``.
+* ``migrations_dir``  the ``expense`` Alembic branch (``migrations/``).
 
 Importing this module also registers the ``expense_notes`` table on ``Base.metadata``.
 """
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pairly_core.plugins import DemoSeed
@@ -70,6 +72,7 @@ class ExpensePlugin:
     demo_seeds: Mapping[str, DemoSeed] = field(
         default_factory=lambda: {"expense-demo": seed_expense_demo}
     )
+    migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
 
     def api_router(self) -> APIRouter:
         return api_router()

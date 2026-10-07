@@ -2,6 +2,11 @@
 # Copyright (c) 2026 Proofly Technology
 """Expense notes (the example workflow ``pairly_expense``): table and system templates.
 
+The first revision of the ``expense`` branch. Workflow migrations live in their plugin
+(``ExpensePlugin.migrations_dir``) and the Alembic environment finds them through the
+entry points; each branch starts from no parent and ``depends_on`` the core revision it
+needs (0015: the ``employee`` role the workflow grants to submitters).
+
 * ``expense_notes``: a tenant table (RLS forced, standard tenant policy). The
   application role gets SELECT, INSERT and UPDATE (a note moves through its statuses);
   never DELETE. Links to the extraction and risk assessment use ``(org_id, id)`` keys,
@@ -13,8 +18,8 @@
 Downgrade drops the table and removes the seeded template rows that no notification
 references.
 
-Revision ID: 0016
-Revises: 0015
+Revision ID: expense_0001
+Revises: (none; branch ``expense``, depends on core 0015)
 Create Date: 2026-10-08
 """
 
@@ -28,13 +33,13 @@ from sqlalchemy.dialects import postgresql
 
 from pairly_core.migration_helpers import app_db_role, org_rls_statements
 
-revision: str = "0016"
-down_revision: str | None = "0015"
-branch_labels: str | Sequence[str] | None = None
-depends_on: str | Sequence[str] | None = None
+revision: str = "expense_0001"
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = ("expense",)
+depends_on: str | Sequence[str] | None = "0015"
 
 TABLE = "expense_notes"
-_SYSTEM_ACTOR = "pairly.migrations.0016"
+_SYSTEM_ACTOR = "pairly.migrations.expense_0001"
 _TEMPLATE_KEY = "expense.note.decided"
 _STATUSES = (
     "'processing', 'awaiting_approval', 'approved', 'rejected', 'changes_requested', 'failed'"

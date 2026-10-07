@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Proofly Technology
 #
 # One image for the Python services. Compose picks the command:
-#   migrate  alembic -c /app/apps/api/alembic.ini upgrade head   (owner role)
+#   migrate  alembic -c /app/apps/api/alembic.ini upgrade heads  (owner role)
 #   api      uvicorn pairly_api.main:app                          (app role)
 #   worker   arq pairly_worker.main.WorkerSettings                (app role)
 #

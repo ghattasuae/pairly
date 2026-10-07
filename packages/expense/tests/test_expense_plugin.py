@@ -215,3 +215,18 @@ def test_restore_result_marks_failed_extractions() -> None:
 def test_synthetic_receipts_and_recordings_are_up_to_date() -> None:
     for path, data in outputs().items():
         assert path.read_bytes() == data, f"{path} is stale: run uv run python -m synth.expense"
+
+
+def test_migrations_are_their_own_branch() -> None:
+    from alembic.script import ScriptDirectory
+
+    core = plugin.migrations_dir.parents[3] / "apps" / "api" / "alembic" / "versions"
+    script = ScriptDirectory(
+        str(core.parent), version_locations=[str(core), str(plugin.migrations_dir)]
+    )
+    first = script.get_revision("expense_0001")
+    assert first is not None
+    assert first.branch_labels == {"expense"}
+    assert first.down_revision is None
+    assert first.dependencies == "0015"
+    assert script.get_revisions("expense@head")[0].revision == "expense_0001"

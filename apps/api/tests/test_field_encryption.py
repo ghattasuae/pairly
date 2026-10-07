@@ -409,15 +409,15 @@ def test_migration_0008_encrypts_existing_rows(
     owner = to_asyncpg_url(scratch)
     monkeypatch.setenv("PAIRLY_DB_APP_ROLE", make_url(migrated.app).username or "pairly_app")
     config = _alembic(owner)
-    command.upgrade(config, "head")
+    command.upgrade(config, "heads")
     asyncio.run(_clear_encrypted_rows(owner))
     try:
         command.downgrade(config, "0006")
         org, call, email = asyncio.run(_seed_plain_rows(owner))
-        command.upgrade(config, "head")
+        command.upgrade(config, "heads")
         asyncio.run(_check_and_drop(owner, org, call, email))
     finally:
-        command.upgrade(config, "head")
+        command.upgrade(config, "heads")
 
 
 # ------------------------------------------------------------------ startup

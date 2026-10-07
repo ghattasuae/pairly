@@ -115,7 +115,7 @@ def migrated(db_urls: DbUrls) -> DbUrls:
     try:
         config = Config(str(ALEMBIC_INI))
         config.attributes["database_url"] = db_urls.owner
-        command.upgrade(config, "head")
+        command.upgrade(config, "heads")
     finally:
         if previous is None:
             os.environ.pop("PAIRLY_DB_APP_ROLE", None)

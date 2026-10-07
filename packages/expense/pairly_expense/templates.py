@@ -4,7 +4,7 @@
 """System templates of the expense workflow, English and Arabic.
 
 ``expense.note.decided`` tells the submitter what happened to their note. Migration
-0015 stores these as version 1 shared rows (``org_id`` NULL), the way core seeds its
+``expense_0001`` stores these as version 1 shared rows (``org_id`` NULL), the way core seeds its
 own defaults; an organisation customises them by saving its own version.
 
 Copy style: short plain sentences, never an em dash.

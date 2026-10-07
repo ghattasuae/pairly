@@ -346,7 +346,7 @@ services:
     <<: *app-hardening
     restart: "no"
     working_dir: /app/apps/api
-    command: ["alembic", "-c", "/app/apps/api/alembic.ini", "upgrade", "head"]
+    command: ["alembic", "-c", "/app/apps/api/alembic.ini", "upgrade", "heads"]
     environment:
       PAIRLY_DATABASE_URL_OWNER: postgresql+asyncpg://pairly_owner:${PAIRLY_OWNER_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
       # Migration 0008 encrypts existing rows; `pairly-admin crypto rotate` re-wraps keys.

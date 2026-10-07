@@ -9,6 +9,7 @@ import types
 from collections.abc import Iterator
 from dataclasses import dataclass
 from importlib.metadata import EntryPoint
+from pathlib import Path
 
 import pytest
 from fastapi import APIRouter
@@ -154,3 +155,17 @@ def test_duplicate_demo_seeds_fail_closed() -> None:
     hooked = _Hooked("alpha", demo_seeds={"alpha-x": _seed})
     with pytest.raises(PluginError, match="duplicate"):
         plugins.demo_seeds([hooked, hooked])
+
+
+def test_plugin_migration_locations(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class _WithMigrations:
+        id: str
+        migrations_dir: object = None
+
+    found = plugins.plugin_migration_locations(
+        [_WithMigrations("zeta", tmp_path), _WithMigrations("alpha"), _Hooked("beta")]
+    )
+    assert found == [str(tmp_path.resolve())]
+    with pytest.raises(PluginError, match="not a directory"):
+        plugins.plugin_migration_locations([_WithMigrations("alpha", tmp_path / "missing")])

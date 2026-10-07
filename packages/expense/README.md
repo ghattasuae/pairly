@@ -12,7 +12,7 @@ It is the M1 acceptance workflow and the worked example of [docs/add-a-workflow.
 | Policies as code (rules, risk, approval rules) | `pairly_expense/policy/*.yaml`, `pairly_expense/policies.py` |
 | Graph `expense_note` v1 | `pairly_expense/graph.py` |
 | Final action `mark_reimbursable` | `pairly_expense/actions.py` |
-| Table `expense_notes` | `pairly_expense/models.py`, migration `apps/api/alembic/versions/0015_expense_notes.py` |
+| Table `expense_notes` | `pairly_expense/models.py`, migration `pairly_expense/migrations/expense_0001_expense_notes.py` (Alembic branch `expense`) |
 | Routes under `/v1/expense` | `pairly_expense/api.py` |
 | Notification templates | `pairly_expense/templates.py` |
 | Demo seed `expense-demo` | `pairly_expense/seed.py` |

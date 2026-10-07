@@ -54,10 +54,12 @@ add-a-workflow guide) need none.
    streaming multipart receiver can return small named text fields (a note next to a
    receipt) within the existing field size cap. `receive_upload` is unchanged.
 
-7. **Plugin tables in migrations** (`apps/api/alembic/env.py`). The Alembic environment
+7. **Plugin tables and migrations** (`apps/api/alembic/env.py`). The Alembic environment
    discovers plugins, so tables a plugin declares on `Base.metadata` are known to
-   autogenerate and `alembic check`. The plugin's migration lives in the shared
-   `apps/api/alembic/versions` chain (expense: 0015).
+   autogenerate and `alembic check`, and adds each plugin's `migrations_dir` to the
+   version locations. A plugin's migrations are its own branch (`branch_labels`, first
+   revision without a parent) that `depends_on` the core revision it needs (expense:
+   `expense_0001`, depends on 0015). Migrations run `upgrade heads`.
 
 Also: an import-linter contract that the API, worker and MCP apps never import a
 workflow package (they discover them through the entry point), and the new package in
@@ -77,5 +79,12 @@ the workspace, Dockerfile, mypy and CI lists (configuration, not engine code).
 * `pairly-admin seed` looks an organisation up by slug through the owner-only read
   policy of migration 0004 (`app.inbound_lookup`), the same policy the inbound email
   lookup uses.
-* Workflow migrations share one linear Alembic chain with core. If workflows ever ship
-  separately, move them to per-plugin version locations (ASK before doing so).
+* Core keeps its linear chain; workflows ship and version their migrations with their
+  package. `alembic heads` and `history` (which do not run `env.py`) only list core's
+  chain.
+
+## Amendments
+
+* 2026-10-08, on acceptance: workflow migrations moved to per-plugin version locations
+  (item 7); the built-in `employee` role (core migration 0015) holds no core permission
+  and plugins may grant it only read, submit, create and upload permissions.
