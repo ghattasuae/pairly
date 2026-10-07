@@ -3,10 +3,12 @@
 """Tracing for model calls: LangFuse (optional) and OpenTelemetry spans.
 
 Nothing raw leaves the process: every input and output sent to LangFuse goes through
-a ``Redactor`` first. The default ``RegexRedactor`` masks email addresses, phone
-numbers and IBANs with simple patterns. WP1.4 (guardrails) supplies the real PII
-redactor through the same interface. LangFuse also gets the redactor as its ``mask``
-function, a second layer for anything the SDK captures on its own.
+a ``Redactor`` first. The router and ``build_router`` default to
+``pairly_core.guardrails.pii.PiiRedactor`` (emails, phones including UAE formats,
+IBANs, Luhn-checked card numbers, Emirates ID, passport numbers, known names).
+``RegexRedactor`` below is the older minimal redactor, kept for callers that pass it.
+LangFuse also gets the redactor as its ``mask`` function, a second layer for anything
+the SDK captures on its own.
 
 OpenTelemetry spans carry ids, model names, token counts and cost only, never inputs
 or outputs.

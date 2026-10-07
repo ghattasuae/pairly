@@ -8,6 +8,7 @@ from collections.abc import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.guardrails.pii import PiiRedactor
 from pairly_core.llm.budget import BudgetManager, usd_to_micros
 from pairly_core.llm.catalog import load_catalog, load_prices
 from pairly_core.llm.prompt_registry import PromptRegistry, Root, core_prompt_root
@@ -16,7 +17,7 @@ from pairly_core.llm.providers.base import ModelProvider
 from pairly_core.llm.providers.openai import OpenAIProvider
 from pairly_core.llm.router import ModelRouter
 from pairly_core.llm.settings import LLMSettings
-from pairly_core.llm.tracing import Redactor, RegexRedactor, build_tracer
+from pairly_core.llm.tracing import Redactor, build_tracer
 
 
 def build_providers(settings: LLMSettings) -> dict[str, ModelProvider]:
@@ -44,7 +45,7 @@ def build_router(
 ) -> ModelRouter:
     prices = load_prices(settings.llm_prices_file)
     catalog = load_catalog(prices, settings.llm_models_file)
-    redactor = redactor or RegexRedactor()
+    redactor = redactor or PiiRedactor()
     return ModelRouter(
         settings=settings,
         providers=providers if providers is not None else build_providers(settings),

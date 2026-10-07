@@ -27,6 +27,7 @@ from pairly_core.documents.colors import to_hex
 from pairly_core.documents.model import (
     BBox,
     Char,
+    Fill,
     NormalizedDocument,
     OcrInfo,
     Page,
@@ -42,6 +43,8 @@ from pairly_core.ingestion.sniff import PDF
 
 MAX_METADATA_VALUE = 4096
 MAX_XMP_BYTES = 64 * 1024
+# Filled rectangles kept per page (backgrounds for the hidden-text check).
+MAX_FILLS_PER_PAGE = 2000
 INVISIBLE_RENDER_MODE = 3
 
 _patched = False
@@ -162,6 +165,25 @@ def _structure(path: Path, warnings: list[ParseWarning]) -> tuple[dict[str, str]
         warnings.append(ParseWarning(code="structure_error", message="unreadable document catalog"))
     metadata["pdf:pages"] = str(len(reader.pages))
     return metadata, encrypted
+
+
+def _fills(page: Any, warnings: list[ParseWarning], number: int) -> list[Fill]:
+    """Filled rectangles with a solid colour, largest first, capped per page."""
+    found: list[Fill] = []
+    for obj in page.rects:
+        if not obj.get("fill"):
+            continue
+        color = to_hex(obj.get("non_stroking_color"))
+        if color is None or color.startswith("pattern:"):
+            continue
+        found.append(Fill(bbox=_bbox(obj), color=color))
+    found.sort(key=lambda f: f.bbox.width * f.bbox.height, reverse=True)
+    if len(found) > MAX_FILLS_PER_PAGE:
+        warnings.append(
+            ParseWarning(code="fills_truncated", message="too many filled shapes", page=number)
+        )
+        found = found[:MAX_FILLS_PER_PAGE]
+    return found
 
 
 class PdfParser:
@@ -302,6 +324,7 @@ class PdfParser:
         except Exception:
             warnings.append(ParseWarning(code="table_error", message="tables skipped", page=number))
 
+        fills = _fills(page, warnings, number)
         text = page.extract_text() or ""
         image_count = len(page.images)
         result = Page(
@@ -315,6 +338,7 @@ class PdfParser:
             words=words,
             chars=chars,
             tables=tables,
+            fills=fills,
             image_count=image_count,
         )
         if len(text.strip()) < options.min_text_chars_per_page and image_count:

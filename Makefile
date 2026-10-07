@@ -83,7 +83,7 @@ format: ## Auto-format and auto-fix Python
 
 typecheck: ## mypy (strict on packages/core) and tsc
 	$(UV) run mypy packages/core
-	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts
+	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts synth
 	$(PNPM) typecheck
 
 # ---------------------------------------------------------------- CI checks, run locally

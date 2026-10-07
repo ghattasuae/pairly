@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Structured JSON logs for the worker (structlog over the standard library)."""
+"""Structured JSON logs for the worker (structlog over the standard library).
+
+Every event goes through ``redact_log_event`` (PII redaction) before it is rendered.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +12,8 @@ import sys
 from typing import Any
 
 import structlog
+
+from pairly_core.guardrails.pii import redact_log_event
 
 
 def configure_logging(level: str = "INFO") -> None:
@@ -29,6 +34,8 @@ def configure_logging(level: str = "INFO") -> None:
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             structlog.processors.format_exc_info,
+            # Last before rendering, so messages, fields and tracebacks are all covered.
+            redact_log_event,
             structlog.processors.JSONRenderer(),
         ],
     )

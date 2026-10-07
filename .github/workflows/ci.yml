@@ -84,7 +84,7 @@ jobs:
         run: uv run mypy packages/core
 
       - name: mypy (everything else)
-        run: uv run mypy packages/hire packages/pay apps sdks/python scripts
+        run: uv run mypy packages/hire packages/pay apps sdks/python scripts synth
 
       - name: Start Postgres (roles from infra/postgres/init)
         env:
