@@ -15,6 +15,7 @@ from arq.worker import Function
 
 import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
+from pairly_core.jobs.registry import JobRegistryError, build_job_registry
 from pairly_worker.config import load_worker_config
 from pairly_worker.decision_jobs import (
     ANCHOR_JOB,
@@ -27,7 +28,9 @@ from pairly_worker.main import (
     NIGHTLY_AUDIT_JOB,
     NOTIFICATION_DELIVERY_JOB,
     NOTIFICATION_DIGEST_JOB,
+    RETENTION_JOB,
     SWEEP_JOB,
+    WEBHOOK_JOB,
     WORKFLOW_RESUME_JOB,
     build_worker_settings,
 )
@@ -120,10 +123,24 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         APPEAL_JOB,
         DENIAL_FLUSH_JOB,
         DECISION_SWEEP_JOB,
+        WEBHOOK_JOB,
+        RETENTION_JOB,
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
     assert (jobs[ANCHOR_JOB].hour, jobs[ANCHOR_JOB].minute) == (2, 10)
+    # Every scheduled job is declared in the job registry, and every declared core job
+    # is scheduled (the operations view lists exactly what runs).
+    assert set(jobs) == {j.name for j in build_job_registry().jobs}
+    # Each cron coroutine is wrapped to record its runs in job_runs.
+    assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
+    # The retention dry run is daily at 02:15 UTC, one at a time.
+    retention = jobs[RETENTION_JOB]
+    assert (retention.hour, retention.minute, retention.unique) == (2, 15, True)
+    # Webhook delivery runs every minute, one at a time.
+    assert jobs[WEBHOOK_JOB].unique
+    assert jobs[WEBHOOK_JOB].second == 0
+    assert jobs[WEBHOOK_JOB].minute is None
     cron_job = jobs[NIGHTLY_AUDIT_JOB]
     assert isinstance(cron_job, CronJob)
     assert jobs[APPROVAL_SLA_JOB].minute == set(range(0, 60, 5))
@@ -163,3 +180,8 @@ def test_lazy_module_attribute(monkeypatch: pytest.MonkeyPatch) -> None:
     assert worker_main.WorkerSettings is first
     with pytest.raises(AttributeError):
         _ = worker_main.NotThere
+
+
+def test_undeclared_jobs_are_refused() -> None:
+    with pytest.raises(JobRegistryError, match="unknown job"):
+        worker_main._job(build_job_registry(), "not_declared", worker_main.retention_dry_run)

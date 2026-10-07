@@ -31,6 +31,7 @@ IMAGE="${CI_PG_IMAGE:-pgvector/pgvector:0.8.7-pg16-bookworm}"
 PORT="${CI_PG_PORT:-55432}"
 NAME="${CI_PG_NAME:-pairly-ci-postgres}"
 DB="pairly"
+SCRATCH_DB="pairly_scratch"
 
 rand() { openssl rand -hex 24; }
 
@@ -91,7 +92,17 @@ start() {
     docker logs "$NAME" >&2 || true
     exit 1
   fi
+  # A second, dedicated database for tests that migrate down and up again (the 0008
+  # data migration test). It is a copy of the freshly initialised database (roles,
+  # extension and schema ownership, no tables yet), so such a test never touches the
+  # shared test database, nor rows that earlier test sessions wrote with other keys.
+  docker exec -e PGPASSWORD="$super_pw" "$NAME" psql -q -U postgres -d postgres \
+    -v ON_ERROR_STOP=1 \
+    -c "CREATE DATABASE ${SCRATCH_DB} TEMPLATE ${DB} OWNER pairly_owner" \
+    -c "REVOKE ALL ON DATABASE ${SCRATCH_DB} FROM PUBLIC" >/dev/null
+
   local owner_url="postgresql://pairly_owner:${owner_pw}@127.0.0.1:${PORT}/${DB}"
+  local scratch_url="postgresql://pairly_owner:${owner_pw}@127.0.0.1:${PORT}/${SCRATCH_DB}"
   local app_url="postgresql://pairly_app:${app_pw}@127.0.0.1:${PORT}/${DB}"
 
   # Ready inside the container is not enough: the published host port can lag behind
@@ -140,12 +151,14 @@ PY
       echo "PAIRLY_DATABASE_URL_OWNER=$owner_url"
       echo "PAIRLY_TEST_DATABASE_URL_OWNER=$owner_url"
       echo "PAIRLY_TEST_DATABASE_URL=$app_url"
+      echo "PAIRLY_TEST_SCRATCH_DATABASE_URL_OWNER=$scratch_url"
       echo "PAIRLY_DB_APP_ROLE=pairly_app"
     } >>"$GITHUB_ENV"
   else
     echo "export PAIRLY_DATABASE_URL_OWNER='$owner_url'"
     echo "export PAIRLY_TEST_DATABASE_URL_OWNER='$owner_url'"
     echo "export PAIRLY_TEST_DATABASE_URL='$app_url'"
+    echo "export PAIRLY_TEST_SCRATCH_DATABASE_URL_OWNER='$scratch_url'"
     echo "export PAIRLY_DB_APP_ROLE=pairly_app"
   fi
 }

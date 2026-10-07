@@ -9,7 +9,9 @@
 * ``policy_documents``: an uploaded policy document version (a ``documents`` row) and
   its indexing state. SELECT, INSERT and UPDATE (status only: a trigger keeps every
   identifying column fixed and makes ``archived`` final); no DELETE. Migration 0010
-  adds the guardrail findings and ``needs_review``, which can only become ``archived``.
+  adds the guardrail findings and ``needs_review``. Migration 0013 adds the guardrail
+  override: ``needs_review`` becomes ``pending`` (then indexed) only with a recorded
+  override, approved by a second admin when the findings are high severity.
 """
 
 from __future__ import annotations
@@ -51,8 +53,9 @@ class PolicyDocumentStatus(StrEnum):
     PENDING = "pending"  # uploaded, waiting for scan and parse
     INDEXED = "indexed"  # chunks stored, used by policy checks
     FAILED = "failed"  # could not be indexed (parse failure, empty, embedding error)
-    # Guardrails found a high-severity instruction (or could not run): never indexed,
-    # never active. An admin uploads a corrected file (a new version).
+    # Guardrails found a high-severity instruction (or could not run): not indexed and
+    # not active until an admin overrides it with a written reason (two admins for
+    # high-severity findings), or uploads a corrected file (a new version).
     NEEDS_REVIEW = "needs_review"
     ARCHIVED = "archived"  # no longer used; kept for the record
 
@@ -119,6 +122,16 @@ class PolicyDocument(Base, OrgScoped, Timestamped):
         CheckConstraint(
             "jsonb_typeof(guardrail_findings) = 'array'", name="guardrail_findings_array"
         ),
+        CheckConstraint(
+            "(override_requested_by IS NULL) = (override_requested_at IS NULL) "
+            "AND (override_requested_by IS NULL) = (override_request_reason IS NULL)",
+            name="override_request_complete",
+        ),
+        CheckConstraint(
+            "(overridden_by IS NULL) = (overridden_at IS NULL) "
+            "AND (overridden_by IS NULL) = (override_reason IS NULL)",
+            name="override_complete",
+        ),
         Index("ix_policy_documents_document_id", "document_id"),
     )
 
@@ -147,3 +160,19 @@ class PolicyDocument(Base, OrgScoped, Timestamped):
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
     )
     guardrail_version: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # Guardrail override of a ``needs_review`` document (migration 0013). When the
+    # findings need two people, the first admin's request is kept here and a second,
+    # different admin approves it (``overridden_*``). Write once: a trigger refuses any
+    # change to a value already set.
+    override_requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    override_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    override_request_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    overridden_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    overridden_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    override_reason: Mapped[str | None] = mapped_column(Text, nullable=True)

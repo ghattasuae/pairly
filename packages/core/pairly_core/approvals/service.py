@@ -83,6 +83,7 @@ from pairly_core.rbac import (
     RoleRegistry,
     authorize,
 )
+from pairly_core.webhooks.events import APPROVAL_DECIDED, publish_event
 from pairly_core.workflow.spec import ApprovalType
 
 MAX_PAYLOAD_BYTES = 32 * 1024
@@ -832,6 +833,23 @@ async def decide(
         )
     if activated is not None:
         await _step_activated(session, approval, activated, hooks)
+    # Outbound webhook (transactional outbox): emitted only if this decision commits.
+    await publish_event(
+        session,
+        APPROVAL_DECIDED,
+        {
+            "approval_id": str(approval.id),
+            "run_id": str(approval.run_id),
+            "workflow": approval.workflow,
+            "approval_type": approval.approval_type,
+            "step": step.name,
+            "decision_id": str(row.id),
+            "decision": decision.value,
+            "approval_status": approval.status,
+            "entity_type": approval.entity_type,
+            "entity_id": approval.entity_id,
+        },
+    )
     await hooks.approval_decided(
         session,
         ApprovalDecided(

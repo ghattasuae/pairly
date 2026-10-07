@@ -93,6 +93,7 @@ class ActorType(StrEnum):
     USER = "user"
     AGENT = "agent"
     SYSTEM = "system"
+    API_KEY = "api_key"
 
 
 class AuditAction:
@@ -329,9 +330,15 @@ def validate_payload(payload: Mapping[str, Any] | None) -> dict[str, Any]:
 # ------------------------------------------------------------------ appending
 
 
+_ACTOR_TYPES = {
+    ActorKind.USER: ActorType.USER,
+    ActorKind.AGENT: ActorType.AGENT,
+    ActorKind.API_KEY: ActorType.API_KEY,
+}
+
+
 def actor_ref(actor: Actor) -> tuple[ActorType, str]:
-    kind = ActorType.AGENT if actor.kind is ActorKind.AGENT else ActorType.USER
-    return kind, str(actor.id)
+    return _ACTOR_TYPES[actor.kind], str(actor.id)
 
 
 def _lock_key(org_id: uuid.UUID) -> str:

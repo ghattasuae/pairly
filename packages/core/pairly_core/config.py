@@ -88,6 +88,11 @@ class Settings(BaseSettings):
     # Signed approval links (email, Slack): lifetime in seconds. Short on purpose.
     approval_link_ttl_seconds: int = Field(default=1800, ge=60, le=86400)
 
+    # API keys (WP1.11): default requests per minute per key (a key row may lower or
+    # raise it), and the longest lifetime a new key may have.
+    api_key_rate_limit_per_minute: int = Field(default=600, ge=1, le=100000)
+    api_key_max_days: int = Field(default=365, ge=1, le=3650)
+
     @field_validator("auth_algorithms", "cors_origins", mode="before")
     @classmethod
     def _csv_list(cls, value: Any) -> Any:

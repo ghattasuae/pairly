@@ -22,6 +22,23 @@ class CallStatus(StrEnum):
     INVALID_OUTPUT = "invalid_output"
     LOW_CONFIDENCE = "low_confidence"
     PROVIDER_ERROR = "provider_error"
+    # Part of the work was done (and billed by the provider) before the call failed.
+    PARTIAL_ERROR = "partial_error"
+
+
+@dataclass(frozen=True, slots=True)
+class PartialUsage:
+    """What a failed call had already consumed (and the provider billed) when it failed.
+
+    An exception carries it as ``partial_usage`` (for example a batched embedding call
+    whose later batch failed). ``input_tokens`` is what the provider reported for the
+    successful part, ``input_bound`` an upper bound for it (UTF-8 bytes) used when the
+    provider reported nothing, ``completed`` how many items were done.
+    """
+
+    input_tokens: int = 0
+    input_bound: int = 0
+    completed: int = 0
 
 
 @dataclass(frozen=True, slots=True)

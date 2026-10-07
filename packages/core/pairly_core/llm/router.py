@@ -91,6 +91,7 @@ from pairly_core.llm.types import (
     AttemptInfo,
     CallContext,
     CallStatus,
+    PartialUsage,
     ReplayResult,
     RouterResult,
     TaskSpec,
@@ -628,7 +629,9 @@ class ModelRouter:
         SHA-256 of the vectors, never the vectors. Both are encrypted like every row.
         A local embedder (no price) costs nothing but is still recorded. Raises
         ``ModelUnavailable`` when the call cannot be recorded, and re-raises the
-        backend's own error after recording it.
+        backend's own error after recording it. When the error carries a
+        ``PartialUsage`` (some batches were embedded and billed before the failure), the
+        row has status ``partial_error`` with the usage and cost of the successful part.
         """
         try:
             return await self._embed(
@@ -711,14 +714,35 @@ class ModelRouter:
             try:
                 batch = await backend.embed_batch(texts, purpose=purpose)
             except Exception as exc:
+                partial = getattr(exc, "partial_usage", None)
+                partial_tokens, partial_cost = 0, 0
+                if isinstance(partial, PartialUsage) and partial.completed > 0:
+                    # Some batches succeeded (and were billed) before the failure: record
+                    # their usage and cost, so spend stays accurate, then still raise.
+                    partial_tokens = max(partial.input_tokens, 0)
+                    if price_model is not None:
+                        partial_tokens = partial_tokens or min(
+                            max(partial.input_bound, 0), input_bound
+                        )
+                        partial_cost = self._prices.cost_micros(
+                            price_model, Usage(input_tokens=partial_tokens)
+                        )
+                    values.update(
+                        status=CallStatus.PARTIAL_ERROR.value,
+                        response={"count": len(texts), "completed": partial.completed},
+                    )
+                else:
+                    values.update(status=CallStatus.PROVIDER_ERROR.value)
                 values.update(
-                    status=CallStatus.PROVIDER_ERROR.value,
                     error_kind=type(exc).__name__[:64],
                     output_complete=False,
+                    input_tokens=partial_tokens,
                     latency_ms=self._elapsed_ms(start),
-                    cost_micros=0,
+                    cost_micros=partial_cost,
                 )
-                call_id = await self._store(org_id, values, reservation_id=reservation_id)
+                call_id = await self._store(
+                    org_id, values, reservation_id=reservation_id, cost_micros=partial_cost
+                )
                 settled = True
                 self._trace(values, call_id, inputs)
                 raise

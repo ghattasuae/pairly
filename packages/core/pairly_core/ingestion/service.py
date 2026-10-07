@@ -39,6 +39,7 @@ from pairly_core.ingestion.settings import IntakePolicy
 from pairly_core.ingestion.sniff import SNIFF_BYTES, sniff
 from pairly_core.ingestion.storage import ObjectStore, blob_key
 from pairly_core.rbac import Actor
+from pairly_core.webhooks.events import DOCUMENT_RECEIVED, publish_event
 
 log = structlog.get_logger(__name__)
 
@@ -302,6 +303,19 @@ async def ingest_spooled(
         DocumentAction.RECEIVED,
         document,
         {
+            "source": source.value,
+            "media_type": sniffed,
+            "size_bytes": spooled.size,
+            "sha256": spooled.sha256,
+        },
+    )
+    # Outbound webhook (transactional outbox): emitted only if the document commits.
+    await publish_event(
+        session,
+        DOCUMENT_RECEIVED,
+        {
+            "document_id": str(document.id),
+            "workflow": workflow,
             "source": source.value,
             "media_type": sniffed,
             "size_bytes": spooled.size,

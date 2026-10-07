@@ -33,6 +33,7 @@ from pairly_core.ingestion.storage import S3ObjectStore
 from pairly_core.llm.settings import load_llm_settings
 from pairly_core.policy.documents import index_after_parse
 from pairly_core.retrieval.metered import build_metered_embedder
+from pairly_core.search.documents import index_document_after_parse
 
 log = structlog.get_logger("pairly_worker.documents")
 
@@ -105,6 +106,7 @@ async def parse_document_job(ctx: dict[str, Any], org_id: str, document_id: str)
         )
     if not result.skipped:
         await _index_policy(ctx, org_id, document_id)
+        await _index_for_search(ctx, org_id, document_id)
     return {
         "status": result.status,
         "reason": result.reason,
@@ -132,6 +134,32 @@ async def _index_policy(ctx: dict[str, Any], org_id: str, document_id: str) -> N
         )
     except Exception as exc:
         log.warning("policy_index_failed", document_id=document_id, error=type(exc).__name__)
+
+
+async def _index_for_search(ctx: dict[str, Any], org_id: str, document_id: str) -> None:
+    """Index the parsed text for search if the organisation turned ``search.documents``
+    on (WP1.12; PII redacted). Never fails the parse job."""
+    try:
+        embedder = ctx.get("policy_embedder")
+        if embedder is None:
+            embedder = ctx["policy_embedder"] = build_metered_embedder(
+                load_llm_settings(), ctx["sessionmaker"]
+            )
+        outcome = await index_document_after_parse(
+            ctx["sessionmaker"],
+            ctx["store"],
+            org_id=uuid.UUID(org_id),
+            document_id=uuid.UUID(document_id),
+            embedder=embedder,
+        )
+        if outcome.status == "failed":
+            log.warning(
+                "document_search_index_failed", document_id=document_id, reason=outcome.reason
+            )
+    except Exception as exc:
+        log.warning(
+            "document_search_index_failed", document_id=document_id, error=type(exc).__name__
+        )
 
 
 async def stalled_documents(

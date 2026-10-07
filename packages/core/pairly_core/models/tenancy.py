@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -22,6 +23,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    false,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,6 +44,11 @@ class Organisation(Base, OrgRoot, Timestamped):
     slug: Mapped[str] = mapped_column(String(63), nullable=False, unique=True)
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, default="active", server_default="active"
+    )
+    # Sandbox organisations (brief 2.4.6) accept test API keys (``pk_test_``). Set by the
+    # operator at provisioning; the application role cannot change it (migration 0013).
+    sandbox: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
     )
 
 

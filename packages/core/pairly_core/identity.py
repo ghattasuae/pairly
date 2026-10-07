@@ -17,6 +17,11 @@ Route handlers then use ``OrgSession`` (the same session, still in that transact
 ``require(permission)``. The transaction commits after the handler returns and before
 the response is sent; any error rolls it back.
 
+API keys (WP1.11): a bearer token starting with ``pk_`` is an API key, not a JWT. It is
+resolved by ``pairly_core.api_keys.service.authenticate_api_key`` to an ``api_key``
+actor in the key's own organisation (the ``X-Pairly-Org`` header is optional for keys,
+and must match when sent); the rest of the request works exactly as for a person.
+
 Two routes work before an organisation is chosen, with ``VerifiedSubject`` (the token
 only) and ``SubjectSession`` (a session whose tenant context names the subject and no
 organisation, so tenant policies match nothing): ``GET /v1/me/orgs`` and
@@ -28,7 +33,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Annotated
 
 import structlog
@@ -36,6 +41,8 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from pairly_core.api_keys.ratelimit import RateLimiter
+from pairly_core.api_keys.tokens import looks_like_api_key
 from pairly_core.audit import (
     INFO_REQUEST_ID,
     AuditAction,
@@ -79,6 +86,8 @@ class AppContext:
     sessionmaker: async_sessionmaker[AsyncSession]
     verifier: TokenVerifier
     registry: RoleRegistry
+    # Per API key request rate limit (pairly_core.api_keys.ratelimit).
+    api_key_limiter: RateLimiter = field(default_factory=RateLimiter)
 
 
 def get_context(request: Request) -> AppContext:
@@ -248,15 +257,33 @@ async def subject_session(verified: VerifiedSubject, session: RequestSession) ->
 SubjectSession = Annotated[AsyncSession, Depends(subject_session)]
 
 
-async def current_actor(
-    request: Request, ctx: Context, session: RequestSession, verified: VerifiedSubject
-) -> Actor:
-    org_id = org_from_header(request)
-    actor = await load_actor(
-        session, ctx.registry, subject=verified.subject, org_id=org_id, amr=verified.amr
+async def _api_key_actor(request: Request, ctx: AppContext, session: AsyncSession) -> Actor:
+    from pairly_core.api_keys.service import authenticate_api_key
+
+    header = request.headers.get(ORG_HEADER)
+    org_header = org_from_header(request) if header is not None and header.strip() else None
+    return await authenticate_api_key(
+        session,
+        ctx.registry,
+        bearer_token(request),
+        org_header=org_header,
+        limiter=ctx.api_key_limiter,
+        default_rate_limit=ctx.settings.api_key_rate_limit_per_minute,
     )
+
+
+async def current_actor(request: Request, ctx: Context, session: RequestSession) -> Actor:
+    if looks_like_api_key(bearer_token(request)):
+        actor = await _api_key_actor(request, ctx, session)
+        structlog.contextvars.bind_contextvars(api_key_id=str(actor.id), org_id=str(actor.org_id))
+    else:
+        verified = await verified_subject(request, ctx)
+        org_id = org_from_header(request)
+        actor = await load_actor(
+            session, ctx.registry, subject=verified.subject, org_id=org_id, amr=verified.amr
+        )
+        structlog.contextvars.bind_contextvars(user_id=str(actor.id), org_id=str(actor.org_id))
     request.state.actor = actor
-    structlog.contextvars.bind_contextvars(user_id=str(actor.id), org_id=str(actor.org_id))
     return actor
 
 

@@ -69,10 +69,14 @@ def problem_response(
 async def _pairly_error(request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, PairlyError):
         raise exc
-    headers = None
+    headers: dict[str, str] | None = None
     if isinstance(exc, UnauthenticatedError):
         error = ', error="invalid_token"' if isinstance(exc, TokenError) else ""
         headers = {"WWW-Authenticate": f"Bearer{error}"}
+    extra = getattr(exc, "headers", None)
+    if isinstance(extra, dict):
+        # For example Retry-After on 429. Error classes set only fixed, safe values.
+        headers = {**(headers or {}), **{str(k): str(v) for k, v in extra.items()}}
     return problem_response(
         request, exc.status, exc.code, title=exc.title, detail=exc.detail, headers=headers
     )

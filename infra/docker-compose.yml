@@ -99,6 +99,9 @@ x-app-env: &app-env
   PAIRLY_AUDIT_ANCHOR_BUCKET: ${PAIRLY_AUDIT_ANCHOR_BUCKET:-pairly-audit-anchors}
   PAIRLY_AUDIT_ANCHOR_LOCK_MODE: ${PAIRLY_AUDIT_ANCHOR_LOCK_MODE:-GOVERNANCE}
   PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS: ${PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS:-2555}
+  # API key hashing pepper (WP1.11). An older .env gets it from `make env`, which
+  # appends it without changing any existing line.
+  PAIRLY_API_KEY_PEPPER: ${PAIRLY_API_KEY_PEPPER:?missing}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   # Only reachable with the `observability` profile; tracing is best effort.

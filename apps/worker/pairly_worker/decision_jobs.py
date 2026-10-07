@@ -48,14 +48,21 @@ from pairly_core.db import set_tenant
 from pairly_core.decisions.appeals import escalate_overdue_appeals
 from pairly_core.decisions.compliance import give_up_exports, run_export, stale_exports
 from pairly_core.decisions.jobs import COMPLIANCE_EXPORT_JOB, VERIFY_AUDIT_CHAIN_JOB
+from pairly_core.jobs.registry import (
+    APPEAL_SLA_ESCALATION,
+    AUDIT_ANCHOR_NIGHTLY,
+    AUDIT_DENIAL_FLUSH,
+    DECISION_JOBS_SWEEP,
+)
 from pairly_worker.config import WorkerConfig
 
 log = structlog.get_logger("pairly_worker.decision_jobs")
 
-ANCHOR_JOB: Final = "audit_anchor_nightly"
-APPEAL_SLA_JOB: Final = "appeal_sla_escalation"
-DENIAL_FLUSH_JOB: Final = "audit_denial_flush"
-DECISION_SWEEP_JOB: Final = "decision_jobs_sweep"
+# Declared in the job registry (pairly_core.jobs.registry), like every cron job.
+ANCHOR_JOB: Final = AUDIT_ANCHOR_NIGHTLY
+APPEAL_SLA_JOB: Final = APPEAL_SLA_ESCALATION
+DENIAL_FLUSH_JOB: Final = AUDIT_DENIAL_FLUSH
+DECISION_SWEEP_JOB: Final = DECISION_JOBS_SWEEP
 _ORG_FUNCTIONS: Final = frozenset(
     {
         "audit_org_ids",
@@ -226,10 +233,18 @@ def functions() -> list[Any]:
     ]
 
 
-def cron_jobs(config: WorkerConfig) -> list[Any]:
+Wrap = Callable[[str, Callable[[dict[str, Any]], Awaitable[Any]]], Any]
+
+
+def _plain(_name: str, job: Callable[[dict[str, Any]], Awaitable[Any]]) -> Any:
+    return job
+
+
+def cron_jobs(config: WorkerConfig, wrap: Wrap = _plain) -> list[Any]:
+    """The cron jobs; ``wrap(name, job)`` registers and tracks each one (worker main)."""
     return [
         cron(
-            anchor_audit_chains,
+            wrap(ANCHOR_JOB, anchor_audit_chains),
             name=ANCHOR_JOB,
             hour=config.audit_anchor_hour,
             minute=config.audit_anchor_minute,
@@ -238,7 +253,7 @@ def cron_jobs(config: WorkerConfig) -> list[Any]:
             timeout=1800,
         ),
         cron(
-            escalate_appeals,
+            wrap(APPEAL_SLA_JOB, escalate_appeals),
             name=APPEAL_SLA_JOB,
             minute=set(range(1, 60, 5)),
             run_at_startup=False,
@@ -246,7 +261,7 @@ def cron_jobs(config: WorkerConfig) -> list[Any]:
             timeout=240,
         ),
         cron(
-            flush_denials,
+            wrap(DENIAL_FLUSH_JOB, flush_denials),
             name=DENIAL_FLUSH_JOB,
             minute=set(range(2, 60, 5)),
             run_at_startup=False,
@@ -254,7 +269,7 @@ def cron_jobs(config: WorkerConfig) -> list[Any]:
             timeout=240,
         ),
         cron(
-            sweep_decision_jobs,
+            wrap(DECISION_SWEEP_JOB, sweep_decision_jobs),
             name=DECISION_SWEEP_JOB,
             run_at_startup=True,
             unique=True,
