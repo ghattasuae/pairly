@@ -27,6 +27,7 @@ dev = [
   "import-linter>=2.5",
   "pre-commit>=4.3",
   "pytest-asyncio>=1.0",
+  "types-pyyaml>=6.0",
 ]
 
 [tool.uv]

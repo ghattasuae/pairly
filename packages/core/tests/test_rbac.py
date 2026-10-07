@@ -26,6 +26,7 @@ from pairly_core.rbac import (
     check_grantable,
     requires_second_factor,
 )
+from pairly_core.workflow.spec import GraphSpec
 from pairly_hire.plugin import plugin as hire_plugin
 from pairly_pay.plugin import plugin as pay_plugin
 
@@ -37,6 +38,7 @@ class _Plugin:
     id: str
     name: str
     permissions: tuple[PermissionSpec, ...]
+    graphs: tuple[GraphSpec, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -36,4 +36,5 @@ def configure_tracing(service_name: str = "pairly-api") -> bool:
 
 def instrument_app(app: FastAPI) -> None:
     """Instrument requests. Without an exporting provider the spans are no-ops."""
-    FastAPIInstrumentor.instrument_app(app, excluded_urls="healthz,readyz")
+    # approval-links paths carry a secret token, so they are never traced.
+    FastAPIInstrumentor.instrument_app(app, excluded_urls="healthz,readyz,v1/approval-links")

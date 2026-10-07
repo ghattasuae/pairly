@@ -14,7 +14,12 @@ from arq.worker import Function
 import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
 from pairly_worker.config import load_worker_config
-from pairly_worker.main import NIGHTLY_AUDIT_JOB, build_worker_settings
+from pairly_worker.main import (
+    APPROVAL_SLA_JOB,
+    NIGHTLY_AUDIT_JOB,
+    WORKFLOW_RESUME_JOB,
+    build_worker_settings,
+)
 
 DB = "postgresql://pairly_app:pw@db:5432/pairly"
 REDIS = "redis://:secret-pass@valkey:6379/0"
@@ -49,8 +54,12 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.redis_settings.password == "secret-pass"  # noqa: S105 (test value)
     assert settings.timezone is UTC
     assert settings.health_check_interval == 30
-    (cron_job,) = settings.cron_jobs
+    jobs = {job.name: job for job in settings.cron_jobs}
+    assert set(jobs) == {NIGHTLY_AUDIT_JOB, APPROVAL_SLA_JOB, WORKFLOW_RESUME_JOB}
+    cron_job = jobs[NIGHTLY_AUDIT_JOB]
     assert isinstance(cron_job, CronJob)
+    assert jobs[APPROVAL_SLA_JOB].minute == set(range(0, 60, 5))
+    assert jobs[APPROVAL_SLA_JOB].unique
     assert (cron_job.name, cron_job.hour, cron_job.minute, cron_job.unique) == (
         NIGHTLY_AUDIT_JOB,
         3,

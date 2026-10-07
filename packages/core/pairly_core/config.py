@@ -85,6 +85,9 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    # Signed approval links (email, Slack): lifetime in seconds. Short on purpose.
+    approval_link_ttl_seconds: int = Field(default=1800, ge=60, le=86400)
+
     @field_validator("auth_algorithms", "cors_origins", mode="before")
     @classmethod
     def _csv_list(cls, value: Any) -> Any:

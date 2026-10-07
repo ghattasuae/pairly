@@ -26,13 +26,20 @@ from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from pairly_core.db import check_app_role, create_sessionmaker
+from pairly_core.plugins import discover_plugins
+from pairly_core.rbac import build_registry
+from pairly_core.workflow.checkpoint import TenantCheckpointer
+from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_worker.config import WorkerConfig, load_worker_config
 from pairly_worker.jobs import verify_audit_chains
 from pairly_worker.logs import configure_logging
+from pairly_worker.workflow_jobs import escalate_overdue_approvals, resume_decided_runs
 
 log = structlog.get_logger("pairly_worker")
 
 NIGHTLY_AUDIT_JOB = "nightly_audit_verify"
+APPROVAL_SLA_JOB = "approval_sla_escalation"
+WORKFLOW_RESUME_JOB = "workflow_resume_reconcile"
 
 
 def _dumps(value: Any) -> bytes:
@@ -58,7 +65,23 @@ async def startup(ctx: dict[str, Any]) -> None:
         await engine.dispose()
         raise
     ctx["engine"] = engine
-    ctx["sessionmaker"] = create_sessionmaker(engine)
+    sessionmaker = create_sessionmaker(engine)
+    ctx["sessionmaker"] = sessionmaker
+    plugins = list(discover_plugins().values())
+    registry = build_registry(plugins)
+    runtime = WorkflowRuntime.from_plugins(
+        plugins,
+        sessionmaker=sessionmaker,
+        checkpointer=TenantCheckpointer(config.database_url.get_secret_value()),
+        registry=registry,
+    )
+    try:
+        await runtime.check()
+    except Exception:
+        await engine.dispose()
+        raise
+    ctx["registry"] = registry
+    ctx["runtime"] = runtime
     log.info("worker_startup", env=config.env.value)
 
 
@@ -83,7 +106,22 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 run_at_startup=False,
                 unique=True,
                 timeout=3600,
-            )
+            ),
+            cron(
+                escalate_overdue_approvals,
+                name=APPROVAL_SLA_JOB,
+                minute=set(range(0, 60, 5)),
+                run_at_startup=False,
+                unique=True,
+                timeout=240,
+            ),
+            cron(
+                resume_decided_runs,
+                name=WORKFLOW_RESUME_JOB,
+                run_at_startup=True,
+                unique=True,
+                timeout=600,
+            ),
         ],
         "on_startup": startup,
         "on_shutdown": shutdown,

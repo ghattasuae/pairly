@@ -32,6 +32,16 @@ _CSP_DOCS = (
     "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 )
 _DOCS_PATHS = frozenset({"/docs", "/docs/oauth2-redirect"})
+# Paths that carry a secret token; the token segment is never logged.
+_TOKEN_PATH_PREFIXES = ("/v1/approval-links/",)
+
+
+def loggable_path(path: str) -> str:
+    """``path`` with secret token segments replaced by ``[redacted]``."""
+    for prefix in _TOKEN_PATH_PREFIXES:
+        if path.startswith(prefix) and len(path) > len(prefix):
+            return prefix + "[redacted]"
+    return path
 
 
 class EdgeMiddleware:
@@ -87,7 +97,7 @@ class EdgeMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception:
-            log.exception("unhandled_error", method=scope.get("method"), path=path)
+            log.exception("unhandled_error", method=scope.get("method"), path=loggable_path(path))
             if "status" in status_holder:
                 raise
             body = json.dumps(
@@ -113,7 +123,7 @@ class EdgeMiddleware:
         actor = state.get("actor")
         fields: dict[str, Any] = {
             "method": scope.get("method"),
-            "path": scope.get("path"),
+            "path": loggable_path(str(scope.get("path", ""))),
             "status": status,
             "duration_ms": round((time.perf_counter() - started) * 1000, 2),
         }
