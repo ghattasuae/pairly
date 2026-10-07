@@ -229,4 +229,5 @@ def test_migrations_are_their_own_branch() -> None:
     assert first.branch_labels == {"expense"}
     assert first.down_revision is None
     assert first.dependencies == "0015"
-    assert script.get_revisions("expense@head")[0].revision == "expense_0002"
+    newest = sorted(p.stem for p in plugin.migrations_dir.glob("expense_*.py"))[-1]
+    assert newest.startswith(script.get_revisions("expense@head")[0].revision)

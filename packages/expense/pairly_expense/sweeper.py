@@ -33,16 +33,17 @@ from sqlalchemy import select, text
 
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import set_tenant
-from pairly_core.errors import PairlyError
-from pairly_core.identity import load_actor
 from pairly_core.jobs.registry import JobContext
-from pairly_core.models import User
-from pairly_core.rbac import Actor
 from pairly_core.workflow.models import RunStatus, WorkflowRun
 from pairly_expense.graph import GRAPH
 from pairly_expense.models import ExpenseNote, NoteStatus
-from pairly_expense.notes import ENTITY_TYPE, WORKFLOW, add_reasons, locked_note
-from pairly_expense.permissions import NOTE_SUBMIT
+from pairly_expense.notes import (
+    ENTITY_TYPE,
+    WORKFLOW,
+    add_reasons,
+    locked_note,
+    submitter_actor,
+)
 
 log = structlog.get_logger("pairly_expense.sweeper")
 
@@ -87,25 +88,6 @@ async def _needs_review(
     return True
 
 
-async def _submitter(ctx: JobContext, org_id: uuid.UUID, user_id: uuid.UUID) -> Actor | None:
-    """The submitter as an actor, if they are still a member who may submit."""
-    session = ctx.sessionmaker()
-    set_tenant(session, org_id, None)
-    async with session, session.begin():
-        subject = await session.scalar(select(User.auth_subject).where(User.id == user_id))
-    if subject is None:
-        return None
-    session = ctx.sessionmaker()
-    async with session:
-        try:
-            actor = await load_actor(session, ctx.registry, subject=subject, org_id=org_id)
-        except PairlyError:
-            return None
-        finally:
-            await session.rollback()
-    return actor if actor.has(NOTE_SUBMIT) else None
-
-
 async def _restart(ctx: JobContext, org_id: uuid.UUID, note: ExpenseNote) -> str | None:
     """Count the attempt, then start the run once more. Returns ``None`` when the run
     started, ``""`` when the note no longer needs it, else why it could not."""
@@ -127,7 +109,7 @@ async def _restart(ctx: JobContext, org_id: uuid.UUID, note: ExpenseNote) -> str
             workflow=WORKFLOW,
             payload={"attempt": row.start_attempts},
         )
-    actor = await _submitter(ctx, org_id, note.submitted_by)
+    actor = await submitter_actor(ctx.sessionmaker, ctx.registry, org_id, note.submitted_by)
     if actor is None:
         return "run_not_started:submitter_cannot_submit"
     try:

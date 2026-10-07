@@ -20,9 +20,11 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Final
 
 from sqlalchemy import and_, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.db import set_tenant
 from pairly_core.decisions.models import DecisionKind, DecisionRecord
+from pairly_core.errors import PairlyError
 from pairly_core.extraction.engine import (
     ExtractionResult,
     ExtractionStatus,
@@ -32,7 +34,11 @@ from pairly_core.extraction.engine import (
 from pairly_core.extraction.schema import compile_schema
 from pairly_core.extraction.service import StoredExtraction
 from pairly_core.extraction.types import FieldFlag, SourceSpan
+from pairly_core.identity import load_actor
+from pairly_core.models import User
+from pairly_core.rbac import Actor, RoleRegistry
 from pairly_expense.models import ExpenseNote
+from pairly_expense.permissions import NOTE_SUBMIT
 from pairly_expense.schema import ExpenseReceipt
 
 WORKFLOW: Final = "expense"
@@ -88,6 +94,51 @@ async def refresh_decision_ids(session: AsyncSession, note: ExpenseNote) -> None
         .order_by(DecisionRecord.decided_at, DecisionRecord.id)
     )
     note.decision_ids = list(rows)
+
+
+async def submitter_actor(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    registry: RoleRegistry,
+    org_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> Actor | None:
+    """The submitter as an actor, if they are still a member who may submit."""
+    session = sessionmaker()
+    set_tenant(session, org_id, None)
+    async with session, session.begin():
+        subject = await session.scalar(select(User.auth_subject).where(User.id == user_id))
+    if subject is None:
+        return None
+    session = sessionmaker()
+    async with session:
+        try:
+            actor = await load_actor(session, registry, subject=subject, org_id=org_id)
+        except PairlyError:
+            return None
+        finally:
+            await session.rollback()
+    return actor if actor.has(NOTE_SUBMIT) else None
+
+
+def reset_for_new_run(note: ExpenseNote) -> None:
+    """Clear what the previous run produced, so a fresh run starts from the receipt."""
+    note.run_id = None
+    note.approval_id = None
+    note.extraction_id = None
+    note.rules_evaluation_id = None
+    note.risk_assessment_id = None
+    note.merchant = None
+    note.expense_date = None
+    note.amount = None
+    note.currency = None
+    note.amount_aed = None
+    note.category = None
+    note.review_reasons = []
+    note.guardrail_report = None
+    note.sanitized_sha256 = None
+    note.removed_spans = []
+    note.failure_reason = None
+    note.decided_at = None
 
 
 # ------------------------------------------------------------------ receipt values

@@ -632,6 +632,47 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/expense/notes/{note_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Note
+         * @description Close a note that needs review, with a written reason. Nothing is reimbursed.
+         */
+        post: operations["close_note_v1_expense_notes__note_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/expense/notes/{note_id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restart Note
+         * @description Start a fresh run for a note that needs review, as its original submitter (only
+         *     while they may still submit). The new run ends at a person's decision as usual.
+         */
+        post: operations["restart_note_v1_expense_notes__note_id__restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/extractions/{extraction_id}": {
         parameters: {
             query?: never;
@@ -2522,6 +2563,11 @@ export type components = {
              */
             updated_at: string;
         };
+        /** ExpenseReviewIn */
+        ExpenseReviewIn: {
+            /** Reason */
+            reason: string;
+        };
         /** ExpenseRiskOut */
         ExpenseRiskOut: {
             /**
@@ -3003,7 +3049,7 @@ export type components = {
          * NoteStatus
          * @enum {string}
          */
-        NoteStatus: "processing" | "awaiting_approval" | "approved" | "rejected" | "changes_requested" | "failed" | "needs_review";
+        NoteStatus: "processing" | "awaiting_approval" | "approved" | "rejected" | "changes_requested" | "failed" | "needs_review" | "closed";
         /** NotificationOut */
         NotificationOut: {
             /** Body */
@@ -5033,6 +5079,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExpenseNoteDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_note_v1_expense_notes__note_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_note_v1_expense_notes__note_id__restart_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseNoteSummary"];
                 };
             };
             /** @description Validation Error */

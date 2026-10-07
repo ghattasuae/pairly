@@ -745,6 +745,144 @@ async def test_stuck_notes_are_restarted_once_then_sent_to_a_person(
     assert ids == []
 
 
+# ------------------------------------------------------------------ reviewer actions
+
+
+async def _review(
+    api: Api, world: World, name: str, note_id: str, action: str, **kw: Any
+) -> httpx.Response:
+    body = {"reason": kw.pop("reason", "Checked with the submitter")}
+    return await api.client.post(
+        f"/v1/expense/notes/{note_id}/{action}",
+        json=body,
+        headers=api.headers(world, name, **kw),
+    )
+
+
+async def _set_needs_review(owner: AsyncEngine, world: World, note_id: str) -> None:
+    await owner_rows(
+        owner,
+        world.org_id,
+        "UPDATE expense_notes SET status = 'needs_review', failure_reason = 'run_stalled' "
+        "WHERE id = :id",
+        {"id": uuid.UUID(note_id)},
+    )
+
+
+async def test_reviewer_closes_a_note_that_needs_review(
+    api: Api, world: World, owner_engine: AsyncEngine
+) -> None:
+    note = await submitted(api, world, "submitter", CLEAN)
+    # Not waiting for review: refused.
+    assert (await _review(api, world, "approver", note["id"], "close")).status_code == 409
+    await _set_needs_review(owner_engine, world, note["id"])
+    head_rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT d.id FROM decision_records d WHERE d.entity_type = 'expense_note' "
+        "AND d.entity_id = :e AND NOT EXISTS (SELECT 1 FROM decision_records l "
+        "WHERE l.supersedes = d.id) ORDER BY d.created_at DESC, d.id DESC LIMIT 1",
+        {"e": note["id"]},
+    )
+    (head,) = head_rows
+
+    # Who may not: the submitter (no approve permission), a reviewer without a second
+    # factor, and a blank reason.
+    assert (await _review(api, world, "submitter", note["id"], "close")).status_code == 403
+    no_otp = await _review(api, world, "approver", note["id"], "close", otp=False)
+    assert no_otp.status_code == 403
+    assert no_otp.json()["code"] == "second_factor_required"
+    blank = await _review(api, world, "approver", note["id"], "close", reason="   ")
+    assert blank.status_code == 400
+
+    closed = await _review(api, world, "approver", note["id"], "close")
+    assert closed.status_code == 200, closed.text
+    assert (closed.json()["status"], closed.json()["reimbursable"]) == ("closed", False)
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT kind, final_action, actor_id, supersedes FROM decision_records "
+        "WHERE entity_type = 'expense_note' AND entity_id = :e AND final_action = 'closed'",
+        {"e": note["id"]},
+    )
+    (record,) = rows
+    assert (record.kind, record.actor_id, record.supersedes) == (
+        "final_action",
+        str(world.id("approver")),
+        head.id,
+    )
+    assert "expense.note.closed" in await audit_actions(owner_engine, world.org_id)
+    # Closed is final: a second close is refused.
+    assert (await _review(api, world, "approver", note["id"], "close")).status_code == 409
+
+
+async def test_reviewer_restarts_a_note_as_its_submitter(
+    api: Api, world: World, owner_engine: AsyncEngine
+) -> None:
+    done = await submitted(api, world, "submitter", CLEAN)
+    document_id = done["document"]["id"]
+    stuck = str(await _stuck_note(owner_engine, world, document_id, attempts=1))
+    await _set_needs_review(owner_engine, world, stuck)
+
+    restarted = await _review(api, world, "approver", stuck, "restart")
+    assert restarted.status_code == 202, restarted.text
+    assert restarted.json()["status"] == "processing"
+    fresh = await api.note(world, "approver", stuck)
+    # The fresh run ran as the submitter and ends at a person's decision again.
+    assert fresh["status"] == "awaiting_approval"
+    assert fresh["run_id"] is not None
+    assert fresh["failure_reason"] is None
+    assert fresh["approval"]["status"] == "pending"
+    runs = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT started_by_id FROM workflow_runs WHERE id = :r",
+        {"r": uuid.UUID(fresh["run_id"])},
+    )
+    assert runs[0].started_by_id == str(world.id("submitter"))
+    kinds = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT final_action FROM decision_records WHERE id = ANY(:ids)",
+        {"ids": fresh["decision_ids"]},
+    )
+    assert "restarted" in {r.final_action for r in kinds}
+    assert "expense.note.restarted" in await audit_actions(owner_engine, world.org_id)
+    # Only from needs_review.
+    assert (await _review(api, world, "approver", stuck, "restart")).status_code == 409
+
+
+async def test_reviewers_cannot_act_on_their_own_note_or_for_a_lost_submitter(
+    api: Api, world: World, owner_engine: AsyncEngine
+) -> None:
+    own = await submitted(api, world, "submitter_approver", CLEAN)
+    await _set_needs_review(owner_engine, world, own["id"])
+    for action in ("close", "restart"):
+        refused = await _review(api, world, "submitter_approver", own["id"], action)
+        assert refused.status_code == 403, refused.text
+    # Another reviewer may.
+    assert (await _review(api, world, "approver", own["id"], "close")).status_code == 200
+
+    # A note whose submitter may no longer submit cannot be restarted.
+    lost = uuid.uuid4()
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "INSERT INTO expense_notes (id, org_id, submitted_by, status, document_id, "
+        "failure_reason) VALUES (:id, :o, :u, 'needs_review', :d, 'run_not_started')",
+        {
+            "id": lost,
+            "o": world.org_id,
+            "u": world.id("outsider"),
+            "d": uuid.UUID(own["document"]["id"]),
+        },
+    )
+    gone = await _review(api, world, "approver", str(lost), "restart")
+    assert gone.status_code == 409
+    still = await api.note(world, "approver", str(lost))
+    assert still["status"] == "needs_review"
+
+
 # ------------------------------------------------------------------ 5. the seed command
 
 

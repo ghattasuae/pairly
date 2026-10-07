@@ -16,6 +16,12 @@
   risk assessment, the approval and the decision record ids. Someone else's note is a
   404 for a person who may only see their own. Guardrail evidence text and risk signals
   are for reviewers.
+* ``POST /v1/expense/notes/{id}/close`` and ``/restart``: reviewer actions on a note in
+  ``needs_review`` (``pairly_expense.sweeper``), each with a written reason. They need
+  ``expense.note.approve`` (so a second factor), never on your own note, and write a
+  decision record (a person's action, superseding the note's newest record) plus an
+  audit event. Close ends the note; restart starts a fresh run as the original
+  submitter, only while they may still submit (409 otherwise). Any other status is 409.
 
 Every write is audited in the request's transaction (``expense.note.submitted``).
 Response models are named ``Expense...``: OpenAPI schema names are global, and a
@@ -27,7 +33,7 @@ from __future__ import annotations
 import re
 import tempfile
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Final
@@ -35,7 +41,7 @@ from typing import Annotated, Any, Final
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from pairly_api.idempotency import idempotent
@@ -50,9 +56,11 @@ from pairly_api.uploads import (
     rejected_response,
 )
 from pairly_core.approvals.models import Approval, ApprovalDecision, ApprovalStep
-from pairly_core.audit import audit_actor_action
+from pairly_core.audit import ActorType, audit_actor_action
+from pairly_core.decisions.models import DecisionKind
+from pairly_core.decisions.service import DecisionDraft, chain_head, record_decision
 from pairly_core.documents.permissions import authorize_document
-from pairly_core.errors import BadRequestError, ForbiddenError, NotFoundError
+from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from pairly_core.extraction.service import load_extraction
 from pairly_core.guardrails.report import GuardrailReport
 from pairly_core.identity import Context, CurrentActor, OrgSession
@@ -65,14 +73,20 @@ from pairly_core.ingestion.service import (
     record_rejection,
 )
 from pairly_core.policy.service import results_for_evaluation
-from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_core.rbac import Actor, ActorKind, Denial, PermissionDeniedError, authorize
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.workflow.models import WorkflowRun
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_expense.graph import GRAPH
 from pairly_expense.models import MAX_NOTE, ExpenseNote, NoteStatus
-from pairly_expense.notes import ENTITY_TYPE, WORKFLOW
-from pairly_expense.permissions import NOTE_READ, NOTE_SUBMIT, SEE_ALL
+from pairly_expense.notes import (
+    ENTITY_TYPE,
+    WORKFLOW,
+    refresh_decision_ids,
+    reset_for_new_run,
+    submitter_actor,
+)
+from pairly_expense.permissions import NOTE_APPROVE, NOTE_READ, NOTE_SUBMIT, SEE_ALL
 
 log = structlog.get_logger("pairly_expense.api")
 
@@ -640,3 +654,153 @@ async def get_note(
         approval=await _approval(session, note),
         decision_ids=list(note.decision_ids),
     )
+
+
+# ------------------------------------------------------------------ reviewer actions
+
+CLOSED: Final = "expense.note.closed"
+RESTARTED: Final = "expense.note.restarted"
+
+
+class ExpenseReviewIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: Annotated[str, Field(min_length=1, max_length=2000)]
+
+
+async def _review_target(session: OrgSession, actor: Actor, note_id: uuid.UUID) -> ExpenseNote:
+    """The note a reviewer acts on: approve permission (second factor), not their own,
+    and waiting for review. Locked until the request commits."""
+    authorize(actor, NOTE_APPROVE)
+    note = await session.scalar(
+        select(ExpenseNote).where(ExpenseNote.id == note_id).with_for_update()
+    )
+    if note is None:
+        raise NotFoundError("expense note not found")
+    if note.submitted_by == actor.id:
+        raise PermissionDeniedError(
+            "you cannot act on your own expense note",
+            denial=Denial(actor=actor, permission=NOTE_APPROVE, reason="segregation_of_duties"),
+        )
+    if note.status != NoteStatus.NEEDS_REVIEW.value:
+        raise ConflictError("only a note that needs review can be closed or restarted")
+    return note
+
+
+async def _record_review(
+    session: OrgSession,
+    actor: Actor,
+    note: ExpenseNote,
+    *,
+    action: str,
+    audit_action: str,
+    reason: str,
+    previous_reason: str | None,
+) -> None:
+    """A decision record (a person's action, superseding the note's newest record) and
+    an audit event, in the request's transaction."""
+    head = await chain_head(session, ENTITY_TYPE, str(note.id))
+    stored = await record_decision(
+        session,
+        DecisionDraft(
+            kind=DecisionKind.FINAL_ACTION,
+            workflow=WORKFLOW,
+            entity_type=ENTITY_TYPE,
+            entity_id=str(note.id),
+            actor_type=ActorType.USER,
+            actor_id=str(actor.id),
+            inputs={
+                "note_id": str(note.id),
+                "previous_status": NoteStatus.NEEDS_REVIEW.value,
+                "previous_reason": previous_reason,
+            },
+            output={"action": action, "status": note.status},
+            final_action=action,
+            reason=reason,
+            supersedes=head,
+        ),
+    )
+    await audit_actor_action(
+        session,
+        actor,
+        audit_action,
+        entity_type=ENTITY_TYPE,
+        entity_id=note.id,
+        workflow=WORKFLOW,
+        payload={"decision_id": stored.id, "previous_reason": previous_reason},
+    )
+    await refresh_decision_ids(session, note)
+
+
+def _reason(body: ExpenseReviewIn) -> str:
+    text = _CONTROL_RE.sub("", body.reason).strip()
+    if not text:
+        raise BadRequestError("a reason is required")
+    return text
+
+
+@router.post("/{note_id}/close", response_model=ExpenseNoteSummary)
+async def close_note(
+    note_id: uuid.UUID, body: ExpenseReviewIn, actor: CurrentActor, session: OrgSession
+) -> ExpenseNoteSummary:
+    """Close a note that needs review, with a written reason. Nothing is reimbursed."""
+    reason = _reason(body)
+    note = await _review_target(session, actor, note_id)
+    previous = note.failure_reason
+    note.status = NoteStatus.CLOSED.value
+    note.decided_at = note.updated_at = datetime.now(UTC)
+    await session.flush()
+    await _record_review(
+        session,
+        actor,
+        note,
+        action="closed",
+        audit_action=CLOSED,
+        reason=reason,
+        previous_reason=previous,
+    )
+    await session.flush()
+    await session.refresh(note)
+    return ExpenseNoteSummary.of(note)
+
+
+@router.post("/{note_id}/restart", status_code=202, response_model=ExpenseNoteSummary)
+async def restart_note(
+    note_id: uuid.UUID,
+    body: ExpenseReviewIn,
+    actor: CurrentActor,
+    session: OrgSession,
+    ctx: Context,
+    runtime: Runtime,
+    background: BackgroundTasks,
+) -> Any:
+    """Start a fresh run for a note that needs review, as its original submitter (only
+    while they may still submit). The new run ends at a person's decision as usual."""
+    reason = _reason(body)
+    note = await _review_target(session, actor, note_id)
+    submitter = await submitter_actor(
+        runtime.sessionmaker, ctx.registry, actor.org_id, note.submitted_by
+    )
+    if submitter is None:
+        raise ConflictError("the submitter can no longer submit expense notes")
+    previous = note.failure_reason
+    reset_for_new_run(note)
+    note.status = NoteStatus.PROCESSING.value
+    note.updated_at = datetime.now(UTC)
+    await session.flush()
+    await _record_review(
+        session,
+        actor,
+        note,
+        action="restarted",
+        audit_action=RESTARTED,
+        reason=reason,
+        previous_reason=previous,
+    )
+    await session.flush()
+    await session.refresh(note)
+    body_out = ExpenseNoteSummary.of(note)
+    # The run must see the reset note: commit before it starts (after the response).
+    await session.commit()
+    background.add_task(_start, runtime, submitter, note.id, note.document_id)
+    return JSONResponse(body_out.model_dump(mode="json"), status_code=202)

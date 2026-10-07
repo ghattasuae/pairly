@@ -12,6 +12,8 @@ Status (``NoteStatus``)::
     awaiting_approval --> approved | rejected | changes_requested
     any --(the run could not continue)--> failed
     processing --(stuck: no run, or the run failed or stalled)--> needs_review
+    needs_review --(a reviewer closes it)--> closed
+    needs_review --(a reviewer restarts it: a fresh run)--> processing
 
 ``approved`` is set only by the ``mark_reimbursable`` final action, which the executor
 runs after re-checking the approval. Nothing here moves money: ``reimbursable`` is a
@@ -60,10 +62,18 @@ class NoteStatus(StrEnum):
     FAILED = "failed"
     # The run never got the note to a person's decision (see pairly_expense.sweeper).
     NEEDS_REVIEW = "needs_review"
+    # A reviewer closed a note that needed review, with a written reason.
+    CLOSED = "closed"
 
 
 FINAL_STATUSES = frozenset(
-    {NoteStatus.APPROVED, NoteStatus.REJECTED, NoteStatus.CHANGES_REQUESTED, NoteStatus.FAILED}
+    {
+        NoteStatus.APPROVED,
+        NoteStatus.REJECTED,
+        NoteStatus.CHANGES_REQUESTED,
+        NoteStatus.FAILED,
+        NoteStatus.CLOSED,
+    }
 )
 
 

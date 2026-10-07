@@ -3061,6 +3061,22 @@
         "title": "ExpenseNoteSummary",
         "type": "object"
       },
+      "ExpenseReviewIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ExpenseReviewIn",
+        "type": "object"
+      },
       "ExpenseRiskOut": {
         "properties": {
           "id": {
@@ -4430,7 +4446,8 @@
           "rejected",
           "changes_requested",
           "failed",
-          "needs_review"
+          "needs_review",
+          "closed"
         ],
         "title": "NoteStatus",
         "type": "string"
@@ -8832,6 +8849,114 @@
           }
         },
         "summary": "Get Note",
+        "tags": [
+          "expense"
+        ]
+      }
+    },
+    "/v1/expense/notes/{note_id}/close": {
+      "post": {
+        "description": "Close a note that needs review, with a written reason. Nothing is reimbursed.",
+        "operationId": "close_note_v1_expense_notes__note_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseNoteSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close Note",
+        "tags": [
+          "expense"
+        ]
+      }
+    },
+    "/v1/expense/notes/{note_id}/restart": {
+      "post": {
+        "description": "Start a fresh run for a note that needs review, as its original submitter (only\nwhile they may still submit). The new run ends at a person's decision as usual.",
+        "operationId": "restart_note_v1_expense_notes__note_id__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseNoteSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart Note",
         "tags": [
           "expense"
         ]
