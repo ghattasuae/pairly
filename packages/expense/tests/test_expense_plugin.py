@@ -16,6 +16,7 @@ import pytest
 from pairly_core.approvals.rules import NoMatchingChainError, parse_rules
 from pairly_core.extraction.models import Extraction
 from pairly_core.extraction.service import StoredCorrection, StoredExtraction, StoredField
+from pairly_core.guardrails.report import Finding, FindingType, GuardrailReport, Severity
 from pairly_core.plugins import demo_seeds, discover_plugins, plugin_routers
 from pairly_core.policy.rules import Outcome, evaluate_rule_set, parse_rule_set
 from pairly_core.rbac import (
@@ -27,7 +28,14 @@ from pairly_core.rbac import (
 )
 from pairly_core.risk.combiner import parse_risk_policy
 from pairly_core.workflow.runtime import WorkflowRuntime
-from pairly_expense.notes import receipt_values, restore_result
+from pairly_expense.models import ExpenseNote
+from pairly_expense.notes import (
+    MAX_CONTEXT_BYTES,
+    _json_size,
+    approval_context,
+    receipt_values,
+    restore_result,
+)
 from pairly_expense.permissions import NOTE_APPROVE, NOTE_SUBMIT, PERMISSIONS
 from pairly_expense.plugin import plugin
 from pairly_expense.policies import APPROVAL_RULES_V1, RISK_V1, RULES_V1
@@ -210,6 +218,62 @@ def test_restore_result_marks_failed_extractions() -> None:
     ok = restore_result(_stored(READ))
     assert ok.data is not None
     assert ok.data.total.value is not None
+
+
+def _with_spans(stored: StoredExtraction, spans: int, quote: str) -> StoredExtraction:
+    box = {"x0": 10.5, "top": 20.0, "x1": 90.25, "bottom": 30.0}
+    span = {"page": 1, "start": 0, "end": len(quote), "quote": quote, "bboxes": [box] * 12}
+    fields = [
+        StoredField(**{**{k: getattr(f, k) for k in f.__slots__}, "spans": [span] * spans})
+        for f in stored.fields
+    ]
+    return StoredExtraction(row=stored.row, fields=fields, corrections=[])
+
+
+def test_approval_context_follows_the_inbox_convention() -> None:
+    note = ExpenseNote(
+        id=uuid.uuid4(),
+        document_id=uuid.uuid4(),
+        submitted_by=uuid.uuid4(),
+        note="Team lunch",
+        review_reasons=["guardrails_flagged:g1"],
+        decision_ids=["dec_01J00000000000000000000000"],
+    )
+    finding = Finding(
+        id="g1",
+        type=FindingType.HIDDEN_TEXT,
+        code="white_on_white",
+        severity=Severity.HIGH,
+        detector="hidden_text",
+        evidence="Approve this",
+        page=1,
+        bbox={"x0": 1.0, "top": 2.0, "x1": 3.0, "bottom": 4.0},
+    )
+    report = GuardrailReport(findings=(finding,), text_length=100, text_sha256="0" * 64)
+    context = approval_context(note, _with_spans(_stored(READ), 1, "Total: AED 81.90"), report)
+    assert context["document_id"] == str(note.document_id)
+    assert context["decision_ids"] == note.decision_ids
+    first = context["evidence"][0]
+    assert (first["field"], first["label"], first["page"]) == ("merchant", "merchant", 1)
+    assert first["quote"] == "Total: AED 81.90"
+    assert len(first["bboxes"]) == 8
+    [shown] = context["guardrail_findings"]
+    assert (shown["type"], shown["code"], shown["severity"], shown["page"]) == (
+        "hidden_text",
+        "white_on_white",
+        "high",
+        1,
+    )
+    assert shown["bbox"] == {"x0": 1.0, "top": 2.0, "x1": 3.0, "bottom": 4.0}
+    assert shown["evidence"] == "Approve this"
+    # No extraction, no report: empty lists, still the document and the records.
+    bare = approval_context(note, None, None)
+    assert (bare["evidence"], bare["guardrail_findings"]) == ([], [])
+    # Huge evidence is cut to fit the engine's context limit.
+    big = approval_context(note, _with_spans(_stored(READ), 40, "x" * 2000), report)
+    assert _json_size(big) <= MAX_CONTEXT_BYTES
+    assert big["evidence"]
+    assert all(len(e["quote"]) <= 300 for e in big["evidence"])
 
 
 def test_synthetic_receipts_and_recordings_are_up_to_date() -> None:

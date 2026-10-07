@@ -196,7 +196,8 @@
   "Workflows": {
     "all": "All workflows",
     "hire": "Hire",
-    "pay": "Pay"
+    "pay": "Pay",
+    "expense": "Expenses"
   },
   "Invite": {
     "title": "Join {org}",

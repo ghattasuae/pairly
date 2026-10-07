@@ -177,6 +177,12 @@ def test_payload_hash_is_canonical() -> None:
             canonical_payload(bad)  # type: ignore[arg-type]
     with pytest.raises(InvalidPayloadError):
         canonical_payload({"big": "x" * 40000})
+    # A context may hold finite floats (evidence boxes), never NaN or infinity.
+    shown, _ = canonical_payload({"bbox": {"x0": 1.5, "top": 2.25}}, allow_floats=True)
+    assert shown == {"bbox": {"x0": 1.5, "top": 2.25}}
+    for bad_float in (float("nan"), float("inf")):
+        with pytest.raises(InvalidPayloadError):
+            canonical_payload({"x": [bad_float]}, allow_floats=True)
     deep: dict[str, Any] = {}
     node = deep
     for _ in range(20):

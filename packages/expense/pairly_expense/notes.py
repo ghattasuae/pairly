@@ -5,6 +5,7 @@
 * ``locked_note`` / ``add_reasons`` / ``refresh_decision_ids``: small row operations.
 * ``ReceiptValues`` / ``receipt_values``: what was read from the receipt, keeping only
   values a check may rely on (evidenced and confident, or corrected by a person).
+* ``approval_context``: the approval's context in the inbox convention.
 * ``restore_result``: an ``ExtractionResult`` rebuilt from the stored extraction, so the
   risk step reads exactly what the extraction step stored (graph state only carries
   ids, never Python objects).
@@ -13,6 +14,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -34,6 +36,7 @@ from pairly_core.extraction.engine import (
 from pairly_core.extraction.schema import compile_schema
 from pairly_core.extraction.service import StoredExtraction
 from pairly_core.extraction.types import FieldFlag, SourceSpan
+from pairly_core.guardrails.report import GuardrailReport
 from pairly_core.identity import load_actor
 from pairly_core.models import User
 from pairly_core.rbac import Actor, RoleRegistry
@@ -94,6 +97,74 @@ async def refresh_decision_ids(session: AsyncSession, note: ExpenseNote) -> None
         .order_by(DecisionRecord.decided_at, DecisionRecord.id)
     )
     note.decision_ids = list(rows)
+
+
+MAX_CONTEXT_EVIDENCE: Final = 40
+MAX_CONTEXT_FINDINGS: Final = 40
+MAX_CONTEXT_QUOTE: Final = 300
+MAX_CONTEXT_BOXES: Final = 8
+# The engine refuses an approval context over 32 KiB; keep well under it.
+MAX_CONTEXT_BYTES: Final = 28 * 1024
+
+
+def approval_context(
+    note: ExpenseNote,
+    stored: StoredExtraction | None,
+    report: GuardrailReport | None,
+) -> dict[str, Any]:
+    """The approval's ``context``, in the inbox convention (apps/web/README.md).
+
+    ``document_id`` (the receipt), ``evidence[]`` (one item per located span of each
+    extracted field: ``field``, ``label``, ``quote``, ``page``, ``bboxes``),
+    ``guardrail_findings[]`` (``id``, ``type``, ``code``, ``severity``, ``page``,
+    ``bbox``, ``evidence``, ``location``) and ``decision_ids[]``, plus the note's own
+    keys. Built from stored rows only, bounded in size: quotes and excerpts are cut, and
+    when it is still too large the last evidence items, then findings, are left out (the
+    full lists stay on the note and its extraction).
+    """
+    evidence: list[dict[str, Any]] = []
+    for item in stored.fields if stored is not None else ():
+        for span in item.spans:
+            if len(evidence) >= MAX_CONTEXT_EVIDENCE:
+                break
+            evidence.append(
+                {
+                    "field": item.path,
+                    "label": item.path,
+                    "quote": str(span.get("quote") or "")[:MAX_CONTEXT_QUOTE],
+                    "page": span.get("page"),
+                    "bboxes": list(span.get("bboxes") or [])[:MAX_CONTEXT_BOXES],
+                }
+            )
+    findings = [
+        {
+            "id": f.id,
+            "type": f.type.value,
+            "code": f.code,
+            "severity": f.severity.value,
+            "page": f.page,
+            "bbox": f.bbox.model_dump(mode="json") if f.bbox is not None else None,
+            "evidence": f.evidence[:MAX_CONTEXT_QUOTE],
+            "location": f.location,
+        }
+        for f in (report.findings if report is not None else ())[:MAX_CONTEXT_FINDINGS]
+    ]
+    context: dict[str, Any] = {
+        "document_id": str(note.document_id),
+        "evidence": evidence,
+        "guardrail_findings": findings,
+        "decision_ids": list(note.decision_ids),
+        "review_reasons": list(note.review_reasons),
+        "note": note.note,
+        "submitted_by": str(note.submitted_by),
+    }
+    while _json_size(context) > MAX_CONTEXT_BYTES and (evidence or findings):
+        (evidence or findings).pop()
+    return context
+
+
+def _json_size(value: Any) -> int:
+    return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
 
 async def submitter_actor(

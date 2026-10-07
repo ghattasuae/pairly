@@ -33,6 +33,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
 import uuid
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -160,7 +161,7 @@ class InvalidPayloadError(BadRequestError):
 # ------------------------------------------------------------------ payloads
 
 
-def _check_json(value: object, depth: int = 0) -> None:
+def _check_json(value: object, depth: int = 0, *, allow_floats: bool = False) -> None:
     if depth > 16:
         raise InvalidPayloadError("payload nested too deep")
     if value is None or isinstance(value, bool | int | str):
@@ -168,28 +169,35 @@ def _check_json(value: object, depth: int = 0) -> None:
             raise InvalidPayloadError("payload strings cannot contain NUL")
         return
     if isinstance(value, float):
+        if allow_floats and math.isfinite(value):
+            return
         raise InvalidPayloadError("payload floats are not allowed: use strings for amounts")
     if isinstance(value, list | tuple):
         for item in value:
-            _check_json(item, depth + 1)
+            _check_json(item, depth + 1, allow_floats=allow_floats)
         return
     if isinstance(value, Mapping):
         for key, item in value.items():
             if not isinstance(key, str):
                 raise InvalidPayloadError("payload keys must be strings")
-            _check_json(item, depth + 1)
+            _check_json(item, depth + 1, allow_floats=allow_floats)
         return
     raise InvalidPayloadError(f"unsupported payload type {type(value).__name__}")
 
 
-def canonical_payload(payload: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+def canonical_payload(
+    payload: Mapping[str, Any], *, allow_floats: bool = False
+) -> tuple[dict[str, Any], str]:
     """A JSON copy of ``payload`` and its SHA-256 over canonical JSON (sorted keys).
 
-    The executor recomputes this hash from the run state before any final action.
+    The executor recomputes this hash from the run state before any final action, so a
+    payload never holds floats (amounts are strings). An approval's ``context`` is shown,
+    never executed or hashed for execution: it may hold finite floats (page coordinates
+    of evidence boxes, ``allow_floats=True``).
     """
     if not isinstance(payload, Mapping):
         raise InvalidPayloadError("payload must be a JSON object")
-    _check_json(payload)
+    _check_json(payload, allow_floats=allow_floats)
     raw = json.dumps(
         payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
     ).encode("utf-8")
@@ -387,7 +395,7 @@ async def create_approval(
 
     approval_type = request.approval_type
     payload, digest = canonical_payload(request.payload)
-    context, _ = canonical_payload(request.context)
+    context, _ = canonical_payload(request.context, allow_floats=True)
     policy, rules = await rules_for(session, approval_type)
     chain = rules.select_chain(payload)
     now = await db_now(session)

@@ -199,6 +199,13 @@ class Api:
         assert response.status_code == 200, response.text
         return dict(response.json())
 
+    async def approval_context(self, world: World, name: str, approval_id: str) -> dict[str, Any]:
+        response = await self.client.get(
+            f"/v1/approvals/{approval_id}", headers=self.headers(world, name)
+        )
+        assert response.status_code == 200, response.text
+        return dict(response.json()["context"])
+
     async def decide(
         self,
         world: World,
@@ -346,6 +353,19 @@ async def test_clean_receipt_end_to_end(api: Api, world: World, owner_engine: As
     approval = note["approval"]
     assert (approval["status"], approval["chain"]) == ("pending", "under_500")
     assert [s["name"] for s in approval["steps"]] == ["approver"]
+    # The context carries what the inbox reads (apps/web/README.md): the receipt, the
+    # evidence of what was read, the guardrail findings and the decision records.
+    context = await api.approval_context(world, "approver", approval["id"])
+    assert context["document_id"] == note["document"]["id"]
+    quotes = {(e["field"], e["quote"]) for e in context["evidence"]}
+    assert ("total", "Total: AED 81.90") in quotes
+    total_evidence = next(e for e in context["evidence"] if e["field"] == "total")
+    assert total_evidence["page"] == 1
+    assert total_evidence["bboxes"]
+    assert set(total_evidence["bboxes"][0]) == {"x0", "top", "x1", "bottom"}
+    assert context["guardrail_findings"] == []
+    assert context["decision_ids"]
+    assert all(i.startswith("dec_") for i in context["decision_ids"])
 
     # The submitter cannot decide (no permission), the approver can, with a second factor.
     assert (await api.decide(world, "submitter", approval["id"])).status_code == 403
@@ -463,6 +483,18 @@ async def test_hidden_text_is_flagged_and_a_person_still_decides(
     assert "critical_signal:core.guardrail_findings" in note["risk"]["reasons"]
     assert any(r.startswith("guardrails_flagged:") for r in note["review_reasons"])
     assert note["approval"]["status"] == "pending"
+    # The approval context shows the reviewer the hidden line, where it is on the page.
+    context = await api.approval_context(world, "approver", note["approval"]["id"])
+    assert context["document_id"] == note["document"]["id"]
+    flagged = [f for f in context["guardrail_findings"] if f["type"] == "hidden_text"]
+    assert flagged
+    assert flagged[0]["evidence"] == HIDDEN_TEXT
+    assert flagged[0]["page"] == 1
+    assert flagged[0]["bbox"] is not None
+    assert {"id", "code", "severity"} <= set(flagged[0])
+    assert all(HIDDEN_TEXT not in e["quote"] for e in context["evidence"])
+    assert any(e["field"] == "total" for e in context["evidence"])
+    assert context["decision_ids"]
 
     # The hidden instruction never reached the model: the replayed calls' inputs.
     async with session_for(api, world.org_id) as s, s.begin():

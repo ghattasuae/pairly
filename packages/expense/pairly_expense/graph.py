@@ -85,6 +85,7 @@ from pairly_expense.notes import (
     ENTITY_TYPE,
     WORKFLOW,
     add_reasons,
+    approval_context,
     locked_note,
     receipt_values,
     refresh_decision_ids,
@@ -477,9 +478,11 @@ def _title(note: ExpenseNote) -> str:
 async def propose(state: NoteState, runtime: Ctx) -> Command[Any]:
     ctx = runtime.context
     note_id, document_id = _ids(state)
-    note, _ = await _report(ctx, note_id)
+    note, report = await _report(ctx, note_id)
     doc = await _document(ctx, document_id)
     payload = _payload(note, doc.sha256)
+    async with ctx.transaction() as session:
+        stored = await load_extraction(session, note.extraction_id) if note.extraction_id else None
     try:
         approval_id = await request_approval(
             ctx,
@@ -487,12 +490,7 @@ async def propose(state: NoteState, runtime: Ctx) -> Command[Any]:
             approval_type=APPROVAL_TYPE,
             title=_title(note),
             payload=payload,
-            context={
-                "review_reasons": list(note.review_reasons),
-                "note": note.note,
-                "submitted_by": str(note.submitted_by),
-                "decision_ids": list(note.decision_ids),
-            },
+            context=approval_context(note, stored, report),
             entity_type=ENTITY_TYPE,
             entity_id=str(note_id),
         )
