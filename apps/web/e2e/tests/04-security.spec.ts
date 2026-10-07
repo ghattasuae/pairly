@@ -3,13 +3,14 @@
 
 import { test, expect, request } from "@playwright/test";
 
+import { BASE_URL } from "../utils/origin";
 import { logCheck, logSecurity } from "../utils/report";
 
 function record(name: string, ok: boolean, detail?: string) {
   logCheck({ name, status: ok ? "pass" : "fail", detail });
 }
 
-const BASE = process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100";
+const BASE = BASE_URL;
 
 test.describe("Security smoke", () => {
   for (const url of [`${BASE}/api/auth/token`, `${BASE}/api/auth/organization/list`]) {

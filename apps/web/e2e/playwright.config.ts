@@ -3,6 +3,8 @@
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { BASE_URL } from "./utils/origin";
+
 // M0 audit suite for the Pairly web app. Runs against the already-running compose stack
 // (`PROFILES="web" make dev`), not a dev server Playwright manages itself: the flows here
 // depend on the API, Postgres and Mailpit containers too.
@@ -19,9 +21,9 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"], ["json", { outputFile: "./report.json" }]],
   use: {
-    // The compose web service. Override with PAIRLY_E2E_BASE_URL (that origin must be in
-    // PAIRLY_AUTH_TRUSTED_ORIGINS or be PAIRLY_PUBLIC_WEB_URL itself).
-    baseURL: process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100",
+    // The compose web service at http://localhost:<PAIRLY_WEB_PORT>, the magic-link host
+    // (see utils/origin.ts). Override with PAIRLY_E2E_BASE_URL.
+    baseURL: BASE_URL,
     headless: true,
     screenshot: "off",
     trace: "retain-on-failure",

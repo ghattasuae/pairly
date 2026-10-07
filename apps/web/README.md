@@ -154,18 +154,14 @@ copy checks (raw message keys, em dashes) and RTL checks across en/ar and light/
 runs against the compose stack, not a dev server, because the flows need the API,
 Postgres and Mailpit. It is not part of CI yet.
 
-1. Trust the address the browser will use. The suite opens `http://127.0.0.1:3100`, while
-   `BETTER_AUTH_URL` (from `PAIRLY_PUBLIC_WEB_URL`) is `http://localhost:3100`. Add the IP
-   origin to the repo-root `.env`:
-
-   ```bash
-   PAIRLY_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:3100
-   ```
-
-   Without it, sign-in requests from 127.0.0.1 fail the origin check (in development the
-   sign-in form says so; in production the message stays generic).
+1. The suite opens `http://localhost:3100` (`http://localhost:<PAIRLY_WEB_PORT>`), the
+   host of `PAIRLY_PUBLIC_WEB_URL`, so magic links and invitations from Mailpit come back
+   to the origin whose cookies and storage the browser holds. No extra trusted origin is
+   needed. To use another address (for example `http://127.0.0.1:3100`), set
+   `PAIRLY_E2E_BASE_URL` and add that origin to `PAIRLY_AUTH_TRUSTED_ORIGINS` in the
+   repo-root `.env`, or sign-in requests fail the origin check.
 2. Start the stack with the web profile and wait until it is healthy:
-   `PROFILES=web make dev`. Port 3100 on 127.0.0.1 must be the compose `web` service;
+   `PROFILES=web make dev`. Port 3100 on localhost must be the compose `web` service;
    another local server on that port will answer instead.
 3. Install the browser once: `pnpm --filter @pairly/web exec playwright install chromium`.
 4. Run it:
@@ -176,8 +172,9 @@ Postgres and Mailpit. It is not part of CI yet.
    ```
 
    `PAIRLY_E2E_BASE_URL` points the suite at another address (it must be trusted, see
-   step 1). `PAIRLY_E2E_SCRATCH` sets where screenshots, saved sessions and the findings
-   (`findings/axe.ndjson`, `copy.ndjson`, `rtl.ndjson`) are written. Axe results are
+   step 1); `PAIRLY_WEB_PORT` changes the default port. `PAIRLY_E2E_SCRATCH` sets where
+   screenshots, saved sessions and the findings (`findings/axe.ndjson`, `copy.ndjson`,
+   `rtl.ndjson`) are written. Axe results are
    logged there rather than failing the run, so read `axe.ndjson` after each run.
 
 Order matters: `01-full-flow` bootstraps an organisation (`make bootstrap-org`), accepts
@@ -186,11 +183,9 @@ reuse. `06-inbox`, `07-approval-link` and `08-audit-decisions-settings` seed app
 with `make dev-seed-approval` (development only, see below). Run `make down` when you are
 done.
 
-If magic links come back on `localhost` while the suite opens `127.0.0.1`, the browser
-storage of the two origins differs and the invite step fails: then point the suite at
-the `PAIRLY_PUBLIC_WEB_URL` host (`PAIRLY_E2E_BASE_URL=http://localhost:3100`). Other
-knobs: `MAILPIT_URL`, `PAIRLY_E2E_EMAILED_HOST` (host in emailed links) and
-`PAIRLY_E2E_COMPOSE_FILE` (extra compose files for the `make` calls, for example
+If you point the suite at another host than the one in emailed links, set
+`PAIRLY_E2E_EMAILED_HOST` to the emailed host so links are rewritten to yours. Other
+knobs: `MAILPIT_URL` and `PAIRLY_E2E_COMPOSE_FILE` (extra compose files for the `make` calls, for example
 `infra/docker-compose.yml -f my-override.yml`).
 
 Development seed: `make dev-seed-approval ORG=<slug> EMAIL=<member email> ARGS="..."` gives

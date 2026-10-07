@@ -4,6 +4,8 @@
 // Minimal Mailpit HTTP API client for the e2e tests (read-only: we only ever read mail
 // that the app under test just sent, to pull out magic-link / invite tokens).
 
+import { BASE_URL, EMAILED_HOST } from "./origin";
+
 export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 
 interface MailpitMessageSummary {
@@ -22,13 +24,11 @@ interface MailpitMessage {
   Text: string;
 }
 
-/** The app's base URL as it appears in emailed links (PAIRLY_PUBLIC_WEB_URL's host). */
-const EMAILED_HOST = process.env.PAIRLY_E2E_EMAILED_HOST ?? "localhost:3100";
-/** What we actually navigate to: the compose `web` service on 127.0.0.1 (host port 3100
- *  by default, PAIRLY_WEB_PORT), which avoids other local servers on localhost. */
-const REACHABLE_HOST = new URL(process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100").host;
+/** What we navigate to (utils/origin.ts). By default the emailed host itself. */
+const REACHABLE_HOST = new URL(BASE_URL).host;
 
-/** Rewrite an emailed absolute URL so Playwright hits the right server. */
+/** Rewrite an emailed absolute URL so Playwright hits the right server (a no-op by
+ *  default, when the suite opens the emailed host). */
 export function toReachableUrl(url: string): string {
   return url.replace(EMAILED_HOST, REACHABLE_HOST);
 }
