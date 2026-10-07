@@ -25,6 +25,13 @@ address in one workflow and prints the full address once (only the token's hash 
 stored). Mail to the previous address is dropped from then on:
 
     uv run pairly-admin inbound rotate --org <uuid> --workflow pay
+
+``crypto rotate`` re-wraps every encrypted field's data key with the current KEK
+(``PAIRLY_KEK_CURRENT``), in batches, one audited transaction per batch. It is
+resumable: rows already on the current KEK are skipped. ``--dry-run`` only counts what
+is left. See ``pairly_core.crypto.rotation`` for the full procedure:
+
+    uv run pairly-admin crypto rotate [--org <uuid>] [--batch-size 500] [--dry-run]
 """
 
 from __future__ import annotations
@@ -43,9 +50,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import pairly_core.models  # noqa: F401  (registers every core table, encrypted ones included)
 from pairly_core.audit import ActorType
 from pairly_core.config import to_asyncpg_url
-from pairly_core.db import create_sessionmaker, set_tenant
+from pairly_core.crypto.keys import CryptoConfigError, init_crypto
+from pairly_core.crypto.rotation import DEFAULT_BATCH, RotationReport, rotate_keys
+from pairly_core.db import Base, create_sessionmaker, set_tenant
 from pairly_core.errors import PairlyError
 from pairly_core.ingestion.addresses import WORKFLOW_RE, inbound_address, rotate_inbound_token
 from pairly_core.invitations import INVITATION_TTL, BootstrappedOrg, bootstrap_organisation
@@ -138,6 +148,27 @@ async def rotate_inbound(owner_url: str, org_id: uuid.UUID, workflow: str) -> Ro
         await engine.dispose()
 
 
+async def rotate_crypto(
+    owner_url: str,
+    *,
+    org_ids: Sequence[uuid.UUID] | None,
+    batch_size: int,
+    dry_run: bool,
+) -> RotationReport:
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        return await rotate_keys(
+            create_sessionmaker(engine),
+            Base.metadata,
+            org_ids=org_ids,
+            batch_size=batch_size,
+            dry_run=dry_run,
+            actor_id=ADMIN_ACTOR,
+        )
+    finally:
+        await engine.dispose()
+
+
 def _web_url(value: str) -> str:
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
@@ -181,6 +212,19 @@ def _parser() -> argparse.ArgumentParser:
     )
     rotate.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
     rotate.add_argument("--workflow", required=True, help="workflow id, for example 'pay'")
+
+    crypto = commands.add_parser("crypto", help="application-level encryption keys")
+    crypto_commands = crypto.add_subparsers(dest="crypto_command", required=True)
+    crypto_rotate = crypto_commands.add_parser(
+        "rotate", help="re-wrap data keys with the current KEK (resumable, audited)"
+    )
+    crypto_rotate.add_argument(
+        "--org", action="append", type=uuid.UUID, help="only this organisation (repeatable)"
+    )
+    crypto_rotate.add_argument("--batch-size", type=int, default=DEFAULT_BATCH)
+    crypto_rotate.add_argument(
+        "--dry-run", action="store_true", help="count rows still on an old KEK, change nothing"
+    )
     return parser
 
 
@@ -223,6 +267,33 @@ def _recordings(args: argparse.Namespace, owner_url: str) -> int:
     return 0
 
 
+def _crypto(args: argparse.Namespace, owner_url: str) -> int:
+    try:
+        ring = init_crypto()
+    except CryptoConfigError as exc:
+        print(f"pairly-admin: {exc}", file=sys.stderr)
+        return 2
+    if not 1 <= args.batch_size <= 10_000:
+        print("pairly-admin: --batch-size must be 1..10000", file=sys.stderr)
+        return 2
+    report = asyncio.run(
+        rotate_crypto(owner_url, org_ids=args.org, batch_size=args.batch_size, dry_run=args.dry_run)
+    )
+    print(f"Current KEK version: {ring.current}. Organisations: {report.orgs}.")
+    if args.dry_run:
+        if not report.pending:
+            print("Nothing to re-wrap: every encrypted field uses the current KEK.")
+        for key, count in sorted(report.pending.items()):
+            print(f"  {key}: {count} rows on an old KEK")
+        return 0
+    for key, count in sorted(report.rewrapped.items()):
+        print(f"  {key}: {count} rows re-wrapped")
+    for key, count in sorted(report.failed.items()):
+        print(f"  {key}: {count} rows could not be decrypted (left unchanged)", file=sys.stderr)
+    print(f"Re-wrapped {report.total_rewrapped} rows, {report.total_failed} failed.")
+    return 1 if report.total_failed else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     owner_url = os.environ.get(OWNER_URL_ENV)
@@ -233,6 +304,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _recordings(args, owner_url)
     if args.command == "inbound":
         return _inbound(args, owner_url)
+    if args.command == "crypto":
+        return _crypto(args, owner_url)
     try:
         result = asyncio.run(
             bootstrap(owner_url, name=args.name, slug=args.slug, admin_email=args.admin_email)

@@ -43,7 +43,8 @@ def _prefixed(prefix: str) -> Callable[[], str]:
 
 # Hex values are URL safe, so they can go straight into connection strings.
 SECRET_GENERATORS: dict[str, Callable[[], str]] = {
-    "PAIRLY_ENCRYPTION_KEY": _b64key,
+    # First key encryption key (WP1.14). PAIRLY_KEK_2 stays empty until a rotation.
+    "PAIRLY_KEK_1": _b64key,
     "PAIRLY_BLIND_INDEX_KEY": _b64key,
     "PAIRLY_SIGNED_LINK_SECRET": _hex(32),
     "POSTGRES_PASSWORD": _hex(24),

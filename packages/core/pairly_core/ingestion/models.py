@@ -47,6 +47,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from pairly_core.crypto.types import EncryptedString, Sealed
 from pairly_core.db import Base, OrgScoped, Timestamped
 
 _UUID_DEFAULT = text("gen_random_uuid()")
@@ -87,6 +88,11 @@ class InboundEmail(Base, OrgScoped, Timestamped):
         UniqueConstraint("org_id", "message_id", name="uq_inbound_emails_org_id_message_id"),
         CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
         CheckConstraint("raw_sha256 ~ '^[0-9a-f]{64}$'", name="raw_sha256_format"),
+        CheckConstraint(
+            "sender_address_bidx IS NULL OR sender_address_bidx ~ '^[0-9a-f]{64}$'",
+            name="sender_address_bidx_format",
+        ),
+        Index("ix_inbound_emails_org_id_sender_address_bidx", "org_id", "sender_address_bidx"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -97,8 +103,10 @@ class InboundEmail(Base, OrgScoped, Timestamped):
     message_id: Mapped[str] = mapped_column(String(998), nullable=False)
     raw_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     # Business contact data: needed to reply with a receipt and to check sender domains.
-    # TODO(WP1.x encryption): move to application-level encryption with a blind index.
-    sender_address: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    # Encrypted (WP1.14, migration 0008); ``sender_address_bidx`` is its blind index
+    # (``blind_index("email", ...)``) for equality search and dedupe.
+    sender_address: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    sender_address_bidx: Mapped[str | None] = mapped_column(String(64), nullable=True)
     sender_domain: Mapped[str | None] = mapped_column(String(253), nullable=True)
     subject: Mapped[str | None] = mapped_column(Text, nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

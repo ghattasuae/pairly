@@ -52,6 +52,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.audit import append_audit
+from pairly_core.crypto.blind_index import blind_index
+from pairly_core.crypto.types import seal
 from pairly_core.db import set_tenant
 from pairly_core.ingestion.addresses import InboundRoute, candidate_routes, lookup_inbound_org
 from pairly_core.ingestion.models import DocumentSource, InboundEmail
@@ -546,11 +548,21 @@ async def ingest_email(
                 )
                 return result
 
+            email_id = uuid.uuid4()
             email_row = InboundEmail(
+                id=email_id,
+                org_id=org_id,
                 workflow=route.workflow,
                 message_id=parsed.message_id,
                 raw_sha256=parsed.raw_sha256,
-                sender_address=parsed.sender,
+                sender_address=seal(
+                    InboundEmail,
+                    "sender_address",
+                    parsed.sender,
+                    org_id=org_id,
+                    row_id=email_id,
+                ),
+                sender_address_bidx=blind_index("email", parsed.sender, org_id),
                 sender_domain=parsed.sender_domain,
                 subject=parsed.subject,
                 sent_at=parsed.sent_at,

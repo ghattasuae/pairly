@@ -31,7 +31,7 @@ from pairly_core.llm.bundle import (
     parse_bundle,
 )
 from pairly_core.llm.catalog import load_catalog, load_prices
-from pairly_core.llm.errors import BudgetExceeded, RecordingMissing
+from pairly_core.llm.errors import BudgetExceeded, ModelUnavailable, RecordingMissing
 from pairly_core.llm.prompt_registry import PromptRegistry
 from pairly_core.llm.providers.fake import FakeProvider
 from pairly_core.llm.resilience import RetryPolicy
@@ -136,16 +136,22 @@ async def test_record_mode_then_recorded_hit_and_miss(
     rows = await _rows(
         llm_engine,
         org,
-        "SELECT mode, status, model, request_hash, cost_micros, response, prompt_hash, "
+        "SELECT id, mode, status, model, request_hash, cost_micros, response, prompt_hash, "
         "request FROM model_calls ORDER BY attempt",
     )
     assert [(r.mode, r.status, r.model) for r in rows] == [
         ("record", "invalid_output", HAIKU),
         ("record", "ok", SONNET),
     ]
-    assert rows[1].response == GOOD
+    # Request and response are encrypted at rest (WP1.14); the store decrypts them.
+    assert rows[1].request.startswith("v1:")
+    assert rows[1].response.startswith("v1:")
+    async with _session(llm_engine, org) as s, s.begin():
+        stored = await DatabaseCallStore().get(s, rows[1].id)
+    assert stored is not None
+    assert stored.response == GOOD
     assert rows[1].request_hash == live.request_hash
-    assert rows[1].request["inputs"] == INPUTS
+    assert stored.request["inputs"] == INPUTS
     assert rows[1].cost_micros == live.cost_micros > 0
 
     recorded, offline = make_router(llm_engine, prompts, mode=ModelMode.RECORDED)
@@ -155,6 +161,32 @@ async def test_record_mode_then_recorded_hit_and_miss(
     assert offline.requests == []
     with pytest.raises(RecordingMissing):
         await recorded.complete(task=TASK, inputs={"text": "other"}, schema=Answer, org_id=org)
+    assert offline.requests == []
+
+
+async def test_a_recording_that_does_not_decrypt_fails_closed(
+    llm_engine: AsyncEngine,
+    owner_engine: AsyncEngine,
+    prompts: PromptRegistry,
+    clean_llm: TwoTenants,
+) -> None:
+    org = clean_llm.a.org_id
+    router, provider = make_router(llm_engine, prompts)
+    provider.script(HAIKU, GOOD)
+    await router.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=org)
+    provider.script(HAIKU, {"label": "other", "confidence": 0.9})
+    await router.complete(task=TASK, inputs={"text": "other"}, schema=Answer, org_id=org)
+    rows = await _rows(llm_engine, org, "SELECT id, response FROM model_calls ORDER BY created_at")
+    # Someone with database access moves another row's ciphertext into the recording.
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org)})
+        await conn.execute(
+            text("UPDATE model_calls SET response = :r WHERE id = :id"),
+            {"r": rows[1].response, "id": rows[0].id},
+        )
+    recorded, offline = make_router(llm_engine, prompts, mode=ModelMode.RECORDED)
+    with pytest.raises(ModelUnavailable, match="could not be decrypted"):
+        await recorded.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=org)
     assert offline.requests == []
 
 
@@ -190,7 +222,7 @@ async def test_model_calls_are_tenant_isolated(
                     "prompt_hash, provider, model, tier, schema_name, schema_hash, request_hash, "
                     "mode, status, request) VALUES (:org, gen_random_uuid(), 1, 't', 'v1', "
                     "repeat('a', 64), 'p', 'm', 'small', 'S', repeat('a', 64), repeat('a', 64), "
-                    "'live', 'ok', '{}')"
+                    "'live', 'ok', 'v1:x')"
                 ),
                 {"org": a},
             )
