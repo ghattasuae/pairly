@@ -91,10 +91,45 @@ start() {
     docker logs "$NAME" >&2 || true
     exit 1
   fi
-  log "ready on 127.0.0.1:${PORT}"
-
   local owner_url="postgresql://pairly_owner:${owner_pw}@127.0.0.1:${PORT}/${DB}"
   local app_url="postgresql://pairly_app:${app_pw}@127.0.0.1:${PORT}/${DB}"
+
+  # Ready inside the container is not enough: the published host port can lag behind
+  # (Colima and Docker Desktop forward it asynchronously). Wait until the app role can
+  # run SELECT 1 through 127.0.0.1:$PORT, exactly the way the tests connect. The URL goes
+  # through the environment, never the command line.
+  local tries=30
+  for i in $(seq 1 "$tries"); do
+    if PROBE_URL="$app_url" uv run --project "$ROOT" --frozen --no-sync python - \
+      >/dev/null 2>&1 <<'PY'
+import asyncio
+import os
+
+import asyncpg
+
+
+async def main() -> None:
+    conn = await asyncpg.connect(os.environ["PROBE_URL"], timeout=3)
+    try:
+        if await conn.fetchval("SELECT 1") != 1:
+            raise SystemExit(1)
+    finally:
+        await conn.close()
+
+
+asyncio.run(main())
+PY
+    then
+      break
+    fi
+    if [ "$i" -eq "$tries" ]; then
+      log "postgres is ready in $NAME, but 'SELECT 1' as pairly_app through" \
+        "127.0.0.1:${PORT} still fails after ${tries} tries; check the port mapping"
+      exit 1
+    fi
+    sleep 1
+  done
+  log "ready on 127.0.0.1:${PORT}"
 
   if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -n "${GITHUB_ENV:-}" ]; then
     local pw

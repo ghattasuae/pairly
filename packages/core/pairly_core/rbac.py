@@ -195,7 +195,6 @@ CORE_PERMISSIONS: tuple[PermissionSpec, ...] = (
     ),
     _p("core.decision.propose", "Create proposed decisions", _R.AGENT),
     _p("core.approval.read", "See the approval inbox", _R.ADMIN, _R.AUDITOR, *_STAFF, *_DECIDERS),
-    _p("core.approval.decide", "Approve or reject approval requests", _R.ADMIN, *_DECIDERS),
 )
 
 

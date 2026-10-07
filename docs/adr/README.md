@@ -8,5 +8,6 @@ Every record has: context, decision, consequences, status (proposed, accepted, s
 
 | ADR | Title | Status |
 |---|---|---|
+| [0008](0008-workflow-runtime-approvals-signed-links.md) | Workflow runtime, approvals and signed links | proposed |
 
-No records yet. The first ones cover: monorepo and tooling, Better Auth with JWKS verification in the API, arq for jobs, row level security tenancy, the hash-chained audit log, and recorded model mode.
+Planned records cover: monorepo and tooling, Better Auth with JWKS verification in the API, arq for jobs, row level security tenancy, the hash-chained audit log, and recorded model mode.

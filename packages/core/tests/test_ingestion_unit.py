@@ -52,6 +52,7 @@ from pairly_core.rbac import (
     RoleGrant,
     build_registry,
 )
+from pairly_core.workflow.spec import GraphSpec
 
 from . import doc_fixtures as fx
 
@@ -436,12 +437,14 @@ class _Toy:
         PermissionSpec("toy.document.read", "Read toy documents", frozenset({"admin"})),
         PermissionSpec("toy.document.upload", "Upload toy documents", frozenset({"admin"})),
     )
+    graphs: tuple[GraphSpec, ...] = ()
 
 
 class _Bare:
     id = "bare"
     name = "Bare"
     permissions = (PermissionSpec("bare.item.read", "Read items", frozenset({"admin"})),)
+    graphs: tuple[GraphSpec, ...] = ()
 
 
 def _actor(

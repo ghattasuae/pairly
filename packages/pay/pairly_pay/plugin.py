@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 
 from pairly_core.rbac import BuiltinRole as R
 from pairly_core.rbac import PermissionSpec
+from pairly_core.workflow.spec import GraphSpec
 
 PERMISSIONS: tuple[PermissionSpec, ...] = (
     PermissionSpec(
@@ -36,6 +37,7 @@ class PayPlugin:
     id: str = "pay"
     name: str = "Pairly Pay"
     permissions: tuple[PermissionSpec, ...] = field(default=PERMISSIONS)
+    graphs: tuple[GraphSpec, ...] = ()
 
 
 plugin = PayPlugin()

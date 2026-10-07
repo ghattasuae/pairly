@@ -23,16 +23,19 @@ from pairly_api import __version__
 from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
-from pairly_api.routes import audit, health, invitations, me, members
+from pairly_api.routes import approval_links, approvals, audit, health, invitations, me, members
 from pairly_api.routes import documents as document_routes
 from pairly_api.routes.documents import DocumentServices
 from pairly_api.telemetry import configure_tracing, instrument_app
+from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import RoleRegistry, build_registry
+from pairly_core.workflow.checkpoint import TenantCheckpointer
+from pairly_core.workflow.runtime import WorkflowRuntime
 
 log = structlog.get_logger(__name__)
 
@@ -63,7 +66,10 @@ async def _document_services(settings: Settings) -> DocumentServices | None:
 
 
 def _lifespan(
-    settings: Settings, registry: RoleRegistry
+    settings: Settings,
+    registry: RoleRegistry,
+    plugins: list[WorkflowPlugin],
+    hooks: ApprovalHooks,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -75,13 +81,23 @@ def _lifespan(
                 app.state.documents = await _document_services(settings)
                 owned_services = app.state.documents is not None
             await check_app_role(engine)
+            sessionmaker = create_sessionmaker(engine)
             app.state.pairly = AppContext(
                 settings=settings,
                 engine=engine,
-                sessionmaker=create_sessionmaker(engine),
+                sessionmaker=sessionmaker,
                 verifier=verifier,
                 registry=registry,
             )
+            runtime = WorkflowRuntime.from_plugins(
+                plugins,
+                sessionmaker=sessionmaker,
+                checkpointer=TenantCheckpointer(settings.database_url.get_secret_value()),
+                registry=registry,
+                hooks=hooks,
+            )
+            await runtime.check()
+            app.state.workflow_runtime = runtime
             log.info("startup", env=settings.env.value, permissions=len(registry.permissions))
             yield
         finally:
@@ -100,6 +116,7 @@ def create_app(
     *,
     plugins: Iterable[WorkflowPlugin] | None = None,
     documents: DocumentServices | None = None,
+    approval_hooks: ApprovalHooks = NO_HOOKS,
 ) -> FastAPI:
     settings = settings or load_settings()
     configure_logging(settings.log_level)
@@ -111,7 +128,7 @@ def create_app(
     app = FastAPI(
         title="Pairly API",
         version=__version__,
-        lifespan=_lifespan(settings, registry),
+        lifespan=_lifespan(settings, registry, workflow_plugins, approval_hooks),
         openapi_url="/v1/openapi.json",
         docs_url="/docs" if show_docs else None,
         redoc_url=None,
@@ -125,6 +142,8 @@ def create_app(
     v1.include_router(invitations.router)
     v1.include_router(members.router)
     v1.include_router(document_routes.router)
+    v1.include_router(approvals.router)
+    v1.include_router(approval_links.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

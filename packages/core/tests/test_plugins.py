@@ -24,6 +24,7 @@ class _Plugin:
     id: str
     name: str
     permissions: tuple[object, ...] = ()
+    graphs: tuple[object, ...] = ()
 
 
 class _NotAPlugin:

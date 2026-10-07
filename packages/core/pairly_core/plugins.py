@@ -8,7 +8,8 @@ a workflow package directly; it only discovers plugin objects at runtime.
 
 The ``WorkflowPlugin`` protocol is intentionally minimal for now. It grows with the
 engine (entity types, models, extraction schemas, detectors, rules, policy schema,
-graphs, approval types, templates, router, seed hook).
+approval types, templates, router, seed hook). ``graphs`` (WP1.8) lists the plugin's
+LangGraph graphs; each ``GraphSpec`` carries its approval types and final actions.
 
 Discovery fails closed: a plugin that cannot be loaded, does not satisfy the protocol,
 has an invalid id, or collides with another plugin raises ``PluginError`` instead of
@@ -23,6 +24,7 @@ from importlib.metadata import EntryPoint, entry_points
 from typing import Protocol, runtime_checkable
 
 from pairly_core.rbac import PermissionSpec
+from pairly_core.workflow.spec import GraphSpec
 
 ENTRY_POINT_GROUP = "pairly.workflows"
 
@@ -58,6 +60,14 @@ class WorkflowPlugin(Protocol):
         """
         ...
 
+    @property
+    def graphs(self) -> Sequence[GraphSpec]:
+        """LangGraph graphs this workflow runs (``pairly_core.workflow.spec.GraphSpec``).
+
+        Each spec belongs to this workflow and names permissions of it. Empty is fine.
+        """
+        ...
+
 
 def _load(ep: EntryPoint) -> WorkflowPlugin:
     try:
@@ -77,6 +87,7 @@ def _load(ep: EntryPoint) -> WorkflowPlugin:
             f"workflow plugin id {plugin_id!r} does not match its entry point name {ep.name!r}"
         )
     _check_permissions(obj, ep)
+    _check_graphs(obj, ep)
     return obj
 
 
@@ -91,6 +102,23 @@ def _check_permissions(obj: WorkflowPlugin, ep: EntryPoint) -> None:
             raise PluginError(
                 f"workflow plugin {ep.name!r}: permission {spec.name!r} is outside its namespace"
             )
+
+
+def _check_graphs(obj: WorkflowPlugin, ep: EntryPoint) -> None:
+    graphs = obj.graphs
+    if isinstance(graphs, str | bytes) or not isinstance(graphs, Sequence):
+        raise PluginError(f"workflow plugin {ep.name!r}: graphs must be a sequence")
+    names: set[str] = set()
+    for spec in graphs:
+        if not isinstance(spec, GraphSpec):
+            raise PluginError(f"workflow plugin {ep.name!r}: graphs must be GraphSpec")
+        if spec.workflow != obj.id:
+            raise PluginError(
+                f"workflow plugin {ep.name!r}: graph {spec.name!r} belongs to another workflow"
+            )
+        if spec.name in names:
+            raise PluginError(f"workflow plugin {ep.name!r}: duplicate graph {spec.name!r}")
+        names.add(spec.name)
 
 
 def discover_plugins(group: str = ENTRY_POINT_GROUP) -> dict[str, WorkflowPlugin]:

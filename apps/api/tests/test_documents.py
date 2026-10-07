@@ -39,6 +39,7 @@ from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import InMemoryObjectStore
 from pairly_core.plugins import WorkflowPlugin
 from pairly_core.rbac import PermissionSpec
+from pairly_core.workflow.spec import GraphSpec
 from pairly_hire.plugin import plugin as hire_plugin
 from pairly_pay.plugin import plugin as pay_plugin
 from pairly_worker import documents as worker_docs
@@ -56,6 +57,7 @@ class ToyPlugin:
         PermissionSpec("toy.document.read", "Read toy documents", frozenset({"admin"})),
         PermissionSpec("toy.document.upload", "Upload toy documents", frozenset({"admin"})),
     )
+    graphs: tuple[GraphSpec, ...] = ()
 
 
 PLUGINS: list[WorkflowPlugin] = [hire_plugin, pay_plugin, ToyPlugin()]
