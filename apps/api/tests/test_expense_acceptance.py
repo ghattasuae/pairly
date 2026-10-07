@@ -59,6 +59,7 @@ from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import InMemoryObjectStore
 from pairly_core.integrations.slack.transport import FakeSlackTransport
 from pairly_core.invitations import invite_as_system
+from pairly_core.jobs.registry import JobContext
 from pairly_core.llm.factory import build_router
 from pairly_core.llm.providers.fake import FakeProvider
 from pairly_core.llm.settings import ModelMode, load_llm_settings
@@ -70,6 +71,7 @@ from pairly_core.rbac import RoleRegistry, build_registry
 from pairly_core.workflow.services import GraphServices
 from pairly_expense.plugin import plugin as expense_plugin
 from pairly_expense.seed import demo_email, seed_expense_demo
+from pairly_expense.sweeper import sweep_org, sweep_stuck_notes
 from pairly_hire.plugin import plugin as hire_plugin
 from pairly_pay.plugin import plugin as pay_plugin
 from synth.expense.receipts import CLEAN, HIDDEN, HIDDEN_TEXT, THRESHOLD, Receipt, receipt_pdf
@@ -286,7 +288,8 @@ async def owner_rows(
 ) -> list[Any]:
     async with owner.begin() as conn:
         await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org_id)})
-        return list((await conn.execute(text(sql), params or {})).all())
+        result = await conn.execute(text(sql), params or {})
+        return list(result.all()) if result.returns_rows else []
 
 
 async def audit_actions(owner: AsyncEngine, org_id: uuid.UUID) -> list[str]:
@@ -657,6 +660,89 @@ async def test_unreadable_or_infected_receipts_go_to_a_person(api: Api, world: W
     assert infected["document"]["status"] == "infected"
     assert "document_not_parsed:infected" in infected["review_reasons"]
     assert infected["approval"]["status"] == "pending"
+
+
+# ------------------------------------------------------------------ stuck notes
+
+
+async def _stuck_note(
+    owner: AsyncEngine,
+    world: World,
+    document_id: str,
+    *,
+    attempts: int = 0,
+    run_id: uuid.UUID | None = None,
+) -> uuid.UUID:
+    note_id = uuid.uuid4()
+    await owner_rows(
+        owner,
+        world.org_id,
+        "INSERT INTO expense_notes (id, org_id, submitted_by, status, document_id, run_id, "
+        "start_attempts, created_at, updated_at) VALUES (:id, :o, :u, 'processing', :d, :r, "
+        ":a, now() - interval '1 hour', now() - interval '1 hour')",
+        {
+            "id": note_id,
+            "o": world.org_id,
+            "u": world.id("submitter"),
+            "d": uuid.UUID(document_id),
+            "r": run_id,
+            "a": attempts,
+        },
+    )
+    return note_id
+
+
+async def test_stuck_notes_are_restarted_once_then_sent_to_a_person(
+    api: Api, world: World, owner_engine: AsyncEngine
+) -> None:
+    done = await submitted(api, world, "submitter", CLEAN)
+    document_id = done["document"]["id"]
+    never_started = await _stuck_note(owner_engine, world, document_id)
+    retried = await _stuck_note(owner_engine, world, document_id, attempts=1)
+    failed_run = uuid.uuid4()
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "INSERT INTO workflow_runs (id, org_id, workflow, graph_name, graph_version, "
+        "thread_id, status, started_by_type, started_by_id, error, created_at, updated_at) "
+        "VALUES (:id, :o, 'expense', 'expense_note', 1, :t, 'failed', 'user', :u, "
+        "'executor_refused: test', now(), now())",
+        {
+            "id": failed_run,
+            "o": world.org_id,
+            "t": f"{world.org_id}:{failed_run}",
+            "u": str(world.id("submitter")),
+        },
+    )
+    broken = await _stuck_note(owner_engine, world, document_id, run_id=failed_run)
+
+    runtime = api.app.state.workflow_runtime
+    ctx = JobContext(create_sessionmaker(api.engine), runtime, REGISTRY)
+    summary = await sweep_stuck_notes(ctx)
+    assert summary["restarted"] >= 1
+    assert summary["needs_review"] >= 2
+
+    restarted = await api.note(world, "approver", str(never_started))
+    assert restarted["status"] == "awaiting_approval"
+    assert restarted["run_id"] is not None
+    # Same receipt as another note: risk flags the duplicate, a person decides.
+    assert restarted["risk"]["requires_human"] is True
+    gave_up = await api.note(world, "approver", str(retried))
+    assert (gave_up["status"], gave_up["failure_reason"]) == ("needs_review", "run_not_started")
+    failed = await api.note(world, "approver", str(broken))
+    assert failed["status"] == "needs_review"
+    assert failed["failure_reason"] == "run_failed:executor_refused: test"
+    # The finished note is left alone, and a second sweep changes nothing.
+    assert (await api.note(world, "approver", done["id"]))["status"] == "awaiting_approval"
+    again = await sweep_org(ctx, world.org_id, 15)
+    assert again == {"restarted": 0, "needs_review": 0}
+    actions = await audit_actions(owner_engine, world.org_id)
+    assert actions.count("expense.note.run_restarted") == 1
+    assert actions.count("expense.note.needs_review") == 2
+    # The organisation finder answers the app role with ids only.
+    async with session_for(api, world.org_id) as s, s.begin():
+        ids = (await s.execute(text("SELECT expense_stuck_note_org_ids(0)"))).scalars().all()
+    assert ids == []
 
 
 # ------------------------------------------------------------------ 5. the seed command

@@ -4429,7 +4429,8 @@
           "approved",
           "rejected",
           "changes_requested",
-          "failed"
+          "failed",
+          "needs_review"
         ],
         "title": "NoteStatus",
         "type": "string"

@@ -50,7 +50,9 @@ from pairly_core.jobs.registry import (
     RETENTION_DRY_RUN,
     SWEEP_DOCUMENTS,
     WORKFLOW_RESUME_RECONCILE,
+    JobContext,
     JobRegistry,
+    JobSpec,
     build_job_registry,
 )
 from pairly_core.jobs.runs import JobFn, tracked
@@ -215,10 +217,39 @@ def _job(registry: JobRegistry, name: str, job: JobFn) -> WorkerCoroutine:
     return cast("WorkerCoroutine", tracked(name, job))
 
 
+def plugin_job(spec: JobSpec) -> JobFn:
+    """A plugin job (``JobSpec.run``) as an arq coroutine over the worker's context."""
+    run = spec.run
+    if run is None:
+        raise ValueError(f"job {spec.name!r} has nothing to run")
+
+    async def job(ctx: dict[str, Any]) -> Any:
+        return await run(JobContext(ctx["sessionmaker"], ctx["runtime"], ctx["registry"]))
+
+    job.__name__ = spec.name
+    return job
+
+
+def _plugin_crons(jobs: JobRegistry) -> list[Any]:
+    return [
+        cron(
+            _job(jobs, spec.name, plugin_job(spec)),
+            name=spec.name,
+            minute=spec.minutes,
+            run_at_startup=False,
+            unique=True,
+            timeout=600,
+        )
+        for spec in jobs.jobs
+        if spec.run is not None
+    ]
+
+
 def build_worker_settings(config: WorkerConfig | None = None) -> type:
     """The arq settings class for ``config`` (default: from the environment)."""
     config = config or load_worker_config()
-    jobs = build_job_registry()
+    # Fail closed: an invalid plugin stops the worker here too.
+    jobs = build_job_registry(discover_plugins().values())
     attrs: dict[str, Any] = {
         "redis_settings": RedisSettings.from_dsn(config.redis_url.get_secret_value()),
         "functions": [
@@ -298,6 +329,8 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
             ),
             # Decision records, appeals and audit hardening (WP1.10, WP1.10b).
             *decision_jobs.cron_jobs(config, lambda name, job: _job(jobs, name, job)),
+            # Workflow plugin jobs that declare a coroutine (JobSpec.run).
+            *_plugin_crons(jobs),
         ],
         "on_startup": startup,
         "on_shutdown": shutdown,

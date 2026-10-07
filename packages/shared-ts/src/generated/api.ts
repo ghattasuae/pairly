@@ -3003,7 +3003,7 @@ export type components = {
          * NoteStatus
          * @enum {string}
          */
-        NoteStatus: "processing" | "awaiting_approval" | "approved" | "rejected" | "changes_requested" | "failed";
+        NoteStatus: "processing" | "awaiting_approval" | "approved" | "rejected" | "changes_requested" | "failed" | "needs_review";
         /** NotificationOut */
         NotificationOut: {
             /** Body */

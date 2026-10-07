@@ -16,6 +16,7 @@ from arq.worker import Function
 import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
 from pairly_core.jobs.registry import JobRegistryError, build_job_registry
+from pairly_core.plugins import discover_plugins
 from pairly_worker.config import load_worker_config
 from pairly_worker.decision_jobs import (
     ANCHOR_JOB,
@@ -125,13 +126,17 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         DECISION_SWEEP_JOB,
         WEBHOOK_JOB,
         RETENTION_JOB,
+        "expense_stuck_note_sweep",
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
     assert (jobs[ANCHOR_JOB].hour, jobs[ANCHOR_JOB].minute) == (2, 10)
     # Every scheduled job is declared in the job registry, and every declared core job
     # is scheduled (the operations view lists exactly what runs).
-    assert set(jobs) == {j.name for j in build_job_registry().jobs}
+    assert set(jobs) == {j.name for j in build_job_registry(discover_plugins().values()).jobs}
+    # Plugin jobs with a coroutine run too (expense: every 5 minutes, one at a time).
+    sweep = jobs["expense_stuck_note_sweep"]
+    assert (sweep.minute, sweep.unique) == (set(range(0, 60, 5)), True)
     # Each cron coroutine is wrapped to record its runs in job_runs.
     assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
     # The retention dry run is daily at 02:15 UTC, one at a time.

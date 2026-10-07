@@ -11,6 +11,7 @@ Status (``NoteStatus``)::
     processing --(checks done, approval requested)--> awaiting_approval
     awaiting_approval --> approved | rejected | changes_requested
     any --(the run could not continue)--> failed
+    processing --(stuck: no run, or the run failed or stalled)--> needs_review
 
 ``approved`` is set only by the ``mark_reimbursable`` final action, which the executor
 runs after re-checking the approval. Nothing here moves money: ``reimbursable`` is a
@@ -33,6 +34,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -56,6 +58,8 @@ class NoteStatus(StrEnum):
     REJECTED = "rejected"
     CHANGES_REQUESTED = "changes_requested"
     FAILED = "failed"
+    # The run never got the note to a person's decision (see pairly_expense.sweeper).
+    NEEDS_REVIEW = "needs_review"
 
 
 FINAL_STATUSES = frozenset(
@@ -144,6 +148,10 @@ class ExpenseNote(Base, OrgScoped):
         Boolean, nullable=False, default=False, server_default="false"
     )
     failure_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Times the stuck note sweeper restarted the run (at most once).
+    start_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

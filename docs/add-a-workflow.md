@@ -93,7 +93,7 @@ class ExpensePlugin:
         return router
 ```
 
-Other optional attributes: `feature_flags`, `search_sources`, `retention_rules`, `scheduled_jobs`. Each registry checks that names stay inside your namespace.
+Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace.
 
 ## 3. Permissions
 
@@ -190,15 +190,21 @@ Name your response models with your workflow as a prefix (`ExpenseNoteDetail`, n
 
 The expense routes: `POST /v1/expense/notes` (multipart receipt plus `note`, 202, starts the run after the response), `GET /v1/expense/notes`, `GET /v1/expense/notes/{id}` (values with evidence spans, guardrail findings, rule results, risk, approval, decision record ids).
 
-## 9. Notifications and webhooks
+## 9. Scheduled jobs: nothing stays stuck
+
+Declare jobs in `scheduled_jobs` as `JobSpec`s named `<plugin id>_...`. A job with `run` (an async function that gets a `JobContext`: sessions, the workflow runtime, the role registry) and `every_minutes` (a divisor of 60) is scheduled by the worker, one run at a time, and recorded in `job_runs` like core jobs.
+
+The expense plugin uses one (`sweeper.py`, `expense_stuck_note_sweep`, every 5 minutes): a note still `processing` 15 minutes after its last change (`PAIRLY_EXPENSE_STUCK_MINUTES`) had its run never start, fail or stall. With no run yet, it restarts the run once, as the submitter; otherwise the note moves to `needs_review` with the reason, so a person looks. The engine cannot see a run that never started (there is no run row yet), which is why the workflow owns this check. To find the organisations to visit without reading across tenants, the plugin's migration adds a SECURITY DEFINER function that returns organisation ids only (`expense_stuck_note_org_ids`); the job then works in each organisation under Row Level Security.
+
+## 10. Notifications and webhooks
 
 System templates are rows with `org_id` NULL, seeded by your migration like core's (`templates.py`, migration `expense_0001`). Templates use the locked down Jinja subset, English and Arabic. Declare webhook events in `webhook_events` (names start with your id) and publish them with `publish_event` in the same transaction as the change.
 
-## 10. Offline demo: recorded model responses
+## 11. Offline demo: recorded model responses
 
 In `recorded` mode the router answers only from stored responses, keyed on the exact request (prompt, model, inputs, settings). `synth/expense` generates the synthetic receipts and, for each, the request `extract` will send and a scripted answer, and writes a recordings bundle. `pairly-admin seed expense-demo` imports it. If you change a prompt, the schema or a parser, run `uv run python -m synth.expense` again; a test fails when the files are out of date.
 
-## 11. Demo seed
+## 12. Demo seed
 
 `demo_seeds` maps a name to an async function that gets an owner-role session bound to the organisation. The expense seed publishes the policies, invites a submitter, an approver and a finance controller (each limited to the workflow) and imports the recordings. It is idempotent.
 
@@ -209,7 +215,7 @@ make demo-expense SLUG=acme
 
 The demo submitter has the built-in `employee` role: no core permission, and only the read, submit, create and upload permissions a workflow grants it.
 
-## 12. Tests to write
+## 13. Tests to write
 
 * Unit: policies parse, the approval chain by amount, rule outcomes, which values count, the generated files are current (`packages/expense/tests`).
 * End to end on Postgres in recorded mode (`apps/api/tests/test_expense_acceptance.py`): the clean path through approval and the final action, hidden text that never reaches the model, approval from a signed email link, a two step chain with segregation of duties, and the fail closed paths.
@@ -226,5 +232,6 @@ The demo submitter has the built-in `employee` role: no core permission, and onl
 - [ ] Final action re-checks its own row
 - [ ] Routes audited; idempotent submissions
 - [ ] Templates and webhook events in your namespace
+- [ ] A job that sends anything stuck to a person
 - [ ] Recordings for the demo inputs; a seed
 - [ ] Tests for the happy path, injection, approvals, SoD and fail closed paths

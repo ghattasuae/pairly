@@ -89,4 +89,7 @@ the workspace, Dockerfile, mypy and CI lists (configuration, not engine code).
   (item 7); the built-in `employee` role (core migration 0015) holds no core permission
   and plugins may grant it only read, submit, create and upload permissions; the
   slug lookup of `pairly-admin seed` got its own owner-only function instead of reusing
-  the inbound email lookup policy.
+  the inbound email lookup policy; plugin jobs that declare a coroutine
+  (`JobSpec.run`, `every_minutes`) are scheduled by the worker with a `JobContext`, so a
+  workflow can sweep its own stuck records (the expense plugin restarts runs that never
+  started, once, then sends the note to a person).

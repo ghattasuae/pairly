@@ -14,6 +14,7 @@ Everything the engine needs to run expense notes, declared on one object
                    never loads them).
 * ``demo_seeds``   ``expense-demo`` for ``pairly-admin seed``.
 * ``migrations_dir``  the ``expense`` Alembic branch (``migrations/``).
+* ``scheduled_jobs``  ``expense_stuck_note_sweep``, run by the worker every 5 minutes.
 
 Importing this module also registers the ``expense_notes`` table on ``Base.metadata``.
 """
@@ -25,6 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pairly_core.jobs.registry import JobSpec
 from pairly_core.plugins import DemoSeed
 from pairly_core.rbac import PermissionSpec
 from pairly_core.webhooks.events import EventType
@@ -35,6 +37,7 @@ from pairly_expense.graph import DECIDED_EVENT, FINAL_ACTION, GRAPH, VERSION, bu
 from pairly_expense.permissions import NOTE_APPROVE, NOTE_READ, NOTE_SUBMIT, PERMISSIONS
 from pairly_expense.policies import APPROVAL_RULES_V1, APPROVAL_TYPE
 from pairly_expense.seed import seed_expense_demo
+from pairly_expense.sweeper import JOB_NAME, sweep_stuck_notes
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -49,6 +52,16 @@ EXPENSE_NOTE: GraphSpec = GraphSpec(
     approval_types=(ApprovalType(APPROVAL_TYPE, NOTE_APPROVE, APPROVAL_RULES_V1, "Expense note"),),
     final_actions={FINAL_ACTION: mark_reimbursable},
     description="Receipt to reimbursable: read, check, and a person decides.",
+)
+
+SCHEDULED_JOBS: tuple[JobSpec, ...] = (
+    JobSpec(
+        JOB_NAME,
+        "Restart expense runs that never started; send stuck notes to a person",
+        "every 5 minutes",
+        run=sweep_stuck_notes,
+        every_minutes=5,
+    ),
 )
 
 WEBHOOK_EVENTS: tuple[EventType, ...] = (
@@ -73,6 +86,7 @@ class ExpensePlugin:
         default_factory=lambda: {"expense-demo": seed_expense_demo}
     )
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
+    scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
 
     def api_router(self) -> APIRouter:
         return api_router()
