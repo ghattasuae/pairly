@@ -54,6 +54,15 @@ class SearchChunk(Base, OrgScoped, Timestamped):
             "(embedding IS NULL) = (embedding_model IS NULL)", name="embedding_has_model"
         ),
         Index("ix_search_chunks_source", "org_id", "kind", "source_id"),
+        # Declared here (as created by migration 0009) so ``alembic check`` matches.
+        Index("ix_search_chunks_tsv_en", "tsv_en", postgresql_using="gin"),
+        Index("ix_search_chunks_tsv_simple", "tsv_simple", postgresql_using="gin"),
+        Index(
+            "ix_search_chunks_embedding",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
