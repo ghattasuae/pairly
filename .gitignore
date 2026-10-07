@@ -46,3 +46,6 @@ evals/output/
 .vscode/*
 !.vscode/extensions.json
 *.swp
+
+# Claude Code agent worktrees and local settings
+.claude/
