@@ -4,13 +4,16 @@
 """Create a local `.env` from `.env.example` with strong random secrets.
 
 Usage:
-    uv run python scripts/gen_dev_env.py            # writes .env at the repo root if missing
-    uv run python scripts/gen_dev_env.py --env PATH # custom target (used by tests)
+    uv run python scripts/gen_dev_env.py                   # writes .env if missing
+    uv run python scripts/gen_dev_env.py --append-missing  # also updates an existing one
+    uv run python scripts/gen_dev_env.py --env PATH        # custom target (used by tests)
 
 Rules:
-- An existing `.env` is never overwritten: no line in it is changed or removed. The only
-  change ever made to one is appending a secret added after it was created
-  (APPEND_IF_MISSING) when the file does not name that key at all.
+- An existing `.env` is never overwritten: no line in it is changed or removed. Without
+  `--append-missing` it is left alone (the script names the keys it lacks). With it,
+  every required key the file does not name at all (SECRET_GENERATORS and DERIVED, so
+  keys added after the file was created) is appended with a fresh value. `make env`
+  passes it when `.env` exists.
 - Every secret listed in SECRET_GENERATORS gets a fresh value from `secrets`.
 - Every key listed in DERIVED is computed from one of those secrets (the audit anchor
   public key is derived from the audit signing key, so the pair always matches).
@@ -29,6 +32,7 @@ import os
 import secrets
 import sys
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -129,42 +133,6 @@ SECRET_GENERATORS: dict[str, Callable[[], str]] = {
     "LANGFUSE_INIT_USER_PASSWORD": _hex(16),
 }
 
-# Secrets introduced after the first release of this script. An existing .env that does
-# not name one gets a fresh value appended (never a changed line), so `make env` brings
-# an older checkout up to date without touching the secrets it already has.
-APPEND_IF_MISSING: tuple[str, ...] = ("PAIRLY_API_KEY_PEPPER",)
-
-
-def env_keys(text: str) -> set[str]:
-    """The keys a .env text assigns (commented out lines do not count)."""
-    keys: set[str] = set()
-    for line in text.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("export "):
-            stripped = stripped[len("export ") :].lstrip()
-        if stripped and not stripped.startswith("#") and "=" in stripped:
-            keys.add(stripped.partition("=")[0].strip())
-    return keys
-
-
-def append_missing(path: Path) -> list[str]:
-    """Append each APPEND_IF_MISSING secret that ``path`` does not name. Returns them.
-
-    Opens with O_APPEND (and O_NOFOLLOW), so existing bytes are never rewritten.
-    """
-    fd = os.open(path, os.O_RDWR | os.O_APPEND | os.O_NOFOLLOW)
-    with os.fdopen(fd, "r+", encoding="utf-8") as handle:
-        current = handle.read()
-        missing = [key for key in APPEND_IF_MISSING if key not in env_keys(current)]
-        if not missing:
-            return []
-        lines = [] if current == "" or current.endswith("\n") else [""]
-        lines.append("# Added by scripts/gen_dev_env.py (new secret, existing lines unchanged).")
-        lines.extend(f"{key}={SECRET_GENERATORS[key]()}" for key in missing)
-        handle.write("\n".join(lines) + "\n")
-    return missing
-
-
 # Keys computed from a generated secret: name -> (source secret, derivation).
 DERIVED: dict[str, tuple[str, Callable[[str], str]]] = {
     "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY": ("PAIRLY_AUDIT_SIGNING_KEY", _public_from_seed),
@@ -220,34 +188,153 @@ def write_new(path: Path, text: str) -> bool:
     return True
 
 
-def _update_existing(path: Path) -> int:
+def env_values(text: str) -> dict[str, str]:
+    """The keys a .env text assigns and their raw values (commented out lines do not count)."""
+    values: dict[str, str] = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].lstrip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key, _, value = stripped.partition("=")
+            values[key.strip()] = value.strip().strip("'\"")
+    return values
+
+
+def env_keys(text: str) -> set[str]:
+    return set(env_values(text))
+
+
+@dataclass
+class AppendPlan:
+    """What ``--append-missing`` adds to an existing .env, and what it cannot fix."""
+
+    lines: list[tuple[str, str]] = field(default_factory=list)
+    problems: list[str] = field(default_factory=list)
+    empty: list[str] = field(default_factory=list)
+
+    @property
+    def added(self) -> list[str]:
+        return [key for key, _ in self.lines]
+
+
+def plan_missing(current: str) -> AppendPlan:
+    """Every required key (SECRET_GENERATORS, DERIVED) that ``current`` does not name.
+
+    A key the file names, even with an empty value, is never touched (only reported),
+    since appending a second definition would make the file ambiguous. A derived key is
+    computed from its source: the generated one when both are missing, the existing value
+    when only the derived key is missing. A missing source whose derived key is already
+    set cannot be generated (it would not match), so it is reported instead.
+    """
+    existing = env_values(current)
+    plan = AppendPlan()
+    generated: dict[str, str] = {}
+    derived_sources = {source: key for key, (source, _) in DERIVED.items()}
+    for key, make in SECRET_GENERATORS.items():
+        if key in existing:
+            if not existing[key]:
+                plan.empty.append(key)
+            continue
+        dependant = derived_sources.get(key)
+        if dependant is not None and existing.get(dependant):
+            plan.problems.append(
+                f"{key} is missing but {dependant} is set; a new {key} would not match it. "
+                f"Remove the {dependant} line (both are then generated) or add the matching "
+                f"{key} yourself."
+            )
+            continue
+        generated[key] = make()
+        plan.lines.append((key, generated[key]))
+    for key, (source, derive) in DERIVED.items():
+        if key in existing:
+            if not existing[key]:
+                plan.empty.append(key)
+            continue
+        seed = generated.get(source) or existing.get(source, "")
+        if not seed:
+            plan.problems.append(f"{key} cannot be derived: {source} is empty or missing.")
+            continue
+        try:
+            plan.lines.append((key, derive(seed)))
+        except (ValueError, TypeError):
+            plan.problems.append(f"{key} cannot be derived: {source} is not a valid key.")
+    return plan
+
+
+def append_missing(path: Path) -> AppendPlan:
+    """Append every missing required key to ``path`` (see ``plan_missing``).
+
+    Opens with O_APPEND (and O_NOFOLLOW), so existing bytes are never rewritten.
+    """
+    fd = os.open(path, os.O_RDWR | os.O_APPEND | os.O_NOFOLLOW)
+    with os.fdopen(fd, "r+", encoding="utf-8") as handle:
+        current = handle.read()
+        plan = plan_missing(current)
+        if plan.lines:
+            lines = [] if current == "" or current.endswith("\n") else [""]
+            lines.append(
+                "# Added by scripts/gen_dev_env.py --append-missing (existing lines unchanged)."
+            )
+            lines.extend(f"{key}={value}" for key, value in plan.lines)
+            handle.write("\n".join(lines) + "\n")
+    return plan
+
+
+def _report(path: Path, plan: AppendPlan) -> int:
+    if plan.added:
+        print(f"{path}: appended {', '.join(plan.added)} (existing lines unchanged).")
+    else:
+        print(f"{path}: nothing to append, leaving it unchanged.")
+    for key in plan.empty:
+        print(f"warning: {key} is set but empty in {path}; fill it in.", file=sys.stderr)
+    for problem in plan.problems:
+        print(f"error: {problem}", file=sys.stderr)
+    return 1 if plan.problems else 0
+
+
+def _update_existing(path: Path, *, append: bool) -> int:
+    if not append:
+        try:
+            missing = plan_missing(path.read_text(encoding="utf-8")).added
+        except OSError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(f"{path} exists, leaving it unchanged.")
+        if missing:
+            print(
+                f"note: it lacks {', '.join(missing)}; run `make env` "
+                "(or this script with --append-missing) to append them."
+            )
+        return 0
     try:
-        added = append_missing(path)
+        plan = append_missing(path)
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    if added:
-        print(f"{path} exists; appended new secrets: {', '.join(added)} (other lines unchanged).")
-    else:
-        print(f"{path} exists, leaving it unchanged.")
-    return 0
+    return _report(path, plan)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--example", type=Path, default=ROOT / ".env.example")
     parser.add_argument("--env", type=Path, default=ROOT / ".env")
+    parser.add_argument(
+        "--append-missing",
+        action="store_true",
+        help="for an existing .env: append every required key it lacks, change nothing else",
+    )
     args = parser.parse_args(argv)
 
     if args.env.exists():
-        return _update_existing(args.env)
+        return _update_existing(args.env, append=args.append_missing)
     try:
         text = render(args.example.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     if not write_new(args.env, text):
-        return _update_existing(args.env)
+        return _update_existing(args.env, append=args.append_missing)
     print(f"created {args.env} with {len(SECRET_GENERATORS)} generated secrets (mode 0600).")
     return 0
 

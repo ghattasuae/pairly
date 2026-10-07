@@ -33,8 +33,9 @@ install: ## Install Python (uv) and JS (pnpm) dependencies
 hooks: ## Install the pre-commit git hooks
 	$(UV) run pre-commit install
 
-env: ## Create .env with random secrets if it is missing (never overwrites)
-	@$(UV) run python scripts/gen_dev_env.py
+env: ## Create .env with random secrets, or append the keys an existing one lacks (never changes a line)
+	@if [ -f .env ]; then $(UV) run python scripts/gen_dev_env.py --append-missing; \
+	else $(UV) run python scripts/gen_dev_env.py; fi
 
 # migrate, api and worker share one image (pairly-local/python-app:dev). Building it
 # through `up --build` makes three services build the same tag at once, which races.

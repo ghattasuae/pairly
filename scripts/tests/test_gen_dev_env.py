@@ -52,34 +52,132 @@ def test_real_example_fills_every_secret_with_unique_values(tmp_path: Path) -> N
     assert values["POSTGRES_DB"] == "pairly"
 
 
-def test_never_overwrites_existing_env(tmp_path: Path) -> None:
-    target = tmp_path / ".env"
-    target.write_text("KEEP=me\nPAIRLY_API_KEY_PEPPER=\n")
-    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
-    # The file names every appendable secret already (even empty): nothing changes.
-    assert target.read_text() == "KEEP=me\nPAIRLY_API_KEY_PEPPER=\n"
+def _run(target: Path, *flags: str) -> int:
+    return int(gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target), *flags]))
 
 
-def test_existing_env_gets_new_secrets_appended(tmp_path: Path) -> None:
+def _public_of(seed_b64: str) -> bytes:
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    key = Ed25519PrivateKey.from_private_bytes(base64.urlsafe_b64decode(seed_b64))
+    return key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+
+def _full_env() -> str:
+    """An existing .env holding every required key already."""
+    seed = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode()
+    lines = [f"{key}=existing-{key.lower()}" for key in gen.SECRET_GENERATORS]
+    lines = [line for line in lines if not line.startswith("PAIRLY_AUDIT_SIGNING_KEY=")]
+    lines.append(f"PAIRLY_AUDIT_SIGNING_KEY={seed}")
+    lines.append(f"PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY={gen._public_from_seed(seed)}")
+    return "\n".join(lines) + "\n"
+
+
+def test_never_overwrites_existing_env_without_the_flag(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     target = tmp_path / ".env"
-    original = "KEEP=me\n# PAIRLY_API_KEY_PEPPER=commented-out\nNO_NEWLINE=x"
+    target.write_text("KEEP=me\n")
+    assert _run(target) == 0
+    assert target.read_text() == "KEEP=me\n"
+    # It names the keys the file lacks (never their values).
+    out = capsys.readouterr().out
+    assert "PAIRLY_API_KEY_PEPPER" in out
+    assert "--append-missing" in out
+
+
+def test_append_missing_adds_every_missing_key_and_changes_no_line(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    # An older .env: everything but the Wave C keys, one commented out, no final newline.
+    lines = [
+        line
+        for line in _full_env().splitlines()
+        if not line.startswith(
+            ("PAIRLY_API_KEY_PEPPER=", "PAIRLY_AUDIT_SIGNING_KEY=", "PAIRLY_AUDIT_ANCHOR_")
+        )
+    ]
+    original = "\n".join(["KEEP=me", "# PAIRLY_API_KEY_PEPPER=commented-out", *lines])
     target.write_text(original)
     target.chmod(0o600)
-    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    assert _run(target, "--append-missing") == 0
     text = target.read_text()
     assert text.startswith(original + "\n")
-    values = _parse(text)
-    assert values["KEEP"] == "me"
-    assert values["NO_NEWLINE"] == "x"
-    assert len(values["PAIRLY_API_KEY_PEPPER"]) >= 43
+    added = _parse(text[len(original) :])
+    assert set(added) == {
+        "PAIRLY_API_KEY_PEPPER",
+        "PAIRLY_AUDIT_SIGNING_KEY",
+        "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY",
+    }
+    assert len(added["PAIRLY_API_KEY_PEPPER"]) >= 43
+    # Appended together, the pair matches.
+    public = base64.urlsafe_b64decode(added["PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY"])
+    assert public == _public_of(added["PAIRLY_AUDIT_SIGNING_KEY"])
     assert stat.S_IMODE(target.stat().st_mode) == 0o600
     # A second run appends nothing more.
-    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    assert _run(target, "--append-missing") == 0
     assert target.read_text() == text
 
 
-def test_appendable_secrets_are_known_secrets() -> None:
-    assert set(gen.APPEND_IF_MISSING) <= set(gen.SECRET_GENERATORS)
+def test_append_missing_derives_the_public_key_from_an_existing_signing_key(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / ".env"
+    original = "\n".join(
+        line
+        for line in _full_env().splitlines()
+        if not line.startswith("PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY=")
+    )
+    target.write_text(original + "\n")
+    assert _run(target, "--append-missing") == 0
+    values = _parse(target.read_text())
+    assert target.read_text().startswith(original + "\n")
+    public = base64.urlsafe_b64decode(values["PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY"])
+    assert public == _public_of(values["PAIRLY_AUDIT_SIGNING_KEY"])
+
+
+def test_append_missing_never_pairs_a_new_signing_key_with_an_old_public_key(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / ".env"
+    original = "\n".join(
+        line
+        for line in _full_env().splitlines()
+        if not line.startswith(("PAIRLY_AUDIT_SIGNING_KEY=", "PAIRLY_API_KEY_PEPPER="))
+    )
+    target.write_text(original + "\n")
+    assert _run(target, "--append-missing") == 1
+    text = target.read_text()
+    # The safe key is still appended; the signing key is reported, not generated.
+    assert set(_parse(text[len(original) + 1 :])) == {"PAIRLY_API_KEY_PEPPER"}
+    assert "PAIRLY_AUDIT_SIGNING_KEY is missing" in capsys.readouterr().err
+
+
+def test_append_missing_leaves_empty_keys_alone(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / ".env"
+    original = _full_env().replace(
+        "PAIRLY_API_KEY_PEPPER=existing-pairly_api_key_pepper", "PAIRLY_API_KEY_PEPPER="
+    )
+    target.write_text(original)
+    assert _run(target, "--append-missing") == 0
+    assert target.read_text() == original
+    assert "PAIRLY_API_KEY_PEPPER is set but empty" in capsys.readouterr().err
+
+
+def test_append_missing_on_a_complete_env_changes_nothing(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    original = _full_env()
+    target.write_text(original)
+    assert _run(target, "--append-missing") == 0
+    assert target.read_text() == original
+
+
+def test_append_missing_creates_a_missing_env(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    assert _run(target, "--append-missing") == 0
+    assert set(gen.SECRET_GENERATORS) <= set(_parse(target.read_text()))
 
 
 def test_example_with_a_secret_value_is_rejected() -> None:
