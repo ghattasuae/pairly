@@ -95,6 +95,17 @@ class TextBlock(_Model):
     group: int | None = None
 
 
+class Fill(_Model):
+    """A filled rectangle on a PDF page (a background, a band, a box over text).
+
+    Kept so hidden-text checks can compare a character's colour with what is behind it
+    instead of assuming a white page. Drawing order is not recorded.
+    """
+
+    bbox: BBox
+    color: str
+
+
 class Table(_Model):
     bbox: BBox | None = None
     rows: list[list[str | None]]
@@ -119,6 +130,8 @@ class Page(_Model):
     words: list[Word] = Field(default_factory=list)
     chars: list[Char] = Field(default_factory=list)
     tables: list[Table] = Field(default_factory=list)
+    # Filled rectangles (PDF only), capped per page; see ``Fill``.
+    fills: list[Fill] = Field(default_factory=list)
     ocr: OcrInfo | None = None
     image_count: int = 0
 

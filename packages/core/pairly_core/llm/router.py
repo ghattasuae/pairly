@@ -47,8 +47,10 @@ from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.crypto.envelope import DecryptionError
 from pairly_core.db import set_tenant
 from pairly_core.errors import NotFoundError
+from pairly_core.guardrails.pii import PiiRedactor
 from pairly_core.llm.budget import Budget
 from pairly_core.llm.catalog import ModelCatalog, ModelEntry, PriceTable, Usage
 from pairly_core.llm.diff import json_diff
@@ -81,7 +83,6 @@ from pairly_core.llm.tracing import (
     GenerationRecord,
     NoopTracer,
     Redactor,
-    RegexRedactor,
     Tracer,
     otel_tracer,
 )
@@ -168,7 +169,7 @@ class ModelRouter:
         self._budget = budget
         self._calls: CallStore = store or DatabaseCallStore()
         self._tracer: Tracer = tracer or NoopTracer()
-        self._redactor: Redactor = redactor or RegexRedactor()
+        self._redactor: Redactor = redactor or PiiRedactor()
         self._retry = retry_policy or RetryPolicy(
             max_retries=settings.llm_max_retries,
             base_delay=settings.llm_retry_base_delay_seconds,
@@ -566,6 +567,11 @@ class ModelRouter:
         except SQLAlchemyError as exc:
             log.error("llm.storage_failed", task=task.name, error=type(exc).__name__)
             raise ModelUnavailable("the model call could not be recorded") from exc
+        except DecryptionError as exc:
+            # A stored recording that does not decrypt was moved, tampered with or is
+            # under a KEK that is no longer configured: never use it, fail closed.
+            log.error("llm.stored_call_undecryptable", task=task.name)
+            raise ModelUnavailable("a stored model call could not be decrypted") from exc
 
     async def _complete[T: BaseModel](
         self,

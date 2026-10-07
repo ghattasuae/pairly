@@ -24,6 +24,7 @@ from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
 from pairly_core.plugins import discover_plugins
@@ -56,6 +57,9 @@ _loads = job_loads
 async def startup(ctx: dict[str, Any]) -> None:
     config: WorkerConfig = ctx["config"]
     configure_logging(config.log_level)
+    # Fail closed: no encryption keys, no worker (the keys are needed to read and write
+    # encrypted fields).
+    init_crypto()
     engine = create_async_engine(
         config.database_url.get_secret_value(),
         pool_size=config.db_pool_size,

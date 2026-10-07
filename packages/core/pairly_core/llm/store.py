@@ -2,8 +2,10 @@
 # Copyright (c) 2026 Proofly Technology
 """Storage of model calls and recorded responses (the ``model_calls`` table).
 
-Response bodies live in the database (``model_calls.response``, jsonb), capped by
-``PAIRLY_LLM_MAX_RESPONSE_BYTES``. ``CallStore`` is the seam for moving bodies to object
+Response bodies live in the database (``model_calls.response``), capped by
+``PAIRLY_LLM_MAX_RESPONSE_BYTES``. ``request`` and ``response`` are encrypted with
+the row's own context (``pairly_core.crypto``): ``insert`` seals them and
+``StoredCall.from_row`` opens them. ``CallStore`` is the seam for moving bodies to object
 storage later without touching the router.
 
 A "recording" for a request hash is the newest row with that hash that holds a model
@@ -20,6 +22,7 @@ from typing import Any, Protocol
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pairly_core.crypto.types import seal, unseal
 from pairly_core.llm.types import CallStatus
 from pairly_core.models.llm import ModelCall
 
@@ -66,12 +69,23 @@ class StoredCall:
             request_hash=row.request_hash,
             mode=row.mode,
             status=row.status,
-            request=dict(row.request),
-            response=row.response,
+            request=dict(unseal(row, "request")),
+            response=unseal(row, "response"),
             output_complete=row.output_complete,
             stop_reason=row.stop_reason,
             confidence=row.confidence,
         )
+
+
+def seal_call_values(values: dict[str, Any]) -> dict[str, Any]:
+    """A copy of ``values`` (with ``id`` and ``org_id``) with request and response sealed."""
+    out = dict(values)
+    for column in ("request", "response"):
+        if column in out:
+            out[column] = seal(
+                ModelCall, column, out[column], org_id=out["org_id"], row_id=out["id"]
+            )
+    return out
 
 
 class CallStore(Protocol):
@@ -87,8 +101,8 @@ class CallStore(Protocol):
 class DatabaseCallStore:
     async def insert(self, session: AsyncSession, values: dict[str, Any]) -> uuid.UUID:
         call_id = values.setdefault("id", uuid.uuid4())
-        await session.execute(insert(ModelCall).values(**values))
         assert isinstance(call_id, uuid.UUID)  # noqa: S101
+        await session.execute(insert(ModelCall).values(**seal_call_values(values)))
         return call_id
 
     async def find_recording(self, session: AsyncSession, request_hash: str) -> StoredCall | None:

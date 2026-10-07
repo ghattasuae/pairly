@@ -44,6 +44,15 @@ x-app-hardening: &app-hardening
 
 # Runtime settings shared by the API and the worker. Names are the contract with
 # packages/core settings (WP0.4).
+# Application-level encryption keys (WP1.14, pairly_core.crypto). The API, the worker
+# and the migrate job (it converts existing rows) all need them; nothing starts without.
+x-crypto-env: &crypto-env
+  PAIRLY_KEK_CURRENT: ${PAIRLY_KEK_CURRENT:?missing}
+  PAIRLY_KEK_1: ${PAIRLY_KEK_1:?missing}
+  # Second slot for a rotation; empty means unset.
+  PAIRLY_KEK_2: ${PAIRLY_KEK_2:-}
+  PAIRLY_BLIND_INDEX_KEY: ${PAIRLY_BLIND_INDEX_KEY:?missing}
+
 x-app-env: &app-env
   PAIRLY_ENV: ${PAIRLY_ENV:-development}
   PAIRLY_LOG_LEVEL: ${PAIRLY_LOG_LEVEL:-INFO}
@@ -83,8 +92,7 @@ x-app-env: &app-env
   PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3100}
   PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3100}
   PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3100}
-  PAIRLY_ENCRYPTION_KEY: ${PAIRLY_ENCRYPTION_KEY:?missing}
-  PAIRLY_BLIND_INDEX_KEY: ${PAIRLY_BLIND_INDEX_KEY:?missing}
+  <<: *crypto-env
   PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -330,6 +338,8 @@ services:
     command: ["alembic", "-c", "/app/apps/api/alembic.ini", "upgrade", "head"]
     environment:
       PAIRLY_DATABASE_URL_OWNER: postgresql+asyncpg://pairly_owner:${PAIRLY_OWNER_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
+      # Migration 0008 encrypts existing rows; `pairly-admin crypto rotate` re-wraps keys.
+      <<: *crypto-env
       # For `make bootstrap-org` (pairly-admin), which prints an invite link to the web app.
       PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3100}
     depends_on:

@@ -4,7 +4,8 @@
 
 Run with: ``uvicorn pairly_api.main:create_app --factory``.
 
-Startup fails closed: missing settings raise ``ConfigError``, an invalid workflow plugin
+Startup fails closed: missing settings or encryption keys (``PAIRLY_KEK_*``,
+``PAIRLY_BLIND_INDEX_KEY``) raise ``ConfigError``, an invalid workflow plugin
 raises ``PluginError``, and connecting to Postgres as a role that bypasses RLS raises
 ``UnsafeDatabaseRoleError``. Document storage settings (``PAIRLY_S3_*``) are required
 too, except in the test environment, where the document routes answer 503 without them.
@@ -31,6 +32,7 @@ from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
+from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
@@ -120,6 +122,7 @@ def create_app(
     approval_hooks: ApprovalHooks = NO_HOOKS,
 ) -> FastAPI:
     settings = settings or load_settings()
+    init_crypto()
     configure_logging(settings.log_level)
     configure_tracing()
     workflow_plugins = list(discover_plugins().values()) if plugins is None else list(plugins)

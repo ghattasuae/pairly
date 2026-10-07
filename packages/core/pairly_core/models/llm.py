@@ -4,7 +4,9 @@
 
 * ``model_calls``: one row per attempt (sent request, or replayed recording). Metadata,
   the exact request (inputs and settings) and the model output, for cost reporting,
-  decision records and replay. Append-only for the application role.
+  decision records and replay. Append-only for the application role. ``request`` and
+  ``response`` are encrypted (``EncryptedJSON``, migration 0008): write them with
+  ``seal`` and read them with ``unseal``.
 * ``llm_budget_reservations``: in-flight worst-case cost of calls that were admitted
   by the budget check but have not settled yet. Rows expire on their own.
 * ``org_llm_budgets``: per-org override of the default monthly budget.
@@ -15,7 +17,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import Any
 
 from sqlalchemy import (
     BigInteger,
@@ -32,9 +33,9 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from pairly_core.crypto.types import EncryptedJSON, Sealed
 from pairly_core.db import Base, OrgScoped
 
 
@@ -66,8 +67,9 @@ class ModelCall(Base, OrgScoped):
     mode: Mapped[str] = mapped_column(String(16), nullable=False)
     status: Mapped[str] = mapped_column(String(24), nullable=False)
     error_kind: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    request: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    response: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
+    # Encrypted (WP1.14): inputs and model output hold document content and personal data.
+    request: Mapped[Sealed] = mapped_column(EncryptedJSON(), nullable=False)
+    response: Mapped[Sealed | None] = mapped_column(EncryptedJSON(), nullable=True)
     # False when the provider cut the output off or refused (max tokens, refusal).
     output_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     stop_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)

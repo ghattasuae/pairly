@@ -83,7 +83,7 @@ format: ## Auto-format and auto-fix Python
 
 typecheck: ## mypy (strict on packages/core) and tsc
 	$(UV) run mypy packages/core
-	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts
+	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts synth
 	$(PNPM) typecheck
 
 # ---------------------------------------------------------------- CI checks, run locally
@@ -112,4 +112,5 @@ ci-actionlint: ## Lint the GitHub Actions workflows
 ci-test: ## pytest with coverage against a throwaway Postgres, as in CI
 	@db_env="$$(scripts/ci_postgres.sh start)" && eval "$$db_env" || exit 1; trap 'scripts/ci_postgres.sh stop' EXIT; \
 	$(UV) run --frozen alembic -c apps/api/alembic.ini upgrade head && \
+	$(UV) run --frozen alembic -c apps/api/alembic.ini check && \
 	$(UV) run --frozen pytest --cov --cov-report=term-missing
