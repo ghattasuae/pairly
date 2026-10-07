@@ -79,7 +79,7 @@ export function parseTrustedOrigins(raw: string | undefined): string[] {
       candidate.replace(/\/$/, "") === parsed.origin;
     if (!exact) {
       throw new Error(
-        `PAIRLY_AUTH_TRUSTED_ORIGINS: ${JSON.stringify(candidate)} must be an exact origin such as http://127.0.0.1:3000`,
+        `PAIRLY_AUTH_TRUSTED_ORIGINS: ${JSON.stringify(candidate)} must be an exact origin such as http://127.0.0.1:3100`,
       );
     }
     if (!origins.includes(parsed.origin)) origins.push(parsed.origin);
@@ -92,7 +92,7 @@ function devDefaults(): Partial<Record<string, string>> {
   const pw = value("PAIRLY_AUTH_DB_PASSWORD");
   const db = value("POSTGRES_DB") ?? "pairly";
   const pgPort = value("POSTGRES_HOST_PORT") ?? "5432";
-  const web = value("PAIRLY_PUBLIC_WEB_URL") ?? "http://localhost:3000";
+  const web = value("PAIRLY_PUBLIC_WEB_URL") ?? "http://localhost:3100";
   return {
     BETTER_AUTH_URL: web,
     PAIRLY_AUTH_DATABASE_URL: pw

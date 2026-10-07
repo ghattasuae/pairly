@@ -18,12 +18,13 @@
 # - Every published port is bound to 127.0.0.1.
 # - Every secret is `${VAR:?missing}`: compose refuses to start without it. No default secrets.
 # - Each service gets only the secrets it needs.
-# - Memory limits keep the default profile near 1.5 GB (the local Docker VM has 2 GB).
+# - Memory limits keep the default profile near 2 GB. The worker gets the most (896m)
+#   because it runs the document parser sandbox (OCR) next to its jobs.
 #
 # Image licences (all run as separate processes next to Pairly, nothing is linked):
 #   pgvector/pgvector  PostgreSQL License      valkey 8.1     BSD-3-Clause
 #   MinIO              AGPL-3.0                axllent/mailpit  MIT
-#   clamav/clamav      GPL-2.0                 clickhouse      Apache-2.0
+#   clamav-debian      GPL-2.0                 clickhouse      Apache-2.0
 #   langfuse           MIT (ee/ folders unused without a licence key)
 
 name: pairly
@@ -48,7 +49,7 @@ x-app-env: &app-env
   PAIRLY_LOG_LEVEL: ${PAIRLY_LOG_LEVEL:-INFO}
   PAIRLY_MODEL_MODE: ${PAIRLY_MODEL_MODE:-recorded}
   PAIRLY_PUBLIC_API_URL: ${PAIRLY_PUBLIC_API_URL:-http://localhost:8000}
-  PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+  PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3100}
   # Runtime role only (not the owner), so Row Level Security applies.
   PAIRLY_DATABASE_URL: postgresql+asyncpg://pairly_app:${PAIRLY_APP_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
   PAIRLY_REDIS_URL: redis://:${REDIS_PASSWORD:?missing}@redis:6379/0
@@ -65,12 +66,21 @@ x-app-env: &app-env
   # the human queue (fail closed), they are never treated as clean.
   PAIRLY_CLAMAV_HOST: clamav
   PAIRLY_CLAMAV_PORT: "3310"
+  # Documents (WP1.1, WP1.2). Inbound email addresses are <workflow>+<org-slug>@<domain>.
+  PAIRLY_INBOUND_EMAIL_DOMAIN: ${PAIRLY_INBOUND_EMAIL_DOMAIN:-inbound.pairly.localhost}
+  PAIRLY_MAX_UPLOAD_BYTES: ${PAIRLY_MAX_UPLOAD_BYTES:-26214400}
+  PAIRLY_INTAKE_POLICIES: ${PAIRLY_INTAKE_POLICIES:-{}}
+  PAIRLY_SIGNED_URL_TTL_SECONDS: ${PAIRLY_SIGNED_URL_TTL_SECONDS:-60}
+  # Parser sandbox: one parse at a time, sized to fit the worker container below.
+  PAIRLY_PARSE_CONCURRENCY: ${PAIRLY_PARSE_CONCURRENCY:-1}
+  PAIRLY_PARSE_MEMORY_MB: ${PAIRLY_PARSE_MEMORY_MB:-512}
+  PAIRLY_OCR_LANGUAGES: ${PAIRLY_OCR_LANGUAGES:-eng+ara}
   # Better Auth JWT plugin (apps/web, WP0.6) serves the key set; tokens carry this issuer
   # and audience.
   PAIRLY_AUTH_JWKS_URL: http://web:3000/api/auth/jwks
-  PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3000}
-  PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3000}
-  PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3000}
+  PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3100}
+  PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3100}
+  PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3100}
   PAIRLY_ENCRYPTION_KEY: ${PAIRLY_ENCRYPTION_KEY:?missing}
   PAIRLY_BLIND_INDEX_KEY: ${PAIRLY_BLIND_INDEX_KEY:?missing}
   PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
@@ -98,7 +108,7 @@ x-app-depends: &app-depends
 # LangFuse settings shared by its web and worker containers.
 x-langfuse-env: &langfuse-env
   DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:?missing}@postgres:5432/langfuse
-  NEXTAUTH_URL: http://localhost:${LANGFUSE_HOST_PORT:-3100}
+  NEXTAUTH_URL: http://localhost:${LANGFUSE_HOST_PORT:-3200}
   SALT: ${LANGFUSE_SALT:?missing}
   ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:?missing}
   TELEMETRY_ENABLED: "false"
@@ -319,7 +329,7 @@ services:
     environment:
       PAIRLY_DATABASE_URL_OWNER: postgresql+asyncpg://pairly_owner:${PAIRLY_OWNER_DB_PASSWORD:?missing}@postgres:5432/${POSTGRES_DB:?missing}
       # For `make bootstrap-org` (pairly-admin), which prints an invite link to the web app.
-      PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+      PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3100}
     depends_on:
       postgres:
         condition: service_healthy
@@ -336,6 +346,9 @@ services:
     <<: *app-hardening
     restart: unless-stopped
     command: ["uvicorn", "pairly_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--no-server-header"]
+    # Uploads are spooled here (hashed while streaming) before they go to MinIO.
+    tmpfs:
+      - /tmp:size=128m
     environment:
       <<: *app-env
     depends_on: *app-depends
@@ -363,6 +376,10 @@ services:
     <<: *app-hardening
     restart: unless-stopped
     command: ["arq", "pairly_worker.main.WorkerSettings"]
+    # Scan and parse work in private temp dirs; the parser sandbox runs as a child process
+    # with its own CPU, memory (PAIRLY_PARSE_MEMORY_MB) and wall-clock limits.
+    tmpfs:
+      - /tmp:size=256m
     environment:
       <<: *app-env
     depends_on: *app-depends
@@ -378,7 +395,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 320m
+          memory: 896m
 
   web:
     profiles: ["web"]
@@ -397,9 +414,9 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3000"
-      BETTER_AUTH_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+      BETTER_AUTH_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3100}
       # Extra exact origins Better Auth accepts besides BETTER_AUTH_URL (comma separated),
-      # e.g. http://127.0.0.1:3000 for browsers or tests that use the IP address.
+      # e.g. http://127.0.0.1:3100 for browsers or tests that use the IP address.
       PAIRLY_AUTH_TRUSTED_ORIGINS: ${PAIRLY_AUTH_TRUSTED_ORIGINS:-}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?missing}
       # Better Auth connects as pairly_auth, which owns only schema `auth` (its search_path)
@@ -408,8 +425,8 @@ services:
       # Better Auth applies its own schema migrations (as pairly_auth) before serving.
       PAIRLY_AUTH_MIGRATE_ON_START: "true"
       # JWT claims for the API. Must equal the api service's values (same variables).
-      PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3000}
-      PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3000}
+      PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3100}
+      PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3100}
       PAIRLY_API_INTERNAL_URL: http://api:8000
       PAIRLY_SMTP_HOST: mailpit
       PAIRLY_SMTP_PORT: "1025"
@@ -427,7 +444,8 @@ services:
       api:
         condition: service_healthy
     ports:
-      - 127.0.0.1:${PAIRLY_WEB_PORT:-3000}:3000
+      # Host port 3100 by default (configurable); the container still listens on 3000.
+      - 127.0.0.1:${PAIRLY_WEB_PORT:-3100}:3000
     healthcheck:
       test:
         - CMD
@@ -446,7 +464,8 @@ services:
   # ---------------------------------------------------------------- profile: scan
   clamav:
     profiles: ["scan"]
-    image: clamav/clamav:1.5.4
+    # The Debian build is multi-arch (amd64, arm64); clamav/clamav is amd64 only.
+    image: clamav/clamav-debian:1.5.4
     <<: *hardening
     restart: unless-stopped
     volumes:
@@ -463,8 +482,9 @@ services:
     deploy:
       resources:
         limits:
-          # clamd holds the full signature set in memory (about 1 GB, more during reloads).
-          memory: 1536m
+          # clamd holds the full signature set in memory (about 1.1 GB steady). Startup and
+          # reloads need more: measured OOM-kill at 1536m on arm64 (clamav-debian 1.5.4).
+          memory: 2560m
 
   # ---------------------------------------------------------------- profile: observability
   clickhouse:
@@ -538,7 +558,7 @@ services:
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:?missing}
     depends_on: *langfuse-depends
     ports:
-      - 127.0.0.1:${LANGFUSE_HOST_PORT:-3100}:3000
+      - 127.0.0.1:${LANGFUSE_HOST_PORT:-3200}:3000
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1"]
       interval: 10s

@@ -6,7 +6,8 @@ Run with: ``uvicorn pairly_api.main:create_app --factory``.
 
 Startup fails closed: missing settings raise ``ConfigError``, an invalid workflow plugin
 raises ``PluginError``, and connecting to Postgres as a role that bypasses RLS raises
-``UnsafeDatabaseRoleError``.
+``UnsafeDatabaseRoleError``. Document storage settings (``PAIRLY_S3_*``) are required
+too, except in the test environment, where the document routes answer 503 without them.
 """
 
 from __future__ import annotations
@@ -23,15 +24,42 @@ from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
 from pairly_api.routes import audit, health, invitations, me, members
+from pairly_api.routes import documents as document_routes
+from pairly_api.routes.documents import DocumentServices
 from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_core.auth import TokenVerifier
-from pairly_core.config import Settings, load_settings
+from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import RoleRegistry, build_registry
 
 log = structlog.get_logger(__name__)
+
+
+async def _document_services(settings: Settings) -> DocumentServices | None:
+    """Storage and queue for the document routes, from ``PAIRLY_S3_*`` and friends."""
+    from pairly_core.ingestion.queue import ArqJobQueue, JobQueue, NullJobQueue
+    from pairly_core.ingestion.settings import load_ingestion_settings
+    from pairly_core.ingestion.storage import S3ObjectStore
+
+    try:
+        ingestion = load_ingestion_settings(env=settings.env)
+    except ConfigError:
+        if settings.env is Environment.TEST:
+            log.warning("documents_disabled", reason="ingestion settings missing")
+            return None
+        raise
+    queue: JobQueue = NullJobQueue()
+    if ingestion.redis_url is not None:
+        try:
+            queue = await ArqJobQueue.connect(ingestion.redis_url.get_secret_value())
+        except Exception as exc:
+            # Uploads still work; the worker's sweeper queues their scans.
+            log.warning("job_queue_unavailable", error=type(exc).__name__)
+    return DocumentServices(
+        settings=ingestion, store=S3ObjectStore.from_settings(ingestion), queue=queue
+    )
 
 
 def _lifespan(
@@ -41,7 +69,11 @@ def _lifespan(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         engine = create_engine(settings)
         verifier = TokenVerifier.from_settings(settings)
+        owned_services = False
         try:
+            if getattr(app.state, "documents", None) is None:
+                app.state.documents = await _document_services(settings)
+                owned_services = app.state.documents is not None
             await check_app_role(engine)
             app.state.pairly = AppContext(
                 settings=settings,
@@ -53,6 +85,10 @@ def _lifespan(
             log.info("startup", env=settings.env.value, permissions=len(registry.permissions))
             yield
         finally:
+            services = getattr(app.state, "documents", None)
+            close = getattr(getattr(services, "queue", None), "aclose", None)
+            if owned_services and close is not None:
+                await close()
             await verifier.aclose()
             await engine.dispose()
 
@@ -63,6 +99,7 @@ def create_app(
     settings: Settings | None = None,
     *,
     plugins: Iterable[WorkflowPlugin] | None = None,
+    documents: DocumentServices | None = None,
 ) -> FastAPI:
     settings = settings or load_settings()
     configure_logging(settings.log_level)
@@ -80,12 +117,14 @@ def create_app(
         redoc_url=None,
     )
     install_error_handlers(app)
+    app.state.documents = documents
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
     v1.include_router(audit.router)
     v1.include_router(invitations.router)
     v1.include_router(members.router)
+    v1.include_router(document_routes.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

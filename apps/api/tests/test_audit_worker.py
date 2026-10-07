@@ -68,7 +68,10 @@ async def test_nightly_job_flags_broken_chains(
 
 
 async def test_worker_startup_checks_role(migrated: DbUrls, owner_engine: AsyncEngine) -> None:
-    config = load_worker_config(database_url=migrated.app, redis_url="redis://localhost:6379/0")
+    # env=test: no object storage here, so the document jobs stay disabled (WP1.1).
+    config = load_worker_config(
+        database_url=migrated.app, redis_url="redis://localhost:6379/0", env="test"
+    )
     ctx: dict[str, Any] = {"config": config}
     await startup(ctx)
     try:
@@ -85,7 +88,7 @@ async def test_worker_startup_checks_role(migrated: DbUrls, owner_engine: AsyncE
     if is_super:
         bad: dict[str, Any] = {
             "config": load_worker_config(
-                database_url=migrated.owner, redis_url="redis://localhost:6379/0"
+                database_url=migrated.owner, redis_url="redis://localhost:6379/0", env="test"
             )
         }
         with pytest.raises(UnsafeDatabaseRoleError):

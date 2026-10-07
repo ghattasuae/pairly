@@ -9,7 +9,7 @@ function record(name: string, ok: boolean, detail?: string) {
   logCheck({ name, status: ok ? "pass" : "fail", detail });
 }
 
-const BASE = "http://127.0.0.1:3000";
+const BASE = process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100";
 
 test.describe("Security smoke", () => {
   for (const url of [`${BASE}/api/auth/token`, `${BASE}/api/auth/organization/list`]) {

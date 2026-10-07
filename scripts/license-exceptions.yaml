@@ -38,3 +38,24 @@ exceptions:
       (Next.js, PostCSS, Babel). CC BY 4.0 asks only for attribution, which NOTICE.md
       gives. It adds no copyleft terms, so it fits AGPL-3.0 and commercial relicensing.
       Reviewed 2026-10-07; confirm with legal before the first commercial license.
+  - ecosystem: python
+    name: pillow
+    license: MIT-CMU
+    reason: >-
+      Pillow (image decoding for OCR and pdfplumber) uses the MIT-CMU license, the
+      Historical Permission Notice and Disclaimer variant used by PIL since 1995. It is
+      permissive (keep the notice, no copyleft) and GPL compatible, so it fits AGPL-3.0
+      and commercial relicensing. The checker lists it as unknown only because the id is
+      not in its allow list. Reviewed 2026-10-07 (WP1.2).
+  - ecosystem: python
+    name: pypdfium2
+    license: BSD-3-Clause, Apache-2.0, dependency licenses
+    reason: >-
+      Python bindings (BSD-3-Clause or Apache-2.0) plus a bundled PDFium binary, pulled in
+      by pdfplumber. The bundled build licenses are PDFium (BSD-3-Clause), FreeType (FTL,
+      BSD style), ICU (Unicode license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT),
+      OpenJPEG (BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf
+      (MIT or Apache-2.0), LLVM libc (Apache-2.0 with LLVM exception) and CC-BY-4.0
+      documentation. All permissive with attribution only, no copyleft, so it fits AGPL-3.0
+      and commercial relicensing. NOTICE.md must carry the attributions. Reviewed
+      2026-10-07 (WP1.2). Not PyMuPDF (AGPL), which stays banned.

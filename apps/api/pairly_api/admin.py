@@ -80,8 +80,8 @@ def _parser() -> argparse.ArgumentParser:
     boot.add_argument(
         "--web-url",
         type=_web_url,
-        default=os.environ.get(WEB_URL_ENV) or "http://localhost:3000",
-        help=f"public web app URL for the link (default: ${WEB_URL_ENV} or localhost:3000)",
+        default=os.environ.get(WEB_URL_ENV) or "http://localhost:3100",
+        help=f"public web app URL for the link (default: ${WEB_URL_ENV} or localhost:3100)",
     )
     boot.add_argument("--locale", choices=LOCALES, default="en", help="language of the link")
     return parser
