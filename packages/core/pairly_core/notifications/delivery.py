@@ -224,6 +224,54 @@ async def deliver_org(
 class DigestStats:
     digests: int = 0
     items: int = 0
+    # People whose digest failed (rolled back to their savepoint, items kept held).
+    failed: int = 0
+
+
+async def _digest_for(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    items: list[Notification],
+    *,
+    day: str,
+    now: datetime,
+) -> int:
+    """Queue ``user_id``'s digest of ``items``. Returns how many items it covers."""
+    lines: list[dict[str, str]] = []
+    for row in items[:MAX_DIGEST_ITEMS]:
+        content = unseal(row, "content") or {}
+        entry = content.get("digest") if isinstance(content, dict) else None
+        if isinstance(entry, dict):
+            # Always both keys: the digest template reads ``item.url`` under strict
+            # undefined, so an item without a link must carry an empty one.
+            lines.append(
+                {
+                    "title": str(entry.get("title") or ""),
+                    "url": str(entry.get("url") or ""),
+                }
+            )
+    results = await notify(
+        session,
+        recipient=Recipient.user(user_id),
+        template_key="core.digest.daily",
+        variables={"items": lines, "count": len(items), "date": day},
+        dedupe_key=f"digest:{user_id}:{day}",
+        channels=["email"],
+        actor_id=NOTIFY_ACTOR,
+    )
+    result = results[0] if results else None
+    if result is None or result.replayed or result.notification_id is None:
+        return 0  # today's digest exists already: these items wait for tomorrow's
+    delivered = result.status != NotificationStatus.SUPPRESSED.value
+    for row in items:
+        row.status = (
+            NotificationStatus.SENT.value if delivered else NotificationStatus.SUPPRESSED.value
+        )
+        row.reason = "digest" if delivered else "digest_opted_out"
+        row.digest_id = result.notification_id
+        row.sent_at = now if delivered else None
+    await session.flush()
+    return len(items)
 
 
 async def build_digests(session: AsyncSession, *, now: datetime | None = None) -> DigestStats:
@@ -247,40 +295,18 @@ async def build_digests(session: AsyncSession, *, now: datetime | None = None) -
     stats = DigestStats()
     day = now.date().isoformat()
     for user_id, items in by_user.items():
-        lines: list[dict[str, str]] = []
-        for row in items[:MAX_DIGEST_ITEMS]:
-            content = unseal(row, "content") or {}
-            entry = content.get("digest") if isinstance(content, dict) else None
-            if isinstance(entry, dict):
-                # Always both keys: the digest template reads ``item.url`` under strict
-                # undefined, so an item without a link must carry an empty one.
-                lines.append(
-                    {
-                        "title": str(entry.get("title") or ""),
-                        "url": str(entry.get("url") or ""),
-                    }
-                )
-        results = await notify(
-            session,
-            recipient=Recipient.user(user_id),
-            template_key="core.digest.daily",
-            variables={"items": lines, "count": len(items), "date": day},
-            dedupe_key=f"digest:{user_id}:{day}",
-            channels=["email"],
-            actor_id=NOTIFY_ACTOR,
-        )
-        result = results[0] if results else None
-        if result is None or result.replayed or result.notification_id is None:
-            continue  # today's digest exists already: these items wait for tomorrow's
-        delivered = result.status != NotificationStatus.SUPPRESSED.value
-        for row in items:
-            row.status = (
-                NotificationStatus.SENT.value if delivered else NotificationStatus.SUPPRESSED.value
-            )
-            row.reason = "digest" if delivered else "digest_opted_out"
-            row.digest_id = result.notification_id
-            row.sent_at = now if delivered else None
-        await session.flush()
-        stats.digests += 1
-        stats.items += len(items)
+        # One savepoint per person: a bad item (undecryptable content, a template that
+        # fails to render for this person) rolls back only that person's digest, logs,
+        # and the rest of the organisation's digests still go out. The person's items
+        # stay held and are tried again with the next digest.
+        try:
+            async with session.begin_nested():
+                count = await _digest_for(session, user_id, items, day=day, now=now)
+        except Exception as exc:
+            stats.failed += 1
+            log.warning("digest_person_failed", user_id=str(user_id), error=type(exc).__name__)
+            continue
+        if count:
+            stats.digests += 1
+            stats.items += count
     return stats

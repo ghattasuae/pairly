@@ -60,7 +60,7 @@ async def deliver_notifications(ctx: dict[str, Any]) -> dict[str, Any]:
 
 async def send_digests(ctx: dict[str, Any]) -> dict[str, Any]:
     sessionmaker: async_sessionmaker[AsyncSession] = ctx["sessionmaker"]
-    digests = items = 0
+    digests = items = failed = 0
     errors: list[str] = []
     for org_id in await _due_org_ids(sessionmaker):
         try:
@@ -74,6 +74,12 @@ async def send_digests(ctx: dict[str, Any]) -> dict[str, Any]:
             continue
         digests += stats.digests
         items += stats.items
-    summary: dict[str, Any] = {"digests": digests, "items": items, "errors": errors}
+        failed += stats.failed
+    summary: dict[str, Any] = {
+        "digests": digests,
+        "items": items,
+        "failed_people": failed,
+        "errors": errors,
+    }
     log.info("digests_finished", **summary)
     return summary

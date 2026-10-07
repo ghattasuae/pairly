@@ -308,6 +308,59 @@ async def test_preferences_api(
 # ------------------------------------------------------------------ digests and unsubscribe
 
 
+async def test_one_bad_item_never_blocks_the_organisations_digests(
+    notify_api: NotifyApi, world: World, owner_engine: AsyncEngine, wf_engine: AsyncEngine
+) -> None:
+    api = notify_api
+    maker = _maker(wf_engine)
+    held: dict[str, uuid.UUID] = {}
+    for name in ("appr1", "appr2"):
+        saved = await api.client.put(
+            "/v1/notifications/preferences",
+            json={"digest": {"approvals": "daily"}},
+            headers=api.headers(world, name),
+        )
+        assert saved.status_code == 200, saved.text
+        (row,) = await _notify(
+            maker,
+            world.org_id,
+            recipient=Recipient.user(world.id(name)),
+            template_key="core.approval.requested",
+            variables=APPROVAL_VARS | {"title": f"Invoice for {name}"},
+            dedupe_key=f"digest-savepoint:{name}",
+            channels=["email"],
+        )
+        assert row.status == "digest"
+        held[name] = row.notification_id  # type: ignore[assignment]
+    # appr1's held item can no longer be decrypted (a corrupted or foreign ciphertext).
+    await owner_sql(
+        owner_engine,
+        world.org_id,
+        "UPDATE notifications SET content = 'v1:not-a-valid-ciphertext' WHERE id = :i",
+        {"i": held["appr1"]},
+    )
+
+    async with maker() as session:
+        set_tenant(session, world.org_id, None)
+        async with session.begin():
+            stats = await build_digests(session)
+    assert (stats.digests, stats.failed) == (1, 1)
+    digests = await notifications(maker, world.org_id, template_key="core.digest.daily")
+    assert [r.recipient_user_id for r, _ in digests] == [world.id("appr2")]
+    assert "Invoice for appr2" in digests[0][1]["text"]
+    status = {
+        r.id: r.status
+        for r in await owner_sql(
+            owner_engine,
+            world.org_id,
+            "SELECT id, status FROM notifications WHERE id IN (:a, :b)",
+            {"a": held["appr1"], "b": held["appr2"]},
+        )
+    }
+    # The bad person's item stays held (tried again next time); the other one went out.
+    assert status == {held["appr1"]: "digest", held["appr2"]: "sent"}
+
+
 async def test_digest_job_and_one_click_unsubscribe(
     notify_api: NotifyApi, world: World, owner_engine: AsyncEngine, wf_engine: AsyncEngine
 ) -> None:
