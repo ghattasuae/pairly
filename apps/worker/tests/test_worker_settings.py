@@ -13,10 +13,12 @@ from arq.worker import Function
 
 import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
+from pairly_core.jobs.registry import JobRegistryError, build_job_registry
 from pairly_worker.config import load_worker_config
 from pairly_worker.main import (
     APPROVAL_SLA_JOB,
     NIGHTLY_AUDIT_JOB,
+    RETENTION_JOB,
     SWEEP_JOB,
     WEBHOOK_JOB,
     WORKFLOW_RESUME_JOB,
@@ -63,7 +65,16 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         APPROVAL_SLA_JOB,
         WORKFLOW_RESUME_JOB,
         WEBHOOK_JOB,
+        RETENTION_JOB,
     }
+    # Every scheduled job is declared in the job registry, and every declared core job
+    # is scheduled (the operations view lists exactly what runs).
+    assert set(jobs) == {j.name for j in build_job_registry().jobs}
+    # Each cron coroutine is wrapped to record its runs in job_runs.
+    assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
+    # The retention dry run is daily at 02:15 UTC, one at a time.
+    retention = jobs[RETENTION_JOB]
+    assert (retention.hour, retention.minute, retention.unique) == (2, 15, True)
     # Webhook delivery runs every minute, one at a time.
     assert jobs[WEBHOOK_JOB].unique
     assert jobs[WEBHOOK_JOB].second == 0
@@ -100,3 +111,8 @@ def test_lazy_module_attribute(monkeypatch: pytest.MonkeyPatch) -> None:
     assert worker_main.WorkerSettings is first
     with pytest.raises(AttributeError):
         _ = worker_main.NotThere
+
+
+def test_undeclared_jobs_are_refused() -> None:
+    with pytest.raises(JobRegistryError, match="unknown job"):
+        worker_main._job(build_job_registry(), "not_declared", worker_main.retention_dry_run)

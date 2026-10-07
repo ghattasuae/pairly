@@ -259,4 +259,11 @@ async def make_org(owner_engine: AsyncEngine) -> AsyncIterator[Any]:
             await conn.execute(
                 text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)}
             )
-            await conn.execute(text("DELETE FROM documents WHERE org_id = :o"), {"o": org.id})
+            # Policy files stay: policy documents (append-only) reference them.
+            await conn.execute(
+                text(
+                    "DELETE FROM documents WHERE org_id = :o AND id NOT IN "
+                    "(SELECT document_id FROM policy_documents WHERE org_id = :o)"
+                ),
+                {"o": org.id},
+            )

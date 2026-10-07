@@ -297,6 +297,8 @@ CORE_PERMISSION_MODULES: tuple[str, ...] = (
     "pairly_core.policy.permissions",
     "pairly_core.api_keys.permissions",
     "pairly_core.webhooks.permissions",
+    "pairly_core.flags.permissions",
+    "pairly_core.retention.permissions",
 )
 
 

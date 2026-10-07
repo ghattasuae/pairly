@@ -200,6 +200,7 @@ class DeliveryStats:
     failed_attempts: int = 0
     gave_up: int = 0
     disabled_endpoints: list[str] = field(default_factory=list)
+    skipped: bool = False  # the organisation's webhooks.outbound flag is off
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,11 +256,8 @@ class WebhookDispatcher:
             )
             if not events:
                 return 0
-            enabled = True if self._enabled_for is None else await self._enabled_for(session)
-            endpoints = (
-                list(await session.scalars(select(WebhookEndpoint).where(WebhookEndpoint.active)))
-                if enabled
-                else []
+            endpoints = list(
+                await session.scalars(select(WebhookEndpoint).where(WebhookEndpoint.active))
             )
             for event in events:
                 payload = envelope(
@@ -479,8 +477,20 @@ class WebhookDispatcher:
 
     # ------------------------------------------------------------------ all orgs
 
+    async def enabled(self, org_id: uuid.UUID) -> bool:
+        """Whether the organisation delivers webhooks now (the ``enabled_for`` check)."""
+        if self._enabled_for is None:
+            return True
+        async with self._session(org_id) as session, session.begin():
+            return await self._enabled_for(session)
+
     async def run_org(self, org_id: uuid.UUID) -> DeliveryStats:
         stats = DeliveryStats()
+        # Switched off: touch nothing. The outbox keeps its events and pending deliveries
+        # stay pending, so switching back on delivers them (within the 24 hour window).
+        if not await self.enabled(org_id):
+            stats.skipped = True
+            return stats
         stats.fanned_out = await self.fan_out(org_id)
         return await self.deliver_due(org_id, stats)
 

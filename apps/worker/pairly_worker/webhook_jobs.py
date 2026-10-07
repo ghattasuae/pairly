@@ -16,6 +16,8 @@ from typing import Any
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.flags.registry import WEBHOOKS_OUTBOUND
+from pairly_core.flags.service import is_enabled
 from pairly_core.webhooks.delivery import (
     EndpointDisabledHook,
     HttpxSender,
@@ -29,13 +31,18 @@ log = structlog.get_logger("pairly_worker.webhook_jobs")
 DISPATCHER = "webhook_dispatcher"
 
 
+async def _outbound_enabled(session: AsyncSession) -> bool:
+    return await is_enabled(session, WEBHOOKS_OUTBOUND)
+
+
 def setup_webhooks(
     ctx: dict[str, Any], *, on_endpoint_disabled: EndpointDisabledHook | None = None
 ) -> WebhookDispatcher:
     """Build the dispatcher (fails closed on invalid webhook settings)."""
     settings = load_webhook_settings()
     sender = HttpxSender(settings)
-    kwargs: dict[str, Any] = {}
+    # Organisations can switch delivery off with the webhooks.outbound flag.
+    kwargs: dict[str, Any] = {"enabled_for": _outbound_enabled}
     if on_endpoint_disabled is not None:
         kwargs["on_endpoint_disabled"] = on_endpoint_disabled
     dispatcher = WebhookDispatcher(ctx["sessionmaker"], sender, settings, **kwargs)
@@ -47,7 +54,14 @@ def setup_webhooks(
 async def deliver_webhooks(ctx: dict[str, Any]) -> dict[str, Any]:
     sessionmaker: async_sessionmaker[AsyncSession] = ctx["sessionmaker"]
     dispatcher: WebhookDispatcher = ctx[DISPATCHER]
-    totals = {"orgs": 0, "fanned_out": 0, "sent": 0, "succeeded": 0, "failed_attempts": 0}
+    totals = {
+        "orgs": 0,
+        "skipped": 0,
+        "fanned_out": 0,
+        "sent": 0,
+        "succeeded": 0,
+        "failed_attempts": 0,
+    }
     disabled: list[str] = []
     errors: list[str] = []
     for org_id in await due_org_ids(sessionmaker):
@@ -58,6 +72,7 @@ async def deliver_webhooks(ctx: dict[str, Any]) -> dict[str, Any]:
             errors.append(str(org_id))
             log.error("webhook_delivery_failed", org_id=str(org_id), error=type(exc).__name__)
             continue
+        totals["skipped"] += int(stats.skipped)
         totals["fanned_out"] += stats.fanned_out
         totals["sent"] += stats.sent
         totals["succeeded"] += stats.succeeded

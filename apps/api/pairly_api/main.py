@@ -31,11 +31,14 @@ from pairly_api.routes import (
     approval_links,
     approvals,
     audit,
+    flags,
     health,
     invitations,
     me,
     members,
     policies,
+    retention,
+    search,
     webhooks,
 )
 from pairly_api.routes import documents as document_routes
@@ -48,9 +51,12 @@ from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
+from pairly_core.flags.registry import build_flag_registry, install_flag_registry
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import RoleRegistry, build_registry
+from pairly_core.retention.rules import build_retention_registry
+from pairly_core.search.sources import build_search_registry
 from pairly_core.webhooks.events import build_event_registry, install_event_registry
 from pairly_core.webhooks.settings import load_webhook_settings
 from pairly_core.workflow.checkpoint import TenantCheckpointer
@@ -146,6 +152,7 @@ def create_app(
     workflow_plugins = list(discover_plugins().values()) if plugins is None else list(plugins)
     registry = build_registry(workflow_plugins)
     install_event_registry(build_event_registry(workflow_plugins))
+    install_flag_registry(build_flag_registry(workflow_plugins))
 
     show_docs = not settings.is_production
     app = FastAPI(
@@ -160,6 +167,8 @@ def create_app(
     app.add_exception_handler(IdempotentReplay, replay_handler)
     app.state.documents = documents
     app.state.webhook_settings = webhook_settings
+    app.state.search_registry = build_search_registry(workflow_plugins)
+    app.state.retention_registry = build_retention_registry(workflow_plugins)
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
@@ -173,6 +182,9 @@ def create_app(
     v1.include_router(policies.router)
     v1.include_router(api_keys.router)
     v1.include_router(webhooks.router)
+    v1.include_router(flags.router)
+    v1.include_router(search.router)
+    v1.include_router(retention.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)

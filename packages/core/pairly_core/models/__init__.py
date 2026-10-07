@@ -11,13 +11,16 @@ from pairly_core.approvals.models import (
     ApprovalStep,
 )
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
+from pairly_core.flags.models import FeatureFlag
 from pairly_core.idempotency import IdempotencyRecord
 from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
+from pairly_core.jobs.models import JobRunRow
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
 from pairly_core.policy.models import PolicyDocument, RuleResult
+from pairly_core.retention.models import RetentionReport
 from pairly_core.retrieval.models import SearchChunk
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.webhooks.models import (
@@ -40,11 +43,13 @@ __all__ = [
     "Extraction",
     "ExtractionCorrection",
     "ExtractionField",
+    "FeatureFlag",
     "IdempotencyRecord",
     "InboundAddress",
     "InboundEmail",
     "InboundEvent",
     "Invitation",
+    "JobRunRow",
     "LLMBudgetAlert",
     "LLMBudgetReservation",
     "Membership",
@@ -53,6 +58,7 @@ __all__ = [
     "Organisation",
     "PolicyDocument",
     "PolicyVersion",
+    "RetentionReport",
     "RiskAssessment",
     "RiskSignalRow",
     "Role",

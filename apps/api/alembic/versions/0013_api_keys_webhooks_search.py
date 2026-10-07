@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""API keys, idempotency keys, webhooks; partial embedding billing; policy override.
+"""API keys, idempotency keys, webhooks; flags, job runs, retention; partial embedding
+billing; policy override.
 
 WP1.11 (all new tables are org scoped with the standard RLS policy, forced):
 
@@ -17,6 +18,22 @@ WP1.11 (all new tables are org scoped with the standard RLS policy, forced):
   DELETE), ``inbound_events`` (SELECT, INSERT, DELETE). ``webhook_due_org_ids()``
   (SECURITY DEFINER) returns the organisations with undispatched events or due
   deliveries, for the worker.
+
+WP1.12:
+
+* ``feature_flags`` (org scoped, RLS forced; SELECT, INSERT, UPDATE, DELETE): per
+  organisation overrides of the flags declared in code (``pairly_core.flags``). A
+  missing row means the declared default.
+* ``job_runs`` (platform table, not org scoped): one row per scheduled job run (name,
+  start, finish, status, a small JSON summary of counts, an error class name). RLS is
+  forced with no policy for the application role and every table privilege is revoked
+  from it: it records and reads runs only through ``job_run_start``,
+  ``job_run_finish`` and ``job_runs_recent`` (SECURITY DEFINER), so a tenant request can
+  never read or rewrite platform job history. ``job_run_start`` keeps 30 days of
+  history per job (older runs of that job are removed as new ones start).
+* ``retention_reports`` (org scoped, RLS forced; SELECT, INSERT, DELETE): what a
+  retention dry run found per rule (how many rows would be deleted, never deleted).
+  ``retention_org_ids()`` (SECURITY DEFINER) lists the organisations for the job.
 
 Fixups:
 
@@ -582,16 +599,206 @@ def _downgrade_webhooks() -> None:
         op.drop_table(table)
 
 
+# ---------------------------------------------------------------- WP1.12
+
+_FLAG_KEY_CHECK = "key ~ '^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){1,3}$'"
+_JOB_NAME_CHECK = "job_name ~ '^[a-z][a-z0-9_]{0,63}$'"
+_RULE_KEY_CHECK = "rule ~ '^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$'"
+
+
+def _upgrade_flags_jobs_retention(role: str) -> None:
+    op.create_table(
+        "feature_flags",
+        _uuid_pk(),
+        _org_fk("feature_flags"),
+        sa.Column("key", sa.String(100), nullable=False),
+        sa.Column("enabled", sa.Boolean(), nullable=False),
+        sa.Column(
+            "updated_by",
+            sa.Uuid(),
+            sa.ForeignKey(
+                "users.id", ondelete="RESTRICT", name="fk_feature_flags_updated_by_users"
+            ),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
+        sa.UniqueConstraint("org_id", "key", name="uq_feature_flags_org_key"),
+        sa.CheckConstraint(_FLAG_KEY_CHECK, name="ck_feature_flags_key_format"),
+    )
+    op.create_index("ix_feature_flags_org_id", "feature_flags", ["org_id"])
+    _rls("feature_flags", role, "SELECT, INSERT, UPDATE, DELETE")
+
+    op.create_table(
+        "job_runs",
+        _uuid_pk(),
+        sa.Column("job_name", sa.String(64), nullable=False),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
+        sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("status", sa.String(16), nullable=False, server_default="running"),
+        sa.Column("summary", postgresql.JSONB(), nullable=True),
+        sa.Column("error", sa.String(128), nullable=True),
+        sa.CheckConstraint(_JOB_NAME_CHECK, name="ck_job_runs_job_name_format"),
+        sa.CheckConstraint(
+            "status IN ('running', 'succeeded', 'failed')", name="ck_job_runs_status_valid"
+        ),
+        sa.CheckConstraint(
+            "(status = 'running') = (finished_at IS NULL)", name="ck_job_runs_finished_pair"
+        ),
+        sa.CheckConstraint(
+            "summary IS NULL OR (jsonb_typeof(summary) = 'object' "
+            "AND octet_length(summary::text) <= 16384)",
+            name="ck_job_runs_summary_object",
+        ),
+    )
+    op.create_index("ix_job_runs_job_name_started_at", "job_runs", ["job_name", "started_at"])
+    op.execute("ALTER TABLE job_runs ENABLE ROW LEVEL SECURITY")
+    op.execute("ALTER TABLE job_runs FORCE ROW LEVEL SECURITY")
+    # Only the owner (the functions below) touches the table.
+    op.execute("CREATE POLICY job_runs_owner ON job_runs TO CURRENT_USER USING (true)")
+    op.execute("REVOKE ALL ON job_runs FROM PUBLIC")
+    op.execute(f"REVOKE ALL ON job_runs FROM {role}")
+    op.execute(
+        """
+        CREATE FUNCTION job_run_start(p_job text) RETURNS uuid
+        LANGUAGE plpgsql VOLATILE
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public
+        AS $$
+        DECLARE
+            new_id uuid;
+        BEGIN
+            -- History is kept 30 days per job: an every-minute job adds 1440 rows a day.
+            DELETE FROM public.job_runs WHERE id IN (
+                SELECT r.id FROM public.job_runs r
+                 WHERE r.job_name = p_job AND r.started_at < now() - interval '30 days'
+                 ORDER BY r.started_at LIMIT 1000
+            );
+            INSERT INTO public.job_runs (job_name) VALUES (p_job) RETURNING id INTO new_id;
+            RETURN new_id;
+        END
+        $$
+        """
+    )
+    op.execute(
+        """
+        CREATE FUNCTION job_run_finish(p_id uuid, p_status text, p_summary jsonb, p_error text)
+        RETURNS boolean
+        LANGUAGE plpgsql VOLATILE
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public
+        AS $$
+        BEGIN
+            IF p_status NOT IN ('succeeded', 'failed') THEN
+                RAISE EXCEPTION 'a finished job run is succeeded or failed'
+                    USING ERRCODE = 'check_violation';
+            END IF;
+            -- Only a running row changes, once: a finished run is history.
+            UPDATE public.job_runs
+               SET status = p_status, finished_at = now(), summary = p_summary,
+                   error = left(p_error, 128)
+             WHERE id = p_id AND status = 'running';
+            RETURN FOUND;
+        END
+        $$
+        """
+    )
+    op.execute(
+        """
+        CREATE FUNCTION job_runs_recent(p_job text, p_limit integer)
+        RETURNS TABLE (id uuid, job_name text, started_at timestamptz,
+                       finished_at timestamptz, status text, summary jsonb, error text)
+        LANGUAGE sql STABLE
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public
+        AS $$
+            SELECT r.id, r.job_name::text, r.started_at, r.finished_at, r.status::text,
+                   r.summary, r.error::text
+              FROM public.job_runs r
+             WHERE p_job IS NULL OR r.job_name = p_job
+             ORDER BY r.started_at DESC, r.id
+             LIMIT least(greatest(coalesce(p_limit, 50), 1), 500)
+        $$
+        """
+    )
+    for fn in (
+        "job_run_start(text)",
+        "job_run_finish(uuid, text, jsonb, text)",
+        "job_runs_recent(text, integer)",
+    ):
+        op.execute(f"REVOKE ALL ON FUNCTION {fn} FROM PUBLIC")
+        op.execute(f"GRANT EXECUTE ON FUNCTION {fn} TO {role}")
+
+    op.create_table(
+        "retention_reports",
+        _uuid_pk(),
+        _org_fk("retention_reports"),
+        sa.Column("run_id", sa.Uuid(), nullable=False),
+        sa.Column("rule", sa.String(100), nullable=False),
+        sa.Column("cutoff", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("would_delete", sa.BigInteger(), nullable=False),
+        sa.Column("dry_run", sa.Boolean(), nullable=False, server_default=sa.true()),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=_now()),
+        sa.UniqueConstraint("org_id", "run_id", "rule", name="uq_retention_reports_run_rule"),
+        sa.CheckConstraint(_RULE_KEY_CHECK, name="ck_retention_reports_rule_format"),
+        sa.CheckConstraint("would_delete >= 0", name="ck_retention_reports_count_non_negative"),
+        # WP1.12 only reports: a row that claims a real deletion cannot exist yet.
+        sa.CheckConstraint("dry_run", name="ck_retention_reports_dry_run_only"),
+    )
+    op.create_index("ix_retention_reports_org_id", "retention_reports", ["org_id"])
+    op.create_index(
+        "ix_retention_reports_org_id_created_at", "retention_reports", ["org_id", "created_at"]
+    )
+    _rls("retention_reports", role, "SELECT, INSERT, DELETE")
+    op.execute(
+        "CREATE POLICY organisations_retention_scan ON organisations FOR SELECT "
+        "TO CURRENT_USER USING (current_setting('app.retention_org_scan', true) = 'on')"
+    )
+    op.execute(
+        """
+        CREATE FUNCTION retention_org_ids() RETURNS SETOF uuid
+        LANGUAGE plpgsql VOLATILE
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public
+        AS $$
+        DECLARE
+            previous text := current_setting('app.retention_org_scan', true);
+            ids uuid[];
+        BEGIN
+            PERFORM set_config('app.retention_org_scan', 'on', true);
+            SELECT array_agg(o.id ORDER BY o.id) INTO ids FROM public.organisations o;
+            PERFORM set_config('app.retention_org_scan', coalesce(previous, ''), true);
+            RETURN QUERY SELECT unnest(coalesce(ids, '{}'::uuid[]));
+        END
+        $$
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION retention_org_ids() FROM PUBLIC")
+    op.execute(f"GRANT EXECUTE ON FUNCTION retention_org_ids() TO {role}")
+
+
+def _downgrade_flags_jobs_retention() -> None:
+    op.execute("DROP FUNCTION IF EXISTS retention_org_ids()")
+    op.execute("DROP POLICY IF EXISTS organisations_retention_scan ON organisations")
+    op.drop_table("retention_reports")
+    op.execute("DROP FUNCTION IF EXISTS job_runs_recent(text, integer)")
+    op.execute("DROP FUNCTION IF EXISTS job_run_finish(uuid, text, jsonb, text)")
+    op.execute("DROP FUNCTION IF EXISTS job_run_start(text)")
+    op.drop_table("job_runs")
+    op.drop_table("feature_flags")
+
+
 def upgrade() -> None:
     role = ident(app_db_role())
     _upgrade_model_calls()
     _upgrade_policy_override(role)
     _upgrade_api_keys(role)
     _upgrade_webhooks(role)
+    _upgrade_flags_jobs_retention(role)
 
 
 def downgrade() -> None:
     role = ident(app_db_role())
+    _downgrade_flags_jobs_retention()
     _downgrade_webhooks()
     _downgrade_api_keys()
     _downgrade_policy_override(role)

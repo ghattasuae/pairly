@@ -29,7 +29,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final
 
-from sqlalchemy import Float, delete, func, literal, or_, select
+from sqlalchemy import ColumnElement, Float, Select, delete, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import REGCONFIG, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only
@@ -40,6 +40,10 @@ from pairly_core.retrieval.metered import OrgEmbedder
 from pairly_core.retrieval.models import MAX_CHUNK_CHARS, SearchChunk
 from pairly_core.retrieval.text import query_words
 from pairly_core.retrieval.vector import Vector
+
+# The sources a search may return: a list of ids, or a SELECT of ids (for kinds with many
+# sources, such as documents, filtered in SQL rather than listed).
+SourceScope = Sequence[uuid.UUID] | Select[Any]
 
 RRF_K: Final = 60
 MAX_LIMIT: Final = 50
@@ -155,6 +159,16 @@ async def index_chunks(
     return len(rows)
 
 
+def _in_scope(source_ids: SourceScope) -> ColumnElement[bool]:
+    if isinstance(source_ids, Select):
+        return SearchChunk.source_id.in_(source_ids)
+    return SearchChunk.source_id.in_(list(source_ids))
+
+
+def _empty_scope(source_ids: SourceScope) -> bool:
+    return not isinstance(source_ids, Select) and not source_ids
+
+
 def reciprocal_rank_fusion(
     rankings: Sequence[Sequence[uuid.UUID]], *, k: int = RRF_K
 ) -> dict[uuid.UUID, float]:
@@ -170,7 +184,7 @@ async def _lexical(
     org: uuid.UUID,
     kind: SearchableKind,
     words: list[str],
-    source_ids: Sequence[uuid.UUID],
+    source_ids: SourceScope,
     limit: int,
 ) -> list[uuid.UUID]:
     if not words:
@@ -186,7 +200,7 @@ async def _lexical(
         .where(
             SearchChunk.org_id == org,
             SearchChunk.kind == kind.key,
-            SearchChunk.source_id.in_(list(source_ids)),
+            _in_scope(source_ids),
             or_(SearchChunk.tsv_en.op("@@")(q_en), SearchChunk.tsv_simple.op("@@")(q_simple)),
         )
         .order_by(rank.desc(), SearchChunk.chunk_index, SearchChunk.id)
@@ -201,7 +215,7 @@ async def _semantic(
     kind: SearchableKind,
     vector: list[float],
     embedder: Embedder,
-    source_ids: Sequence[uuid.UUID],
+    source_ids: SourceScope,
     limit: int,
 ) -> list[tuple[uuid.UUID, float]]:
     # The HNSW index is shared by every tenant. Without iterative scans, the index could
@@ -215,7 +229,7 @@ async def _semantic(
         .where(
             SearchChunk.org_id == org,
             SearchChunk.kind == kind.key,
-            SearchChunk.source_id.in_(list(source_ids)),
+            _in_scope(source_ids),
             SearchChunk.embedding.is_not(None),
             SearchChunk.embedding_model == embedder.model_id,
             SearchChunk.embedding_version == embedder.version,
@@ -236,7 +250,7 @@ async def hybrid_search(
     *,
     kind: SearchableKind,
     query: str,
-    source_ids: Sequence[uuid.UUID],
+    source_ids: SourceScope,
     embedder: Embedder,
     limit: int = 8,
     candidates: int = 40,
@@ -246,7 +260,7 @@ async def hybrid_search(
     if org is None:
         raise TenantError("search needs a tenant context")
     limit = max(1, min(limit, MAX_LIMIT))
-    if not source_ids or not query.strip():
+    if _empty_scope(source_ids) or not query.strip():
         return []
     words = query_words(query)
     lexical = await _lexical(session, org, kind, words, source_ids, candidates)
