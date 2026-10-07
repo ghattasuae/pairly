@@ -11,10 +11,17 @@ from pairly_core.approvals.models import (
 )
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
 from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
+from pairly_core.integrations.models import (
+    Integration,
+    SlackInteraction,
+    SlackLinkRequest,
+    SlackUserLink,
+)
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
+from pairly_core.notifications.models import Notification, NotificationPreference, Template
 from pairly_core.policy.models import PolicyDocument, RuleResult
 from pairly_core.retrieval.models import SearchChunk
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
@@ -33,11 +40,14 @@ __all__ = [
     "ExtractionField",
     "InboundAddress",
     "InboundEmail",
+    "Integration",
     "Invitation",
     "LLMBudgetAlert",
     "LLMBudgetReservation",
     "Membership",
     "ModelCall",
+    "Notification",
+    "NotificationPreference",
     "OrgLLMBudget",
     "Organisation",
     "PolicyDocument",
@@ -47,6 +57,10 @@ __all__ = [
     "Role",
     "RuleResult",
     "SearchChunk",
+    "SlackInteraction",
+    "SlackLinkRequest",
+    "SlackUserLink",
+    "Template",
     "User",
     "WorkflowRun",
 ]

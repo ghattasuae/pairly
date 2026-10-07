@@ -38,6 +38,11 @@ class WorkerConfig(BaseSettings):
     # Nightly audit chain verification, UTC.
     audit_verify_hour: int = Field(default=2, ge=0, le=23)
     audit_verify_minute: int = Field(default=30, ge=0, le=59)
+    # Daily notification digest, UTC hour (same variable as the notification settings).
+    digest_hour_utc: int = Field(default=7, ge=0, le=23)
+    # Lifetime of the signed approval links in escalation messages (same variable and
+    # bounds as the API's setting, so the API and the worker issue the same links).
+    approval_link_ttl_seconds: int = Field(default=1800, ge=60, le=86400)
     # Seconds between arq health records; the compose health check reads them.
     worker_health_check_interval: int = Field(default=30, ge=5, le=3600)
 
