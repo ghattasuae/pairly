@@ -50,3 +50,14 @@ def test_scanner_selection(monkeypatch: pytest.MonkeyPatch) -> None:
     setup_documents(ctx, Environment.DEVELOPMENT)
     assert isinstance(ctx["scanner"], ClamdScanner)
     assert ctx["scanner"].host == "clamav"
+
+
+async def test_policy_index_hook_never_fails_the_parse_job(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pairly_core.retrieval.embeddings import HashingEmbedder
+    from pairly_worker.documents import _index_policy
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("PAIRLY_OPENAI_API_KEY", raising=False)
+    ctx: dict[str, Any] = {}  # no sessionmaker or store: indexing fails, quietly
+    await _index_policy(ctx, "00000000-0000-4000-8000-000000000001", "not-a-uuid")
+    assert isinstance(ctx["policy_embedder"], HashingEmbedder)

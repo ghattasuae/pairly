@@ -3,7 +3,8 @@
 """Document jobs: virus scan, sandboxed parse, and the sweeper that re-queues stalls.
 
 * ``scan_document(org_id, document_id)``  ClamAV scan. Clean documents queue a parse.
-* ``parse_document(org_id, document_id)`` sandboxed parse of a clean document.
+* ``parse_document(org_id, document_id)`` sandboxed parse of a clean document; a
+  parsed policy document is then indexed for policy search (WP1.5).
 * ``sweep_documents`` (cron, every minute) finds stalled documents through the
   ``documents_needing_work`` SECURITY DEFINER function (ids and status only) and queues
   them again, so a lost enqueue never leaves a document waiting forever.
@@ -29,6 +30,9 @@ from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB
 from pairly_core.ingestion.scan import ClamdScanner, UnavailableScanner, VirusScanner, scan_document
 from pairly_core.ingestion.settings import IngestionSettings, load_ingestion_settings
 from pairly_core.ingestion.storage import S3ObjectStore
+from pairly_core.llm.settings import load_llm_settings
+from pairly_core.policy.documents import index_after_parse
+from pairly_core.retrieval.embeddings import build_embedder
 
 log = structlog.get_logger("pairly_worker.documents")
 
@@ -99,12 +103,32 @@ async def parse_document_job(ctx: dict[str, Any], org_id: str, document_id: str)
             config=ctx["parse_config"],
             vision=ctx.get("vision"),
         )
+    if not result.skipped:
+        await _index_policy(ctx, org_id, document_id)
     return {
         "status": result.status,
         "reason": result.reason,
         "needs_review": result.needs_review,
         "skipped": result.skipped,
     }
+
+
+async def _index_policy(ctx: dict[str, Any], org_id: str, document_id: str) -> None:
+    """Index the file if it is a policy document (WP1.5). Never fails the parse job:
+    a policy document left ``pending`` can be indexed again from the API."""
+    try:
+        embedder = ctx.get("policy_embedder")
+        if embedder is None:
+            embedder = ctx["policy_embedder"] = build_embedder(load_llm_settings())
+        await index_after_parse(
+            ctx["sessionmaker"],
+            ctx["store"],
+            org_id=uuid.UUID(org_id),
+            document_id=uuid.UUID(document_id),
+            embedder=embedder,
+        )
+    except Exception as exc:
+        log.warning("policy_index_failed", document_id=document_id, error=type(exc).__name__)
 
 
 async def stalled_documents(
