@@ -13,6 +13,12 @@ too, except in the test environment, where the document routes answer 503 withou
 Notification settings (``pairly_core.notifications.settings``) are read at startup as
 well; outside the test environment the approval hooks send approval emails, Slack
 messages and in-app items (``NotificationApprovalHook``).
+
+Workflow plugins plug in without any change here: their permissions, graphs, events,
+flags, search sources and retention rules are read from the discovered plugin objects,
+and a plugin's ``api_router`` is mounted under ``/v1/<plugin id>``. Graph nodes get the
+engine services of this process (``GraphServices``: document store, model router, and
+the scanner and parse settings when ingestion is configured).
 """
 
 from __future__ import annotations
@@ -23,6 +29,7 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 import structlog
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_api import __version__
 from pairly_api.decision_services import DecisionServices, build_decision_services
@@ -66,7 +73,7 @@ from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.integrations.slack.transport import HttpSlackTransport, SlackTransport
 from pairly_core.notifications.approval_hook import NotificationApprovalHook
 from pairly_core.notifications.settings import NotificationSettings, load_notification_settings
-from pairly_core.plugins import WorkflowPlugin, discover_plugins
+from pairly_core.plugins import WorkflowPlugin, discover_plugins, plugin_routers
 from pairly_core.rbac import RoleRegistry, build_registry
 from pairly_core.retention.rules import build_retention_registry
 from pairly_core.search.sources import build_search_registry
@@ -74,6 +81,7 @@ from pairly_core.webhooks.events import build_event_registry, install_event_regi
 from pairly_core.webhooks.settings import load_webhook_settings
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
+from pairly_core.workflow.services import GraphServices
 
 log = structlog.get_logger(__name__)
 
@@ -100,6 +108,38 @@ async def _document_services(settings: Settings) -> DocumentServices | None:
             log.warning("job_queue_unavailable", error=type(exc).__name__)
     return DocumentServices(
         settings=ingestion, store=S3ObjectStore.from_settings(ingestion), queue=queue
+    )
+
+
+def _graph_services(
+    sessionmaker: async_sessionmaker[AsyncSession], documents: DocumentServices | None
+) -> GraphServices:
+    """What graph nodes may use in this process: the model router (recorded mode unless
+    configured otherwise) and, when document storage is configured, the store, the
+    scanner (only when ClamAV is configured) and the sandboxed parse settings."""
+    from pairly_core.documents.pipeline import ParseConfig
+    from pairly_core.ingestion.scan import ClamdScanner
+    from pairly_core.llm.factory import build_router
+    from pairly_core.llm.settings import load_llm_settings
+
+    router = build_router(load_llm_settings(), sessionmaker)
+    if documents is None:
+        return GraphServices(router=router)
+    ingestion = documents.settings
+    scanner = (
+        ClamdScanner(
+            ingestion.clamav_host,
+            ingestion.clamav_port,
+            timeout=ingestion.clamav_timeout_seconds,
+        )
+        if ingestion.clamav_host
+        else None
+    )
+    return GraphServices(
+        store=documents.store,
+        router=router,
+        scanner=scanner,
+        parse_config=ParseConfig.from_settings(ingestion),
     )
 
 
@@ -131,6 +171,9 @@ def _lifespan(
                 verifier=verifier,
                 registry=registry,
             )
+            services = getattr(app.state, "graph_services", None)
+            if not isinstance(services, GraphServices):
+                services = _graph_services(sessionmaker, app.state.documents)
             runtime = WorkflowRuntime.from_plugins(
                 plugins,
                 sessionmaker=sessionmaker,
@@ -138,6 +181,7 @@ def _lifespan(
                 registry=registry,
                 # Decision records first: a hook that raises aborts the change.
                 hooks=ApprovalHooks([DecisionRecordHook(), hooks]),
+                services=services,
             )
             await runtime.check()
             app.state.workflow_runtime = runtime
@@ -179,6 +223,7 @@ def create_app(
     notification_settings: NotificationSettings | None = None,
     slack_transport: SlackTransport | None = None,
     decision_services: DecisionServices | None = None,
+    graph_services: GraphServices | None = None,
 ) -> FastAPI:
     settings = settings or load_settings()
     notify = notification_settings or load_notification_settings(env=settings.env)
@@ -211,6 +256,7 @@ def create_app(
         base_url=notify.slack_api_base_url
     )
     app.state.decision_services = decision_services
+    app.state.graph_services = graph_services
     app.state.webhook_settings = webhook_settings
     app.state.search_registry = build_search_registry(workflow_plugins)
     app.state.retention_registry = build_retention_registry(workflow_plugins)
@@ -235,7 +281,9 @@ def create_app(
     v1.include_router(flags.router)
     v1.include_router(search.router)
     v1.include_router(retention.router)
-    # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
+    # Workflow plugin routes, each under /v1/<plugin id> (pairly_core.plugins).
+    for plugin_id, plugin_router in plugin_routers(workflow_plugins):
+        v1.include_router(plugin_router, prefix=f"/{plugin_id}")
     app.include_router(health.router)
     app.include_router(v1)
 

@@ -26,6 +26,12 @@ stored). Mail to the previous address is dropped from then on:
 
     uv run pairly-admin inbound rotate --org <uuid> --workflow pay
 
+``seed`` runs a workflow plugin's demo seed (``demo_seeds`` on the plugin, see
+``pairly_core.plugins``) in one organisation, found by its slug, in one transaction.
+Seeds are idempotent; invitations they create are printed once as accept links:
+
+    uv run pairly-admin seed expense-demo --org acme
+
 ``crypto rotate`` re-wraps every encrypted field's data key with the current KEK
 (``PAIRLY_KEK_CURRENT``), in batches, one audited transaction per batch. It is
 resumable: rows already on the current KEK are skipped. ``--dry-run`` only counts what
@@ -46,9 +52,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 import pairly_core.models  # noqa: F401  (registers every core table, encrypted ones included)
 from pairly_core.audit import ActorType
@@ -68,7 +74,8 @@ from pairly_core.llm.bundle import (
     parse_bundle,
 )
 from pairly_core.models import Organisation
-from pairly_core.plugins import discover_plugins
+from pairly_core.plugins import SeedContext, SeedResult, demo_seeds, discover_plugins
+from pairly_core.rbac import build_registry
 
 OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
 INBOUND_DOMAIN_ENV = "PAIRLY_INBOUND_EMAIL_DOMAIN"
@@ -169,6 +176,49 @@ async def rotate_crypto(
         await engine.dispose()
 
 
+async def org_id_by_slug(session: AsyncSession, slug: str) -> uuid.UUID | None:
+    """The organisation with ``slug``, read as the owner role.
+
+    ``organisations`` forces Row Level Security, so even the owner sees no row without a
+    tenant. Migration 0004 gives the owner role (and only it) a read policy for slug
+    lookups, switched on per transaction by ``app.inbound_lookup``; this uses it and
+    switches it off again. Plain SQL: the ORM's tenant filter would hide the row too.
+    """
+    await session.execute(text("SELECT set_config('app.inbound_lookup', 'on', true)"))
+    found = await session.scalar(
+        text("SELECT id FROM organisations WHERE slug = :slug"), {"slug": slug.strip().lower()}
+    )
+    await session.execute(text("SELECT set_config('app.inbound_lookup', '', true)"))
+    return found if isinstance(found, uuid.UUID) else None
+
+
+async def run_seed(owner_url: str, name: str, slug: str, web_url: str) -> SeedResult:
+    """Run the demo seed ``name`` in the organisation ``slug`` (one transaction)."""
+    plugins = list(discover_plugins().values())
+    seeds = demo_seeds(plugins)
+    seed = seeds.get(name)
+    if seed is None:
+        known = ", ".join(sorted(seeds)) or "none"
+        raise LookupError(f"unknown seed {name!r} (known: {known})")
+    registry = build_registry(plugins)
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        session = create_sessionmaker(engine)()
+        async with session:
+            async with session.begin():
+                org_id = await org_id_by_slug(session, slug)
+            if org_id is None:
+                raise LookupError(f"no organisation with slug {slug!r}")
+            set_tenant(session, org_id, None)
+            async with session.begin():
+                return await seed(
+                    session,
+                    SeedContext(org_id=org_id, org_slug=slug, registry=registry, web_url=web_url),
+                )
+    finally:
+        await engine.dispose()
+
+
 def _web_url(value: str) -> str:
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
@@ -212,6 +262,17 @@ def _parser() -> argparse.ArgumentParser:
     )
     rotate.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
     rotate.add_argument("--workflow", required=True, help="workflow id, for example 'pay'")
+
+    seed = commands.add_parser("seed", help="run a workflow's demo seed in an organisation")
+    seed.add_argument("seed_name", metavar="name", help="seed name, for example expense-demo")
+    seed.add_argument("--org", dest="org_slug", required=True, help="organisation slug")
+    seed.add_argument(
+        "--web-url",
+        type=_web_url,
+        default=os.environ.get(WEB_URL_ENV) or "http://localhost:3100",
+        help=f"public web app URL for invite links (default: ${WEB_URL_ENV} or localhost:3100)",
+    )
+    seed.add_argument("--locale", choices=LOCALES, default="en", help="language of the links")
 
     crypto = commands.add_parser("crypto", help="application-level encryption keys")
     crypto_commands = crypto.add_subparsers(dest="crypto_command", required=True)
@@ -267,6 +328,28 @@ def _recordings(args: argparse.Namespace, owner_url: str) -> int:
     return 0
 
 
+def _seed(args: argparse.Namespace, owner_url: str) -> int:
+    try:
+        init_crypto()
+        result = asyncio.run(run_seed(owner_url, args.seed_name, args.org_slug, args.web_url))
+    except (LookupError, CryptoConfigError, BundleError, OSError) as exc:
+        print(f"pairly-admin: {exc}", file=sys.stderr)
+        return 2
+    except PairlyError as exc:
+        print(f"pairly-admin: {exc.detail}", file=sys.stderr)
+        return 2
+    print(f"Seed {args.seed_name} ran in {args.org_slug}.")
+    for line in result.lines:
+        print(f"  {line}")
+    if result.invitations:
+        print("Invitations (each link is shown once, keep them private):")
+    for invite in result.invitations:
+        scope = f" ({invite.workflow} only)" if invite.workflow else ""
+        print(f"  {invite.email}, {invite.role}{scope}:")
+        print(f"    {accept_link(args.web_url, args.locale, invite.token)}")
+    return 0
+
+
 def _crypto(args: argparse.Namespace, owner_url: str) -> int:
     try:
         ring = init_crypto()
@@ -306,6 +389,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _inbound(args, owner_url)
     if args.command == "crypto":
         return _crypto(args, owner_url)
+    if args.command == "seed":
+        return _seed(args, owner_url)
     try:
         result = asyncio.run(
             bootstrap(owner_url, name=args.name, slug=args.slug, admin_email=args.admin_email)

@@ -16,7 +16,8 @@ Scoped per workflow (``pairly_core.decisions.scope``), like the approval inbox: 
 actor sees the records, receipts, replays and appeals of the workflows where they hold
 that workflow's read permission (``pay.invoice.read``), or of every workflow with a
 core-wide grant (``core.decision.read``, ``core.appeal.read``: admin and auditor).
-Replay also needs ``core.decision.replay``; filing an appeal ``core.appeal.create``;
+Replay also needs ``core.decision.replay``; filing an appeal ``core.appeal.create`` (or
+the record's workflow's own ``<workflow>.appeal.create``);
 resolving one the workflow's decide permission (``pay.invoice.approve``,
 ``hire.candidate.decide``) or ``core.appeal.decide``, with step-up. Decrypted personal
 data needs ``core.decision_personal.read``. A record or appeal outside the actor's
@@ -47,7 +48,6 @@ from pairly_core.decisions.appeals import (
 )
 from pairly_core.decisions.models import AppealOutcome, AppealStatus, DecisionRecord, RequesterType
 from pairly_core.decisions.permissions import (
-    APPEAL_CREATE,
     APPEAL_READ,
     DECISION_PERSONAL_READ,
     DECISION_READ,
@@ -81,7 +81,6 @@ from pairly_core.rbac import Actor, require
 router = APIRouter(tags=["decisions"])
 
 ReplayActor = Annotated[Actor, Depends(require(DECISION_REPLAY))]
-AppealCreator = Annotated[Actor, Depends(require(APPEAL_CREATE))]
 
 
 def _record_scope(actor: CurrentActor) -> WorkflowScope:
@@ -350,8 +349,10 @@ def _appeal_out(view: AppealView, actor: Actor) -> AppealOut:
 
 @router.post("/decisions/{decision_id}/appeals", response_model=AppealOut, status_code=201)
 async def file_appeal(
-    decision_id: DecisionId, body: AppealIn, actor: AppealCreator, session: OrgSession
+    decision_id: DecisionId, body: AppealIn, actor: CurrentActor, session: OrgSession
 ) -> AppealOut:
+    # core.appeal.create, or the record's workflow's own <workflow>.appeal.create
+    # (checked by create_appeal once the record is known and readable).
     view = await create_appeal(
         session,
         actor,

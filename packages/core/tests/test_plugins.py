@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from importlib.metadata import EntryPoint
 
 import pytest
+from fastapi import APIRouter
 
 from pairly_core import plugins
 from pairly_core.plugins import ENTRY_POINT_GROUP, PluginError, discover_plugins
@@ -100,3 +101,56 @@ def test_invalid_plugins_fail_closed(
     _use_entry_points(monkeypatch, eps)
     with pytest.raises(PluginError, match=message):
         discover_plugins()
+
+
+# ------------------------------------------------------------------ optional hooks
+
+
+@dataclass(frozen=True)
+class _Hooked:
+    id: str
+    api_router: object = None
+    demo_seeds: object = None
+
+
+async def _seed(*_: object) -> plugins.SeedResult:
+    return plugins.SeedResult()
+
+
+def test_plugin_routers_and_demo_seeds() -> None:
+    router = APIRouter()
+    found = plugins.plugin_routers([_Hooked("alpha", api_router=lambda: router), _Hooked("beta")])
+    assert found == [("alpha", router)]
+    seeds = plugins.demo_seeds([_Hooked("alpha", demo_seeds={"alpha-demo": _seed}), _Hooked("b")])
+    assert seeds == {"alpha-demo": _seed}
+
+
+@pytest.mark.parametrize(
+    ("plugin", "message"),
+    [
+        (_Hooked("alpha", api_router="not callable"), "must be callable"),
+        (_Hooked("alpha", api_router=lambda: "no router"), "must return APIRouter"),
+    ],
+)
+def test_bad_routers_fail_closed(plugin: _Hooked, message: str) -> None:
+    with pytest.raises(PluginError, match=message):
+        plugins.plugin_routers([plugin])
+
+
+@pytest.mark.parametrize(
+    ("seeds", "message"),
+    [
+        ({"Bad Name": _seed}, "invalid seed name"),
+        ({"beta-demo": _seed}, "outside its namespace"),
+        ({"alpha-demo": "not callable"}, "not callable"),
+    ],
+)
+def test_bad_demo_seeds_fail_closed(seeds: dict[str, object], message: str) -> None:
+    with pytest.raises(PluginError, match=message):
+        plugins.demo_seeds([_Hooked("alpha", demo_seeds=seeds)])
+
+
+def test_duplicate_demo_seeds_fail_closed() -> None:
+    hooked = _Hooked("alpha", demo_seeds={"alpha-x": _seed})
+    with pytest.raises(PluginError, match="duplicate"):
+        plugins.demo_seeds([hooked, hooked])

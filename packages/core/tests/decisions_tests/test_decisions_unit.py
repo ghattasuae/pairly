@@ -38,7 +38,11 @@ from pairly_core.config import ConfigError
 from pairly_core.decisions.bidi import shape, visual_order
 from pairly_core.decisions.ids import is_decision_id, new_decision_id
 from pairly_core.decisions.models import DecisionRecord
-from pairly_core.decisions.permissions import DECISION_PERSONAL_READ, DECISION_READ
+from pairly_core.decisions.permissions import (
+    APPEAL_CREATE,
+    DECISION_PERSONAL_READ,
+    DECISION_READ,
+)
 from pairly_core.decisions.receipts import (
     RECEIPT_POLICY,
     Audience,
@@ -52,6 +56,7 @@ from pairly_core.decisions.receipts import (
     subject_receipt,
     visibility,
 )
+from pairly_core.decisions.scope import authorize_appeal_creation, create_permission
 from pairly_core.decisions.serialize import (
     EncodingError,
     decode_typed,
@@ -59,7 +64,7 @@ from pairly_core.decisions.serialize import (
     fingerprint,
 )
 from pairly_core.errors import NotFoundError
-from pairly_core.rbac import Actor, ActorKind
+from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError
 
 ORG = uuid.UUID("00000000-0000-4000-8000-000000000001")
 
@@ -231,6 +236,28 @@ def test_policy_is_data_and_fails_closed_for_unknown_sections() -> None:
         "audience": "internal_full",
         "redacted": [],
     }
+
+
+def test_appeal_creation_permission_per_workflow() -> None:
+    def actor(*perms: str) -> Actor:
+        return Actor(
+            kind=ActorKind.USER,
+            id=uuid.uuid4(),
+            org_id=ORG,
+            grants=(),
+            permissions=frozenset(perms),
+        )
+
+    # The core-wide grant covers every workflow; a workflow's own grant covers it only.
+    assert create_permission(actor(APPEAL_CREATE), "pay") == APPEAL_CREATE
+    assert create_permission(actor("expense.appeal.create"), "expense") == "expense.appeal.create"
+    assert create_permission(actor("expense.appeal.create"), "pay") is None
+    assert create_permission(actor("expense.appeal.create"), "core") is None
+    assert authorize_appeal_creation(actor("expense.appeal.create"), "expense") == (
+        "expense.appeal.create"
+    )
+    with pytest.raises(PermissionDeniedError):
+        authorize_appeal_creation(actor("expense.note.read"), "expense")
 
 
 def test_audience_follows_permissions() -> None:

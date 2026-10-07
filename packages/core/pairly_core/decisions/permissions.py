@@ -13,7 +13,9 @@ workflow's own read and decide permissions (``pairly_core.decisions.scope``). Ad
   through a role that grants it explicitly.
 * ``core.appeal.read``: the appeals queue of every workflow.
 * ``core.appeal.create``: file an appeal on behalf of a candidate or vendor (staff,
-  until the portals exist), on a record of a workflow the filer may read.
+  until the portals exist), on a record of a workflow the filer may read. A workflow
+  may declare ``<workflow>.appeal.create`` for its own members
+  (``pairly_core.decisions.scope.authorize_appeal_creation``).
 * ``core.appeal.decide``: resolve any workflow's appeal with a written outcome (step-up:
   TOTP). Workflow deciders (``hire.candidate.decide``, ``pay.invoice.approve``) resolve
   their own workflow's appeals without it.

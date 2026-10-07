@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Alembic environment. Runs migrations as the owner role (PAIRLY_DATABASE_URL_OWNER)."""
+"""Alembic environment. Runs migrations as the owner role (PAIRLY_DATABASE_URL_OWNER).
+
+Workflow plugins are discovered (``pairly.workflows`` entry points) before the metadata
+is used, so the tables their modules declare on ``Base.metadata`` are known to
+autogenerate and ``alembic check`` like core tables.
+"""
 
 from __future__ import annotations
 
@@ -14,6 +19,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import pairly_core.models  # noqa: F401  (registers core tables on Base.metadata)
 from pairly_core.config import to_asyncpg_url
 from pairly_core.db import Base
+from pairly_core.plugins import discover_plugins
+
+# Importing a plugin imports its table definitions (they register on Base.metadata).
+discover_plugins()
 
 OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
 

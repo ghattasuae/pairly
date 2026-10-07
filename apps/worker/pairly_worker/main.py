@@ -29,7 +29,7 @@ import structlog
 from arq import cron, func
 from arq.connections import RedisSettings
 from arq.typing import WorkerCoroutine
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from pairly_core.approvals.hooks import ApprovalHook, ApprovalHooks
 from pairly_core.audit_anchor.signing import PUBLIC_KEY_ENV, SIGNING_KEY_ENV, load_signing_key
@@ -54,6 +54,8 @@ from pairly_core.jobs.registry import (
     build_job_registry,
 )
 from pairly_core.jobs.runs import JobFn, tracked
+from pairly_core.llm.factory import build_router
+from pairly_core.llm.settings import load_llm_settings
 from pairly_core.notifications.approval_hook import NotificationApprovalHook
 from pairly_core.notifications.delivery import Transports
 from pairly_core.notifications.email import email_transport_from_settings
@@ -65,6 +67,7 @@ from pairly_core.search.documents import PURGE_JOB
 from pairly_core.webhooks.events import build_event_registry, install_event_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
+from pairly_core.workflow.services import GraphServices
 from pairly_worker import decision_jobs
 from pairly_worker.config import WorkerConfig, load_worker_config
 from pairly_worker.documents import (
@@ -113,6 +116,20 @@ def setup_audit_anchors(ctx: dict[str, Any], config: WorkerConfig) -> None:
             raise
         log.warning("audit_anchors_disabled", reason="anchor storage settings missing")
         ctx["anchor_store"] = None
+
+
+def graph_services(
+    ctx: dict[str, Any], sessionmaker: async_sessionmaker[AsyncSession]
+) -> GraphServices:
+    """Engine services for graph nodes the worker runs (resumed runs): the model router
+    and the document services ``setup_documents`` put in ``ctx`` (absent in tests
+    without ingestion settings)."""
+    return GraphServices(
+        store=ctx.get("store"),
+        router=build_router(load_llm_settings(), sessionmaker),
+        scanner=ctx.get("scanner"),
+        parse_config=ctx.get("parse_config"),
+    )
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -167,6 +184,7 @@ async def startup(ctx: dict[str, Any]) -> None:
             checkpointer=TenantCheckpointer(config.database_url.get_secret_value()),
             registry=registry,
             hooks=hooks,
+            services=graph_services(ctx, sessionmaker),
         )
         await runtime.check()
     except Exception:

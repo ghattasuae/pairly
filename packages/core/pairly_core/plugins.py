@@ -11,6 +11,16 @@ engine (entity types, models, extraction schemas, detectors, rules, policy schem
 approval types, templates, router, seed hook). ``graphs`` (WP1.8) lists the plugin's
 LangGraph graphs; each ``GraphSpec`` carries its approval types and final actions.
 
+Optional attributes, read with ``getattr`` so a plugin only declares what it uses:
+
+* ``webhook_events``, ``feature_flags``, ``search_sources``, ``retention_rules``,
+  ``scheduled_jobs``: see the module that builds each registry.
+* ``api_router``: a callable with no arguments returning a FastAPI ``APIRouter``. The
+  API mounts it under ``/v1/<plugin id>`` (``plugin_routers``). It is a callable so
+  that processes without an HTTP API (the worker) never import the routes.
+* ``demo_seeds``: a mapping of seed name (``<plugin id>-<name>``) to an async
+  ``DemoSeed``, run by ``pairly-admin seed <name> --org <slug>`` (``demo_seeds``).
+
 Discovery fails closed: a plugin that cannot be loaded, does not satisfy the protocol,
 has an invalid id, or collides with another plugin raises ``PluginError`` instead of
 being silently skipped.
@@ -19,12 +29,18 @@ being silently skipped.
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+import uuid
+from collections.abc import Awaitable, Callable, Iterable, Sequence
+from dataclasses import dataclass, field
 from importlib.metadata import EntryPoint, entry_points
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from pairly_core.rbac import PermissionSpec
+from pairly_core.rbac import PermissionSpec, RoleRegistry
 from pairly_core.workflow.spec import GraphSpec
+
+if TYPE_CHECKING:
+    from fastapi import APIRouter
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 ENTRY_POINT_GROUP = "pairly.workflows"
 
@@ -134,3 +150,86 @@ def discover_plugins(group: str = ENTRY_POINT_GROUP) -> dict[str, WorkflowPlugin
             raise PluginError(f"duplicate workflow plugin id {plugin.id!r}")
         plugins[plugin.id] = plugin
     return plugins
+
+
+# ------------------------------------------------------------------ optional: API routes
+
+
+def plugin_routers(plugins: Iterable[Any]) -> list[tuple[str, APIRouter]]:
+    """``(plugin id, router)`` for every plugin that declares ``api_router``.
+
+    The API mounts each router under ``/v1/<plugin id>``, so a workflow's routes can
+    never shadow a core route or another workflow's. Fails closed: a declared
+    ``api_router`` that is not callable or does not return an ``APIRouter`` raises
+    ``PluginError``.
+    """
+    from fastapi import APIRouter
+
+    routers: list[tuple[str, APIRouter]] = []
+    for plugin in plugins:
+        factory = getattr(plugin, "api_router", None)
+        if factory is None:
+            continue
+        if not callable(factory):
+            raise PluginError(f"workflow plugin {plugin.id!r}: api_router must be callable")
+        router = factory()
+        if not isinstance(router, APIRouter):
+            raise PluginError(f"workflow plugin {plugin.id!r}: api_router must return APIRouter")
+        routers.append((plugin.id, router))
+    return routers
+
+
+# ------------------------------------------------------------------ optional: demo seeds
+
+_SEED_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}-[a-z][a-z0-9-]{0,47}$")
+
+
+@dataclass(frozen=True, slots=True)
+class SeedContext:
+    """What a demo seed gets: the organisation (the session is bound to it), the role
+    registry and the public web URL (for links it prints)."""
+
+    org_id: uuid.UUID
+    org_slug: str
+    registry: RoleRegistry
+    web_url: str
+
+
+@dataclass(frozen=True, slots=True)
+class SeededInvitation:
+    email: str
+    role: str
+    workflow: str | None
+    # Shown once by the CLI as an accept link; only its hash is stored.
+    token: str = field(repr=False)
+
+
+@dataclass(frozen=True, slots=True)
+class SeedResult:
+    lines: tuple[str, ...] = ()
+    invitations: tuple[SeededInvitation, ...] = ()
+
+
+# Runs as the owner database role, in one transaction the CLI commits. Must be
+# idempotent: running a seed twice changes nothing the first run already did.
+DemoSeed = Callable[["AsyncSession", SeedContext], Awaitable[SeedResult]]
+
+
+def demo_seeds(plugins: Iterable[Any]) -> dict[str, DemoSeed]:
+    """Every plugin's ``demo_seeds``, by name. Names are ``<plugin id>-<name>``."""
+    seeds: dict[str, DemoSeed] = {}
+    for plugin in plugins:
+        declared = getattr(plugin, "demo_seeds", None) or {}
+        for name, seed in dict(declared).items():
+            if not isinstance(name, str) or not _SEED_NAME_RE.fullmatch(name):
+                raise PluginError(f"workflow plugin {plugin.id!r}: invalid seed name {name!r}")
+            if not name.startswith(f"{plugin.id}-"):
+                raise PluginError(
+                    f"workflow plugin {plugin.id!r}: seed {name!r} is outside its namespace"
+                )
+            if not callable(seed):
+                raise PluginError(f"workflow plugin {plugin.id!r}: seed {name!r} is not callable")
+            if name in seeds:
+                raise PluginError(f"duplicate demo seed {name!r}")
+            seeds[name] = seed
+    return seeds

@@ -6,6 +6,8 @@
 * ``DocumentServices`` / ``get_services``: storage, queue and limits (``app.state``).
 * ``receive_upload``: streams a multipart body with exactly one ``file`` part to a
   private temp file, hashing and counting as it goes, stopping at the size limit.
+  ``receive_upload_with_fields`` also returns the small text fields a route names
+  (for example a note next to a receipt); every other field is still discarded.
 * ``rejected_response``: the problem response for a rejected file (413, 415, 400).
 * ``enqueue_scan``: queues the virus scan after the commit.
 * ``DocumentOut``: the document record both upload endpoints return.
@@ -111,19 +113,25 @@ class DocumentOut(BaseModel):
 
 
 class _Receiver:
-    """Callbacks for the streaming multipart parser: one ``file`` part, spooled."""
+    """Callbacks for the streaming multipart parser: one ``file`` part, spooled, plus
+    the text fields named in ``text_fields`` (each once, within ``MAX_FIELD_BYTES``)."""
 
-    def __init__(self, tmp: Path, max_bytes: int) -> None:
+    def __init__(
+        self, tmp: Path, max_bytes: int, text_fields: frozenset[str] = frozenset()
+    ) -> None:
         self.tmp = tmp
         self.max_bytes = max_bytes
+        self.text_fields = text_fields
         self.writer: SpoolWriter | None = None
         self.filename: str | None = None
         self.parts = 0
         self.files = 0
+        self.fields: dict[str, bytearray] = {}
         self._headers: dict[bytes, bytes] = {}
         self._field = b""
         self._value = b""
         self._in_file = False
+        self._text: bytearray | None = None
         self._field_bytes = 0
 
     def callbacks(self) -> dict[str, Callable[..., None]]:
@@ -143,6 +151,7 @@ class _Receiver:
             raise BadRequestError("too many form parts")
         self._headers = {}
         self._in_file = False
+        self._text = None
 
     def _header_field(self, data: bytes, start: int, end: int) -> None:
         self._field += data[start:end]
@@ -158,6 +167,10 @@ class _Receiver:
         _, params = parse_options_header(self._headers.get(b"content-disposition", b""))
         name = params.get(b"name", b"").decode("utf-8", errors="replace")
         if name != FILE_FIELD:
+            if name in self.text_fields and b"filename" not in params:
+                if name in self.fields:
+                    raise BadRequestError(f"send the '{name}' field once")
+                self._text = self.fields[name] = bytearray()
             return
         self.files += 1
         if self.files > 1:
@@ -174,24 +187,47 @@ class _Receiver:
         self._field_bytes += end - start
         if self._field_bytes > MAX_FIELD_BYTES:
             raise BadRequestError("form fields too large")
+        if self._text is not None:
+            self._text += data[start:end]
 
     def _part_end(self) -> None:
         self._in_file = False
+        self._text = None
 
     def abort(self) -> None:
         if self.writer is not None:
             self.writer.abort()
 
 
+@dataclass(frozen=True, slots=True)
+class ReceivedUpload:
+    file: SpooledFile
+    filename: str | None
+    # The requested text fields that were sent, decoded as UTF-8 (strict).
+    fields: dict[str, str]
+
+
 async def receive_upload(
     request: Request, tmp: Path, max_bytes: int, timeout: float
 ) -> tuple[SpooledFile, str | None]:
+    received = await receive_upload_with_fields(request, tmp, max_bytes, timeout)
+    return received.file, received.filename
+
+
+async def receive_upload_with_fields(
+    request: Request,
+    tmp: Path,
+    max_bytes: int,
+    timeout: float,
+    text_fields: frozenset[str] = frozenset(),
+) -> ReceivedUpload:
+    """Like ``receive_upload``, plus the text fields named in ``text_fields``."""
     content_type = request.headers.get("content-type", "")
     media, params = parse_options_header(content_type)
     boundary = params.get(b"boundary")
     if media != b"multipart/form-data" or not boundary or len(boundary) > 200:
         raise UnsupportedBodyError()
-    receiver = _Receiver(tmp, max_bytes)
+    receiver = _Receiver(tmp, max_bytes, text_fields)
     parser = MultipartParser(boundary, receiver.callbacks())  # type: ignore[arg-type]
     try:
         async with asyncio.timeout(timeout):
@@ -209,7 +245,12 @@ async def receive_upload(
         raise
     if receiver.writer is None:
         raise BadRequestError(f"a '{FILE_FIELD}' file part is required")
-    return receiver.writer.finish(), receiver.filename
+    try:
+        fields = {name: bytes(value).decode("utf-8") for name, value in receiver.fields.items()}
+    except UnicodeDecodeError:
+        receiver.abort()
+        raise BadRequestError("form fields must be UTF-8 text") from None
+    return ReceivedUpload(receiver.writer.finish(), receiver.filename, fields)
 
 
 class UnsupportedBodyError(Exception):
