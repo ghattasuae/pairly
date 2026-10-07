@@ -19,6 +19,7 @@ from pairly_core.retrieval.embeddings import (
     EmbeddingUnavailable,
     HashingEmbedder,
     OpenAIEmbedder,
+    PartialEmbeddingError,
     build_embedder,
 )
 from pairly_core.retrieval.search import SearchableKind, reciprocal_rank_fusion
@@ -129,6 +130,37 @@ async def test_openai_embedder_fails_closed() -> None:
         await emb.embed(["x"], purpose="query")
     with pytest.raises(ValueError, match="key"):
         OpenAIEmbedder("")
+
+
+async def test_openai_embedder_partial_failure_carries_usage() -> None:
+    """A later batch fails: the error says what the successful batches consumed."""
+    seen: list[dict[str, Any]] = []
+    ok = _openai_handler(seen)
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        if len(seen) >= 1:
+            seen.append({})
+            return httpx2.Response(500, json={"error": {"message": "down"}})
+        return ok(request)
+
+    client = httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
+    emb = OpenAIEmbedder("sk-test", http_client=client, base_url="https://api.test/v1")
+    emb._client = emb._client.with_options(max_retries=0)
+    texts = [f"text {i}" for i in range(100)]
+    with pytest.raises(PartialEmbeddingError) as info:
+        await emb.embed_batch(texts, purpose="document")
+    usage = info.value.partial_usage
+    assert isinstance(info.value, EmbeddingUnavailable)
+    assert (usage.input_tokens, usage.completed) == (3, 96)
+    assert usage.input_bound == sum(len(t.encode()) for t in texts[:96])
+
+    # A failure on the very first batch consumed nothing: a plain EmbeddingUnavailable.
+    first = httpx2.AsyncClient(transport=httpx2.MockTransport(_openai_handler([], status=500)))
+    emb = OpenAIEmbedder("sk-test", http_client=first, base_url="https://api.test/v1")
+    emb._client = emb._client.with_options(max_retries=0)
+    with pytest.raises(EmbeddingUnavailable) as plain:
+        await emb.embed_batch(texts, purpose="document")
+    assert not isinstance(plain.value, PartialEmbeddingError)
 
 
 def test_build_embedder_selection() -> None:

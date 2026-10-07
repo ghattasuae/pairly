@@ -22,9 +22,15 @@ from pairly_core.llm.providers.fake import FakeProvider
 from pairly_core.llm.router import EMBED_TASK, ModelRouter
 from pairly_core.llm.settings import LLMSettings, ModelMode
 from pairly_core.llm.store import DatabaseCallStore
+from pairly_core.llm.types import PartialUsage
 from pairly_core.models.llm import LLMBudgetReservation
 from pairly_core.policy.documents import POLICY_KIND, active_policy_documents, index_normalized
-from pairly_core.retrieval.embeddings import EmbeddingBatch, EmbeddingUnavailable, HashingEmbedder
+from pairly_core.retrieval.embeddings import (
+    EmbeddingBatch,
+    EmbeddingUnavailable,
+    HashingEmbedder,
+    PartialEmbeddingError,
+)
 from pairly_core.retrieval.metered import MeteredEmbedder
 from pairly_core.retrieval.search import hybrid_search
 
@@ -199,6 +205,67 @@ async def test_budget_and_provider_failures_fail_closed(
             s, policy_document_id=row2.id, normalized=build_document(SPEND_POLICY), embedder=broke
         )
     assert (outcome.status, outcome.reason) == ("failed", "embedding_unavailable")
+
+
+class PartlyFailing(PricedFake):
+    """Billed for the first batch, then the provider fails (a later batch errors)."""
+
+    def __init__(self, *, tokens: int, completed: int, bound: int = 0) -> None:
+        super().__init__(tokens)
+        self.completed = completed
+        self.bound = bound
+
+    async def embed_batch(self, texts: Sequence[str], *, purpose: Any) -> EmbeddingBatch:
+        raise PartialEmbeddingError(
+            "embedding request failed: APIError",
+            PartialUsage(
+                input_tokens=self.tokens, input_bound=self.bound, completed=self.completed
+            ),
+        )
+
+
+async def test_partial_failure_is_billed_and_still_raises(
+    pol_engine: AsyncEngine, owner_engine: AsyncEngine
+) -> None:
+    org = await new_org(owner_engine)
+    router = make_router(pol_engine, mode=ModelMode.LIVE)
+    with pytest.raises(EmbeddingUnavailable):
+        await MeteredEmbedder(PartlyFailing(tokens=1000, completed=96), router).embed_for_org(
+            org.id, ["first text", "second text"], purpose="document"
+        )
+    (row,) = await calls(owner_engine, org.id)
+    # The successful batches cost 1000 tokens at 0.02 USD per million = 20 micro-dollars.
+    assert (row.status, row.error_kind, row.input_tokens, row.cost_micros) == (
+        "partial_error",
+        "PartialEmbeddingError",
+        1000,
+        20,
+    )
+    async with session_for(pol_engine, org.id) as s, s.begin():
+        stored = await DatabaseCallStore().get(s, row.id)
+        left = await s.scalar(select(LLMBudgetReservation.id).limit(1))
+    assert stored is not None
+    assert stored.response == {"count": 2, "completed": 96}
+    assert left is None
+
+    # No usage reported: the successful part is billed at its byte bound (never the
+    # whole request's bound, never nothing).
+    org2 = await new_org(owner_engine)
+    with pytest.raises(EmbeddingUnavailable):
+        await MeteredEmbedder(PartlyFailing(tokens=0, completed=1, bound=10), router).embed_for_org(
+            org2.id, ["0123456789", "abcdefghijklmnop"], purpose="document"
+        )
+    (row2,) = await calls(owner_engine, org2.id)
+    assert (row2.status, row2.input_tokens) == ("partial_error", 10)
+
+    # Nothing completed: an ordinary provider error at zero cost.
+    org3 = await new_org(owner_engine)
+    with pytest.raises(EmbeddingUnavailable):
+        await MeteredEmbedder(PartlyFailing(tokens=0, completed=0), router).embed_for_org(
+            org3.id, ["x"], purpose="query"
+        )
+    (row3,) = await calls(owner_engine, org3.id)
+    assert (row3.status, row3.cost_micros) == ("provider_error", 0)
 
 
 async def test_embedding_calls_are_not_replayed(

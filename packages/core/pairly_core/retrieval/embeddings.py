@@ -30,6 +30,7 @@ import httpx2
 import openai
 
 from pairly_core.llm.settings import LLMSettings, ModelMode
+from pairly_core.llm.types import PartialUsage
 from pairly_core.retrieval.text import terms
 from pairly_core.retrieval.vector import DIMENSIONS
 
@@ -39,6 +40,19 @@ Purpose = Literal["document", "query"]
 
 class EmbeddingUnavailable(RuntimeError):  # noqa: N818 (mirrors ModelUnavailable)
     """Embeddings could not be computed. Callers fail closed (human review)."""
+
+
+class PartialEmbeddingError(EmbeddingUnavailable):
+    """A batched call failed after some batches succeeded (and were billed).
+
+    ``partial_usage`` lets the model router record the cost of the successful batches
+    (status ``partial_error``). The vectors themselves are discarded: the caller fails
+    closed exactly as for any other ``EmbeddingUnavailable``.
+    """
+
+    def __init__(self, message: str, usage: PartialUsage) -> None:
+        super().__init__(message)
+        self.partial_usage = usage
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,7 +217,18 @@ class OpenAIEmbedder:
     async def embed_batch(self, texts: Sequence[str], *, purpose: Purpose) -> EmbeddingBatch:
         out: list[list[float] | None] = [None] * len(texts)
         tokens = 0
+        # What the successful batches consumed, for billing if a later batch fails.
+        done_bound = 0
+        done = 0
         pending = [(i, t[:MAX_EMBED_CHARS]) for i, t in enumerate(texts) if t.strip()]
+
+        def fail(message: str) -> EmbeddingUnavailable:
+            if done == 0:
+                return EmbeddingUnavailable(message)
+            return PartialEmbeddingError(
+                message, PartialUsage(input_tokens=tokens, input_bound=done_bound, completed=done)
+            )
+
         for start in range(0, len(pending), self.BATCH):
             batch = pending[start : start + self.BATCH]
             try:
@@ -214,19 +239,20 @@ class OpenAIEmbedder:
                     encoding_format="float",
                 )
             except openai.OpenAIError as exc:
-                raise EmbeddingUnavailable(
-                    f"embedding request failed: {type(exc).__name__}"
-                ) from None
-            if len(response.data) != len(batch):
-                raise EmbeddingUnavailable("the embedding response has the wrong length")
+                raise fail(f"embedding request failed: {type(exc).__name__}") from None
+            # The provider answered: this batch is billed, whatever we make of the answer.
             usage = getattr(response, "usage", None)
             tokens += int(getattr(usage, "prompt_tokens", 0) or 0)
+            done_bound += sum(len(t.encode("utf-8", "surrogatepass")) for _, t in batch)
+            done += len(batch)
+            if len(response.data) != len(batch):
+                raise fail("the embedding response has the wrong length")
             for item in response.data:
                 if not 0 <= item.index < len(batch):
-                    raise EmbeddingUnavailable("the embedding response is malformed")
+                    raise fail("the embedding response is malformed")
                 vector = [float(v) for v in item.embedding]
                 if len(vector) != self._dimensions or not all(math.isfinite(v) for v in vector):
-                    raise EmbeddingUnavailable("the embedding has the wrong shape")
+                    raise fail("the embedding has the wrong shape")
                 out[batch[item.index][0]] = _normalize(vector)
         return EmbeddingBatch(out, tokens)
 
