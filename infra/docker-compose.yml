@@ -94,6 +94,9 @@ x-app-env: &app-env
   PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3100}
   <<: *crypto-env
   PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
+  # API key hashing pepper (WP1.11). An older .env gets it from `make env`, which
+  # appends it without changing any existing line.
+  PAIRLY_API_KEY_PEPPER: ${PAIRLY_API_KEY_PEPPER:?missing}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   # Only reachable with the `observability` profile; tracing is best effort.

@@ -155,6 +155,16 @@ class TwoTenants:
     b: Tenant
 
 
+# Children first (fixed names, safe to format into SQL).
+WEBHOOK_TABLES = (
+    "webhook_deliveries",
+    "webhook_outbox",
+    "webhook_endpoints",
+    "inbound_events",
+    "idempotency_keys",
+)
+
+
 async def _seed_tenant(conn: Any, label: str, role_key: str) -> Tenant:
     """Insert one org with one user, one custom role and one membership.
 
@@ -200,6 +210,13 @@ async def _drop_tenant(conn: Any, tenant: Tenant) -> None:
         ),
         {"org": str(tenant.org_id), "sub": tenant.subject},
     )
+    # Rows a request may leave behind (WP1.11): the webhook outbox (every upload emits
+    # document.received), deliveries, endpoints and stored idempotency keys.
+    for table in WEBHOOK_TABLES:
+        await conn.execute(
+            text(f"DELETE FROM {table} WHERE org_id = :o"),  # noqa: S608  # nosec B608
+            {"o": tenant.org_id},
+        )
     await conn.execute(text("DELETE FROM memberships WHERE org_id = :o"), {"o": tenant.org_id})
     await conn.execute(text("DELETE FROM roles WHERE org_id = :o"), {"o": tenant.org_id})
     await conn.execute(text("DELETE FROM users WHERE id = :u"), {"u": tenant.user_id})
@@ -216,3 +233,30 @@ async def tenants(owner_engine: AsyncEngine) -> AsyncIterator[TwoTenants]:
     for tenant in (a, b):
         async with owner_engine.begin() as conn:
             await _drop_tenant(conn, tenant)
+
+
+@pytest.fixture
+async def make_org(owner_engine: AsyncEngine) -> AsyncIterator[Any]:
+    """Factory for new organisations (``policy_support.Org``) with one member of ``role``.
+
+    Their documents are removed afterwards, since the stalled-document sweeper in other
+    tests scans every organisation. The organisations themselves stay (API keys and
+    policy documents cannot be deleted); they are unique and never reused.
+    """
+    from .policy_support import Org
+
+    made: list[Org] = []
+
+    async def make(role: str = "admin") -> Org:
+        async with owner_engine.begin() as conn:
+            tenant = await _seed_tenant(conn, f"k{uuid.uuid4().hex[:6]}", role)
+        made.append(Org(tenant))
+        return made[-1]
+
+    yield make
+    for org in made:
+        async with owner_engine.begin() as conn:
+            await conn.execute(
+                text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)}
+            )
+            await conn.execute(text("DELETE FROM documents WHERE org_id = :o"), {"o": org.id})

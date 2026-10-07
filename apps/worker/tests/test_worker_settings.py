@@ -18,6 +18,7 @@ from pairly_worker.main import (
     APPROVAL_SLA_JOB,
     NIGHTLY_AUDIT_JOB,
     SWEEP_JOB,
+    WEBHOOK_JOB,
     WORKFLOW_RESUME_JOB,
     build_worker_settings,
 )
@@ -56,7 +57,17 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.timezone is UTC
     assert settings.health_check_interval == 30
     jobs = {job.name: job for job in settings.cron_jobs}
-    assert set(jobs) == {NIGHTLY_AUDIT_JOB, SWEEP_JOB, APPROVAL_SLA_JOB, WORKFLOW_RESUME_JOB}
+    assert set(jobs) == {
+        NIGHTLY_AUDIT_JOB,
+        SWEEP_JOB,
+        APPROVAL_SLA_JOB,
+        WORKFLOW_RESUME_JOB,
+        WEBHOOK_JOB,
+    }
+    # Webhook delivery runs every minute, one at a time.
+    assert jobs[WEBHOOK_JOB].unique
+    assert jobs[WEBHOOK_JOB].second == 0
+    assert jobs[WEBHOOK_JOB].minute is None
     cron_job = jobs[NIGHTLY_AUDIT_JOB]
     assert isinstance(cron_job, CronJob)
     assert jobs[APPROVAL_SLA_JOB].minute == set(range(0, 60, 5))

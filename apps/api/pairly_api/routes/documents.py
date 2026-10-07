@@ -27,11 +27,12 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from pairly_api.idempotency import idempotent
 from pairly_api.problems import problem_response
 from pairly_api.uploads import (
     MULTIPART_OVERHEAD,
@@ -59,6 +60,7 @@ from pairly_core.ingestion.service import (
     ingest_spooled,
     record_rejection,
 )
+from pairly_core.rbac import ActorKind
 
 log = structlog.get_logger(__name__)
 
@@ -91,6 +93,8 @@ class ContentUrlOut(BaseModel):
     "",
     status_code=201,
     response_model=UploadOut,
+    # Safe to retry with the same Idempotency-Key (pairly_api.idempotency).
+    dependencies=[Depends(idempotent, scope="function")],
     responses={
         200: {"model": UploadOut, "description": "Already submitted (deduplicated)"},
         400: {"description": "Malformed body or empty file"},
@@ -163,7 +167,9 @@ async def upload_document(
             filename=filename,
             policy=policy,
             by=by,
-            submitted_by=actor.id,
+            # Only a person is a users row; an API key's upload is attributed in the audit
+            # log (actor type api_key) instead.
+            submitted_by=actor.id if actor.kind is ActorKind.USER else None,
         )
 
     if outcome.reason is not None or outcome.document is None:

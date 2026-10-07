@@ -259,9 +259,7 @@ class PolicyDocumentOut(BaseModel):
             indexed_at=row.indexed_at,
             archived_at=row.archived_at,
             warning_count=len(findings),
-            warnings=(
-                [PolicyWarningOut.model_validate(f) for f in findings] if manager else []
-            ),
+            warnings=([PolicyWarningOut.model_validate(f) for f in findings] if manager else []),
             override_requested_by=row.override_requested_by,
             override_requested_at=row.override_requested_at,
             override_request_reason=row.override_request_reason if manager else None,

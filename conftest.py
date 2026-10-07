@@ -3,7 +3,8 @@
 """Repository-wide pytest setup.
 
 Encryption keys (WP1.14): the API, the worker and every encrypted column need
-``PAIRLY_KEK_*`` and ``PAIRLY_BLIND_INDEX_KEY``. When the environment does not set
+``PAIRLY_KEK_*`` and ``PAIRLY_BLIND_INDEX_KEY``; the API also needs
+``PAIRLY_API_KEY_PEPPER`` (WP1.11). When the environment does not set
 them, the test session gets fresh random keys (never a fixed value), so tests never
 depend on a developer's real keys and no key is ever committed.
 """
@@ -23,3 +24,5 @@ if not os.environ.get("PAIRLY_KEK_CURRENT"):
     os.environ["PAIRLY_KEK_CURRENT"] = "test1"
     os.environ.setdefault("PAIRLY_KEK_test1", _random_key())
 os.environ.setdefault("PAIRLY_BLIND_INDEX_KEY", _random_key())
+# API key hashing pepper (WP1.11), random per session like the keys above.
+os.environ.setdefault("PAIRLY_API_KEY_PEPPER", _random_key())

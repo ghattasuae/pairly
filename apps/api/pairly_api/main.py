@@ -5,7 +5,8 @@
 Run with: ``uvicorn pairly_api.main:create_app --factory``.
 
 Startup fails closed: missing settings or encryption keys (``PAIRLY_KEK_*``,
-``PAIRLY_BLIND_INDEX_KEY``) raise ``ConfigError``, an invalid workflow plugin
+``PAIRLY_BLIND_INDEX_KEY``) or the API key pepper (``PAIRLY_API_KEY_PEPPER``) raise
+``ConfigError``, an invalid workflow plugin
 raises ``PluginError``, and connecting to Postgres as a role that bypasses RLS raises
 ``UnsafeDatabaseRoleError``. Document storage settings (``PAIRLY_S3_*``) are required
 too, except in the test environment, where the document routes answer 503 without them.
@@ -21,10 +22,12 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from pairly_api import __version__
+from pairly_api.idempotency import IdempotencyMiddleware, IdempotentReplay, replay_handler
 from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
 from pairly_api.routes import (
+    api_keys,
     approval_links,
     approvals,
     audit,
@@ -33,11 +36,13 @@ from pairly_api.routes import (
     me,
     members,
     policies,
+    webhooks,
 )
 from pairly_api.routes import documents as document_routes
 from pairly_api.routes import extractions as extraction_routes
 from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_api.uploads import DocumentServices
+from pairly_core.api_keys.tokens import init_api_key_pepper
 from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
 from pairly_core.auth import TokenVerifier
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
@@ -46,6 +51,8 @@ from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import RoleRegistry, build_registry
+from pairly_core.webhooks.events import build_event_registry, install_event_registry
+from pairly_core.webhooks.settings import load_webhook_settings
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
 
@@ -132,10 +139,13 @@ def create_app(
 ) -> FastAPI:
     settings = settings or load_settings()
     init_crypto()
+    init_api_key_pepper()
+    webhook_settings = load_webhook_settings()
     configure_logging(settings.log_level)
     configure_tracing()
     workflow_plugins = list(discover_plugins().values()) if plugins is None else list(plugins)
     registry = build_registry(workflow_plugins)
+    install_event_registry(build_event_registry(workflow_plugins))
 
     show_docs = not settings.is_production
     app = FastAPI(
@@ -147,7 +157,9 @@ def create_app(
         redoc_url=None,
     )
     install_error_handlers(app)
+    app.add_exception_handler(IdempotentReplay, replay_handler)
     app.state.documents = documents
+    app.state.webhook_settings = webhook_settings
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
@@ -159,6 +171,8 @@ def create_app(
     v1.include_router(approvals.router)
     v1.include_router(approval_links.router)
     v1.include_router(policies.router)
+    v1.include_router(api_keys.router)
+    v1.include_router(webhooks.router)
     # Workflow plugin routers are mounted under /v1/<plugin id> in a later work package.
     app.include_router(health.router)
     app.include_router(v1)
@@ -180,6 +194,8 @@ def create_app(
             max_age=600,
         )
     instrument_app(app)
+    # Inside the edge layer: hashes Idempotency-Key requests and keeps their responses.
+    app.add_middleware(IdempotencyMiddleware)
     # Added last, so it is the outermost layer and wraps every response.
     app.add_middleware(EdgeMiddleware, hsts=settings.is_production)
     return app

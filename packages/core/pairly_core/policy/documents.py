@@ -400,9 +400,9 @@ async def request_override(
     if row.status != PolicyDocumentStatus.NEEDS_REVIEW or row.overridden_at is not None:
         raise OverrideNotAllowedError("only a policy document that needs review can be overridden")
     two_person = override_needs_two_admins(row)
-    finding_ids = [
-        str(f.get("id")) for f in row.guardrail_findings or [] if isinstance(f, dict)
-    ][:50]
+    finding_ids = [str(f.get("id")) for f in row.guardrail_findings or [] if isinstance(f, dict)][
+        :50
+    ]
     now = datetime.now(UTC)
     if two_person and row.override_requested_by is None:
         row.override_requested_by = user_id

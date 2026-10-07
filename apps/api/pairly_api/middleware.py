@@ -118,6 +118,7 @@ class EdgeMiddleware:
             "duration_ms": round((time.perf_counter() - started) * 1000, 2),
         }
         if actor is not None:
-            fields["user_id"] = str(actor.id)
+            kind = str(getattr(actor, "kind", "user"))
+            fields["user_id" if kind == "user" else f"{kind}_id"] = str(actor.id)
             fields["org_id"] = str(actor.org_id)
         log.info("request", **fields)

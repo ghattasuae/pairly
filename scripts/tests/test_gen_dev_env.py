@@ -52,9 +52,32 @@ def test_real_example_fills_every_secret_with_unique_values(tmp_path: Path) -> N
 
 def test_never_overwrites_existing_env(tmp_path: Path) -> None:
     target = tmp_path / ".env"
-    target.write_text("KEEP=me\n")
+    target.write_text("KEEP=me\nPAIRLY_API_KEY_PEPPER=\n")
     assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
-    assert target.read_text() == "KEEP=me\n"
+    # The file names every appendable secret already (even empty): nothing changes.
+    assert target.read_text() == "KEEP=me\nPAIRLY_API_KEY_PEPPER=\n"
+
+
+def test_existing_env_gets_new_secrets_appended(tmp_path: Path) -> None:
+    target = tmp_path / ".env"
+    original = "KEEP=me\n# PAIRLY_API_KEY_PEPPER=commented-out\nNO_NEWLINE=x"
+    target.write_text(original)
+    target.chmod(0o600)
+    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    text = target.read_text()
+    assert text.startswith(original + "\n")
+    values = _parse(text)
+    assert values["KEEP"] == "me"
+    assert values["NO_NEWLINE"] == "x"
+    assert len(values["PAIRLY_API_KEY_PEPPER"]) >= 43
+    assert stat.S_IMODE(target.stat().st_mode) == 0o600
+    # A second run appends nothing more.
+    assert gen.main(["--example", str(ROOT / ".env.example"), "--env", str(target)]) == 0
+    assert target.read_text() == text
+
+
+def test_appendable_secrets_are_known_secrets() -> None:
+    assert set(gen.APPEND_IF_MISSING) <= set(gen.SECRET_GENERATORS)
 
 
 def test_example_with_a_secret_value_is_rejected() -> None:

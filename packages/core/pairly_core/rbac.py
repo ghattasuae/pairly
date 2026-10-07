@@ -13,6 +13,10 @@ Rules enforced in code:
 * The ``agent`` service role may only ever hold ``read`` and ``propose`` permissions.
   Granting it anything else raises ``AgentPermissionError`` when the registry is built,
   and ``authorize`` denies such a permission to an agent actor even if it got one.
+* API keys act like agents: their scopes may only name ``read``, ``propose`` and
+  ``upload`` (submitting a document for processing) permissions, never approve, decide,
+  manage, export or any other final action (``API_KEY_ALLOWED_ACTIONS``). ``authorize``
+  enforces it for every ``api_key`` actor, whatever the key row says.
 * A membership limited to one workflow grants only that workflow's permissions. Core
   permissions come from memberships that cover every workflow.
 * Every check fails closed: unknown roles grant nothing, unknown permissions are held
@@ -48,6 +52,8 @@ if TYPE_CHECKING:
 CORE_NAMESPACE = "core"
 AGENT_ROLE = "agent"
 AGENT_ALLOWED_ACTIONS = frozenset({"read", "propose"})
+# API keys (pairly_core.api_keys) act like agents, plus submitting documents.
+API_KEY_ALLOWED_ACTIONS = frozenset({"read", "propose", "upload"})
 # Actions that need a second factor (TOTP) in the current sign-in. See the module docstring.
 STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export"})
 # The ``amr`` value (RFC 8176 "one-time password") the web app puts in the token after a
@@ -289,6 +295,8 @@ CORE_PERMISSION_MODULES: tuple[str, ...] = (
     "pairly_core.documents.permissions",
     "pairly_core.extraction.permissions",
     "pairly_core.policy.permissions",
+    "pairly_core.api_keys.permissions",
+    "pairly_core.webhooks.permissions",
 )
 
 
@@ -321,6 +329,13 @@ def build_registry(plugins: Iterable[WorkflowPlugin] = ()) -> RoleRegistry:
 class ActorKind(StrEnum):
     USER = "user"
     AGENT = "agent"
+    # A scoped API key (pairly_core.api_keys): read, propose and upload only.
+    API_KEY = "api_key"
+
+
+def api_key_may_hold(permission: str) -> bool:
+    """Whether an API key scope may name ``permission`` (read, propose, upload only)."""
+    return permission_action(permission) in API_KEY_ALLOWED_ACTIONS
 
 
 @dataclass(frozen=True, slots=True)
@@ -379,6 +394,8 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
         actor.kind is ActorKind.AGENT and permission_action(permission) not in AGENT_ALLOWED_ACTIONS
     ):
         reason = "agent_action_not_allowed"
+    elif actor.kind is ActorKind.API_KEY and not api_key_may_hold(permission):
+        reason = "api_key_action_not_allowed"
     elif (
         actor.kind is ActorKind.USER
         and requires_second_factor(permission)

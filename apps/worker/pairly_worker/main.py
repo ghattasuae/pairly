@@ -29,6 +29,7 @@ from pairly_core.db import check_app_role, create_sessionmaker
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
 from pairly_core.plugins import discover_plugins
 from pairly_core.rbac import build_registry
+from pairly_core.webhooks.events import build_event_registry, install_event_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_worker.config import WorkerConfig, load_worker_config
@@ -40,6 +41,7 @@ from pairly_worker.documents import (
 )
 from pairly_worker.jobs import verify_audit_chains
 from pairly_worker.logs import configure_logging
+from pairly_worker.webhook_jobs import deliver_webhooks, setup_webhooks
 from pairly_worker.workflow_jobs import escalate_overdue_approvals, resume_decided_runs
 
 log = structlog.get_logger("pairly_worker")
@@ -48,6 +50,7 @@ NIGHTLY_AUDIT_JOB = "nightly_audit_verify"
 SWEEP_JOB = "sweep_documents"
 APPROVAL_SLA_JOB = "approval_sla_escalation"
 WORKFLOW_RESUME_JOB = "workflow_resume_reconcile"
+WEBHOOK_JOB = "deliver_webhooks"
 
 # Shared with the API's enqueue side (JSON, never pickle).
 _dumps = job_dumps
@@ -80,6 +83,8 @@ async def startup(ctx: dict[str, Any]) -> None:
         setup_documents(ctx, config.env)
         plugins = list(discover_plugins().values())
         registry = build_registry(plugins)
+        install_event_registry(build_event_registry(plugins))
+        setup_webhooks(ctx)
         runtime = WorkflowRuntime.from_plugins(
             plugins,
             sessionmaker=sessionmaker,
@@ -96,6 +101,9 @@ async def startup(ctx: dict[str, Any]) -> None:
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:
+    sender = ctx.pop("webhook_sender", None)
+    if sender is not None:
+        await sender.aclose()
     engine = ctx.pop("engine", None)
     if engine is not None:
         await engine.dispose()
@@ -143,6 +151,14 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 run_at_startup=True,
                 unique=True,
                 timeout=600,
+            ),
+            # Outbound webhooks: fan out the outbox and send due deliveries.
+            cron(
+                deliver_webhooks,
+                name=WEBHOOK_JOB,
+                run_at_startup=True,
+                unique=True,
+                timeout=300,
             ),
         ],
         "on_startup": startup,
