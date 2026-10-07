@@ -32,6 +32,7 @@ COPY pyproject.toml uv.lock .python-version ./
 COPY packages/core/pyproject.toml packages/core/
 COPY packages/hire/pyproject.toml packages/hire/
 COPY packages/pay/pyproject.toml packages/pay/
+COPY packages/expense/pyproject.toml packages/expense/
 COPY apps/api/pyproject.toml apps/api/
 COPY apps/worker/pyproject.toml apps/worker/
 COPY apps/mcp/pyproject.toml apps/mcp/
@@ -43,6 +44,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY packages/core packages/core
 COPY packages/hire packages/hire
 COPY packages/pay packages/pay
+COPY packages/expense packages/expense
 COPY apps/api apps/api
 COPY apps/worker apps/worker
 COPY apps/mcp apps/mcp

@@ -12,6 +12,7 @@ dependencies = [
   "pairly-core",
   "pairly-hire",
   "pairly-pay",
+  "pairly-expense",
   "pairly-api",
   "pairly-worker",
   "pairly-mcp",
@@ -40,6 +41,7 @@ members = [
   "packages/core",
   "packages/hire",
   "packages/pay",
+  "packages/expense",
   "apps/api",
   "apps/worker",
   "apps/mcp",
@@ -50,6 +52,7 @@ members = [
 pairly-core = { workspace = true }
 pairly-hire = { workspace = true }
 pairly-pay = { workspace = true }
+pairly-expense = { workspace = true }
 pairly-api = { workspace = true }
 pairly-worker = { workspace = true }
 pairly-mcp = { workspace = true }
@@ -80,7 +83,7 @@ select = [
 
 [tool.ruff.lint.isort]
 known-first-party = [
-  "pairly_core", "pairly_hire", "pairly_pay",
+  "pairly_core", "pairly_hire", "pairly_pay", "pairly_expense",
   "pairly_api", "pairly_worker", "pairly_mcp", "pairly",
 ]
 
@@ -95,9 +98,10 @@ warn_unused_configs = true
 warn_redundant_casts = true
 check_untyped_defs = true
 
-# "strict = true" is global-only in mypy, so the strict flag set is spelled out for core.
+# "strict = true" is global-only in mypy, so the strict flag set is spelled out for core
+# (and for the expense example workflow, the model for new workflows).
 [[tool.mypy.overrides]]
-module = ["pairly_core", "pairly_core.*"]
+module = ["pairly_core", "pairly_core.*", "pairly_expense", "pairly_expense.*"]
 disallow_any_generics = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true
@@ -137,7 +141,7 @@ fail_under = 85
 # ---------------------------------------------------------------- import-linter
 [tool.importlinter]
 root_packages = [
-  "pairly_core", "pairly_hire", "pairly_pay",
+  "pairly_core", "pairly_hire", "pairly_pay", "pairly_expense",
   "pairly_api", "pairly_worker", "pairly_mcp",
 ]
 
@@ -145,9 +149,19 @@ root_packages = [
 name = "Core engine never imports a workflow or an app"
 type = "forbidden"
 source_modules = ["pairly_core"]
-forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_api", "pairly_worker", "pairly_mcp"]
+forbidden_modules = [
+  "pairly_hire", "pairly_pay", "pairly_expense", "pairly_api", "pairly_worker", "pairly_mcp",
+]
 
 [[tool.importlinter.contracts]]
 name = "Workflows are independent of each other"
 type = "independence"
-modules = ["pairly_hire", "pairly_pay"]
+modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
+
+# Workflows plug in through the pairly.workflows entry point only: the API and the
+# worker never import one, so adding a workflow needs no change in them.
+[[tool.importlinter.contracts]]
+name = "Apps discover workflows at runtime, never import them"
+type = "forbidden"
+source_modules = ["pairly_api", "pairly_worker", "pairly_mcp"]
+forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_expense"]

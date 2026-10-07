@@ -20,7 +20,8 @@ WAIT_TIMEOUT ?= 300
 # Optional service filter for `make logs`, e.g. SERVICE=api
 SERVICE      ?=
 
-.PHONY: help install hooks env dev demo down logs ps test evals lint format typecheck bootstrap-org
+.PHONY: help install hooks env dev demo demo-expense down logs ps test evals lint format typecheck
+.PHONY: bootstrap-org
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -53,6 +54,18 @@ dev: env ## Start the stack and wait until healthy (PROFILES="scan observability
 demo: dev ## Boot everything healthy (seed data arrives in M2)
 	@echo ""
 	@echo "make demo: the stack is healthy. Seeded demo data arrives in M2, so there is nothing to explore yet."
+
+# The expense note example workflow (docs/add-a-workflow.md), offline in recorded mode.
+# Needs an organisation (make bootstrap-org). Seeds its policies, three demo people
+# (invitation links are printed once) and the recorded model responses, and checks
+# that the synthetic receipts in synth/expense/receipts are current.
+demo-expense: ## Seed the expense example in an org (SLUG=acme): policies, people, recordings
+	@if [ -z "$(SLUG)" ]; then echo 'usage: make demo-expense SLUG=acme'; exit 2; fi
+	$(UV) run python -m synth.expense --check
+	$(COMPOSE) run --rm --no-deps migrate pairly-admin seed expense-demo --org "$(SLUG)"
+	@echo ""
+	@echo "Upload a receipt from synth/expense/receipts as the submitter (POST /v1/expense/notes),"
+	@echo "then decide it as the approver from the inbox or the email link (Mail UI on :8025)."
 
 down: ## Stop and remove every stack container, all profiles (volumes are kept)
 	@test -f .env || { echo "no .env, nothing to stop"; exit 0; }; \
@@ -89,8 +102,8 @@ format: ## Auto-format and auto-fix Python
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
 
-typecheck: ## mypy (strict on packages/core) and tsc
-	$(UV) run mypy packages/core
+typecheck: ## mypy (strict on packages/core and packages/expense) and tsc
+	$(UV) run mypy packages/core packages/expense
 	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts synth
 	$(PNPM) typecheck
 

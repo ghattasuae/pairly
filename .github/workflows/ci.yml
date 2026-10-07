@@ -80,8 +80,8 @@ jobs:
       - name: import contracts
         run: uv run lint-imports
 
-      - name: mypy (strict on packages/core)
-        run: uv run mypy packages/core
+      - name: mypy (strict on packages/core and packages/expense)
+        run: uv run mypy packages/core packages/expense
 
       - name: mypy (everything else)
         run: uv run mypy packages/hire packages/pay apps sdks/python scripts synth
