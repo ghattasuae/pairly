@@ -2168,6 +2168,11 @@ export type components = {
             updated_at: string;
             /** Url */
             url: string;
+            /**
+             * Url Redacted
+             * @default false
+             */
+            url_redacted: boolean;
         };
         /** EndpointPatch */
         EndpointPatch: {
@@ -2213,6 +2218,11 @@ export type components = {
             updated_at: string;
             /** Url */
             url: string;
+            /**
+             * Url Redacted
+             * @default false
+             */
+            url_redacted: boolean;
         };
         /** EventTypeOut */
         EventTypeOut: {

@@ -230,6 +230,19 @@ async def test_endpoint_validation_and_rbac(
     auditor = await add_member_role(owner_engine, org.id, "auditor")
     read = await api.client.get("/v1/webhooks/endpoints", headers=api.h(auditor, org.id))
     assert read.status_code == 200
+    # Readers see scheme, host and path only; managers the full URL (with its token).
+    secret_url = "https://hooks.example.com/in/pairly?token=s3cret"  # noqa: S105
+    made = await api.create_endpoint(org, url=secret_url)
+    assert made.status_code == 201, made.text
+    assert (made.json()["url"], made.json()["url_redacted"]) == (secret_url, False)
+    for path in ("/v1/webhooks/endpoints", f"/v1/webhooks/endpoints/{made.json()['id']}"):
+        as_auditor = (await api.client.get(path, headers=api.h(auditor, org.id))).json()
+        as_admin = (await api.client.get(path, headers=api.h(org.tenant.subject, org.id))).json()
+        mine = as_auditor if isinstance(as_auditor, dict) else as_auditor[-1]
+        theirs = as_admin if isinstance(as_admin, dict) else as_admin[-1]
+        assert (mine["url"], mine["url_redacted"]) == ("https://hooks.example.com/in/pairly", True)
+        assert "s3cret" not in json.dumps(as_auditor)
+        assert (theirs["url"], theirs["url_redacted"]) == (secret_url, False)
     write = await api.client.post(
         "/v1/webhooks/endpoints",
         json={"url": HOOK_URL, "event_types": [DOCUMENT_RECEIVED]},
@@ -416,3 +429,10 @@ async def test_inbound_events_are_processed_once(api: Api, org: Org) -> None:
         sm, org_id=org.id, provider="slack", event_id="evt_1", handler=handler
     )
     assert not other.duplicate
+
+
+def test_display_url_keeps_scheme_host_and_path_only() -> None:
+    from pairly_api.routes.webhooks import display_url
+
+    url = "https://user:pw@hooks.example.com:8443/in/pairly?token=s3cret#frag"
+    assert display_url(url) == "https://hooks.example.com/in/pairly"

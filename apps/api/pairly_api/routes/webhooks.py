@@ -5,7 +5,9 @@
 * ``GET   /v1/webhooks/event-types``                    the registered event types
 * ``POST  /v1/webhooks/endpoints``                      create; returns the signing
   secret once (``core.webhooks.manage``, step-up)
-* ``GET   /v1/webhooks/endpoints``                      list (``core.webhooks.read``)
+* ``GET   /v1/webhooks/endpoints``                      list (``core.webhooks.read``;
+                                                         the full URL only with
+                                                         ``core.webhooks.manage``)
 * ``GET   /v1/webhooks/endpoints/{id}``                 one
 * ``PATCH /v1/webhooks/endpoints/{id}``                 change URL, event types,
   description, or enable and disable it
@@ -21,6 +23,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from typing import Annotated
+from urllib.parse import urlsplit, urlunsplit
 
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
@@ -84,9 +87,21 @@ class EndpointPatch(BaseModel):
     active: bool | None = None
 
 
+def display_url(url: str) -> str:
+    """Scheme, host and path only: no user info, port, query or fragment.
+
+    Endpoint URLs often carry a token in the query string or the user info; people who
+    may only read the endpoint list never see those parts.
+    """
+    parts = urlsplit(url)
+    return urlunsplit((parts.scheme, parts.hostname or "", parts.path, "", ""))
+
+
 class EndpointOut(BaseModel):
     id: uuid.UUID
+    # The full URL for managers (core.webhooks.manage); scheme, host and path otherwise.
     url: str
+    url_redacted: bool = False
     description: str | None
     event_types: list[str]
     active: bool
@@ -97,10 +112,11 @@ class EndpointOut(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def of(cls, row: WebhookEndpoint) -> EndpointOut:
+    def of(cls, row: WebhookEndpoint, *, full_url: bool = True) -> EndpointOut:
         return cls(
             id=row.id,
-            url=row.url,
+            url=row.url if full_url else display_url(row.url),
+            url_redacted=not full_url,
             description=row.description,
             event_types=list(row.event_types),
             active=row.active,
@@ -177,12 +193,14 @@ async def create(
 
 @router.get("/endpoints", response_model=list[EndpointOut])
 async def list_all(actor: ReadActor, session: OrgSession) -> list[EndpointOut]:
-    return [EndpointOut.of(row) for row in await list_endpoints(session)]
+    full = actor.has(WEBHOOKS_MANAGE)
+    return [EndpointOut.of(row, full_url=full) for row in await list_endpoints(session)]
 
 
 @router.get("/endpoints/{endpoint_id}", response_model=EndpointOut)
 async def get_one(endpoint_id: uuid.UUID, actor: ReadActor, session: OrgSession) -> EndpointOut:
-    return EndpointOut.of(await get_endpoint(session, endpoint_id))
+    row = await get_endpoint(session, endpoint_id)
+    return EndpointOut.of(row, full_url=actor.has(WEBHOOKS_MANAGE))
 
 
 @router.patch("/endpoints/{endpoint_id}", response_model=EndpointOut)

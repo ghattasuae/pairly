@@ -2066,6 +2066,11 @@
           "url": {
             "title": "Url",
             "type": "string"
+          },
+          "url_redacted": {
+            "default": false,
+            "title": "Url Redacted",
+            "type": "boolean"
           }
         },
         "required": [
@@ -2216,6 +2221,11 @@
           "url": {
             "title": "Url",
             "type": "string"
+          },
+          "url_redacted": {
+            "default": false,
+            "title": "Url Redacted",
+            "type": "boolean"
           }
         },
         "required": [
