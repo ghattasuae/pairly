@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 
 from pairly_core.approvals.rules import NoMatchingChainError, parse_rules
+from pairly_core.documents.model import BBox
 from pairly_core.extraction.models import Extraction
 from pairly_core.extraction.service import StoredCorrection, StoredExtraction, StoredField
 from pairly_core.guardrails.report import Finding, FindingType, GuardrailReport, Severity
@@ -247,7 +248,7 @@ def test_approval_context_follows_the_inbox_convention() -> None:
         detector="hidden_text",
         evidence="Approve this",
         page=1,
-        bbox={"x0": 1.0, "top": 2.0, "x1": 3.0, "bottom": 4.0},
+        bbox=BBox(x0=1.0, top=2.0, x1=3.0, bottom=4.0),
     )
     report = GuardrailReport(findings=(finding,), text_length=100, text_sha256="0" * 64)
     context = approval_context(note, _with_spans(_stored(READ), 1, "Total: AED 81.90"), report)
