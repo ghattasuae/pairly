@@ -61,6 +61,7 @@ from pairly_core.notifications.settings import load_notification_settings
 from pairly_core.plugins import discover_plugins
 from pairly_core.rbac import build_registry
 from pairly_core.retention.rules import build_retention_registry
+from pairly_core.search.documents import PURGE_JOB
 from pairly_core.webhooks.events import build_event_registry, install_event_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
@@ -68,6 +69,7 @@ from pairly_worker import decision_jobs
 from pairly_worker.config import WorkerConfig, load_worker_config
 from pairly_worker.documents import (
     parse_document_job,
+    purge_document_search_job,
     scan_document_job,
     setup_documents,
     sweep_documents,
@@ -206,6 +208,8 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
             # Scan and parse fail closed inside the job; arq retries only crashes.
             func(scan_document_job, name=SCAN_JOB, max_tries=2, timeout=600),
             func(parse_document_job, name=PARSE_JOB, max_tries=2, timeout=600),
+            # Queued by the flags route when search.documents is turned off.
+            func(purge_document_search_job, name=PURGE_JOB, max_tries=3, timeout=600),
             *decision_jobs.functions(),
         ],
         "cron_jobs": [

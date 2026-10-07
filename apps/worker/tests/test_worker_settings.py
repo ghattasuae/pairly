@@ -158,6 +158,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         "parse_document",
         "compliance_export",
         "verify_audit_chain",
+        "purge_document_search",
     }
     assert all(isinstance(f, Function) for f in functions.values())
     assert jobs[SWEEP_JOB].unique

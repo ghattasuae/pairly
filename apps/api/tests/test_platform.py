@@ -480,3 +480,72 @@ async def test_unified_search(api: Api, org: Org, owner_engine: AsyncEngine) -> 
     await api.client.delete(f"/v1/flags/{SEARCH_DOCUMENTS}", headers=api.h(admin, org.id))
     kinds_after = await api.client.get("/v1/search/kinds", headers=api.h(admin, org.id))
     assert [k["kind"] for k in kinds_after.json()] == ["policy"]
+
+
+async def test_turning_document_search_off_purges_the_index(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    from pairly_api.decision_services import DecisionServices
+    from pairly_core.decisions.jobs import NullTaskQueue, RecordingTaskQueue
+    from pairly_core.search.documents import PURGE_JOB
+    from pairly_worker.documents import purge_document_search_job
+
+    admin = org.tenant.subject
+    embedder = HashingEmbedder()
+    doc = await _parsed_document(api, org.id, "pay", "invoice-purge")
+    queue = RecordingTaskQueue()
+    api.app.state.decision_services = DecisionServices(queue=queue)
+
+    async def chunks() -> int:
+        rows = await owner_rows(
+            owner_engine, org.id, "SELECT count(*) FROM search_chunks WHERE kind = 'document'"
+        )
+        return int(rows[0][0])
+
+    async def index() -> None:
+        outcome = await index_document_after_parse(
+            api.sessionmaker, api.store, org_id=org.id, document_id=doc, embedder=embedder
+        )
+        assert outcome.status == "indexed", outcome
+
+    async def flag(enabled: bool | None) -> None:
+        url = f"/v1/flags/{SEARCH_DOCUMENTS}"
+        if enabled is None:
+            response = await api.client.delete(url, headers=api.h(admin, org.id))
+        else:
+            response = await api.client.put(
+                url, json={"enabled": enabled}, headers=api.h(admin, org.id)
+            )
+        assert response.status_code == 200, response.text
+
+    await flag(True)
+    assert queue.jobs == []  # turning it on queues nothing
+    await index()
+    assert await chunks() >= 1
+
+    # Off: the purge is queued for the worker (after the commit), which deletes it all.
+    await flag(False)
+    ((job, args, _),) = queue.jobs
+    assert (job, args) == (PURGE_JOB, (str(org.id),))
+    assert await chunks() >= 1
+    result = await purge_document_search_job({"sessionmaker": api.sessionmaker}, str(org.id))
+    assert result["chunks"] >= 1
+    assert await chunks() == 0
+    purged = await owner_rows(
+        owner_engine,
+        org.id,
+        "SELECT payload->>'chunks' FROM audit_events WHERE action = 'core.search.documents_purged'",
+    )
+    assert [int(r[0]) for r in purged] == [result["chunks"]]
+
+    # A purge that runs after the flag came back on deletes nothing.
+    await flag(True)
+    await index()
+    stale = await purge_document_search_job({"sessionmaker": api.sessionmaker}, str(org.id))
+    assert stale == {"chunks": None, "skipped": True}
+    assert await chunks() >= 1
+
+    # No queue: the request purges itself (also through DELETE back to the default).
+    api.app.state.decision_services = DecisionServices(queue=NullTaskQueue())
+    await flag(None)
+    assert await chunks() == 0

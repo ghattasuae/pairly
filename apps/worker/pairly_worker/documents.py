@@ -24,7 +24,9 @@ import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.audit import ActorType
 from pairly_core.config import ConfigError, Environment
+from pairly_core.db import set_tenant
 from pairly_core.documents.pipeline import ParseConfig, parse_document
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB
 from pairly_core.ingestion.scan import ClamdScanner, UnavailableScanner, VirusScanner, scan_document
@@ -33,7 +35,7 @@ from pairly_core.ingestion.storage import S3ObjectStore
 from pairly_core.llm.settings import load_llm_settings
 from pairly_core.policy.documents import index_after_parse
 from pairly_core.retrieval.metered import build_metered_embedder
-from pairly_core.search.documents import index_document_after_parse
+from pairly_core.search.documents import index_document_after_parse, purge_documents
 
 log = structlog.get_logger("pairly_worker.documents")
 
@@ -188,3 +190,17 @@ async def sweep_documents(ctx: dict[str, Any]) -> dict[str, int]:
     if stalled:
         log.info("documents_swept", queued=len(stalled))
     return {"queued": len(stalled)}
+
+
+async def purge_document_search_job(ctx: dict[str, Any], org_id: str) -> dict[str, Any]:
+    """Delete an organisation's document chunks after ``search.documents`` went off."""
+    sessionmaker: async_sessionmaker[AsyncSession] = ctx["sessionmaker"]
+    org = uuid.UUID(org_id)
+    async with sessionmaker() as session:
+        set_tenant(session, org, None)
+        async with session.begin():
+            purged = await purge_documents(
+                session, actor_type=ActorType.SYSTEM, actor_id="pairly.search.purge"
+            )
+    log.info("document_search_purged", org_id=org_id, chunks=purged, skipped=purged is None)
+    return {"chunks": purged, "skipped": purged is None}
