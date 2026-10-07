@@ -43,8 +43,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // pg and nodemailer are Node-only; keep them out of the bundler.
   serverExternalPackages: ["pg", "nodemailer"],
-  // Policy documents are uploaded through a server action (the API accepts up to 25 MB).
-  experimental: { serverActions: { bodySizeLimit: "26mb" } },
+  // Server actions keep the default 1 MB body limit. Policy documents (up to 25 MB) go
+  // through their own route handler, /api/policies/documents, which enforces 26 MB.
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

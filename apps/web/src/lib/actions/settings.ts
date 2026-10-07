@@ -7,7 +7,8 @@
  * documents and rule sets. Every one is checked by the API (`core.flags.manage`,
  * `core.api_keys.manage`, `core.webhooks.manage`, `core.policy.manage`, all step-up
  * permissions). Secrets the API returns once (an API key, a webhook signing secret) go
- * straight to the person who created them and are never stored here.
+ * straight to the person who created them and are never stored here. Policy document
+ * uploads go through the `/api/policies/documents` route handler instead (large body).
  */
 import { z } from "zod";
 
@@ -123,37 +124,6 @@ export async function loadDeliveries(id: string): Promise<ActionResult<{ deliver
 }
 
 // ------------------------------------------------------------------ policies
-
-const policyName = z.string().regex(/^[a-z][a-z0-9_.-]{0,127}$/);
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-
-/** Upload a policy document as the next version of `name` (multipart, through ingestion). */
-export async function uploadPolicyDocument(form: FormData): Promise<ActionResult<{ policy: PolicyDocument }>> {
-  const name = form.get("name");
-  const title = form.get("title");
-  const file = form.get("file");
-  if (
-    !policyName.safeParse(name).success ||
-    typeof title !== "string" ||
-    title.trim().length < 1 ||
-    title.length > 200 ||
-    !(file instanceof File) ||
-    file.size === 0 ||
-    file.size > MAX_UPLOAD_BYTES
-  ) {
-    return invalid;
-  }
-  const body = new FormData();
-  body.set("file", file, file.name.slice(0, 200) || "policy");
-  const result = await callApi((api) =>
-    api.POST("/v1/policies/documents", {
-      params: { query: { name: name as string, title: title.trim() } },
-      body: body as never,
-      bodySerializer: (value: unknown) => value as FormData,
-    }),
-  );
-  return toAction(result, (data) => ({ policy: data.policy_document }));
-}
 
 const overrideSchema = z.object({ id: z.uuid(), reason: z.string().trim().min(10).max(2000) });
 

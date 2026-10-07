@@ -46,6 +46,29 @@ export async function upstream(
   });
 }
 
+/** Uploads may take a while (virus scan, parse); everything else keeps the short timeout. */
+export const UPLOAD_TIMEOUT_MS = 120_000;
+
+/** POST a multipart body to the API as the signed-in user in their active organisation. */
+export async function upstreamUpload(
+  path: `/v1/${string}`,
+  body: FormData,
+  init: { signal?: AbortSignal } = {},
+): Promise<Response> {
+  const token = await getApiToken();
+  if (!token) throw new NotSignedInError();
+  const headers = buildApiHeaders(token, await getActiveOrgId());
+  const timeout = AbortSignal.timeout(UPLOAD_TIMEOUT_MS);
+  return fetch(`${serverEnv().apiInternalUrl}${path}`, {
+    method: "POST",
+    headers,
+    body,
+    cache: "no-store",
+    redirect: "error",
+    signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
+  });
+}
+
 /** The problem `code` of an error response, or a code for its status. */
 export async function upstreamProblem(response: Response): Promise<Response> {
   let code = "unavailable";
@@ -56,6 +79,6 @@ export async function upstreamProblem(response: Response): Promise<Response> {
     if (response.status === 404) code = "not_found";
     else if (response.status === 403) code = "permission_denied";
   }
-  const status = [400, 401, 403, 404, 409, 410, 422, 429].includes(response.status) ? response.status : 502;
+  const status = [400, 401, 403, 404, 409, 410, 413, 415, 422, 429].includes(response.status) ? response.status : 502;
   return jsonProblem(status, code);
 }

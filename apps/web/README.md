@@ -245,6 +245,13 @@ server-minted token, and three route handlers pass through what must stream (the
 stream, receipt PDFs and audit exports). They refuse cross-site requests
 (`Sec-Fetch-Site`), and the export also needs a custom header a link cannot send.
 
+Server actions keep Next's default 1 MB body limit. Policy documents (up to 25 MB) are
+uploaded through their own route handler, `POST /api/policies/documents`, which accepts
+at most 26 MB (counted while reading, whatever `Content-Length` says), only from our own
+origin (`Sec-Fetch-Site: same-origin` or a trusted `Origin`) and only with the
+`X-Pairly-Upload: 1` header, which another site cannot send without a CORS preflight we
+never answer.
+
 ## Design system
 
 "Ledger and ink": warm paper surfaces, deep teal ink for primary actions, one amber signal

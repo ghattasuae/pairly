@@ -21,9 +21,9 @@ import {
   loadRuleSetVersion,
   loadRuleSetVersions,
   overridePolicyDocument,
-  uploadPolicyDocument,
 } from "@/lib/actions/settings";
 import type { DryRun, PolicyDocument, RuleSetVersion } from "@/lib/api/types";
+import { uploadPolicyDocument } from "@/lib/policy-upload-client";
 import { cn } from "@/lib/utils";
 
 import { ActionError } from "./admin-panels";
