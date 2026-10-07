@@ -2,9 +2,11 @@
 # Copyright (c) 2026 Proofly Technology
 """Worker settings, read from environment variables (prefix ``PAIRLY_``).
 
-Fail closed: ``PAIRLY_REDIS_URL`` and ``PAIRLY_DATABASE_URL`` have no defaults, and
-``load_worker_config`` raises ``ConfigError`` naming every missing or invalid variable,
-so the worker (and its health check) refuse to start instead of guessing.
+Fail closed: ``PAIRLY_REDIS_URL``, ``PAIRLY_DATABASE_URL`` and
+``PAIRLY_AUDIT_SIGNING_KEY`` (the Ed25519 key that signs the nightly audit anchors,
+kept apart from every database secret) have no defaults, and ``load_worker_config``
+raises ``ConfigError`` naming every missing or invalid variable, so the worker (and its
+health check) refuse to start instead of guessing.
 
 The worker connects to Postgres as the non-owner application role, like the API.
 """
@@ -17,6 +19,7 @@ from urllib.parse import urlsplit
 from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pairly_core.audit_anchor.signing import SIGNING_KEY_ENV, load_signing_key
 from pairly_core.config import ENV_PREFIX, ConfigError, Environment, to_asyncpg_url
 
 
@@ -38,6 +41,11 @@ class WorkerConfig(BaseSettings):
     # Nightly audit chain verification, UTC.
     audit_verify_hour: int = Field(default=2, ge=0, le=23)
     audit_verify_minute: int = Field(default=30, ge=0, le=59)
+    # Ed25519 seed (base64url) that signs each organisation's chain head every night.
+    audit_signing_key: SecretStr
+    # Nightly anchoring, UTC (before the verification, so it checks the fresh anchor).
+    audit_anchor_hour: int = Field(default=2, ge=0, le=23)
+    audit_anchor_minute: int = Field(default=10, ge=0, le=59)
     # Seconds between arq health records; the compose health check reads them.
     worker_health_check_interval: int = Field(default=30, ge=5, le=3600)
 
@@ -45,6 +53,16 @@ class WorkerConfig(BaseSettings):
     @classmethod
     def _db_url(cls, value: SecretStr) -> SecretStr:
         return SecretStr(to_asyncpg_url(value.get_secret_value()))
+
+    @field_validator("audit_signing_key")
+    @classmethod
+    def _signing_key(cls, value: SecretStr) -> SecretStr:
+        try:
+            load_signing_key({SIGNING_KEY_ENV: value.get_secret_value()})
+        except ConfigError as exc:
+            # Never echo the key.
+            raise ValueError(str(exc)) from None
+        return value
 
     @field_validator("redis_url")
     @classmethod

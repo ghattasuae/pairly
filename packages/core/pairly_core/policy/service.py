@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import TenantError, current_org
+from pairly_core.decisions.recorders import on_rules_evaluated
 from pairly_core.models.policy import PolicyVersion
 from pairly_core.policy.models import ResultSource, RuleResult
 from pairly_core.policy.rules import (
@@ -168,7 +169,7 @@ async def evaluate_and_record(
         for result in evaluation.results
     ]
     await session.execute(insert(RuleResult), rows)
-    await append_audit(
+    event = await append_audit(
         session,
         action=RULES_EVALUATED,
         actor_type=actor_type,
@@ -184,6 +185,18 @@ async def evaluate_and_record(
             "overall": evaluation.overall.value,
             "counts": _counts(evaluation),
         },
+    )
+    await on_rules_evaluated(
+        session,
+        evaluation_id=evaluation_id,
+        policy=policy,
+        evaluation=evaluation,
+        facts=facts,
+        as_of=as_of,
+        subject=subject,
+        actor_type=actor_type,
+        actor_id=actor_id,
+        audit_event_id=event.id,
     )
     return RecordedEvaluation(evaluation_id=evaluation_id, policy=policy, evaluation=evaluation)
 

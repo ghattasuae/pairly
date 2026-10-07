@@ -94,6 +94,11 @@ x-app-env: &app-env
   PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3100}
   <<: *crypto-env
   PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
+  # Audit anchors (WP1.10b). The public key only: the signing key goes to the worker.
+  PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY: ${PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY:?missing}
+  PAIRLY_AUDIT_ANCHOR_BUCKET: ${PAIRLY_AUDIT_ANCHOR_BUCKET:-pairly-audit-anchors}
+  PAIRLY_AUDIT_ANCHOR_LOCK_MODE: ${PAIRLY_AUDIT_ANCHOR_LOCK_MODE:-GOVERNANCE}
+  PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS: ${PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS:-2555}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   # Only reachable with the `observability` profile; tracing is best effort.
@@ -287,6 +292,9 @@ services:
       PAIRLY_S3_BUCKET: ${PAIRLY_S3_BUCKET:?missing}
       PAIRLY_S3_ACCESS_KEY: ${PAIRLY_S3_ACCESS_KEY:?missing}
       PAIRLY_S3_SECRET_KEY: ${PAIRLY_S3_SECRET_KEY:?missing}
+      PAIRLY_AUDIT_ANCHOR_BUCKET: ${PAIRLY_AUDIT_ANCHOR_BUCKET:-pairly-audit-anchors}
+      PAIRLY_AUDIT_ANCHOR_LOCK_MODE: ${PAIRLY_AUDIT_ANCHOR_LOCK_MODE:-GOVERNANCE}
+      PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS: ${PAIRLY_AUDIT_ANCHOR_RETENTION_DAYS:-2555}
       LANGFUSE_S3_ACCESS_KEY: ${LANGFUSE_S3_ACCESS_KEY:?missing}
       LANGFUSE_S3_SECRET_KEY: ${LANGFUSE_S3_SECRET_KEY:?missing}
     volumes:
@@ -394,6 +402,8 @@ services:
       - /tmp:size=256m
     environment:
       <<: *app-env
+      # Signs the nightly audit anchors. Only the worker holds it (WP1.10b).
+      PAIRLY_AUDIT_SIGNING_KEY: ${PAIRLY_AUDIT_SIGNING_KEY:?missing}
     depends_on: *app-depends
     healthcheck:
       # The worker writes an expiring health key to Valkey every

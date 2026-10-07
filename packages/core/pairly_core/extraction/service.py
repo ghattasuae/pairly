@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, actor_ref, append_audit
 from pairly_core.db import TenantError, current_org
+from pairly_core.decisions.recorders import on_extraction_corrected, on_extraction_saved
 from pairly_core.errors import BadRequestError, NotFoundError
 from pairly_core.extraction.engine import ExtractionResult, FewShotHint
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
@@ -184,7 +185,7 @@ async def save_extraction(
                 for position, item in enumerate(result.fields)
             ],
         )
-    await append_audit(
+    event = await append_audit(
         session,
         action=EXTRACTION_CREATED,
         actor_type=actor_type,
@@ -201,6 +202,16 @@ async def save_extraction(
             "reasons": list(result.reasons[:50]),
             "model_call_ids": [str(c) for c in call.call_ids],
         },
+    )
+    await on_extraction_saved(
+        session,
+        extraction_id=extraction_id,
+        document=document,
+        result=result,
+        actor_type=actor_type,
+        actor_id=actor_id,
+        template_key=template_key,
+        audit_event_id=event.id,
     )
     return extraction_id
 
@@ -321,7 +332,7 @@ async def correct_field(
         )
     )
     kind, actor_id = actor_ref(actor)
-    await append_audit(
+    event = await append_audit(
         session,
         action=EXTRACTION_CORRECTED,
         actor_type=kind,
@@ -330,6 +341,19 @@ async def correct_field(
         entity_id=row.id,
         workflow=row.workflow,
         payload={"correction_id": str(correction_id), "field_path": field_path},
+    )
+    await on_extraction_corrected(
+        session,
+        extraction_id=row.id,
+        document_id=row.document_id,
+        workflow=row.workflow,
+        correction_id=correction_id,
+        field_path=field_path,
+        old_value=old,
+        new_value=typed,
+        reason=reason,
+        actor_id=actor.id,
+        audit_event_id=event.id,
     )
     stored = await session.scalar(
         select(ExtractionCorrection).where(ExtractionCorrection.id == correction_id)

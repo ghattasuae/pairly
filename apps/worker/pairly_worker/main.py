@@ -11,11 +11,14 @@ Hardening:
 
 * Jobs are serialised as JSON, not pickle, so data in the queue can never execute code.
 * At startup the worker refuses a database role that bypasses Row Level Security.
+* At startup the worker loads ``PAIRLY_AUDIT_SIGNING_KEY`` (fails closed when missing)
+  and, outside tests, the audit anchor store (``PAIRLY_AUDIT_ANCHOR_*``).
 * Cron times are UTC.
 """
 
 from __future__ import annotations
 
+import os
 from datetime import UTC
 from typing import Any
 
@@ -24,13 +27,19 @@ from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from pairly_core.approvals.hooks import ApprovalHooks
+from pairly_core.audit_anchor.signing import PUBLIC_KEY_ENV, SIGNING_KEY_ENV, load_signing_key
+from pairly_core.audit_anchor.store import S3AnchorStore, load_anchor_settings
+from pairly_core.config import ConfigError, Environment
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
+from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
 from pairly_core.plugins import discover_plugins
 from pairly_core.rbac import build_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
+from pairly_worker import decision_jobs
 from pairly_worker.config import WorkerConfig, load_worker_config
 from pairly_worker.documents import (
     parse_document_job,
@@ -54,12 +63,30 @@ _dumps = job_dumps
 _loads = job_loads
 
 
+def setup_audit_anchors(ctx: dict[str, Any], config: WorkerConfig) -> None:
+    """The signing key (always) and the anchor store (outside tests: required)."""
+    ctx["audit_signing_key"] = load_signing_key(
+        {
+            SIGNING_KEY_ENV: config.audit_signing_key.get_secret_value(),
+            PUBLIC_KEY_ENV: os.environ.get(PUBLIC_KEY_ENV, ""),
+        }
+    )
+    try:
+        ctx["anchor_store"] = S3AnchorStore.from_settings(load_anchor_settings())
+    except ConfigError:
+        if config.env is not Environment.TEST:
+            raise
+        log.warning("audit_anchors_disabled", reason="anchor storage settings missing")
+        ctx["anchor_store"] = None
+
+
 async def startup(ctx: dict[str, Any]) -> None:
     config: WorkerConfig = ctx["config"]
     configure_logging(config.log_level)
     # Fail closed: no encryption keys, no worker (the keys are needed to read and write
-    # encrypted fields).
+    # encrypted fields). Same for the audit signing key.
     init_crypto()
+    setup_audit_anchors(ctx, config)
     engine = create_async_engine(
         config.database_url.get_secret_value(),
         pool_size=config.db_pool_size,
@@ -85,6 +112,7 @@ async def startup(ctx: dict[str, Any]) -> None:
             sessionmaker=sessionmaker,
             checkpointer=TenantCheckpointer(config.database_url.get_secret_value()),
             registry=registry,
+            hooks=ApprovalHooks([DecisionRecordHook()]),
         )
         await runtime.check()
     except Exception:
@@ -111,6 +139,7 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
             # Scan and parse fail closed inside the job; arq retries only crashes.
             func(scan_document_job, name=SCAN_JOB, max_tries=2, timeout=600),
             func(parse_document_job, name=PARSE_JOB, max_tries=2, timeout=600),
+            *decision_jobs.functions(),
         ],
         "cron_jobs": [
             cron(
@@ -144,6 +173,7 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 unique=True,
                 timeout=600,
             ),
+            *decision_jobs.cron_jobs(config),
         ],
         "on_startup": startup,
         "on_shutdown": shutdown,

@@ -78,6 +78,15 @@ wheels = [
 ]
 
 [[package]]
+name = "arabic-reshaper"
+version = "3.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f2/6c/6be41c689bd2f6e9274c77bf45be820e41ff1ecb9ab0a1d23964b6d04606/arabic_reshaper-3.0.1.tar.gz", hash = "sha256:a0d9b2a9fa29b5f2c1d705f407adf6ca4242405b9cac0e5cc09e6c4f3f8fb68c", size = 42829, upload-time = "2026-04-28T13:53:17.447Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/7d/77752d819ede528c664ecf4de974b17b049e054a14537b74b53c8568014f/arabic_reshaper-3.0.1-py3-none-any.whl", hash = "sha256:41c5adc2420f85758eada7e880251c4b6a2adbd83377bd27e5d4eba71f648bc7", size = 20699, upload-time = "2026-04-28T13:53:15.894Z" },
+]
+
+[[package]]
 name = "arq"
 version = "0.28.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1254,6 +1263,7 @@ version = "0.0.0"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "anthropic" },
+    { name = "arabic-reshaper" },
     { name = "arq" },
     { name = "asyncpg" },
     { name = "boto3" },
@@ -1277,6 +1287,7 @@ dependencies = [
     { name = "python-docx" },
     { name = "python-multipart" },
     { name = "pyyaml" },
+    { name = "reportlab" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "structlog" },
 ]
@@ -1284,6 +1295,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=1.11,<2" },
+    { name = "arabic-reshaper", specifier = ">=3.0" },
     { name = "arq", specifier = ">=0.28,<0.29" },
     { name = "asyncpg", specifier = ">=0.30" },
     { name = "boto3", specifier = ">=1.35" },
@@ -1307,6 +1319,7 @@ requires-dist = [
     { name = "python-docx", specifier = ">=1.1.2" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "reportlab", specifier = ">=4.2" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.36" },
     { name = "structlog", specifier = ">=24.4" },
 ]

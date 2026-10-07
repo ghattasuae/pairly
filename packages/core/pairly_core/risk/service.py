@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import TenantError, current_org
+from pairly_core.decisions.recorders import on_risk_assessed
 from pairly_core.ingestion.models import Document
 from pairly_core.policy_versions import PolicyError, PublishedPolicy, latest_policy
 from pairly_core.risk.combiner import (
@@ -156,7 +157,7 @@ async def assess(
                 for position, w in enumerate(combined.signals)
             ],
         )
-    await append_audit(
+    event = await append_audit(
         session,
         action=RISK_ASSESSED,
         actor_type=actor_type,
@@ -176,6 +177,16 @@ async def assess(
             "requires_human": combined.requires_human,
             "reasons": list(combined.reasons[:50]),
         },
+    )
+    await on_risk_assessed(
+        session,
+        assessment_id=assessment_id,
+        assessment_type=assessment_type,
+        ctx=ctx,
+        combined=combined,
+        actor_type=actor_type,
+        actor_id=actor_id,
+        audit_event_id=event.id,
     )
     return AssessmentRecord(assessment_id, combined)
 
