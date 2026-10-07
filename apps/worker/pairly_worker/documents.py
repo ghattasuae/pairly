@@ -32,7 +32,7 @@ from pairly_core.ingestion.settings import IngestionSettings, load_ingestion_set
 from pairly_core.ingestion.storage import S3ObjectStore
 from pairly_core.llm.settings import load_llm_settings
 from pairly_core.policy.documents import index_after_parse
-from pairly_core.retrieval.embeddings import build_embedder
+from pairly_core.retrieval.metered import build_metered_embedder
 
 log = structlog.get_logger("pairly_worker.documents")
 
@@ -119,7 +119,10 @@ async def _index_policy(ctx: dict[str, Any], org_id: str, document_id: str) -> N
     try:
         embedder = ctx.get("policy_embedder")
         if embedder is None:
-            embedder = ctx["policy_embedder"] = build_embedder(load_llm_settings())
+            # Metered: budget reservation and a model_calls row per embedding call.
+            embedder = ctx["policy_embedder"] = build_metered_embedder(
+                load_llm_settings(), ctx["sessionmaker"]
+            )
         await index_after_parse(
             ctx["sessionmaker"],
             ctx["store"],

@@ -23,6 +23,7 @@ import hashlib
 import itertools
 import math
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Final, Literal, Protocol, runtime_checkable
 
 import httpx2
@@ -38,6 +39,14 @@ Purpose = Literal["document", "query"]
 
 class EmbeddingUnavailable(RuntimeError):  # noqa: N818 (mirrors ModelUnavailable)
     """Embeddings could not be computed. Callers fail closed (human review)."""
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingBatch:
+    """Vectors of one ``embed_batch`` call and the input tokens the provider billed."""
+
+    vectors: list[list[float] | None]
+    input_tokens: int = 0
 
 
 @runtime_checkable
@@ -86,6 +95,14 @@ class HashingEmbedder:
         return "pairly-hashing"
 
     @property
+    def provider(self) -> str:
+        return "local"
+
+    @property
+    def price_model(self) -> str | None:
+        return None  # computed locally: free, but still metered (recorded)
+
+    @property
     def version(self) -> str:
         return f"{self.VERSION}-d{self._dimensions}"
 
@@ -121,6 +138,9 @@ class HashingEmbedder:
 
     async def embed(self, texts: Sequence[str], *, purpose: Purpose) -> list[list[float] | None]:
         return [self.embed_one(t) for t in texts]
+
+    async def embed_batch(self, texts: Sequence[str], *, purpose: Purpose) -> EmbeddingBatch:
+        return EmbeddingBatch(await self.embed(texts, purpose=purpose), 0)
 
 
 class OpenAIEmbedder:
@@ -158,6 +178,14 @@ class OpenAIEmbedder:
         return f"openai/{self._model}"
 
     @property
+    def provider(self) -> str:
+        return "openai"
+
+    @property
+    def price_model(self) -> str | None:
+        return self._model
+
+    @property
     def version(self) -> str:
         return f"d{self._dimensions}"
 
@@ -170,7 +198,11 @@ class OpenAIEmbedder:
         return self._floor
 
     async def embed(self, texts: Sequence[str], *, purpose: Purpose) -> list[list[float] | None]:
+        return (await self.embed_batch(texts, purpose=purpose)).vectors
+
+    async def embed_batch(self, texts: Sequence[str], *, purpose: Purpose) -> EmbeddingBatch:
         out: list[list[float] | None] = [None] * len(texts)
+        tokens = 0
         pending = [(i, t[:MAX_EMBED_CHARS]) for i, t in enumerate(texts) if t.strip()]
         for start in range(0, len(pending), self.BATCH):
             batch = pending[start : start + self.BATCH]
@@ -187,6 +219,8 @@ class OpenAIEmbedder:
                 ) from None
             if len(response.data) != len(batch):
                 raise EmbeddingUnavailable("the embedding response has the wrong length")
+            usage = getattr(response, "usage", None)
+            tokens += int(getattr(usage, "prompt_tokens", 0) or 0)
             for item in response.data:
                 if not 0 <= item.index < len(batch):
                     raise EmbeddingUnavailable("the embedding response is malformed")
@@ -194,10 +228,10 @@ class OpenAIEmbedder:
                 if len(vector) != self._dimensions or not all(math.isfinite(v) for v in vector):
                     raise EmbeddingUnavailable("the embedding has the wrong shape")
                 out[batch[item.index][0]] = _normalize(vector)
-        return out
+        return EmbeddingBatch(out, tokens)
 
 
-def build_embedder(settings: LLMSettings) -> Embedder:
+def build_embedder(settings: LLMSettings) -> HashingEmbedder | OpenAIEmbedder:
     """OpenAI in ``live`` and ``record`` modes when a key is set, else the hashing fake.
 
     ``recorded`` mode stays offline and deterministic, like the model router.

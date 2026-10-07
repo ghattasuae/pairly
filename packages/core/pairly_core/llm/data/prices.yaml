@@ -73,3 +73,10 @@ models:
     output: "50.00"
     cache_read: "1.00"
     cache_write: "10.00"
+  # Embeddings (ModelRouter.embed, task core_embed): input tokens only.
+  text-embedding-3-small:
+    provider: openai
+    input: "0.02"
+    output: "0.00"
+    cache_read: "0.00"
+    cache_write: "0.00"

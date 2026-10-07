@@ -38,9 +38,9 @@ import asyncio
 import json
 import time
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import structlog
 from pydantic import BaseModel, ValidationError
@@ -67,6 +67,7 @@ from pairly_core.llm.hashing import (
     request_hash,
     schema_hash,
     schema_json,
+    sha256_hex,
 )
 from pairly_core.llm.prompt_registry import Prompt, PromptRegistry
 from pairly_core.llm.providers.base import ModelProvider, ProviderRequest, ProviderResponse
@@ -104,6 +105,42 @@ USER_TEMPLATE_VERSION = 1
 PROMPT_OVERHEAD_TOKENS = 2048
 # Extra seconds on top of the SDK timeout before the router gives up on a request.
 TIMEOUT_GRACE_SECONDS = 5.0
+# Embedding calls (``ModelRouter.embed``): recorded in ``model_calls`` under this task.
+EMBED_TASK = "core_embed"
+EMBED_VERSION = "v1"
+EMBED_TIER = "embedding"
+EMBED_SCHEMA = "EmbeddingVectors"
+
+
+class EmbeddingBatchLike(Protocol):
+    @property
+    def vectors(self) -> list[list[float] | None]: ...
+
+    @property
+    def input_tokens(self) -> int: ...
+
+
+class EmbeddingBackend(Protocol):
+    """What ``ModelRouter.embed`` needs from an embedder (``pairly_core.retrieval``)."""
+
+    @property
+    def model_id(self) -> str: ...
+
+    @property
+    def version(self) -> str: ...
+
+    @property
+    def dimensions(self) -> int: ...
+
+    @property
+    def provider(self) -> str: ...
+
+    @property
+    def price_model(self) -> str | None:
+        """The model's key in the price table, or None for a free local embedder."""
+        ...
+
+    async def embed_batch(self, texts: Sequence[str], *, purpose: Any) -> EmbeddingBatchLike: ...
 
 
 def render_user_message(inputs: Mapping[str, Any]) -> str:
@@ -573,6 +610,150 @@ class ModelRouter:
             log.error("llm.stored_call_undecryptable", task=task.name)
             raise ModelUnavailable("a stored model call could not be decrypted") from exc
 
+    async def embed(
+        self,
+        *,
+        backend: EmbeddingBackend,
+        texts: Sequence[str],
+        purpose: str,
+        org_id: uuid.UUID,
+        context: CallContext | None = None,
+    ) -> list[list[float] | None]:
+        """Embed ``texts`` with ``backend``, metered like any model call.
+
+        The worst-case cost is reserved against the org's monthly budget first
+        (``BudgetExceeded`` stops it, fail closed), and one ``model_calls`` row (task
+        ``core_embed``) records the attempt. Its request holds a hash and length per
+        text, never the text; its response holds the count, the dimensions and a
+        SHA-256 of the vectors, never the vectors. Both are encrypted like every row.
+        A local embedder (no price) costs nothing but is still recorded. Raises
+        ``ModelUnavailable`` when the call cannot be recorded, and re-raises the
+        backend's own error after recording it.
+        """
+        try:
+            return await self._embed(
+                backend=backend, texts=texts, purpose=purpose, org_id=org_id, context=context
+            )
+        except SQLAlchemyError as exc:
+            log.error("llm.storage_failed", task=EMBED_TASK, error=type(exc).__name__)
+            raise ModelUnavailable("the embedding call could not be recorded") from exc
+
+    async def _embed(
+        self,
+        *,
+        backend: EmbeddingBackend,
+        texts: Sequence[str],
+        purpose: str,
+        org_id: uuid.UUID,
+        context: CallContext | None,
+    ) -> list[list[float] | None]:
+        if not texts:
+            return []
+        context = context or CallContext()
+        settings = {
+            "model": backend.model_id,
+            "version": backend.version,
+            "dimensions": backend.dimensions,
+        }
+        inputs = {
+            "purpose": purpose,
+            "texts": [
+                {"sha256": sha256_hex(t.encode("utf-8", "surrogatepass")), "chars": len(t)}
+                for t in texts
+            ],
+        }
+        e_prompt_hash = sha256_hex(canonical_json({"task": EMBED_TASK, **settings}))
+        e_schema_hash = sha256_hex(f"vector({backend.dimensions})".encode())
+        r_hash = request_hash(
+            task=EMBED_TASK,
+            prompt_version=EMBED_VERSION,
+            prompt_hash=e_prompt_hash,
+            provider=backend.provider,
+            model=backend.model_id,
+            inputs=inputs,
+            schema_hash=e_schema_hash,
+            settings=settings,
+        )
+        price_model = backend.price_model
+        worst = 0
+        # A token is never shorter than one byte: bytes bound the input tokens.
+        input_bound = sum(len(t.encode("utf-8", "surrogatepass")) for t in texts)
+        if price_model is not None:
+            worst = self._prices.max_cost_micros(
+                price_model, input_tokens=input_bound, output_tokens=0
+            )
+        async with self._session(org_id) as session:
+            reservation_id = await self._budget.reserve(session, org_id, worst)
+        values: dict[str, Any] = {
+            "org_id": org_id,
+            "chain_id": uuid.uuid4(),
+            "attempt": 1,
+            "task": EMBED_TASK,
+            "prompt_version": EMBED_VERSION,
+            "prompt_hash": e_prompt_hash,
+            "provider": backend.provider,
+            "model": backend.model_id[:128],
+            "tier": EMBED_TIER,
+            "schema_name": EMBED_SCHEMA,
+            "schema_hash": e_schema_hash,
+            "request_hash": r_hash,
+            "mode": self.mode.value,
+            "request": {"inputs": inputs, "settings": settings},
+            "actor_id": context.actor_id,
+            "workflow": context.workflow,
+            "entity_type": context.entity_type,
+            "entity_id": context.entity_id,
+            "request_id": context.request_id,
+        }
+        start = self._clock()
+        settled = False
+        try:
+            try:
+                batch = await backend.embed_batch(texts, purpose=purpose)
+            except Exception as exc:
+                values.update(
+                    status=CallStatus.PROVIDER_ERROR.value,
+                    error_kind=type(exc).__name__[:64],
+                    output_complete=False,
+                    latency_ms=self._elapsed_ms(start),
+                    cost_micros=0,
+                )
+                call_id = await self._store(org_id, values, reservation_id=reservation_id)
+                settled = True
+                self._trace(values, call_id, inputs)
+                raise
+            vectors = batch.vectors
+            if len(vectors) != len(texts):
+                raise ValueError("the embedder returned the wrong number of vectors")
+            tokens = max(batch.input_tokens, 0)
+            cost = 0
+            if price_model is not None:
+                # No usage reported: charge the worst case rather than nothing.
+                tokens = tokens or input_bound
+                cost = self._prices.cost_micros(price_model, Usage(input_tokens=tokens))
+            values.update(
+                status=CallStatus.OK.value,
+                response={
+                    "count": len(vectors),
+                    "dimensions": backend.dimensions,
+                    "missing": [i for i, v in enumerate(vectors) if v is None],
+                    "vectors_sha256": sha256_hex(canonical_json(vectors)),
+                },
+                output_complete=True,
+                input_tokens=tokens,
+                cost_micros=cost,
+                latency_ms=self._elapsed_ms(start),
+            )
+            call_id = await self._store(
+                org_id, values, reservation_id=reservation_id, cost_micros=cost
+            )
+            settled = True
+            self._trace(values, call_id, inputs)
+            return vectors
+        finally:
+            if not settled:
+                await self._release(org_id, reservation_id)
+
     async def _complete[T: BaseModel](
         self,
         *,
@@ -756,6 +937,8 @@ class ModelRouter:
             original = await self._calls.get(session, call_id)
         if original is None:
             raise NotFoundError("model call not found")
+        if original.task == EMBED_TASK:
+            raise ValueError("embedding calls are metered, not replayed")
         prompt = self._prompts.get(original.task, original.prompt_version)
         s_hash = schema_hash(schema)
         prompt_unchanged = prompt.hash == original.prompt_hash

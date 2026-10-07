@@ -35,7 +35,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only
 
 from pairly_core.db import TenantError, current_org
-from pairly_core.retrieval.embeddings import Embedder
+from pairly_core.retrieval.embeddings import Embedder, Purpose
+from pairly_core.retrieval.metered import OrgEmbedder
 from pairly_core.retrieval.models import MAX_CHUNK_CHARS, SearchChunk
 from pairly_core.retrieval.text import query_words
 from pairly_core.retrieval.vector import Vector
@@ -87,6 +88,15 @@ def chunk_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+async def embed_texts(
+    embedder: Embedder, org_id: uuid.UUID, texts: Sequence[str], *, purpose: Purpose
+) -> list[list[float] | None]:
+    """Embed for one organisation: billed and recorded when the embedder is metered."""
+    if isinstance(embedder, OrgEmbedder):
+        return await embedder.embed_for_org(org_id, texts, purpose=purpose)
+    return await embedder.embed(texts, purpose=purpose)
+
+
 async def index_chunks(
     session: AsyncSession,
     *,
@@ -107,7 +117,11 @@ async def index_chunks(
     for chunk in chunks:
         if not chunk.text.strip() or len(chunk.text) > MAX_CHUNK_CHARS:
             raise ValueError("chunk text must be 1 to 4000 characters")
-    vectors = await embedder.embed([c.text for c in chunks], purpose="document") if chunks else []
+    vectors = (
+        await embed_texts(embedder, org, [c.text for c in chunks], purpose="document")
+        if chunks
+        else []
+    )
     if len(vectors) != len(chunks):
         raise ValueError("the embedder returned the wrong number of vectors")
     await session.execute(
@@ -237,7 +251,7 @@ async def hybrid_search(
     words = query_words(query)
     lexical = await _lexical(session, org, kind, words, source_ids, candidates)
     semantic: list[tuple[uuid.UUID, float]] = []
-    vectors = await embedder.embed([query], purpose="query")
+    vectors = await embed_texts(embedder, org, [query], purpose="query")
     if vectors and vectors[0] is not None:
         semantic = await _semantic(session, org, kind, vectors[0], embedder, source_ids, candidates)
     vector_ids = [cid for cid, _ in semantic]

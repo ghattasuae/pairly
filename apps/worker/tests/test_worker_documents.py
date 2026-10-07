@@ -58,6 +58,15 @@ async def test_policy_index_hook_never_fails_the_parse_job(monkeypatch: pytest.M
 
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("PAIRLY_OPENAI_API_KEY", raising=False)
-    ctx: dict[str, Any] = {}  # no sessionmaker or store: indexing fails, quietly
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from pairly_core.retrieval.metered import MeteredEmbedder
+
+    empty: dict[str, Any] = {}  # no sessionmaker: the embedder cannot even be built
+    await _index_policy(empty, "00000000-0000-4000-8000-000000000001", "not-a-uuid")
+    assert "policy_embedder" not in empty
+    ctx: dict[str, Any] = {"sessionmaker": async_sessionmaker()}  # no store: fails, quietly
     await _index_policy(ctx, "00000000-0000-4000-8000-000000000001", "not-a-uuid")
-    assert isinstance(ctx["policy_embedder"], HashingEmbedder)
+    # Offline (no key): the hashing embedder, metered through the model router.
+    assert isinstance(ctx["policy_embedder"], MeteredEmbedder)
+    assert isinstance(ctx["policy_embedder"].inner, HashingEmbedder)

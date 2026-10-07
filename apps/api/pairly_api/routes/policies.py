@@ -95,7 +95,8 @@ from pairly_core.policy.service import (
 )
 from pairly_core.policy_versions import PolicyError, latest_policy, list_policy_versions
 from pairly_core.rbac import Actor, require
-from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable, build_embedder
+from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable
+from pairly_core.retrieval.metered import build_metered_embedder
 from pairly_core.retrieval.search import hybrid_search
 
 router = APIRouter(prefix="/policies", tags=["policies"])
@@ -109,10 +110,16 @@ MAX_FACTS_BYTES = 64 * 1024
 
 
 def get_embedder(request: Request) -> Embedder:
-    """The app's embedder (``app.state.policy_embedder``), built once from settings."""
+    """The app's embedder (``app.state.policy_embedder``), built once from settings.
+
+    Metered: every embedding call is reserved against the org's model budget and
+    recorded in ``model_calls`` (task ``core_embed``) through the model router.
+    """
     embedder = getattr(request.app.state, "policy_embedder", None)
     if embedder is None:
-        embedder = build_embedder(load_llm_settings())
+        embedder = build_metered_embedder(
+            load_llm_settings(), request.app.state.pairly.sessionmaker
+        )
         request.app.state.policy_embedder = embedder
     if not isinstance(embedder, Embedder):  # pragma: no cover - configuration error
         raise TypeError("app.state.policy_embedder is not an Embedder")
