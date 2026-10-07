@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Model catalog for the model router (pairly_core.llm.catalog).
+# Routing is cheap first: a task starts at its prompt's tier and escalates to the next
+# tier on invalid output or low confidence. Within a tier, providers are tried in
+# `provider_order` (the next one only when the previous one is down).
+# Every model here must have a price in prices.yaml, or startup fails.
+#
+# Model ids verified 2026-10-07 against
+#   https://platform.claude.com/docs/en/about-claude/models/overview
+#   https://developers.openai.com/api/docs/models
+
+version: "2026-10-07"
+tiers: [small, large]
+provider_order: [anthropic, openai]
+
+providers:
+  anthropic:
+    small:
+      # Retirement "not sooner than 2026-10-15": check before relying on it.
+      model: claude-haiku-4-5-20251001
+      supports_temperature: true
+    large:
+      model: claude-sonnet-5-5
+      supports_temperature: false
+  openai:
+    small:
+      model: gpt-6-luna
+      supports_temperature: false
+    large:
+      model: gpt-6.1-sol
+      supports_temperature: false

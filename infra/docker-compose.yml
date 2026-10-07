@@ -47,6 +47,7 @@ x-app-env: &app-env
   PAIRLY_ENV: ${PAIRLY_ENV:-development}
   PAIRLY_LOG_LEVEL: ${PAIRLY_LOG_LEVEL:-INFO}
   PAIRLY_MODEL_MODE: ${PAIRLY_MODEL_MODE:-recorded}
+  PAIRLY_LLM_MONTHLY_BUDGET_USD: ${PAIRLY_LLM_MONTHLY_BUDGET_USD:-20}
   PAIRLY_PUBLIC_API_URL: ${PAIRLY_PUBLIC_API_URL:-http://localhost:8000}
   PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
   # Runtime role only (not the owner), so Row Level Security applies.

@@ -12,6 +12,13 @@ connects as the owner role from ``PAIRLY_DATABASE_URL_OWNER``.
 The Better Auth organization that mirrors it (same UUID) is created by the web app when
 the admin accepts the invitation, through Better Auth's own adapter, so this command
 never writes to the ``auth`` schema. See ``apps/web/README.md``.
+
+``recordings export`` and ``recordings import`` move stored model responses between
+databases as a bundle file (see ``pairly_core.llm.bundle``), so seed data can ship the
+responses ``make demo`` replays offline in ``recorded`` mode:
+
+    uv run pairly-admin recordings export --org <uuid> --out recordings.json [--task t]
+    uv run pairly-admin recordings import --org <uuid> --in recordings.json
 """
 
 from __future__ import annotations
@@ -20,16 +27,26 @@ import argparse
 import asyncio
 import os
 import sys
+import uuid
 from collections.abc import Sequence
+from pathlib import Path
 from urllib.parse import urlencode, urlsplit
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from pairly_core.config import to_asyncpg_url
-from pairly_core.db import create_sessionmaker
+from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.errors import PairlyError
 from pairly_core.invitations import INVITATION_TTL, BootstrappedOrg, bootstrap_organisation
+from pairly_core.llm.bundle import (
+    BundleError,
+    ImportReport,
+    dumps_bundle,
+    export_recordings,
+    import_recordings,
+    parse_bundle,
+)
 
 OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
 WEB_URL_ENV = "PAIRLY_PUBLIC_WEB_URL"
@@ -59,6 +76,29 @@ async def bootstrap(owner_url: str, *, name: str, slug: str, admin_email: str) -
         await engine.dispose()
 
 
+async def export_bundle(owner_url: str, org_id: uuid.UUID, task: str | None) -> str:
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        session = create_sessionmaker(engine)()
+        set_tenant(session, org_id, None)
+        async with session, session.begin():
+            return dumps_bundle(await export_recordings(session, task=task))
+    finally:
+        await engine.dispose()
+
+
+async def import_bundle(owner_url: str, org_id: uuid.UUID, text: str) -> ImportReport:
+    entries = parse_bundle(text)
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        session = create_sessionmaker(engine)()
+        set_tenant(session, org_id, None)
+        async with session, session.begin():
+            return await import_recordings(session, org_id, entries)
+    finally:
+        await engine.dispose()
+
+
 def _web_url(value: str) -> str:
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
@@ -84,7 +124,33 @@ def _parser() -> argparse.ArgumentParser:
         help=f"public web app URL for the link (default: ${WEB_URL_ENV} or localhost:3000)",
     )
     boot.add_argument("--locale", choices=LOCALES, default="en", help="language of the link")
+
+    rec = commands.add_parser("recordings", help="export or import recorded model responses")
+    rec_commands = rec.add_subparsers(dest="recordings_command", required=True)
+    export = rec_commands.add_parser("export", help="write an org's recordings to a bundle file")
+    export.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
+    export.add_argument("--out", required=True, type=Path, help="bundle file to write")
+    export.add_argument("--task", help="only this task")
+    imp = rec_commands.add_parser("import", help="load a bundle file into an org")
+    imp.add_argument("--org", required=True, type=uuid.UUID, help="organisation id")
+    imp.add_argument("--in", dest="source", required=True, type=Path, help="bundle file to read")
     return parser
+
+
+def _recordings(args: argparse.Namespace, owner_url: str) -> int:
+    if args.recordings_command == "export":
+        text = asyncio.run(export_bundle(owner_url, args.org, args.task))
+        args.out.write_text(text, encoding="utf-8")
+        print(f"Wrote {args.out}")
+        return 0
+    try:
+        text = args.source.read_text(encoding="utf-8")
+        report = asyncio.run(import_bundle(owner_url, args.org, text))
+    except (OSError, BundleError) as exc:
+        print(f"pairly-admin: {exc}", file=sys.stderr)
+        return 2
+    print(f"Imported {report.imported} recordings, skipped {report.skipped} already present.")
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -93,6 +159,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not owner_url:
         print(f"pairly-admin: {OWNER_URL_ENV} is not set (owner role URL)", file=sys.stderr)
         return 2
+    if args.command == "recordings":
+        return _recordings(args, owner_url)
     try:
         result = asyncio.run(
             bootstrap(owner_url, name=args.name, slug=args.slug, admin_email=args.admin_email)
