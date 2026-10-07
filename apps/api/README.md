@@ -23,7 +23,9 @@ Endpoints: `/healthz` (liveness), `/readyz` (database check), `/v1/me`, `/v1/me/
 `X-Pairly-Org: <organisation id>`. Errors use `application/problem+json`.
 
 Database tests need `PAIRLY_TEST_DATABASE_URL` (app role) and
-`PAIRLY_TEST_DATABASE_URL_OWNER` (owner role); without them they are skipped.
+`PAIRLY_TEST_DATABASE_URL_OWNER` (owner role); without them they are skipped. The 0008
+migration round trip also needs `PAIRLY_TEST_SCRATCH_DATABASE_URL_OWNER`, a second
+database it can migrate down and up on its own (`scripts/ci_postgres.sh` creates both).
 
 Operator CLI (owner role, `PAIRLY_DATABASE_URL_OWNER`): `uv run pairly-admin bootstrap-org
 --name ... --slug ... --admin-email ...` creates an organisation and prints its admin

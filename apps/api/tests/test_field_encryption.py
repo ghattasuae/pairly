@@ -23,6 +23,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 import pairly_core.models  # noqa: F401
+from pairly_core.config import to_asyncpg_url
 from pairly_core.crypto import keys as keys_mod
 from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.envelope import DecryptionError, kek_version
@@ -369,17 +370,52 @@ async def _check_and_drop(
         await engine.dispose()
 
 
+SCRATCH_OWNER_ENV = "PAIRLY_TEST_SCRATCH_DATABASE_URL_OWNER"
+_ENCRYPTED_TABLES = ("model_calls", "inbound_emails")
+
+
+async def _clear_encrypted_rows(owner_url: str) -> None:
+    """Remove rows an earlier session left in the scratch database.
+
+    They were encrypted with that session's random keys, which this session does not
+    have, so the downgrade below could not decrypt them. The scratch database belongs
+    to this test alone, so nothing else loses data.
+    """
+    engine = create_async_engine(owner_url, pool_size=1, max_overflow=0)
+    try:
+        async with engine.begin() as conn:
+            for table in _ENCRYPTED_TABLES:
+                # RLS is forced on the owner too: lift it for this transaction only.
+                await conn.execute(text(f"ALTER TABLE {table} NO FORCE ROW LEVEL SECURITY"))
+                await conn.execute(text(f"DELETE FROM {table}"))  # noqa: S608  # nosec B608 (fixed names)
+                await conn.execute(text(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY"))
+    finally:
+        await engine.dispose()
+
+
 def test_migration_0008_encrypts_existing_rows(
     migrated: DbUrls, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Downgrade to 0006, write plaintext rows, upgrade: they come back encrypted."""
+    """Downgrade to 0006, write plaintext rows, upgrade: they come back encrypted.
+
+    Runs in a dedicated scratch database (``PAIRLY_TEST_SCRATCH_DATABASE_URL_OWNER``,
+    created by ``scripts/ci_postgres.sh``), never in the shared test database: the
+    downgrade decrypts every encrypted row with this session's keys, and the shared
+    database may hold rows from other tests or from earlier sessions with other keys.
+    """
+    scratch = os.environ.get(SCRATCH_OWNER_ENV)
+    if not scratch:
+        pytest.skip(f"the migration round trip needs {SCRATCH_OWNER_ENV} (a dedicated database)")
+    owner = to_asyncpg_url(scratch)
     monkeypatch.setenv("PAIRLY_DB_APP_ROLE", make_url(migrated.app).username or "pairly_app")
-    config = _alembic(migrated.owner)
+    config = _alembic(owner)
+    command.upgrade(config, "head")
+    asyncio.run(_clear_encrypted_rows(owner))
     try:
         command.downgrade(config, "0006")
-        org, call, email = asyncio.run(_seed_plain_rows(migrated.owner))
+        org, call, email = asyncio.run(_seed_plain_rows(owner))
         command.upgrade(config, "head")
-        asyncio.run(_check_and_drop(migrated.owner, org, call, email))
+        asyncio.run(_check_and_drop(owner, org, call, email))
     finally:
         command.upgrade(config, "head")
 
