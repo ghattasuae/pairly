@@ -14,7 +14,8 @@
     "auth:schema": "tsx scripts/auth-migrate.ts --print",
     "storybook": "storybook dev --port 6006 --no-open",
     "build-storybook": "storybook build --output-dir storybook-static",
-    "test:watch": "vitest --config vitest.config.ts"
+    "test:watch": "vitest --config vitest.config.ts",
+    "e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@pairly/shared-ts": "workspace:*",

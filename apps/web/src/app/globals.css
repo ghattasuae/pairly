@@ -37,7 +37,8 @@
   --secondary-foreground: oklch(0.3 0.05 182);
 
   --muted: oklch(0.948 0.008 85);
-  --muted-foreground: oklch(0.47 0.016 200);
+  /* 0.45 keeps body-size muted text above 6:1 on every light surface (WCAG AA 4.5:1). */
+  --muted-foreground: oklch(0.45 0.016 200);
   --accent: oklch(0.935 0.018 175);
   --accent-foreground: oklch(0.27 0.045 182);
 
@@ -213,13 +214,13 @@
   }
 }
 
+/* Movement only, no fade: text is never rendered at partial opacity, so contrast holds
+   from the first frame (axe and real readers both see full-strength colour). */
 @keyframes rise {
   from {
-    opacity: 0;
     transform: translateY(6px);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }

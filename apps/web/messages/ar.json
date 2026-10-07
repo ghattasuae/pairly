@@ -79,7 +79,8 @@
       "INVALID_TOKEN": "انتهت صلاحية هذا الرابط أو سبق استخدامه. اطلب رابطًا جديدًا.",
       "EXPIRED_TOKEN": "انتهت صلاحية هذا الرابط. اطلب رابطًا جديدًا.",
       "new_user_signup_disabled": "لا يوجد حساب في Pairly لهذا البريد. اطلب دعوة من المسؤول.",
-      "signInRequired": "سجّل الدخول للمتابعة."
+      "signInRequired": "سجّل الدخول للمتابعة.",
+      "originMismatch": "خادم المصادقة لا يثق بهذا العنوان ({origin}). افتح Pairly على العنوان المحدد في BETTER_AUTH_URL، أو أضف هذا العنوان إلى PAIRLY_AUTH_TRUSTED_ORIGINS. تظهر هذه الرسالة في بيئة التطوير فقط."
     }
   },
   "CheckEmail": {

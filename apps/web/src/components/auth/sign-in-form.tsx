@@ -13,17 +13,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
+import { errorKeyFor, type SignInErrorKey as ErrorKey } from "@/lib/auth/sign-in-errors";
+import { isolate } from "@/lib/bidi";
 
 import { FormError } from "./auth-card";
 
 const emailSchema = z.email().max(254);
 
-type ErrorKey = "invalidEmail" | "rateLimited" | "generic";
-
 export interface SignInFormProps {
   sso: { google: boolean; microsoft: boolean };
   /** Override for stories and tests. Defaults to Better Auth. */
-  sendLink?: (email: string, locale: string) => Promise<{ ok: boolean; status?: number }>;
+  sendLink?: (
+    email: string,
+    locale: string,
+  ) => Promise<{ ok: boolean; status?: number | undefined; code?: string | undefined }>;
 }
 
 async function defaultSendLink(email: string, locale: string) {
@@ -34,7 +37,7 @@ async function defaultSendLink(email: string, locale: string) {
     // Picks the language of the email. Validated against the locale list on the server.
     metadata: { locale },
   } as Parameters<typeof authClient.signIn.magicLink>[0]);
-  return error ? { ok: false, status: error.status } : { ok: true };
+  return error ? { ok: false, status: error.status, code: error.code } : { ok: true };
 }
 
 export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps) {
@@ -68,7 +71,7 @@ export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps)
         router.push("/check-email");
         return;
       }
-      setError(result.status === 429 ? "rateLimited" : "generic");
+      setError(errorKeyFor(result));
     } catch {
       setError("generic");
     }
@@ -100,7 +103,13 @@ export function SignInForm({ sso, sendLink = defaultSendLink }: SignInFormProps)
             className="text-start"
           />
         </div>
-        {error && <FormError id={errorId}>{t(`errors.${error}`)}</FormError>}
+        {error && (
+          <FormError id={errorId}>
+            {error === "originMismatch"
+              ? t("errors.originMismatch", { origin: isolate(window.location.origin) })
+              : t(`errors.${error}`)}
+          </FormError>
+        )}
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending ? t("sending") : t("submit")}
           {!pending && <ArrowRight className="rtl:rotate-180" aria-hidden />}

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 // Shared scratch-space paths and a tiny NDJSON logger used by every spec so the final
 // report (pass/fail table, a11y violations, copy findings) can be assembled after the
 // whole run from plain files, without relying on parsing Playwright's own reporters.

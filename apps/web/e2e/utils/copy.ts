@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 import type { Page } from "@playwright/test";
 
 import { logCopy } from "./report";
@@ -55,7 +58,7 @@ function findSuspiciousEnglishRuns(text: string): string[] {
 
 export async function auditCopy(page: Page, pageName: string, locale: string, theme: string): Promise<void> {
   const text = (await page.locator("body").innerText().catch(() => "")) || "";
-  const emDash = text.includes("—");
+  const emDash = text.includes("\u2014");
   const rawKeys = [...new Set((text.match(RAW_KEY_RE) ?? []).map((s) => s))];
   const suspiciousEnglish = locale === "ar" ? findSuspiciousEnglishRuns(text) : [];
   logCopy({ page: pageName, locale, theme, emDash, rawKeys, suspiciousEnglish });

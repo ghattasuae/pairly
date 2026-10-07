@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 import { defineConfig, devices } from "@playwright/test";
 
 // M0 audit suite for the Pairly web app. Runs against the already-running compose stack
@@ -16,7 +19,9 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"], ["json", { outputFile: "./report.json" }]],
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    // The compose web service. Override with PAIRLY_E2E_BASE_URL (that origin must be in
+    // PAIRLY_AUTH_TRUSTED_ORIGINS or be PAIRLY_PUBLIC_WEB_URL itself).
+    baseURL: process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3000",
     headless: true,
     screenshot: "off",
     trace: "retain-on-failure",

@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 import { auditA11y } from "../utils/axe";
 import { auditCopy } from "../utils/copy";
@@ -29,7 +32,7 @@ function record(name: string, ok: boolean, detail?: string) {
   logCheck({ name, status: ok ? "pass" : "fail", detail });
 }
 
-async function shotAndAudit(page: import("@playwright/test").Page, pageName: string, name: string, theme: "light" | "dark") {
+async function shotAndAudit(page: Page, pageName: string, name: string, theme: "light" | "dark") {
   await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `${name}.png`), fullPage: true });
   await auditA11y(page, pageName, "ar", theme);
   await auditCopy(page, pageName, "ar", theme);

@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="relative max-w-sm font-display text-4xl leading-tight italic">{t("tagline")}</p>
       </aside>
       <div className="bg-ledger flex flex-col">
-        <div className="flex items-center justify-between px-6 pt-5 sm:px-10">
+        <header className="flex items-center justify-between px-6 pt-5 sm:px-10">
           <span className="lg:invisible">
             <Wordmark />
           </span>
@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <LocaleSwitcher />
             <ThemeToggle />
           </div>
-        </div>
+        </header>
         <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 items-center justify-center px-6 py-12 outline-none sm:px-10">
           {children}
         </main>

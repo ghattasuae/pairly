@@ -20,6 +20,9 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
+/** Strictest policy: an API response may not load, run or frame anything. */
+const API_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -41,7 +44,13 @@ const nextConfig: NextConfig = {
   // pg and nodemailer are Node-only; keep them out of the bundler.
   serverExternalPackages: ["pg", "nodemailer"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Route handlers (Better Auth, JWKS, health) return JSON or redirects, never documents
+      // that load anything. Pages get their nonce-based CSP from src/proxy.ts instead; the
+      // proxy never runs on /api, so the two policies never meet on one response.
+      { source: "/api/:path*", headers: [{ key: "Content-Security-Policy", value: API_CSP }] },
+    ];
   },
 };
 

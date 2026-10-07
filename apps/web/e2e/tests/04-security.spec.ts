@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 import { test, expect, request } from "@playwright/test";
 
 import { logCheck, logSecurity } from "../utils/report";

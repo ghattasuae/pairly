@@ -85,7 +85,7 @@ function createAuth(env: ServerEnv) {
     baseURL: env.baseUrl,
     basePath: "/api/auth",
     secret: env.secret,
-    trustedOrigins: [new URL(env.baseUrl).origin],
+    trustedOrigins: env.trustedOrigins,
     database: pool,
     telemetry: { enabled: false },
     advanced: {

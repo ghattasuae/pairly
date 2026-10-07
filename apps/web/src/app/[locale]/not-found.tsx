@@ -12,7 +12,9 @@ export default function NotFound() {
   const common = useTranslations("Common");
   return (
     <div className="bg-ledger flex min-h-dvh flex-col px-6 py-8 sm:px-10">
-      <Wordmark />
+      <header>
+        <Wordmark />
+      </header>
       <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 items-center outline-none">
         <div className="rise max-w-lg space-y-4">
           <p className="font-mono text-sm text-signal-foreground dark:text-signal">{t("code")}</p>

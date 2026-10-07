@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 // Minimal Mailpit HTTP API client for the e2e tests (read-only: we only ever read mail
 // that the app under test just sent, to pull out magic-link / invite tokens).
 

@@ -19,6 +19,8 @@ const url = z.url({ protocol: /^https?$/ });
 const schema = z.object({
   nodeEnv: z.enum(["development", "production", "test"]),
   baseUrl: url,
+  /** Exact origins Better Auth accepts requests and redirects from (BETTER_AUTH_URL first). */
+  trustedOrigins: z.array(z.string()).min(1),
   secret: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   databaseUrl: z.string().regex(/^postgres(ql)?:\/\//, "PAIRLY_AUTH_DATABASE_URL must be a postgres URL"),
   jwtIssuer: z.string().min(1),
@@ -53,6 +55,38 @@ function flag(name: string, fallback: boolean): boolean {
   return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
 }
 
+/**
+ * Parse `PAIRLY_AUTH_TRUSTED_ORIGINS`: a comma separated list of exact origins
+ * (`scheme://host[:port]`). No wildcards, paths, queries or credentials: anything else is a
+ * configuration error, so a typo can never widen what Better Auth trusts.
+ */
+export function parseTrustedOrigins(raw: string | undefined): string[] {
+  if (!raw) return [];
+  const origins: string[] = [];
+  for (const entry of raw.split(",")) {
+    const candidate = entry.trim();
+    if (!candidate) continue;
+    let parsed: URL;
+    try {
+      parsed = new URL(candidate);
+    } catch {
+      throw new Error(`PAIRLY_AUTH_TRUSTED_ORIGINS: ${JSON.stringify(candidate)} is not a URL`);
+    }
+    // Equal to its own origin means: no path, query, fragment or credentials.
+    const exact =
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      !candidate.includes("*") &&
+      candidate.replace(/\/$/, "") === parsed.origin;
+    if (!exact) {
+      throw new Error(
+        `PAIRLY_AUTH_TRUSTED_ORIGINS: ${JSON.stringify(candidate)} must be an exact origin such as http://127.0.0.1:3000`,
+      );
+    }
+    if (!origins.includes(parsed.origin)) origins.push(parsed.origin);
+  }
+  return origins;
+}
+
 /** Development-only fallbacks, derived from the repo-root `.env`. */
 function devDefaults(): Partial<Record<string, string>> {
   const pw = value("PAIRLY_AUTH_DB_PASSWORD");
@@ -83,9 +117,19 @@ export function readServerEnv(): ServerEnv {
   const msId = get("MICROSOFT_CLIENT_ID");
   const msSecret = get("MICROSOFT_CLIENT_SECRET");
 
+  const baseUrl = get("BETTER_AUTH_URL");
+  let baseOrigin: string[] = [];
+  try {
+    baseOrigin = baseUrl ? [new URL(baseUrl).origin] : [];
+  } catch {
+    // Reported by the schema below.
+  }
+  const extraOrigins = parseTrustedOrigins(get("PAIRLY_AUTH_TRUSTED_ORIGINS"));
+
   const parsed = schema.safeParse({
     nodeEnv,
-    baseUrl: get("BETTER_AUTH_URL"),
+    baseUrl,
+    trustedOrigins: [...new Set([...baseOrigin, ...extraOrigins])],
     secret: get("BETTER_AUTH_SECRET"),
     databaseUrl: get("PAIRLY_AUTH_DATABASE_URL"),
     jwtIssuer: get("PAIRLY_AUTH_ISSUER"),

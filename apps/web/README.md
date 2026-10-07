@@ -131,6 +131,43 @@ user, and access comes only from accepting an invitation in the API.
   `["otp", "backup"]`. The sign-in is logged as a structured warning
   (`auth.backup_code_sign_in`, user id only) and Home tells the user how many codes remain.
 
+## End-to-end and accessibility suite
+
+`e2e/` holds a Playwright suite (Chromium, one worker) with axe accessibility checks,
+copy checks (raw message keys, em dashes) and RTL checks across en/ar and light/dark. It
+runs against the compose stack, not a dev server, because the flows need the API,
+Postgres and Mailpit. It is not part of CI yet.
+
+1. Trust the address the browser will use. The suite opens `http://127.0.0.1:3000`, while
+   `BETTER_AUTH_URL` (from `PAIRLY_PUBLIC_WEB_URL`) is `http://localhost:3000`. Add the IP
+   origin to the repo-root `.env`:
+
+   ```bash
+   PAIRLY_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:3000
+   ```
+
+   Without it, sign-in requests from 127.0.0.1 fail the origin check (in development the
+   sign-in form says so; in production the message stays generic).
+2. Start the stack with the web profile and wait until it is healthy:
+   `PROFILES=web make dev`. Port 3000 on 127.0.0.1 must be the compose `web` service;
+   another local server on that port will answer instead.
+3. Install the browser once: `pnpm --filter @pairly/web exec playwright install chromium`.
+4. Run it:
+
+   ```bash
+   pnpm --filter @pairly/web e2e                                   # everything
+   pnpm --filter @pairly/web e2e e2e/tests/04-security.spec.ts     # one spec
+   ```
+
+   `PAIRLY_E2E_BASE_URL` points the suite at another address (it must be trusted, see
+   step 1). `PAIRLY_E2E_SCRATCH` sets where screenshots, saved sessions and the findings
+   (`findings/axe.ndjson`, `copy.ndjson`, `rtl.ndjson`) are written. Axe results are
+   logged there rather than failing the run, so read `axe.ndjson` after each run.
+
+Order matters: `01-full-flow` bootstraps an organisation (`make bootstrap-org`), accepts
+the invite, turns on TOTP and saves sessions that `02-pages` and `03-keyboard` reuse.
+Run `make down` when you are done.
+
 ## Design system
 
 "Ledger and ink": warm paper surfaces, deep teal ink for primary actions, one amber signal

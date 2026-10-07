@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 import path from "node:path";
 
 import { AUTH_STATE_DIR } from "../utils/report";

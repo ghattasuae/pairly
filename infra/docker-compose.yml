@@ -398,6 +398,9 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       BETTER_AUTH_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3000}
+      # Extra exact origins Better Auth accepts besides BETTER_AUTH_URL (comma separated),
+      # e.g. http://127.0.0.1:3000 for browsers or tests that use the IP address.
+      PAIRLY_AUTH_TRUSTED_ORIGINS: ${PAIRLY_AUTH_TRUSTED_ORIGINS:-}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?missing}
       # Better Auth connects as pairly_auth, which owns only schema `auth` (its search_path)
       # and runs its own migrations there. It has no rights on the Pairly tables.

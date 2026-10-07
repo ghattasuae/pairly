@@ -79,7 +79,8 @@
       "INVALID_TOKEN": "That link has expired or was already used. Ask for a new one.",
       "EXPIRED_TOKEN": "That link has expired. Ask for a new one.",
       "new_user_signup_disabled": "This email has no Pairly account. Ask your admin for an invite.",
-      "signInRequired": "Sign in to continue."
+      "signInRequired": "Sign in to continue.",
+      "originMismatch": "This address ({origin}) is not trusted by the auth server. Open Pairly at the address in BETTER_AUTH_URL, or add this origin to PAIRLY_AUTH_TRUSTED_ORIGINS. You only see this message in development."
     }
   },
   "CheckEmail": {

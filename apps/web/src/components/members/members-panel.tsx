@@ -164,7 +164,7 @@ function InviteForm({
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4 rounded-xl border bg-surface p-5 shadow-soft">
       <div className="space-y-1">
-        <h3 className="font-display text-xl">{t("inviteHeading")}</h3>
+        <h2 className="font-display text-xl">{t("inviteHeading")}</h2>
         <p className="text-sm text-muted-foreground">{t("inviteBody")}</p>
       </div>
       <fieldset disabled={disabled || pending} className="grid gap-4 sm:grid-cols-2">

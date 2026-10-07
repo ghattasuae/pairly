@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Proofly Technology
+
 // Test-only RFC 6238 (TOTP) implementation, built on RFC 4226 (HOTP), using Node's
 // built-in crypto. No third-party OTP library is installed in this repo, so this
 // computes 6-digit codes directly from a base32 secret (as shown in the QR / "enter
@@ -65,7 +68,7 @@ export function totp(base32Secret: string, options: TotpOptions = {}): string {
 export async function totpFresh(base32Secret: string, minSecondsLeft = 5): Promise<string> {
   const period = 30;
   let now = Math.floor(Date.now() / 1000);
-  let remaining = period - (now % period);
+  const remaining = period - (now % period);
   if (remaining < minSecondsLeft) {
     await new Promise((r) => setTimeout(r, (remaining + 1) * 1000));
     now = Math.floor(Date.now() / 1000);
