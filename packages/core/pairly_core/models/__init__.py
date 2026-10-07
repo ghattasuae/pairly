@@ -15,6 +15,8 @@ from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
+from pairly_core.policy.models import PolicyDocument, RuleResult
+from pairly_core.retrieval.models import SearchChunk
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.workflow.models import WorkflowRun
 
@@ -38,10 +40,13 @@ __all__ = [
     "ModelCall",
     "OrgLLMBudget",
     "Organisation",
+    "PolicyDocument",
     "PolicyVersion",
     "RiskAssessment",
     "RiskSignalRow",
     "Role",
+    "RuleResult",
+    "SearchChunk",
     "User",
     "WorkflowRun",
 ]

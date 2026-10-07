@@ -288,6 +288,7 @@ class RoleRegistry:
 CORE_PERMISSION_MODULES: tuple[str, ...] = (
     "pairly_core.documents.permissions",
     "pairly_core.extraction.permissions",
+    "pairly_core.policy.permissions",
 )
 
 
