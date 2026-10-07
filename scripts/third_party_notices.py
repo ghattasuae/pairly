@@ -6,12 +6,19 @@
 Usage:
     uv run python scripts/third_party_notices.py                 # print to stdout
     uv run python scripts/third_party_notices.py -o NOTICE.md    # write the file
+    uv run python scripts/third_party_notices.py --fetch-missing -o NOTICE.md
+        # also ask PyPI and the npm registry for packages not installed here (optional
+        # platform binaries for other systems)
 
 Python packages come from the current environment (importlib.metadata, the same
 data `uv pip list --format json` shows). JavaScript packages come from
 pnpm-lock.yaml when it exists, with license data read from the installed
 package.json files under node_modules. Missing data is shown as UNKNOWN; the
 script never fails because one package lacks metadata.
+
+Bundled components that are not packages of their own (PDFium inside the pypdfium2
+wheels, the DejaVu Sans subset embedded in decision receipts) are listed in their own
+section (BUNDLED).
 """
 
 from __future__ import annotations
@@ -20,11 +27,17 @@ import argparse
 import json
 import re
 import sys
+import urllib.parse
+import urllib.request
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
 
 UNKNOWN = "UNKNOWN"
+
+_NOT_INSTALLED = f"{UNKNOWN} (not installed here)"
 
 # Our own workspace packages are AGPL-3.0 and are not third-party components.
 OWN_PREFIXES = ("pairly", "@pairly/")
@@ -88,6 +101,57 @@ def python_components() -> list[Component]:
         if key not in seen:
             seen[key] = Component(name, dist.version or UNKNOWN, license_name)
     return sorted(seen.values(), key=lambda c: c.name.lower())
+
+
+def uv_lock_packages(lockfile: Path) -> list[tuple[str, str]]:
+    """(name, version) of every package in uv.lock (all platforms)."""
+    import tomllib
+
+    try:
+        data = tomllib.loads(lockfile.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    found = []
+    for package in data.get("package", []):
+        name, version = package.get("name"), package.get("version")
+        if isinstance(name, str) and isinstance(version, str):
+            found.append((name, version))
+    return found
+
+
+def _norm(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def with_locked_python(installed: list[Component], root: Path) -> list[Component]:
+    """Add uv.lock packages that are not installed here (other platforms only)."""
+    have = {_norm(c.name) for c in installed}
+    extra = [
+        Component(name, version, _NOT_INSTALLED)
+        for name, version in uv_lock_packages(root / "uv.lock")
+        if _norm(name) not in have and not name.lower().startswith(OWN_PREFIXES)
+    ]
+    return sorted([*installed, *extra], key=lambda c: c.name.lower())
+
+
+def pypi_license(name: str, version: str, *, timeout: float = 15.0) -> str:
+    """The license a PyPI release declares (expression, field or classifiers), or ""."""
+    url = f"https://pypi.org/pypi/{urllib.parse.quote(name)}/{urllib.parse.quote(version)}/json"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            info = json.loads(response.read().decode("utf-8")).get("info") or {}
+    except (OSError, ValueError):
+        return ""
+    for key in ("license_expression", "license"):
+        value = _clean(info.get(key))
+        if value and len(value) <= MAX_LICENSE_FIELD and "\n" not in value:
+            return value
+    classifiers = [
+        c.split("::")[-1].strip()
+        for c in info.get("classifiers") or []
+        if c.startswith("License ::") and c.strip() != "License :: OSI Approved"
+    ]
+    return ", ".join(sorted(set(classifiers)))
 
 
 # pnpm lockfile keys under `packages:`. v9: `name@1.0.0:` or `'@scope/name@1.0.0':`.
@@ -163,7 +227,7 @@ def js_license(root: Path, name: str, version: str) -> str:
         store.is_dir() and any(store.glob(f"{store_name}@{version}*"))
     )
     # Optional platform binaries for other systems are listed in the lockfile but not installed.
-    return UNKNOWN if installed else f"{UNKNOWN} (not installed here)"
+    return UNKNOWN if installed else _NOT_INSTALLED
 
 
 def js_components(root: Path) -> list[Component] | None:
@@ -178,6 +242,76 @@ def js_components(root: Path) -> list[Component] | None:
     return components
 
 
+NPM_REGISTRY = "https://registry.npmjs.org"
+
+
+def registry_license(name: str, version: str, *, timeout: float = 15.0) -> str:
+    """The license an npm package version declares in the public registry, or ""."""
+    url = f"{NPM_REGISTRY}/{urllib.parse.quote(name, safe='@')}/{urllib.parse.quote(version)}"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 - fixed https host
+            data = json.loads(response.read().decode("utf-8"))
+    except (OSError, ValueError):
+        return ""
+    value = data.get("license")
+    if isinstance(value, dict):
+        value = value.get("type")
+    return _clean(value) if isinstance(value, str) else ""
+
+
+def fill_from_registry(
+    components: list[Component], lookup: Callable[[str, str], str] = registry_license
+) -> list[Component]:
+    """Ask a registry for every package that is not installed on this machine."""
+    missing = [c for c in components if c.license == _NOT_INSTALLED]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        found = dict(
+            zip(missing, pool.map(lambda c: lookup(c.name, c.version), missing), strict=True)
+        )
+    return [
+        Component(c.name, c.version, f"{found[c]} (from the registry)") if found.get(c) else c
+        for c in components
+    ]
+
+
+@dataclass(frozen=True)
+class Bundled:
+    name: str
+    version: str
+    license: str
+    where: str
+
+
+def _pdfium_version() -> str:
+    try:
+        from pypdfium2.version import PDFIUM_INFO  # type: ignore[import-untyped]
+    except Exception:
+        return UNKNOWN
+    return str(PDFIUM_INFO)
+
+
+def bundled_components() -> list[Bundled]:
+    """Third-party code and data shipped inside other packages or in this repository."""
+    return [
+        Bundled(
+            "PDFium",
+            _pdfium_version(),
+            "BSD-3-Clause; its bundled build also carries FreeType (FTL), ICU (Unicode "
+            "license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT), OpenJPEG "
+            "(BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf (MIT "
+            "or Apache-2.0), LLVM libc (Apache-2.0 WITH LLVM-exception)",
+            "compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0)",
+        ),
+        Bundled(
+            "DejaVu Sans (subset)",
+            "2.37",
+            "Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain",
+            "packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in "
+            "decision receipt PDFs",
+        ),
+    ]
+
+
 def _cell(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
@@ -188,7 +322,18 @@ def table(components: list[Component]) -> str:
     return "\n".join(rows)
 
 
-def render(python: list[Component], js: list[Component] | None) -> str:
+def bundled_table(items: list[Bundled]) -> str:
+    rows = ["| Name | Version | License | Where |", "| --- | --- | --- | --- |"]
+    rows += [
+        f"| {_cell(b.name)} | {_cell(b.version)} | {_cell(b.license)} | {_cell(b.where)} |"
+        for b in items
+    ]
+    return "\n".join(rows)
+
+
+def render(
+    python: list[Component], js: list[Component] | None, bundled: list[Bundled] | None = None
+) -> str:
     parts = [
         "# Third-party notices",
         "",
@@ -199,11 +344,15 @@ def render(python: list[Component], js: list[Component] | None) -> str:
         "To refresh it, install all dependencies and run:",
         "",
         "```sh",
-        "uv run python scripts/third_party_notices.py -o NOTICE.md",
+        "uv run python scripts/third_party_notices.py --fetch-missing -o NOTICE.md",
         "```",
         "",
         "A license shown as UNKNOWN means the package did not publish license metadata, "
         "or it is not installed on this machine. Check it by hand before release.",
+        "",
+        f"## Bundled components ({len(bundled or [])})",
+        "",
+        bundled_table(bundled or []),
         "",
         f"## Python packages ({len(python)})",
         "",
@@ -231,9 +380,20 @@ def main(argv: list[str] | None = None) -> int:
         default=Path(__file__).resolve().parents[1],
         help="repository root (default: parent of scripts/)",
     )
+    parser.add_argument(
+        "--fetch-missing",
+        action="store_true",
+        help="look up packages that are not installed here in the npm registry",
+    )
     args = parser.parse_args(argv)
 
-    text = render(python_components(), js_components(args.root))
+    python = with_locked_python(python_components(), args.root)
+    js = js_components(args.root)
+    if args.fetch_missing:
+        python = fill_from_registry(python, pypi_license)
+        if js is not None:
+            js = fill_from_registry(js)
+    text = render(python, js, bundled_components())
     if args.output:
         args.output.write_text(text, encoding="utf-8")
         print(f"wrote {args.output}", file=sys.stderr)
