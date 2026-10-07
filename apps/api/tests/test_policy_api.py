@@ -174,11 +174,26 @@ async def test_rule_set_publish_read_and_rbac(
     bad = await api.client.get("/v1/policies/rule-sets/Bad Name", headers=api.h(admin, org.id))
     assert bad.status_code == 422
 
+    # Every rule set by name with its latest version, without content.
+    second = RULES_V1.replace("amount > 10000", "amount > 20000")
+    assert (
+        await api.client.post(url, json={"content": second}, headers=api.h(admin, org.id))
+    ).status_code == 201
+    listed = await api.client.get("/v1/policies/rule-sets", headers=api.h(approver, org.id))
+    assert listed.status_code == 200, listed.text
+    spend = [r for r in listed.json() if r["name"] == "pay.spend"]
+    assert [(r["version"], r["content"]) for r in spend] == [(2, None)]
+    assert [r["name"] for r in listed.json()] == sorted(r["name"] for r in listed.json())
+
     other = await new_org(owner_engine)
     hidden = await api.client.get(
         "/v1/policies/rule-sets/pay.spend", headers=api.h(other.tenant.subject, other.id)
     )
     assert hidden.status_code == 404
+    elsewhere = await api.client.get(
+        "/v1/policies/rule-sets", headers=api.h(other.tenant.subject, other.id)
+    )
+    assert "pay.spend" not in [r["name"] for r in elsewhere.json()]
 
 
 async def test_dry_run_stores_nothing(api: Api, org: Org, owner_engine: AsyncEngine) -> None:

@@ -28,10 +28,10 @@ import { cn } from "@/lib/utils";
 
 import { ActionError } from "./admin-panels";
 
-const RECENT_KEY = "pairly.recentRuleSets";
-
 export interface PoliciesPanelProps {
   documents: PolicyDocument[];
+  /** Every rule set with its latest version (`GET /v1/policies/rule-sets`). */
+  ruleSets?: RuleSetVersion[];
   meId: string;
   canManage: boolean;
   totpEnabled: boolean;
@@ -74,7 +74,14 @@ function StatusBadge({ status }: { status: string }) {
  * guardrail warnings, override with a written reason, two admins for high-severity
  * findings) and rule sets (versions, dry run on sample facts).
  */
-export function PoliciesPanel({ documents, meId, canManage, totpEnabled, actions = DEFAULT_ACTIONS }: PoliciesPanelProps) {
+export function PoliciesPanel({
+  documents,
+  ruleSets = [],
+  meId,
+  canManage,
+  totpEnabled,
+  actions = DEFAULT_ACTIONS,
+}: PoliciesPanelProps) {
   const t = useTranslations("PoliciesSettings");
   const locale = useLocale();
   const [docs, setDocs] = useState(documents);
@@ -112,7 +119,7 @@ export function PoliciesPanel({ documents, meId, canManage, totpEnabled, actions
         )}
       </section>
 
-      <RuleSets actions={actions} onError={setError} />
+      <RuleSets ruleSets={ruleSets} actions={actions} onError={setError} />
     </div>
   );
 }
@@ -380,9 +387,11 @@ function PolicyRow({
 }
 
 function RuleSets({
+  ruleSets,
   actions,
   onError,
 }: {
+  ruleSets: RuleSetVersion[];
   actions: NonNullable<PoliciesPanelProps["actions"]>;
   onError: (code: string | null) => void;
 }) {
@@ -391,7 +400,6 @@ function RuleSets({
   const locale = useLocale();
   const ids = { name: useId(), facts: useId(), version: useId() };
   const [name, setName] = useState("");
-  const [recent, setRecent] = useState<string[]>([]);
   const [opened, setOpened] = useState<string | null>(null);
   const [versions, setVersions] = useState<RuleSetVersion[] | null>(null);
   const [content, setContent] = useState<{ version: number; text: string } | null>(null);
@@ -399,17 +407,6 @@ function RuleSets({
   const [dryVersion, setDryVersion] = useState<number | null>(null);
   const [result, setResult] = useState<DryRun | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // Recently opened names, read when the field is first focused (a per-browser convenience).
-  const loadRecent = () => {
-    if (recent.length > 0) return;
-    try {
-      const saved = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]") as unknown;
-      if (Array.isArray(saved)) setRecent(saved.filter((s): s is string => typeof s === "string").slice(0, 8));
-    } catch {
-      /* a convenience only */
-    }
-  };
 
   const open = async (target: string) => {
     const clean = target.trim();
@@ -427,13 +424,6 @@ function RuleSets({
         setOpened(clean);
         setVersions(found.versions);
         setDryVersion(found.versions[0]?.version ?? null);
-        const next = [clean, ...recent.filter((r) => r !== clean)].slice(0, 8);
-        setRecent(next);
-        try {
-          localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-        } catch {
-          /* a convenience only */
-        }
       } else {
         setVersions(null);
         setOpened(null);
@@ -474,6 +464,31 @@ function RuleSets({
         </h2>
         <p className="text-sm text-muted-foreground">{t("body")}</p>
       </div>
+      {ruleSets.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("noRuleSets")}</p>
+      ) : (
+        <ul aria-label={t("listLabel")} className="flex flex-wrap gap-2">
+          {ruleSets.map((r) => (
+            <li key={r.name}>
+              <Button
+                type="button"
+                variant={opened === r.name ? "default" : "outline"}
+                size="sm"
+                disabled={busy}
+                onClick={() => {
+                  setName(r.name);
+                  void open(r.name);
+                }}
+              >
+                <span className="font-mono" dir="ltr">
+                  {r.name}
+                </span>
+                <span className="text-xs opacity-80">{t("latest", { version: r.version })}</span>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
       <form
         className="flex flex-col gap-2 sm:flex-row sm:items-end"
         onSubmit={(event) => {
@@ -488,16 +503,15 @@ function RuleSets({
           <Input
             id={ids.name}
             dir="ltr"
-            list={`${ids.name}-recent`}
-            onFocus={loadRecent}
+            list={`${ids.name}-known`}
             placeholder="expense.limits"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="text-start"
           />
-          <datalist id={`${ids.name}-recent`}>
-            {recent.map((r) => (
-              <option key={r} value={r} />
+          <datalist id={`${ids.name}-known`}>
+            {ruleSets.map((r) => (
+              <option key={r.name} value={r.name} />
             ))}
           </datalist>
         </div>

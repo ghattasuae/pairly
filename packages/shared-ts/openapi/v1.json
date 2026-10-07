@@ -6925,6 +6925,23 @@
           },
           {
             "in": "query",
+            "name": "decision_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^dec_[0-9A-HJKMNP-TV-Z]{26}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decision Id"
+            }
+          },
+          {
+            "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
@@ -10438,6 +10455,56 @@
           }
         },
         "summary": "Get Rule Results",
+        "tags": [
+          "policies"
+        ]
+      }
+    },
+    "/v1/policies/rule-sets": {
+      "get": {
+        "description": "Every rule set in the organisation: its name and latest version, by name.",
+        "operationId": "list_rule_sets_v1_policies_rule_sets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PolicyVersionOut"
+                  },
+                  "title": "Response List Rule Sets V1 Policies Rule Sets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Rule Sets",
         "tags": [
           "policies"
         ]

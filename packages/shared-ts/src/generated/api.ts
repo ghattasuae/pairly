@@ -1246,6 +1246,26 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/policies/rule-sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rule Sets
+         * @description Every rule set in the organisation: its name and latest version, by name.
+         */
+        get: operations["list_rule_sets_v1_policies_rule_sets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/policies/rule-sets/{name}": {
         parameters: {
             query?: never;
@@ -3971,6 +3991,7 @@ export interface operations {
     appeals_queue_v1_appeals_get: {
         parameters: {
             query?: {
+                decision_id?: string | null;
                 limit?: number;
                 status?: components["schemas"]["AppealStatus"] | null;
             };
@@ -6265,6 +6286,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoredResultOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rule_sets_v1_policies_rule_sets_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyVersionOut"][];
                 };
             };
             /** @description Validation Error */

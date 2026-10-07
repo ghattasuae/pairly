@@ -1099,7 +1099,10 @@
       "facts": "Facts (JSON)",
       "run": "Run",
       "overall": "Overall: {overall}.",
-      "requiresHuman": "Needs a person"
+      "requiresHuman": "Needs a person",
+      "listLabel": "Rule sets in this organisation",
+      "latest": "v{version}",
+      "noRuleSets": "No rule sets yet. Workflows publish theirs when they first run or are seeded."
     }
   }
 }

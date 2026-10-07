@@ -29,6 +29,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -106,6 +107,22 @@ async def list_policy_versions(
         .where(PolicyVersion.kind == kind, PolicyVersion.name == name)
         .order_by(PolicyVersion.version.desc())
         .limit(limit)
+    )
+    return [PublishedPolicy.from_row(r) for r in rows]
+
+
+async def latest_policies(
+    session: AsyncSession, kind: str, *, limit: int = 200
+) -> list[PublishedPolicy]:
+    """The latest version of every policy of ``kind`` in the organisation, by name."""
+    if not _KIND_RE.fullmatch(kind):
+        raise PolicyError("invalid policy kind")
+    rows = await session.scalars(
+        select(PolicyVersion)
+        .where(PolicyVersion.kind == kind)
+        .ext(distinct_on(PolicyVersion.name))
+        .order_by(PolicyVersion.name, PolicyVersion.version.desc())
+        .limit(max(1, min(limit, 500)))
     )
     return [PublishedPolicy.from_row(r) for r in rows]
 

@@ -30,12 +30,16 @@ export default async function PoliciesPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status !== "ready" || !canSee("policies", viewer.me.permissions)) notFound();
   const t = await getTranslations("Settings");
-  const documents = await callApi((api) => api.GET("/v1/policies/documents"));
+  const [documents, ruleSets] = await Promise.all([
+    callApi((api) => api.GET("/v1/policies/documents")),
+    callApi((api) => api.GET("/v1/policies/rule-sets")),
+  ]);
   return (
     <SettingsFrame title={t("pages.policies.title")} subtitle={t("pages.policies.body")}>
       {documents.ok ? (
         <PoliciesPanel
           documents={documents.data}
+          ruleSets={ruleSets.ok ? ruleSets.data : []}
           meId={viewer.me.id}
           canManage={viewer.me.permissions.includes("core.policy.manage")}
           totpEnabled={twoFactorEnabled(session)}

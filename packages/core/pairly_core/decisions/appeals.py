@@ -217,9 +217,13 @@ async def list_appeals(
     *,
     scope: WorkflowScope,
     status: AppealStatus | None = None,
+    decision_id: str | None = None,
     limit: int = 100,
 ) -> list[AppealView]:
-    """The appeals queue (by SLA due date), limited to the workflows in ``scope``."""
+    """The appeals queue (by SLA due date), limited to the workflows in ``scope``.
+
+    ``decision_id`` keeps the appeals of one decision record only.
+    """
     query = (
         select(Appeal, DecisionRecord.workflow)
         .join(DecisionRecord, DecisionRecord.id == Appeal.decision_id)
@@ -229,6 +233,8 @@ async def list_appeals(
     )
     if status is not None:
         query = query.where(Appeal.status == status.value)
+    if decision_id is not None:
+        query = query.where(Appeal.decision_id == decision_id)
     return [AppealView.of(row, workflow) for row, workflow in await session.execute(query)]
 
 

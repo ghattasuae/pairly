@@ -4,6 +4,8 @@
 
 Rule sets (``core.policy.read`` to read, ``core.policy.manage`` to publish):
 
+* ``GET  /v1/policies/rule-sets``                   every rule set name with its latest
+  version (no content)
 * ``GET  /v1/policies/rule-sets/{name}``            latest version (or ``?version=n``)
 * ``GET  /v1/policies/rule-sets/{name}/versions``   every version, newest first
 * ``POST /v1/policies/rule-sets/{name}/versions``   publish a new version (never an edit)
@@ -100,7 +102,12 @@ from pairly_core.policy.service import (
     publish_rule_set,
     results_for_evaluation,
 )
-from pairly_core.policy_versions import PolicyError, latest_policy, list_policy_versions
+from pairly_core.policy_versions import (
+    PolicyError,
+    latest_policies,
+    latest_policy,
+    list_policy_versions,
+)
 from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError, require
 from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable
 from pairly_core.retrieval.metered import build_metered_embedder
@@ -325,6 +332,16 @@ def _version_out(policy: Any, *, content: bool = False) -> PolicyVersionOut:
         created_at=policy.created_at,
         content=policy.content if content else None,
     )
+
+
+@router.get("/rule-sets", response_model=list[PolicyVersionOut])
+async def list_rule_sets(
+    actor: ReadActor,
+    session: OrgSession,
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
+) -> list[PolicyVersionOut]:
+    """Every rule set in the organisation: its name and latest version, by name."""
+    return [_version_out(p) for p in await latest_policies(session, RULES_KIND, limit=limit)]
 
 
 @router.get("/rule-sets/{name}", response_model=PolicyVersionOut)

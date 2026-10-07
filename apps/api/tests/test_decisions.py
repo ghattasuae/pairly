@@ -794,6 +794,11 @@ async def test_records_and_appeals_are_scoped_per_workflow(
     assert [a["id"] for a in (await get("/v1/appeals", "hire_manager")).json()] == [hire_id]
     auditor = (await get("/v1/appeals", "auditor")).json()
     assert {a["id"] for a in auditor} == {hire_id, pay_id}
+    # One record's appeals, still within the reader's workflows.
+    by_record = (await get(f"/v1/appeals?decision_id={pay.id}", "auditor")).json()
+    assert [a["id"] for a in by_record] == [pay_id]
+    assert (await get(f"/v1/appeals?decision_id={hire}", "pay_approver")).json() == []
+    assert (await get("/v1/appeals?decision_id=not-a-record", "auditor")).status_code == 422
     assert all(a["reason"] == {"redacted": True} for a in auditor)
     # The clerk reads pay appeals but cannot decide them: the reason stays redacted.
     clerk_queue = (await get("/v1/appeals", "clerk")).json()

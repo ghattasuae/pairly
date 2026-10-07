@@ -8,7 +8,8 @@
 * ``POST /v1/decisions/{id}/replay``            re-run the decision, store the result.
 * ``GET  /v1/decisions/{id}/replays``           replay results, newest first.
 * ``POST /v1/decisions/{id}/appeals``           file an appeal (staff on behalf).
-* ``GET  /v1/appeals``                          the appeals queue (by SLA due date).
+* ``GET  /v1/appeals``                          the appeals queue (by SLA due date;
+  ``?decision_id=`` for one record's appeals, ``?status=`` for open or resolved).
 * ``GET  /v1/appeals/{id}``                     one appeal.
 * ``POST /v1/appeals/{id}/resolve``             close it with a written outcome.
 
@@ -94,7 +95,8 @@ def _appeal_scope(actor: CurrentActor) -> WorkflowScope:
 RecordScope = Annotated[WorkflowScope, Depends(_record_scope)]
 AppealScope = Annotated[WorkflowScope, Depends(_appeal_scope)]
 Services = Annotated[DecisionServices, Depends(get_decision_services)]
-DecisionId = Annotated[str, Path(pattern=r"^dec_[0-9A-HJKMNP-TV-Z]{26}$")]
+DECISION_ID_PATTERN = r"^dec_[0-9A-HJKMNP-TV-Z]{26}$"
+DecisionId = Annotated[str, Path(pattern=DECISION_ID_PATTERN)]
 PERSONAL_DATA_VIEWED = "core.decision.personal_data_viewed"
 
 
@@ -370,9 +372,12 @@ async def appeals_queue(
     scope: AppealScope,
     session: OrgSession,
     status: AppealStatus | None = AppealStatus.OPEN,
+    decision_id: Annotated[str | None, Query(pattern=DECISION_ID_PATTERN)] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
 ) -> list[AppealOut]:
-    views = await list_appeals(session, scope=scope, status=status, limit=limit)
+    views = await list_appeals(
+        session, scope=scope, status=status, decision_id=decision_id, limit=limit
+    )
     return [_appeal_out(v, actor) for v in views]
 
 

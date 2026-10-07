@@ -46,8 +46,8 @@ export default async function DecisionPage({ params }: Props) {
   const [receipt, replays, openAppeals, resolvedAppeals] = await Promise.all([
     callApi((api) => api.GET("/v1/decisions/{decision_id}/receipt", { params: { path: { decision_id: id } } })),
     callApi((api) => api.GET("/v1/decisions/{decision_id}/replays", { params: { path: { decision_id: id } } })),
-    callApi((api) => api.GET("/v1/appeals", { params: { query: { status: "open", limit: 200 } } })),
-    callApi((api) => api.GET("/v1/appeals", { params: { query: { status: "resolved", limit: 200 } } })),
+    callApi((api) => api.GET("/v1/appeals", { params: { query: { status: "open", decision_id: id, limit: 200 } } })),
+    callApi((api) => api.GET("/v1/appeals", { params: { query: { status: "resolved", decision_id: id, limit: 200 } } })),
   ]);
   if (!receipt.ok) {
     if (["not_found", "permission_denied", "invalid_input"].includes(receipt.code)) notFound();
@@ -59,7 +59,7 @@ export default async function DecisionPage({ params }: Props) {
   }
   const data = receipt.data as Record<string, unknown>;
   const workflow = typeof data.workflow === "string" ? data.workflow : "";
-  // TODO(api): filter appeals by decision id on the server (GET /v1/appeals?decision_id=).
+  // The API filters by decision; the check here only guards against a wrong answer.
   const appeals: Appeal[] | null =
     openAppeals.ok || resolvedAppeals.ok
       ? [...(openAppeals.ok ? openAppeals.data : []), ...(resolvedAppeals.ok ? resolvedAppeals.data : [])].filter(
