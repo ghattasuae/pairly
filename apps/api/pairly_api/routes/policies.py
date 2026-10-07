@@ -20,12 +20,17 @@ Policy documents (``core.policy.read`` / ``core.policy.manage``):
 * ``GET  /v1/policies/documents/{id}``              one
 * ``POST /v1/policies/documents/{id}/index``        index now (409 while not parsed)
 * ``POST /v1/policies/documents/{id}/archive``      stop using it (final)
+* ``POST /v1/policies/documents/{id}/override``     override the guardrails of a
+  ``needs_review`` document with a written reason. High-severity findings need two
+  different admins: the first call records the request (202), the second approves it.
+  Then the document indexes, with every flagged span still left out.
 * ``POST /v1/policies/search``                      hybrid search over active versions
 
 Every policy document runs through the guardrails before it is indexed. Its findings
 come back as ``warnings`` to callers holding ``core.policy.manage`` (others see only
 ``warning_count``). Status ``needs_review`` (a high-severity instruction found in the
-text) is never indexed and never active: upload a corrected file as a new version.
+text) is not indexed and not active: upload a corrected file as a new version, or
+override (see above).
 
 ``manage`` is a step-up action: it needs a TOTP sign-in. Another organisation's rows are
 404 (Row Level Security hides them).
@@ -80,8 +85,10 @@ from pairly_core.policy.documents import (
     get_policy_document,
     index_policy_document,
     list_policy_documents,
+    override_needs_two_admins,
     policy_intake,
     register_policy_document,
+    request_override,
 )
 from pairly_core.policy.models import PolicyDocument, RuleResult
 from pairly_core.policy.permissions import POLICY_MANAGE, POLICY_READ
@@ -94,7 +101,7 @@ from pairly_core.policy.service import (
     results_for_evaluation,
 )
 from pairly_core.policy_versions import PolicyError, latest_policy, list_policy_versions
-from pairly_core.rbac import Actor, require
+from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError, require
 from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable
 from pairly_core.retrieval.metered import build_metered_embedder
 from pairly_core.retrieval.search import hybrid_search
@@ -224,10 +231,19 @@ class PolicyDocumentOut(BaseModel):
     warning_count: int
     # Guardrail findings; only for callers who manage policies, else empty.
     warnings: list[PolicyWarningOut]
+    # Guardrail override (two-person rule for high-severity findings). The reasons are
+    # only shown to callers who manage policies.
+    override_requested_by: uuid.UUID | None = None
+    override_requested_at: datetime | None = None
+    override_request_reason: str | None = None
+    overridden_by: uuid.UUID | None = None
+    overridden_at: datetime | None = None
+    override_reason: str | None = None
 
     @classmethod
     def of(cls, row: PolicyDocument, actor: Actor) -> PolicyDocumentOut:
         findings = list(row.guardrail_findings or [])
+        manager = actor.has(POLICY_MANAGE)
         return cls(
             id=row.id,
             name=row.name,
@@ -244,10 +260,14 @@ class PolicyDocumentOut(BaseModel):
             archived_at=row.archived_at,
             warning_count=len(findings),
             warnings=(
-                [PolicyWarningOut.model_validate(f) for f in findings]
-                if actor.has(POLICY_MANAGE)
-                else []
+                [PolicyWarningOut.model_validate(f) for f in findings] if manager else []
             ),
+            override_requested_by=row.override_requested_by,
+            override_requested_at=row.override_requested_at,
+            override_request_reason=row.override_request_reason if manager else None,
+            overridden_by=row.overridden_by,
+            overridden_at=row.overridden_at,
+            override_reason=row.override_reason if manager else None,
         )
 
 
@@ -261,6 +281,18 @@ class IndexOut(BaseModel):
     status: str
     reason: str | None
     chunks: int
+    policy_document: PolicyDocumentOut
+
+
+class OverrideIn(BaseModel):
+    reason: Annotated[str, Field(min_length=10, max_length=2000)]
+
+
+class OverrideOut(BaseModel):
+    # requested: waiting for a second admin. overridden: approved, then indexed.
+    status: str
+    second_admin_required: bool
+    index: IndexOut | None
     policy_document: PolicyDocumentOut
 
 
@@ -585,6 +617,63 @@ async def archive_document(
         session, policy_document_id=policy_document_id, actor_type=kind, actor_id=actor_id
     )
     return PolicyDocumentOut.of(row, actor)
+
+
+@router.post(
+    "/documents/{policy_document_id}/override",
+    response_model=OverrideOut,
+    responses={202: {"model": OverrideOut, "description": "Recorded; a second admin must approve"}},
+)
+async def override_document(
+    request: Request,
+    policy_document_id: uuid.UUID,
+    body: OverrideIn,
+    actor: ManageActor,
+    session: OrgSession,
+    embedder: EmbedderDep,
+) -> Any:
+    """Override the guardrails of a ``needs_review`` document (step-up, written reason)."""
+    if actor.kind is not ActorKind.USER:
+        raise PermissionDeniedError("only a person can override the guardrails")
+    await _load_document(session, policy_document_id)
+    outcome = await request_override(
+        session, policy_document_id=policy_document_id, user_id=actor.id, reason=body.reason
+    )
+    second = override_needs_two_admins(outcome.row)
+    if outcome.status == "requested":
+        out = OverrideOut(
+            status="requested",
+            second_admin_required=second,
+            index=None,
+            policy_document=PolicyDocumentOut.of(outcome.row, actor),
+        )
+        return JSONResponse(out.model_dump(mode="json"), status_code=202)
+    kind, actor_id = actor_ref(actor)
+    index: IndexOut | None = None
+    services = getattr(request.app.state, "documents", None)
+    if services is not None:
+        result = await index_policy_document(
+            session,
+            services.store,
+            policy_document_id=policy_document_id,
+            embedder=embedder,
+            actor_type=kind,
+            actor_id=actor_id,
+        )
+        row = await _load_document(session, policy_document_id)
+        index = IndexOut(
+            status=result.status,
+            reason=result.reason,
+            chunks=result.chunks,
+            policy_document=PolicyDocumentOut.of(row, actor),
+        )
+    row = await _load_document(session, policy_document_id)
+    return OverrideOut(
+        status="overridden",
+        second_admin_required=second,
+        index=index,
+        policy_document=PolicyDocumentOut.of(row, actor),
+    )
 
 
 @router.post("/search", response_model=list[SearchHitOut])

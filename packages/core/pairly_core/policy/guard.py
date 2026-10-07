@@ -13,8 +13,10 @@ reader cannot see, or text written to steer a model, must never reach a chunk:
 * The findings are kept as warnings on the policy document, for admins.
 * Low and medium findings never block indexing. A high ``instruction`` finding, or a
   guardrail detector that failed (fail closed: an unchecked document is never clean),
-  marks the document ``needs_review``: it is not indexed and can never become active.
-  An admin uploads a corrected file, which is a new version.
+  marks the document ``needs_review``: it is not indexed and not active. An admin
+  uploads a corrected file (a new version), or overrides with a written reason (two
+  admins for high-severity findings, ``pairly_core.policy.documents.request_override``);
+  the excluded spans stay excluded after an override.
 """
 
 from __future__ import annotations

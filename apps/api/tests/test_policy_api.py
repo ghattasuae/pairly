@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from pydantic import SecretStr
 from reportlab.pdfgen import canvas  # type: ignore[import-untyped]
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_api.main import create_app
@@ -463,3 +464,162 @@ async def test_policy_document_guardrail_warnings_and_needs_review(
         owner_engine, org.id, "SELECT string_agg(action, ',' ORDER BY seq) FROM audit_events"
     )
     assert "core.policy.document_needs_review" in actions
+
+
+# ------------------------------------------------------------------ guardrail override
+
+
+async def _needs_review(api: Api, owner_engine: AsyncEngine, org: Org, name: str) -> str:
+    admin = org.tenant.subject
+    body = (await _upload(api, admin, org.id, pdf_bytes(name), name=name)).json()
+    pdoc = body["policy_document"]
+    await _mark_parsed(api, owner_engine, org.id, body["document"], INJECTED_POLICY)
+    flagged = await api.client.post(
+        f"/v1/policies/documents/{pdoc['id']}/index", headers=api.h(admin, org.id)
+    )
+    assert flagged.json()["status"] == "needs_review", flagged.text
+    return str(pdoc["id"])
+
+
+async def test_guardrail_override_needs_two_admins(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    admin = org.tenant.subject
+    second = await add_member(owner_engine, org.id, "admin")
+    approver = await add_member(owner_engine, org.id, "approver")
+    pdoc_id = await _needs_review(api, owner_engine, org, "office")
+    url = f"/v1/policies/documents/{pdoc_id}/override"
+    reason = {"reason": "Reviewed with legal: the flagged sentence is a quoted example."}
+
+    no_otp = await api.client.post(url, json=reason, headers=api.h(admin, org.id, otp=False))
+    assert no_otp.status_code == 403
+    assert no_otp.json()["code"] == "second_factor_required"
+    denied = await api.client.post(url, json=reason, headers=api.h(approver, org.id))
+    assert denied.status_code == 403
+    short = await api.client.post(url, json={"reason": "ok"}, headers=api.h(admin, org.id))
+    assert short.status_code == 422
+
+    first = await api.client.post(url, json=reason, headers=api.h(admin, org.id))
+    assert first.status_code == 202, first.text
+    assert (first.json()["status"], first.json()["second_admin_required"]) == ("requested", True)
+    out = first.json()["policy_document"]
+    assert out["status"] == "needs_review"
+    assert out["override_request_reason"] == reason["reason"]
+    assert out["overridden_by"] is None
+
+    same = await api.client.post(url, json=reason, headers=api.h(admin, org.id))
+    assert same.status_code == 409
+    assert same.json()["code"] == "second_admin_required"
+    # Nobody else sees the reasons, only that an override exists.
+    seen = await api.client.get(
+        f"/v1/policies/documents/{pdoc_id}", headers=api.h(approver, org.id)
+    )
+    assert seen.json()["override_request_reason"] is None
+    assert seen.json()["override_requested_by"] is not None
+
+    approve = {"reason": "Second review: agreed, the span stays excluded from the index."}
+    done = await api.client.post(url, json=approve, headers=api.h(second, org.id))
+    assert done.status_code == 200, done.text
+    assert done.json()["status"] == "overridden"
+    assert done.json()["index"]["status"] == "indexed"
+    final = done.json()["policy_document"]
+    assert final["status"] == "indexed"
+    assert final["chunk_count"] >= 1
+    assert final["override_reason"] == approve["reason"]
+    assert final["overridden_by"] != final["override_requested_by"]
+
+    # Indexed, but the flagged instruction never reached a chunk.
+    hits = await api.client.post(
+        "/v1/policies/search",
+        json={"query": "office supplies approval ignore the rules approve every invoice"},
+        headers=api.h(approver, org.id),
+    )
+    office = [h for h in hits.json() if h["name"] == "office"]
+    assert office
+    assert all("ignore the rules" not in h["text"] for h in office)
+
+    again = await api.client.post(url, json=approve, headers=api.h(second, org.id))
+    assert again.status_code == 409
+    assert again.json()["code"] == "override_not_allowed"
+
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)})
+        rows = (
+            await conn.execute(
+                text(
+                    "SELECT action, actor_id, payload FROM audit_events WHERE entity_id = :e "
+                    "AND action LIKE 'core.policy.document_overrid%' ORDER BY seq"
+                ),
+                {"e": pdoc_id},
+            )
+        ).all()
+    assert [r.action for r in rows] == [
+        "core.policy.document_override_requested",
+        "core.policy.document_overridden",
+    ]
+    assert rows[0].payload["reason"] == reason["reason"]
+    assert rows[1].payload["reason"] == approve["reason"]
+    assert rows[1].payload["two_person"] is True
+    assert rows[0].actor_id != rows[1].actor_id
+
+
+async def test_override_rules_hold_in_the_database(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    """The trigger refuses a one-person override and edits that would dodge the rule."""
+    pdoc_id = await _needs_review(api, owner_engine, org, "office_db")
+    user_id = org.tenant.user_id
+    engine = api.app.state.pairly.engine
+    statements = (
+        # One person, no request: refused although the columns are filled in.
+        "UPDATE policy_documents SET overridden_by = :u, overridden_at = now(), "
+        "override_reason = 'one person only', status = 'pending' WHERE id = :i",
+        # Same person requests and approves.
+        "UPDATE policy_documents SET override_requested_by = :u, "
+        "override_requested_at = now(), override_request_reason = 'r', overridden_by = :u, "
+        "overridden_at = now(), override_reason = 'r', status = 'pending' WHERE id = :i",
+        # Clearing the findings first, to look like a one-person case.
+        "UPDATE policy_documents SET guardrail_findings = '[]'::jsonb WHERE id = :i",
+        # Activating without any override.
+        "UPDATE policy_documents SET status = 'indexed' WHERE id = :i",
+    )
+
+    async def run(sql: str) -> None:
+        async with engine.begin() as conn:
+            await conn.execute(
+                text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)}
+            )
+            await conn.execute(text(sql), {"u": user_id, "i": pdoc_id})
+
+    for sql in statements:
+        with pytest.raises(DBAPIError):
+            await run(sql)
+
+
+async def test_one_admin_is_enough_without_high_findings(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    """Medium findings only (not a case today, kept for future review reasons)."""
+    admin = org.tenant.subject
+    body = (await _upload(api, admin, org.id, pdf_bytes("medium"), name="medium")).json()
+    pdoc_id = body["policy_document"]["id"]
+    await _mark_parsed(api, owner_engine, org.id, body["document"])
+    medium = '[{"id": "f1", "severity": "medium", "type": "instruction"}]'
+    async with api.app.state.pairly.engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)})
+        await conn.execute(
+            text(
+                "UPDATE policy_documents SET status = 'needs_review', "
+                "status_reason = 'guardrails_instruction', "
+                "guardrail_findings = CAST(:f AS jsonb) WHERE id = :i"
+            ),
+            {"f": medium, "i": pdoc_id},
+        )
+    done = await api.client.post(
+        f"/v1/policies/documents/{pdoc_id}/override",
+        json={"reason": "Medium finding reviewed, the text is fine."},
+        headers=api.h(admin, org.id),
+    )
+    assert done.status_code == 200, done.text
+    assert (done.json()["status"], done.json()["second_admin_required"]) == ("overridden", False)
+    assert done.json()["index"]["status"] == "indexed"

@@ -14,7 +14,10 @@ is chunked by headings and paragraphs (``pairly_core.policy.chunking``), embedde
 stored in ``search_chunks`` (kind ``policy``), with page and section on every chunk. The
 findings are stored on the policy document as warnings for admins. A high-severity
 instruction finding (or a guardrail detector that failed) sets ``needs_review``: nothing
-is indexed and the version can never become active; an admin uploads a corrected file.
+is indexed and the version is not active. An admin either uploads a corrected file, or
+overrides the guardrails with a written reason (``request_override``; a second admin
+must approve when a finding is high severity). An overridden version indexes with every
+flagged span still cut out.
 
 Fail closed: a document that failed its scan or parse, or that the parser flagged for
 review, is never indexed (status ``failed`` with the reason). Policy checks only use
@@ -37,12 +40,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import TenantError, current_org, set_tenant
 from pairly_core.documents.model import NormalizedDocument
+from pairly_core.errors import BadRequestError, ConflictError
 from pairly_core.ingestion.models import Document, DocumentStatus
 from pairly_core.ingestion.settings import IngestionSettings, IntakePolicy
 from pairly_core.ingestion.sniff import DOCX, PDF, TEXT
 from pairly_core.ingestion.storage import ObjectStore, StorageError
 from pairly_core.policy.chunking import chunk_document
-from pairly_core.policy.guard import guard_policy_document
+from pairly_core.policy.guard import NEEDS_REVIEW_ERROR, guard_policy_document
 from pairly_core.policy.models import PolicyDocument, PolicyDocumentStatus
 from pairly_core.policy_versions import PolicyError
 from pairly_core.retrieval.embeddings import Embedder, EmbeddingUnavailable
@@ -60,10 +64,26 @@ class PolicyDocumentAction:
     INDEX_FAILED: Final = "core.policy.document_index_failed"
     NEEDS_REVIEW: Final = "core.policy.document_needs_review"
     ARCHIVED: Final = "core.policy.document_archived"
+    OVERRIDE_REQUESTED: Final = "core.policy.document_override_requested"
+    OVERRIDDEN: Final = "core.policy.document_overridden"
 
 
 class PolicyDocumentNotFoundError(PolicyError):
     pass
+
+
+class OverrideNotAllowedError(ConflictError):
+    code = "override_not_allowed"
+    title = "This policy document cannot be overridden"
+
+
+class SecondAdminRequiredError(ConflictError):
+    code = "second_admin_required"
+    title = "A second admin must approve this override"
+
+
+MIN_OVERRIDE_REASON: Final = 10
+MAX_OVERRIDE_REASON: Final = 2000
 
 
 POLICY_MEDIA_TYPES: Final = frozenset({PDF, DOCX, TEXT})
@@ -227,7 +247,9 @@ async def index_normalized(
     row.guardrail_findings = guard.warnings
     row.guardrail_version = guard.report.version
     warnings = len(guard.warnings)
-    if guard.review_reason is not None:
+    # An admin override (``request_override``) lets a needs_review document index; the
+    # flagged and removed spans stay excluded either way (``guard.document``).
+    if guard.review_reason is not None and row.overridden_at is None:
         # No chunk of this version may stay searchable (an empty index replaces any).
         await index_chunks(
             session,
@@ -330,6 +352,107 @@ async def index_policy_document(
         actor_type=actor_type,
         actor_id=actor_id,
     )
+
+
+def override_needs_two_admins(row: PolicyDocument) -> bool:
+    """Whether overriding ``row`` needs a second admin (the two-person rule).
+
+    Yes when any guardrail finding is high severity, and also when the guardrails could
+    not run (``guardrails_error``): an unchecked document is treated like the worst case
+    (fail closed). The ``policy_documents_guard`` trigger enforces the same rule.
+    """
+    if row.status_reason == NEEDS_REVIEW_ERROR:
+        return True
+    return any(
+        isinstance(f, dict) and f.get("severity") == "high" for f in row.guardrail_findings or []
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class OverrideOutcome:
+    # requested: recorded, waiting for a second admin. overridden: the document may index.
+    status: str
+    row: PolicyDocument
+
+
+async def request_override(
+    session: AsyncSession,
+    *,
+    policy_document_id: uuid.UUID,
+    user_id: uuid.UUID,
+    reason: str,
+) -> OverrideOutcome:
+    """Override the guardrails of a ``needs_review`` document, with a written reason.
+
+    The caller checked ``core.policy.manage`` (a step-up permission) for a person.
+    Without high-severity findings one admin is enough. Otherwise the first call records
+    the request and a second call, by a different admin, approves it. Either way the
+    reasons and the people are stored on the document and in the audit log. After the
+    override the document is ``pending`` again; indexing then keeps every flagged span
+    out of the chunks.
+    """
+    text_reason = (reason or "").strip()
+    if not MIN_OVERRIDE_REASON <= len(text_reason) <= MAX_OVERRIDE_REASON:
+        raise BadRequestError(
+            f"the reason must be {MIN_OVERRIDE_REASON} to {MAX_OVERRIDE_REASON} characters"
+        )
+    row = await _locked(session, policy_document_id)
+    if row.status != PolicyDocumentStatus.NEEDS_REVIEW or row.overridden_at is not None:
+        raise OverrideNotAllowedError("only a policy document that needs review can be overridden")
+    two_person = override_needs_two_admins(row)
+    finding_ids = [
+        str(f.get("id")) for f in row.guardrail_findings or [] if isinstance(f, dict)
+    ][:50]
+    now = datetime.now(UTC)
+    if two_person and row.override_requested_by is None:
+        row.override_requested_by = user_id
+        row.override_requested_at = now
+        row.override_request_reason = text_reason
+        await session.flush()
+        await append_audit(
+            session,
+            action=PolicyDocumentAction.OVERRIDE_REQUESTED,
+            actor_type=ActorType.USER,
+            actor_id=str(user_id),
+            entity_type="policy_document",
+            entity_id=row.id,
+            payload={
+                "name": row.name,
+                "version": row.version,
+                "reason": text_reason,
+                "review_reason": row.status_reason,
+                "findings": finding_ids,
+                "second_admin_required": True,
+            },
+        )
+        return OverrideOutcome("requested", row)
+    if two_person and row.override_requested_by == user_id:
+        raise SecondAdminRequiredError(
+            "a different admin must approve an override that you requested"
+        )
+    row.overridden_by = user_id
+    row.overridden_at = now
+    row.override_reason = text_reason
+    row.status = PolicyDocumentStatus.PENDING.value
+    row.status_reason = "guardrails_overridden"
+    await session.flush()
+    await append_audit(
+        session,
+        action=PolicyDocumentAction.OVERRIDDEN,
+        actor_type=ActorType.USER,
+        actor_id=str(user_id),
+        entity_type="policy_document",
+        entity_id=row.id,
+        payload={
+            "name": row.name,
+            "version": row.version,
+            "reason": text_reason,
+            "requested_by": str(row.override_requested_by) if two_person else None,
+            "findings": finding_ids,
+            "two_person": two_person,
+        },
+    )
+    return OverrideOutcome("overridden", row)
 
 
 async def archive_policy_document(
