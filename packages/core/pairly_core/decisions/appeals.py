@@ -25,7 +25,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Final
+from typing import Final, Protocol
 
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -322,8 +322,18 @@ async def resolve_appeal(
     return AppealView.of(refreshed, record.workflow)
 
 
-async def escalate_overdue_appeals(session: AsyncSession, *, limit: int = 200) -> list[uuid.UUID]:
-    """Mark overdue open appeals of the session's organisation escalated (once each)."""
+class AppealNotifier(Protocol):
+    async def __call__(self, session: AsyncSession, appeal: Appeal) -> int: ...
+
+
+async def escalate_overdue_appeals(
+    session: AsyncSession, *, limit: int = 200, notifier: AppealNotifier | None = None
+) -> list[uuid.UUID]:
+    """Mark overdue open appeals of the session's organisation escalated (once each).
+
+    ``notifier`` (the worker passes ``escalation.AppealEscalationNotifier``) tells the
+    people who may resolve each one, in the same transaction.
+    """
     now = await _now(session)
     rows = (
         await session.scalars(
@@ -355,6 +365,7 @@ async def escalate_overdue_appeals(session: AsyncSession, *, limit: int = 200) -
                 "overdue_seconds": int((now - row.sla_due_at).total_seconds()),
             },
         )
-        # TODO(WP1.9): notify the appeal queue owners through the notification hooks.
+        if notifier is not None:
+            await notifier(session, row)
         escalated.append(row.id)
     return escalated

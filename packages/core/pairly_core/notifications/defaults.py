@@ -434,6 +434,82 @@ SENSITIVE: Final = (
     ),
 )
 
+# Appeal escalation (WP1.10 follow-up): sent to the people who may resolve an overdue
+# appeal. Not sensitive: ids, the workflow and the due date only, never the requester's
+# words or personal data.
+_APPEAL_VARS: Final = {
+    "appeal_ref": _v("string", "APL-3F2A9C1D"),
+    "decision_id": _v("string", "dec_01JABCDEFGHJKMNPQRSTVWXYZ0"),
+    "workflow": _v("string", "pay"),
+    "due_at": _v("datetime", "2026-10-21T09:00:00+00:00"),
+    "queue_url": _v("url", "https://app.pairly.example/appeals"),
+}
+_SHORT_APPEAL_VARS: Final = {k: _APPEAL_VARS[k] for k in ("appeal_ref", "workflow", "due_at")}
+APPEAL_ESCALATED: Final = (
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="email",
+        locale="en",
+        category="sla",
+        subject="Overdue appeal {{ appeal_ref }} ({{ workflow }})",
+        body=(
+            "An appeal is past its deadline and needs a written outcome.\n\n"
+            "Appeal: {{ appeal_ref }}\nDecision: {{ decision_id }}\nWorkflow: {{ workflow }}\n"
+            "Was due: {{ due_at }}\n\nOpen the appeals queue: {{ queue_url }}"
+        ),
+        variables=_APPEAL_VARS,
+    ),
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="email",
+        locale="ar",
+        category="sla",
+        subject="طعن متأخر {{ appeal_ref }} ({{ workflow }})",
+        body=(
+            "تجاوز هذا الطعن موعده النهائي ويحتاج إلى قرار مكتوب.\n\n"
+            "الطعن: {{ appeal_ref }}\nالقرار: {{ decision_id }}\nسير العمل: {{ workflow }}\n"
+            "كان الموعد: {{ due_at }}\n\nافتح قائمة الطعون: {{ queue_url }}"
+        ),
+        variables=_APPEAL_VARS,
+    ),
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="slack",
+        locale="en",
+        category="sla",
+        body="*Overdue appeal:* {{ appeal_ref }} ({{ workflow }}). Was due: {{ due_at }}.",
+        variables=_SHORT_APPEAL_VARS,
+    ),
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="slack",
+        locale="ar",
+        category="sla",
+        body="*طعن متأخر:* {{ appeal_ref }} ({{ workflow }}). كان الموعد: {{ due_at }}.",
+        variables=_SHORT_APPEAL_VARS,
+    ),
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="in_app",
+        locale="en",
+        category="sla",
+        subject="Overdue appeal {{ appeal_ref }}",
+        body="Workflow {{ workflow }}. Was due {{ due_at }}.",
+        variables=_SHORT_APPEAL_VARS,
+    ),
+    DefaultTemplate(
+        key="core.appeal.escalated",
+        channel="in_app",
+        locale="ar",
+        category="sla",
+        subject="طعن متأخر {{ appeal_ref }}",
+        body="سير العمل {{ workflow }}. كان الموعد {{ due_at }}.",
+        variables=_SHORT_APPEAL_VARS,
+    ),
+)
+
+# Seeded by migration 0011. Later defaults are seeded by their own migration (0014 for
+# APPEAL_ESCALATED) and listed in ALL_SYSTEM_TEMPLATES.
 SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *APPROVAL_REQUESTED,
     *APPROVAL_ESCALATED,
@@ -442,3 +518,4 @@ SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *DIGEST,
     *SENSITIVE,
 )
+ALL_SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (*SYSTEM_TEMPLATES, *APPEAL_ESCALATED)

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from pairly_core.notifications.defaults import SYSTEM_TEMPLATES
+from pairly_core.notifications.defaults import ALL_SYSTEM_TEMPLATES as SYSTEM_TEMPLATES
 from pairly_core.notifications.templating import (
     MAX_OUTPUT_CHARS,
     TemplateRenderError,

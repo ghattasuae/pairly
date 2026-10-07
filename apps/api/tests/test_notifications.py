@@ -244,7 +244,8 @@ async def test_approval_emails_carry_signed_links_only_when_sent_now(
         row, content = urgent[world.id(name)]
         assert (row.status, row.reason, row.urgency) == ("queued", None, "urgent"), name
         assert row.next_attempt_at is not None
-        assert row.next_attempt_at <= datetime.now(UTC)
+        # Due now by the database clock (the Postgres container may run slightly ahead).
+        assert row.next_attempt_at <= datetime.now(UTC) + timedelta(seconds=5)
         assert len(_tokens(content)) == 2, name
     assert "core.notification.held_for_digest" in await audit_actions(owner_engine, world.org_id)
 

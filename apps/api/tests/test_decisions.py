@@ -1092,3 +1092,88 @@ async def test_approval_hooks_write_records(owner_engine: AsyncEngine, migrated:
         assert final.output["approver_ids"] == [str(world.id("appr1"))]
     finally:
         await eng.dispose()
+
+
+# ------------------------------------------------------------------ events and escalation
+
+
+async def test_decision_recorded_webhook_event_is_in_the_same_transaction(
+    engine: AsyncEngine, owner_engine: AsyncEngine, org_a: Org
+) -> None:
+    from pairly_core.decisions.models import DecisionKind
+    from pairly_core.decisions.service import DecisionDraft, record_decision
+
+    def draft() -> DecisionDraft:
+        return DecisionDraft(
+            kind=DecisionKind.SCORE,
+            workflow="pay",
+            entity_type="invoice",
+            entity_id="inv-event",
+            actor_type=ActorType.SYSTEM,
+            actor_id="tests",
+            output={"score": 1},
+            sensitive={"name": "Personal Name"},
+        )
+
+    async with session_for(engine, org_a.org_id) as s, s.begin():
+        stored = await record_decision(s, draft())
+    # A rolled-back record emits nothing.
+    async with session_for(engine, org_a.org_id) as s:
+        transaction = await s.begin()
+        await record_decision(s, draft())
+        await transaction.rollback()
+    rows = await owner_sql(
+        owner_engine,
+        org_a.org_id,
+        "SELECT data FROM webhook_outbox WHERE event_type = 'decision.recorded' "
+        "AND data->>'entity_id' = 'inv-event'",
+    )
+    assert [r.data["decision_id"] for r in rows] == [stored.id]
+    data = rows[0].data
+    assert (data["workflow"], data["kind"], data["content_hash"]) == (
+        "pay",
+        "score",
+        stored.content_hash,
+    )
+    assert "Personal Name" not in json.dumps(data)
+
+
+async def test_overdue_appeal_notifies_its_deciders(
+    engine: AsyncEngine, owner_engine: AsyncEngine, org_a: Org
+) -> None:
+    from pairly_core.decisions.escalation import AppealEscalationNotifier, appeal_ref
+
+    from .notify_support import notifications, notify_settings
+
+    record = await rules_record(engine, org_a)  # workflow "pay"
+    async with session_for(engine, org_a.org_id) as s, s.begin():
+        late = await create_appeal(
+            s,
+            org_a.actor("fc"),
+            decision_id=record.id,
+            requester_type=RequesterType.VENDOR,
+            requester_id="vendor-2",
+            reason="Secret words of the vendor",
+            sla=timedelta(seconds=-60),
+        )
+    notifier = AppealEscalationNotifier(registry=REGISTRY, settings=notify_settings())
+    async with session_for(engine, org_a.org_id) as s, s.begin():
+        assert await escalate_overdue_appeals(s, notifier=notifier) == [late.id]
+    rows = await notifications(
+        create_sessionmaker(engine), org_a.org_id, template_key="core.appeal.escalated"
+    )
+    people = {row.recipient_user_id for row, _ in rows}
+    # Pay deciders (approver, pay-only approver) and admin (core.appeal.decide); not the
+    # filer (fc), not the clerk, auditor, reader or the hire-only manager.
+    assert people == {org_a.user("approver"), org_a.user("pay_approver"), org_a.user("admin")}
+    assert {row.channel for row, _ in rows} >= {"email", "in_app"}
+    texts = " ".join(json.dumps(content) for _, content in rows)
+    assert appeal_ref(late.id) in texts
+    assert "Secret words" not in texts
+    # Escalated once: a second run notifies nobody again.
+    async with session_for(engine, org_a.org_id) as s, s.begin():
+        assert await escalate_overdue_appeals(s, notifier=notifier) == []
+    again = await notifications(
+        create_sessionmaker(engine), org_a.org_id, template_key="core.appeal.escalated"
+    )
+    assert len(again) == len(rows)

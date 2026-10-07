@@ -43,6 +43,8 @@ from pairly_core.decisions.models import HUMAN_KINDS, DecisionKind, DecisionReco
 from pairly_core.decisions.serialize import EncodingError, canonical, plain_json, sha256_hex
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import ModelCall
+from pairly_core.webhooks.events import DECISION_RECORDED as DECISION_RECORDED_EVENT
+from pairly_core.webhooks.events import publish_event
 
 DECISION_RECORDED: Final = "core.decision.recorded"
 MAX_PUBLIC_BYTES: Final = 256 * 1024
@@ -426,6 +428,23 @@ async def record_decision(session: AsyncSession, draft: DecisionDraft) -> Stored
             "subject_id": draft.entity_id,
             "content_hash": digest,
             "supersedes": supersedes,
+        },
+    )
+    # Outbound webhook (transactional outbox): emitted only if this record commits.
+    # Ids and facts only, never the record's personal data.
+    await publish_event(
+        session,
+        DECISION_RECORDED_EVENT,
+        {
+            "decision_id": record_id,
+            "kind": kind.value,
+            "workflow": draft.workflow,
+            "entity_type": draft.entity_type,
+            "entity_id": draft.entity_id,
+            "final_action": draft.final_action,
+            "supersedes": supersedes,
+            "content_hash": digest,
+            "decided_at": format_timestamp(decided_at),
         },
     )
     return StoredDecision(record_id, digest, supersedes, event.id)

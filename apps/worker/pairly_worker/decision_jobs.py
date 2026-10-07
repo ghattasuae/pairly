@@ -47,6 +47,7 @@ from pairly_core.audit_anchor.verification import (
 from pairly_core.db import set_tenant
 from pairly_core.decisions.appeals import escalate_overdue_appeals
 from pairly_core.decisions.compliance import give_up_exports, run_export, stale_exports
+from pairly_core.decisions.escalation import AppealEscalationNotifier
 from pairly_core.decisions.jobs import COMPLIANCE_EXPORT_JOB, VERIFY_AUDIT_CHAIN_JOB
 from pairly_core.jobs.registry import (
     APPEAL_SLA_ESCALATION,
@@ -189,8 +190,18 @@ async def anchor_audit_chains(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 async def escalate_appeals(ctx: dict[str, Any]) -> dict[str, Any]:
+    # The worker's notification settings and role registry (set at startup); without
+    # them (tests that pass a bare context) appeals are escalated without notifying.
+    transports = ctx.get("transports")
+    registry = ctx.get("registry")
+    notifier = (
+        AppealEscalationNotifier(registry=registry, settings=transports.settings)
+        if transports is not None and registry is not None
+        else None
+    )
+
     async def work(session: AsyncSession) -> int:
-        return len(await escalate_overdue_appeals(session))
+        return len(await escalate_overdue_appeals(session, notifier=notifier))
 
     return await _each_org(ctx, "appeal_overdue_org_ids", work, "appeal_escalation")
 
