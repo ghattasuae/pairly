@@ -21,7 +21,7 @@ WAIT_TIMEOUT ?= 300
 SERVICE      ?=
 
 .PHONY: help install hooks env dev demo demo-expense down logs ps test evals lint format typecheck
-.PHONY: bootstrap-org
+.PHONY: bootstrap-org dev-seed-approval
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -77,6 +77,12 @@ bootstrap-org: ## Create an org and print its admin invite link (NAME, SLUG, ADM
 		echo 'usage: make bootstrap-org NAME="Acme Ltd" SLUG=acme ADMIN_EMAIL=you@acme.test'; exit 2; fi
 	$(COMPOSE) run --rm --no-deps migrate pairly-admin bootstrap-org \
 		--name "$(NAME)" --slug "$(SLUG)" --admin-email "$(ADMIN_EMAIL)"
+
+dev-seed-approval: ## Development only: one pending approval for the web e2e suite (ORG, EMAIL, ARGS)
+	@if [ -z "$(ORG)" ] || [ -z "$(EMAIL)" ]; then \
+		echo 'usage: make dev-seed-approval ORG=<org slug> EMAIL=<approver email> [ARGS="--link approve --decision"]'; exit 2; fi
+	$(COMPOSE) run --rm --no-deps -e PAIRLY_DEVSEED=1 migrate python -m pairly_api.devseed approval \
+		--org-slug "$(ORG)" --approver-email "$(EMAIL)" $(ARGS)
 
 logs: ## Follow logs (SERVICE=api to filter)
 	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)

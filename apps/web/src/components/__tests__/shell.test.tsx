@@ -29,7 +29,7 @@ describe("Sidebar", () => {
     );
     const nav = screen.getByRole("navigation", { name: "Main" });
     const links = Array.from(nav.querySelectorAll("a")).map((a) => a.textContent);
-    expect(links).toEqual(["Home", "Inbox", "Pay"]);
+    expect(links).toEqual(["Home", "Inbox", "Pay", "Settings"]);
     expect(screen.getByRole("link", { name: "Pay" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
   });
@@ -77,7 +77,7 @@ describe("SignInForm", () => {
     renderWithIntl(<SignInForm sso={{ google: false, microsoft: false }} sendLink={sendLink} />, "ar");
     await userEvent.type(screen.getByLabelText("بريد العمل"), "sam@example.test");
     await userEvent.click(screen.getByRole("button", { name: "أرسل لي رابطًا" }));
-    expect(sendLink).toHaveBeenCalledWith("sam@example.test", "ar");
+    expect(sendLink).toHaveBeenCalledWith("sam@example.test", "ar", null);
     expect(await screen.findByRole("alert")).toHaveTextContent("محاولات كثيرة");
   });
 

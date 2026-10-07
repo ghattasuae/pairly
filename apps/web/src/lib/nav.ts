@@ -33,12 +33,18 @@ const inNamespace = (permissions: readonly string[], ns: string): boolean =>
 export const NAV_RULES: Record<NavKey, (permissions: readonly string[]) => boolean> = {
   home: () => true,
   // Approvals are authorised per workflow (for example pay.invoice.approve), so show the
-  // inbox to anyone who can read approvals or holds any workflow permission.
-  inbox: (p) => p.includes("core.approval.read") || inNamespace(p, "hire") || inNamespace(p, "pay"),
+  // inbox to anyone who can read approvals, approve in any workflow, or holds any
+  // workflow permission.
+  inbox: (p) =>
+    p.includes("core.approval.read") ||
+    p.some((perm) => perm.endsWith(".approve")) ||
+    inNamespace(p, "hire") ||
+    inNamespace(p, "pay"),
   hire: (p) => inNamespace(p, "hire"),
   pay: (p) => inNamespace(p, "pay"),
   audit: (p) => p.includes("core.audit.read"),
-  settings: (p) => p.includes("core.org.manage") || p.includes("core.users.read"),
+  // Everyone has personal settings (notifications, security); the page hides the rest.
+  settings: () => true,
 };
 
 /** Sections to show. `null` permissions (not provisioned, API down) shows Home only. */

@@ -17,17 +17,20 @@ import createMiddleware from "next-intl/middleware";
 
 import { isLocale, routing } from "./i18n/routing";
 import { COOKIE_PREFIX } from "./lib/auth/constants";
-import { buildCsp } from "./lib/csp";
+import { buildCsp, documentOriginFrom } from "./lib/csp";
 import { isPublicPath } from "./lib/public-paths";
+import { safeNextPath } from "./lib/safe-path";
 
 const handleI18nRouting = createMiddleware(routing);
 
 export function proxy(request: NextRequest): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const dev = process.env.NODE_ENV === "development";
   const csp = buildCsp({
     nonce,
-    dev: process.env.NODE_ENV === "development",
+    dev,
     https: request.nextUrl.protocol === "https:",
+    documentOrigin: documentOriginFrom(process.env.PAIRLY_DOCUMENT_ORIGIN, dev, process.env.MINIO_API_HOST_PORT),
   });
 
   const segments = request.nextUrl.pathname.split("/");
@@ -38,6 +41,9 @@ export function proxy(request: NextRequest): NextResponse {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/sign-in`;
       url.search = "";
+      // Come back to the same page after signing in (a plain same-site path only).
+      const next = safeNextPath(request.nextUrl.pathname);
+      if (next && next !== `/${locale}`) url.searchParams.set("next", next);
       const redirect = NextResponse.redirect(url);
       redirect.headers.set("Content-Security-Policy", csp);
       return redirect;

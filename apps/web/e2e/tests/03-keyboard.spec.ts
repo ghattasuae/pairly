@@ -97,7 +97,7 @@ test.describe("Keyboard", () => {
     const context = await browser.newContext({ storageState: file });
     const page = await context.newPage();
     await page.goto("/en");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.keyboard.press("Control+k");
     const dialog = page.getByRole("dialog");

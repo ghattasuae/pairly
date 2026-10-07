@@ -40,7 +40,7 @@ describe("UnsubscribeLanding", () => {
     const confirm = vi.fn();
     renderWithIntl(<UnsubscribeLanding describe={describe} confirm={confirm} />);
     expect(await screen.findByRole("heading", { name: "This link has expired" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sign in to manage email settings" })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("link", { name: "Sign in to manage email settings" })).toHaveAttribute("href", "/settings/notifications");
     expect(describe).toHaveBeenCalledWith(TOKEN);
     expect(replaceState).toHaveBeenCalledWith(null, "", "/en/unsubscribe");
     expect(confirm).not.toHaveBeenCalled();

@@ -22,11 +22,11 @@ interface MailpitMessage {
   Text: string;
 }
 
-/** The app's base URL as it appears in emailed links (see infra/docker-compose.yml). */
-const EMAILED_HOST = "localhost:3100";
+/** The app's base URL as it appears in emailed links (PAIRLY_PUBLIC_WEB_URL's host). */
+const EMAILED_HOST = process.env.PAIRLY_E2E_EMAILED_HOST ?? "localhost:3100";
 /** What we actually navigate to: the compose `web` service on 127.0.0.1 (host port 3100
  *  by default, PAIRLY_WEB_PORT), which avoids other local servers on localhost. */
-const REACHABLE_HOST = "127.0.0.1:3100";
+const REACHABLE_HOST = new URL(process.env.PAIRLY_E2E_BASE_URL ?? "http://127.0.0.1:3100").host;
 
 /** Rewrite an emailed absolute URL so Playwright hits the right server. */
 export function toReachableUrl(url: string): string {

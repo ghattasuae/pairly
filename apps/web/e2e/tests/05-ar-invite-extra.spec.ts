@@ -78,7 +78,7 @@ test("invite landing (ar, light + dark): signIn and accept states", async ({ bro
   await page.goto(confirmHref);
   await page.locator("main").getByRole("link").first().click();
   await page.waitForURL(/\/invite/, { timeout: 15_000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
 
   await shotAndAudit(page, "invite-valid-accept", "invite-valid-accept-ar-light", "light");
   await page.emulateMedia({ colorScheme: "dark" });

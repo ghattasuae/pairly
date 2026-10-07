@@ -50,6 +50,9 @@
   --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.985 0.006 85);
   --success: oklch(0.55 0.11 155);
+  /* Text versions of danger and success: 4.5:1 or more on paper, surface and their tints. */
+  --danger-ink: oklch(0.47 0.17 27);
+  --success-ink: oklch(0.44 0.1 155);
 
   --border: oklch(0.89 0.01 85);
   --rule: oklch(0.86 0.012 85);
@@ -91,6 +94,8 @@
   --destructive: oklch(0.68 0.17 25);
   --destructive-foreground: oklch(0.18 0.03 25);
   --success: oklch(0.72 0.12 155);
+  --danger-ink: oklch(0.76 0.14 25);
+  --success-ink: oklch(0.78 0.12 155);
 
   --border: oklch(0.3 0.014 205);
   --rule: oklch(0.33 0.016 205);
@@ -132,6 +137,8 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-danger-ink: var(--danger-ink);
+  --color-success-ink: var(--success-ink);
   --color-border: var(--border);
   --color-rule: var(--rule);
   --color-input: var(--input);
@@ -207,6 +214,24 @@
     @apply text-xs tracking-normal normal-case;
   }
 
+  /* Document viewer: a guardrail finding is striped and dashed, never only a colour, so it
+     reads differently from an evidence highlight (solid, teal) in every theme. */
+  .highlight-guardrail {
+    border: 2px dashed var(--destructive);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--destructive) 28%, transparent) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  /* The highlight picked in the list: a thick ring that pulses once. */
+  .highlight-active {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    animation: highlight-pulse 900ms ease-out 1;
+  }
+
   /* Staggered entrance for page sections. */
   .rise {
     animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -222,6 +247,15 @@
   }
   to {
     transform: none;
+  }
+}
+
+@keyframes highlight-pulse {
+  0% {
+    outline-offset: 10px;
+  }
+  100% {
+    outline-offset: 2px;
   }
 }
 

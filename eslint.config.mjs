@@ -18,6 +18,8 @@ export default defineConfig(
       "**/storybook-static/**",
       "**/next-env.d.ts",
       "**/generated/**",
+      // PDF.js worker and fonts copied from pdfjs-dist (apps/web/scripts/copy-pdfjs.mjs).
+      "apps/web/public/pdfjs/**",
       ".venv/**",
     ],
   },

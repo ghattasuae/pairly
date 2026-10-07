@@ -2,7 +2,9 @@
 // Copyright (c) 2026 Proofly Technology
 
 /** Pages reachable without a session (path after the locale prefix). */
-const PUBLIC_PATHS = ["/sign-in", "/check-email", "/two-factor", "/invite", "/unsubscribe"];
+// `/approvals/link` is public so a signed-out person sees what the link is for and can
+// sign in from there (the token stays in the fragment, see the page).
+const PUBLIC_PATHS = ["/sign-in", "/check-email", "/two-factor", "/invite", "/unsubscribe", "/approvals/link"];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
   return PUBLIC_PATHS.some((p) => pathAfterLocale === p || pathAfterLocale.startsWith(`${p}/`));

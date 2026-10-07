@@ -453,6 +453,9 @@ services:
       PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3100}
       PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3100}
       PAIRLY_API_INTERNAL_URL: http://api:8000
+      # Origin of signed document URLs (MinIO, as the browser sees it). The page CSP allows
+      # the document viewer to fetch from it and nothing else.
+      PAIRLY_DOCUMENT_ORIGIN: http://localhost:${MINIO_API_HOST_PORT:-9000}
       PAIRLY_SMTP_HOST: mailpit
       PAIRLY_SMTP_PORT: "1025"
       PAIRLY_SMTP_FROM: ${PAIRLY_SMTP_FROM:-Pairly <no-reply@pairly.localhost>}
