@@ -60,6 +60,31 @@ export async function waitForMessageTo(address: string, timeoutMs = 20_000): Pro
   throw new Error(`No Mailpit message to ${address} after ${timeoutMs}ms`);
 }
 
+/**
+ * Poll Mailpit until a message to `address` whose HTML contains every one of `needles`
+ * shows up (newest first), then return it. For inboxes that get several kinds of mail.
+ */
+export async function waitForMessageWith(
+  address: string,
+  needles: readonly string[],
+  timeoutMs = 90_000,
+): Promise<MailpitMessage> {
+  const deadline = Date.now() + timeoutMs;
+  const target = address.toLowerCase();
+  const seen = new Set<string>();
+  while (Date.now() < deadline) {
+    const list = await mailpitFetch<MailpitMessagesResponse>("/api/v1/messages?limit=100");
+    for (const summary of list.messages) {
+      if (seen.has(summary.ID) || !summary.To.some((to) => to.Address.toLowerCase() === target)) continue;
+      const message = await mailpitFetch<MailpitMessage>(`/api/v1/message/${summary.ID}`);
+      if (needles.every((needle) => message.HTML.includes(needle))) return message;
+      seen.add(summary.ID);
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error(`No Mailpit message to ${address} containing ${JSON.stringify(needles)} after ${timeoutMs}ms`);
+}
+
 /** Pull the first href from an HTML email body that matches `pathPart` (e.g. "sign-in/confirm"). */
 export function extractLink(html: string, pathPart: string): string {
   const re = /href="([^"]+)"/g;
