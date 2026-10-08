@@ -28,6 +28,16 @@ describe("visibleNav", () => {
     expect(isNavVisible("settings", ["core.org.manage"])).toBe(true);
   });
 
+  it("shows Expenses to submitters and reviewers of expense notes, the Inbox to approvers only", () => {
+    expect(keys(["expense.note.read", "expense.note.submit", "expense.document.upload"])).toEqual([
+      "home",
+      "expense",
+      "settings",
+    ]);
+    expect(keys(["expense.note.read", "expense.note.approve"])).toEqual(["home", "inbox", "expense", "settings"]);
+    expect(isNavVisible("expense", ["pay.invoice.read"])).toBe(false);
+  });
+
   it("never matches a namespace by prefix only", () => {
     expect(isNavVisible("hire", ["hirex.candidate.read"])).toBe(false);
   });

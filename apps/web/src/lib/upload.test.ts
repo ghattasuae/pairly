@@ -2,14 +2,9 @@
 // Copyright (c) 2026 Proofly Technology
 import { describe, expect, it } from "vitest";
 
-import {
-  checkUploadRequest,
-  MAX_FILE_BYTES,
-  MAX_REQUEST_BYTES,
-  parsePolicyUploadForm,
-  readCapped,
-  UPLOAD_HEADER,
-} from "./policy-upload";
+import { idempotencyKey, MAX_NOTE_LENGTH, parseExpenseUploadForm } from "./expense-upload";
+import { parsePolicyUploadForm } from "./policy-upload";
+import { checkUploadRequest, MAX_FILE_BYTES, MAX_REQUEST_BYTES, readCapped, UPLOAD_HEADER } from "./upload-guard";
 
 const ORIGINS = ["http://localhost:3100"];
 
@@ -94,5 +89,34 @@ describe("parsePolicyUploadForm", () => {
     expect(parsePolicyUploadForm(form({ name: "travel", title: "T", file: new File([], "e.pdf") }))).toBeNull();
     const big = new File([new Uint8Array(MAX_FILE_BYTES + 1)], "big.pdf");
     expect(parsePolicyUploadForm(form({ name: "travel", title: "T", file: big }))).toBeNull();
+  });
+});
+
+describe("parseExpenseUploadForm", () => {
+  const receipt = new File(["%PDF-1.7"], "receipt.pdf", { type: "application/pdf" });
+  const form = (values: Record<string, string | File>) => {
+    const data = new FormData();
+    for (const [key, value] of Object.entries(values)) data.set(key, value);
+    return data;
+  };
+
+  it("returns the receipt and the trimmed note (optional)", () => {
+    expect(parseExpenseUploadForm(form({ file: receipt, note: "  Team lunch " }))?.note).toBe("Team lunch");
+    expect(parseExpenseUploadForm(form({ file: receipt }))?.note).toBe("");
+  });
+
+  it("refuses a missing, empty or oversized receipt and a long note", () => {
+    expect(parseExpenseUploadForm(form({ note: "x" }))).toBeNull();
+    expect(parseExpenseUploadForm(form({ file: new File([], "e.pdf") }))).toBeNull();
+    const big = new File([new Uint8Array(MAX_FILE_BYTES + 1)], "big.pdf");
+    expect(parseExpenseUploadForm(form({ file: big }))).toBeNull();
+    expect(parseExpenseUploadForm(form({ file: receipt, note: "x".repeat(MAX_NOTE_LENGTH + 1) }))).toBeNull();
+  });
+
+  it("accepts only well formed idempotency keys", () => {
+    expect(idempotencyKey("0b9c6f7e-1d2a-4c3b-9e8f-7a6b5c4d3e2f")).not.toBeNull();
+    expect(idempotencyKey("short")).toBeNull();
+    expect(idempotencyKey("bad key with spaces")).toBeNull();
+    expect(idempotencyKey(null)).toBeNull();
   });
 });

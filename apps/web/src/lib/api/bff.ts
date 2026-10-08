@@ -53,11 +53,12 @@ export const UPLOAD_TIMEOUT_MS = 120_000;
 export async function upstreamUpload(
   path: `/v1/${string}`,
   body: FormData,
-  init: { signal?: AbortSignal } = {},
+  init: { signal?: AbortSignal; headers?: Record<string, string> } = {},
 ): Promise<Response> {
   const token = await getApiToken();
   if (!token) throw new NotSignedInError();
   const headers = buildApiHeaders(token, await getActiveOrgId());
+  for (const [key, value] of Object.entries(init.headers ?? {})) headers.set(key, value);
   const timeout = AbortSignal.timeout(UPLOAD_TIMEOUT_MS);
   return fetch(`${serverEnv().apiInternalUrl}${path}`, {
     method: "POST",

@@ -213,6 +213,10 @@ resume: expected.
   minutes, described (no change), and decided only on the confirm button by the bound
   user signed in with a code. Used, expired, invalid and other people's links look the
   same.
+- **Expenses** (`/expense`, the M1 example workflow): submit a receipt with a note and
+  follow your notes (reviewers see all). The receipt goes through its own route handler,
+  `POST /api/expense/notes` (same guards and 26 MB limit as policy uploads, plus one
+  `Idempotency-Key` per submission), to `POST /v1/expense/notes`.
 - **Approval context convention** (workflow-agnostic): the inbox draws evidence from an
   approval's `context` when it has `document_id`, `evidence[]` (`label` or `field`,
   `quote`, `page`, `bboxes` or `bbox`), `guardrail_findings[]` (`type`, `code`,
@@ -263,7 +267,7 @@ every string lives in `messages/*.json`; plain short sentences, never em dashes;
 a visible focus ring on everything; animations switch off with `prefers-reduced-motion`.
 
 Keyboard: `Cmd/Ctrl+K` opens the command palette, `G` then a letter jumps to a section
-(`G H` home, `G I` inbox, `G R` hire, `G P` pay, `G A` audit, `G S` settings). A skip link
+(`G H` home, `G I` inbox, `G E` expenses, `G R` hire, `G P` pay, `G A` audit, `G S` settings). A skip link
 is the first focusable element on every page.
 
 Storybook shows the shell, states, auth steps and primitives in English and Arabic, light

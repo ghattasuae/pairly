@@ -7,7 +7,8 @@
  */
 import type { ActionResult } from "./action-result";
 import type { PolicyDocument } from "./api/types";
-import { UPLOAD_HEADER, UPLOAD_ROUTE } from "./policy-upload";
+import { UPLOAD_ROUTE } from "./policy-upload";
+import { UPLOAD_HEADER } from "./upload-guard";
 
 const CODE = /^[a-z_]{1,64}$/;
 

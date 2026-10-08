@@ -8,7 +8,7 @@
  * on every request, so a hidden page that someone opens anyway still gets nothing.
  */
 
-export type NavKey = "home" | "inbox" | "hire" | "pay" | "audit" | "settings";
+export type NavKey = "home" | "inbox" | "expense" | "hire" | "pay" | "audit" | "settings";
 
 export interface NavItem {
   key: NavKey;
@@ -20,6 +20,7 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: "home", href: "/", shortcut: "H" },
   { key: "inbox", href: "/inbox", shortcut: "I" },
+  { key: "expense", href: "/expense", shortcut: "E" },
   { key: "hire", href: "/hire", shortcut: "R" },
   { key: "pay", href: "/pay", shortcut: "P" },
   { key: "audit", href: "/audit", shortcut: "A" },
@@ -40,6 +41,8 @@ export const NAV_RULES: Record<NavKey, (permissions: readonly string[]) => boole
     p.some((perm) => perm.endsWith(".approve")) ||
     inNamespace(p, "hire") ||
     inNamespace(p, "pay"),
+  // The expense note example workflow: submitters see their own notes, reviewers all.
+  expense: (p) => p.includes("expense.note.submit") || p.includes("expense.note.read"),
   hire: (p) => inNamespace(p, "hire"),
   pay: (p) => inNamespace(p, "pay"),
   audit: (p) => p.includes("core.audit.read"),

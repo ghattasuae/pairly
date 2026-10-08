@@ -18,6 +18,7 @@
     "label": "Main",
     "home": "Home",
     "inbox": "Inbox",
+    "expense": "Expenses",
     "hire": "Hire",
     "pay": "Pay",
     "audit": "Audit",
@@ -1103,6 +1104,32 @@
       "listLabel": "Rule sets in this organisation",
       "latest": "v{version}",
       "noRuleSets": "No rule sets yet. Workflows publish theirs when they first run or are seeded."
+    }
+  },
+  "Expense": {
+    "intro": "Submit a receipt and follow your expense notes. A person decides every note.",
+    "uploadTitle": "Submit a receipt",
+    "uploadBody": "PDF, PNG or JPEG, up to 25 MB. It is scanned and read, then sent to an approver.",
+    "file": "Receipt",
+    "note": "Note (optional)",
+    "notePlaceholder": "What was it for?",
+    "submit": "Submit",
+    "submitting": "Submitting",
+    "submitted": "Receipt submitted",
+    "submittedBody": "It is being read now. You will get a message when it is decided.",
+    "myNotes": "Your notes",
+    "allNotes": "All notes",
+    "empty": "No expense notes yet",
+    "emptyBody": "Submitted receipts show here with their status.",
+    "unread": "Receipt being read",
+    "status": {
+      "processing": "Being read",
+      "awaiting_approval": "Waiting for approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes requested",
+      "failed": "Could not continue",
+      "closed": "Closed"
     }
   }
 }

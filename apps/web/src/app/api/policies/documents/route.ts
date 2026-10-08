@@ -5,12 +5,13 @@
  * Policy document upload (`POST /v1/policies/documents`), the only route that accepts a
  * large body (26 MB). The API checks `core.policy.manage` and the TOTP step-up, scans and
  * indexes the file. Only our own pages may upload: same origin and the `X-Pairly-Upload`
- * header (see `src/lib/policy-upload.ts`). Answers `{ ok, policy }` or `{ code }`.
+ * header (see `src/lib/upload-guard.ts`). Answers `{ ok, policy }` or `{ code }`.
  */
 import { jsonProblem, upstreamProblem, upstreamUpload } from "@/lib/api/bff";
 import { NotSignedInError } from "@/lib/api/server";
 import { serverEnv } from "@/lib/env";
-import { checkUploadRequest, MAX_REQUEST_BYTES, parsePolicyUploadForm, readCapped } from "@/lib/policy-upload";
+import { parsePolicyUploadForm } from "@/lib/policy-upload";
+import { checkUploadRequest, MAX_REQUEST_BYTES, readCapped } from "@/lib/upload-guard";
 
 export const dynamic = "force-dynamic";
 
