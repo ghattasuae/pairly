@@ -4,18 +4,20 @@
 
 import { ArrowLeft, Check, ExternalLink, FileText, Loader2, RotateCcw, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useState } from "react";
 import type * as React from "react";
 
 import { JsonView } from "@/components/data/json-view";
 import { ApprovalStatusBadge, SlaBadge } from "@/components/data/status-badges";
 import { DocumentViewer } from "@/components/document/document-viewer";
+import { GuardrailNotice } from "@/components/document/guardrail-notice";
 import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Link } from "@/i18n/navigation";
 import type { ApprovalDetail, ApprovalSummary, DecisionChoice } from "@/lib/api/types";
-import { readContext } from "@/lib/evidence";
+import { guardrailHighlights, readContext, subjectFor } from "@/lib/evidence";
 import { cn } from "@/lib/utils";
 
 export type DetailState =
@@ -79,6 +81,8 @@ export function ApprovalPanel({
   const t = useTranslations("Inbox");
   const format = useFormatter();
   const labels = useLabels();
+  // "Show on the page" in the warning: the viewer scrolls to that finding (this item only).
+  const [focus, setFocus] = useState<{ item: string; id: string; seq: number } | null>(null);
   const detail = state.status === "ready" ? state.detail : null;
   const base = detail ?? summary;
 
@@ -96,6 +100,8 @@ export function ApprovalPanel({
   const decidable = !!detail && detail.can_decide && detail.status === "pending" && !optimistic;
   const needsFactor = !!detail && detail.status === "pending" && (stepUp || detail.needs_second_factor);
   const context = detail ? readContext(detail.context) : null;
+  const findings = context ? guardrailHighlights(context.highlights) : [];
+  const subject = subjectFor(base.workflow);
 
   return (
     <article aria-labelledby={headingId} className="flex min-h-full flex-col">
@@ -124,6 +130,20 @@ export function ApprovalPanel({
             <span>· {t("due", { when: format.relativeTime(new Date(step.due_at), new Date()) })}</span>
           )}
         </div>
+
+        {/* What a reviewer must see before deciding: the guardrail findings. */}
+        {findings.length > 0 && (
+          <GuardrailNotice
+            highlights={findings}
+            subject={subject}
+            className="mt-1"
+            onShow={
+              context?.documentId
+                ? (h) => setFocus((previous) => ({ item: base.id, id: h.id, seq: (previous?.seq ?? 0) + 1 }))
+                : undefined
+            }
+          />
+        )}
 
         {/* Decision actions */}
         {optimistic && (
@@ -191,9 +211,14 @@ export function ApprovalPanel({
 
             {context?.documentId && (
               <Section title={t("evidence")} id={`${headingId}-evidence`}>
-                <DocumentViewer documentId={context.documentId} highlights={context.highlights} />
+                <DocumentViewer
+                  documentId={context.documentId}
+                  highlights={context.highlights}
+                  subject={subject}
+                  focus={focus?.item === base.id ? focus : null}
+                />
                 <Link
-                  href={`/documents/${context.documentId}`}
+                  href={`/documents/${context.documentId}?approval=${detail.id}`}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
                 >
                   <FileText className="size-4" aria-hidden />

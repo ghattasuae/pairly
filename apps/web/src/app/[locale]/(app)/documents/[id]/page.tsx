@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
-import { highlightsFromFields, highlightsFromFindings, type Highlight } from "@/lib/evidence";
+import { highlightsFromFields, highlightsFromFindings, readContext, subjectFor, type Highlight } from "@/lib/evidence";
 import { isUuid } from "@/lib/inbox-filters";
 import { resolveViewer } from "@/lib/provisioning";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; approval?: string | string[] }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -36,11 +36,27 @@ async function latestReceipt(decisions: { id: string; kind: string }[], kind: st
   return result.ok ? (result.data as Record<string, unknown>) : null;
 }
 
+/** Guardrail findings, with the flagged text, from the approval the reviewer came from. */
+async function approvalFindings(approvalId: unknown, documentId: string): Promise<Highlight[] | null> {
+  if (typeof approvalId !== "string" || !isUuid(approvalId)) return null;
+  const result = await callApi((api) =>
+    api.GET("/v1/approvals/{approval_id}", { params: { path: { approval_id: approvalId } } }),
+  );
+  if (!result.ok) return null;
+  const context = readContext(result.data.context);
+  // Only when the approval is about this very document.
+  if (context.documentId !== documentId) return null;
+  return context.highlights.filter((h) => h.kind === "guardrail");
+}
+
 /**
  * One document with what the AI found in it: where each extracted value was read
- * (evidence) and any guardrail findings, drawn on the pages. The highlights come from
- * the document's newest extraction and risk decision records; without permission to
- * read those, the document shows on its own.
+ * (evidence) and any guardrail findings, drawn on the pages, with the guardrail warning
+ * above them. Evidence comes from the document's newest extraction record. Findings come
+ * from the approval the reviewer opened it from (`?approval=`, the inbox link; the
+ * approval API decides who may read it), else from a risk record about the document
+ * (the flagged text only where the receipt shows it). Without permission to read those,
+ * the document shows on its own.
  */
 export default async function DocumentPage({ params, searchParams }: Props) {
   const { locale: raw, id } = await params;
@@ -81,12 +97,18 @@ export default async function DocumentPage({ params, searchParams }: Props) {
     );
     if (extraction.ok) highlights.push(...highlightsFromFields(extraction.data.fields));
   }
+  const query = await searchParams;
+  const fromApproval = await approvalFindings(query.approval, id);
   highlights.push(
-    ...highlightsFromFindings((riskReceipt?.evidence as { guardrail_findings?: unknown } | undefined)?.guardrail_findings),
+    ...(fromApproval ??
+      highlightsFromFindings(
+        (riskReceipt?.evidence as { guardrail_findings?: unknown } | undefined)?.guardrail_findings,
+        (riskReceipt?.personal_data as { guardrail_evidence?: unknown } | undefined)?.guardrail_evidence,
+      )),
   );
 
   const document = doc.data;
-  const pageParam = Number((await searchParams).page);
+  const pageParam = Number(query.page);
   const workflow = workflows.has(document.workflow as "pay") ? workflows(document.workflow as "pay") : document.workflow;
 
   return (
@@ -107,6 +129,8 @@ export default async function DocumentPage({ params, searchParams }: Props) {
         documentId={document.id}
         highlights={highlights}
         layout="split"
+        subject={subjectFor(document.workflow)}
+        notice
         initialPage={Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1}
       />
       {records.length > 0 && (

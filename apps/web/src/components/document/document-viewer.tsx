@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { documentSource } from "@/lib/actions/documents";
 import type { ActionResult } from "@/lib/action-result";
 import type { BBox } from "@/lib/api/types";
-import type { Highlight } from "@/lib/evidence";
+import { findingsFirst, type Highlight, type Subject } from "@/lib/evidence";
 import { cn } from "@/lib/utils";
 
+import { GuardrailNotice } from "./guardrail-notice";
 import { type OpenedPdf, openPdf } from "./pdf";
 
 type Source = { url: string; mediaType: string; filename?: string | null };
@@ -42,7 +43,14 @@ export interface DocumentViewerProps {
   layout?: "split" | "stacked";
   className?: string;
   /** What the document is, for the explanations ("This invoice ..."). */
-  subject?: "document" | "cv" | "invoice" | "email";
+  subject?: Subject;
+  /**
+   * Show a highlight on the page (scroll to it and mark it) whenever `seq` changes, for
+   * controls outside the viewer such as the inbox warning.
+   */
+  focus?: { id: string; seq: number } | null;
+  /** Show the guardrail warning above the pages (the document page). */
+  notice?: boolean;
   /** Overrides for stories and tests. */
   loadSource?: LoadSource;
   source?: Source;
@@ -70,6 +78,8 @@ export function DocumentViewer({
   layout = "stacked",
   className,
   subject = "document",
+  focus = null,
+  notice = false,
   loadSource = documentSource,
   source,
 }: DocumentViewerProps) {
@@ -146,9 +156,8 @@ export function DocumentViewer({
     requestAnimationFrame(() => scrollToPage(Math.min(initialPage, pageCount)));
   }, [pageCount, initialPage, scrollToPage]);
 
-  const focusHighlight = useCallback(
+  const scrollToHighlight = useCallback(
     (highlight: Highlight) => {
-      setActiveId(highlight.id);
       if (highlight.page === null) return;
       requestAnimationFrame(() => {
         const box = scroller.current?.querySelector<HTMLElement>(`[data-highlight="${CSS.escape(highlight.id)}"]`);
@@ -159,6 +168,29 @@ export function DocumentViewer({
     },
     [scrollToPage],
   );
+
+  const focusHighlight = useCallback(
+    (highlight: Highlight) => {
+      setActiveId(highlight.id);
+      scrollToHighlight(highlight);
+    },
+    [scrollToHighlight],
+  );
+
+  // A request from outside the viewer (the inbox warning) to show one highlight: mark it
+  // while rendering, scroll to it after. Only a new request (`seq`) moves the view.
+  const [seenFocus, setSeenFocus] = useState<number | null>(null);
+  if (focus && focus.seq !== seenFocus) {
+    setSeenFocus(focus.seq);
+    if (highlights.some((h) => h.id === focus.id)) setActiveId(focus.id);
+  }
+  const focusTarget = focus ? highlights.find((h) => h.id === focus.id) : undefined;
+  useEffect(() => {
+    if (focusTarget) scrollToHighlight(focusTarget);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.seq]);
+
+  const listed = useMemo(() => findingsFirst(highlights), [highlights]);
 
   const byPage = useMemo(() => {
     const map = new Map<number, Highlight[]>();
@@ -295,19 +327,27 @@ export function DocumentViewer({
           )}
         </ul>
       )}
-      <HighlightList highlights={highlights} activeId={activeId} onSelect={focusHighlight} subject={subject} />
+      <HighlightList highlights={listed} activeId={activeId} onSelect={focusHighlight} subject={subject} />
     </div>
   );
 
-  return (
+  const withNotice = notice && hasFindings;
+  const body = (
     <div
       className={cn(
         layout === "split" ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]" : "space-y-4",
-        className,
+        withNotice ? undefined : className,
       )}
     >
       {pages}
       {highlights.length > 0 && list}
+    </div>
+  );
+  if (!withNotice) return body;
+  return (
+    <div className={cn("space-y-4", className)}>
+      <GuardrailNotice highlights={highlights} subject={subject} onShow={focusHighlight} headingLevel={2} />
+      {body}
     </div>
   );
 }
@@ -468,11 +508,13 @@ function HighlightList({
   highlights: readonly Highlight[];
   activeId: string | null;
   onSelect: (h: Highlight) => void;
-  subject: "document" | "cv" | "invoice" | "email";
+  subject: Subject;
 }) {
   const t = useTranslations("Viewer");
   const explain = useExplanation();
   const severity = useTranslations("Severity");
+  const guardrail = useTranslations("Guardrail");
+  const subjects = useTranslations("Explain");
   return (
     <ol className="space-y-2" aria-label={t("listLabel")}>
       {highlights.map((h) => {
@@ -505,9 +547,18 @@ function HighlightList({
                 )}
               </span>
               {h.kind === "guardrail" ? (
-                <span className="mt-1.5 block text-muted-foreground">
-                  {explain(h.explanationKey ?? "guardrails.unknown.unknown", { evidence: h.quote, subject })}
-                </span>
+                <>
+                  <span className="mt-1.5 block text-muted-foreground">
+                    {h.quote
+                      ? explain(h.explanationKey ?? "guardrails.unknown.unknown", { evidence: h.quote, subject })
+                      : guardrail("withheld", { subject: subjects(`subjects.${subject}`) })}
+                  </span>
+                  {h.removed !== undefined && (
+                    <span className="mt-1.5 block text-muted-foreground">
+                      {h.removed ? guardrail("removed") : guardrail("kept")}
+                    </span>
+                  )}
+                </>
               ) : (
                 h.quote && (
                   <q className="mt-1.5 block break-words text-muted-foreground">

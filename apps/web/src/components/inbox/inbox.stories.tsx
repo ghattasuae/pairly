@@ -28,6 +28,7 @@ const items: ApprovalSummary[] = [
   updated_at: new Date(now).toISOString(),
   decided_at: null,
   sla_state: sla as ApprovalSummary["sla_state"],
+  guardrail_findings: i === 0 ? 1 : 0,
   current_step: {
     id: `5555555${i}-0000-4000-8000-000000000000`,
     position: 0,

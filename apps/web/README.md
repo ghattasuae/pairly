@@ -220,8 +220,15 @@ resume: expected.
 - **Approval context convention** (workflow-agnostic): the inbox draws evidence from an
   approval's `context` when it has `document_id`, `evidence[]` (`label` or `field`,
   `quote`, `page`, `bboxes` or `bbox`), `guardrail_findings[]` (`type`, `code`,
-  `severity`, `page`, `bbox`, `evidence`) and `decision_id` or `decision_ids[]`. Other
-  keys show as plain data.
+  `severity`, `page`, `bbox`, `evidence`, optional `remove`: the text was left out of
+  what the model read) and `decision_id` or `decision_ids[]`. Other keys show as plain
+  data. An item with guardrail findings opens with a warning above the decision buttons:
+  one sentence per finding from the explanation keys, the flagged text quoted (the
+  context, like the inbox, is for reviewers only), whether extraction ignored it, and a
+  button that shows it on the page. The list row says "Needs a person: guardrail flag"
+  (the API's `guardrail_findings` count on each inbox item). "Open the document" passes
+  `?approval=<id>`, so the document page draws the same findings when the approval names
+  that document.
 - **Document viewer**: PDF.js (pdfjs-dist, Apache-2.0) renders pages; its worker and
   standard fonts are copied to `public/pdfjs/` by `scripts/copy-pdfjs.mjs` before `dev`,
   `build` and Storybook, and load from our own origin (`worker-src 'self'`). The bytes come

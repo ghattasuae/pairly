@@ -429,7 +429,8 @@
       "document": "This document",
       "cv": "This CV",
       "invoice": "This invoice",
-      "email": "This email"
+      "email": "This email",
+      "receipt": "This receipt"
     },
     "fallback": {
       "guardrail": "{subject} contains content that may try to manipulate an AI system: \"{evidence}\".",
@@ -536,6 +537,15 @@
       "parse_failed": "Could not be read",
       "other": "Unknown"
     }
+  },
+  "Guardrail": {
+    "title": "{count, plural, one {Needs a person: guardrail flag} other {Needs a person: # guardrail flags}}",
+    "intro": "Pairly found content in this item that may try to steer an AI. Check it before you decide.",
+    "withheld": "{subject} has text that a guardrail flagged. Only reviewers can see that text.",
+    "removed": "Pairly removed this text before the AI read it, so it did not change any extracted value.",
+    "kept": "This text was still in what the AI read. Check each extracted value against the page.",
+    "show": "Show on the page",
+    "badge": "Needs a person: guardrail flag"
   },
   "Inbox": {
     "title": "Inbox",

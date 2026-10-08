@@ -7,6 +7,7 @@ import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 
 import { ApprovalStatusBadge, SlaBadge } from "@/components/data/status-badges";
+import { GuardrailBadge } from "@/components/document/guardrail-notice";
 import { useNotifications } from "@/components/notifications/notifications-provider";
 import { isTypingTarget } from "@/components/shell/shortcuts";
 import { EmptyState } from "@/components/states/empty-state";
@@ -546,6 +547,7 @@ export function InboxView({
                         ) : (
                           <SlaBadge state={item.sla_state} />
                         )}
+                        <GuardrailBadge count={item.guardrail_findings} />
                       </span>
                     </a>
                   </li>

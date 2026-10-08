@@ -5,6 +5,8 @@
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
+import type { Subject } from "@/lib/evidence";
+
 const MAX_EVIDENCE = 80;
 /**
  * Code point ranges never shown as they are: control characters, the soft hyphen,
@@ -53,7 +55,7 @@ export function isExplanationKey(key: unknown): key is string {
 export function useExplanation() {
   const t = useTranslations("Explain");
   return useCallback(
-    (key: string, options: { evidence?: string; subject?: "document" | "cv" | "invoice" | "email" } = {}) => {
+    (key: string, options: { evidence?: string; subject?: Subject } = {}) => {
       const subject = t(`subjects.${options.subject ?? "document"}` as "subjects.document");
       const evidence = cleanEvidence(options.evidence ?? "");
       const values = { subject, evidence };
