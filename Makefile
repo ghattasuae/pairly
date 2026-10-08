@@ -2,6 +2,14 @@
 # Copyright (c) 2026 Proofly Technology
 #
 # Python always runs through uv (Python 3.12, see .python-version). JS runs through pnpm.
+#
+# Two ways to run the stack:
+# - Native (the default for development and tests): `make dev` / `make local-up`. Postgres
+#   16 and Valkey run as local processes with their data in .local/, and the api, worker
+#   and web run as plain processes (scripts/local_stack.sh). No containers.
+# - Docker Compose (for CI and self-hosters): `make docker-dev` (infra/docker-compose.yml).
+# The admin targets (bootstrap-org, demo-expense, dev-seed-approval, audit-anchor-now)
+# run against the native stack; STACK=docker runs them in the compose stack instead.
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
@@ -9,18 +17,36 @@ SHELL := /bin/bash
 UV   ?= uv
 PNPM ?= pnpm
 
+# native (default) or docker: which stack the admin targets talk to.
+STACK ?= native
+LOCAL := scripts/local_stack.sh
+
 # Docker Compose stack (infra/docker-compose.yml). Extra profiles: web, scan, observability.
-#   PROFILES="scan observability" make dev
+#   PROFILES="scan observability" make docker-dev
 PROFILES     ?=
 COMPOSE_FILE := infra/docker-compose.yml
 COMPOSE      := docker compose --env-file .env -f $(COMPOSE_FILE)
 PROFILE_ARGS := $(foreach p,$(PROFILES),--profile $(p))
-# Seconds `make dev` waits for every service to report healthy.
+# Seconds `make docker-dev` waits for every service to report healthy.
 WAIT_TIMEOUT ?= 300
-# Optional service filter for `make logs`, e.g. SERVICE=api
+# Optional service filter for `make logs` / `make docker-logs`, e.g. SERVICE=api
 SERVICE      ?=
 
+ifeq ($(STACK),docker)
+RUN_OWNER  := $(COMPOSE) run --rm --no-deps migrate
+RUN_SEED   := $(COMPOSE) run --rm --no-deps -e PAIRLY_DEVSEED=1 migrate
+RUN_WORKER := $(COMPOSE) exec -T worker
+else ifeq ($(STACK),native)
+RUN_OWNER  := $(LOCAL) exec owner --
+RUN_SEED   := LOCAL_EXTRA_ENV=PAIRLY_DEVSEED=1 $(LOCAL) exec owner --
+RUN_WORKER := $(LOCAL) exec worker --
+else
+$(error STACK must be native or docker)
+endif
+
 .PHONY: help install hooks env dev demo demo-expense down logs ps test evals lint format typecheck
+.PHONY: local-up local-down local-status local-test local-logs
+.PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
 .PHONY: bootstrap-org dev-seed-approval audit-anchor-now
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
@@ -38,23 +64,66 @@ env: ## Create .env with random secrets, or append the keys an existing one lack
 	@if [ -f .env ]; then $(UV) run python scripts/gen_dev_env.py --append-missing; \
 	else $(UV) run python scripts/gen_dev_env.py; fi
 
-# migrate, api and worker share one image (pairly-local/python-app:dev). Building it
-# through `up --build` makes three services build the same tag at once, which races.
-# So the shared image is built once (through `migrate`), plus the web image when the
-# web profile is on, and `up` then starts everything without building.
+# ---------------------------------------------------------------- native stack (default)
+dev: local-up ## Start the native stack (Postgres, Valkey, api, worker, web on :3100), no containers
+
+demo: dev ## Native stack up; then `make bootstrap-org` and `make demo-expense` seed a demo
+	@echo ""
+	@echo "make demo: the stack is up. Create an organisation with make bootstrap-org, then"
+	@echo "seed the expense example with make demo-expense SLUG=<slug>."
+
+local-up: env ## Start Postgres, Valkey, migrations, api, worker and web as local processes
+	$(LOCAL) up
+
+local-down: ## Stop every native process (web, worker, api, Valkey, Postgres)
+	$(LOCAL) down
+
+local-status: ## Show the native processes and their health
+	$(LOCAL) status
+
+local-test: ## pytest with coverage against fresh local test databases (no Docker)
+	$(LOCAL) test
+
+local-logs: ## Follow the native logs (SERVICE=api|worker|web to filter)
+	$(LOCAL) logs $(SERVICE)
+
+down: local-down ## Stop the native stack (make docker-down for the compose stack)
+
+logs: local-logs ## Follow the native logs (SERVICE=api to filter)
+
+ps: local-status ## Show the native processes and their health
+
+# ---------------------------------------------------------------- Docker Compose stack
+# For CI and self-hosters. migrate, api and worker share one image
+# (pairly-local/python-app:dev). Building it through `up --build` makes three services
+# build the same tag at once, which races. So the shared image is built once (through
+# `migrate`), plus the web image when the web profile is on, and `up` then starts
+# everything without building.
 BUILD_SERVICES := migrate $(if $(filter web,$(PROFILES)),web,)
 
-dev: env ## Start the stack and wait until healthy (PROFILES="scan observability web")
+docker-dev: env ## Compose stack, wait until healthy (PROFILES="scan observability web")
 	$(COMPOSE) $(PROFILE_ARGS) build $(BUILD_SERVICES)
 	$(COMPOSE) $(PROFILE_ARGS) up -d --no-build --remove-orphans --wait --wait-timeout $(WAIT_TIMEOUT)
 	@$(COMPOSE) $(PROFILE_ARGS) ps
 	@echo ""
 	@echo "Pairly is up. API http://localhost:8000  Mail UI http://localhost:8025  MinIO console http://localhost:9001"
 
-demo: dev ## Boot everything healthy (seed data arrives in M2)
+docker-demo: docker-dev ## Compose stack healthy; seed with STACK=docker make bootstrap-org / demo-expense
 	@echo ""
-	@echo "make demo: the stack is healthy. Seeded demo data arrives in M2, so there is nothing to explore yet."
+	@echo "make docker-demo: the stack is healthy. Seed it with STACK=docker make bootstrap-org"
+	@echo "and STACK=docker make demo-expense SLUG=<slug>."
 
+docker-down: ## Stop and remove every compose container, all profiles (volumes are kept)
+	@test -f .env || { echo "no .env, nothing to stop"; exit 0; }; \
+	$(COMPOSE) --profile '*' down --remove-orphans
+
+docker-logs: ## Follow compose logs (SERVICE=api to filter)
+	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)
+
+docker-ps: ## Show compose containers and their health
+	$(COMPOSE) --profile '*' ps -a
+
+# ---------------------------------------------------------------- admin (STACK=native|docker)
 # The expense note example workflow (docs/add-a-workflow.md), offline in recorded mode.
 # Needs an organisation (make bootstrap-org). Seeds its policies, three demo people
 # (invitation links are printed once) and the recorded model responses, and checks
@@ -62,36 +131,27 @@ demo: dev ## Boot everything healthy (seed data arrives in M2)
 demo-expense: ## Seed the expense example in an org (SLUG=acme): policies, people, recordings
 	@if [ -z "$(SLUG)" ]; then echo 'usage: make demo-expense SLUG=acme'; exit 2; fi
 	$(UV) run python -m synth.expense --check
-	$(COMPOSE) run --rm --no-deps migrate pairly-admin seed expense-demo --org "$(SLUG)"
+	$(RUN_OWNER) pairly-admin seed expense-demo --org "$(SLUG)"
 	@echo ""
 	@echo "Upload a receipt from synth/expense/receipts as the submitter (POST /v1/expense/notes),"
-	@echo "then decide it as the approver from the inbox or the email link (Mail UI on :8025)."
+	@echo "then decide it as the approver from the inbox or the email link (native: .local/mail;"
+	@echo "Docker: Mail UI on :8025)."
 
-down: ## Stop and remove every stack container, all profiles (volumes are kept)
-	@test -f .env || { echo "no .env, nothing to stop"; exit 0; }; \
-	$(COMPOSE) --profile '*' down --remove-orphans
-
-# Runs in the migrate image, the only one that gets the owner database role.
+# Runs as the owner database role (natively, or in the migrate image with STACK=docker).
 bootstrap-org: ## Create an org and print its admin invite link (NAME, SLUG, ADMIN_EMAIL)
 	@if [ -z "$(NAME)" ] || [ -z "$(SLUG)" ] || [ -z "$(ADMIN_EMAIL)" ]; then \
 		echo 'usage: make bootstrap-org NAME="Acme Ltd" SLUG=acme ADMIN_EMAIL=you@acme.test'; exit 2; fi
-	$(COMPOSE) run --rm --no-deps migrate pairly-admin bootstrap-org \
+	$(RUN_OWNER) pairly-admin bootstrap-org \
 		--name "$(NAME)" --slug "$(SLUG)" --admin-email "$(ADMIN_EMAIL)"
 
 dev-seed-approval: ## Development only: one pending approval for the web e2e suite (ORG, EMAIL, ARGS)
 	@if [ -z "$(ORG)" ] || [ -z "$(EMAIL)" ]; then \
 		echo 'usage: make dev-seed-approval ORG=<org slug> EMAIL=<approver email> [ARGS="--link approve --decision"]'; exit 2; fi
-	$(COMPOSE) run --rm --no-deps -e PAIRLY_DEVSEED=1 migrate python -m pairly_api.devseed approval \
+	$(RUN_SEED) python -m pairly_api.devseed approval \
 		--org-slug "$(ORG)" --approver-email "$(EMAIL)" $(ARGS)
 
 audit-anchor-now: ## Development only: sign and store every org's audit chain head now (normally nightly)
-	$(COMPOSE) exec -T worker python -m pairly_worker.run_now audit_anchor_nightly
-
-logs: ## Follow logs (SERVICE=api to filter)
-	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)
-
-ps: ## Show stack containers and their health
-	$(COMPOSE) --profile '*' ps -a
+	$(RUN_WORKER) python -m pairly_worker.run_now audit_anchor_nightly
 
 test: ## Run Python and JS tests
 	$(UV) run --frozen pytest --cov --cov-report=term-missing

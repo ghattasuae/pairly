@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
 
+# Native local stack (scripts/local_*.sh): database, queue, objects, mail, logs
+.local/
+
 # Secrets
 .env
 .env.*
