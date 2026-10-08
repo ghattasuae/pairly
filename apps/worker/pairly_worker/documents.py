@@ -29,9 +29,14 @@ from pairly_core.config import ConfigError, Environment
 from pairly_core.db import set_tenant
 from pairly_core.documents.pipeline import ParseConfig, parse_document
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB
-from pairly_core.ingestion.scan import ClamdScanner, UnavailableScanner, VirusScanner, scan_document
+from pairly_core.ingestion.scan import (
+    UnavailableScanner,
+    VirusScanner,
+    scan_document,
+    scanner_from_settings,
+)
 from pairly_core.ingestion.settings import IngestionSettings, load_ingestion_settings
-from pairly_core.ingestion.storage import S3ObjectStore
+from pairly_core.ingestion.storage import object_store_from_settings
 from pairly_core.llm.settings import load_llm_settings
 from pairly_core.policy.documents import index_after_parse
 from pairly_core.retrieval.metered import build_metered_embedder
@@ -44,12 +49,11 @@ SWEEP_BUCKET_SECONDS = 600
 
 
 def build_scanner(settings: IngestionSettings) -> VirusScanner:
-    if not settings.clamav_host:
+    scanner = scanner_from_settings(settings)
+    if scanner is None:
         log.warning("scanner_not_configured", effect="every document waits for review")
         return UnavailableScanner()
-    return ClamdScanner(
-        settings.clamav_host, settings.clamav_port, timeout=settings.clamav_timeout_seconds
-    )
+    return scanner
 
 
 def setup_documents(ctx: dict[str, Any], env: Environment) -> None:
@@ -62,7 +66,7 @@ def setup_documents(ctx: dict[str, Any], env: Environment) -> None:
             return
         raise
     ctx["ingestion"] = settings
-    ctx["store"] = S3ObjectStore.from_settings(settings)
+    ctx["store"] = object_store_from_settings(settings)
     ctx["scanner"] = build_scanner(settings)
     ctx["parse_config"] = ParseConfig.from_settings(settings)
     ctx["parse_slots"] = asyncio.Semaphore(settings.parse_concurrency)

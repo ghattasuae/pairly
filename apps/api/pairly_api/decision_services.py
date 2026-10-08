@@ -25,7 +25,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.audit_anchor.anchoring import anchor_map, load_anchors, public_keys
 from pairly_core.audit_anchor.signing import PUBLIC_KEY_ENV, load_public_key
-from pairly_core.audit_anchor.store import AnchorStore, S3AnchorStore, load_anchor_settings
+from pairly_core.audit_anchor.store import (
+    AnchorStore,
+    anchor_store_from_settings,
+    load_anchor_settings,
+)
 from pairly_core.audit_anchor.verification import LARGE_CHAIN_EVENTS, AnchorLoader
 from pairly_core.config import ConfigError, Settings
 from pairly_core.decisions.jobs import ArqTaskQueue, NullTaskQueue, TaskQueue
@@ -74,7 +78,7 @@ async def build_decision_services(
     store: AnchorStore | None = None
     if key is not None:
         try:
-            store = S3AnchorStore.from_settings(load_anchor_settings())
+            store = anchor_store_from_settings(load_anchor_settings())
         except ConfigError:
             if settings.is_production:
                 raise

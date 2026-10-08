@@ -23,6 +23,7 @@ the scanner and parse settings when ingestion is configured).
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator, Callable, Iterable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
@@ -44,6 +45,7 @@ from pairly_api.routes import (
     audit,
     compliance,
     decisions,
+    dev_objects,
     flags,
     health,
     invitations,
@@ -90,7 +92,7 @@ async def _document_services(settings: Settings) -> DocumentServices | None:
     """Storage and queue for the document routes, from ``PAIRLY_S3_*`` and friends."""
     from pairly_core.ingestion.queue import ArqJobQueue, JobQueue, NullJobQueue
     from pairly_core.ingestion.settings import load_ingestion_settings
-    from pairly_core.ingestion.storage import S3ObjectStore
+    from pairly_core.ingestion.storage import object_store_from_settings
 
     try:
         ingestion = load_ingestion_settings(env=settings.env)
@@ -107,7 +109,7 @@ async def _document_services(settings: Settings) -> DocumentServices | None:
             # Uploads still work; the worker's sweeper queues their scans.
             log.warning("job_queue_unavailable", error=type(exc).__name__)
     return DocumentServices(
-        settings=ingestion, store=S3ObjectStore.from_settings(ingestion), queue=queue
+        settings=ingestion, store=object_store_from_settings(ingestion), queue=queue
     )
 
 
@@ -116,9 +118,10 @@ def _graph_services(
 ) -> GraphServices:
     """What graph nodes may use in this process: the model router (recorded mode unless
     configured otherwise) and, when document storage is configured, the store, the
-    scanner (only when ClamAV is configured) and the sandboxed parse settings."""
+    scanner (only when ClamAV or the development fake is configured) and the sandboxed
+    parse settings."""
     from pairly_core.documents.pipeline import ParseConfig
-    from pairly_core.ingestion.scan import ClamdScanner
+    from pairly_core.ingestion.scan import scanner_from_settings
     from pairly_core.llm.factory import build_router
     from pairly_core.llm.settings import load_llm_settings
 
@@ -126,19 +129,10 @@ def _graph_services(
     if documents is None:
         return GraphServices(router=router)
     ingestion = documents.settings
-    scanner = (
-        ClamdScanner(
-            ingestion.clamav_host,
-            ingestion.clamav_port,
-            timeout=ingestion.clamav_timeout_seconds,
-        )
-        if ingestion.clamav_host
-        else None
-    )
     return GraphServices(
         store=documents.store,
         router=router,
-        scanner=scanner,
+        scanner=scanner_from_settings(ingestion),
         parse_config=ParseConfig.from_settings(ingestion),
     )
 
@@ -203,6 +197,17 @@ def _lifespan(
             await engine.dispose()
 
     return lifespan
+
+
+def _serves_dev_objects(settings: Settings, documents: DocumentServices | None) -> bool:
+    """Mount ``/v1/_dev/objects`` only in development and test, with the filesystem store."""
+    if settings.env not in {Environment.DEVELOPMENT, Environment.TEST}:
+        return False
+    if documents is not None:
+        from pairly_core.ingestion.fs_storage import FilesystemObjectStore
+
+        return isinstance(documents.store, FilesystemObjectStore)
+    return os.environ.get("PAIRLY_OBJECT_STORE", "").strip().lower() == "filesystem"
 
 
 def default_approval_hooks(settings: Settings, notify: NotificationSettings) -> ApprovalHooks:
@@ -281,6 +286,9 @@ def create_app(
     v1.include_router(flags.router)
     v1.include_router(search.router)
     v1.include_router(retention.router)
+    if _serves_dev_objects(settings, documents):
+        # Signed URLs of the filesystem object store (native development, no MinIO).
+        v1.include_router(dev_objects.router)
     # Workflow plugin routes, each under /v1/<plugin id> (pairly_core.plugins).
     for plugin_id, plugin_router in plugin_routers(workflow_plugins):
         v1.include_router(plugin_router, prefix=f"/{plugin_id}")

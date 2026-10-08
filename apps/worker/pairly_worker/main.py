@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from pairly_core.approvals.hooks import ApprovalHook, ApprovalHooks
 from pairly_core.audit_anchor.signing import PUBLIC_KEY_ENV, SIGNING_KEY_ENV, load_signing_key
-from pairly_core.audit_anchor.store import S3AnchorStore, load_anchor_settings
+from pairly_core.audit_anchor.store import anchor_store_from_settings, load_anchor_settings
 from pairly_core.config import ConfigError, Environment
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
@@ -112,7 +112,7 @@ def setup_audit_anchors(ctx: dict[str, Any], config: WorkerConfig) -> None:
         }
     )
     try:
-        ctx["anchor_store"] = S3AnchorStore.from_settings(load_anchor_settings())
+        ctx["anchor_store"] = anchor_store_from_settings(load_anchor_settings())
     except ConfigError:
         if config.env is not Environment.TEST:
             raise
