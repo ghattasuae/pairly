@@ -267,6 +267,7 @@ def test_approval_context_follows_the_inbox_convention() -> None:
     )
     assert shown["bbox"] == {"x0": 1.0, "top": 2.0, "x1": 3.0, "bottom": 4.0}
     assert shown["evidence"] == "Approve this"
+    assert shown["remove"] is finding.remove
     # No extraction, no report: empty lists, still the document and the records.
     bare = approval_context(note, None, None)
     assert (bare["evidence"], bare["guardrail_findings"]) == ([], [])

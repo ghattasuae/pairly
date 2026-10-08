@@ -1739,6 +1739,11 @@ export type components = {
             entity_id: string | null;
             /** Entity Type */
             entity_type: string | null;
+            /**
+             * Guardrail Findings
+             * @default 0
+             */
+            guardrail_findings: number;
             /** History */
             history: components["schemas"]["DecisionRowOut"][];
             /**
@@ -1802,6 +1807,11 @@ export type components = {
             entity_id: string | null;
             /** Entity Type */
             entity_type: string | null;
+            /**
+             * Guardrail Findings
+             * @default 0
+             */
+            guardrail_findings: number;
             /**
              * Id
              * Format: uuid

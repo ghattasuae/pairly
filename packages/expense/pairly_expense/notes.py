@@ -117,7 +117,8 @@ def approval_context(
     ``document_id`` (the receipt), ``evidence[]`` (one item per located span of each
     extracted field: ``field``, ``label``, ``quote``, ``page``, ``bboxes``),
     ``guardrail_findings[]`` (``id``, ``type``, ``code``, ``severity``, ``page``,
-    ``bbox``, ``evidence``, ``location``) and ``decision_ids[]``, plus the note's own
+    ``bbox``, ``evidence``, ``location``, ``remove``: whether the text was left out of
+    what the model read) and ``decision_ids[]``, plus the note's own
     keys. Built from stored rows only, bounded in size: quotes and excerpts are cut, and
     when it is still too large the last evidence items, then findings, are left out (the
     full lists stay on the note and its extraction).
@@ -146,6 +147,7 @@ def approval_context(
             "bbox": f.bbox.model_dump(mode="json") if f.bbox is not None else None,
             "evidence": f.evidence[:MAX_CONTEXT_QUOTE],
             "location": f.location,
+            "remove": f.remove,
         }
         for f in (report.findings if report is not None else ())[:MAX_CONTEXT_FINDINGS]
     ]

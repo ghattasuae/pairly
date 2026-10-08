@@ -492,9 +492,16 @@ async def test_hidden_text_is_flagged_and_a_person_still_decides(
     assert flagged[0]["page"] == 1
     assert flagged[0]["bbox"] is not None
     assert {"id", "code", "severity"} <= set(flagged[0])
+    assert flagged[0]["remove"] is True  # left out of what the model read
     assert all(HIDDEN_TEXT not in e["quote"] for e in context["evidence"])
     assert any(e["field"] == "total" for e in context["evidence"])
     assert context["decision_ids"]
+    # The inbox list says it needs a person for a guardrail flag (a count, no text).
+    listed = await api.client.get("/v1/approvals", headers=api.headers(world, "approver"))
+    assert listed.status_code == 200, listed.text
+    row = next(i for i in listed.json()["items"] if i["id"] == note["approval"]["id"])
+    assert row["guardrail_findings"] == len(context["guardrail_findings"])
+    assert HIDDEN_TEXT not in listed.text
 
     # The hidden instruction never reached the model: the replayed calls' inputs.
     async with session_for(api, world.org_id) as s, s.begin():

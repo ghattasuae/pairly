@@ -616,6 +616,11 @@
             ],
             "title": "Entity Type"
           },
+          "guardrail_findings": {
+            "default": 0,
+            "title": "Guardrail Findings",
+            "type": "integer"
+          },
           "history": {
             "items": {
               "$ref": "#/components/schemas/DecisionRowOut"
@@ -795,6 +800,11 @@
               }
             ],
             "title": "Entity Type"
+          },
+          "guardrail_findings": {
+            "default": 0,
+            "title": "Guardrail Findings",
+            "type": "integer"
           },
           "id": {
             "format": "uuid",

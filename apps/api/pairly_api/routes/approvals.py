@@ -124,6 +124,10 @@ class ApprovalOut(BaseModel):
     decided_at: datetime | None
     sla_state: SlaState | None
     current_step: StepOut | None
+    # How many guardrail findings the context names (``guardrail_findings[]``, the inbox
+    # convention), so the list can say "needs a person: guardrail flag". A count only:
+    # the findings themselves are in the detail.
+    guardrail_findings: int = 0
 
 
 class InboxOut(BaseModel):
@@ -205,7 +209,13 @@ def _summary(approval: Approval, step: ApprovalStep | None, sla: SlaState | None
         "decided_at": approval.decided_at,
         "sla_state": sla,
         "current_step": step_out(step) if step is not None else None,
+        "guardrail_findings": _finding_count(approval.context),
     }
+
+
+def _finding_count(context: Any) -> int:
+    findings = context.get("guardrail_findings") if isinstance(context, dict) else None
+    return sum(1 for f in findings if isinstance(f, dict)) if isinstance(findings, list) else 0
 
 
 def _decision_row(row: ApprovalDecision) -> DecisionRowOut:

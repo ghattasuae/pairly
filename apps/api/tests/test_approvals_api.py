@@ -16,6 +16,7 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_api.main import create_app
+from pairly_api.routes.approvals import _finding_count
 from pairly_core.approvals.models import Channel, Decision
 from pairly_core.db import set_tenant
 from pairly_core.signed_links import IssuedLink, issue_link
@@ -142,6 +143,21 @@ async def _run_status(api: Api, world: World, run_id: uuid.UUID) -> str:
 # ------------------------------------------------------------------ inbox
 
 
+@pytest.mark.parametrize(
+    ("context", "count"),
+    [
+        ({}, 0),
+        ({"guardrail_findings": []}, 0),
+        ({"guardrail_findings": [{"id": "g1"}, {"id": "g2"}]}, 2),
+        ({"guardrail_findings": [{"id": "g1"}, "junk", 3, None]}, 1),
+        ({"guardrail_findings": {"id": "g1"}}, 0),
+        ([], 0),
+    ],
+)
+def test_finding_count_reads_the_context_convention(context: Any, count: int) -> None:
+    assert _finding_count(context) == count
+
+
 async def test_inbox_lists_only_workflows_with_the_permission(api: Api, world: World) -> None:
     runs = [await _start(api, world, str(100 + i)) for i in range(3)]
     ids = [str(r.pending_approval_id) for r in reversed(runs)]
@@ -152,6 +168,7 @@ async def test_inbox_lists_only_workflows_with_the_permission(api: Api, world: W
     item = mine.json()["items"][0]
     assert item["sla_state"] == "on_track"
     assert item["current_step"]["name"] == "manager"
+    assert item["guardrail_findings"] == 0
 
     # Approver only for "pay": nothing from testwf, and the detail is hidden.
     other = await api.client.get("/v1/approvals", headers=api.headers(world, "payonly"))
