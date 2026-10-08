@@ -14,6 +14,11 @@ Fail closed. Anything other than a clear ``OK`` is not clean:
   its hash does not match: status stays ``scanning``, ``needs_review`` is set with the
   reason, and the worker's sweeper retries later (up to ``scan_max_attempts``). A
   document is never marked clean because the scan could not run.
+
+Native development (``PAIRLY_VIRUS_SCANNER=dev-fake``, refused outside development and
+test) uses ``FakeScanner`` with the engine name ``DEV_FAKE_ENGINE``, so every document it
+passed says so. It detects the EICAR test string only, which keeps the infected path
+working; it is not a virus scan.
 """
 
 from __future__ import annotations
@@ -38,6 +43,7 @@ from pairly_core.audit import ActorType, append_audit
 from pairly_core.db import set_tenant
 from pairly_core.ingestion.models import Document, DocumentStatus
 from pairly_core.ingestion.service import DocumentAction
+from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import ObjectNotFoundError, ObjectStore, StorageError
 
 log = structlog.get_logger(__name__)
@@ -174,6 +180,29 @@ class FakeScanner:
         if EICAR in data:
             return ScanResult(Verdict.INFECTED, self.engine, signature="Eicar-Test-Signature")
         return ScanResult(Verdict.CLEAN, self.engine)
+
+
+DEV_FAKE_ENGINE: Final = (
+    "pairly-dev-fake-scanner/1 (development only, EICAR only, not a virus scan)"
+)
+
+
+def scanner_from_settings(settings: IngestionSettings) -> VirusScanner | None:
+    """The configured scanner: clamd, the development fake, or None when there is none.
+
+    ``IngestionSettings`` refuses ``virus_scanner=dev-fake`` outside development and test.
+    """
+    if settings.virus_scanner == "dev-fake":
+        log.warning(
+            "dev_fake_scanner_in_use",
+            effect="documents are checked for the EICAR test string only, not scanned",
+        )
+        return FakeScanner(engine=DEV_FAKE_ENGINE)
+    if settings.clamav_host:
+        return ClamdScanner(
+            settings.clamav_host, settings.clamav_port, timeout=settings.clamav_timeout_seconds
+        )
+    return None
 
 
 # ------------------------------------------------------------------ job

@@ -10,12 +10,21 @@ Intake policies are per workflow: ``PAIRLY_INTAKE_POLICIES`` is a JSON object su
 ``{"pay": {"allowed_types": ["application/pdf"], "max_bytes": 10485760}}``. A workflow
 without an entry gets the default policy (``PAIRLY_INTAKE_DEFAULT_TYPES`` and
 ``PAIRLY_INTAKE_DEFAULT_MAX_BYTES``). No policy can exceed ``PAIRLY_MAX_UPLOAD_BYTES``.
+
+Native development backends (``make dev``, no containers), refused outside development
+and test:
+
+* ``PAIRLY_OBJECT_STORE=filesystem``: objects are files under
+  ``PAIRLY_OBJECT_STORE_DIR`` (``pairly_core.ingestion.fs_storage``) and signed GET URLs
+  point at the API's ``/v1/_dev/objects`` route (``PAIRLY_PUBLIC_API_URL``).
+* ``PAIRLY_VIRUS_SCANNER=dev-fake``: the fake scanner, which only detects the EICAR test
+  string. It is not a virus scan; production needs clamd (``PAIRLY_CLAMAV_HOST``).
 """
 
 from __future__ import annotations
 
 import re
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
 from pydantic import (
@@ -74,6 +83,12 @@ class IngestionSettings(BaseSettings):
     s3_secret_key: SecretStr
     # Signed GET URLs are short lived on purpose.
     signed_url_ttl_seconds: int = Field(default=60, ge=10, le=900)
+    # "s3" (MinIO, AWS S3), or "filesystem" for native development and tests only.
+    object_store: Literal["s3", "filesystem"] = "s3"
+    # Root folder of the filesystem store (one subfolder per bucket).
+    object_store_dir: str | None = None
+    # Base of the filesystem store's signed URLs (the API as the browser sees it).
+    public_api_url: str = "http://localhost:8000"
 
     # ---------------------------------------------------------------- queue
     # Optional for the API: without it, uploads are picked up by the worker's sweeper.
@@ -98,6 +113,9 @@ class IngestionSettings(BaseSettings):
     clamav_host: str | None = None
     clamav_port: int = Field(default=3310, ge=1, le=65535)
     clamav_timeout_seconds: float = Field(default=30.0, gt=0, le=600)
+    # "clamd" (ClamAV at clamav_host), or "dev-fake" for native development and tests
+    # only: detects the EICAR test string and nothing else.
+    virus_scanner: Literal["clamd", "dev-fake"] = "clamd"
     scan_max_attempts: int = Field(default=5, ge=1, le=50)
 
     # ---------------------------------------------------------------- parsing sandbox
@@ -172,6 +190,16 @@ class IngestionSettings(BaseSettings):
         for url in (self.s3_endpoint_url, self.s3_public_endpoint_url):
             if url and url.startswith("http://") and not insecure_ok:
                 raise ValueError("S3 endpoints must use https outside development and test")
+        if self.object_store == "filesystem":
+            if not insecure_ok:
+                raise ValueError("the filesystem object store is for development and test only")
+            if not (self.object_store_dir or "").strip():
+                raise ValueError("the filesystem object store needs PAIRLY_OBJECT_STORE_DIR")
+            parts = urlsplit(self.public_api_url)
+            if parts.scheme not in {"http", "https"} or not parts.hostname:
+                raise ValueError("public_api_url must be an absolute http(s) URL")
+        if self.virus_scanner == "dev-fake" and not insecure_ok:
+            raise ValueError("the dev-fake virus scanner is for development and test only")
         return self
 
     def policy_for(self, workflow: str) -> IntakePolicy:

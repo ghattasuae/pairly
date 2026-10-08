@@ -19,22 +19,32 @@ Write once, three layers (the S3 store):
 With ``PAIRLY_AUDIT_ANCHOR_LOCK_MODE=none`` (a store without object lock) only layers 1
 and 3 apply: someone holding the storage root credentials could still delete anchors.
 That is the documented limitation of such a deployment.
+
+Native development and tests (``PAIRLY_OBJECT_STORE=filesystem``, refused elsewhere)
+use ``FilesystemAnchorStore``: anchors are files under
+``<PAIRLY_OBJECT_STORE_DIR>/<anchor bucket>/``, and write once is enforced in code. A new
+anchor is written to a temp file and then hard-linked to its key, which fails when the
+key exists, so an anchor is never overwritten or seen half written; the store has no
+delete, and the files are made read-only.
 """
 
 from __future__ import annotations
 
 import asyncio
+import os
 import re
+import secrets
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any, Final, Protocol, cast, runtime_checkable
+from pathlib import Path
+from typing import Any, Final, Literal, Protocol, cast, runtime_checkable
 
-from pydantic import Field, SecretStr, ValidationError
+from pydantic import Field, SecretStr, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from pairly_core.config import ENV_PREFIX, ConfigError
+from pairly_core.config import ENV_PREFIX, ConfigError, Environment
 
 PREFIX: Final = "audit-anchors/v1"
 MAX_ANCHOR_BYTES: Final = 4096
@@ -115,6 +125,19 @@ class AnchorSettings(BaseSettings):
         default="GOVERNANCE", pattern=r"^(GOVERNANCE|COMPLIANCE|none)$"
     )
     audit_anchor_retention_days: int = Field(default=2555, ge=1, le=36500)
+    # Native development and tests only: anchors as write-once files.
+    env: Environment = Environment.PRODUCTION
+    object_store: Literal["s3", "filesystem"] = "s3"
+    object_store_dir: str | None = None
+
+    @model_validator(mode="after")
+    def _filesystem_only_locally(self) -> AnchorSettings:
+        if self.object_store == "filesystem":
+            if self.env not in {Environment.DEVELOPMENT, Environment.TEST}:
+                raise ValueError("the filesystem object store is for development and test only")
+            if not (self.object_store_dir or "").strip():
+                raise ValueError("the filesystem object store needs PAIRLY_OBJECT_STORE_DIR")
+        return self
 
 
 def load_anchor_settings(**overrides: Any) -> AnchorSettings:
@@ -124,9 +147,92 @@ def load_anchor_settings(**overrides: Any) -> AnchorSettings:
         names = sorted(
             {f"{ENV_PREFIX}{str(e['loc'][0]).upper()}" for e in exc.errors() if e["loc"]}
         )
+        # Whole-model checks (the filesystem store) carry no field; their messages
+        # name settings, never values.
+        names += sorted({str(e["msg"]) for e in exc.errors() if not e["loc"]})
         raise ConfigError(
             "invalid or missing anchor storage settings: " + ", ".join(names)
         ) from None
+
+
+def anchor_store_from_settings(settings: AnchorSettings) -> AnchorStore:
+    """S3 with object lock, or (development and test only) write-once files."""
+    if settings.object_store == "filesystem":
+        if settings.object_store_dir is None:  # pragma: no cover - checked by the settings
+            raise ConfigError("missing required settings: PAIRLY_OBJECT_STORE_DIR")
+        return FilesystemAnchorStore(Path(settings.object_store_dir) / settings.audit_anchor_bucket)
+    return S3AnchorStore.from_settings(settings)
+
+
+class FilesystemAnchorStore:
+    """Anchors as files, write once enforced in code. Development and test only."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = Path(root).resolve()
+
+    def _path(self, key: str) -> Path:
+        path = (self.root / check_key(key)).resolve()
+        if not path.is_relative_to(self.root):
+            raise ValueError("not an anchor key")
+        return path
+
+    def _put_sync(self, key: str, data: bytes) -> bool:
+        if len(data) > MAX_ANCHOR_BYTES:
+            raise AnchorStoreError("anchor object too large")
+        path = self._path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
+        try:
+            with tmp.open("xb") as out:
+                out.write(data)
+                out.flush()
+                os.fsync(out.fileno())
+            tmp.chmod(0o444)
+            try:
+                # Atomic and exclusive: fails when the key exists (never overwrites).
+                os.link(tmp, path)
+            except FileExistsError:
+                return False
+            return True
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    async def put_new(self, key: str, data: bytes) -> bool:
+        try:
+            return await asyncio.to_thread(self._put_sync, key, bytes(data))
+        except OSError as exc:
+            raise AnchorStoreError(f"anchor put failed: {type(exc).__name__}") from exc
+
+    def _get_sync(self, key: str) -> bytes:
+        with self._path(key).open("rb") as handle:
+            data = handle.read(MAX_ANCHOR_BYTES + 1)
+        if len(data) > MAX_ANCHOR_BYTES:
+            raise AnchorStoreError("anchor object too large")
+        return data
+
+    async def get(self, key: str) -> bytes:
+        try:
+            return await asyncio.to_thread(self._get_sync, key)
+        except FileNotFoundError:
+            raise AnchorStoreError("anchor not found") from None
+        except OSError as exc:
+            raise AnchorStoreError(f"anchor get failed: {type(exc).__name__}") from exc
+
+    def _list_sync(self, prefix: str) -> list[str]:
+        keys: list[str] = []
+        if not self.root.is_dir():
+            return keys
+        for path in self.root.rglob("*.json"):
+            key = path.relative_to(self.root).as_posix()
+            if _KEY_RE.fullmatch(key) and key.startswith(prefix):
+                keys.append(key)
+        return sorted(keys)
+
+    async def list_keys(self, prefix: str) -> list[str]:
+        try:
+            return await asyncio.to_thread(self._list_sync, prefix)
+        except OSError as exc:
+            raise AnchorStoreError(f"anchor list failed: {type(exc).__name__}") from exc
 
 
 def _error_code(exc: Exception) -> str:

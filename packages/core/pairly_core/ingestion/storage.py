@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Object storage behind a small interface: S3 compatible (MinIO locally) or in memory.
+"""Object storage behind a small interface: S3 compatible (MinIO), files (native
+development and tests, ``fs_storage``) or in memory.
 
 Keys are built here only, from the organisation id and the content hash. User-supplied
 names never reach a key, so a file name cannot traverse paths, collide with another
@@ -338,3 +339,23 @@ def _is_not_found(exc: Exception) -> bool:
     error = response.get("Error", {})
     code = str(error.get("Code", "")) if isinstance(error, Mapping) else ""
     return code in {"404", "NoSuchKey", "NotFound"}
+
+
+def object_store_from_settings(settings: IngestionSettings) -> ObjectStore:
+    """The configured store: S3 (MinIO, AWS) or, in development and test only, files.
+
+    ``IngestionSettings`` refuses ``object_store=filesystem`` outside development and
+    test, so production can only get the S3 store here.
+    """
+    if settings.object_store == "filesystem":
+        from pairly_core.ingestion.fs_storage import FilesystemObjectStore, url_signing_key
+
+        if settings.object_store_dir is None:  # pragma: no cover - checked by the settings
+            raise StorageError("PAIRLY_OBJECT_STORE_DIR is not set")
+        return FilesystemObjectStore(
+            root=Path(settings.object_store_dir),
+            bucket=settings.s3_bucket,
+            signing_key=url_signing_key(settings.s3_secret_key.get_secret_value()),
+            public_base_url=settings.public_api_url,
+        )
+    return S3ObjectStore.from_settings(settings)

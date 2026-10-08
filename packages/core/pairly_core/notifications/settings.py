@@ -4,7 +4,9 @@
 
 Email: ``PAIRLY_EMAIL_TRANSPORT`` is ``smtp`` (Mailpit locally, any relay in production,
 same ``PAIRLY_SMTP_*`` variables as the web app), ``resend`` (HTTP API, needs
-``PAIRLY_RESEND_API_KEY``) or ``fake`` (tests and demos, sends nothing).
+``PAIRLY_RESEND_API_KEY``), ``fake`` (tests and demos, sends nothing) or ``outbox``
+(native development and tests only: each message is written as a file to
+``PAIRLY_OUTBOX_DIR``, see ``pairly_core.notifications.outbox``).
 
 Fail closed:
 
@@ -40,7 +42,9 @@ class NotificationSettings(BaseSettings):
     public_web_url: str | None = None
     public_api_url: str | None = None
 
-    email_transport: Literal["smtp", "resend", "fake"] = "smtp"
+    email_transport: Literal["smtp", "resend", "fake", "outbox"] = "smtp"
+    # Development outbox folder (email_transport "outbox" only).
+    outbox_dir: str | None = None
     smtp_host: str | None = None
     smtp_port: int = Field(default=587, ge=1, le=65535)
     smtp_secure: bool = False  # implicit TLS (port 465)
@@ -110,6 +114,11 @@ class NotificationSettings(BaseSettings):
             problems.append("resend_api_key is required for the resend transport")
         if self.email_transport == "fake" and self.env is Environment.PRODUCTION:
             problems.append("the fake email transport is not allowed in production")
+        if self.email_transport == "outbox":
+            if not self.relaxed:
+                problems.append("the outbox email transport is for development and test only")
+            if not (self.outbox_dir or "").strip():
+                problems.append("outbox_dir is required for the outbox transport")
         if self.signed_link_secret is None and self.env is not Environment.TEST:
             problems.append("signed_link_secret is required")
         elif (

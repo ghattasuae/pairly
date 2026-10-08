@@ -22,6 +22,8 @@ Transports:
 * ``ResendTransport``: Resend's HTTP API through ``httpx``, with an ``Idempotency-Key``
   (the notification's dedupe key) so a retry never sends twice on their side.
 * ``FakeEmailTransport``: records messages, can fail on demand. Tests and demos.
+* ``OutboxTransport`` (``pairly_core.notifications.outbox``): writes each message to a
+  folder. Native development and tests only (no Mailpit).
 
 Errors are ``DeliveryError`` with ``transient`` True (retry later: network, 4xx SMTP,
 HTTP 429 and 5xx) or False (give up: rejected recipient, HTTP 4xx).
@@ -260,6 +262,13 @@ def email_transport_from_settings(
 ) -> EmailTransport:
     if settings.email_transport == "fake":
         return FakeEmailTransport()
+    if settings.email_transport == "outbox":
+        from pathlib import Path
+
+        from pairly_core.notifications.outbox import OutboxTransport
+
+        assert settings.outbox_dir is not None  # noqa: S101 (validated by settings)
+        return OutboxTransport(Path(settings.outbox_dir))
     if settings.email_transport == "resend":
         assert settings.resend_api_key is not None  # noqa: S101 (validated by settings)
         return ResendTransport(
