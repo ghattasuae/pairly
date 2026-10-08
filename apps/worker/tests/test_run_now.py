@@ -46,7 +46,9 @@ def test_enqueues_the_job_and_returns_its_result(monkeypatch: pytest.MonkeyPatch
         async def aclose(self) -> None:
             calls.append(("closed", ""))
 
-    async def fake_pool(settings: object) -> Pool:
+    async def fake_pool(settings: object, **kwargs: object) -> Pool:
+        assert kwargs["job_serializer"] is not None
+        assert kwargs["job_deserializer"] is not None
         return Pool()
 
     monkeypatch.setattr(run_now, "create_pool", fake_pool)

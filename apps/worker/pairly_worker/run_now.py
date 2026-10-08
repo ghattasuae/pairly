@@ -26,6 +26,7 @@ from typing import Final
 from arq import create_pool
 from arq.connections import RedisSettings
 
+from pairly_core.ingestion.queue import job_dumps, job_loads
 from pairly_worker.decision_jobs import ANCHOR_JOB
 
 RUNNABLE: Final = frozenset({ANCHOR_JOB})
@@ -33,7 +34,10 @@ TIMEOUT_SECONDS: Final = 120
 
 
 async def run_now(redis_url: str, job: str) -> object:
-    pool = await create_pool(RedisSettings.from_dsn(redis_url))
+    # The worker's JSON job format (never pickle).
+    pool = await create_pool(
+        RedisSettings.from_dsn(redis_url), job_serializer=job_dumps, job_deserializer=job_loads
+    )
     try:
         queued = await pool.enqueue_job(job, _job_id=f"run-now:{job}:{uuid.uuid4().hex}")
         if queued is None:  # pragma: no cover - a fresh job id is never taken
