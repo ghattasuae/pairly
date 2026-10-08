@@ -21,7 +21,7 @@ WAIT_TIMEOUT ?= 300
 SERVICE      ?=
 
 .PHONY: help install hooks env dev demo demo-expense down logs ps test evals lint format typecheck
-.PHONY: bootstrap-org dev-seed-approval
+.PHONY: bootstrap-org dev-seed-approval audit-anchor-now
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -83,6 +83,9 @@ dev-seed-approval: ## Development only: one pending approval for the web e2e sui
 		echo 'usage: make dev-seed-approval ORG=<org slug> EMAIL=<approver email> [ARGS="--link approve --decision"]'; exit 2; fi
 	$(COMPOSE) run --rm --no-deps -e PAIRLY_DEVSEED=1 migrate python -m pairly_api.devseed approval \
 		--org-slug "$(ORG)" --approver-email "$(EMAIL)" $(ARGS)
+
+audit-anchor-now: ## Development only: sign and store every org's audit chain head now (normally nightly)
+	$(COMPOSE) exec -T worker python -m pairly_worker.run_now audit_anchor_nightly
 
 logs: ## Follow logs (SERVICE=api to filter)
 	$(COMPOSE) --profile '*' logs -f --tail=200 $(SERVICE)
