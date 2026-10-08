@@ -10,7 +10,9 @@ You need:
 
 1. [uv](https://docs.astral.sh/uv/) for Python (Python 3.12).
 2. [pnpm](https://pnpm.io/) for JavaScript and TypeScript.
-3. Docker with compose, for the local stack.
+3. Postgres 16 with pgvector, Valkey and Tesseract, installed natively, for the local
+   stack (on macOS: Homebrew `postgresql@16`, `pgvector`, `valkey`, `tesseract`). Docker
+   is not needed for development.
 4. `make`.
 
 Then run:
@@ -19,9 +21,14 @@ Then run:
 make install   # Python and JS dependencies
 make hooks     # pre-commit hooks (lint, types, secrets scan, SPDX headers, em dash check)
 make test      # Python and JS tests
+make dev       # native stack: Postgres, Valkey, api, worker, web on http://localhost:3100
+make local-test  # pytest against fresh local test databases, no Docker
+make local-down  # stop every native process
 ```
 
-Run `make help` to see every target.
+Run `make help` to see every target. The native stack keeps all its data under `.local/`
+(gitignored); see `infra/README.md`. The Docker Compose stack (`make docker-dev`) is for
+CI and self-hosters.
 
 ## Branches and pull requests
 

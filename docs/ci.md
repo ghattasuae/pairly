@@ -23,7 +23,7 @@ Alembic runs `upgrade heads` (core plus every workflow branch) as `pairly_owner`
 
 The coverage threshold comes from `[tool.coverage.report] fail_under` in `pyproject.toml`. Change it there, not in the workflow.
 
-`make ci-test` does the same on your machine. It uses port 55432, so it does not clash with `make dev`.
+`make ci-test` does the same on your machine with Docker (port 55432, `CI_PG_PORT` to change it; stop the native cluster first, it uses the same port). Without Docker, `make local-test` runs the same steps against fresh test databases in the native Postgres cluster (`scripts/local_pg.sh`).
 
 ### Web build
 
