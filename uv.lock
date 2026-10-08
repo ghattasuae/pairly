@@ -417,6 +417,18 @@ wheels = [
 ]
 
 [[package]]
+name = "faker"
+version = "40.41.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/f5/cf09c597bac1c2600e4f77200a7abb73e20fb2a542c11d0c557c1c4220f5/faker-40.41.0.tar.gz", hash = "sha256:5383e4ebba7061491530ae5952a33dcf8f161a250c89717fa0ac856602dcfaf3", size = 2031440, upload-time = "2026-10-05T22:08:14.767Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/52/9ae853e8c70d6b77fe81b1563378d8ee49aa316cf19502a2e0bf1e4a873e/faker-40.41.0-py3-none-any.whl", hash = "sha256:35a7f66282990698c20c3e6dd57180900206b760c2f777112c085cc217e7de92", size = 2067633, upload-time = "2026-10-05T22:08:12.554Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.142.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1425,6 +1437,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "faker" },
     { name = "import-linter" },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -1451,6 +1464,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "faker", specifier = ">=37" },
     { name = "import-linter", specifier = ">=2.5" },
     { name = "mypy", specifier = ">=1.18" },
     { name = "pre-commit", specifier = ">=4.3" },

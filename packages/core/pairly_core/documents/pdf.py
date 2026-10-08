@@ -7,6 +7,10 @@ rendering mode (3 = invisible) and an ``off_page`` flag; words (split where the 
 changes); lines as blocks with their dominant style; tables. Pages without a text
 layer but with images are rendered (pypdfium2, through pdfplumber) and OCR'd.
 
+Per page, a renderer-based visibility check (``documents.render``): characters whose
+rendered pixels show no contrast (covered by a shape, clipped) carry
+``Char.render_contrast``, and ``Page.render`` says whether the page was checked.
+
 Document level: the Info dictionary, raw XMP, and structural warnings for active
 content (JavaScript, open actions) and embedded files. Encrypted files open only with
 an empty user password; otherwise parsing fails with ``encrypted``.
@@ -33,12 +37,14 @@ from pairly_core.documents.model import (
     Page,
     ParserInfo,
     ParseWarning,
+    RenderCheck,
     Style,
     Table,
     TextBlock,
     Word,
 )
 from pairly_core.documents.registry import ParseError, ParseOptions
+from pairly_core.documents.render import PageRenderer
 from pairly_core.ingestion.sniff import PDF
 
 MAX_METADATA_VALUE = 4096
@@ -188,7 +194,8 @@ def _fills(page: Any, warnings: list[ParseWarning], number: int) -> list[Fill]:
 
 class PdfParser:
     name = "pdf"
-    version = "1"
+    # 2: renderer-based visibility check (Page.render, Char.render_contrast).
+    version = "2"
     media_types = frozenset({PDF})
 
     def parse(self, path: Path, options: ParseOptions) -> NormalizedDocument:
@@ -200,6 +207,7 @@ class PdfParser:
         metadata, encrypted = _structure(path, warnings)
         budget = [options.max_chars]
         pages: list[Page] = []
+        renderer = PageRenderer(path, "" if encrypted else None, options)
         try:
             with pdfplumber.open(path, password="" if encrypted else None) as pdf:
                 total = len(pdf.pages)
@@ -213,7 +221,9 @@ class PdfParser:
                         )
                         break
                     try:
-                        pages.append(self._page(page, index + 1, options, budget, warnings))
+                        pages.append(
+                            self._page(page, index + 1, options, budget, warnings, renderer)
+                        )
                     except (ParseError, MemoryError):
                         raise
                     except Exception as exc:
@@ -236,6 +246,8 @@ class PdfParser:
                         page.close()
         except (PDFSyntaxError, OSError, ValueError, KeyError, TypeError) as exc:
             raise ParseError("corrupt", f"cannot read PDF: {type(exc).__name__}") from None
+        finally:
+            renderer.close()
         if pages and not any(p.text.strip() for p in pages):
             warnings.append(ParseWarning(code="no_text", message="no text found"))
         if budget[0] < 0:
@@ -251,6 +263,7 @@ class PdfParser:
                     "pdfplumber": pkg_version("pdfplumber"),
                     "pdfminer.six": pkg_version("pdfminer.six"),
                     "pypdf": pkg_version("pypdf"),
+                    "pypdfium2": pkg_version("pypdfium2"),
                 },
             ),
             pages=pages,
@@ -265,6 +278,7 @@ class PdfParser:
         options: ParseOptions,
         budget: list[int],
         warnings: list[ParseWarning],
+        renderer: PageRenderer,
     ) -> Page:
         width, height = float(page.width), float(page.height)
         raw_chars: list[dict[str, Any]] = list(page.chars)
@@ -283,6 +297,7 @@ class PdfParser:
                 )
             )
             budget[0] -= 1
+        chars, render = self._render_check(page, number, chars, renderer)
 
         extra = ["fontname", "size", "non_stroking_color", "stroking_color"]
         if raw_chars and "rendermode" in raw_chars[0]:
@@ -340,10 +355,31 @@ class PdfParser:
             tables=tables,
             fills=fills,
             image_count=image_count,
+            render=render,
         )
         if len(text.strip()) < options.min_text_chars_per_page and image_count:
             result = self._ocr(page, result, options, warnings)
         return result
+
+    def _render_check(
+        self, page: Any, number: int, chars: list[Char], renderer: PageRenderer
+    ) -> tuple[list[Char], RenderCheck]:
+        """Rendered contrast under every visible character (see ``documents.render``)."""
+        boxes = [
+            None if not ch.text.strip() or ch.style.invisible or ch.off_page else ch.bbox
+            for ch in chars
+        ]
+        cropbox = tuple(float(v) for v in page.cropbox)
+        check, low = renderer.check(
+            number - 1, (cropbox[0], cropbox[1], cropbox[2], cropbox[3]), boxes
+        )
+        if not low:
+            return chars, check
+        updated = [
+            ch.model_copy(update={"render_contrast": low[i]}) if i in low else ch
+            for i, ch in enumerate(chars)
+        ]
+        return updated, check
 
     def _ocr(
         self, page: Any, result: Page, options: ParseOptions, warnings: list[ParseWarning]

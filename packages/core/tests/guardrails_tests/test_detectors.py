@@ -418,6 +418,7 @@ def test_registry_rules() -> None:
         "instruction",
         "keyword_stuffing",
         "metadata",
+        "render_check",
         "unicode",
     }
 

@@ -26,6 +26,8 @@ class GuardrailConfig:
     high_contrast_below: float = 1.2
     # Font sizes below this (points) are unreadable; below the second, high severity.
     min_font_pt: float = 4.0
+    # Renderer check: a covered or clipped run needs this many visible characters.
+    render_min_chars: int = 3
     tiny_font_high_below_pt: float = 2.5
     # Keyword stuffing score (0..1): low from the first, flagged from the second.
     stuffing_low_score: float = 0.3

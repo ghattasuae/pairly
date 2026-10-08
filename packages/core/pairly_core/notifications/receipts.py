@@ -46,7 +46,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.approvals.service import db_now
 from pairly_core.audit import ActorType, append_audit
-from pairly_core.crypto.blind_index import blind_index
+from pairly_core.crypto.blind_index import blind_index_candidates
 from pairly_core.db import set_tenant
 from pairly_core.ingestion.email import EmailIngestResult, ingest_email
 from pairly_core.ingestion.settings import IngestionSettings
@@ -167,7 +167,7 @@ def _own_domains(settings: NotificationSettings, ingestion: IngestionSettings) -
 
 
 async def _rate_limited(
-    session: AsyncSession, settings: NotificationSettings, sender_bidx: str
+    session: AsyncSession, settings: NotificationSettings, sender_bidx: Sequence[str]
 ) -> str | None:
     now = await db_now(session)
     per_sender = await session.scalar(
@@ -175,7 +175,8 @@ async def _rate_limited(
         .select_from(Notification)
         .where(
             Notification.category == "receipts",
-            Notification.recipient_bidx == sender_bidx,
+            # Every configured blind index key: rows written before a key rotation match.
+            Notification.recipient_bidx.in_(sender_bidx),
             Notification.created_at > now - timedelta(days=1),
         )
     )
@@ -229,7 +230,7 @@ async def send_receipt(
                         )
                     )
                 )
-                sender_bidx = blind_index("email", headers.sender, result.org_id)
+                sender_bidx = blind_index_candidates("email", headers.sender, result.org_id)
                 reason = (
                     await _rate_limited(session, settings, sender_bidx)
                     if sender_bidx

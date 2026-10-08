@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+# Synthetic sample job and rubric (WP2.1). Scores are 0 to 4 per criterion; the overall
+# score is the weighted mean as a percentage, computed in code, never by a model.
+id: ap_accountant
+title: Accounts Payable Accountant
+title_ar: محاسب حسابات دائنة
+family: accounts_payable
+seniority: mid
+location: Abu Dhabi, United Arab Emirates
+employment_type: full_time
+summary: >-
+  Process supplier invoices end to end: matching, VAT checks, vendor reconciliations
+  and weekly payment runs in the ERP.
+rubric:
+  schema_version: 1
+  version: 1
+  criteria:
+    - id: ap_experience
+      name: Accounts payable experience
+      name_ar: الخبرة في الحسابات الدائنة
+      kind: must_have
+      weight: 30
+      description: Years in accounts payable; general accounting counts at half weight.
+      evidence: Job entries with an accounts payable or accounting title and dates.
+      anchors:
+        - {score: 0, description: No accounts payable or accounting role.}
+        - {score: 1, description: Less than 1 year.}
+        - {score: 2, description: 1 to 3 years.}
+        - {score: 3, description: 3 to 5 years.}
+        - {score: 4, description: 5 years or more.}
+    - id: invoice_matching
+      name: Invoice processing and matching
+      name_ar: معالجة الفواتير ومطابقتها
+      kind: must_have
+      weight: 20
+      description: Processes supplier invoices and matches them to purchase orders and receipts.
+      evidence: Achievement lines about invoice processing or three-way matching.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: erp_systems
+      name: ERP systems
+      name_ar: أنظمة تخطيط موارد المؤسسات
+      kind: must_have
+      weight: 15
+      description: Daily work in SAP, Oracle Fusion or Microsoft Dynamics.
+      evidence: Achievement lines that name the ERP used.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: uae_vat
+      name: UAE VAT
+      name_ar: ضريبة القيمة المضافة في الإمارات
+      kind: must_have
+      weight: 15
+      description: Checks tax invoices and prepares VAT workings or returns.
+      evidence: Achievement lines about VAT.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: reconciliation_close
+      name: Reconciliations and close
+      name_ar: التسويات والإقفال
+      kind: nice_to_have
+      weight: 10
+      description: Vendor or bank reconciliations and month-end close.
+      evidence: Achievement lines about reconciliations or the month-end close.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: accounting_qualification
+      name: Accounting qualification
+      name_ar: مؤهل محاسبي
+      kind: nice_to_have
+      weight: 5
+      description: A professional accounting certificate or an accounting degree.
+      evidence: The certification or education entry.
+      anchors:
+        - {score: 0, description: None.}
+        - {score: 1, description: Diploma in a related field.}
+        - {score: 2, description: Degree in a related field.}
+        - {score: 3, description: Degree in accounting.}
+        - {score: 4, description: "ACCA, CMA or CPA."}
+    - id: arabic_language
+      name: Arabic
+      name_ar: اللغة العربية
+      kind: nice_to_have
+      weight: 5
+      description: Can work in Arabic with vendors and authorities.
+      evidence: The languages section.
+      anchors:
+        - {score: 0, description: Not listed.}
+        - {score: 1, description: Basic.}
+        - {score: 2, description: Conversational.}
+        - {score: 3, description: Professional.}
+        - {score: 4, description: Fluent or native.}
+  knockouts:
+    - id: right_to_work_uae
+      question: Do you have the right to work in the UAE without a new visa sponsorship?
+      question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
+      answer_type: yes_no
+      pass_if_yes: true
+    - id: accounting_degree
+      question: Do you hold a degree in accounting, finance or commerce?
+      question_ar: هل تحمل شهادة في المحاسبة أو التمويل أو التجارة؟
+      answer_type: yes_no
+      pass_if_yes: true

@@ -39,6 +39,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from pairly_core.crypto.blind_index import blind_index_info
 from pairly_core.crypto.types import EncryptedJSON, EncryptedString, Sealed
 from pairly_core.db import Base, OrgScoped, OrgScopedOrShared
 
@@ -138,7 +139,9 @@ class Notification(Base, OrgScoped):
     # Email address or Slack user id the message goes to (encrypted).
     recipient_address: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
     # Blind index of an external email address: rate limits and lookups without plaintext.
-    recipient_bidx: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    recipient_bidx: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, info=blind_index_info("email", "recipient_address")
+    )
     channel: Mapped[str] = mapped_column(String(16), nullable=False)
     category: Mapped[str] = mapped_column(String(32), nullable=False)
     urgency: Mapped[str] = mapped_column(String(8), nullable=False)

@@ -9,7 +9,7 @@ a ``detect(scan: ScanInput) -> Iterable[Finding]`` method.
 from __future__ import annotations
 
 from pairly_core.guardrails.base import DetectorRegistry
-from pairly_core.guardrails.detectors.hidden import HiddenTextDetector
+from pairly_core.guardrails.detectors.hidden import HiddenTextDetector, RenderCheckDetector
 from pairly_core.guardrails.detectors.instructions import InstructionDetector, MetadataDetector
 from pairly_core.guardrails.detectors.stuffing import KeywordStuffingDetector
 from pairly_core.guardrails.detectors.unicode import UnicodeDetector
@@ -19,6 +19,7 @@ def default_registry() -> DetectorRegistry:
     return DetectorRegistry(
         [
             HiddenTextDetector(),
+            RenderCheckDetector(),
             InstructionDetector(),
             KeywordStuffingDetector(),
             MetadataDetector(),
@@ -32,6 +33,7 @@ __all__ = [
     "InstructionDetector",
     "KeywordStuffingDetector",
     "MetadataDetector",
+    "RenderCheckDetector",
     "UnicodeDetector",
     "default_registry",
 ]

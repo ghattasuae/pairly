@@ -8,4 +8,23 @@ Evaluation suites that gate merges. Planned contents:
 - `thresholds.yaml` (CI gate)
 - `report.md`, generated per run
 
-Not implemented yet (WP2.10). `make evals` prints a notice until then.
+The suites and the CI gate are not implemented yet (WP2.10). `make evals` prints a
+notice until then.
+
+## Runners available now
+
+### `uv run python -m evals.guardrails_hire`
+
+The deterministic guardrails on the synthetic Hire corpus (`synth.hire`): every PDF and
+DOCX attack CV and clean CV is parsed in process with the sandbox's parsers (renderer
+check included) and scanned. Writes `evals/results/guardrails_hire.json`: precision,
+recall and false-positive rate at document level, recall per check and per technique,
+payload leaks, detector errors, every false positive with its finding codes, and the
+share of rubric label quotes found in the parsed text per format and layout.
+
+Claim attacks (dates, titles, unsupported skills) are reported apart: they are for the
+claim consistency checks, not the guardrails. The optional model classifier is not run
+(it needs a live model). Scans need OCR and are skipped unless `--include-scans`.
+Thresholds are the `GuardrailConfig` defaults; this runner never changes them.
+
+Numbers quoted anywhere must come from a run of this file, never be written by hand.

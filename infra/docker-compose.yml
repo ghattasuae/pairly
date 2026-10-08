@@ -52,6 +52,8 @@ x-crypto-env: &crypto-env
   # Second slot for a rotation; empty means unset.
   PAIRLY_KEK_2: ${PAIRLY_KEK_2:-}
   PAIRLY_BLIND_INDEX_KEY: ${PAIRLY_BLIND_INDEX_KEY:?missing}
+  PAIRLY_BLIND_INDEX_KEY_2: ${PAIRLY_BLIND_INDEX_KEY_2:-}
+  PAIRLY_BLIND_INDEX_KEY_CURRENT: ${PAIRLY_BLIND_INDEX_KEY_CURRENT:-1}
 
 x-app-env: &app-env
   PAIRLY_ENV: ${PAIRLY_ENV:-development}

@@ -1,0 +1,133 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+# Synthetic sample job and rubric (WP2.1). Scores are 0 to 4 per criterion; the overall
+# score is the weighted mean as a percentage, computed in code, never by a model.
+id: backend_engineer
+title: Backend Engineer
+title_ar: مهندس أنظمة خلفية
+family: backend
+seniority: senior
+location: Dubai, United Arab Emirates
+employment_type: full_time
+summary: >-
+  Build and run the APIs and services behind a payments product. Python or Go,
+  PostgreSQL, containers on a public cloud.
+rubric:
+  schema_version: 1
+  version: 1
+  criteria:
+    - id: backend_experience
+      name: Backend engineering experience
+      name_ar: الخبرة في هندسة الأنظمة الخلفية
+      kind: must_have
+      weight: 30
+      description: Years spent building server-side software in a professional role.
+      evidence: Job entries with a backend title and dates; frontend and data roles count at half weight.
+      anchors:
+        - {score: 0, description: No backend engineering role.}
+        - {score: 1, description: Less than 1 year.}
+        - {score: 2, description: 1 to 3 years.}
+        - {score: 3, description: 3 to 5 years.}
+        - {score: 4, description: 5 years or more.}
+    - id: python_or_go
+      name: Python or Go in production
+      name_ar: استخدام Python أو Go في بيئة الإنتاج
+      kind: must_have
+      weight: 20
+      description: Has shipped production code in Python or Go.
+      evidence: An achievement line that shows Python or Go used in work, not only a skills list.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement shows it in use.}
+        - {score: 3, description: Two achievements show it in use.}
+        - {score: 4, description: Three or more achievements show it in use.}
+    - id: databases_apis
+      name: Databases and APIs
+      name_ar: قواعد البيانات والواجهات البرمجية
+      kind: must_have
+      weight: 15
+      description: Designs APIs and works with relational databases.
+      evidence: Achievement lines about REST or gRPC APIs or PostgreSQL.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: cloud_containers
+      name: Containers and cloud
+      name_ar: الحاويات والحوسبة السحابية
+      kind: nice_to_have
+      weight: 10
+      description: Runs services in containers on a public cloud.
+      evidence: Achievement lines about Docker, Kubernetes or AWS.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: distributed_systems
+      name: Distributed systems and design
+      name_ar: الأنظمة الموزعة والتصميم
+      kind: nice_to_have
+      weight: 10
+      description: Event pipelines, queues, design reviews of larger systems.
+      evidence: Achievement lines about Kafka, event pipelines or system design reviews.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: testing_quality
+      name: Testing and delivery
+      name_ar: الاختبار والتسليم
+      kind: nice_to_have
+      weight: 5
+      description: Automated tests and continuous delivery.
+      evidence: Achievement lines about unit tests or CI/CD.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Listed as a skill only.}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: mentoring
+      name: Mentoring and technical leadership
+      name_ar: التوجيه والقيادة التقنية
+      kind: nice_to_have
+      weight: 5
+      description: Has mentored engineers or led technical work.
+      evidence: Achievement lines about mentoring, leading reviews or leading a team.
+      anchors:
+        - {score: 0, description: No mention.}
+        - {score: 1, description: Not used (no skills-list credit for leadership).}
+        - {score: 2, description: One achievement.}
+        - {score: 3, description: Two achievements.}
+        - {score: 4, description: Three or more achievements.}
+    - id: cs_degree
+      name: Computing degree
+      name_ar: شهادة في الحوسبة
+      kind: nice_to_have
+      weight: 5
+      description: A degree in computing, or a related technical field.
+      evidence: The education entry with degree and field.
+      anchors:
+        - {score: 0, description: No related degree.}
+        - {score: 1, description: Diploma in a related field.}
+        - {score: 2, description: Degree in a related technical field.}
+        - {score: 3, description: Bachelor's degree in computing.}
+        - {score: 4, description: Master's degree in computing.}
+  knockouts:
+    - id: right_to_work_uae
+      question: Do you have the right to work in the UAE without a new visa sponsorship?
+      question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
+      answer_type: yes_no
+      pass_if_yes: true
+    - id: notice_period_days
+      question: What is your notice period in days?
+      question_ar: ما مدة الإشعار المطلوبة منك بالأيام؟
+      answer_type: number
+      max_value: 60

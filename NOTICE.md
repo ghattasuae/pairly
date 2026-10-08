@@ -17,7 +17,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | PDFium | 156.0.8076.0 | BSD-3-Clause; its bundled build also carries FreeType (FTL), ICU (Unicode license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT), OpenJPEG (BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf (MIT or Apache-2.0), LLVM libc (Apache-2.0 WITH LLVM-exception) | compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0) |
 | DejaVu Sans (subset) | 2.37 | Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain | packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in decision receipt PDFs |
 
-## Python packages (136)
+## Python packages (137)
 
 | Name | Version | License |
 | --- | --- | --- |
@@ -46,6 +46,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | distlib | 0.4.3 | PSF-2.0 |
 | distro | 1.9.0 | Apache License, Version 2.0 |
 | docstring_parser | 0.18.0 | MIT |
+| Faker | 40.41.0 | MIT License |
 | fastapi | 0.142.2 | MIT |
 | filelock | 4.0.12 | MIT |
 | googleapis-common-protos | 1.75.5 | Apache-2.0 |

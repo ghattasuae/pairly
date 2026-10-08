@@ -443,7 +443,8 @@
         "invisible_render_mode": "{subject} contains invisible text that only software can read: \"{evidence}\".",
         "tiny_font": "{subject} contains text in a font too small for a person to read: \"{evidence}\".",
         "off_page": "{subject} contains text placed outside the visible page: \"{evidence}\".",
-        "docx_hidden": "{subject} contains text marked as hidden in Word, so a person does not see it: \"{evidence}\"."
+        "docx_hidden": "{subject} contains text marked as hidden in Word, so a person does not see it: \"{evidence}\".",
+        "covered_or_clipped": "{subject} contains text that is covered by a shape or cut off, so a person cannot see it: \"{evidence}\"."
       },
       "instruction": {
         "ignore_instructions": "{subject} contains text that tells an AI system to ignore its instructions: \"{evidence}\".",
@@ -457,7 +458,9 @@
         "role_marker": "{subject} contains chat role markers used to inject instructions: \"{evidence}\".",
         "tool_directive": "{subject} contains a command or JSON aimed at an AI tool: \"{evidence}\".",
         "output_control": "{subject} contains text that tells an AI system what to answer: \"{evidence}\".",
-        "hidden_message": "{subject} contains a message hidden in invisible characters: \"{evidence}\"."
+        "hidden_message": "{subject} contains a message hidden in invisible characters: \"{evidence}\".",
+        "classifier_paraphrase": "{subject} contains reworded text that a classifier found aimed at an AI system or an automated reviewer: \"{evidence}\".",
+        "classifier_unavailable": "{subject} was not fully checked for reworded instructions, because the classifier did not complete: \"{evidence}\"."
       },
       "keyword_stuffing": {
         "repetition": "{subject} repeats the same keyword far more often than normal writing does: {evidence}.",

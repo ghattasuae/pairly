@@ -19,7 +19,28 @@ A value that does not normalise (not an email, too few digits, bad IBAN checksum
 has no index (``None``). The index is lossy on purpose: it reveals equality, nothing
 else, and only to someone holding the key.
 
-TODO(WP1.14 follow-up): blind index key rotation (needs a key version per index column).
+Key rotation (versioned keys, see ``pairly_core.crypto.keys``):
+
+* writes use the current key: ``blind_index(...)``;
+* lookups match every configured key: ``blind_index_candidates(...)`` (dual lookup),
+  used as ``column.in_(candidates)``, so a row written under the old or the new key is
+  found during a rotation;
+* ``blind_index_all(...)`` gives the index under each version, for code that stores
+  more than one (dual write);
+* ``pairly-admin crypto rotate-blind-index`` recomputes stored indexes under the
+  current key from the encrypted source column (``crypto.blind_index_rotation``).
+
+A blind index column declares its source with ``info=blind_index_info(kind, source)``,
+so the rotation finds every index column without a registry to keep in sync. The
+stored value stays a bare 64-character hex digest (no version prefix): the version is
+not needed because lookups try every configured key and the rotation recomputes from
+the plaintext.
+
+The rollout that never misses a lookup: (1) add ``PAIRLY_BLIND_INDEX_KEY_2`` and
+restart everything with the current version unchanged (every process now looks up
+under both keys); (2) set ``PAIRLY_BLIND_INDEX_KEY_CURRENT=2`` and restart (new
+indexes use key 2, lookups still try both); (3) run the rotate command until
+``--dry-run`` reports nothing left; (4) remove the old key.
 """
 
 from __future__ import annotations
@@ -29,8 +50,11 @@ import hmac
 import re
 import unicodedata
 import uuid
-from collections.abc import Callable
-from typing import Literal
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass
+from typing import Any, Literal
+
+from sqlalchemy import MetaData, Table
 
 from pairly_core.crypto.keys import KeyRing, get_keyring
 
@@ -111,10 +135,7 @@ NORMALIZERS: dict[str, Callable[[str], str | None]] = {
 }
 
 
-def blind_index(
-    kind: IndexKind, value: str | None, org_id: uuid.UUID, keyring: KeyRing | None = None
-) -> str | None:
-    """Hex HMAC-SHA256 of the normalised value, or ``None`` when it does not normalise."""
+def _message(kind: str, value: str | None, org_id: uuid.UUID) -> bytes | None:
     if value is None:
         return None
     normalizer = NORMALIZERS.get(kind)
@@ -125,6 +146,83 @@ def blind_index(
     normalized = normalizer(value)
     if normalized is None:
         return None
+    return b"|".join((_TAG, kind.encode("ascii"), org_id.bytes, normalized.encode("utf-8")))
+
+
+def blind_index(
+    kind: IndexKind,
+    value: str | None,
+    org_id: uuid.UUID,
+    keyring: KeyRing | None = None,
+    *,
+    version: str | None = None,
+) -> str | None:
+    """Hex HMAC-SHA256 of the normalised value, or ``None`` when it does not normalise.
+
+    Uses the current blind index key, or the key ``version`` when given (raises
+    ``UnknownKeyVersionError`` when that version is not configured).
+    """
+    message = _message(kind, value, org_id)
+    if message is None:
+        return None
     ring = keyring or get_keyring()
-    message = b"|".join((_TAG, kind.encode("ascii"), org_id.bytes, normalized.encode("utf-8")))
-    return hmac.new(ring.blind_index_key, message, hashlib.sha256).hexdigest()
+    key = ring.blind_index_key if version is None else ring.blind_key(version)
+    return hmac.new(key, message, hashlib.sha256).hexdigest()
+
+
+def blind_index_all(
+    kind: IndexKind, value: str | None, org_id: uuid.UUID, keyring: KeyRing | None = None
+) -> dict[str, str]:
+    """The index under every configured key version (empty when it does not normalise)."""
+    message = _message(kind, value, org_id)
+    if message is None:
+        return {}
+    ring = keyring or get_keyring()
+    return {
+        version: hmac.new(ring.blind_key(version), message, hashlib.sha256).hexdigest()
+        for version in ring.blind_index_versions
+    }
+
+
+def blind_index_candidates(
+    kind: IndexKind, value: str | None, org_id: uuid.UUID, keyring: KeyRing | None = None
+) -> tuple[str, ...]:
+    """Every index a stored row may hold for ``value`` (current key first): for lookups."""
+    return tuple(blind_index_all(kind, value, org_id, keyring).values())
+
+
+# ------------------------------------------------------------------ index columns
+
+INFO_KEY = "pairly_blind_index"
+
+
+def blind_index_info(kind: IndexKind, source: str) -> dict[str, Any]:
+    """``mapped_column(..., info=...)`` for a blind index of the encrypted ``source``."""
+    if kind not in NORMALIZERS:
+        raise ValueError(f"unknown blind index kind {kind!r}")
+    return {INFO_KEY: {"kind": kind, "source": source}}
+
+
+@dataclass(frozen=True, slots=True)
+class BlindIndexColumn:
+    table: Table
+    column: str
+    source: str
+    kind: IndexKind
+
+
+def blind_index_columns(metadata: MetaData) -> Iterator[BlindIndexColumn]:
+    """Every declared blind index column in ``metadata``, sorted by table and column."""
+    from pairly_core.crypto.types import _EncryptedType
+
+    for table in sorted(metadata.tables.values(), key=lambda t: t.name):
+        for col in sorted(table.columns, key=lambda c: c.name):
+            spec = col.info.get(INFO_KEY)
+            if spec is None:
+                continue
+            source = spec["source"]
+            if source not in table.c or not isinstance(table.c[source].type, _EncryptedType):
+                raise ValueError(f"{table.name}.{col.name}: source {source!r} is not encrypted")
+            if "id" not in table.c or "org_id" not in table.c:
+                raise ValueError(f"{table.name} has a blind index but no id or org_id")
+            yield BlindIndexColumn(table, col.name, source, spec["kind"])

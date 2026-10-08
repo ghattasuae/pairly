@@ -66,6 +66,9 @@ class Char(_Model):
     bbox: BBox
     style: Style
     off_page: bool = False
+    # Contrast between the darkest and lightest rendered pixels under the character
+    # (WCAG ratio, 1.0 = one flat colour), kept only when low; see ``documents.render``.
+    render_contrast: float | None = None
 
 
 class Word(_Model):
@@ -106,6 +109,18 @@ class Fill(_Model):
     color: str
 
 
+RenderStatus = Literal["ok", "disabled", "no_text", "page_cap", "timeout", "too_large", "error"]
+# Statuses that leave text on the page unchecked (the guardrails then fail closed).
+RENDER_INCOMPLETE: frozenset[str] = frozenset({"page_cap", "timeout", "too_large", "error"})
+
+
+class RenderCheck(_Model):
+    """What the renderer-based visibility check did on a PDF page."""
+
+    status: RenderStatus
+    dpi: float | None = None
+
+
 class Table(_Model):
     bbox: BBox | None = None
     rows: list[list[str | None]]
@@ -134,6 +149,8 @@ class Page(_Model):
     fills: list[Fill] = Field(default_factory=list)
     ocr: OcrInfo | None = None
     image_count: int = 0
+    # PDF only: the renderer-based visibility check (``documents.render``).
+    render: RenderCheck | None = None
 
 
 class ParseWarning(_Model):

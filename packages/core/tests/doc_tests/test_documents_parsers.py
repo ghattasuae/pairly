@@ -53,7 +53,7 @@ def _words(doc: NormalizedDocument) -> dict[str, object]:
 def test_pdf_styles_hidden_text_and_metadata(tmp_path: Path) -> None:
     doc = PdfParser().parse(_write(tmp_path, "cv.pdf", fx.tricky_pdf()), OPTIONS)
     assert doc.parser.name == "pdf"
-    assert set(doc.parser.libraries) == {"pdfplumber", "pdfminer.six", "pypdf"}
+    assert set(doc.parser.libraries) == {"pdfplumber", "pdfminer.six", "pypdf", "pypdfium2"}
     (page,) = doc.pages
     assert (page.unit, round(page.width), round(page.height)) == ("pt", 595, 842)
     words = {w.text: w for w in page.words}

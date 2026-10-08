@@ -58,6 +58,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": '{subject} contains text placed outside the visible page: "{evidence}".',
         "ar": 'في {subject} نص موضوع خارج حدود الصفحة المرئية: "{evidence}".',
     },
+    "guardrails.hidden_text.covered_or_clipped": {
+        "en": '{subject} contains text that is covered by a shape or cut off, so a person cannot see it: "{evidence}".',
+        "ar": 'في {subject} نص مغطى بشكل مرسوم فوقه أو مقصوص، لذلك لا يراه القارئ: "{evidence}".',
+    },
     "guardrails.hidden_text.docx_hidden": {
         "en": '{subject} contains text marked as hidden in Word, so a person does not see it: "{evidence}".',
         "ar": 'في {subject} نص مخفي بإعدادات Word، لذلك لا يراه القارئ: "{evidence}".',
@@ -105,6 +109,14 @@ MESSAGES: dict[str, dict[str, str]] = {
     "guardrails.instruction.output_control": {
         "en": '{subject} contains text that tells an AI system what to answer: "{evidence}".',
         "ar": 'في {subject} نص يحدد لنظام الذكاء الاصطناعي ما يجب أن يجيب به: "{evidence}".',
+    },
+    "guardrails.instruction.classifier_paraphrase": {
+        "en": '{subject} contains reworded text that a classifier found aimed at an AI system or an automated reviewer: "{evidence}".',
+        "ar": 'في {subject} نص معاد صياغته وجده المصنف موجها إلى نظام ذكاء اصطناعي أو مراجع آلي: "{evidence}".',
+    },
+    "guardrails.instruction.classifier_unavailable": {
+        "en": '{subject} was not fully checked for reworded instructions, because the classifier did not complete: "{evidence}".',
+        "ar": 'لم يكتمل فحص {subject} بحثا عن تعليمات معاد صياغتها لأن المصنف لم يكتمل: "{evidence}".',
     },
     "guardrails.instruction.hidden_message": {
         "en": '{subject} contains a message hidden in invisible characters: "{evidence}".',
