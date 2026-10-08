@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
 
-// Talking to the compose stack from the specs: extra `make` arguments, the state the
-// full-flow spec leaves for later specs, and the development seed for approvals.
+// Talking to the running stack from the specs: extra `make` arguments, the state the
+// full-flow spec leaves for later specs, and the development seed for approvals. The
+// native stack (`make dev`) is the default; PAIRLY_E2E_STACK=docker (or
+// PAIRLY_E2E_COMPOSE_FILE) runs the same make targets against the compose stack.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -14,13 +16,15 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../../../..");
 
 /**
- * Extra `make` variables for every make call. `PAIRLY_E2E_COMPOSE_FILE` points make at
- * extra compose files (for example `infra/docker-compose.yml -f my-override.yml`), for a
- * stack started the same way.
+ * Extra `make` variables for every make call. `PAIRLY_E2E_STACK=docker` runs the make
+ * targets against the compose stack (`STACK=docker`) instead of the native one.
+ * `PAIRLY_E2E_COMPOSE_FILE` (implies docker) points make at extra compose files (for
+ * example `infra/docker-compose.yml -f my-override.yml`), for a stack started that way.
  */
 export function makeArgs(): string[] {
   const file = process.env.PAIRLY_E2E_COMPOSE_FILE;
-  return file ? [`COMPOSE_FILE=${file}`] : [];
+  const docker = process.env.PAIRLY_E2E_STACK === "docker" || Boolean(file);
+  return [...(docker ? ["STACK=docker"] : []), ...(file ? [`COMPOSE_FILE=${file}`] : [])];
 }
 
 export interface RunState {

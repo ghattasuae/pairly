@@ -2,8 +2,9 @@
 // Copyright (c) 2026 Proofly Technology
 
 /**
- * Transactional email for auth flows (magic links, invitations). SMTP only: Mailpit
- * locally, any SMTP relay in production. Bodies are built from the locale's message file,
+ * Transactional email for auth flows (magic links, invitations). SMTP (Mailpit for the
+ * Docker stack, any SMTP relay in production) or, for the native development stack and
+ * tests only, the file outbox (`outbox.ts`, `PAIRLY_EMAIL_TRANSPORT=outbox`). Bodies are built from the locale's message file,
  * plain text plus a minimal HTML version with every interpolated value escaped.
  *
  * Invitation emails are sent here, by the web server, right after the API returns the new
@@ -17,8 +18,19 @@ import { loadMessages } from "@/i18n/messages";
 import { type Locale, localeDirection } from "@/i18n/routing";
 
 import { serverEnv } from "./env";
+import { writeOutboxMessage } from "./outbox";
 
 let transporter: Transporter | undefined;
+
+async function deliver(mail: { to: string; subject: string; text: string; html: string }): Promise<void> {
+  const env = serverEnv();
+  const message = { from: env.smtp.from, ...mail };
+  if (env.email.transport === "outbox" && env.email.outboxDir) {
+    await writeOutboxMessage(env.email.outboxDir, message);
+    return;
+  }
+  await getTransporter().sendMail(message);
+}
 
 function getTransporter(): Transporter {
   if (transporter) return transporter;
@@ -80,7 +92,7 @@ export async function sendInvitationEmail(params: {
 ${button(params.url, t("button"))}
 <p style="color:#5b6766;font-size:14px">${escapeHtml(t("expires", { days: INVITATION_DAYS }))}<br>${escapeHtml(t("ignore"))}</p>
 </body></html>`;
-  await getTransporter().sendMail({ from: serverEnv().smtp.from, to: params.to, subject, text, html });
+  await deliver({ to: params.to, subject, text, html });
 }
 
 export async function sendMagicLinkEmail(params: {
@@ -109,11 +121,5 @@ export async function sendMagicLinkEmail(params: {
 <p><a href="${escapeHtml(params.url)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#1d5c52;color:#ffffff;text-decoration:none">${escapeHtml(t("button"))}</a></p>
 <p style="color:#5b6766;font-size:14px">${escapeHtml(t("expires", { minutes }))}<br>${escapeHtml(t("ignore"))}</p>
 </body></html>`;
-  await getTransporter().sendMail({
-    from: serverEnv().smtp.from,
-    to: params.to,
-    subject,
-    text,
-    html,
-  });
+  await deliver({ to: params.to, subject, text, html });
 }

@@ -11,21 +11,26 @@ permissions from `/v1/me` only to hide links nobody could use.
 ## Run it
 
 ```bash
-make dev                               # API, Postgres, Mailpit ... (default profile)
-pnpm --filter @pairly/web auth:migrate # once: create the Better Auth tables (schema auth)
-pnpm --filter @pairly/web dev          # http://localhost:3100, reads the repo-root .env
+make dev    # native stack: Postgres, Valkey, API, worker and this app on http://localhost:3100
 ```
 
-Or run everything in containers: `PROFILES=web make dev`. The `web` container applies the
-Better Auth migrations itself on start (`PAIRLY_AUTH_MIGRATE_ON_START=true`).
+`make dev` runs `next dev` on 127.0.0.1:3100 in the background (log in
+`.local/logs/web.log`) with the variables it needs, and the app applies the Better Auth
+migrations itself on start (`PAIRLY_AUTH_MIGRATE_ON_START=true`). `LOCAL_WEB_MODE=start
+make dev` builds once and runs `next start` instead. Stop with `make local-down`.
 
-Create an organisation with `make bootstrap-org` (see below), open the printed invite link,
-then open Mailpit at http://localhost:8025 for the sign-in link.
+Create an organisation with `make bootstrap-org` (see below) and open the printed invite
+link. Email is not sent in the native stack: magic links and invitations are written to
+`.local/mail` (`PAIRLY_EMAIL_TRANSPORT=outbox`, see `src/lib/outbox.ts`). The newest
+message is the last line of `.local/mail/index.jsonl`; its `<id>.json` holds the text and
+HTML, its `<id>.eml` the raw message. The outbox is refused unless `PAIRLY_ENV` is
+`development` or `test`.
 
-Note: in compose the API fetches signing keys from `http://web:3000/api/auth/jwks`. If you
-run the web app on the host with `pnpm dev` instead, point the API at it with
-`PAIRLY_AUTH_JWKS_URL=http://host.docker.internal:3100/api/auth/jwks`, or use the `web`
-profile.
+Documents open through short-lived signed URLs from the API's development route
+(`PAIRLY_DOCUMENT_ORIGIN` is the API origin, `http://localhost:8000`).
+
+The Docker Compose stack still works for CI and self-hosters: `PROFILES=web make
+docker-dev`. There email goes to Mailpit (http://localhost:8025) and documents to MinIO.
 
 Other scripts:
 
@@ -80,7 +85,7 @@ messages/en.json, ar.json  every UI string
 
 ## Auth
 
-- **Magic link** through SMTP (Mailpit locally). The email links to
+- **Magic link** through SMTP (Mailpit in the Docker stack; the file outbox in the native stack). The email links to
   `/<locale>/sign-in/confirm#token=...`. The token sits in the URL fragment, so it never
   reaches server logs, and it is only spent when the person presses "Sign in", so mail
   scanners that open links cannot use it up. Tokens are stored hashed and expire after
@@ -150,20 +155,21 @@ user, and access comes only from accepting an invitation in the API.
 
 ## End-to-end and accessibility suite
 
-`e2e/` holds a Playwright suite (Chromium, one worker) with axe accessibility checks,
-copy checks (raw message keys, em dashes) and RTL checks across en/ar and light/dark. It
-runs against the compose stack, not a dev server, because the flows need the API,
-Postgres and Mailpit. It is not part of CI yet.
+`e2e/` holds a Playwright suite (Chromium, one worker, headless) with axe accessibility
+checks, copy checks (raw message keys, em dashes) and RTL checks across en/ar and
+light/dark. It runs against the running native stack, not a server Playwright starts,
+because the flows need the API, the worker and Postgres too. It is not part of CI yet.
 
 1. The suite opens `http://localhost:3100` (`http://localhost:<PAIRLY_WEB_PORT>`), the
-   host of `PAIRLY_PUBLIC_WEB_URL`, so magic links and invitations from Mailpit come back
-   to the origin whose cookies and storage the browser holds. No extra trusted origin is
+   host of `PAIRLY_PUBLIC_WEB_URL`, so magic links and invitations come back to the
+   origin whose cookies and storage the browser holds. No extra trusted origin is
    needed. To use another address (for example `http://127.0.0.1:3100`), set
    `PAIRLY_E2E_BASE_URL` and add that origin to `PAIRLY_AUTH_TRUSTED_ORIGINS` in the
    repo-root `.env`, or sign-in requests fail the origin check.
-2. Start the stack with the web profile and wait until it is healthy:
-   `PROFILES=web make dev`. Port 3100 on localhost must be the compose `web` service;
-   another local server on that port will answer instead.
+2. Start the native stack: `make dev` (or `LOCAL_WEB_MODE=start make dev` for a
+   production build, which answers faster than `next dev` compiling each page on first
+   use). Port 3100 on localhost must be this stack's web app; another local server on
+   that port will answer instead. `make local-status` shows the health of each part.
 3. Install the browser once: `pnpm --filter @pairly/web exec playwright install chromium`.
 4. Run it:
 
@@ -177,17 +183,28 @@ Postgres and Mailpit. It is not part of CI yet.
    screenshots, saved sessions and the findings (`findings/axe.ndjson`, `copy.ndjson`,
    `rtl.ndjson`) are written. Axe results are
    logged there rather than failing the run, so read `axe.ndjson` after each run.
+   `09-m1-acceptance` writes its screenshots to `PAIRLY_E2E_M1_DIR`.
+
+The suite reads email from the outbox (`e2e/utils/mail.ts`, `.local/mail`, or
+`PAIRLY_OUTBOX_DIR`). The `make` calls it makes (`bootstrap-org`, `demo-expense`,
+`dev-seed-approval`, `audit-anchor-now`) run against the native stack.
 
 Order matters: `01-full-flow` bootstraps an organisation (`make bootstrap-org`), accepts
 the invite, turns on TOTP and saves sessions (and `run-state.json`) that the later specs
 reuse. `06-inbox`, `07-approval-link` and `08-audit-decisions-settings` seed approvals
-with `make dev-seed-approval` (development only, see below). Run `make down` when you are
-done.
+with `make dev-seed-approval` (development only, see below). `09-m1-acceptance` stands
+alone (its own organisation, seeded with `make demo-expense`, recorded model mode). Run
+`make local-down` when you are done.
 
 If you point the suite at another host than the one in emailed links, set
-`PAIRLY_E2E_EMAILED_HOST` to the emailed host so links are rewritten to yours. Other
-knobs: `MAILPIT_URL` and `PAIRLY_E2E_COMPOSE_FILE` (extra compose files for the `make` calls, for example
-`infra/docker-compose.yml -f my-override.yml`).
+`PAIRLY_E2E_EMAILED_HOST` to the emailed host so links are rewritten to yours.
+
+Against the Docker Compose stack (`PROFILES="web scan" make docker-dev`) instead, set
+`PAIRLY_E2E_STACK=docker` (the `make` calls then run with `STACK=docker`) and
+`PAIRLY_E2E_MAIL=mailpit` (read email from Mailpit at `MAILPIT_URL`, default
+`http://127.0.0.1:8025`). `PAIRLY_E2E_COMPOSE_FILE` adds compose files for those `make`
+calls (for example `infra/docker-compose.yml -f my-override.yml`) and implies
+`PAIRLY_E2E_STACK=docker`.
 
 Development seed: `make dev-seed-approval ORG=<slug> EMAIL=<member email> ARGS="..."` gives
 the member the `approver` role in Pay, starts a placeholder run and requests one

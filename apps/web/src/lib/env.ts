@@ -26,8 +26,16 @@ const schema = z.object({
   jwtIssuer: z.string().min(1),
   jwtAudience: z.string().min(1),
   apiInternalUrl: url,
+  /**
+   * `smtp` (any relay; Mailpit for the Docker stack) or `outbox` (native development and
+   * tests only: each message is written as files to `outboxDir`, see `outbox.ts`).
+   */
+  email: z.object({
+    transport: z.enum(["smtp", "outbox"]),
+    outboxDir: z.string().optional(),
+  }),
   smtp: z.object({
-    host: z.string().min(1),
+    host: z.string().optional(),
     port: z.coerce.number().int().min(1).max(65535),
     secure: z.boolean(),
     requireTls: z.boolean(),
@@ -126,6 +134,7 @@ export function readServerEnv(): ServerEnv {
   }
   const extraOrigins = parseTrustedOrigins(get("PAIRLY_AUTH_TRUSTED_ORIGINS"));
 
+  const emailTransport = get("PAIRLY_EMAIL_TRANSPORT") ?? "smtp";
   const parsed = schema.safeParse({
     nodeEnv,
     baseUrl,
@@ -135,6 +144,7 @@ export function readServerEnv(): ServerEnv {
     jwtIssuer: get("PAIRLY_AUTH_ISSUER"),
     jwtAudience: get("PAIRLY_AUTH_AUDIENCE"),
     apiInternalUrl: get("PAIRLY_API_INTERNAL_URL"),
+    email: { transport: emailTransport, outboxDir: get("PAIRLY_OUTBOX_DIR") },
     smtp: {
       host: get("PAIRLY_SMTP_HOST"),
       port: get("PAIRLY_SMTP_PORT") ?? "587",
@@ -159,6 +169,20 @@ export function readServerEnv(): ServerEnv {
     throw new Error(`Invalid web server configuration:\n  ${fields.join("\n  ")}`);
   }
   const env = parsed.data;
+  if (env.email.transport === "smtp" && !env.smtp.host) {
+    throw new Error("Invalid web server configuration:\n  smtp.host: PAIRLY_SMTP_HOST is required");
+  }
+  if (env.email.transport === "outbox") {
+    // Fail closed: the outbox only exists for the native development stack and tests.
+    // PAIRLY_ENV, not NODE_ENV, decides (the native stack may run `next start`).
+    const pairlyEnv = get("PAIRLY_ENV") ?? "production";
+    if (pairlyEnv !== "development" && pairlyEnv !== "test") {
+      throw new Error("PAIRLY_EMAIL_TRANSPORT=outbox is for development and test only (PAIRLY_ENV)");
+    }
+    if (!env.email.outboxDir) {
+      throw new Error("Invalid web server configuration:\n  email.outboxDir: PAIRLY_OUTBOX_DIR is required");
+    }
+  }
   if (env.nodeEnv === "production" && !env.baseUrl.startsWith("https://")) {
     const host = new URL(env.baseUrl).hostname;
     if (host !== "localhost" && host !== "127.0.0.1") {

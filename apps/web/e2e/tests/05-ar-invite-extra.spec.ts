@@ -10,7 +10,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { auditA11y } from "../utils/axe";
 import { auditCopy } from "../utils/copy";
 import { auditRtl } from "../utils/rtl";
-import { clearMailbox, extractLink, toReachableUrl, waitForMessageTo } from "../utils/mailpit";
+import { clearMailbox, extractLink, toReachableUrl, waitForMessageTo } from "../utils/mail";
 import { logCheck, SCREENSHOTS_DIR } from "../utils/report";
 
 // 01-full-flow.spec.ts only drives the invite "signIn"/"accept" states in en/light (the

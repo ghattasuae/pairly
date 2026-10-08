@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-import { clearMailbox, extractLink, toReachableUrl, waitForMessageTo, waitForMessageWith } from "../utils/mailpit";
+import { clearMailbox, extractLink, toReachableUrl, waitForMessageTo, waitForMessageWith } from "../utils/mail";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
 import { makeArgs, REPO_ROOT } from "../utils/stack";
 import { totpFresh } from "../utils/totp";

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 import { totpFresh } from "../utils/totp";
-import { clearMailbox, waitForMessageTo, extractLink, toReachableUrl } from "../utils/mailpit";
+import { clearMailbox, waitForMessageTo, extractLink, toReachableUrl } from "../utils/mail";
 import { AUTH_STATE_DIR, SCREENSHOTS_DIR, logCheck } from "../utils/report";
 import { makeArgs, saveRunState } from "../utils/stack";
 import { auditA11y } from "../utils/axe";
