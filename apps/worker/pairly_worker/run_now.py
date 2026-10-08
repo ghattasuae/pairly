@@ -5,11 +5,11 @@
     python -m pairly_worker.run_now audit_anchor_nightly
 
 Enqueues the named cron job (it must be one of ``RUNNABLE``) on the arq queue the worker
-reads, waits for it and prints its result as JSON. The worker runs it with its own
-context (keys, stores, database role), exactly as the schedule would. Refuses to run when
-``PAIRLY_ENV`` is ``production``: there the schedule is the only way. ``make
-audit-anchor-now`` runs it in the compose worker, so the audit viewer has an anchor to
-check without waiting for the night.
+reads, waits until it has run and prints JSON (with its result when the worker kept one).
+The worker runs it with its own context (keys, stores, database role), exactly as the
+schedule would. Refuses to run unless ``PAIRLY_ENV`` is ``development`` or ``test``:
+elsewhere the schedule is the only way. ``make audit-anchor-now`` runs it in the compose
+worker, so the audit viewer has an anchor to check without waiting for the night.
 """
 
 from __future__ import annotations
@@ -25,12 +25,15 @@ from typing import Final
 
 from arq import create_pool
 from arq.connections import RedisSettings
+from arq.jobs import JobStatus
 
 from pairly_core.ingestion.queue import job_dumps, job_loads
 from pairly_worker.decision_jobs import ANCHOR_JOB
 
 RUNNABLE: Final = frozenset({ANCHOR_JOB})
 TIMEOUT_SECONDS: Final = 120
+POLL_SECONDS: Final = 0.5
+_WAITING: Final = frozenset({JobStatus.deferred, JobStatus.queued, JobStatus.in_progress})
 
 
 async def run_now(redis_url: str, job: str) -> object:
@@ -42,7 +45,19 @@ async def run_now(redis_url: str, job: str) -> object:
         queued = await pool.enqueue_job(job, _job_id=f"run-now:{job}:{uuid.uuid4().hex}")
         if queued is None:  # pragma: no cover - a fresh job id is never taken
             raise RuntimeError("the job was not queued")
-        return await queued.result(timeout=TIMEOUT_SECONDS)
+        # The worker keeps no results: wait until the job has left the queue, then report
+        # its result if one was kept (the worker log has it either way).
+        deadline = asyncio.get_running_loop().time() + TIMEOUT_SECONDS
+        while await queued.status() in _WAITING:
+            if asyncio.get_running_loop().time() > deadline:
+                raise TimeoutError(f"{job} did not finish in {TIMEOUT_SECONDS} seconds")
+            await asyncio.sleep(POLL_SECONDS)
+        info = await queued.result_info()
+        if info is None:
+            return {"job": job, "finished": True}
+        if not info.success:
+            raise RuntimeError(f"{job} failed: {info.result!r}")
+        return {"job": job, "finished": True, "result": info.result}
     finally:
         await pool.aclose()
 

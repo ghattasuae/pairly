@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pytest
+from arq.jobs import JobStatus
 
 from pairly_worker import run_now
 from pairly_worker.decision_jobs import ANCHOR_JOB
@@ -34,9 +35,14 @@ def test_refuses_unknown_jobs_and_a_missing_queue(monkeypatch: pytest.MonkeyPatc
 def test_enqueues_the_job_and_returns_its_result(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str, str]] = []
 
+    states = iter([JobStatus.queued, JobStatus.in_progress, JobStatus.not_found])
+
     class Job:
-        async def result(self, timeout: float) -> dict[str, int]:
-            return {"written": 1}
+        async def status(self) -> JobStatus:
+            return next(states)
+
+        async def result_info(self) -> None:
+            return None
 
     class Pool:
         async def enqueue_job(self, name: str, _job_id: str) -> Job:
@@ -52,6 +58,7 @@ def test_enqueues_the_job_and_returns_its_result(monkeypatch: pytest.MonkeyPatch
         return Pool()
 
     monkeypatch.setattr(run_now, "create_pool", fake_pool)
+    monkeypatch.setattr(run_now, "POLL_SECONDS", 0)
     monkeypatch.setenv("PAIRLY_ENV", "development")
     monkeypatch.setenv("PAIRLY_REDIS_URL", "redis://localhost:6379/0")
     assert run_now.main([ANCHOR_JOB]) == 0
