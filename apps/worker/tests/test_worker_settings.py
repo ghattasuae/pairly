@@ -127,6 +127,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         WEBHOOK_JOB,
         RETENTION_JOB,
         "expense_stuck_note_sweep",
+        "hire_screening_start",
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
@@ -137,6 +138,9 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     # Plugin jobs with a coroutine run too (expense: every 5 minutes, one at a time).
     sweep = jobs["expense_stuck_note_sweep"]
     assert (sweep.minute, sweep.unique) == (set(range(0, 60, 5)), True)
+    # Hire: start pending screenings every minute, one at a time.
+    screening = jobs["hire_screening_start"]
+    assert (screening.minute, screening.unique) == (set(range(60)), True)
     # Each cron coroutine is wrapped to record its runs in job_runs.
     assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
     # The retention dry run is daily at 02:15 UTC, one at a time.

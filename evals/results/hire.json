@@ -444,20 +444,20 @@
   "what": "Deterministic stages on this machine, per CV, in process (not gating).",
   "stages": {
    "blind": {
-    "mean_ms": 0.7,
-    "p95_ms": 1.04
+    "mean_ms": 0.71,
+    "p95_ms": 1.05
    },
    "checks": {
     "mean_ms": 0.57,
     "p95_ms": 0.84
    },
    "guardrails": {
-    "mean_ms": 3.88,
-    "p95_ms": 7.48
+    "mean_ms": 3.92,
+    "p95_ms": 7.57
    },
    "parse": {
-    "mean_ms": 55.6,
-    "p95_ms": 71.24
+    "mean_ms": 57.43,
+    "p95_ms": 76.28
    },
    "sanitize": {
     "mean_ms": 0.07,
@@ -480,5 +480,5 @@
   "current": true,
   "note": "scripted from synthetic ground truth; not model output"
  },
- "seconds": 40.8
+ "seconds": 41.7
 }
