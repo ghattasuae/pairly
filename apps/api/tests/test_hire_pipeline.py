@@ -375,11 +375,20 @@ async def test_rejection_is_never_sent_without_an_approval(
 
     detail = (await api.call("GET", f"/v1/approvals/{approval_id}", world, "manager")).json()
     assert detail["approval_type"] == "hire.message"
-    # The approval binds the exact email, which carries the name; the reviewer's
-    # preview shows the blind label in its place.
+    # The approval binds the exact email, which carries the name; while blind the
+    # approver sees it with the name masked (test_hire_blind_text covers the hash).
     label = after["preview"]["text"].split("\n", 1)[0].removeprefix("Dear ").rstrip(",")
     assert label.startswith("Candidate ")
-    assert detail["payload"]["text"] == after["preview"]["text"].replace(label, "Layla Haddad")
+    assert detail["masked_fields"] == ["name", "email", "phone"]
+    assert detail["payload"]["text"] == after["preview"]["text"].replace(
+        label, "[name hidden in blind mode]"
+    )
+    (stored,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT payload FROM approvals WHERE id = :a",
+        {"a": approval_id},
+    )
 
     # The submitter cannot approve their own message; nobody can without a second factor.
     own = await api.client.post(
@@ -408,7 +417,7 @@ async def test_rejection_is_never_sent_without_an_approval(
     rejection = next(
         m for m in mails if "Layla Haddad" in m["text"] and "not to move forward" in m["text"]
     )
-    assert rejection["text"] == detail["payload"]["text"]
+    assert rejection["text"] == stored.payload["text"]
     (note,) = await owner_rows(
         owner_engine,
         world.org_id,

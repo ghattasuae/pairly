@@ -635,6 +635,7 @@
     "notFound": "This item is not available to you any more.",
     "loadError": "The details could not be loaded. Pick the item again to retry.",
     "whatHappens": "What you are approving",
+    "blindMasked": "The candidate's name, email and phone are hidden in blind mode. The approval still covers the real message, and the email goes out with the real details.",
     "evidence": "Evidence",
     "openDocument": "Open the document on its own page",
     "context": "Context",

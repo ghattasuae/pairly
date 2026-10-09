@@ -594,6 +594,17 @@
             ],
             "title": "Decided At"
           },
+          "display_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Note"
+          },
           "entity_id": {
             "anyOf": [
               {
@@ -632,6 +643,14 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "masked_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Masked Fields",
+            "type": "array"
           },
           "needs_second_factor": {
             "title": "Needs Second Factor",

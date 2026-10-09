@@ -593,3 +593,49 @@ def display_text(original: str, spans: Sequence[tuple[int, int, BlindCategory]])
         position = end
     out.append(original[position:])
     return DisplayText("".join(out), tuple(replacements))
+
+
+# ------------------------------------------------------------------ known identity
+
+
+def merge_sources(*many: BlindSources) -> BlindSources:
+    """Every value of several sources, each once."""
+    return BlindSources(
+        names=_unique(v for s in many for v in s.names),
+        emails=_unique(v for s in many for v in s.emails),
+        phones=_unique(v for s in many for v in s.phones),
+        links=_unique(v for s in many for v in s.links),
+        locations=_unique(v for s in many for v in s.locations),
+        institutions=_unique(v for s in many for v in s.institutions),
+    )
+
+
+def identity_spans(text: str, sources: BlindSources) -> list[tuple[int, int, str]]:
+    """Where ``text`` names the known person: ``(start, end, kind)`` with kind ``name``,
+    ``email`` or ``phone``, merged, in order. Only the values ``sources`` knows (the
+    exact email, the phone's digits, the name in full and word by word), so it can mask
+    a message that must otherwise read exactly as sent."""
+    found: list[tuple[int, int, str]] = []
+    for email in sources.emails:
+        pattern = re.compile(re.escape(email), re.IGNORECASE)
+        found += [(m.start(), m.end(), "email") for m in pattern.finditer(text)]
+    for phone in sources.phones:
+        phone_pattern = _phone_re(phone)
+        if phone_pattern is not None:
+            for m in phone_pattern.finditer(text):
+                # The pattern starts at the first digit: keep a leading "+" with it.
+                start = m.start() - 1 if m.start() > 0 and text[m.start() - 1] == "+" else m.start()
+                found.append((start, m.end(), "phone"))
+    for name in sources.names:
+        for pattern in (_name_re(name), *(_name_re(p) for p in _name_parts(name))):
+            found += [
+                (m.start(), m.end(), "name") for m in pattern.finditer(text) if m.end() > m.start()
+            ]
+    merged: list[tuple[int, int, str]] = []
+    for start, end, kind in sorted(found, key=lambda s: (s[0], -s[1])):
+        if merged and start < merged[-1][1]:
+            last = merged[-1]
+            merged[-1] = (last[0], max(last[1], end), last[2])
+            continue
+        merged.append((start, end, kind))
+    return merged

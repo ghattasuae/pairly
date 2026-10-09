@@ -2666,6 +2666,8 @@ export type components = {
             current_step: components["schemas"]["StepOut"] | null;
             /** Decided At */
             decided_at: string | null;
+            /** Display Note */
+            display_note?: string | null;
             /** Entity Id */
             entity_id: string | null;
             /** Entity Type */
@@ -2682,6 +2684,11 @@ export type components = {
              * Format: uuid
              */
             id: string;
+            /**
+             * Masked Fields
+             * @default []
+             */
+            masked_fields: string[];
             /** Needs Second Factor */
             needs_second_factor: boolean;
             /** Payload */
