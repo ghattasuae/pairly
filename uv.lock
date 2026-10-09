@@ -1371,11 +1371,19 @@ name = "pairly-hire"
 version = "0.0.0"
 source = { editable = "packages/hire" }
 dependencies = [
+    { name = "httpx" },
+    { name = "pairly-api" },
     { name = "pairly-core" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pairly-core", editable = "packages/core" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "pairly-api", editable = "apps/api" },
+    { name = "pairly-core", editable = "packages/core" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [[package]]
 name = "pairly-mcp"

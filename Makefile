@@ -8,7 +8,7 @@
 #   16 and Valkey run as local processes with their data in .local/, and the api, worker
 #   and web run as plain processes (scripts/local_stack.sh). No containers.
 # - Docker Compose (for CI and self-hosters): `make docker-dev` (infra/docker-compose.yml).
-# The admin targets (bootstrap-org, demo-expense, dev-seed-approval, audit-anchor-now)
+# The admin targets (bootstrap-org, demo-expense, demo-hire, dev-seed-approval, audit-anchor-now)
 # run against the native stack; STACK=docker runs them in the compose stack instead.
 
 SHELL := /bin/bash
@@ -44,7 +44,7 @@ else
 $(error STACK must be native or docker)
 endif
 
-.PHONY: help install hooks env dev demo demo-expense down logs ps test evals lint format typecheck
+.PHONY: help install hooks env dev demo demo-expense demo-hire down logs ps test evals lint format typecheck
 .PHONY: local-up local-down local-status local-test local-logs
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
 .PHONY: bootstrap-org dev-seed-approval audit-anchor-now
@@ -128,6 +128,13 @@ docker-ps: ## Show compose containers and their health
 # Needs an organisation (make bootstrap-org). Seeds its policies, three demo people
 # (invitation links are printed once) and the recorded model responses, and checks
 # that the synthetic receipts in synth/expense/receipts are current.
+demo-hire: ## Seed Pairly Hire in an org (SLUG=acme): jobs, rubrics, people, recordings
+	@if [ -z "$(SLUG)" ]; then echo 'usage: make demo-hire SLUG=acme'; exit 2; fi
+	$(UV) run python -m pairly_hire.recordings --check
+	$(RUN_OWNER) pairly-admin seed hire-demo --org "$(SLUG)"
+	@echo ""
+	@echo "Careers page: /en/careers/$(SLUG) and /ar/careers/$(SLUG) on the web app."
+
 demo-expense: ## Seed the expense example in an org (SLUG=acme): policies, people, recordings
 	@if [ -z "$(SLUG)" ]; then echo 'usage: make demo-expense SLUG=acme'; exit 2; fi
 	$(UV) run python -m synth.expense --check
@@ -171,9 +178,9 @@ format: ## Auto-format and auto-fix Python
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
 
-typecheck: ## mypy (strict on packages/core and packages/expense) and tsc
-	$(UV) run mypy packages/core packages/expense
-	$(UV) run mypy packages/hire packages/pay apps sdks/python scripts synth
+typecheck: ## mypy (strict on packages/core, packages/expense and packages/hire) and tsc
+	$(UV) run mypy packages/core packages/expense packages/hire
+	$(UV) run mypy packages/pay apps sdks/python scripts synth
 	$(PNPM) typecheck
 
 # ---------------------------------------------------------------- CI checks, run locally

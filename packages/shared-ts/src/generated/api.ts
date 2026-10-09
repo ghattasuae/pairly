@@ -742,6 +742,402 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Applications */
+        get: operations["list_applications_v1_hire_applications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Application */
+        get: operations["get_application_v1_hire_applications__application_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Jobs */
+        get: operations["list_jobs_v1_hire_jobs_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_v1_hire_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_v1_hire_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch */
+        patch: operations["patch_v1_hire_jobs__job_id__patch"];
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job Checks */
+        get: operations["job_checks_v1_hire_jobs__job_id__checks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close */
+        post: operations["close_v1_hire_jobs__job_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/form": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Form */
+        get: operations["get_form_v1_hire_jobs__job_id__form_get"];
+        /** Put Form */
+        put: operations["put_form_v1_hire_jobs__job_id__form_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause */
+        post: operations["pause_v1_hire_jobs__job_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish */
+        post: operations["publish_v1_hire_jobs__job_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/rubric": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Rubric */
+        get: operations["get_rubric_v1_hire_jobs__job_id__rubric_get"];
+        /** Put Rubric */
+        put: operations["put_rubric_v1_hire_jobs__job_id__rubric_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/rubric/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ai Rubric Draft */
+        post: operations["ai_rubric_draft_v1_hire_jobs__job_id__rubric_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/rubric/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lock */
+        post: operations["lock_v1_hire_jobs__job_id__rubric_lock_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/check-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Text */
+        post: operations["check_text_v1_hire_jobs_check_text_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/jobs/draft-description": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft Description */
+        post: operations["draft_description_v1_hire_jobs_draft_description_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Careers */
+        get: operations["careers_v1_hire_public_careers__org_slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/applications/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload File */
+        post: operations["upload_file_v1_hire_public_careers__org_slug__applications_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/applications/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["submit_v1_hire_public_careers__org_slug__applications_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/feed.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Feed Json */
+        get: operations["feed_json_v1_hire_public_careers__org_slug__feed_json_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/feed.xml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Feed Xml */
+        get: operations["feed_xml_v1_hire_public_careers__org_slug__feed_xml_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/jobs/{job_slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job Detail */
+        get: operations["job_detail_v1_hire_public_careers__org_slug__jobs__job_slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/careers/{org_slug}/jobs/{job_slug}/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply */
+        post: operations["apply_v1_hire_public_careers__org_slug__jobs__job_slug__applications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/reports/self-identification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Self Identification Report */
+        get: operations["self_identification_report_v1_hire_reports_self_identification_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_v1_hire_settings_get"];
+        /** Put Settings */
+        put: operations["put_settings_v1_hire_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/integrations/slack": {
         parameters: {
             query?: never;
@@ -2828,6 +3224,612 @@ export type components = {
             key: string;
             /** Overridden */
             overridden: boolean;
+        };
+        /** HireApplicationDetail */
+        HireApplicationDetail: {
+            /** Acknowledged At */
+            acknowledged_at: string | null;
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            };
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate Name */
+            candidate_name: string;
+            /**
+             * Consent At
+             * Format: date-time
+             */
+            consent_at: string;
+            /** Consent Locale */
+            consent_locale: string;
+            /** Consent Version */
+            consent_version: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Cv Document Id */
+            cv_document_id: string | null;
+            /** Duplicate Hints */
+            duplicate_hints: number;
+            /** Duplicate Signals */
+            duplicate_signals: {
+                [key: string]: unknown;
+            }[];
+            /** Email */
+            email: string;
+            /** Files */
+            files: {
+                [key: string]: string;
+            };
+            /**
+             * Form Policy Id
+             * Format: uuid
+             */
+            form_policy_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Knockouts */
+            knockouts: components["schemas"]["HireKnockoutOut"][];
+            /** Location */
+            location: string | null;
+            /** Needs Human Review */
+            needs_human_review: boolean;
+            /** Phone */
+            phone: string | null;
+            /** Profile Url */
+            profile_url: string | null;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /**
+             * Rubric Policy Id
+             * Format: uuid
+             */
+            rubric_policy_id: string;
+            /** Rubric Version */
+            rubric_version: number | null;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** HireApplicationList */
+        HireApplicationList: {
+            /** Items */
+            items: components["schemas"]["HireApplicationSummary"][];
+        };
+        /** HireApplicationSummary */
+        HireApplicationSummary: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate Name */
+            candidate_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Duplicate Hints */
+            duplicate_hints: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Needs Human Review */
+            needs_human_review: boolean;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** HireApplyOut */
+        HireApplyOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** File Fields */
+            file_fields: string[];
+            /** Required Files */
+            required_files: string[];
+            /** Token */
+            token: string;
+        };
+        /** HireBriefIn */
+        HireBriefIn: {
+            /** Brief */
+            brief: string;
+        };
+        /** HireCareersOut */
+        HireCareersOut: {
+            /** Jobs */
+            jobs: components["schemas"]["HirePublicJob"][];
+            organisation: components["schemas"]["HirePublicOrg"];
+        };
+        /** HireCheckTextIn */
+        HireCheckTextIn: {
+            /**
+             * Description Ar
+             * @default
+             */
+            description_ar: string;
+            /**
+             * Description En
+             * @default
+             */
+            description_en: string;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Title Ar
+             * @default
+             */
+            title_ar: string;
+        };
+        /** HireFileOut */
+        HireFileOut: {
+            /** Field */
+            field: string;
+            /** Received */
+            received: boolean;
+        };
+        /** HireFindingOut */
+        HireFindingOut: {
+            /** Category */
+            category: string;
+            /** End */
+            end: number;
+            /** Match */
+            match: string;
+            /** Message */
+            message: string;
+            /** Rule */
+            rule: string;
+            /** Severity */
+            severity: string;
+            /** Start */
+            start: number;
+            /** Suggestions */
+            suggestions: string[];
+        };
+        /** HireFormOut */
+        HireFormOut: {
+            /** Form */
+            form: {
+                [key: string]: unknown;
+            };
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Knockout Questions */
+            knockout_questions: {
+                [key: string]: unknown;
+            }[];
+            /** Version */
+            version: number | null;
+        };
+        /** HireJobDraftOut */
+        HireJobDraftOut: {
+            checks: components["schemas"]["HireTextChecks"];
+            /** Description Ar */
+            description_ar: string;
+            /** Description En */
+            description_en: string;
+            model: components["schemas"]["HireModelCallOut"];
+            /** Nice To Have */
+            nice_to_have: string[];
+            /** Requirements */
+            requirements: string[];
+            /** Responsibilities */
+            responsibilities: string[];
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+        };
+        /** HireJobIn */
+        HireJobIn: {
+            /** Country */
+            country?: string | null;
+            /** Description Ar */
+            description_ar?: string | null;
+            /** Description En */
+            description_en?: string | null;
+            /**
+             * Employment Type
+             * @enum {string}
+             */
+            employment_type: "full_time" | "part_time" | "contract" | "temporary" | "internship";
+            /** Location */
+            location: string;
+            /** Salary Currency */
+            salary_currency?: string | null;
+            /** Salary Max */
+            salary_max?: number | string | null;
+            /** Salary Min */
+            salary_min?: number | string | null;
+            /** Salary Period */
+            salary_period?: ("year" | "month" | "hour") | null;
+            /** Show Salary */
+            show_salary?: boolean | null;
+            /** Team */
+            team?: string | null;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar?: string | null;
+            /**
+             * Work Model
+             * @enum {string}
+             */
+            work_model: "onsite" | "hybrid" | "remote";
+        };
+        /** HireJobList */
+        HireJobList: {
+            /** Items */
+            items: components["schemas"]["HireJobOut"][];
+        };
+        /** HireJobOut */
+        HireJobOut: {
+            /** Closed At */
+            closed_at: string | null;
+            /** Country */
+            country: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Description Ar */
+            description_ar: string;
+            /** Description En */
+            description_en: string;
+            /** Employment Type */
+            employment_type: string;
+            /** Form Policy Id */
+            form_policy_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Location */
+            location: string;
+            /** Published At */
+            published_at: string | null;
+            /** Rubric Policy Id */
+            rubric_policy_id: string | null;
+            /** Salary Currency */
+            salary_currency: string | null;
+            /** Salary Max */
+            salary_max: string | null;
+            /** Salary Min */
+            salary_min: string | null;
+            /** Salary Period */
+            salary_period: string | null;
+            /** Show Salary */
+            show_salary: boolean;
+            /** Slug */
+            slug: string;
+            /** Status */
+            status: string;
+            /** Team */
+            team: string | null;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Work Model */
+            work_model: string;
+        };
+        /** HireJobPatch */
+        HireJobPatch: {
+            /** Country */
+            country?: string | null;
+            /** Description Ar */
+            description_ar?: string | null;
+            /** Description En */
+            description_en?: string | null;
+            /** Employment Type */
+            employment_type?: ("full_time" | "part_time" | "contract" | "temporary" | "internship") | null;
+            /** Location */
+            location?: string | null;
+            /** Salary Currency */
+            salary_currency?: string | null;
+            /** Salary Max */
+            salary_max?: number | string | null;
+            /** Salary Min */
+            salary_min?: number | string | null;
+            /** Salary Period */
+            salary_period?: ("year" | "month" | "hour") | null;
+            /** Show Salary */
+            show_salary?: boolean | null;
+            /** Team */
+            team?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Title Ar */
+            title_ar?: string | null;
+            /** Work Model */
+            work_model?: ("onsite" | "hybrid" | "remote") | null;
+        };
+        /** HireKnockoutOut */
+        HireKnockoutOut: {
+            /** Answer */
+            answer: string | null;
+            /** Expected Answer */
+            expected_answer: string;
+            /** Id */
+            id: string;
+            /** Matches */
+            matches: boolean;
+            /** Question */
+            question: string;
+            /** Reason */
+            reason: string;
+        };
+        /** HireModelCallOut */
+        HireModelCallOut: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /** From Recording */
+            from_recording: boolean;
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+        };
+        /** HirePublicJob */
+        HirePublicJob: {
+            /** Country */
+            country: string | null;
+            /** Employment Type */
+            employment_type: string;
+            /** Location */
+            location: string;
+            /** Published At */
+            published_at: string;
+            salary: components["schemas"]["HirePublicSalary"] | null;
+            /** Slug */
+            slug: string;
+            /** Team */
+            team: string | null;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Url */
+            url: string;
+            /** Work Model */
+            work_model: string;
+        };
+        /** HirePublicJobDetail */
+        HirePublicJobDetail: {
+            /** Country */
+            country: string | null;
+            /** Description Ar */
+            description_ar: string;
+            /** Description En */
+            description_en: string;
+            /** Employment Type */
+            employment_type: string;
+            /** Form */
+            form: {
+                [key: string]: unknown;
+            };
+            /** Json Ld */
+            json_ld: {
+                [key: string]: unknown;
+            };
+            /** Location */
+            location: string;
+            /** Notice */
+            notice: {
+                [key: string]: components["schemas"]["HirePublicNotice"];
+            };
+            organisation: components["schemas"]["HirePublicOrg"];
+            /** Published At */
+            published_at: string;
+            salary: components["schemas"]["HirePublicSalary"] | null;
+            /** Slug */
+            slug: string;
+            /** Team */
+            team: string | null;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Url */
+            url: string;
+            /** Work Model */
+            work_model: string;
+        };
+        /** HirePublicNotice */
+        HirePublicNotice: {
+            /** Consent */
+            consent: string;
+            /** Points */
+            points: string[];
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+        };
+        /** HirePublicOrg */
+        HirePublicOrg: {
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+        };
+        /** HirePublicSalary */
+        HirePublicSalary: {
+            /** Currency */
+            currency: string | null;
+            /** Max */
+            max: string;
+            /** Min */
+            min: string;
+            /** Period */
+            period: string | null;
+        };
+        /** HireRubricLockOut */
+        HireRubricLockOut: {
+            /** Applications On Earlier Versions */
+            applications_on_earlier_versions: number;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** New Version */
+            new_version: boolean;
+            version: components["schemas"]["HireRubricVersionOut"];
+        };
+        /** HireRubricOut */
+        HireRubricOut: {
+            /** Draft */
+            draft: {
+                [key: string]: unknown;
+            } | null;
+            /** Draft Differs */
+            draft_differs: boolean;
+            /** Draft Source */
+            draft_source: string | null;
+            /** Draft Updated At */
+            draft_updated_at: string | null;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Locked */
+            locked: {
+                [key: string]: unknown;
+            } | null;
+            locked_version: components["schemas"]["HireRubricVersionOut"] | null;
+            /** Versions */
+            versions: components["schemas"]["HireRubricVersionOut"][];
+        };
+        /** HireRubricVersionOut */
+        HireRubricVersionOut: {
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+        };
+        /** HireSelfIdReport */
+        HireSelfIdReport: {
+            /** Categories */
+            categories: {
+                [key: string]: {
+                    [key: string]: number | null;
+                };
+            };
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Min Count */
+            min_count: number;
+            /** Responses */
+            responses: number | null;
+        };
+        /** HireSettingsIn */
+        HireSettingsIn: {
+            /** Careers Enabled */
+            careers_enabled?: boolean | null;
+            /** Rejected Retention Months */
+            rejected_retention_months?: number | null;
+            /** Response Days */
+            response_days?: number | null;
+        };
+        /** HireSettingsOut */
+        HireSettingsOut: {
+            /** Careers Enabled */
+            careers_enabled: boolean;
+            /** Rejected Retention Months */
+            rejected_retention_months: number;
+            /** Response Days */
+            response_days: number;
+        };
+        /** HireSubmitOut */
+        HireSubmitOut: {
+            /** Reference */
+            reference: string;
+            /** Response Days */
+            response_days: number;
+            /** Status */
+            status: string;
+        };
+        /** HireTextChecks */
+        HireTextChecks: {
+            /** Inclusive Ar */
+            inclusive_ar: components["schemas"]["HireFindingOut"][];
+            /** Inclusive En */
+            inclusive_en: components["schemas"]["HireFindingOut"][];
+            /** Sanity Ar */
+            sanity_ar: components["schemas"]["HireFindingOut"][];
+            /** Sanity En */
+            sanity_en: components["schemas"]["HireFindingOut"][];
         };
         /** HitOut */
         HitOut: {
@@ -5332,6 +6334,897 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FlagOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_applications_v1_hire_applications_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                limit?: number;
+                needs_review?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireApplicationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_application_v1_hire_applications__application_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireApplicationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jobs_v1_hire_jobs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                status?: ("draft" | "open" | "paused" | "closed") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_v1_hire_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireJobIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_v1_hire_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_v1_hire_jobs__job_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireJobPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    job_checks_v1_hire_jobs__job_id__checks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireTextChecks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_v1_hire_jobs__job_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_form_v1_hire_jobs__job_id__form_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFormOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_form_v1_hire_jobs__job_id__form_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFormOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_v1_hire_jobs__job_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_v1_hire_jobs__job_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rubric_v1_hire_jobs__job_id__rubric_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRubricOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_rubric_v1_hire_jobs__job_id__rubric_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRubricOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_rubric_draft_v1_hire_jobs__job_id__rubric_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRubricOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lock_v1_hire_jobs__job_id__rubric_lock_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRubricLockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_text_v1_hire_jobs_check_text_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireCheckTextIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireTextChecks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    draft_description_v1_hire_jobs_draft_description_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireBriefIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobDraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    careers_v1_hire_public_careers__org_slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCareersOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_file_v1_hire_public_careers__org_slug__applications_files_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_v1_hire_public_careers__org_slug__applications_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Token */
+                    token: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSubmitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    feed_json_v1_hire_public_careers__org_slug__feed_json_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    feed_xml_v1_hire_public_careers__org_slug__feed_xml_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    job_detail_v1_hire_public_careers__org_slug__jobs__job_slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_slug: string;
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePublicJobDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_v1_hire_public_careers__org_slug__jobs__job_slug__applications_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_slug: string;
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireApplyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    self_identification_report_v1_hire_reports_self_identification_get: {
+        parameters: {
+            query: {
+                job_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSelfIdReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_v1_hire_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSettingsOut"];
+                };
+            };
+        };
+    };
+    put_settings_v1_hire_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSettingsOut"];
                 };
             };
             /** @description Validation Error */

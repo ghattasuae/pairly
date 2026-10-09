@@ -17,8 +17,8 @@ package.json files under node_modules. Missing data is shown as UNKNOWN; the
 script never fails because one package lacks metadata.
 
 Bundled components that are not packages of their own (PDFium inside the pypdfium2
-wheels, the DejaVu Sans subset embedded in decision receipts) are listed in their own
-section (BUNDLED).
+wheels, the DejaVu Sans subset embedded in decision receipts, the disposable email
+domain list of Pairly Hire) are listed in their own section (BUNDLED).
 """
 
 from __future__ import annotations
@@ -308,6 +308,13 @@ def bundled_components() -> list[Bundled]:
             "Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain",
             "packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in "
             "decision receipt PDFs",
+        ),
+        Bundled(
+            "disposable-email-domains (subset)",
+            "curated 2026-10",
+            "CC0-1.0",
+            "packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire "
+            "apply form refuses",
         ),
     ]
 

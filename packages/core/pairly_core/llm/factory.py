@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Build a ``ModelRouter`` from settings (used by the API and the worker)."""
+"""Build a ``ModelRouter`` from settings (used by the API and the worker).
+
+Prompts come from the core root plus every installed workflow plugin's ``prompt_roots``
+(``pairly_core.plugins.plugin_prompt_roots``), unless the caller passes its own roots.
+"""
 
 from __future__ import annotations
 
@@ -39,10 +43,14 @@ def build_router(
     settings: LLMSettings,
     sessionmaker: async_sessionmaker[AsyncSession],
     *,
-    prompt_roots: Sequence[Root] = (),
+    prompt_roots: Sequence[Root] | None = None,
     redactor: Redactor | None = None,
     providers: dict[str, ModelProvider] | None = None,
 ) -> ModelRouter:
+    if prompt_roots is None:
+        from pairly_core.plugins import discover_plugins, plugin_prompt_roots
+
+        prompt_roots = plugin_prompt_roots(discover_plugins().values())
     prices = load_prices(settings.llm_prices_file)
     catalog = load_catalog(prices, settings.llm_models_file)
     redactor = redactor or PiiRedactor()

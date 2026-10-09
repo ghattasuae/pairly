@@ -80,11 +80,11 @@ jobs:
       - name: import contracts
         run: uv run lint-imports
 
-      - name: mypy (strict on packages/core and packages/expense)
-        run: uv run mypy packages/core packages/expense
+      - name: mypy (strict on packages/core, packages/expense and packages/hire)
+        run: uv run mypy packages/core packages/expense packages/hire
 
       - name: mypy (everything else)
-        run: uv run mypy packages/hire packages/pay apps sdks/python scripts synth
+        run: uv run mypy packages/pay apps sdks/python scripts synth
 
       - name: Start Postgres (roles from infra/postgres/init)
         env:

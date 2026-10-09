@@ -10,12 +10,13 @@ uv run python scripts/third_party_notices.py --fetch-missing -o NOTICE.md
 
 A license shown as UNKNOWN means the package did not publish license metadata, or it is not installed on this machine. Check it by hand before release.
 
-## Bundled components (2)
+## Bundled components (3)
 
 | Name | Version | License | Where |
 | --- | --- | --- | --- |
 | PDFium | 156.0.8076.0 | BSD-3-Clause; its bundled build also carries FreeType (FTL), ICU (Unicode license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT), OpenJPEG (BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf (MIT or Apache-2.0), LLVM libc (Apache-2.0 WITH LLVM-exception) | compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0) |
 | DejaVu Sans (subset) | 2.37 | Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain | packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in decision receipt PDFs |
+| disposable-email-domains (subset) | curated 2026-10 | CC0-1.0 | packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire apply form refuses |
 
 ## Python packages (137)
 
@@ -159,7 +160,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | xxhash | 4.0.1 | BSD-2-Clause |
 | zstandard | 0.25.0 | BSD-3-Clause |
 
-## JavaScript packages (723)
+## JavaScript packages (736)
 
 | Name | Version | License |
 | --- | --- | --- |
@@ -301,6 +302,18 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | @jridgewell/trace-mapping | 0.3.31 | MIT |
 | @keyv/bigmap | 1.3.1 | MIT |
 | @keyv/serialize | 1.1.1 | MIT |
+| @napi-rs/canvas | 1.0.10 | MIT |
+| @napi-rs/canvas-android-arm64 | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-darwin-arm64 | 1.0.10 | MIT |
+| @napi-rs/canvas-darwin-x64 | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-arm-gnueabihf | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-arm64-gnu | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-arm64-musl | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-riscv64-gnu | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-x64-gnu | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-linux-x64-musl | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-win32-arm64-msvc | 1.0.10 | MIT (from the registry) |
+| @napi-rs/canvas-win32-x64-msvc | 1.0.10 | MIT (from the registry) |
 | @napi-rs/wasm-runtime | 1.2.5 | MIT (from the registry) |
 | @next/env | 16.4.0 | MIT |
 | @next/eslint-plugin-next | 16.4.0 | MIT |
@@ -760,6 +773,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | path-scurry | 2.0.2 | BlueOak-1.0.0 |
 | pathe | 2.0.3 | MIT |
 | pathval | 2.0.1 | MIT |
+| pdfjs-dist | 6.4.299 | Apache-2.0 |
 | pg | 8.23.1 | MIT |
 | pg-cloudflare | 1.4.1 | MIT |
 | pg-connection-string | 2.14.1 | MIT |

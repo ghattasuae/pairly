@@ -3767,6 +3767,1893 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HireApplicationDetail": {
+        "properties": {
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          },
+          "answers": {
+            "additionalProperties": true,
+            "title": "Answers",
+            "type": "object"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_name": {
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "consent_at": {
+            "format": "date-time",
+            "title": "Consent At",
+            "type": "string"
+          },
+          "consent_locale": {
+            "title": "Consent Locale",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "cv_document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv Document Id"
+          },
+          "duplicate_hints": {
+            "title": "Duplicate Hints",
+            "type": "integer"
+          },
+          "duplicate_signals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Duplicate Signals",
+            "type": "array"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "object"
+          },
+          "form_policy_id": {
+            "format": "uuid",
+            "title": "Form Policy Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "knockouts": {
+            "items": {
+              "$ref": "#/components/schemas/HireKnockoutOut"
+            },
+            "title": "Knockouts",
+            "type": "array"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "needs_human_review": {
+            "title": "Needs Human Review",
+            "type": "boolean"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "profile_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Url"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "rubric_policy_id": {
+            "format": "uuid",
+            "title": "Rubric Policy Id",
+            "type": "string"
+          },
+          "rubric_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rubric Version"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "id",
+          "job_id",
+          "candidate_id",
+          "reference",
+          "status",
+          "candidate_name",
+          "needs_human_review",
+          "review_reasons",
+          "duplicate_hints",
+          "submitted_at",
+          "created_at",
+          "email",
+          "phone",
+          "location",
+          "profile_url",
+          "rubric_policy_id",
+          "rubric_version",
+          "form_policy_id",
+          "answers",
+          "knockouts",
+          "consent_version",
+          "consent_at",
+          "consent_locale",
+          "cv_document_id",
+          "files",
+          "duplicate_signals",
+          "acknowledged_at"
+        ],
+        "title": "HireApplicationDetail",
+        "type": "object"
+      },
+      "HireApplicationList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireApplicationSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "HireApplicationList",
+        "type": "object"
+      },
+      "HireApplicationSummary": {
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_name": {
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duplicate_hints": {
+            "title": "Duplicate Hints",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "needs_human_review": {
+            "title": "Needs Human Review",
+            "type": "boolean"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "id",
+          "job_id",
+          "candidate_id",
+          "reference",
+          "status",
+          "candidate_name",
+          "needs_human_review",
+          "review_reasons",
+          "duplicate_hints",
+          "submitted_at",
+          "created_at"
+        ],
+        "title": "HireApplicationSummary",
+        "type": "object"
+      },
+      "HireApplyOut": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "file_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "File Fields",
+            "type": "array"
+          },
+          "required_files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Files",
+            "type": "array"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at",
+          "file_fields",
+          "required_files"
+        ],
+        "title": "HireApplyOut",
+        "type": "object"
+      },
+      "HireBriefIn": {
+        "additionalProperties": false,
+        "properties": {
+          "brief": {
+            "maxLength": 800,
+            "minLength": 10,
+            "title": "Brief",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brief"
+        ],
+        "title": "HireBriefIn",
+        "type": "object"
+      },
+      "HireCareersOut": {
+        "properties": {
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/HirePublicJob"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "organisation": {
+            "$ref": "#/components/schemas/HirePublicOrg"
+          }
+        },
+        "required": [
+          "organisation",
+          "jobs"
+        ],
+        "title": "HireCareersOut",
+        "type": "object"
+      },
+      "HireCheckTextIn": {
+        "additionalProperties": false,
+        "properties": {
+          "description_ar": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Description Ar",
+            "type": "string"
+          },
+          "description_en": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Description En",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Title Ar",
+            "type": "string"
+          }
+        },
+        "title": "HireCheckTextIn",
+        "type": "object"
+      },
+      "HireFileOut": {
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "received": {
+            "title": "Received",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "received"
+        ],
+        "title": "HireFileOut",
+        "type": "object"
+      },
+      "HireFindingOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "match": {
+            "title": "Match",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rule",
+          "category",
+          "severity",
+          "start",
+          "end",
+          "match",
+          "message",
+          "suggestions"
+        ],
+        "title": "HireFindingOut",
+        "type": "object"
+      },
+      "HireFormOut": {
+        "properties": {
+          "form": {
+            "additionalProperties": true,
+            "title": "Form",
+            "type": "object"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "knockout_questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Knockout Questions",
+            "type": "array"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "job_id",
+          "version",
+          "form",
+          "knockout_questions"
+        ],
+        "title": "HireFormOut",
+        "type": "object"
+      },
+      "HireJobDraftOut": {
+        "properties": {
+          "checks": {
+            "$ref": "#/components/schemas/HireTextChecks"
+          },
+          "description_ar": {
+            "title": "Description Ar",
+            "type": "string"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/HireModelCallOut"
+          },
+          "nice_to_have": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Nice To Have",
+            "type": "array"
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requirements",
+            "type": "array"
+          },
+          "responsibilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Responsibilities",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "title": "Title Ar",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "title_ar",
+          "summary",
+          "responsibilities",
+          "requirements",
+          "nice_to_have",
+          "description_en",
+          "description_ar",
+          "checks",
+          "model"
+        ],
+        "title": "HireJobDraftOut",
+        "type": "object"
+      },
+      "HireJobIn": {
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "description_ar": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ar"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "employment_type": {
+            "enum": [
+              "full_time",
+              "part_time",
+              "contract",
+              "temporary",
+              "internship"
+            ],
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "location": {
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Location",
+            "type": "string"
+          },
+          "salary_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Currency"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "maximum": 999999999999,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "maximum": 999999999999,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_period": {
+            "anyOf": [
+              {
+                "enum": [
+                  "year",
+                  "month",
+                  "hour"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Period"
+          },
+          "show_salary": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Show Salary"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Ar"
+          },
+          "work_model": {
+            "enum": [
+              "onsite",
+              "hybrid",
+              "remote"
+            ],
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "location",
+          "work_model",
+          "employment_type"
+        ],
+        "title": "HireJobIn",
+        "type": "object"
+      },
+      "HireJobList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireJobOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "HireJobList",
+        "type": "object"
+      },
+      "HireJobOut": {
+        "properties": {
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "description_ar": {
+            "title": "Description Ar",
+            "type": "string"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "employment_type": {
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "form_policy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Policy Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "rubric_policy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rubric Policy Id"
+          },
+          "salary_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Currency"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Period"
+          },
+          "show_salary": {
+            "title": "Show Salary",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "title": "Title Ar",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "work_model": {
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "status",
+          "title",
+          "title_ar",
+          "team",
+          "location",
+          "country",
+          "work_model",
+          "employment_type",
+          "salary_min",
+          "salary_max",
+          "salary_currency",
+          "salary_period",
+          "show_salary",
+          "description_en",
+          "description_ar",
+          "rubric_policy_id",
+          "form_policy_id",
+          "created_by",
+          "published_at",
+          "closed_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "HireJobOut",
+        "type": "object"
+      },
+      "HireJobPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "description_ar": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ar"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "employment_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "full_time",
+                  "part_time",
+                  "contract",
+                  "temporary",
+                  "internship"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employment Type"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "salary_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Currency"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "maximum": 999999999999,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "maximum": 999999999999,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_period": {
+            "anyOf": [
+              {
+                "enum": [
+                  "year",
+                  "month",
+                  "hour"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Period"
+          },
+          "show_salary": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Show Salary"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "title_ar": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Ar"
+          },
+          "work_model": {
+            "anyOf": [
+              {
+                "enum": [
+                  "onsite",
+                  "hybrid",
+                  "remote"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Model"
+          }
+        },
+        "title": "HireJobPatch",
+        "type": "object"
+      },
+      "HireKnockoutOut": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "expected_answer": {
+            "title": "Expected Answer",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "boolean"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "question",
+          "answer",
+          "expected_answer",
+          "matches",
+          "reason"
+        ],
+        "title": "HireKnockoutOut",
+        "type": "object"
+      },
+      "HireModelCallOut": {
+        "properties": {
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "call_id",
+          "prompt_version",
+          "model",
+          "from_recording"
+        ],
+        "title": "HireModelCallOut",
+        "type": "object"
+      },
+      "HirePublicJob": {
+        "properties": {
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "employment_type": {
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "string"
+          },
+          "salary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HirePublicSalary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "title": "Title Ar",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "work_model": {
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "title_ar",
+          "team",
+          "location",
+          "country",
+          "work_model",
+          "employment_type",
+          "salary",
+          "published_at",
+          "url"
+        ],
+        "title": "HirePublicJob",
+        "type": "object"
+      },
+      "HirePublicJobDetail": {
+        "properties": {
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "description_ar": {
+            "title": "Description Ar",
+            "type": "string"
+          },
+          "description_en": {
+            "title": "Description En",
+            "type": "string"
+          },
+          "employment_type": {
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "form": {
+            "additionalProperties": true,
+            "title": "Form",
+            "type": "object"
+          },
+          "json_ld": {
+            "additionalProperties": true,
+            "title": "Json Ld",
+            "type": "object"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "notice": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HirePublicNotice"
+            },
+            "title": "Notice",
+            "type": "object"
+          },
+          "organisation": {
+            "$ref": "#/components/schemas/HirePublicOrg"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "string"
+          },
+          "salary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HirePublicSalary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "title": "Title Ar",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "work_model": {
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "title_ar",
+          "team",
+          "location",
+          "country",
+          "work_model",
+          "employment_type",
+          "salary",
+          "published_at",
+          "url",
+          "organisation",
+          "description_en",
+          "description_ar",
+          "json_ld",
+          "notice",
+          "form"
+        ],
+        "title": "HirePublicJobDetail",
+        "type": "object"
+      },
+      "HirePublicNotice": {
+        "properties": {
+          "consent": {
+            "title": "Consent",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "title",
+          "points",
+          "consent"
+        ],
+        "title": "HirePublicNotice",
+        "type": "object"
+      },
+      "HirePublicOrg": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ],
+        "title": "HirePublicOrg",
+        "type": "object"
+      },
+      "HirePublicSalary": {
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "max": {
+            "title": "Max",
+            "type": "string"
+          },
+          "min": {
+            "title": "Min",
+            "type": "string"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          }
+        },
+        "required": [
+          "min",
+          "max",
+          "currency",
+          "period"
+        ],
+        "title": "HirePublicSalary",
+        "type": "object"
+      },
+      "HireRubricLockOut": {
+        "properties": {
+          "applications_on_earlier_versions": {
+            "title": "Applications On Earlier Versions",
+            "type": "integer"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "new_version": {
+            "title": "New Version",
+            "type": "boolean"
+          },
+          "version": {
+            "$ref": "#/components/schemas/HireRubricVersionOut"
+          }
+        },
+        "required": [
+          "job_id",
+          "version",
+          "new_version",
+          "applications_on_earlier_versions"
+        ],
+        "title": "HireRubricLockOut",
+        "type": "object"
+      },
+      "HireRubricOut": {
+        "properties": {
+          "draft": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft"
+          },
+          "draft_differs": {
+            "title": "Draft Differs",
+            "type": "boolean"
+          },
+          "draft_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Source"
+          },
+          "draft_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Updated At"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "locked": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked"
+          },
+          "locked_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireRubricVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/HireRubricVersionOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "draft",
+          "draft_source",
+          "draft_updated_at",
+          "locked",
+          "locked_version",
+          "draft_differs",
+          "versions"
+        ],
+        "title": "HireRubricOut",
+        "type": "object"
+      },
+      "HireRubricVersionOut": {
+        "properties": {
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "content_hash",
+          "created_at"
+        ],
+        "title": "HireRubricVersionOut",
+        "type": "object"
+      },
+      "HireSelfIdReport": {
+        "properties": {
+          "categories": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "min_count": {
+            "title": "Min Count",
+            "type": "integer"
+          },
+          "responses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responses"
+          }
+        },
+        "required": [
+          "job_id",
+          "responses",
+          "min_count",
+          "categories"
+        ],
+        "title": "HireSelfIdReport",
+        "type": "object"
+      },
+      "HireSettingsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "careers_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Careers Enabled"
+          },
+          "rejected_retention_months": {
+            "anyOf": [
+              {
+                "maximum": 120,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected Retention Months"
+          },
+          "response_days": {
+            "anyOf": [
+              {
+                "maximum": 90,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Days"
+          }
+        },
+        "title": "HireSettingsIn",
+        "type": "object"
+      },
+      "HireSettingsOut": {
+        "properties": {
+          "careers_enabled": {
+            "title": "Careers Enabled",
+            "type": "boolean"
+          },
+          "rejected_retention_months": {
+            "title": "Rejected Retention Months",
+            "type": "integer"
+          },
+          "response_days": {
+            "title": "Response Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "careers_enabled",
+          "rejected_retention_months",
+          "response_days"
+        ],
+        "title": "HireSettingsOut",
+        "type": "object"
+      },
+      "HireSubmitOut": {
+        "properties": {
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "response_days": {
+            "title": "Response Days",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reference",
+          "response_days"
+        ],
+        "title": "HireSubmitOut",
+        "type": "object"
+      },
+      "HireTextChecks": {
+        "properties": {
+          "inclusive_ar": {
+            "items": {
+              "$ref": "#/components/schemas/HireFindingOut"
+            },
+            "title": "Inclusive Ar",
+            "type": "array"
+          },
+          "inclusive_en": {
+            "items": {
+              "$ref": "#/components/schemas/HireFindingOut"
+            },
+            "title": "Inclusive En",
+            "type": "array"
+          },
+          "sanity_ar": {
+            "items": {
+              "$ref": "#/components/schemas/HireFindingOut"
+            },
+            "title": "Sanity Ar",
+            "type": "array"
+          },
+          "sanity_en": {
+            "items": {
+              "$ref": "#/components/schemas/HireFindingOut"
+            },
+            "title": "Sanity En",
+            "type": "array"
+          }
+        },
+        "required": [
+          "inclusive_en",
+          "inclusive_ar",
+          "sanity_en",
+          "sanity_ar"
+        ],
+        "title": "HireTextChecks",
+        "type": "object"
+      },
       "HitOut": {
         "properties": {
           "chunk_id": {
@@ -9205,6 +11092,1290 @@
         "summary": "Put Flag",
         "tags": [
           "flags"
+        ]
+      }
+    },
+    "/v1/hire/applications": {
+      "get": {
+        "operationId": "list_applications_v1_hire_applications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "needs_review",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Needs Review"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireApplicationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Applications",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/applications/{application_id}": {
+      "get": {
+        "operationId": "get_application_v1_hire_applications__application_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireApplicationDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Application",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs": {
+      "get": {
+        "operationId": "list_jobs_v1_hire_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "draft",
+                    "open",
+                    "paused",
+                    "closed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Jobs",
+        "tags": [
+          "hire"
+        ]
+      },
+      "post": {
+        "operationId": "create_v1_hire_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireJobIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/check-text": {
+      "post": {
+        "operationId": "check_text_v1_hire_jobs_check_text_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireCheckTextIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireTextChecks"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check Text",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/draft-description": {
+      "post": {
+        "operationId": "draft_description_v1_hire_jobs_draft_description_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireBriefIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobDraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft Description",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_v1_hire_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get",
+        "tags": [
+          "hire"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_v1_hire_jobs__job_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireJobPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/checks": {
+      "get": {
+        "operationId": "job_checks_v1_hire_jobs__job_id__checks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireTextChecks"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Job Checks",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/close": {
+      "post": {
+        "operationId": "close_v1_hire_jobs__job_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/form": {
+      "get": {
+        "operationId": "get_form_v1_hire_jobs__job_id__form_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireFormOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Form",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_form_v1_hire_jobs__job_id__form_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireFormOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Form",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/pause": {
+      "post": {
+        "operationId": "pause_v1_hire_jobs__job_id__pause_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pause",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/publish": {
+      "post": {
+        "operationId": "publish_v1_hire_jobs__job_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/rubric": {
+      "get": {
+        "operationId": "get_rubric_v1_hire_jobs__job_id__rubric_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRubricOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Rubric",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_rubric_v1_hire_jobs__job_id__rubric_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRubricOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Rubric",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/rubric/draft": {
+      "post": {
+        "operationId": "ai_rubric_draft_v1_hire_jobs__job_id__rubric_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRubricOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Rubric Draft",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/rubric/lock": {
+      "post": {
+        "operationId": "lock_v1_hire_jobs__job_id__rubric_lock_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRubricLockOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lock",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}": {
+      "get": {
+        "operationId": "careers_v1_hire_public_careers__org_slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCareersOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Careers",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/applications/files": {
+      "post": {
+        "operationId": "upload_file_v1_hire_public_careers__org_slug__applications_files_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireFileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload File",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/applications/submit": {
+      "post": {
+        "operationId": "submit_v1_hire_public_careers__org_slug__applications_submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "token": {
+                    "maxLength": 100,
+                    "minLength": 10,
+                    "title": "Token",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "title": "HireTokenIn",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSubmitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/feed.json": {
+      "get": {
+        "operationId": "feed_json_v1_hire_public_careers__org_slug__feed_json_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Feed Json V1 Hire Public Careers  Org Slug  Feed Json Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Feed Json",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/feed.xml": {
+      "get": {
+        "operationId": "feed_xml_v1_hire_public_careers__org_slug__feed_xml_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Feed Xml",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/jobs/{job_slug}": {
+      "get": {
+        "operationId": "job_detail_v1_hire_public_careers__org_slug__jobs__job_slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "job_slug",
+            "required": true,
+            "schema": {
+              "title": "Job Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePublicJobDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Job Detail",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/careers/{org_slug}/jobs/{job_slug}/applications": {
+      "post": {
+        "operationId": "apply_v1_hire_public_careers__org_slug__jobs__job_slug__applications_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "job_slug",
+            "required": true,
+            "schema": {
+              "title": "Job Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireApplyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply",
+        "tags": [
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/reports/self-identification": {
+      "get": {
+        "operationId": "self_identification_report_v1_hire_reports_self_identification_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSelfIdReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Self Identification Report",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings": {
+      "get": {
+        "operationId": "get_settings_v1_hire_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_v1_hire_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
+        "tags": [
+          "hire"
         ]
       }
     },

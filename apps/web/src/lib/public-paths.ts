@@ -3,8 +3,17 @@
 
 /** Pages reachable without a session (path after the locale prefix). */
 // `/approvals/link` is public so a signed-out person sees what the link is for and can
-// sign in from there (the token stays in the fragment, see the page).
-const PUBLIC_PATHS = ["/sign-in", "/check-email", "/two-factor", "/invite", "/unsubscribe", "/approvals/link"];
+// sign in from there (the token stays in the fragment, see the page). `/careers` holds
+// the organisations' public careers pages and the apply flow (Pairly Hire).
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/check-email",
+  "/two-factor",
+  "/invite",
+  "/unsubscribe",
+  "/approvals/link",
+  "/careers",
+];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
   return PUBLIC_PATHS.some((p) => pathAfterLocale === p || pathAfterLocale.startsWith(`${p}/`));

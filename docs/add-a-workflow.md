@@ -93,7 +93,7 @@ class ExpensePlugin:
         return router
 ```
 
-Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace.
+Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `prompt_roots` (section 11), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace.
 
 ## 3. Permissions
 
@@ -108,7 +108,7 @@ Permissions are `<workflow>.<resource>.<action>` with the built-in roles that ho
 | `expense.extraction.read`, `.correct` | reviewers; admin and AP clerk | same rule for extractions |
 | `expense.appeal.create` | staff | contest a decision of this workflow |
 
-Rules the engine enforces, whatever you declare: the agent role only gets `read` and `propose`; API keys only `read`, `propose` and `upload`; a membership limited to one workflow grants only that workflow's permissions; `approve`, `decide`, `manage` and `export` need a TOTP sign-in.
+Rules the engine enforces, whatever you declare: the agent role only gets `read` and `propose`; API keys only `read`, `propose` and `upload`; a membership limited to one workflow grants only that workflow's permissions; `approve`, `decide`, `manage`, `export`, `lock` and `publish` need a TOTP sign-in ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md)).
 
 ## 4. What to read from the document
 
@@ -202,6 +202,8 @@ The expense plugin uses one (`sweeper.py`, `expense_stuck_note_sweep`, every 5 m
 System templates are rows with `org_id` NULL, seeded by your migration like core's (`templates.py`, migration `expense_0001`). Templates use the locked down Jinja subset, English and Arabic. Declare webhook events in `webhook_events` (names start with your id) and publish them with `publish_event` in the same transaction as the change.
 
 ## 11. Offline demo: recorded model responses
+
+Your own prompts: declare `prompt_roots` on the plugin (directories of `<task>/<version>.md` files, every task named `<plugin id>_...`). The model router loads them next to core's ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md)). Pairly Hire does this for its job description and rubric drafts (`packages/hire/pairly_hire/prompts`) and builds their recordings with `uv run python -m pairly_hire.recordings`.
 
 In `recorded` mode the router answers only from stored responses, keyed on the exact request (prompt, model, inputs, settings). `synth/expense` generates the synthetic receipts and, for each, the request `extract` will send and a scripted answer, and writes a recordings bundle. `pairly-admin seed expense-demo` imports it. If you change a prompt, the schema or a parser, run `uv run python -m synth.expense` again; a test fails when the files are out of date.
 
