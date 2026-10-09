@@ -11,6 +11,10 @@
 * ``List-Unsubscribe`` and ``List-Unsubscribe-Post: List-Unsubscribe=One-Click``
   (RFC 2369, RFC 8058) on non-transactional categories only.
 * ``In-Reply-To`` and ``References`` for replies.
+* Text attachments (``Attachment``), today calendar files: ``text/calendar`` with its
+  ``method`` parameter (``REQUEST`` or ``CANCEL``), so mail apps show the invitation.
+  The message becomes ``multipart/mixed``. At most ``MAX_ATTACHMENTS`` of at most
+  ``MAX_ATTACHMENT_CHARS`` each, with a plain file name.
 
 Header values are single-line: CR and LF are removed before they reach a header, so a
 rendered subject can never inject headers.
@@ -32,8 +36,11 @@ HTTP 429 and 5xx) or False (give up: rejected recipient, HTTP 4xx).
 from __future__ import annotations
 
 import asyncio
+import base64
+import re
 import smtplib
 import ssl
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from email.utils import formatdate, parseaddr
@@ -51,6 +58,60 @@ class DeliveryError(Exception):
         self.transient = transient
 
 
+MAX_ATTACHMENTS = 3
+MAX_ATTACHMENT_CHARS = 256 * 1024
+_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+_MIME_RE = re.compile(r"^text/[a-z0-9.+-]{1,40}$")
+_PARAM_RE = re.compile(r"^[A-Za-z0-9-]{1,32}$")
+
+
+@dataclass(frozen=True, slots=True)
+class Attachment:
+    """A text attachment (a calendar file). ``params`` go on the Content-Type header."""
+
+    filename: str
+    mime_type: str
+    text: str
+    params: Mapping[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not _FILENAME_RE.match(self.filename):
+            raise ValueError("invalid attachment file name")
+        if not _MIME_RE.match(self.mime_type):
+            raise ValueError("only text attachments are supported")
+        if len(self.text) > MAX_ATTACHMENT_CHARS:
+            raise ValueError("attachment too large")
+        for key, value in self.params.items():
+            if not _PARAM_RE.match(key) or not _PARAM_RE.match(value):
+                raise ValueError("invalid attachment parameter")
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "filename": self.filename,
+            "mime_type": self.mime_type,
+            "text": self.text,
+            "params": dict(self.params),
+        }
+
+    @classmethod
+    def from_json(cls, data: object) -> Attachment | None:
+        """Back from stored content; anything malformed is dropped (None)."""
+        if not isinstance(data, dict):
+            return None
+        params = data.get("params")
+        try:
+            return cls(
+                filename=str(data.get("filename") or ""),
+                mime_type=str(data.get("mime_type") or ""),
+                text=str(data.get("text") or ""),
+                params={str(k): str(v) for k, v in params.items()}
+                if isinstance(params, dict)
+                else {},
+            )
+        except ValueError:
+            return None
+
+
 @dataclass(frozen=True, slots=True)
 class OutgoingEmail:
     to: str
@@ -64,6 +125,7 @@ class OutgoingEmail:
     list_unsubscribe: str | None = None
     auto_submitted: str = "auto-generated"
     in_reply_to: str | None = None
+    attachments: tuple[Attachment, ...] = ()
 
 
 def one_line(value: str, limit: int = 998) -> str:
@@ -97,6 +159,16 @@ def build_message(email: OutgoingEmail) -> EmailMessage:
     msg.set_content(email.text, charset="utf-8")
     if email.html:
         msg.add_alternative(email.html, subtype="html", charset="utf-8")
+    if len(email.attachments) > MAX_ATTACHMENTS:
+        raise DeliveryError("too_many_attachments", transient=False)
+    for attachment in email.attachments:
+        msg.add_attachment(
+            attachment.text,
+            subtype=attachment.mime_type.split("/", 1)[1],
+            charset="utf-8",
+            filename=attachment.filename,
+            params=dict(attachment.params),
+        )
     # After the body: set_content drops Content-* headers set before it.
     msg["Content-Language"] = one_line(email.locale, 16)
     return msg
@@ -211,6 +283,18 @@ class ResendTransport:
         }
         if email.html:
             body["html"] = email.html
+        if email.attachments:
+            body["attachments"] = [
+                {
+                    "filename": a.filename,
+                    "content": base64.b64encode(a.text.encode("utf-8")).decode("ascii"),
+                    "content_type": "; ".join(
+                        [f"{a.mime_type}; charset=utf-8"]
+                        + [f"{k}={v}" for k, v in sorted(a.params.items())]
+                    ),
+                }
+                for a in email.attachments
+            ]
         try:
             response = await self._client.post(
                 f"{self._base}/emails",

@@ -41,7 +41,12 @@ from pairly_core.crypto.types import unseal
 from pairly_core.db import set_tenant
 from pairly_core.integrations.slack.links import active_slack, bot_token
 from pairly_core.integrations.slack.transport import SlackTransport
-from pairly_core.notifications.email import DeliveryError, EmailTransport, OutgoingEmail
+from pairly_core.notifications.email import (
+    Attachment,
+    DeliveryError,
+    EmailTransport,
+    OutgoingEmail,
+)
 from pairly_core.notifications.models import Notification, NotificationStatus
 from pairly_core.notifications.service import (
     NOTIFY_ACTOR,
@@ -100,6 +105,13 @@ def unsubscribe_url(settings: NotificationSettings, row: Notification) -> str | 
     return f"{settings.api_url}/v1/notifications/unsubscribe?token={token}"
 
 
+def _attachments(raw: Any) -> tuple[Attachment, ...]:
+    if not isinstance(raw, list):
+        return ()
+    found = (Attachment.from_json(item) for item in raw)
+    return tuple(a for a in found if a is not None)
+
+
 async def _send(transports: Transports, session: AsyncSession, row: Notification) -> str:
     content: dict[str, Any] = unseal(row, "content") or {}
     address = unseal(row, "recipient_address")
@@ -121,6 +133,7 @@ async def _send(transports: Transports, session: AsyncSession, row: Notification
             else None,
             auto_submitted=str(content.get("auto_submitted") or "auto-generated"),
             in_reply_to=content.get("in_reply_to"),
+            attachments=_attachments(content.get("attachments")),
         )
         return await transports.email.send(email)
     if row.channel == "slack":
