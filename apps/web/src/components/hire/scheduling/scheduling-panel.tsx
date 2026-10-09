@@ -413,7 +413,7 @@ export function SchedulingPanel({
                       type="button"
                       disabled={busy || panel.length === 0}
                       onClick={() => void choose(slot.start)}
-                      data-slot={slot.start}
+                      data-suggested-slot={slot.start}
                       aria-label={
                         active && ACTIVE_STATUSES.has(active.status)
                           ? t("moveHere", { when })
