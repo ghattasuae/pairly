@@ -180,3 +180,11 @@ name = "Hire scoring never sees self-identification"
 type = "forbidden"
 source_modules = ["pairly_hire.scoring"]
 forbidden_modules = ["pairly_hire.selfid", "pairly_hire.forms", "pairly_hire.applying", "pairly_hire.api"]
+
+# The pipeline and messaging show and write about candidates; they never read the
+# self-identification answers either (WP2.5, WP2.7).
+[[tool.importlinter.contracts]]
+name = "Hire pipeline and messaging never read self-identification answers"
+type = "forbidden"
+source_modules = ["pairly_hire.pipeline", "pairly_hire.messaging"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]

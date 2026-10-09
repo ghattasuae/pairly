@@ -1,0 +1,1590 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0a70ff2b2144a186ac84ec442aca5f76cdd1d668c697b47629f1abfcacce4def",
+      "response": {
+        "personal_note": "Thank you for your patience. Your application for the Customer Support Lead role is still with our team, and we have not forgotten you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0ac369480b23acaceed018550b52b7ecb75b7754ab3a846e4aa2efdafa14ea0e",
+      "response": {
+        "personal_note": "نعلم أن التقديم يتطلب وقتا وجهدا، ونشكرك على اهتمامك بوظيفة مهندس/ة خلفيات أول.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "17af55ec9e5d3e8337d36483dba1544e204bc83fd35a508a6d5842da41de34ee",
+      "response": {
+        "personal_note": "We know applying takes time and care, and we thank you for your interest in the Senior Backend Engineer role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "196450f81cb4eebc145c29af0e295bbb8bcfe4c06ce4e32d113d2b37d29d742d",
+      "response": {
+        "personal_note": "We enjoyed reading your application for the Accounts Payable Specialist role and look forward to talking with you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "235418a064bbe067d203cc695044ab00e0db0fcd273a6acbd719738020489a55",
+      "response": {
+        "personal_note": "We enjoyed reading your application for the Customer Support Lead role and look forward to talking with you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "26fddd343057c4e8c0ca9347b0505bb329a61278df98edaf999cb2d77570796a",
+      "response": {
+        "personal_note": "نعتذر عن هذا التغيير. ما زلنا نتطلع إلى الحديث معك عن وظيفة مهندس/ة خلفيات أول.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2b4f4bfb297cf504a36ba591249c86d0a8e03e8de122ad3097dbe18f3b1c4cea",
+      "response": {
+        "personal_note": "نتطلع إلى الحديث معك عن وظيفة أخصائي/ة حسابات دائنة. خذ وقتك في الاستعداد، واسألنا إذا كان أي شيء غير واضح.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "35630a0ef98cdf4b38571374edfe574ab5695295d2bc8f9e3a4a1609fc378870",
+      "response": {
+        "personal_note": "كنت من آخر المرشحين لوظيفة مهندس/ة خلفيات أول، ولم يكن القرار سهلا.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "3cb0b626d2684dd8ea57af2252b7640b89c7caf7df6c187a4d4703c40671e34c",
+      "response": {
+        "personal_note": "Thank you for the open and thoughtful conversation about the Customer Support Lead role. We appreciated your time.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4900f0bd32313d9ae674237f842b7b8d8a3ef56e68e2eb91a9fc2927896da521",
+      "response": {
+        "personal_note": "كنت من آخر المرشحين لوظيفة قائد/ة فريق دعم العملاء، ولم يكن القرار سهلا.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "52cf36b14f22199c76f657795f20cea02faaedd39b0601be9110381988fa71b7",
+      "response": {
+        "personal_note": "شكرا على الحوار الصريح والمدروس حول وظيفة مهندس/ة خلفيات أول. نقدر وقتك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "5a6a866461ecb03425bb4e5fa35f76fe0fe2a385663e76dfddb6799bdbff7db5",
+      "response": {
+        "personal_note": "شكرا لصبرك. طلبك لوظيفة أخصائي/ة حسابات دائنة ما زال لدى فريقنا، ولم ننسك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "65dcb71f37555cd09b79ac363bb101b2cf75ba0edef1c11ff428d27c8f8d643b",
+      "response": {
+        "personal_note": "كنت من آخر المرشحين لوظيفة أخصائي/ة حسابات دائنة، ولم يكن القرار سهلا.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "697836ffea4458b5a6584531fa94d2ac97798e3492a11502593f4351c7b3a3a7",
+      "response": {
+        "personal_note": "Thank you for letting us know. We wish you the very best with your next step.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6d102ac1c9de7264455b0ad5f901c657952136c36e7acc6b3d75e30d9c082bd6",
+      "response": {
+        "personal_note": "We know applying takes time and care, and we thank you for your interest in the Accounts Payable Specialist role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6d261eea732d7ea41253a929cdcf31405e593ff304d127bf6285428a793ed9cb",
+      "response": {
+        "personal_note": "نتطلع إلى الحديث معك عن وظيفة مهندس/ة خلفيات أول. خذ وقتك في الاستعداد، واسألنا إذا كان أي شيء غير واضح.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "73946d7c3d1523dc99e0bae3c53bac876a633a556d77562dc015b12e9571556b",
+      "response": {
+        "personal_note": "شكرا لإبلاغنا. نتمنى لك كل التوفيق في خطوتك القادمة.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "771e7941b3d50b685bcf836a7d90d18978306f5029fdd9e072b3de30394c8ff3",
+      "response": {
+        "personal_note": "We are sorry for the change. We still look forward to talking with you about the Senior Backend Engineer role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "7d15b8bfbd550d858582c730d22a1e8da8965a02c7d104dc2adcf429adf4494c",
+      "response": {
+        "personal_note": "Thank you for your patience. Your application for the Accounts Payable Specialist role is still with our team, and we have not forgotten you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "81584b460d1a2e34b9256fad6592275f91f54e295fc921664bbe21e735edd241",
+      "response": {
+        "personal_note": "Thank you for letting us know. We wish you the very best with your next step.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "83995b121ba165b9506a36f07ee7ce467c4d159a921d22cb733a8853c8d9763a",
+      "response": {
+        "personal_note": "Thank you for letting us know. We wish you the very best with your next step.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "88c11e55b76e1e33fcfcd981c85c7080296348b501448f671fac3a82b487b05d",
+      "response": {
+        "personal_note": "We look forward to talking with you about the Accounts Payable Specialist role. Take your time to prepare, and ask us if anything is unclear.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8b49156444a7cde6dc164ef75e14073bfd6c63619ebfc20f96ade3d4b57c5f5e",
+      "response": {
+        "personal_note": "شكرا على الحوار الصريح والمدروس حول وظيفة قائد/ة فريق دعم العملاء. نقدر وقتك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "95eb7735d5b58c4f87ca66cbadcacd6b8338b3e4b6e58cf561b6dc79ae8c4296",
+      "response": {
+        "personal_note": "نعتذر عن هذا التغيير. ما زلنا نتطلع إلى الحديث معك عن وظيفة قائد/ة فريق دعم العملاء.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "977c806b84ddcdb04ae9b41dafd9fcb0860e98ba26361eaedbf97980b318c8de",
+      "response": {
+        "personal_note": "Thank you for your patience. Your application for the Senior Backend Engineer role is still with our team, and we have not forgotten you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "99ee60ae9953ccde86a90f8a4cee963b274fcd5b5fc903fb1a83dd2e8e303d85",
+      "response": {
+        "personal_note": "استمتعنا بقراءة طلبك لوظيفة مهندس/ة خلفيات أول ونتطلع إلى الحديث معك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9a33cbb510341e29842dca340e212abf1a81db12b6b04571fd6b9bed5f47ab05",
+      "response": {
+        "personal_note": "We are sorry for the change. We still look forward to talking with you about the Customer Support Lead role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a65e28e68fbd916f00faf26420c51d5d251f2875ce8476902ce537420ecda2ee",
+      "response": {
+        "personal_note": "We look forward to talking with you about the Customer Support Lead role. Take your time to prepare, and ask us if anything is unclear.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a7cef7749ab13c4c71395a0164ee41af93d55635a491f41e8a5ed2c003805097",
+      "response": {
+        "personal_note": "استمتعنا بقراءة طلبك لوظيفة أخصائي/ة حسابات دائنة ونتطلع إلى الحديث معك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ace6b7929753a79a613279efe3fafa2d1f1f432f4dc2438d8aa099ed496caf33",
+      "response": {
+        "personal_note": "استمتعنا بقراءة طلبك لوظيفة قائد/ة فريق دعم العملاء ونتطلع إلى الحديث معك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "aeb770eae86f0a59c1f3a79d8886b191ef8083c47b78d2d0cd0c1beca2fcee9f",
+      "response": {
+        "personal_note": "We look forward to talking with you about the Senior Backend Engineer role. Take your time to prepare, and ask us if anything is unclear.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b24fd5d88b93e5e2431e64c20d1f2f56943353e428f9b22af5431c4bf58677c2",
+      "response": {
+        "personal_note": "Thank you for the open and thoughtful conversation about the Accounts Payable Specialist role. We appreciated your time.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Invite the candidate to an interview.",
+          "template": "hire.candidate.interview_invite"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b750bcbf52c4104f812beeefcc8b5c1e042b52401239602536e6b62548db3433",
+      "response": {
+        "personal_note": "We enjoyed reading your application for the Senior Backend Engineer role and look forward to talking with you.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "bc2efc732dd64baf9c901f897d7f06f3f4e4f2acf8bb6389e04e3deb466d0c14",
+      "response": {
+        "personal_note": "شكرا على الحوار الصريح والمدروس حول وظيفة أخصائي/ة حسابات دائنة. نقدر وقتك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c0e52928f3944c2a3b140d64c62c32a8233e9771fb79f2fb0dbbf51d53fcf14d",
+      "response": {
+        "personal_note": "You were one of the last candidates for the Accounts Payable Specialist role, and the decision was not easy.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c79d4b6af3d69b52bddf58ba7e8398da4add8fba6dac957b42fb4029c0448bc7",
+      "response": {
+        "personal_note": "شكرا لإبلاغنا. نتمنى لك كل التوفيق في خطوتك القادمة.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "cc8cace44dce51ced7b84a05768d6c7b027aefff1477bb2eda446267269a1516",
+      "response": {
+        "personal_note": "We know applying takes time and care, and we thank you for your interest in the Customer Support Lead role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ced091f36add83696a4d9a9e7295b0c38be8a205426e327141d2735cf353e477",
+      "response": {
+        "personal_note": "شكرا لصبرك. طلبك لوظيفة قائد/ة فريق دعم العملاء ما زال لدى فريقنا، ولم ننسك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Customer Support Lead",
+          "language": "en",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "cf4116d8e83ae4d3981dc29ca2f4170c555cb9f4aab7a5e627b11e4955be0bdd",
+      "response": {
+        "personal_note": "You were one of the last candidates for the Customer Support Lead role, and the decision was not easy.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Accounts Payable Specialist",
+          "language": "en",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d2a0efcdc5e3e9bac9daaad65d514b2b946dfe7bba931bfd8e933d7775b77459",
+      "response": {
+        "personal_note": "We are sorry for the change. We still look forward to talking with you about the Accounts Payable Specialist role.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d767f3e82d0f15892403a010b7594093716886f9c28a1a38fc39c3600134d8d0",
+      "response": {
+        "personal_note": "نعلم أن التقديم يتطلب وقتا وجهدا، ونشكرك على اهتمامك بوظيفة أخصائي/ة حسابات دائنة.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Tell the candidate their application is still being worked on.",
+          "template": "hire.candidate.status_update"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e4b11fa347a76fe4081bc13916ed9ebd1f96acedbc63d213265bfcbb138f40f1",
+      "response": {
+        "personal_note": "شكرا لصبرك. طلبك لوظيفة مهندس/ة خلفيات أول ما زال لدى فريقنا، ولم ننسك.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "مهندس/ة خلفيات أول",
+          "language": "ar",
+          "purpose": "Confirm the candidate withdrew their application.",
+          "template": "hire.candidate.withdrawal"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e50552c4fab0f76275ff1d448937ac85d32eec746886b4d22a62db388b0c1ee5",
+      "response": {
+        "personal_note": "شكرا لإبلاغنا. نتمنى لك كل التوفيق في خطوتك القادمة.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Tell the candidate we will not move forward after review.",
+          "template": "hire.candidate.rejection_screening"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e524a49a8a0029bc46dabe741e84587c6ad28c2fff7b3c81f2dec958974eec4d",
+      "response": {
+        "personal_note": "نعلم أن التقديم يتطلب وقتا وجهدا، ونشكرك على اهتمامك بوظيفة قائد/ة فريق دعم العملاء.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Tell the candidate we will not offer the role after interviews.",
+          "template": "hire.candidate.rejection_interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e74b04460df4fe62d6b50ce01aa2834d83353ee35a0a24400a029c993bf09a24",
+      "response": {
+        "personal_note": "Thank you for the open and thoughtful conversation about the Senior Backend Engineer role. We appreciated your time.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "Senior Backend Engineer",
+          "language": "en",
+          "purpose": "Tell the candidate we chose someone else after the final round.",
+          "template": "hire.candidate.rejection_final"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e75bde21bdff3e7a53eaeddd8cd2759869848c2e8c3b5876a2b684a518249904",
+      "response": {
+        "personal_note": "You were one of the last candidates for the Senior Backend Engineer role, and the decision was not easy.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "أخصائي/ة حسابات دائنة",
+          "language": "ar",
+          "purpose": "Tell the candidate their interview moves to a new time.",
+          "template": "hire.candidate.interview_reschedule"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e9fb0c509359172e559d462897ac5dcc4cfae43a6276f725da391772a721029d",
+      "response": {
+        "personal_note": "نعتذر عن هذا التغيير. ما زلنا نتطلع إلى الحديث معك عن وظيفة أخصائي/ة حسابات دائنة.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "bd9c9d42dfc3b0a45ceb7ec066e72188b3af8fb5ca889ef6fbfffb59a5788b8e",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "evidence": [],
+          "job_title": "قائد/ة فريق دعم العملاء",
+          "language": "ar",
+          "purpose": "Remind the candidate of their interview.",
+          "template": "hire.candidate.interview_reminder"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "fe83ecda7ef16418b644f6d45824b9d9d28d3fb07dbc872eecd5394f890a61bd",
+      "response": {
+        "personal_note": "نتطلع إلى الحديث معك عن وظيفة قائد/ة فريق دعم العملاء. خذ وقتك في الاستعداد، واسألنا إذا كان أي شيء غير واضح.",
+        "reason": ""
+      },
+      "schema_hash": "2e4742aa3f2adb27940625f75c4d7b56a1820fbcbb2ddd9c127d4739749c8e3c",
+      "schema_name": "MessageDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_message_draft",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}

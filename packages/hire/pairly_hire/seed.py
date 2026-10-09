@@ -14,7 +14,9 @@ Idempotent, in one transaction (the CLI's), as the owner database role:
      so a person can show the edit, lock and publish steps.
 3. Invitations for a recruiter, a hiring manager and an interviewer, each limited to
    the Hire workflow.
-4. The recorded model responses of ``data/recordings.json``, so drafting works offline.
+4. The recorded model responses of ``data/recordings.json`` (job and rubric drafts) and
+   ``data/messaging_recordings.json`` (personal paragraphs of messages), so drafting
+   works offline.
 """
 
 from __future__ import annotations
@@ -50,6 +52,14 @@ DEMO_PEOPLE: Final = (
 
 def recordings_text() -> str:
     return files("pairly_hire").joinpath("data", "recordings.json").read_text(encoding="utf-8")
+
+
+def messaging_recordings_text() -> str:
+    return (
+        files("pairly_hire")
+        .joinpath("data", "messaging_recordings.json")
+        .read_text(encoding="utf-8")
+    )
 
 
 def demo_email(slug: str, who: str) -> str:
@@ -175,6 +185,12 @@ async def seed_hire_demo(session: AsyncSession, ctx: SeedContext) -> SeedResult:
     report = await import_recordings(session, ctx.org_id, parse_bundle(recordings_text()))
     lines.append(
         f"recorded model responses: {report.imported} imported, {report.skipped} already there"
+    )
+    report = await import_recordings(
+        session, ctx.org_id, parse_bundle(messaging_recordings_text())
+    )
+    lines.append(
+        f"recorded message drafts: {report.imported} imported, {report.skipped} already there"
     )
     lines.append(f"careers page: {ctx.web_url.rstrip('/')}/en/careers/{ctx.org_slug}")
     return SeedResult(lines=tuple(lines), invitations=tuple(invitations))

@@ -14,7 +14,8 @@ Reads (``Cache-Control: public, max-age=300``; 120 requests a minute per IP):
 The apply flow (``pairly_hire.applying``; ``Cache-Control: no-store``):
 
 * ``POST /{org_slug}/jobs/{job_slug}/applications`` (JSON, 201): consent, contact
-  details, answers, voluntary self-identification and the Turnstile token. Returns a
+  details, answers, voluntary self-identification, the Turnstile token and an optional
+  employee referral token (``referral``, recorded when valid). Returns a
   one-time upload token (2 hours). 10 per hour per IP; 5 per day per email address.
 * ``POST /{org_slug}/applications/files`` (multipart: ``file``, ``token``, ``field``,
   201): one file per request through the engine's ingestion (workflow ``hire``). 40
@@ -84,8 +85,10 @@ from pairly_hire.careers import (
     xml_feed,
 )
 from pairly_hire.jobs import current_form, org_settings
+from pairly_hire.links import links_from_settings
 from pairly_hire.models import HireJob, JobStatus
 from pairly_hire.notice import CURRENT_VERSION, NOTICES
+from pairly_hire.pipeline.referrals import attach_referral
 from pairly_hire.rubrics import locked_rubric
 from pairly_hire.selfid.schema import CATEGORIES
 
@@ -102,6 +105,10 @@ LIMITS: Final = {
     "files": (40, 3600.0),
     "submit": (20, 3600.0),
 }
+
+
+def _notifications(request: Request) -> Any:
+    return getattr(request.app.state, "notifications", None)
 
 
 def _limiter(request: Request, kind: str) -> SlidingWindowLimiter:
@@ -255,6 +262,9 @@ class HireApplyIn(BaseModel):
     knockouts: dict[str, Any] = Field(default_factory=dict, max_length=10)
     self_identification: dict[str, Any] = Field(default_factory=dict, max_length=10)
     turnstile_token: Annotated[str, StringConstraints(max_length=2048)]
+    # The ``ref`` of an employee's referral link (``pairly_hire.pipeline.referrals``).
+    # Invalid or foreign: ignored, the application goes on without a referral.
+    referral: Annotated[str, StringConstraints(max_length=200)] | None = None
 
 
 class HireApplyOut(BaseModel):
@@ -426,6 +436,12 @@ async def apply(org_slug: str, job_slug: str, request: Request, session: Request
         ),
         verifier=verifier,
         remote_ip=None if ip == "unknown" else ip,
+    )
+    await attach_referral(
+        session,
+        started.application,
+        body.referral,
+        links_from_settings(_notifications(request)).secret,
     )
     out = HireApplyOut(
         token=started.token,

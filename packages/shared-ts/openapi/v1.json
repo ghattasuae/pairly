@@ -3767,6 +3767,45 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HireAiDraftIn": {
+        "additionalProperties": false,
+        "properties": {
+          "include_reason": {
+            "default": false,
+            "title": "Include Reason",
+            "type": "boolean"
+          }
+        },
+        "title": "HireAiDraftIn",
+        "type": "object"
+      },
+      "HireAiDraftOut": {
+        "properties": {
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "message": {
+            "$ref": "#/components/schemas/HireMessageOut"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "model",
+          "prompt_version",
+          "from_recording"
+        ],
+        "title": "HireAiDraftOut",
+        "type": "object"
+      },
       "HireApplicationDetail": {
         "properties": {
           "acknowledged_at": {
@@ -4112,6 +4151,56 @@
         "title": "HireApplyOut",
         "type": "object"
       },
+      "HireBoardOut": {
+        "properties": {
+          "blind_mode": {
+            "title": "Blind Mode",
+            "type": "boolean"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/HireCardOut"
+            },
+            "title": "Cards",
+            "type": "array"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_status": {
+            "title": "Job Status",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "sla_days": {
+            "title": "Sla Days",
+            "type": "integer"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/HireStageOut"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "job_title",
+          "job_status",
+          "blind_mode",
+          "sla_days",
+          "stages",
+          "cards"
+        ],
+        "title": "HireBoardOut",
+        "type": "object"
+      },
       "HireBriefIn": {
         "additionalProperties": false,
         "properties": {
@@ -4126,6 +4215,351 @@
           "brief"
         ],
         "title": "HireBriefIn",
+        "type": "object"
+      },
+      "HireBulkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "application_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Application Ids",
+            "type": "array"
+          },
+          "to_stage": {
+            "pattern": "^[a-z][a-z0-9_]{0,31}$",
+            "title": "To Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_ids",
+          "to_stage"
+        ],
+        "title": "HireBulkIn",
+        "type": "object"
+      },
+      "HireBulkMessageIn": {
+        "additionalProperties": false,
+        "properties": {
+          "application_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Application Ids",
+            "type": "array"
+          },
+          "template_key": {
+            "maxLength": 96,
+            "title": "Template Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_ids",
+          "template_key"
+        ],
+        "title": "HireBulkMessageIn",
+        "type": "object"
+      },
+      "HireBulkMessageOut": {
+        "properties": {
+          "message_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Message Ids",
+            "type": "array"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          },
+          "suppressed": {
+            "title": "Suppressed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sent",
+          "suppressed",
+          "message_ids"
+        ],
+        "title": "HireBulkMessageOut",
+        "type": "object"
+      },
+      "HireBulkMessageSummaryOut": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "not_found": {
+            "title": "Not Found",
+            "type": "integer"
+          },
+          "opted_out": {
+            "title": "Opted Out",
+            "type": "integer"
+          },
+          "sensitive": {
+            "title": "Sensitive",
+            "type": "boolean"
+          },
+          "template_key": {
+            "title": "Template Key",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "will_send": {
+            "title": "Will Send",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "template_key",
+          "label",
+          "total",
+          "will_send",
+          "opted_out",
+          "not_found",
+          "sensitive",
+          "missing_fields"
+        ],
+        "title": "HireBulkMessageSummaryOut",
+        "type": "object"
+      },
+      "HireBulkOut": {
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "moves": {
+            "items": {
+              "$ref": "#/components/schemas/HireMoveOut"
+            },
+            "title": "Moves",
+            "type": "array"
+          },
+          "undo_seconds": {
+            "title": "Undo Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "batch_id",
+          "moves",
+          "undo_seconds"
+        ],
+        "title": "HireBulkOut",
+        "type": "object"
+      },
+      "HireBulkSummaryOut": {
+        "properties": {
+          "already_there": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Already There",
+            "type": "array"
+          },
+          "drafts_to_create": {
+            "title": "Drafts To Create",
+            "type": "integer"
+          },
+          "from_stages": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "From Stages",
+            "type": "object"
+          },
+          "messages_sent_now": {
+            "title": "Messages Sent Now",
+            "type": "integer"
+          },
+          "needs_approval": {
+            "title": "Needs Approval",
+            "type": "boolean"
+          },
+          "not_found": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Not Found",
+            "type": "array"
+          },
+          "to_label": {
+            "title": "To Label",
+            "type": "string"
+          },
+          "to_stage": {
+            "title": "To Stage",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "will_move": {
+            "title": "Will Move",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "to_stage",
+          "to_label",
+          "total",
+          "will_move",
+          "already_there",
+          "not_found",
+          "from_stages",
+          "drafts_to_create",
+          "messages_sent_now",
+          "needs_approval"
+        ],
+        "title": "HireBulkSummaryOut",
+        "type": "object"
+      },
+      "HireCardOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "duplicate_hints": {
+            "title": "Duplicate Hints",
+            "type": "integer"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "needs_human_review": {
+            "title": "Needs Human Review",
+            "type": "boolean"
+          },
+          "open_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Message"
+          },
+          "open_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Message Id"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "referred": {
+            "title": "Referred",
+            "type": "boolean"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "sla_overdue": {
+            "title": "Sla Overdue",
+            "type": "boolean"
+          },
+          "stage_entered_at": {
+            "format": "date-time",
+            "title": "Stage Entered At",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "waiting_days": {
+            "title": "Waiting Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "application_id",
+          "reference",
+          "label",
+          "identity_hidden",
+          "stage_key",
+          "stage_entered_at",
+          "submitted_at",
+          "waiting_days",
+          "sla_overdue",
+          "tags",
+          "needs_human_review",
+          "review_reasons",
+          "duplicate_hints",
+          "referred",
+          "open_message",
+          "open_message_id"
+        ],
+        "title": "HireCardOut",
         "type": "object"
       },
       "HireCareersOut": {
@@ -4177,6 +4611,95 @@
           }
         },
         "title": "HireCheckTextIn",
+        "type": "object"
+      },
+      "HireCriterionOut": {
+        "properties": {
+          "criterion": {
+            "title": "Criterion",
+            "type": "string"
+          },
+          "quotes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Quotes",
+            "type": "array"
+          },
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "criterion",
+          "result",
+          "quotes"
+        ],
+        "title": "HireCriterionOut",
+        "type": "object"
+      },
+      "HireDraftIn": {
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "anyOf": [
+              {
+                "pattern": "^(en|ar)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "template_key": {
+            "maxLength": 96,
+            "title": "Template Key",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": true,
+            "maxProperties": 20,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "template_key"
+        ],
+        "title": "HireDraftIn",
+        "type": "object"
+      },
+      "HireEventOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "title",
+          "detail"
+        ],
+        "title": "HireEventOut",
         "type": "object"
       },
       "HireFileOut": {
@@ -5008,6 +5531,304 @@
         "title": "HireKnockoutOut",
         "type": "object"
       },
+      "HireMessageOut": {
+        "properties": {
+          "ai_available": {
+            "title": "Ai Available",
+            "type": "boolean"
+          },
+          "ai_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Fields",
+            "type": "array"
+          },
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "candidate_opted_out": {
+            "title": "Candidate Opted Out",
+            "type": "boolean"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/HireTemplateFieldOut"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/HirePreviewOut"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "reason_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Source"
+          },
+          "sensitive": {
+            "title": "Sensitive",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "template_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Key"
+          },
+          "transactional": {
+            "title": "Transactional",
+            "type": "boolean"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "template_key",
+          "label",
+          "locale",
+          "status",
+          "status_reason",
+          "sensitive",
+          "transactional",
+          "purpose",
+          "values",
+          "fields",
+          "ai_fields",
+          "ai_available",
+          "reason_source",
+          "approval_id",
+          "candidate_opted_out",
+          "preview"
+        ],
+        "title": "HireMessageOut",
+        "type": "object"
+      },
+      "HireMessageSummaryOut": {
+        "properties": {
+          "ai_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Fields",
+            "type": "array"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "delivery": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "reason_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Source"
+          },
+          "sensitive": {
+            "title": "Sensitive",
+            "type": "boolean"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "template_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Key"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "id",
+          "template_key",
+          "label",
+          "status",
+          "sensitive",
+          "purpose",
+          "subject",
+          "text",
+          "approval_id",
+          "ai_fields",
+          "reason_source",
+          "delivery",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "HireMessageSummaryOut",
+        "type": "object"
+      },
+      "HireMessagingSettingsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "sla_days": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Sla Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sla_days"
+        ],
+        "title": "HireMessagingSettingsIn",
+        "type": "object"
+      },
+      "HireMessagingSettingsOut": {
+        "properties": {
+          "sla_days": {
+            "title": "Sla Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sla_days"
+        ],
+        "title": "HireMessagingSettingsOut",
+        "type": "object"
+      },
       "HireModelCallOut": {
         "properties": {
           "call_id": {
@@ -5035,6 +5856,460 @@
           "from_recording"
         ],
         "title": "HireModelCallOut",
+        "type": "object"
+      },
+      "HireMoveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "to_stage": {
+            "pattern": "^[a-z][a-z0-9_]{0,31}$",
+            "title": "To Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to_stage"
+        ],
+        "title": "HireMoveIn",
+        "type": "object"
+      },
+      "HireMoveOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "draft_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Id"
+          },
+          "from_stage": {
+            "title": "From Stage",
+            "type": "string"
+          },
+          "move_id": {
+            "format": "uuid",
+            "title": "Move Id",
+            "type": "string"
+          },
+          "to_stage": {
+            "title": "To Stage",
+            "type": "string"
+          },
+          "undo_seconds": {
+            "title": "Undo Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "move_id",
+          "application_id",
+          "from_stage",
+          "to_stage",
+          "draft_id",
+          "undo_seconds"
+        ],
+        "title": "HireMoveOut",
+        "type": "object"
+      },
+      "HireNoteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "mentions": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Mentions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "HireNoteIn",
+        "type": "object"
+      },
+      "HireNoteOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "mentioned": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Mentioned",
+            "type": "array"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id",
+          "mentioned",
+          "created_at"
+        ],
+        "title": "HireNoteOut",
+        "type": "object"
+      },
+      "HirePrefsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "talent_pool": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Talent Pool"
+          },
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          },
+          "updates_email": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updates Email"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "HirePrefsIn",
+        "type": "object"
+      },
+      "HirePrefsOut": {
+        "properties": {
+          "jobs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "organisation": {
+            "title": "Organisation",
+            "type": "string"
+          },
+          "talent_pool": {
+            "title": "Talent Pool",
+            "type": "boolean"
+          },
+          "updates_email": {
+            "title": "Updates Email",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "organisation",
+          "updates_email",
+          "talent_pool",
+          "jobs"
+        ],
+        "title": "HirePrefsOut",
+        "type": "object"
+      },
+      "HirePrefsTokenIn": {
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "HirePrefsTokenIn",
+        "type": "object"
+      },
+      "HirePreviewOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "masked": {
+            "title": "Masked",
+            "type": "boolean"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "ok",
+          "subject",
+          "text",
+          "missing",
+          "error",
+          "masked"
+        ],
+        "title": "HirePreviewOut",
+        "type": "object"
+      },
+      "HireProfileOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "blind_mode": {
+            "title": "Blind Mode",
+            "type": "boolean"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/HireMessageSummaryOut"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "needs_human_review": {
+            "title": "Needs Human Review",
+            "type": "boolean"
+          },
+          "next_stage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireStageOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "screening": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireScreeningOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "talent_pool": {
+            "title": "Talent Pool",
+            "type": "boolean"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/HireEventOut"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "updates_email": {
+            "title": "Updates Email",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_id",
+          "job_title",
+          "reference",
+          "status",
+          "stage_key",
+          "stage_label",
+          "next_stage",
+          "submitted_at",
+          "blind_mode",
+          "identity_hidden",
+          "label",
+          "contact",
+          "files",
+          "tags",
+          "needs_human_review",
+          "review_reasons",
+          "updates_email",
+          "talent_pool",
+          "referred_by",
+          "screening",
+          "messages",
+          "timeline"
+        ],
+        "title": "HireProfileOut",
         "type": "object"
       },
       "HirePublicJob": {
@@ -5328,6 +6603,158 @@
         "title": "HirePublicSalary",
         "type": "object"
       },
+      "HireRediscoveryHit": {
+        "properties": {
+          "applications": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Applications",
+            "type": "array"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "label",
+          "identity_hidden",
+          "applications",
+          "snippet",
+          "score"
+        ],
+        "title": "HireRediscoveryHit",
+        "type": "object"
+      },
+      "HireRediscoveryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 10,
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "query": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "HireRediscoveryIn",
+        "type": "object"
+      },
+      "HireReferralLinkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "pattern": "^(en|ar)$",
+            "title": "Locale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "HireReferralLinkIn",
+        "type": "object"
+      },
+      "HireReferralLinkOut": {
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "link_id": {
+            "format": "uuid",
+            "title": "Link Id",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id",
+          "job_id",
+          "url"
+        ],
+        "title": "HireReferralLinkOut",
+        "type": "object"
+      },
+      "HireReferralOut": {
+        "properties": {
+          "candidate": {
+            "title": "Candidate",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "referral_id": {
+            "format": "uuid",
+            "title": "Referral Id",
+            "type": "string"
+          },
+          "referred_at": {
+            "format": "date-time",
+            "title": "Referred At",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "referral_id",
+          "job_title",
+          "candidate",
+          "stage",
+          "stage_label",
+          "referred_at"
+        ],
+        "title": "HireReferralOut",
+        "type": "object"
+      },
       "HireRubricLockOut": {
         "properties": {
           "applications_on_earlier_versions": {
@@ -5475,6 +6902,39 @@
         "title": "HireRubricVersionOut",
         "type": "object"
       },
+      "HireScreeningOut": {
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "overall",
+          "criteria"
+        ],
+        "title": "HireScreeningOut",
+        "type": "object"
+      },
       "HireSelfIdReport": {
         "properties": {
           "categories": {
@@ -5591,6 +7051,61 @@
         "title": "HireSettingsOut",
         "type": "object"
       },
+      "HireStageOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "label_ar": {
+            "title": "Label Ar",
+            "type": "string"
+          },
+          "reveal_identity": {
+            "title": "Reveal Identity",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "label_ar",
+          "kind",
+          "reveal_identity"
+        ],
+        "title": "HireStageOut",
+        "type": "object"
+      },
+      "HireStagesOut": {
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/HireStageOut"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "stages"
+        ],
+        "title": "HireStagesOut",
+        "type": "object"
+      },
       "HireSubmitOut": {
         "properties": {
           "reference": {
@@ -5612,6 +7127,147 @@
           "response_days"
         ],
         "title": "HireSubmitOut",
+        "type": "object"
+      },
+      "HireTagsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "tags": {
+            "items": {
+              "maxLength": 32,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "title": "HireTagsIn",
+        "type": "object"
+      },
+      "HireTagsOut": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "title": "HireTagsOut",
+        "type": "object"
+      },
+      "HireTeamMemberOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "HireTeamMemberOut",
+        "type": "object"
+      },
+      "HireTemplateFieldOut": {
+        "properties": {
+          "ai": {
+            "title": "Ai",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required",
+          "ai"
+        ],
+        "title": "HireTemplateFieldOut",
+        "type": "object"
+      },
+      "HireTemplateOut": {
+        "properties": {
+          "ai_available": {
+            "title": "Ai Available",
+            "type": "boolean"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/HireTemplateFieldOut"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "label_ar": {
+            "title": "Label Ar",
+            "type": "string"
+          },
+          "rejection": {
+            "title": "Rejection",
+            "type": "boolean"
+          },
+          "sensitive": {
+            "title": "Sensitive",
+            "type": "boolean"
+          },
+          "suggested_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested For",
+            "type": "array"
+          },
+          "transactional": {
+            "title": "Transactional",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "label_ar",
+          "sensitive",
+          "transactional",
+          "rejection",
+          "ai_available",
+          "suggested_for",
+          "fields"
+        ],
+        "title": "HireTemplateOut",
         "type": "object"
       },
       "HireTextChecks": {
@@ -5652,6 +7308,151 @@
           "sanity_ar"
         ],
         "title": "HireTextChecks",
+        "type": "object"
+      },
+      "HireUndoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "move_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Move Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "move_ids"
+        ],
+        "title": "HireUndoIn",
+        "type": "object"
+      },
+      "HireUndoOut": {
+        "properties": {
+          "cancelled_drafts": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Cancelled Drafts",
+            "type": "array"
+          },
+          "undone": {
+            "items": {
+              "$ref": "#/components/schemas/HireMoveOut"
+            },
+            "title": "Undone",
+            "type": "array"
+          }
+        },
+        "required": [
+          "undone",
+          "cancelled_drafts"
+        ],
+        "title": "HireUndoOut",
+        "type": "object"
+      },
+      "HireValuesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "values": {
+            "additionalProperties": true,
+            "maxProperties": 20,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "title": "HireValuesIn",
+        "type": "object"
+      },
+      "HireWaitingList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireWaitingOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "sla_days": {
+            "title": "Sla Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sla_days",
+          "items"
+        ],
+        "title": "HireWaitingList",
+        "type": "object"
+      },
+      "HireWaitingOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "has_open_draft": {
+            "title": "Has Open Draft",
+            "type": "boolean"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "since": {
+            "format": "date-time",
+            "title": "Since",
+            "type": "string"
+          },
+          "sla_overdue": {
+            "title": "Sla Overdue",
+            "type": "boolean"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          },
+          "waiting_days": {
+            "title": "Waiting Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_id",
+          "job_title",
+          "label",
+          "reference",
+          "stage_key",
+          "stage_label",
+          "waiting_days",
+          "since",
+          "sla_overdue",
+          "has_open_draft"
+        ],
+        "title": "HireWaitingOut",
         "type": "object"
       },
       "HitOut": {
@@ -11680,6 +13481,113 @@
         ]
       }
     },
+    "/v1/hire/jobs/{job_id}/messages/bulk/preview": {
+      "post": {
+        "operationId": "bulk_preview_v1_hire_jobs__job_id__messages_bulk_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireBulkMessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireBulkMessageSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bulk Preview",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/messages/bulk/send": {
+      "post": {
+        "description": "Send one non-sensitive message to each candidate (after the summary). A sensitive\ntemplate is refused: each rejection or offer is approved on its own.",
+        "operationId": "bulk_send_v1_hire_jobs__job_id__messages_bulk_send_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireBulkMessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireBulkMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bulk Send",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/jobs/{job_id}/pause": {
       "post": {
         "operationId": "pause_v1_hire_jobs__job_id__pause_post",
@@ -11718,6 +13626,155 @@
           }
         },
         "summary": "Pause",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/pipeline": {
+      "get": {
+        "operationId": "get_board_v1_hire_jobs__job_id__pipeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireBoardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Board",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/pipeline/bulk/move": {
+      "post": {
+        "operationId": "bulk_move_v1_hire_jobs__job_id__pipeline_bulk_move_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireBulkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireBulkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bulk Move",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/pipeline/bulk/preview": {
+      "post": {
+        "operationId": "bulk_preview_v1_hire_jobs__job_id__pipeline_bulk_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireBulkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireBulkSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bulk Preview",
         "tags": [
           "hire"
         ]
@@ -11943,6 +14000,854 @@
           }
         },
         "summary": "Lock",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/stages": {
+      "get": {
+        "operationId": "get_stages_v1_hire_jobs__job_id__stages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireStagesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Stages",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_stages_v1_hire_jobs__job_id__stages_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Body",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireStagesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Stages",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/templates": {
+      "get": {
+        "operationId": "templates_v1_hire_messages_templates_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireTemplateOut"
+                  },
+                  "title": "Response Templates V1 Hire Messages Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Templates",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/{message_id}": {
+      "get": {
+        "operationId": "get_message_v1_hire_messages__message_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Message",
+        "tags": [
+          "hire"
+        ]
+      },
+      "patch": {
+        "operationId": "edit_message_v1_hire_messages__message_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireValuesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Message",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/{message_id}/ai-draft": {
+      "post": {
+        "operationId": "ai_draft_message_v1_hire_messages__message_id__ai_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireAiDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAiDraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Draft Message",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/{message_id}/cancel": {
+      "post": {
+        "operationId": "cancel_v1_hire_messages__message_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/{message_id}/send": {
+      "post": {
+        "operationId": "send_v1_hire_messages__message_id__send_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/messages/{message_id}/submit": {
+      "post": {
+        "operationId": "submit_v1_hire_messages__message_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}": {
+      "get": {
+        "operationId": "get_profile_v1_hire_pipeline_applications__application_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Profile",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}/advance": {
+      "post": {
+        "operationId": "advance_application_v1_hire_pipeline_applications__application_id__advance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMoveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Advance Application",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}/messages": {
+      "post": {
+        "operationId": "create_message_v1_hire_pipeline_applications__application_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Message",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}/move": {
+      "post": {
+        "operationId": "move_application_v1_hire_pipeline_applications__application_id__move_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireMoveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMoveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Move Application",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}/notes": {
+      "post": {
+        "operationId": "add_note_v1_hire_pipeline_applications__application_id__notes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireNoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireNoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Note",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/applications/{application_id}/tags": {
+      "put": {
+        "operationId": "put_tags_v1_hire_pipeline_applications__application_id__tags_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireTagsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireTagsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Tags",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/moves/undo": {
+      "post": {
+        "operationId": "undo_moves_v1_hire_pipeline_moves_undo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireUndoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireUndoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Undo Moves",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/team": {
+      "get": {
+        "operationId": "team_v1_hire_pipeline_team_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireTeamMemberOut"
+                  },
+                  "title": "Response Team V1 Hire Pipeline Team Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Team",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/pipeline/waiting": {
+      "get": {
+        "operationId": "waiting_longest_v1_hire_pipeline_waiting_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireWaitingList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Waiting Longest",
         "tags": [
           "hire"
         ]
@@ -12276,6 +15181,201 @@
         ]
       }
     },
+    "/v1/hire/public/preferences": {
+      "post": {
+        "operationId": "change_preferences_v1_hire_public_preferences_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePrefsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePrefsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Preferences",
+        "tags": [
+          "hire",
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/preferences/read": {
+      "post": {
+        "operationId": "read_preferences_v1_hire_public_preferences_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePrefsTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePrefsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Preferences",
+        "tags": [
+          "hire",
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/rediscovery/search": {
+      "post": {
+        "operationId": "rediscover_v1_hire_rediscovery_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireRediscoveryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireRediscoveryHit"
+                  },
+                  "title": "Response Rediscover V1 Hire Rediscovery Search Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rediscover",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/referrals/links": {
+      "post": {
+        "operationId": "referral_link_v1_hire_referrals_links_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireReferralLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireReferralLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Referral Link",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/referrals/mine": {
+      "get": {
+        "operationId": "my_referrals_v1_hire_referrals_mine_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireReferralOut"
+                  },
+                  "title": "Response My Referrals V1 Hire Referrals Mine Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Referrals",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/reports/self-identification": {
       "get": {
         "operationId": "self_identification_report_v1_hire_reports_self_identification_get",
@@ -12374,6 +15474,66 @@
           }
         },
         "summary": "Put Settings",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/messaging": {
+      "get": {
+        "operationId": "get_messaging_settings_v1_hire_settings_messaging_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessagingSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Messaging Settings",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_messaging_settings_v1_hire_settings_messaging_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireMessagingSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireMessagingSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Messaging Settings",
         "tags": [
           "hire"
         ]

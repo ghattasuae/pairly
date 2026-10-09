@@ -131,6 +131,7 @@ docker-ps: ## Show compose containers and their health
 demo-hire: ## Seed Pairly Hire in an org (SLUG=acme): jobs, rubrics, people, recordings
 	@if [ -z "$(SLUG)" ]; then echo 'usage: make demo-hire SLUG=acme'; exit 2; fi
 	$(UV) run python -m pairly_hire.recordings --check
+	$(UV) run python -m pairly_hire.messaging.recordings --check
 	$(RUN_OWNER) pairly-admin seed hire-demo --org "$(SLUG)"
 	@echo ""
 	@echo "Careers page: /en/careers/$(SLUG) and /ar/careers/$(SLUG) on the web app."
