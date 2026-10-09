@@ -212,7 +212,7 @@ test("book an interview with an available slot: 3 clicks", async ({ browser }) =
   await expect(card(page, candidates.ana).locator("[data-interview]")).toBeVisible({ timeout: 10_000 });
   const text = await waitForText(candidates.ana.email, "Your interview for");
   expect(text).toContain("is booked");
-  expect(text).not.toContain("—");
+  expect(text).not.toContain("\u2014"); // no em dash
   await context.close();
 });
 
