@@ -1585,5 +1585,161 @@
       "title": "Keyboard",
       "keys": "J and K: next and previous. A: advance. H: hold. R: draft a rejection. N: note. S: schedule. T: tag. X: select. C: compare. /: search."
     }
+  },
+  "Portal": {
+    "eyebrow": "Candidate portal",
+    "title": "Your applications",
+    "nav": {
+      "label": "Portal",
+      "applications": "Applications",
+      "privacy": "Privacy centre",
+      "signOut": "Sign out"
+    },
+    "signIn": {
+      "title": "Follow your application",
+      "intro": "We email you a link. No password needed.",
+      "email": "Email address",
+      "send": "Email me a link",
+      "sending": "Sending",
+      "sent": "If you applied with this address, a link is on its way. It works once and for 30 minutes.",
+      "needOrg": "Open this page from the link in your email, or from the careers page of the company you applied to.",
+      "expiredTitle": "This link does not work any more",
+      "expired": "A link works once and for a short time. Ask for a new one below.",
+      "opening": "Signing you in",
+      "signedOut": "You signed out."
+    },
+    "steps": {
+      "received": {
+        "label": "Application received",
+        "help": "We have your application."
+      },
+      "in_review": {
+        "label": "Being reviewed",
+        "help": "A person on the hiring team reviews it. An AI assistant helps, but a person decides."
+      },
+      "moving_forward": {
+        "label": "Moving forward",
+        "help": "You passed the first review."
+      },
+      "interview": {
+        "label": "Interviews",
+        "help": "The team wants to talk with you."
+      },
+      "offer": {
+        "label": "Offer",
+        "help": "The team is working on an offer."
+      },
+      "hired": {
+        "label": "Hired",
+        "help": "Welcome to the team."
+      },
+      "not_selected": {
+        "label": "Not selected",
+        "help": "The team decided not to move forward. We sent you a message about it."
+      },
+      "withdrawn": {
+        "label": "Withdrawn",
+        "help": "You withdrew this application."
+      }
+    },
+    "state": {
+      "done": "Done",
+      "current": "Now",
+      "ahead": "Next"
+    },
+    "app": {
+      "reference": "Reference {reference}",
+      "appliedOn": "Applied on {date}",
+      "since": "Since {date}",
+      "open": "See details",
+      "timeline": "Where it stands",
+      "filesWanted": "{count, plural, one {# file requested} other {# files requested}}",
+      "interviews": "Upcoming interviews",
+      "noInterviews": "No interviews planned yet.",
+      "join": "Join the meeting",
+      "reschedule": "Reschedule",
+      "cancelInterview": "Cancel",
+      "messages": "Messages",
+      "noMessages": "No messages yet.",
+      "fromCompany": "From the hiring team",
+      "fromYou": "From you",
+      "replyLabel": "Your message to the hiring team",
+      "send": "Send",
+      "sent": "Message sent",
+      "documents": "Files the team asked for",
+      "noDocuments": "The team has not asked for any files.",
+      "upload": "Upload a file for {label}",
+      "received": "Received",
+      "uploading": "Uploading",
+      "uploaded": "File received",
+      "withdraw": "Withdraw this application",
+      "withdrawTitle": "Withdraw your application?",
+      "withdrawBody": "The hiring team will stop considering it, and we email you to confirm. You cannot undo this here.",
+      "withdrawConfirm": "Yes, withdraw",
+      "withdrawn": "You withdrew this application. We sent you an email to confirm.",
+      "back": "All applications",
+      "updated": "Your status changed.",
+      "live": "This page updates by itself."
+    },
+    "jobs": {
+      "title": "Other open jobs",
+      "applied": "You applied",
+      "apply": "See the job and apply",
+      "none": "No other open jobs right now."
+    },
+    "privacy": {
+      "title": "Privacy centre",
+      "intro": "See and control what we keep about you.",
+      "download": "Download my data",
+      "downloadHelp": "One file with what you sent us and what we sent you.",
+      "deleteTitle": "Ask us to delete your data",
+      "deleteHelp": "An admin reviews your request and replies by email. Nothing is deleted automatically.",
+      "deleteNote": "Anything we should know (optional)",
+      "deleteSend": "Send the request",
+      "deleteSent": "We received your request. An admin will handle it.",
+      "deleteAlready": "You already have an open request. An admin will handle it.",
+      "decisionsTitle": "AI-assisted steps",
+      "decisionsHelp": "Each step has an id. You can ask a person to review any of them.",
+      "noDecisions": "No AI-assisted steps yet.",
+      "kind": {
+        "score": "Scoring against the job's criteria",
+        "extraction": "Reading your CV",
+        "shortlist_suggestion": "Suggestion for the shortlist",
+        "human_override": "A person changed a score",
+        "appeal_outcome": "Result of a review"
+      },
+      "receipt": "See the receipt",
+      "review": "Ask for a human review",
+      "reviewTitle": "Ask a person to review this step",
+      "reviewReason": "Why do you want a review? (at least 10 characters)",
+      "reviewSend": "Send",
+      "reviewSent": "A person will review it. You can follow it here.",
+      "reviewed": "Review requested",
+      "appealsTitle": "Your review requests",
+      "appealStatus": {
+        "open": "Waiting for a person",
+        "resolved": "Answered"
+      },
+      "requestsTitle": "Your data requests",
+      "requestStatus": {
+        "open": "Open",
+        "completed": "Done",
+        "declined": "Declined"
+      },
+      "receiptTitle": "Decision receipt",
+      "receiptIntro": "What this step was, when it happened and what it produced.",
+      "decisionId": "Decision id",
+      "decidedAt": "Decided on {date}",
+      "outcome": "Result",
+      "policies": "Rules used"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "not_signed_in": "Your session ended. Ask for a new link.",
+      "rate_limited": "Too many tries. Wait a little and try again.",
+      "conflict": "This was already done.",
+      "too_large": "The file is too large.",
+      "invalid_input": "Check what you entered and try again."
+    }
   }
 }

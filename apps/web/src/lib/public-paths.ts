@@ -6,6 +6,8 @@
 // sign in from there (the token stays in the fragment, see the page). `/careers` holds
 // the organisations' public careers pages and the apply flow (Pairly Hire), and
 // `/candidate/preferences` a candidate's email preferences (signed link in the fragment).
+// `/portal` is the candidate portal: candidates never have a staff session; the portal
+// checks its own session (an HTTP-only cookie) and the API decides every access.
 const PUBLIC_PATHS = [
   "/sign-in",
   "/check-email",
@@ -15,6 +17,7 @@ const PUBLIC_PATHS = [
   "/approvals/link",
   "/careers",
   "/candidate",
+  "/portal",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
