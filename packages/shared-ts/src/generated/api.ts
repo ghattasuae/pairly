@@ -5678,11 +5678,12 @@ export type components = {
         HirePortalInterviewOut: {
             /** Cancel Url */
             cancel_url: string | null;
-            /**
-             * Ends At
-             * Format: date-time
-             */
-            ends_at: string;
+            /** Choose Url */
+            choose_url: string | null;
+            /** Duration Min */
+            duration_min: number;
+            /** Ends At */
+            ends_at: string | null;
             /** Format */
             format: string;
             /**
@@ -5696,11 +5697,10 @@ export type components = {
             location: string | null;
             /** Reschedule Url */
             reschedule_url: string | null;
-            /**
-             * Starts At
-             * Format: date-time
-             */
-            starts_at: string;
+            /** Starts At */
+            starts_at: string | null;
+            /** Status */
+            status: string;
             /** Timezone */
             timezone: string;
             /** Title */

@@ -35,7 +35,7 @@ async def test_screening_queue_is_stable_blind_and_scored(
     assert [i["application_id"] for i in data["items"]] == [first, second]
     assert data["blind_mode"] is True
     assert data["can_change_blind_mode"] is False
-    assert data["scheduling_available"] is False
+    assert data["scheduling_available"] is True
     assert [s["key"] for s in data["stages"]][:3] == ["applied", "screening", "shortlist"]
     item = data["items"][0]
     assert item["identity_hidden"] is True

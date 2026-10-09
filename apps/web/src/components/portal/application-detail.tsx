@@ -158,13 +158,17 @@ export function ApplicationDetail({
         ) : (
           <ul className="space-y-2">
             {app.interviews.map((i) => (
-              <li key={i.id} className="space-y-2 rounded-xl border bg-surface p-4" data-interview={i.id}>
-                <p className="font-medium">{i.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  {format.dateTime(new Date(i.starts_at), { dateStyle: "full", timeStyle: "short", timeZone: i.timezone })}
-                  {" "}
-                  <span dir="ltr">({i.timezone})</span>
-                </p>
+              <li key={i.id} className="space-y-2 rounded-xl border bg-surface p-4" data-interview={i.id} data-interview-status={i.status}>
+                <p className="font-medium">{t("app.interviewFor", { job: i.title })}</p>
+                {i.starts_at ? (
+                  <p className="text-sm text-muted-foreground">
+                    {format.dateTime(new Date(i.starts_at), { dateStyle: "full", timeStyle: "short", timeZone: i.timezone })}
+                    {" "}
+                    <span dir="ltr">({i.timezone})</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("app.chooseTimeHint", { minutes: i.duration_min })}</p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {i.join_url && (
                     <a href={i.join_url} className="inline-flex items-center gap-1 text-sm font-medium text-primary underline" rel="noopener noreferrer" target="_blank">
@@ -172,9 +176,14 @@ export function ApplicationDetail({
                       {t("app.join")}
                     </a>
                   )}
+                  {i.choose_url && (
+                    <a href={i.choose_url} className="text-sm font-medium text-primary underline" data-interview-choose>
+                      {t("app.chooseTime")}
+                    </a>
+                  )}
                   {i.reschedule_url && (
-                    <a href={i.reschedule_url} className="text-sm text-primary underline">
-                      {t("app.reschedule")}
+                    <a href={i.reschedule_url} className="text-sm text-primary underline" data-interview-manage>
+                      {i.cancel_url ? t("app.reschedule") : t("app.manageInterview")}
                     </a>
                   )}
                   {i.cancel_url && (

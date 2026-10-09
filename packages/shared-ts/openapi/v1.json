@@ -7453,10 +7453,32 @@
             ],
             "title": "Cancel Url"
           },
+          "choose_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Choose Url"
+          },
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
           "ends_at": {
-            "format": "date-time",
-            "title": "Ends At",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
           },
           "format": {
             "title": "Format",
@@ -7501,8 +7523,19 @@
             "title": "Reschedule Url"
           },
           "starts_at": {
-            "format": "date-time",
-            "title": "Starts At",
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "status": {
+            "title": "Status",
             "type": "string"
           },
           "timezone": {
@@ -7516,13 +7549,16 @@
         },
         "required": [
           "id",
+          "status",
           "starts_at",
           "ends_at",
+          "duration_min",
           "timezone",
           "format",
           "title",
           "join_url",
           "location",
+          "choose_url",
           "reschedule_url",
           "cancel_url"
         ],

@@ -32,7 +32,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -78,6 +78,9 @@ from pairly_hire.portal.models import (
 from pairly_hire.portal.status import MoveFact, Timeline, timeline
 from pairly_hire.portal.templates import WITHDRAWN
 from pairly_hire.sealing import read_sealed
+
+if TYPE_CHECKING:
+    from pairly_hire.scheduling.emails import SchedulingEnv
 
 WORKFLOW: Final = "hire"
 APPLICATION_ENTITY: Final = "hire.application"
@@ -198,7 +201,9 @@ async def _rejections_sent(
     return out
 
 
-async def applications(session: AsyncSession, identity: PortalIdentity) -> list[PortalApplication]:
+async def applications(
+    session: AsyncSession, identity: PortalIdentity, env: SchedulingEnv | None = None
+) -> list[PortalApplication]:
     apps = await own_applications(session, identity)
     if not apps:
         return []
@@ -231,7 +236,7 @@ async def applications(session: AsyncSession, identity: PortalIdentity) -> list[
     ):
         open_requests[application_id] += 1
     interviews: dict[uuid.UUID, list[PortalInterview]] = defaultdict(list)
-    for interview in await upcoming_interviews(session, identity.candidate_id, ids):
+    for interview in await upcoming_interviews(session, identity.candidate_id, ids, env):
         interviews[interview.application_id].append(interview)
     out: list[PortalApplication] = []
     for app in apps:
@@ -258,10 +263,13 @@ async def applications(session: AsyncSession, identity: PortalIdentity) -> list[
 
 
 async def application(
-    session: AsyncSession, identity: PortalIdentity, application_id: uuid.UUID
+    session: AsyncSession,
+    identity: PortalIdentity,
+    application_id: uuid.UUID,
+    env: SchedulingEnv | None = None,
 ) -> PortalApplication:
     await own_application(session, identity, application_id)
-    for item in await applications(session, identity):
+    for item in await applications(session, identity, env):
         if item.id == application_id:
             return item
     raise NotFoundError("application not found")

@@ -177,6 +177,56 @@ describe("candidate portal", () => {
     expect(screen.queryByRole("button", { name: "Withdraw this application" })).toBeNull();
   });
 
+  it("shows a booked interview with its links and one waiting for a time", () => {
+    const base = {
+      ends_at: null,
+      timezone: "Asia/Dubai",
+      format: "video",
+      title: "Backend Engineer",
+      location: null,
+      cancel_url: null,
+    };
+    renderWithIntl(
+      <ApplicationDetail
+        application={detail({
+          interviews: [
+            {
+              ...base,
+              id: "i1",
+              status: "booked",
+              starts_at: "2026-10-20T06:00:00Z",
+              ends_at: "2026-10-20T06:45:00Z",
+              duration_min: 45,
+              join_url: "https://meet.example/abc",
+              choose_url: null,
+              reschedule_url: "https://app.example/en/schedule#hs1.x",
+            },
+            {
+              ...base,
+              id: "i2",
+              status: "proposed",
+              starts_at: null,
+              duration_min: 30,
+              format: "unspecified",
+              join_url: null,
+              choose_url: "https://app.example/en/schedule#hs1.y",
+              reschedule_url: null,
+            },
+          ],
+        })}
+      />,
+    );
+    const booked = document.querySelector('[data-interview="i1"]') as HTMLElement;
+    expect(booked).toHaveTextContent("Interview: Backend Engineer");
+    expect(booked).toHaveTextContent("(Asia/Dubai)");
+    expect(within(booked).getByRole("link", { name: "Join the meeting" })).toHaveAttribute("href", "https://meet.example/abc");
+    expect(within(booked).getByRole("link", { name: "Change or cancel" })).toHaveAttribute("href", "https://app.example/en/schedule#hs1.x");
+    const proposed = document.querySelector('[data-interview="i2"]') as HTMLElement;
+    expect(proposed).toHaveTextContent("Choose a time that suits you (30 minutes).");
+    expect(within(proposed).getByRole("link", { name: "Choose a time" })).toHaveAttribute("href", "https://app.example/en/schedule#hs1.y");
+    expect(within(proposed).queryByRole("link", { name: "Join the meeting" })).toBeNull();
+  });
+
   it("replies to the hiring team and uploads a requested file", async () => {
     const reply = vi.fn(async (_id: string, text: string) => ({
       ok: true as const,

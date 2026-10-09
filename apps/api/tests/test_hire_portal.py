@@ -642,3 +642,86 @@ async def test_privacy_centre_export_deletion_and_human_review(
         "SELECT actor_type FROM audit_events WHERE action = 'core.appeal.created'",
     )
     assert [c.actor_type for c in created] == ["candidate"]
+
+
+async def test_portal_shows_upcoming_interviews_with_their_links(
+    hire_api: HireApi, world: HireWorld, tmp_path: Path
+) -> None:
+    """Interviews come from scheduling (WP2.8): a booked one with its join link and the
+    candidate's change-or-cancel link, a proposed one with the link to choose a time;
+    never the panel, and never another candidate's interview."""
+    api = hire_api
+    job = await open_job(api, world)
+    booked_app, email = await _apply(api, world, job, "Rana Haddad")
+    proposed_job = await open_job(api, world)
+    proposed_app, _ = await api_apply_same(api, world, proposed_job, email)
+    other_app, _ = await _apply(api, world, job, "Sami Nasser")
+    panel = [str(world.people["interviewer"][0])]
+
+    def key() -> dict[str, str]:
+        return {"Idempotency-Key": f"k-{uuid.uuid4().hex}"}
+
+    found = await api.call(
+        "POST",
+        f"/v1/hire/scheduling/applications/{booked_app}/slots",
+        world,
+        "recruiter",
+        json={"panel": panel, "duration_min": 45},
+    )
+    assert found.status_code == 200, found.text
+    start = found.json()["slots"][0]["start"]
+    booked = await api.client.post(
+        f"/v1/hire/scheduling/applications/{booked_app}/interviews",
+        json={"mode": "book", "panel": panel, "duration_min": 45, "starts_at": start},
+        headers=api.headers(world, "recruiter", extra=key()),
+    )
+    assert booked.status_code == 201, booked.text
+    for app_id in (proposed_app, other_app):
+        linked = await api.client.post(
+            f"/v1/hire/scheduling/applications/{app_id}/interviews",
+            json={"mode": "link", "panel": panel, "duration_min": 30},
+            headers=api.headers(world, "recruiter", extra=key()),
+        )
+        assert linked.status_code == 201, linked.text
+
+    session = await _signed_in(api, world, email, tmp_path)
+    listed = (await api.client.get("/v1/hire/portal/applications", headers=session)).json()
+    by_id = {a["id"]: a for a in listed}
+    assert set(by_id) == {booked_app, proposed_app}
+    (iv,) = by_id[booked_app]["interviews"]
+    assert iv["id"] == booked.json()["id"]
+    assert iv["status"] == "booked"
+    assert iv["starts_at"] is not None
+    assert str(iv["join_url"]).startswith("https://")
+    assert "/schedule#hs1." in str(iv["reschedule_url"])
+    assert iv["choose_url"] is None
+    (pending,) = by_id[proposed_app]["interviews"]
+    assert pending["status"] == "proposed"
+    assert pending["starts_at"] is None
+    assert pending["duration_min"] == 30
+    assert "/schedule#hs1." in str(pending["choose_url"])
+    assert pending["join_url"] is None
+    detail = await api.client.get(f"/v1/hire/portal/applications/{booked_app}", headers=session)
+    assert detail.status_code == 200, detail.text
+    assert [i["id"] for i in detail.json()["interviews"]] == [iv["id"]]
+    # Nothing about the panel reaches the candidate.
+    text_ = json.dumps(listed)
+    assert panel[0] not in text_
+    assert "panel" not in text_
+
+
+async def api_apply_same(
+    api: HireApi, world: HireWorld, job: dict[str, Any], email: str
+) -> tuple[str, str]:
+    """A second application by the same person (same email, so the same candidate)."""
+    reference = await api.apply(
+        world,
+        job["slug"],
+        cv_pdf(uuid.uuid4().hex),
+        email=email,
+        full_name="Rana Haddad",
+        ip=f"198.51.100.{uuid.uuid4().int % 200 + 20}",
+    )
+    listed = await api.call("GET", f"/v1/hire/applications?job_id={job['id']}", world, "recruiter")
+    (found,) = [a for a in listed.json()["items"] if a["reference"] == reference]
+    return str(found["id"]), email

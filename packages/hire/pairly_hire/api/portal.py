@@ -69,6 +69,7 @@ from pairly_core.models import Organisation
 from pairly_core.notifications.service import Recipient, notify
 from pairly_hire.antispam import SlidingWindowLimiter, client_ip
 from pairly_hire.api.common import web_url
+from pairly_hire.api.scheduling import env as scheduling_env
 from pairly_hire.careers import CareersOrg, careers_org
 from pairly_hire.jobs import org_settings
 from pairly_hire.models import HireCandidate
@@ -166,13 +167,16 @@ class HirePortalStepOut(BaseModel):
 
 class HirePortalInterviewOut(BaseModel):
     id: uuid.UUID
-    starts_at: datetime
-    ends_at: datetime
+    status: str
+    starts_at: datetime | None
+    ends_at: datetime | None
+    duration_min: int
     timezone: str
     format: str
     title: str
     join_url: str | None
     location: str | None
+    choose_url: str | None
     reschedule_url: str | None
     cancel_url: str | None
 
@@ -312,13 +316,16 @@ def _application_out(item: service.PortalApplication) -> dict[str, Any]:
         "interviews": [
             HirePortalInterviewOut(
                 id=i.id,
+                status=i.status,
                 starts_at=i.starts_at,
                 ends_at=i.ends_at,
+                duration_min=i.duration_min,
                 timezone=i.timezone,
                 format=i.format,
                 title=i.title,
                 join_url=i.join_url,
                 location=i.location,
+                choose_url=i.choose_url,
                 reschedule_url=i.reschedule_url,
                 cancel_url=i.cancel_url,
             )
@@ -345,9 +352,12 @@ def _request_out(r: HireDocumentRequest) -> HirePortalDocumentRequestOut:
 
 
 async def _detail(
-    session: RequestSession, identity: auth.PortalIdentity, application_id: uuid.UUID
+    request: Request,
+    session: RequestSession,
+    identity: auth.PortalIdentity,
+    application_id: uuid.UUID,
 ) -> HirePortalApplicationDetailOut:
-    item = await service.application(session, identity, application_id)
+    item = await service.application(session, identity, application_id, scheduling_env(request))
     return HirePortalApplicationDetailOut(
         **_application_out(item),
         messages=[_message_out(m) for m in await service.messages(session, identity, item.id)],
@@ -458,17 +468,20 @@ async def sign_out(identity: Portal, session: RequestSession) -> JSONResponse:
 
 
 @router.get("/applications", response_model=list[HirePortalApplicationOut])
-async def list_applications(identity: Portal, session: RequestSession) -> JSONResponse:
-    items = await service.applications(session, identity)
+async def list_applications(
+    request: Request, identity: Portal, session: RequestSession
+) -> JSONResponse:
+    items = await service.applications(session, identity, scheduling_env(request))
     out = [HirePortalApplicationOut(**_application_out(i)) for i in items]
     return _no_store([o.model_dump(mode="json") for o in out])
 
 
 @router.get("/applications/{application_id}", response_model=HirePortalApplicationDetailOut)
 async def get_application(
-    application_id: uuid.UUID, identity: Portal, session: RequestSession
+    application_id: uuid.UUID, request: Request, identity: Portal, session: RequestSession
 ) -> JSONResponse:
-    return _no_store((await _detail(session, identity, application_id)).model_dump(mode="json"))
+    detail = await _detail(request, session, identity, application_id)
+    return _no_store(detail.model_dump(mode="json"))
 
 
 @router.post(
@@ -484,7 +497,8 @@ async def withdraw(
     del body  # ``confirm: true`` is required by the schema
     _hit(request, "privacy", f"withdraw|{identity.candidate_id}")
     await service.withdraw(session, identity, application_id)
-    return _no_store((await _detail(session, identity, application_id)).model_dump(mode="json"))
+    detail = await _detail(request, session, identity, application_id)
+    return _no_store(detail.model_dump(mode="json"))
 
 
 @router.post(
