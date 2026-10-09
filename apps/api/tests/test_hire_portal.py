@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import json
 import re
+import statistics
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -912,3 +914,63 @@ async def test_notices_for_admins_recruiters_and_the_candidate(
     assert staff
     for m in staff:
         assert "Dana" not in m["subject"] + m["text"]
+
+
+async def test_login_link_answers_known_and_unknown_addresses_in_the_same_time(
+    hire_api: HireApi, world: HireWorld, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The request does the same work for any address (hash it, schedule the sender);
+    only the sender, after the answer, looks the candidate up. Timed with the sender
+    recorded, then the real sender is run for both jobs."""
+    from pairly_hire.api import portal as portal_api
+
+    api = hire_api
+    job = await open_job(api, world)
+    _, email = await _apply(api, world, job, "Rima Saad")
+    await deliver(api, world, tmp_path / "ack")
+    jobs: list[Any] = []
+
+    async def record(sessionmaker: Any, link_job: Any) -> None:
+        jobs.append((sessionmaker, link_job))
+
+    monkeypatch.setattr(portal_api, "LINK_SENDER", [record])
+
+    async def ask(address: str, n: int) -> float:
+        # Timing, not rate limits: a fresh limiter store for each request.
+        if hasattr(api.app.state, "hire_portal_limiters"):
+            del api.app.state.hire_portal_limiters
+        started = time.perf_counter()
+        answer = await api.client.post(
+            "/v1/hire/portal/login-link",
+            json={"org": world.slug, "email": address, "locale": "en"},
+            headers=api.public(f"203.0.113.{n % 200 + 20}"),
+        )
+        elapsed = time.perf_counter() - started
+        assert answer.status_code == 202
+        assert answer.json() == {"sent": True}
+        return elapsed
+
+    for n in range(4):  # warm up
+        await ask(email, n)
+        await ask(f"nobody{n}@example.test", n)
+    known: list[float] = []
+    unknown: list[float] = []
+    for n in range(30):
+        known.append(await ask(email, n))
+        unknown.append(await ask(f"nobody{n}@example.test", n))
+    k, u = statistics.median(known), statistics.median(unknown)
+    print(f"login-link median: known {k * 1000:.2f} ms, unknown {u * 1000:.2f} ms")
+    # Same work: medians within 5 ms or 35 % of each other (CI noise), whichever is larger.
+    assert abs(k - u) <= max(0.005, 0.35 * max(k, u)), (k, u)
+    # Both paths scheduled the sender with the same kind of job.
+    assert len(jobs) == 68
+    assert {type(j) for _, j in jobs} == {portal_api.LinkJob}
+
+    # The real sender: one email for the known address, nothing for an unknown one.
+    sessionmaker, known_job = jobs[-2]
+    _, unknown_job = jobs[-1]
+    await portal_api.send_login_link(sessionmaker, known_job)
+    await portal_api.send_login_link(sessionmaker, unknown_job)
+    mails = await deliver(api, world, tmp_path / "links")
+    assert len([m for m in mails if email in m["to"] and "/en/portal/login#" in m["text"]]) == 1
+    assert "nobody" not in json.dumps(mails)

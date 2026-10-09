@@ -1578,7 +1578,12 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Login Link */
+        /**
+         * Login Link
+         * @description The same answer, after the same work, whether or not anyone applied with this
+         *     address: the request only hashes the address and schedules the sender, which looks
+         *     the candidate up after the answer is sent (``send_login_link``).
+         */
         post: operations["login_link_v1_hire_portal_login_link_post"];
         delete?: never;
         options?: never;

@@ -39,10 +39,12 @@ from __future__ import annotations
 
 import tempfile
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal
 
+import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi import Path as PathParam
 from fastapi.responses import JSONResponse
@@ -76,6 +78,8 @@ from pairly_hire.models import HireCandidate
 from pairly_hire.portal import auth, service
 from pairly_hire.portal.models import HireDocumentRequest
 from pairly_hire.portal.templates import LOGIN_LINK
+
+log = structlog.get_logger("pairly_hire.api.portal")
 
 router = APIRouter(prefix="/portal", tags=["hire-portal"])
 
@@ -390,10 +394,68 @@ async def _portal_org(session: RequestSession, org: str) -> CareersOrg | None:
     return CareersOrg(id=row.id, name=row.name, slug=row.slug)
 
 
+@dataclass(frozen=True, slots=True)
+class LinkJob:
+    """What the login-link sender needs, decided before the answer (the same for every
+    address: the organisation is public, the address is only hashed)."""
+
+    org_id: uuid.UUID
+    org_name: str
+    email_bidx: str | None
+    locale: str
+    web_url: str
+
+
+async def send_login_link(sessionmaker: Any, job: LinkJob) -> None:
+    """After the answer: find the candidate by the address's blind index and, only if
+    one exists, issue a single-use link and queue the email. For an unknown address this
+    is a no-op. Runs in its own transaction; never raises into the request."""
+    try:
+        if job.email_bidx is None:
+            return
+        session = sessionmaker()
+        set_tenant(session, job.org_id, None)
+        async with session, session.begin():
+            candidate = await session.scalar(
+                select(HireCandidate).where(HireCandidate.email_bidx == job.email_bidx)
+            )
+            if candidate is None:
+                return
+            token, _ = await auth.issue_login_token(
+                session,
+                org_id=job.org_id,
+                candidate_id=candidate.id,
+                locale=job.locale,
+                purpose="request",
+                ttl=auth.REQUEST_TTL,
+            )
+            await notify(
+                session,
+                recipient=Recipient.external(str(unseal(candidate, "email")), locale=job.locale),
+                template_key=LOGIN_LINK,
+                variables={
+                    "org_name": job.org_name,
+                    "portal_url": f"{job.web_url}/{job.locale}/portal/login#{token}",
+                    "expires_minutes": int(auth.REQUEST_TTL.total_seconds() // 60),
+                },
+                dedupe_key=f"hire.portal.link:{uuid.uuid4()}",
+                channels=["email"],
+                workflow=WORKFLOW,
+            )
+    except Exception:
+        log.exception("portal_login_link_failed")
+
+
 @router.post("/login-link", status_code=202, response_model=HirePortalLinkOut)
 async def login_link(
-    body: HirePortalLinkIn, request: Request, session: RequestSession
+    body: HirePortalLinkIn,
+    request: Request,
+    background: BackgroundTasks,
+    session: RequestSession,
 ) -> JSONResponse:
+    """The same answer, after the same work, whether or not anyone applied with this
+    address: the request only hashes the address and schedules the sender, which looks
+    the candidate up after the answer is sent (``send_login_link``)."""
     ip = client_ip(request)
     _hit(request, "link_ip", ip)
     email = normalize_email(body.email)
@@ -402,34 +464,19 @@ async def login_link(
     _hit(request, "link_email", f"{body.org}|{email}")
     org = await _portal_org(session, body.org)
     if org is not None:
-        bidx = blind_index("email", email, org.id)
-        candidate = await session.scalar(
-            select(HireCandidate).where(HireCandidate.email_bidx == bidx)
+        job = LinkJob(
+            org_id=org.id,
+            org_name=org.name,
+            email_bidx=blind_index("email", email, org.id),
+            locale=body.locale,
+            web_url=web_url(request),
         )
-        if candidate is not None:
-            token, _ = await auth.issue_login_token(
-                session,
-                org_id=org.id,
-                candidate_id=candidate.id,
-                locale=body.locale,
-                purpose="request",
-                ttl=auth.REQUEST_TTL,
-            )
-            await notify(
-                session,
-                recipient=Recipient.external(str(unseal(candidate, "email")), locale=body.locale),
-                template_key=LOGIN_LINK,
-                variables={
-                    "org_name": org.name,
-                    "portal_url": f"{web_url(request)}/{body.locale}/portal/login#{token}",
-                    "expires_minutes": int(auth.REQUEST_TTL.total_seconds() // 60),
-                },
-                dedupe_key=f"hire.portal.link:{uuid.uuid4()}",
-                channels=["email"],
-                workflow=WORKFLOW,
-            )
-    # The same answer whether or not anyone applied with this address.
+        background.add_task(LINK_SENDER[0], request.app.state.pairly.sessionmaker, job)
     return _no_store({"sent": True}, 202)
+
+
+# Swappable for tests (the timing check replaces it with a recorder).
+LINK_SENDER: list[Any] = [send_login_link]
 
 
 @router.post("/session", response_model=HirePortalSessionOut)

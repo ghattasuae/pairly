@@ -18827,6 +18827,7 @@
     },
     "/v1/hire/portal/login-link": {
       "post": {
+        "description": "The same answer, after the same work, whether or not anyone applied with this\naddress: the request only hashes the address and schedules the sender, which looks\nthe candidate up after the answer is sent (``send_login_link``).",
         "operationId": "login_link_v1_hire_portal_login_link_post",
         "requestBody": {
           "content": {
