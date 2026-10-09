@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who decides a screening, version 1. Every application goes to a person: approving
+# shortlists the candidate, rejecting means not shortlisted, and "changes requested"
+# returns the screening for another look. Nothing is decided by the AI.
+schema: pairly.approval_rules/v1
+approval_type: hire.screening
+sla_hours: 120
+warn_hours: 24
+escalation:
+  roles: [recruiter]
+chains:
+  - name: screening
+    steps:
+      - {name: reviewer, mode: any_of, roles: [recruiter, hiring_manager]}
