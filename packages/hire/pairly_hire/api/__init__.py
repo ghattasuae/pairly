@@ -7,6 +7,8 @@
   the Hire settings.
 * ``public``: ``/v1/hire/public/careers/...`` the careers pages' data, job feeds and the
   apply flow. No sign-in; rate limited; open jobs of visible organisations only.
+* ``screening``: ``/v1/hire/applications/{id}/screening...`` the explainability panel,
+  score overrides and re-runs, and ``/v1/hire/screening/settings``.
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -15,9 +17,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from pairly_hire.api import applications, jobs, public
+from pairly_hire.api import applications, jobs, public, screening
 
 router = APIRouter()
 router.include_router(jobs.router)
 router.include_router(applications.router)
 router.include_router(public.router)
+router.include_router(screening.router)

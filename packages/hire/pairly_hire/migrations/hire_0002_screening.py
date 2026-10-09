@@ -13,6 +13,14 @@
 Both are tenant tables with Row Level Security forced and the standard tenant policy.
 Children point at their parents by ``(org_id, id)``.
 
+``hire_screening_pending_org_ids()``: SECURITY DEFINER, returns the ids of organisations
+with a submitted application (last 30 days, still ``received``) that has no screening
+yet, and nothing else. The worker job ``hire_screening_start`` calls it, then works in
+each organisation under Row Level Security as the application role. It switches on, for
+its own statement only, the owner-only read policies ``app.hire_screening_scan`` added
+here on ``hire_applications`` and ``hire_screenings`` (the setting means nothing to the
+application role).
+
 Revision ID: hire_0002
 Revises: hire_0001
 Create Date: 2026-10-09
@@ -175,8 +183,48 @@ def upgrade() -> None:
     )
     op.create_index(f"ix_{t}_org_id", t, ["org_id"])
     _rls(t)
+    _pending_org_finder(app_db_role())
+
+
+def _pending_org_finder(app_role: str) -> None:
+    for table in ("hire_applications", "hire_screenings"):
+        op.execute(
+            f"CREATE POLICY {table}_screening_scan ON {table} FOR SELECT TO CURRENT_USER "
+            "USING (current_setting('app.hire_screening_scan', true) = 'on')"
+        )
+    op.execute(
+        """
+        CREATE FUNCTION hire_screening_pending_org_ids() RETURNS SETOF uuid
+        LANGUAGE plpgsql VOLATILE
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public
+        AS $$
+        DECLARE
+            previous text := current_setting('app.hire_screening_scan', true);
+            ids uuid[];
+        BEGIN
+            PERFORM set_config('app.hire_screening_scan', 'on', true);
+            SELECT array_agg(DISTINCT a.org_id ORDER BY a.org_id) INTO ids
+              FROM public.hire_applications a
+             WHERE a.status = 'received'
+               AND a.submitted_at IS NOT NULL
+               AND a.submitted_at > now() - interval '30 days'
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.hire_screenings s
+                    WHERE s.org_id = a.org_id AND s.application_id = a.id
+               );
+            PERFORM set_config('app.hire_screening_scan', coalesce(previous, ''), true);
+            RETURN QUERY SELECT unnest(coalesce(ids, '{}'::uuid[]));
+        END
+        $$
+        """
+    )
+    op.execute("REVOKE ALL ON FUNCTION hire_screening_pending_org_ids() FROM PUBLIC")
+    op.execute(f"GRANT EXECUTE ON FUNCTION hire_screening_pending_org_ids() TO {app_role}")
 
 
 def downgrade() -> None:
+    op.execute("DROP FUNCTION IF EXISTS hire_screening_pending_org_ids()")
+    op.execute("DROP POLICY IF EXISTS hire_applications_screening_scan ON hire_applications")
     op.drop_table("hire_screening_settings")
     op.drop_table("hire_screenings")

@@ -67,36 +67,43 @@ class Flag:
 # ------------------------------------------------------------------ dates
 
 
-def month_index(value: str | None, *, end: bool) -> int | None:
-    """``YYYY-MM`` or ``YYYY`` as a month count (a year alone: January, or December for
-    an end)."""
+def month_bounds(value: str | None) -> tuple[int, int] | None:
+    """The earliest and latest month a ``YYYY-MM`` or ``YYYY`` value can mean (a year
+    alone can be any of its twelve months), as month counts."""
     if not value:
         return None
     match = re.fullmatch(r"(\d{4})(?:-(\d{2}))?", value)
     if match is None:
         return None
     year = int(match.group(1))
-    month = int(match.group(2)) if match.group(2) else (12 if end else 1)
-    return year * 12 + month - 1
+    if match.group(2):
+        month = year * 12 + int(match.group(2)) - 1
+        return month, month
+    return year * 12, year * 12 + 11
 
 
 @dataclass(frozen=True, slots=True)
 class _Period:
+    """A job's dates as ranges, so a check only flags what is certain whatever month a
+    year-only date means."""
+
     index: int
     job: Job
-    start: int
-    end: int  # inclusive month index
+    start_lo: int
+    start_hi: int
+    end_lo: int
+    end_hi: int  # inclusive month counts
     current: bool
 
 
 def _periods(profile: ParsedProfile, today: int) -> list[_Period]:
     out: list[_Period] = []
     for i, job in enumerate(profile.experience):
-        start = month_index(job.start, end=False)
+        start = month_bounds(job.start)
         if start is None:
             continue
-        end = month_index(job.end, end=True)
-        out.append(_Period(i, job, start, today if end is None else end, end is None))
+        end = month_bounds(job.end) or (today, today)
+        out.append(_Period(i, job, *start, *end, current=job.end is None))
     return out
 
 
@@ -113,7 +120,7 @@ def date_checks(profile: ParsedProfile, as_of: date, config: ClaimConfig) -> lis
     periods = _periods(profile, today)
     flags: list[Flag] = []
     for p in periods:
-        if p.start > today:
+        if p.start_lo > today:
             flags.append(
                 Flag(
                     "future_date",
@@ -122,7 +129,7 @@ def date_checks(profile: ParsedProfile, as_of: date, config: ClaimConfig) -> lis
                     {"experience": [p.index]},
                 )
             )
-        if not p.current and p.end < p.start:
+        if not p.current and p.end_hi < p.start_lo:
             flags.append(
                 Flag(
                     "end_before_start",
@@ -131,10 +138,13 @@ def date_checks(profile: ParsedProfile, as_of: date, config: ClaimConfig) -> lis
                     {"experience": [p.index]},
                 )
             )
-    valid = sorted((p for p in periods if p.end >= p.start), key=lambda p: (p.start, p.end))
+    valid = sorted(
+        (p for p in periods if p.end_hi >= p.start_lo), key=lambda p: (p.start_lo, p.end_hi)
+    )
     for i, a in enumerate(valid):
         for b in valid[i + 1 :]:
-            overlap = min(a.end, b.end) - max(a.start, b.start) + 1
+            # Months both jobs certainly share.
+            overlap = min(a.end_lo, b.end_lo) - max(a.start_hi, b.start_hi) + 1
             if overlap > config.overlap_months:
                 flags.append(
                     Flag(
@@ -148,7 +158,8 @@ def date_checks(profile: ParsedProfile, as_of: date, config: ClaimConfig) -> lis
     covered_until: _Period | None = None
     for p in valid:
         if covered_until is not None:
-            gap = p.start - covered_until.end - 1
+            # Months certainly without a job between the two.
+            gap = p.start_lo - covered_until.end_hi - 1
             if gap > config.gap_months:
                 flags.append(
                     Flag(
@@ -159,7 +170,7 @@ def date_checks(profile: ParsedProfile, as_of: date, config: ClaimConfig) -> lis
                         {"experience": [covered_until.index, p.index], "months": gap},
                     )
                 )
-        if covered_until is None or p.end > covered_until.end:
+        if covered_until is None or p.end_hi > covered_until.end_hi:
             covered_until = p
     return flags
 
@@ -189,17 +200,18 @@ TITLE_LEVELS: Final[tuple[tuple[re.Pattern[str], int, str], ...]] = (
 
 def title_checks(profile: ParsedProfile, as_of: date) -> list[Flag]:
     today = as_of.year * 12 + as_of.month - 1
-    periods = [p for p in _periods(profile, today) if p.end >= p.start]
+    periods = [p for p in _periods(profile, today) if p.end_hi >= p.start_lo]
     flags: list[Flag] = []
     for p in periods:
         title = _title(p.job)
         for pattern, years, label in TITLE_LEVELS:
             if not pattern.search(title):
                 continue
+            # The most earlier work the dates allow: flag only when even that is short.
             before = sum(
-                max(0, min(q.end, p.start - 1) - q.start + 1)
+                max(0, min(q.end_hi, p.start_hi - 1) - q.start_lo + 1)
                 for q in periods
-                if q.index != p.index and q.start < p.start
+                if q.index != p.index and q.start_lo < p.start_hi
             )
             if before < years * 12:
                 flags.append(

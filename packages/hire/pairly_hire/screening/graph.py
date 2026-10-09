@@ -478,7 +478,8 @@ async def blind_step(state: ScreeningState, runtime: Ctx) -> Command[Any]:
         row.blind_spans = [
             {"start": s, "end": e, "category": c.value} for s, e, c in blinded.original_spans()
         ]
-        if details.get("profile") is None:
+        profile = details.get("profile")
+        if not isinstance(profile, dict) or not profile.get("parsed"):
             # Only the application form and the patterns could be used to hide names.
             add_reasons(row, ["blind_without_profile"])
         touch(row)

@@ -505,6 +505,21 @@ def blind(guarded: GuardedInput, sources: BlindSources, config: BlindConfig) -> 
     )
 
 
+def redact_text(text: str, sources: BlindSources, config: BlindConfig) -> str:
+    """``text`` with every blind span replaced (for snippets shown while blind, such as
+    a guardrail finding's evidence). Unchanged when blind mode is off."""
+    if not config.enabled or not text:
+        return text
+    out: list[str] = []
+    position = 0
+    for span in merge(detect(text, sources, config)):
+        out.append(text[position : span.start])
+        out.append(PLACEHOLDER[span.category])
+        position = span.end
+    out.append(text[position:])
+    return "".join(out)
+
+
 # ------------------------------------------------------------------ reviewer view
 
 

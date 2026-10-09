@@ -123,6 +123,21 @@ def touch(row: HireScreening) -> None:
     row.updated_at = datetime.now(UTC)
 
 
+async def is_blind(session: AsyncSession, application_id: uuid.UUID) -> bool:
+    """Whether reviewers must not see the candidate's name and contact details yet:
+    the latest screening is blind (or none exists yet and blind mode is on). For the
+    routes that show an application (pipeline, profile)."""
+    latest = await session.scalar(
+        select(HireScreening.blind)
+        .where(HireScreening.application_id == application_id)
+        .order_by(HireScreening.created_at.desc())
+        .limit(1)
+    )
+    if latest is not None:
+        return bool(latest)
+    return (await screening_settings(session)).blind.enabled
+
+
 # ------------------------------------------------------------------ settings
 
 

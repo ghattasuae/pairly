@@ -20,7 +20,8 @@ The apply flow (``pairly_hire.applying``; ``Cache-Control: no-store``):
   201): one file per request through the engine's ingestion (workflow ``hire``). 40
   per hour per IP.
 * ``POST /{org_slug}/applications/submit`` (JSON ``{"token"}``, 202): the CV must be
-  there. Queues the acknowledgement email. 20 per hour per IP.
+  there. Queues the acknowledgement email. 20 per hour per IP. After the response, the
+  screening starts (``pairly_hire.screening.start``; a person always decides).
 
 Tenant handling: the slug is resolved by ``hire_careers_org(slug)`` (SECURITY DEFINER,
 returns id and name only, and only for an active organisation whose careers page is
@@ -62,6 +63,7 @@ from pairly_core.ingestion.service import (
     ingest_spooled,
     record_rejection,
 )
+from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_hire.antispam import SlidingWindowLimiter, client_ip, verifier_for
 from pairly_hire.api.common import web_url
 from pairly_hire.applying import (
@@ -87,6 +89,7 @@ from pairly_hire.jobs import current_form, org_settings
 from pairly_hire.models import HireJob, JobStatus
 from pairly_hire.notice import CURRENT_VERSION, NOTICES
 from pairly_hire.rubrics import locked_rubric
+from pairly_hire.screening.start import start_after_submit
 from pairly_hire.selfid.schema import CATEGORIES
 
 router = APIRouter(prefix="/public/careers", tags=["hire-public"])
@@ -522,7 +525,9 @@ async def upload_file(
         }
     },
 )
-async def submit(org_slug: str, request: Request, session: RequestSession) -> Any:
+async def submit(
+    org_slug: str, request: Request, session: RequestSession, background: BackgroundTasks
+) -> Any:
     _limit(request, "submit", org_slug)
     body = await _json_body(request, HireTokenIn, 1024)
     org = await _bind(session, org_slug)
@@ -547,4 +552,10 @@ async def submit(org_slug: str, request: Request, session: RequestSession) -> An
         reference=done.application.reference,
         response_days=settings.response_days,
     )
+    runtime = getattr(request.app.state, "workflow_runtime", None)
+    if isinstance(runtime, WorkflowRuntime):
+        # After the response: the screening run (pairly_hire.screening.start). When this
+        # process cannot parse the CV itself, the worker job starts it once it is parsed.
+        await session.commit()
+        background.add_task(start_after_submit, runtime, org.id, done.application.id)
     return _no_store(out.model_dump(mode="json"), 202)
