@@ -125,7 +125,7 @@ def prefs_url(config: LinkConfig, org_id: uuid.UUID, candidate_id: uuid.UUID, lo
         raise ValueError("links are not configured")
     assert config.secret is not None  # noqa: S101 (ready)
     token = prefs_token(config.secret, org_id, candidate_id)
-    return f"{config.web_url}/{locale}/careers/preferences#{token}"
+    return f"{config.web_url}/{locale}/candidate/preferences#{token}"
 
 
 # ------------------------------------------------------------------ referrals

@@ -79,7 +79,7 @@ _BASE: Final = {
 _STATUS_VARS: Final = _BASE | {
     "stage_label": _v("string", "Screening"),
     "preferences_url": _v(
-        "url", "https://app.pairly.example/en/careers/preferences#sample", required=False
+        "url", "https://app.pairly.example/en/candidate/preferences#sample", required=False
     ),
 }
 _INTERVIEW_VARS: Final = _BASE | {
@@ -92,7 +92,7 @@ _REMINDER_VARS: Final = _BASE | {
 _REJECTION_VARS: Final = _BASE | {"reason": _v("text", required=False)}
 _FINAL_VARS: Final = _REJECTION_VARS | {
     "preferences_url": _v(
-        "url", "https://app.pairly.example/en/careers/preferences#sample", required=False
+        "url", "https://app.pairly.example/en/candidate/preferences#sample", required=False
     ),
 }
 _MENTION_VARS: Final = {

@@ -33,6 +33,7 @@ import {
   APPLY_HEADER,
   applyPath,
   filesPath,
+  isReferralToken,
   knownCode,
   MAX_CV_BYTES,
   submitPath,
@@ -54,6 +55,13 @@ export interface ApplyFlowProps {
   locale: Locale;
   notice: PublicNotice;
   form: PublicForm;
+}
+
+/** An employee's referral token in the address (`?ref=`), if the visitor came by one. */
+function referralFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const value = new URLSearchParams(window.location.search).get("ref");
+  return isReferralToken(value) ? value : null;
 }
 
 class ApplyError extends Error {
@@ -190,6 +198,7 @@ export function ApplyFlow({ orgSlug, orgName, jobSlug, locale, notice, form }: A
       knockouts,
       self_identification: Object.fromEntries(Object.entries(selfId).filter(([, v]) => v)),
       turnstile_token: turnstile ?? "",
+      ...(referralFromUrl() ? { referral: referralFromUrl() ?? "" } : {}),
     };
     try {
       const started = await post(applyPath(orgSlug, jobSlug), JSON.stringify(body), {

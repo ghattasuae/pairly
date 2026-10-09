@@ -261,7 +261,7 @@ def test_preferences_token_round_trip_and_tamper() -> None:
 def test_preferences_url_keeps_the_token_in_the_fragment() -> None:
     config = links.LinkConfig(SECRET, "https://app.test.pairly")
     url = links.prefs_url(config, uuid.uuid4(), uuid.uuid4(), "ar")
-    assert url.startswith("https://app.test.pairly/ar/careers/preferences#hp1.")
+    assert url.startswith("https://app.test.pairly/ar/candidate/preferences#hp1.")
     assert "?" not in url
 
 
