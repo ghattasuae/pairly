@@ -276,7 +276,12 @@ def test_plugin_declares_graph_jobs_and_search_kind() -> None:
     assert approval.permission == "hire.message.approve"
     assert set(graph.final_actions) == {"send_candidate_message"}
     jobs = {j.name for j in plugin.scheduled_jobs}  # type: ignore[attr-defined]
-    assert jobs == {"hire_screening_start", "hire_sla_drafts", "hire_rediscovery_index"}
+    assert jobs == {
+        "hire_screening_start",
+        "hire_sla_drafts",
+        "hire_rediscovery_index",
+        "hire_interview_reminders",
+    }
     kinds = {s.kind.key for s in plugin.search_sources}  # type: ignore[attr-defined]
     assert kinds == {"hire_candidate"}
     registry = build_registry([plugin])

@@ -4161,6 +4161,146 @@
         "title": "HireApplyOut",
         "type": "object"
       },
+      "HireAvailabilityIn": {
+        "additionalProperties": false,
+        "properties": {
+          "buffer_after_min": {
+            "maximum": 240,
+            "minimum": 0,
+            "title": "Buffer After Min",
+            "type": "integer"
+          },
+          "buffer_before_min": {
+            "maximum": 240,
+            "minimum": 0,
+            "title": "Buffer Before Min",
+            "type": "integer"
+          },
+          "holidays": {
+            "items": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "maxItems": 366,
+            "title": "Holidays",
+            "type": "array"
+          },
+          "max_per_day": {
+            "anyOf": [
+              {
+                "maximum": 24,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Per Day"
+          },
+          "timezone": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
+          },
+          "working_hours": {
+            "additionalProperties": {
+              "items": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "maxProperties": 7,
+            "title": "Working Hours",
+            "type": "object"
+          }
+        },
+        "required": [
+          "timezone",
+          "working_hours",
+          "buffer_before_min",
+          "buffer_after_min"
+        ],
+        "title": "HireAvailabilityIn",
+        "type": "object"
+      },
+      "HireAvailabilityOut": {
+        "properties": {
+          "buffer_after_min": {
+            "title": "Buffer After Min",
+            "type": "integer"
+          },
+          "buffer_before_min": {
+            "title": "Buffer Before Min",
+            "type": "integer"
+          },
+          "holidays": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Holidays",
+            "type": "array"
+          },
+          "max_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Per Day"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "working_hours": {
+            "additionalProperties": {
+              "items": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Working Hours",
+            "type": "object"
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "saved",
+          "timezone",
+          "working_hours",
+          "buffer_before_min",
+          "buffer_after_min",
+          "max_per_day",
+          "holidays"
+        ],
+        "title": "HireAvailabilityOut",
+        "type": "object"
+      },
       "HireBoardOut": {
         "properties": {
           "blind_mode": {
@@ -4453,6 +4593,119 @@
         "title": "HireBulkSummaryOut",
         "type": "object"
       },
+      "HireBusyOut": {
+        "properties": {
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/HireSlotOut"
+            },
+            "title": "Blocks",
+            "type": "array"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "blocks"
+        ],
+        "title": "HireBusyOut",
+        "type": "object"
+      },
+      "HireCalendarIntegrationsOut": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalendarProviderOut"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "using": {
+            "title": "Using",
+            "type": "string"
+          }
+        },
+        "required": [
+          "using",
+          "providers"
+        ],
+        "title": "HireCalendarIntegrationsOut",
+        "type": "object"
+      },
+      "HireCalendarProviderOut": {
+        "properties": {
+          "account_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Email"
+          },
+          "availability": {
+            "title": "Availability",
+            "type": "string"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "flag_enabled": {
+            "title": "Flag Enabled",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "availability",
+          "flag_enabled",
+          "configured",
+          "connected",
+          "status",
+          "account_email",
+          "steps"
+        ],
+        "title": "HireCalendarProviderOut",
+        "type": "object"
+      },
       "HireCardOut": {
         "properties": {
           "application_id": {
@@ -4592,6 +4845,72 @@
         "title": "HireCareersOut",
         "type": "object"
       },
+      "HireCheckIn": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_min": {
+            "maximum": 240,
+            "minimum": 15,
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "interview_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Id"
+          },
+          "panel": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Panel",
+            "type": "array"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "panel",
+          "starts_at",
+          "duration_min"
+        ],
+        "title": "HireCheckIn",
+        "type": "object"
+      },
+      "HireCheckOut": {
+        "properties": {
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/HireConflictOut"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "conflicts"
+        ],
+        "title": "HireCheckOut",
+        "type": "object"
+      },
       "HireCheckTextIn": {
         "additionalProperties": false,
         "properties": {
@@ -4621,6 +4940,80 @@
           }
         },
         "title": "HireCheckTextIn",
+        "type": "object"
+      },
+      "HireConflictOut": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "reason"
+        ],
+        "title": "HireConflictOut",
+        "type": "object"
+      },
+      "HireConnectIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "HireConnectIn",
+        "type": "object"
+      },
+      "HireConnectOut": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "HireConnectOut",
         "type": "object"
       },
       "HireCriterionOut": {
@@ -4820,6 +5213,329 @@
           "knockout_questions"
         ],
         "title": "HireFormOut",
+        "type": "object"
+      },
+      "HireInterviewCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Timezone"
+          },
+          "duration_min": {
+            "maximum": 240,
+            "minimum": 15,
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "meeting_url": {
+            "anyOf": [
+              {
+                "maxLength": 900,
+                "pattern": "^https://\\S+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meeting Url"
+          },
+          "mode": {
+            "pattern": "^(book|link)$",
+            "title": "Mode",
+            "type": "string"
+          },
+          "panel": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Panel",
+            "type": "array"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          }
+        },
+        "required": [
+          "mode",
+          "panel",
+          "duration_min"
+        ],
+        "title": "HireInterviewCreateIn",
+        "type": "object"
+      },
+      "HireInterviewOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "calendar_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Provider"
+          },
+          "can_record_outcome": {
+            "title": "Can Record Outcome",
+            "type": "boolean"
+          },
+          "cancelled_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By"
+          },
+          "candidate_timezone": {
+            "title": "Candidate Timezone",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "ics_sequence": {
+            "title": "Ics Sequence",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "link_active": {
+            "title": "Link Active",
+            "type": "boolean"
+          },
+          "link_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Expires At"
+          },
+          "meeting_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meeting Provider"
+          },
+          "meeting_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meeting Url"
+          },
+          "panel": {
+            "items": {
+              "$ref": "#/components/schemas/HirePanelMemberOut"
+            },
+            "title": "Panel",
+            "type": "array"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "job_id",
+          "stage_key",
+          "status",
+          "starts_at",
+          "ends_at",
+          "duration_min",
+          "candidate_timezone",
+          "panel",
+          "meeting_url",
+          "meeting_provider",
+          "calendar_provider",
+          "ics_sequence",
+          "link_expires_at",
+          "link_active",
+          "cancelled_by",
+          "can_record_outcome",
+          "created_at"
+        ],
+        "title": "HireInterviewOut",
+        "type": "object"
+      },
+      "HireInterviewUpdateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Timezone"
+          },
+          "clear_meeting_url": {
+            "default": false,
+            "title": "Clear Meeting Url",
+            "type": "boolean"
+          },
+          "duration_min": {
+            "anyOf": [
+              {
+                "maximum": 240,
+                "minimum": 15,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Min"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "meeting_url": {
+            "anyOf": [
+              {
+                "maxLength": 900,
+                "pattern": "^https://\\S+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meeting Url"
+          },
+          "panel": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 6,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Panel"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          }
+        },
+        "title": "HireInterviewUpdateIn",
         "type": "object"
       },
       "HireJobDraftOut": {
@@ -5997,6 +6713,21 @@
         "title": "HireNoteOut",
         "type": "object"
       },
+      "HireOutcomeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "pattern": "^(completed|no_show)$",
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "title": "HireOutcomeIn",
+        "type": "object"
+      },
       "HireOverrideIn": {
         "additionalProperties": false,
         "properties": {
@@ -6025,6 +6756,30 @@
           "reason"
         ],
         "title": "HireOverrideIn",
+        "type": "object"
+      },
+      "HirePanelMemberOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "timezone"
+        ],
+        "title": "HirePanelMemberOut",
         "type": "object"
       },
       "HirePrefsIn": {
@@ -6352,6 +7107,41 @@
         "title": "HireProfileOut",
         "type": "object"
       },
+      "HirePublicBookIn": {
+        "additionalProperties": false,
+        "properties": {
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "token": {
+            "maxLength": 300,
+            "minLength": 20,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "starts_at"
+        ],
+        "title": "HirePublicBookIn",
+        "type": "object"
+      },
       "HirePublicJob": {
         "properties": {
           "country": {
@@ -6641,6 +7431,165 @@
           "period"
         ],
         "title": "HirePublicSalary",
+        "type": "object"
+      },
+      "HirePublicScheduleIn": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "token": {
+            "maxLength": 300,
+            "minLength": 20,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "HirePublicScheduleIn",
+        "type": "object"
+      },
+      "HirePublicScheduleOut": {
+        "properties": {
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "meeting_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meeting Url"
+          },
+          "organisation": {
+            "title": "Organisation",
+            "type": "string"
+          },
+          "panel_size": {
+            "title": "Panel Size",
+            "type": "integer"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/HirePublicSlotOut"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          }
+        },
+        "required": [
+          "state",
+          "organisation",
+          "job_title",
+          "duration_min",
+          "panel_size",
+          "timezone",
+          "starts_at",
+          "ends_at",
+          "meeting_url",
+          "slots"
+        ],
+        "title": "HirePublicScheduleOut",
+        "type": "object"
+      },
+      "HirePublicSlotOut": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "sociable": {
+            "title": "Sociable",
+            "type": "boolean"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          },
+          "time": {
+            "title": "Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "date",
+          "time",
+          "sociable"
+        ],
+        "title": "HirePublicSlotOut",
         "type": "object"
       },
       "HireRediscoveryHit": {
@@ -6959,6 +7908,232 @@
           "status"
         ],
         "title": "HireRunOut",
+        "type": "object"
+      },
+      "HireSchedulingPanelOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "candidate_timezone": {
+            "title": "Candidate Timezone",
+            "type": "string"
+          },
+          "default_panel": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Default Panel",
+            "type": "array"
+          },
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "google_configured": {
+            "title": "Google Configured",
+            "type": "boolean"
+          },
+          "google_enabled": {
+            "title": "Google Enabled",
+            "type": "boolean"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "interviews": {
+            "items": {
+              "$ref": "#/components/schemas/HireInterviewOut"
+            },
+            "title": "Interviews",
+            "type": "array"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          },
+          "stage_label_ar": {
+            "title": "Stage Label Ar",
+            "type": "string"
+          },
+          "step_min": {
+            "title": "Step Min",
+            "type": "integer"
+          },
+          "team": {
+            "items": {
+              "$ref": "#/components/schemas/HirePanelMemberOut"
+            },
+            "title": "Team",
+            "type": "array"
+          },
+          "viewer_timezone": {
+            "title": "Viewer Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_id",
+          "label",
+          "identity_hidden",
+          "job_title",
+          "stage_key",
+          "stage_label",
+          "stage_label_ar",
+          "candidate_timezone",
+          "viewer_timezone",
+          "duration_min",
+          "step_min",
+          "team",
+          "default_panel",
+          "interviews",
+          "google_enabled",
+          "google_configured"
+        ],
+        "title": "HireSchedulingPanelOut",
+        "type": "object"
+      },
+      "HireSchedulingSettingsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_min": {
+            "anyOf": [
+              {
+                "maximum": 240,
+                "minimum": 15,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Min"
+          },
+          "horizon_days": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horizon Days"
+          },
+          "link_days": {
+            "anyOf": [
+              {
+                "maximum": 30,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Days"
+          },
+          "notice_hours": {
+            "anyOf": [
+              {
+                "maximum": 168,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Hours"
+          },
+          "step_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step Min"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          }
+        },
+        "title": "HireSchedulingSettingsIn",
+        "type": "object"
+      },
+      "HireSchedulingSettingsOut": {
+        "properties": {
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "horizon_days": {
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "link_days": {
+            "title": "Link Days",
+            "type": "integer"
+          },
+          "notice_hours": {
+            "title": "Notice Hours",
+            "type": "integer"
+          },
+          "step_min": {
+            "title": "Step Min",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timezone",
+          "duration_min",
+          "step_min",
+          "notice_hours",
+          "horizon_days",
+          "link_days"
+        ],
+        "title": "HireSchedulingSettingsOut",
         "type": "object"
       },
       "HireScreeningCriterion": {
@@ -7468,6 +8643,163 @@
           "response_days"
         ],
         "title": "HireSettingsOut",
+        "type": "object"
+      },
+      "HireSlotOut": {
+        "properties": {
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "sociable": {
+            "title": "Sociable",
+            "type": "boolean"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "sociable"
+        ],
+        "title": "HireSlotOut",
+        "type": "object"
+      },
+      "HireSlotsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Timezone"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
+          "duration_min": {
+            "maximum": 240,
+            "minimum": 15,
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "interview_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Id"
+          },
+          "panel": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Panel",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          }
+        },
+        "required": [
+          "panel",
+          "duration_min"
+        ],
+        "title": "HireSlotsIn",
+        "type": "object"
+      },
+      "HireSlotsOut": {
+        "properties": {
+          "busy": {
+            "items": {
+              "$ref": "#/components/schemas/HireBusyOut"
+            },
+            "title": "Busy",
+            "type": "array"
+          },
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "free": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "title": "Free",
+            "type": "array"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/HireSlotOut"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timezone",
+          "duration_min",
+          "window_start",
+          "window_end",
+          "slots",
+          "free",
+          "busy"
+        ],
+        "title": "HireSlotsOut",
         "type": "object"
       },
       "HireStageOut": {
@@ -16141,6 +17473,132 @@
         ]
       }
     },
+    "/v1/hire/public/scheduling/book": {
+      "post": {
+        "operationId": "public_book_v1_hire_public_scheduling_book_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePublicBookIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePublicScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Book",
+        "tags": [
+          "hire",
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/scheduling/cancel": {
+      "post": {
+        "operationId": "public_cancel_v1_hire_public_scheduling_cancel_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePublicScheduleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePublicScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Cancel",
+        "tags": [
+          "hire",
+          "hire-public"
+        ]
+      }
+    },
+    "/v1/hire/public/scheduling/read": {
+      "post": {
+        "operationId": "public_read_v1_hire_public_scheduling_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePublicScheduleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePublicScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Read",
+        "tags": [
+          "hire",
+          "hire-public"
+        ]
+      }
+    },
     "/v1/hire/rediscovery/search": {
       "post": {
         "operationId": "rediscover_v1_hire_rediscovery_search_post",
@@ -16290,6 +17748,802 @@
           }
         },
         "summary": "Self Identification Report",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/applications/{application_id}": {
+      "get": {
+        "operationId": "panel_v1_hire_scheduling_applications__application_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSchedulingPanelOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Panel",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/applications/{application_id}/check": {
+      "post": {
+        "operationId": "check_v1_hire_scheduling_applications__application_id__check_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireCheckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/applications/{application_id}/interviews": {
+      "post": {
+        "operationId": "create_v1_hire_scheduling_applications__application_id__interviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireInterviewCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/applications/{application_id}/slots": {
+      "post": {
+        "operationId": "slots_v1_hire_scheduling_applications__application_id__slots_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireSlotsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSlotsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Slots",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/availability/me": {
+      "get": {
+        "operationId": "my_availability_v1_hire_scheduling_availability_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAvailabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Availability",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "save_my_availability_v1_hire_scheduling_availability_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireAvailabilityIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAvailabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save My Availability",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/availability/{user_id}": {
+      "get": {
+        "operationId": "availability_v1_hire_scheduling_availability__user_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAvailabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Availability",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "save_availability_v1_hire_scheduling_availability__user_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireAvailabilityIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAvailabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Availability",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations": {
+      "get": {
+        "operationId": "integrations_v1_hire_scheduling_integrations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Integrations",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations/google/callback": {
+      "post": {
+        "operationId": "google_callback_v1_hire_scheduling_integrations_google_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireConnectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Google Callback",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations/google/disconnect": {
+      "post": {
+        "operationId": "google_disconnect_v1_hire_scheduling_integrations_google_disconnect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Google Disconnect",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations/google/start": {
+      "post": {
+        "operationId": "google_start_v1_hire_scheduling_integrations_google_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireConnectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Google Start",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/interviews": {
+      "get": {
+        "operationId": "list_interviews_v1_hire_scheduling_interviews_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "application_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Application Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "upcoming",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Upcoming",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireInterviewOut"
+                  },
+                  "title": "Response List Interviews V1 Hire Scheduling Interviews Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Interviews",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/interviews/{interview_id}": {
+      "get": {
+        "operationId": "get_interview_v1_hire_scheduling_interviews__interview_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Interview",
+        "tags": [
+          "hire"
+        ]
+      },
+      "patch": {
+        "operationId": "update_v1_hire_scheduling_interviews__interview_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireInterviewUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/interviews/{interview_id}/cancel": {
+      "post": {
+        "operationId": "cancel_v1_hire_scheduling_interviews__interview_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/interviews/{interview_id}/link": {
+      "post": {
+        "operationId": "link_v1_hire_scheduling_interviews__interview_id__link_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/interviews/{interview_id}/outcome": {
+      "post": {
+        "operationId": "outcome_v1_hire_scheduling_interviews__interview_id__outcome_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireOutcomeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome",
         "tags": [
           "hire"
         ]
@@ -16470,6 +18724,66 @@
           }
         },
         "summary": "Put Messaging Settings",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/scheduling": {
+      "get": {
+        "operationId": "get_settings_v1_hire_settings_scheduling_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSchedulingSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_v1_hire_settings_scheduling_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireSchedulingSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSchedulingSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
         "tags": [
           "hire"
         ]

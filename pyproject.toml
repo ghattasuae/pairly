@@ -188,3 +188,11 @@ name = "Hire pipeline and messaging never read self-identification answers"
 type = "forbidden"
 source_modules = ["pairly_hire.pipeline", "pairly_hire.messaging"]
 forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
+
+# Scheduling shows candidates to interviewers (blind-safe); it never reads the
+# self-identification answers, and the service layer never imports routes (WP2.8).
+[[tool.importlinter.contracts]]
+name = "Hire scheduling never reads self-identification answers"
+type = "forbidden"
+source_modules = ["pairly_hire.scheduling"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
