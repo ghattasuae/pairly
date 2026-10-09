@@ -1124,6 +1124,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/jobs/{job_id}/screening-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Screening Queue */
+        get: operations["screening_queue_v1_hire_jobs__job_id__screening_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/jobs/{job_id}/stages": {
         parameters: {
             query?: never;
@@ -5433,6 +5450,42 @@ export type components = {
             /** Period */
             period: string | null;
         };
+        /** HireQueueItemOut */
+        HireQueueItemOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Flag Codes */
+            flag_codes: string[];
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /** Label */
+            label: string;
+            /** Needs Human Review */
+            needs_human_review: boolean;
+            /** Open Message */
+            open_message: string | null;
+            /** Open Message Id */
+            open_message_id: string | null;
+            /** Overall Score */
+            overall_score: number | null;
+            /** Reference */
+            reference: string;
+            /** Scored */
+            scored: boolean;
+            /** Screening Status */
+            screening_status: string | null;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Kind */
+            stage_kind: string;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Tags */
+            tags: string[];
+        };
         /** HireRediscoveryHit */
         HireRediscoveryHit: {
             /** Applications */
@@ -5579,6 +5632,8 @@ export type components = {
         };
         /** HireScreeningCriterion */
         HireScreeningCriterion: {
+            /** Anchor */
+            anchor?: string | null;
             /** Confidence */
             confidence: number;
             /** Criterion Id */
@@ -5593,6 +5648,8 @@ export type components = {
             must_have: boolean;
             /** Name */
             name: string;
+            /** Next Anchor */
+            next_anchor?: string | null;
             /**
              * Overridden
              * @default false
@@ -5678,6 +5735,28 @@ export type components = {
             suggested_action: string | null;
             /** Suggestion */
             suggestion: string | null;
+        };
+        /** HireScreeningQueueOut */
+        HireScreeningQueueOut: {
+            /** Blind Mode */
+            blind_mode: boolean;
+            /** Blind Universities */
+            blind_universities: boolean;
+            /** Can Change Blind Mode */
+            can_change_blind_mode: boolean;
+            /** Items */
+            items: components["schemas"]["HireQueueItemOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Scheduling Available */
+            scheduling_available: boolean;
+            /** Stages */
+            stages: components["schemas"]["HireStageOut"][];
         };
         /** HireScreeningSettingsIn */
         HireScreeningSettingsIn: {
@@ -9348,6 +9427,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireRubricLockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_queue_v1_hire_jobs__job_id__screening_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScreeningQueueOut"];
                 };
             };
             /** @description Validation Error */

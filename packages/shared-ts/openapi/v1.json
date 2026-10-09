@@ -7673,6 +7673,133 @@
         "title": "HirePublicSalary",
         "type": "object"
       },
+      "HireQueueItemOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "flag_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flag Codes",
+            "type": "array"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "needs_human_review": {
+            "title": "Needs Human Review",
+            "type": "boolean"
+          },
+          "open_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Message"
+          },
+          "open_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Message Id"
+          },
+          "overall_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Score"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "boolean"
+          },
+          "screening_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screening Status"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_kind": {
+            "title": "Stage Kind",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "application_id",
+          "reference",
+          "label",
+          "identity_hidden",
+          "stage_key",
+          "stage_kind",
+          "tags",
+          "screening_status",
+          "scored",
+          "overall_score",
+          "flag_codes",
+          "needs_human_review",
+          "open_message",
+          "open_message_id",
+          "submitted_at"
+        ],
+        "title": "HireQueueItemOut",
+        "type": "object"
+      },
       "HireRediscoveryHit": {
         "properties": {
           "applications": {
@@ -7993,6 +8120,17 @@
       },
       "HireScreeningCriterion": {
         "properties": {
+          "anchor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor"
+          },
           "confidence": {
             "title": "Confidence",
             "type": "number"
@@ -8033,6 +8171,17 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "next_anchor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Anchor"
           },
           "overridden": {
             "default": false,
@@ -8296,6 +8445,61 @@
           "suggestion"
         ],
         "title": "HireScreeningKnockout",
+        "type": "object"
+      },
+      "HireScreeningQueueOut": {
+        "properties": {
+          "blind_mode": {
+            "title": "Blind Mode",
+            "type": "boolean"
+          },
+          "blind_universities": {
+            "title": "Blind Universities",
+            "type": "boolean"
+          },
+          "can_change_blind_mode": {
+            "title": "Can Change Blind Mode",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireQueueItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "scheduling_available": {
+            "title": "Scheduling Available",
+            "type": "boolean"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/HireStageOut"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "job_title",
+          "blind_mode",
+          "blind_universities",
+          "can_change_blind_mode",
+          "scheduling_available",
+          "stages",
+          "items"
+        ],
+        "title": "HireScreeningQueueOut",
         "type": "object"
       },
       "HireScreeningSettingsIn": {
@@ -16017,6 +16221,49 @@
           }
         },
         "summary": "Lock",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/screening-queue": {
+      "get": {
+        "operationId": "screening_queue_v1_hire_jobs__job_id__screening_queue_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScreeningQueueOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Queue",
         "tags": [
           "hire"
         ]

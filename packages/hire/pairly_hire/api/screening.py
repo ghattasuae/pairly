@@ -56,6 +56,7 @@ from pairly_core.guardrails.report import Finding, GuardrailReport
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.ingestion.models import Document
 from pairly_core.ingestion.storage import StorageError
+from pairly_core.policy_versions import PolicyError
 from pairly_core.rbac import Actor, ActorKind, SecondFactorRequiredError, authorize
 from pairly_core.workflow.models import RunStatus, WorkflowRun
 from pairly_core.workflow.runtime import WorkflowRuntime
@@ -119,6 +120,10 @@ class HireScreeningCriterion(BaseModel):
     why_not_higher: str
     flags: list[str]
     overridden: bool = False
+    # The locked rubric's anchor text for this score and for the next one up (what the
+    # CV would need to show), for a one-sentence "why not higher" in any language.
+    anchor: str | None = None
+    next_anchor: str | None = None
 
 
 class HireScreeningFlag(BaseModel):
@@ -340,6 +345,13 @@ async def screening_view(
     override_raw = details.get("override")
     override: dict[str, Any] = override_raw if isinstance(override_raw, dict) else {}
     overridden_scores: dict[str, int] = dict(override.get("scores") or {})
+    anchors: dict[str, tuple[str, ...]] = {}
+    if scoring:
+        try:
+            _, rubric = await rubric_ref(session, row.rubric_policy_id)
+            anchors = {c.id: c.scale_anchors for c in rubric.criteria}
+        except PolicyError:
+            anchors = {}
     criteria: list[HireScreeningCriterion] = []
     for c in scoring.get("criteria", []):
         if not isinstance(c, dict):
@@ -360,15 +372,15 @@ async def screening_view(
                 )
             )
         cid = str(c["criterion_id"])
+        shown_score = overridden_scores[cid] if cid in overridden_scores else int(c.get("score", 0))
+        levels = anchors.get(cid, ())
         criteria.append(
             HireScreeningCriterion(
                 criterion_id=cid,
                 name=str(c.get("name", cid)),
                 weight=int(c.get("weight", 1)),
                 must_have=bool(c.get("must_have")),
-                score=(
-                    overridden_scores[cid] if cid in overridden_scores else int(c.get("score", 0))
-                ),
+                score=shown_score,
                 model_score=c.get("model_score"),
                 confidence=float(c.get("confidence", 0.0)),
                 evidence=evidence,
@@ -376,6 +388,10 @@ async def screening_view(
                 why_not_higher=str(c.get("why_not_higher", "")),
                 flags=list(c.get("flags", [])),
                 overridden=cid in overridden_scores,
+                anchor=levels[shown_score] if 0 <= shown_score < len(levels) else None,
+                next_anchor=(
+                    levels[shown_score + 1] if 0 <= shown_score + 1 < len(levels) else None
+                ),
             )
         )
     report_raw = details.get("guardrail_report")
