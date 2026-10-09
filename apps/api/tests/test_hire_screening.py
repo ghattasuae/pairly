@@ -660,6 +660,35 @@ async def test_worker_job_starts_pending_screenings(
     assert (await api.screening(world, app_id))["status"] == "awaiting_review"
 
 
+async def test_a_screening_whose_run_never_started_can_be_rerun(
+    screen_factory: ScreenFactory, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = await screen_factory()
+    job = await api.open_job(world)
+    app_id = await api.apply(world, job, "cv-0026")
+    first = await api.screening(world, app_id)
+    # As if the run had never started (the process stopped right after creating it).
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE hire_screenings SET status = 'processing', run_id = NULL, "
+        "created_at = now() - interval '10 minutes' WHERE id = :i",
+        {"i": first["id"]},
+    )
+    rerun = await api.call(
+        "POST", f"/v1/hire/applications/{app_id}/screening/run", world, "recruiter"
+    )
+    assert rerun.status_code == 202, rerun.text
+    (old,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT status, failure_reason FROM hire_screenings WHERE id = :i",
+        {"i": first["id"]},
+    )
+    assert (old.status, old.failure_reason) == ("failed", "run_not_started")
+    assert (await api.screening(world, app_id))["status"] == "awaiting_review"
+
+
 # ------------------------------------------------------------------ 4. reviewer API
 
 

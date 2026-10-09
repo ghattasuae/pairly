@@ -176,7 +176,12 @@ async def rubric_ref(session: AsyncSession, policy_id: uuid.UUID) -> tuple[Polic
 
 
 async def refresh_decision_ids(session: AsyncSession, row: HireScreening) -> None:
-    """Every decision record about this application's screening and its CV parse."""
+    """Every decision record of this screening: its own records (score, suggestion,
+    overrides name the screening in ``inputs``), the approval and final action of its
+    approval, and the extraction of its CV parse."""
+    mine = [DecisionRecord.inputs["screening_id"].astext == str(row.id)]
+    if row.approval_id is not None:
+        mine.append(DecisionRecord.approval_ids.contains([row.approval_id]))
     rows = await session.scalars(
         select(DecisionRecord.id)
         .where(
@@ -185,7 +190,7 @@ async def refresh_decision_ids(session: AsyncSession, row: HireScreening) -> Non
                 and_(
                     DecisionRecord.entity_type == ENTITY_TYPE,
                     DecisionRecord.entity_id == str(row.application_id),
-                    DecisionRecord.decided_at >= row.created_at,
+                    or_(*mine),
                 ),
                 and_(
                     DecisionRecord.entity_type == "document",

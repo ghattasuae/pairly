@@ -20,7 +20,8 @@
   kept for calibration (brief 3.3.11).
 * ``POST /v1/hire/applications/{id}/screening/run`` (``hire.candidate.decide``, second
   factor): a new screening, for example after "changes requested" or a failed run.
-  409 while one is processing or waiting for a person.
+  409 while one is processing or waiting for a person; a processing screening whose run
+  failed, ended or never started is closed as ``failed`` with the reason first.
 * ``GET`` and ``PUT /v1/hire/screening/settings`` (read: ``hire.screening.read``;
   change: ``hire.screening.manage``, second factor): blind mode, whether university
   names are hidden, the gap a claim check calls unexplained (months), the injection
@@ -33,7 +34,7 @@ organisation's application is a 404.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated, Any, Final, Literal
 
@@ -44,13 +45,18 @@ from sqlalchemy import select
 from pairly_core.audit import actor_ref, append_audit
 from pairly_core.crypto.types import unseal
 from pairly_core.documents.model import NormalizedDocument
-from pairly_core.errors import ConflictError, NotFoundError, ServiceUnavailableError
+from pairly_core.errors import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    ServiceUnavailableError,
+)
 from pairly_core.guardrails.report import Finding, GuardrailReport
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.ingestion.models import Document
 from pairly_core.ingestion.storage import StorageError
 from pairly_core.rbac import Actor, ActorKind, SecondFactorRequiredError, authorize
-from pairly_core.workflow.models import WorkflowRun
+from pairly_core.workflow.models import RunStatus, WorkflowRun
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_hire.models import HireApplication
 from pairly_hire.permissions import CANDIDATE_DECIDE
@@ -64,7 +70,7 @@ from pairly_hire.screening.blind import (
     display_text,
     redact_text,
 )
-from pairly_hire.screening.models import HireScreening, HireScreeningSettings
+from pairly_hire.screening.models import HireScreening, HireScreeningSettings, ScreeningStatus
 from pairly_hire.screening.permissions import (
     SCREENING_MANAGE,
     SCREENING_OVERRIDE,
@@ -84,6 +90,8 @@ from pairly_hire.screening.start import active_screening, create_screening, star
 router = APIRouter(tags=["hire"])
 
 MAX_TEXT: Final = 200_000
+# A screening without a run this long after it was created will not get one.
+STUCK_AFTER: Final = timedelta(minutes=5)
 
 
 class HireScreeningEvidence(BaseModel):
@@ -219,7 +227,7 @@ def _step_up(actor: Actor) -> None:
 
 def _people_only(actor: Actor) -> None:
     if actor.kind is not ActorKind.USER:
-        raise SecondFactorRequiredError("only a signed-in person can do this")
+        raise ForbiddenError("only a signed-in person can do this")
 
 
 async def _application(session: OrgSession, application_id: uuid.UUID) -> HireApplication:
@@ -561,9 +569,27 @@ async def run_screening(
     if not isinstance(runtime, WorkflowRuntime):
         raise ServiceUnavailableError("screening is not available here")
     await _application(session, application_id)
-    if await active_screening(session, application_id) is not None:
-        raise ConflictError("a screening of this application is already running or waiting")
     kind, actor_id = actor_ref(actor)
+    active = await active_screening(session, application_id)
+    if active is not None:
+        stuck = await _stuck_reason(session, active)
+        if stuck is None:
+            raise ConflictError("a screening of this application is already running or waiting")
+        # Its run failed or never started: close it (fail closed) so a new one can run.
+        active.status = ScreeningStatus.FAILED.value
+        active.failure_reason = stuck
+        active.updated_at = datetime.now(UTC)
+        await append_audit(
+            session,
+            action="hire.screening.failed",
+            actor_type=kind,
+            actor_id=actor_id,
+            entity_type=SCREENING_ENTITY,
+            entity_id=active.id,
+            workflow=WORKFLOW,
+            payload={"reason": stuck},
+        )
+        await session.flush()
     try:
         row, _ = await create_screening(session, application_id, requested_by=(kind, actor_id))
     except ValueError as exc:
@@ -572,6 +598,21 @@ async def run_screening(
     session.expunge(row)
     background.add_task(start_run, runtime, row)
     return HireRunOut(screening_id=row.id, status=row.status)
+
+
+async def _stuck_reason(session: OrgSession, row: HireScreening) -> str | None:
+    """Why an active screening can never reach a person, or ``None`` when it still can."""
+    if row.status != ScreeningStatus.PROCESSING.value:
+        return None  # awaiting review: a person has it
+    if row.run_id is None:
+        age = datetime.now(UTC) - row.created_at
+        return "run_not_started" if age > STUCK_AFTER else None
+    run = await session.scalar(select(WorkflowRun).where(WorkflowRun.id == row.run_id))
+    if run is None:
+        return "run_missing"
+    if run.status in {RunStatus.FAILED, RunStatus.CANCELLED, RunStatus.COMPLETED}:
+        return f"run_{run.status}:{run.error or ''}"[:200]
+    return None
 
 
 async def _settings_row(session: OrgSession) -> HireScreeningSettings | None:
