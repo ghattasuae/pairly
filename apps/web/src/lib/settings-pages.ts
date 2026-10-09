@@ -5,7 +5,15 @@
  * The settings pages and who sees a link to each. Display only: every page checks again
  * on the server, and the API checks every call.
  */
-export type SettingsKey = "notifications" | "security" | "members" | "flags" | "apiKeys" | "webhooks" | "policies";
+export type SettingsKey =
+  | "notifications"
+  | "security"
+  | "calendar"
+  | "members"
+  | "flags"
+  | "apiKeys"
+  | "webhooks"
+  | "policies";
 
 export interface SettingsPageLink {
   key: SettingsKey;
@@ -16,6 +24,7 @@ export interface SettingsPageLink {
 export const SETTINGS_PAGES: readonly SettingsPageLink[] = [
   { key: "notifications", href: "/settings/notifications", visible: () => true },
   { key: "security", href: "/settings/security", visible: () => true },
+  { key: "calendar", href: "/settings/calendar", visible: (p) => p.includes("hire.interview.read") },
   { key: "members", href: "/settings/members", visible: (p) => p.includes("core.users.read") },
   { key: "policies", href: "/settings/policies", visible: (p) => p.includes("core.policy.read") },
   { key: "flags", href: "/settings/flags", visible: (p) => p.includes("core.flags.read") },

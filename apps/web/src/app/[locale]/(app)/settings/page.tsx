@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
-import { BellRing, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
+import { BellRing, CalendarClock, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const ICONS = {
   notifications: <BellRing aria-hidden />,
   security: <ShieldCheck aria-hidden />,
+  calendar: <CalendarClock aria-hidden />,
   members: <Users aria-hidden />,
   flags: <Flag aria-hidden />,
   apiKeys: <KeyRound aria-hidden />,

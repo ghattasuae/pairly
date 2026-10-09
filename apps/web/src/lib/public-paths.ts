@@ -5,7 +5,8 @@
 // `/approvals/link` is public so a signed-out person sees what the link is for and can
 // sign in from there (the token stays in the fragment, see the page). `/careers` holds
 // the organisations' public careers pages and the apply flow (Pairly Hire), and
-// `/candidate/preferences` a candidate's email preferences (signed link in the fragment).
+// `/candidate/preferences` a candidate's email preferences (signed link in the fragment),
+// `/schedule` a candidate's interview scheduling page (signed link in the fragment).
 const PUBLIC_PATHS = [
   "/sign-in",
   "/check-email",
@@ -15,6 +16,7 @@ const PUBLIC_PATHS = [
   "/approvals/link",
   "/careers",
   "/candidate",
+  "/schedule",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
