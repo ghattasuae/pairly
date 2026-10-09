@@ -23,6 +23,11 @@
 
 Nothing here sends without a recorded human approval: there is no edge from
 ``propose`` to ``execute`` that skips ``wait``.
+
+``restart_stuck`` (run by the ``hire_sla_drafts`` job): a message submitted but whose
+run never started (the API process stopped right after the response) is started again
+as the person who submitted it, if they may still; otherwise it fails with the reason,
+so a person sees it (fail closed: nothing is sent).
 """
 
 from __future__ import annotations
@@ -30,7 +35,7 @@ from __future__ import annotations
 import functools
 import uuid
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Final, TypedDict
 
 import structlog
@@ -38,10 +43,14 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 from langgraph.types import Command
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from pairly_core.approvals.executor import ExecutorRefusedError
 from pairly_core.audit import ActorType, append_audit
+from pairly_core.db import set_tenant
+from pairly_core.errors import PairlyError
+from pairly_core.identity import load_actor
+from pairly_core.models import User
 from pairly_core.notifications.service import (
     Recipient,
     SensitiveTemplateError,
@@ -51,14 +60,15 @@ from pairly_core.notifications.service import (
 )
 from pairly_core.plugins import discover_plugins
 from pairly_core.policy_versions import PolicyError
-from pairly_core.rbac import RoleRegistry, build_registry
+from pairly_core.rbac import Actor, RoleRegistry, build_registry
 from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.nodes import await_decision, request_approval, run_final_action
-from pairly_core.workflow.runtime import node_retry
+from pairly_core.workflow.runtime import WorkflowRuntime, node_retry
 from pairly_core.workflow.spec import FinalActionCall
 from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import CHANNEL, frozen_values, mark_updated
 from pairly_hire.messaging.models import HireMessage, MessageStatus
+from pairly_hire.permissions import MESSAGE_CREATE
 from pairly_hire.pipeline.records import load_record
 
 log = structlog.get_logger("pairly_hire.messaging.graph")
@@ -319,3 +329,85 @@ def build_graph() -> StateGraph[Any, Any, Any, Any]:
     graph.add_edge("declined", END)
     graph.add_edge("changes", END)
     return graph
+
+
+# ------------------------------------------------------------------ stuck submissions
+
+STUCK_AFTER: Final = timedelta(minutes=2)
+
+
+async def _submitter(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    registry: RoleRegistry,
+    org_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> Actor | None:
+    session = sessionmaker()
+    set_tenant(session, org_id, None)
+    async with session, session.begin():
+        subject = await session.scalar(select(User.auth_subject).where(User.id == user_id))
+    if subject is None:
+        return None
+    session = sessionmaker()
+    async with session:
+        try:
+            actor = await load_actor(session, registry, subject=subject, org_id=org_id)
+        except PairlyError:
+            return None
+        finally:
+            await session.rollback()
+    return actor if actor.has(MESSAGE_CREATE) else None
+
+
+async def restart_stuck(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    runtime: WorkflowRuntime,
+    registry: RoleRegistry,
+    org_id: uuid.UUID,
+) -> int:
+    """Start the run of messages submitted more than ``STUCK_AFTER`` ago without one."""
+    session = sessionmaker()
+    set_tenant(session, org_id, None)
+    async with session, session.begin():
+        stuck = list(
+            (
+                await session.execute(
+                    select(HireMessage.id, HireMessage.submitted_by).where(
+                        HireMessage.status == MessageStatus.SUBMITTED.value,
+                        HireMessage.run_id.is_(None),
+                        HireMessage.updated_at < datetime.now(UTC) - STUCK_AFTER,
+                    )
+                )
+            ).all()
+        )
+    started = 0
+    for message_id, user_id in stuck:
+        actor = await _submitter(sessionmaker, registry, org_id, user_id) if user_id else None
+        if actor is None:
+            session = sessionmaker()
+            set_tenant(session, org_id, None)
+            async with session, session.begin():
+                message = await _locked(session, message_id)
+                if message.status == MessageStatus.SUBMITTED.value and message.run_id is None:
+                    message.status = MessageStatus.FAILED.value
+                    message.status_reason = "submitter_lost_access"
+                    message.updated_at = datetime.now(UTC)
+                    await _audit(
+                        session, "hire.message.failed", message, {"reason": message.status_reason}
+                    )
+            continue
+        try:
+            await runtime.start_run(
+                actor,
+                workflow=WORKFLOW,
+                graph=GRAPH,
+                input={"message_id": str(message_id)},
+                entity_type=ENTITY,
+                entity_id=str(message_id),
+            )
+            started += 1
+        except Exception as exc:
+            log.warning(
+                "hire_message_restart_failed", message_id=str(message_id), error=type(exc).__name__
+            )
+    return started

@@ -1185,3 +1185,41 @@ async def test_tenant_isolation_of_every_pipeline_and_messaging_table(
     with pytest.raises(Exception, match="permission denied"):
         async with session, session.begin():
             await session.execute(text("UPDATE hire_stage_moves SET to_stage = 'hired'"))
+
+
+async def test_a_submission_whose_run_never_started_is_restarted(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    from pairly_core.audit import ActorType
+    from pairly_hire.messaging.compose import Author, get_message, submit_message
+    from pairly_hire.messaging.graph import restart_stuck
+    from pairly_hire.pipeline.records import load_record
+
+    api = hire_api
+    job = await open_job(api, world)
+    app_id = (await apply_many(api, world, job, ["Stuck Person"]))["Stuck Person"]
+    draft_id = (await move(api, world, app_id, "rejected")).json()["draft_id"]
+    recruiter = world.people["recruiter"][0]
+    maker = create_sessionmaker(api.engine)
+    session = maker()
+    set_tenant(session, world.org_id, None)
+    config = hire_links.LinkConfig(LINK_SECRET, "https://app.test.pairly")
+    async with session, session.begin():
+        message = await get_message(session, uuid.UUID(draft_id), lock=True)
+        record = await load_record(session, message.application_id)
+        await submit_message(
+            session, message, record, Author(ActorType.USER, str(recruiter)), links=config
+        )
+    runtime = api.app.state.workflow_runtime
+    # Too recent: left alone (the API's own background start may still be running).
+    assert await restart_stuck(maker, runtime, REGISTRY, world.org_id) == 0
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE hire_messages SET updated_at = now() - interval '10 minutes' WHERE id = :m",
+        {"m": draft_id},
+    )
+    assert await restart_stuck(maker, runtime, REGISTRY, world.org_id) == 1
+    after = (await api.call("GET", f"/v1/hire/messages/{draft_id}", world, "recruiter")).json()
+    assert after["status"] == "awaiting_approval"
+    assert after["approval_id"]

@@ -16,6 +16,9 @@ and each application waiting N days or more that has no open draft:
 3. alerts the recruiters of the job once a day, in the app and by email (category
    ``sla``, urgent): "N candidates are waiting for an update".
 
+The same job restarts sensitive messages whose approval run never started
+(``graph.restart_stuck``).
+
 ``waiting_longest`` lists the applications waiting longest, for the Hire home page.
 """
 
@@ -40,6 +43,7 @@ from pairly_core.rbac import Actor, RoleRegistry
 from pairly_hire.links import LinkConfig, links_from_env
 from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import Author, create_draft
+from pairly_hire.messaging.graph import restart_stuck
 from pairly_hire.messaging.models import (
     DEFAULT_SLA_DAYS,
     HireMessage,
@@ -249,4 +253,10 @@ async def run_sla_job(ctx: JobContext) -> dict[str, Any]:
         totals["orgs"] += 1
         totals["drafted"] += result["drafted"]
         totals["alerts"] += result["alerts"]
+        try:
+            totals["restarted"] = totals.get("restarted", 0) + await restart_stuck(
+                ctx.sessionmaker, ctx.runtime, ctx.registry, org_id
+            )
+        except Exception as exc:
+            log.warning("message_restart_failed", org_id=str(org_id), error=type(exc).__name__)
     return totals

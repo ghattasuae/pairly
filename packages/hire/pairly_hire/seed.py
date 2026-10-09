@@ -186,9 +186,7 @@ async def seed_hire_demo(session: AsyncSession, ctx: SeedContext) -> SeedResult:
     lines.append(
         f"recorded model responses: {report.imported} imported, {report.skipped} already there"
     )
-    report = await import_recordings(
-        session, ctx.org_id, parse_bundle(messaging_recordings_text())
-    )
+    report = await import_recordings(session, ctx.org_id, parse_bundle(messaging_recordings_text()))
     lines.append(
         f"recorded message drafts: {report.imported} imported, {report.skipped} already there"
     )

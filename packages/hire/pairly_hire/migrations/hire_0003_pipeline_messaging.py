@@ -285,6 +285,7 @@ def upgrade() -> None:
         _fk(t, "run_id", "workflow_runs", nullable=True),
         _fk(t, "notification_id", "notifications", nullable=True),
         sa.Column("status_reason", sa.String(64), nullable=True),
+        _fk(t, "submitted_by", "users", nullable=True),
         sa.Column("created_by_type", sa.String(16), nullable=False),
         sa.Column("created_by_id", sa.String(128), nullable=False),
         _ts("created_at"),

@@ -90,6 +90,15 @@ class Preview:
     error: str | None = None
 
 
+def _user_id(author: Author) -> uuid.UUID | None:
+    if author.type is not ActorType.USER:
+        return None
+    try:
+        return uuid.UUID(author.id)
+    except ValueError:
+        return None
+
+
 def _clean(value: Any) -> Any:
     if isinstance(value, str):
         return value.strip()[:MAX_VALUE]
@@ -431,6 +440,7 @@ async def submit_message(
     # and the email sent after the approval is rendered from the same values.
     message.variables = _seal(message, "variables", values)
     message.sensitive = True
+    message.submitted_by = _user_id(author)
     message.status = MessageStatus.SUBMITTED.value
     message.status_reason = None
     message.rendered = _seal(

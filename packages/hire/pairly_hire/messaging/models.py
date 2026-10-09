@@ -169,6 +169,11 @@ class HireMessage(Base, OrgScoped):
     )
     # Why it failed or was suppressed (short code), or the approver's outcome.
     status_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # The person who submitted a sensitive message for approval (they start its run,
+    # and can never approve it).
+    submitted_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
     created_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
     created_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
     created_at: Mapped[datetime] = _created()
