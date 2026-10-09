@@ -6,6 +6,10 @@
   (``hire.candidate.read``): submitted applications with the candidate's contact
   details (decrypted for the reader), answers, knockout results, consent, files and
   duplicate hints. Self-identification answers are never part of these responses.
+  While an application is blind (screening's blind mode, until the shortlist or a stage
+  that reveals identity, ``pipeline.records.hidden_identities``) the name reads
+  "Candidate <reference>" and the contact details, CV and files are left out
+  (``identity_hidden``).
 * ``GET /v1/hire/reports/self-identification`` (``hire.selfid.read``): totals per
   category and option for one job, for bias reporting only. Counts under
   ``MIN_REPORT_COUNT`` are shown as ``null`` so nobody can be singled out. Each read is
@@ -35,6 +39,7 @@ from pairly_core.rbac import ActorKind, authorize
 from pairly_hire.jobs import get_job, org_settings, save_settings
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate
 from pairly_hire.permissions import CANDIDATE_READ, JOB_READ, SELFID_READ, SETTINGS_MANAGE
+from pairly_hire.pipeline.records import hidden_identities, hidden_label
 from pairly_hire.retention import apply_retention_months
 from pairly_hire.rubric import parse_rubric
 from pairly_hire.selfid.models import HireSelfIdentification
@@ -53,6 +58,8 @@ class HireApplicationSummary(BaseModel):
     reference: str
     status: str
     candidate_name: str
+    # Blind: the name is "Candidate <reference>" and contact details and files are empty.
+    identity_hidden: bool
     needs_human_review: bool
     review_reasons: list[str]
     duplicate_hints: int
@@ -120,14 +127,20 @@ def _contact(app: HireApplication) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _summary(app: HireApplication, candidate: HireCandidate) -> dict[str, Any]:
+def _summary(app: HireApplication, candidate: HireCandidate, hidden: bool) -> dict[str, Any]:
+    name = (
+        hidden_label(app)
+        if hidden
+        else str(_contact(app).get("full_name") or unseal(candidate, "full_name"))
+    )
     return {
         "id": app.id,
         "job_id": app.job_id,
         "candidate_id": app.candidate_id,
         "reference": app.reference,
         "status": app.status,
-        "candidate_name": str(_contact(app).get("full_name") or unseal(candidate, "full_name")),
+        "candidate_name": name,
+        "identity_hidden": hidden,
         "needs_human_review": app.needs_human_review,
         "review_reasons": list(app.review_reasons or []),
         "duplicate_hints": len(app.duplicate_signals or []),
@@ -156,7 +169,10 @@ async def list_applications(
     if needs_review is not None:
         query = query.where(HireApplication.needs_human_review.is_(needs_review))
     rows = (await session.execute(query.limit(limit))).all()
-    return HireApplicationList(items=[HireApplicationSummary(**_summary(a, c)) for a, c in rows])
+    hidden = await hidden_identities(session, [a for a, _ in rows])
+    return HireApplicationList(
+        items=[HireApplicationSummary(**_summary(a, c, a.id in hidden)) for a, c in rows]
+    )
 
 
 @router.get("/applications/{application_id}", response_model=HireApplicationDetail)
@@ -194,12 +210,14 @@ async def get_application(
                     reason=k.reason,
                 )
             )
+    hidden = app.id in await hidden_identities(session, [app])
+    contact = {} if hidden else _contact(app)
     return HireApplicationDetail(
-        **_summary(app, candidate),
-        email=str(unseal(candidate, "email") or ""),
-        phone=_contact(app).get("phone"),
-        location=_contact(app).get("location"),
-        profile_url=_contact(app).get("profile_url"),
+        **_summary(app, candidate, hidden),
+        email="" if hidden else str(unseal(candidate, "email") or ""),
+        phone=contact.get("phone"),
+        location=contact.get("location"),
+        profile_url=contact.get("profile_url"),
         rubric_policy_id=app.rubric_policy_id,
         rubric_version=policy.version if policy else None,
         form_policy_id=app.form_policy_id,
@@ -208,8 +226,8 @@ async def get_application(
         consent_version=app.consent_version,
         consent_at=app.consent_at,
         consent_locale=app.consent_locale,
-        cv_document_id=app.cv_document_id,
-        files=dict(app.files or {}),
+        cv_document_id=None if hidden else app.cv_document_id,
+        files={} if hidden else dict(app.files or {}),
         duplicate_signals=list(app.duplicate_signals or []),
         acknowledged_at=app.acknowledged_at,
     )

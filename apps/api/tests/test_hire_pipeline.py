@@ -10,7 +10,8 @@
 * The approval binds the exact text: a template changed after the approval blocks it.
 * Bulk: a summary before anything happens; one undo for the batch.
 * Notes with @mentions notify the people mentioned in the app.
-* Blind mode hides identity until a stage reveals it.
+* Blind mode (screening's, wired through ``pipeline.hooks``) hides identity until a
+  stage reveals it.
 * Talent rediscovery: permission, consent and retention filters.
 * Referrals: tracking, and the referrer sees the stage only.
 * AI drafts from recordings fill only the personal paragraph; a draft that adds facts
@@ -44,9 +45,9 @@ from pairly_hire.demo import BACKEND
 from pairly_hire.messaging import library
 from pairly_hire.messaging.recordings import bundle_text, recordings_text
 from pairly_hire.messaging.sla import draft_overdue
-from pairly_hire.pipeline import hooks
 from pairly_hire.pipeline.rediscovery import sync_org
 from pairly_hire.recordings import entry_for
+from pairly_hire.screening import reviewer as screening_reviewer
 
 from .hire_support import (
     PLUGINS,
@@ -94,8 +95,8 @@ async def other(owner_engine: AsyncEngine) -> AsyncIterator[HireWorld]:
 @pytest.fixture(autouse=True)
 def _reset_hooks() -> Any:
     yield
-    hooks.set_blind_mode_source(None)
-    hooks.set_screening_view(None)
+    # Back to what the plugin installs: screening's blind mode and results.
+    screening_reviewer.register()
 
 
 _IP = iter(range(10, 250))
@@ -349,7 +350,10 @@ async def test_rejection_is_never_sent_without_an_approval(
     assert message["sensitive"] is True
     assert message["status"] == "draft"
     assert message["preview"]["ok"]
-    assert "Layla Haddad" in message["preview"]["text"]
+    # Blind until the shortlist: the preview shows the label; the email carries the name.
+    assert message["preview"]["masked"]
+    assert "Layla Haddad" not in message["preview"]["text"]
+    assert "Dear Candidate " in message["preview"]["text"]
 
     # A sensitive message cannot be sent directly.
     direct = await api.client.post(
@@ -369,7 +373,11 @@ async def test_rejection_is_never_sent_without_an_approval(
 
     detail = (await api.call("GET", f"/v1/approvals/{approval_id}", world, "manager")).json()
     assert detail["approval_type"] == "hire.message"
-    assert detail["payload"]["text"] == after["preview"]["text"]
+    # The approval binds the exact email, which carries the name; the reviewer's
+    # preview shows the blind label in its place.
+    label = after["preview"]["text"].split("\n", 1)[0].removeprefix("Dear ").rstrip(",")
+    assert label.startswith("Candidate ")
+    assert detail["payload"]["text"] == after["preview"]["text"].replace(label, "Layla Haddad")
 
     # The submitter cannot approve their own message; nobody can without a second factor.
     own = await api.client.post(
@@ -398,7 +406,7 @@ async def test_rejection_is_never_sent_without_an_approval(
     rejection = next(
         m for m in mails if "Layla Haddad" in m["text"] and "not to move forward" in m["text"]
     )
-    assert rejection["text"] == after["preview"]["text"]
+    assert rejection["text"] == detail["payload"]["text"]
     (note,) = await owner_rows(
         owner_engine,
         world.org_id,
@@ -660,18 +668,13 @@ async def test_notes_mention_people_in_the_app(
 # ------------------------------------------------------------------ blind mode
 
 
-class _BlindOn:
-    async def enabled(self, session: Any) -> bool:
-        return True
-
-
 async def test_blind_mode_hides_identity_until_a_stage_reveals_it(
     hire_api: HireApi, world: HireWorld
 ) -> None:
     api = hire_api
     job = await open_job(api, world)
     app_id = (await apply_many(api, world, job, ["Yusuf Amin"]))["Yusuf Amin"]
-    hooks.set_blind_mode_source(_BlindOn())
+    # Blind mode is on by default (screening's setting) and nothing screened it yet.
     data = await board(api, world, job["id"])
     card = next(c for c in data["cards"] if c["application_id"] == app_id)
     assert data["blind_mode"]
@@ -907,7 +910,7 @@ async def test_ai_drafts_fill_only_the_paragraph_and_bad_drafts_are_refused(
     assert set(message["values"]) == {"personal_note"}
     assert BACKEND.draft.title in message["values"]["personal_note"]
     # The record's values come from the record; the paragraph sits in its place.
-    assert message["preview"]["text"].startswith("Hello Dana Musa,")
+    assert message["preview"]["text"].startswith("Hello Candidate ")  # blind: masked
     assert message["values"]["personal_note"] in message["preview"]["text"]
 
     # A person's edit takes the field back from the model.

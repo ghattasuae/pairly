@@ -375,3 +375,55 @@ def test_year_only_dates_are_never_flagged_on_their_own() -> None:
     assert normalize_year_month("Mar 2019 to Present") == "2019-03"
     assert normalize_year_month("مارس 2019 - حتى الآن") == "2019-03"
     assert normalize_year_month("03/2019 - 06/2021") == "2019-03 2021-06"
+
+
+# ------------------------------------------------------------------ pipeline hooks
+
+
+def test_plugin_wires_screening_into_the_pipeline_hooks() -> None:
+    from pairly_hire import plugin  # noqa: F401  (registers on import)
+    from pairly_hire.pipeline import hooks
+    from pairly_hire.screening.reviewer import ScreeningBlindSource, ScreeningReviewerView
+
+    assert isinstance(hooks._blind, ScreeningBlindSource)
+    assert isinstance(hooks._screening, ScreeningReviewerView)
+
+
+def test_blind_hook_fails_closed() -> None:
+    import uuid
+
+    from pairly_hire.pipeline import hooks
+    from pairly_hire.screening import reviewer
+
+    class Broken:
+        async def enabled(self, session: Any) -> bool:
+            raise RuntimeError("settings unreadable")
+
+        async def blind_applications(self, session: Any, ids: Any) -> set[uuid.UUID]:
+            raise RuntimeError("settings unreadable")
+
+    ids = [uuid.uuid4(), uuid.uuid4()]
+    hooks.set_blind_mode_source(Broken())
+    try:
+        assert asyncio.run(hooks.blind_applications(None, ids)) == set(ids)  # type: ignore[arg-type]
+        assert asyncio.run(hooks.blind_mode(None)) is True  # type: ignore[arg-type]
+        assert asyncio.run(hooks.blind_applications(None, [])) == set()  # type: ignore[arg-type]
+    finally:
+        reviewer.register()
+
+
+@pytest.mark.parametrize(
+    ("score", "flags", "result"),
+    [
+        (4, [], "met"),
+        (3, [], "met"),
+        (2, [], "partly_met"),
+        (1, [], "partly_met"),
+        (0, [], "not_met"),
+        (0, ["not_scored"], "unknown"),
+    ],
+)
+def test_criterion_result_from_credited_scores(score: int, flags: list[str], result: str) -> None:
+    from pairly_hire.screening.reviewer import criterion_result
+
+    assert criterion_result(score, flags) == result

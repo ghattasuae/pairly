@@ -7,13 +7,16 @@ entry (if any) and the job's stages in one place, so every route and job applies
 same rules:
 
 * an application without an entry is in the first stage and never had an update;
-* identity is hidden in blind mode until the application reached a stage that reveals
-  it (``identity_hidden``); hidden, the candidate reads as "Candidate <reference>".
+* identity is hidden while the application is blind (``hooks.blind_applications``,
+  screening's answer) until it reached a stage that reveals it (``identity_hidden``);
+  hidden, the candidate reads as "Candidate <reference>". ``hidden_identities`` answers
+  the same for many applications at once (lists that do not load whole records).
 """
 
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final
@@ -25,10 +28,25 @@ from pairly_core.crypto.types import unseal
 from pairly_core.errors import NotFoundError
 from pairly_core.models import Organisation
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate, HireJob
+from pairly_hire.pipeline.hooks import blind_applications
 from pairly_hire.pipeline.models import HirePipelineEntry
-from pairly_hire.pipeline.stages import FIRST, Stage, StageSet, stages_for
+from pairly_hire.pipeline.stages import FIRST, Stage, StageSet, stages_for, stages_for_jobs
 
 HIDDEN_LABEL: Final = "Candidate {reference}"
+
+
+def stage_of(stages: StageSet, entry: HirePipelineEntry | None) -> Stage:
+    key = entry.stage_key if entry is not None else FIRST
+    return stages.get(key) or stages.stages[0]
+
+
+def is_revealed(stages: StageSet, entry: HirePipelineEntry | None) -> bool:
+    """The application reached a stage that reveals identity (once is enough)."""
+    return stage_of(stages, entry).reveal_identity or (entry is not None and entry.revealed)
+
+
+def hidden_label(app: HireApplication) -> str:
+    return HIDDEN_LABEL.format(reference=app.reference)
 
 
 @dataclass
@@ -45,11 +63,11 @@ class AppRecord:
 
     @property
     def stage(self) -> Stage:
-        return self.stages.get(self.stage_key) or self.stages.stages[0]
+        return stage_of(self.stages, self.entry)
 
     @property
     def revealed(self) -> bool:
-        return self.stage.reveal_identity or (self.entry is not None and self.entry.revealed)
+        return is_revealed(self.stages, self.entry)
 
     def identity_hidden(self, blind_mode: bool) -> bool:
         return blind_mode and not self.revealed
@@ -73,7 +91,7 @@ class AppRecord:
 
     def label(self, blind_mode: bool) -> str:
         if self.identity_hidden(blind_mode):
-            return HIDDEN_LABEL.format(reference=self.app.reference)
+            return hidden_label(self.app)
         return self.full_name
 
     @property
@@ -85,6 +103,26 @@ class AppRecord:
         submitted = self.app.submitted_at or self.app.created_at
         last = self.last_update_at
         return max(submitted, last) if last is not None else submitted
+
+
+async def hidden_identities(
+    session: AsyncSession, apps: Sequence[HireApplication]
+) -> set[uuid.UUID]:
+    """The ids of ``apps`` whose candidate identity reviewers must not see now: blind
+    (``hooks.blind_applications``) and not yet at a stage that reveals identity."""
+    blind = await blind_applications(session, [a.id for a in apps])
+    if not blind:
+        return set()
+    entries = {
+        e.application_id: e
+        for e in await session.scalars(
+            select(HirePipelineEntry).where(HirePipelineEntry.application_id.in_(blind))
+        )
+    }
+    stages = await stages_for_jobs(session, list({a.job_id for a in apps if a.id in blind}))
+    return {
+        a.id for a in apps if a.id in blind and not is_revealed(stages[a.job_id], entries.get(a.id))
+    }
 
 
 async def load_record(

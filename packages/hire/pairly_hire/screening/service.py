@@ -40,6 +40,7 @@ from typing import Any, Final
 
 from pydantic import ValidationError
 from sqlalchemy import and_, or_, select
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType
@@ -127,15 +128,27 @@ async def is_blind(session: AsyncSession, application_id: uuid.UUID) -> bool:
     """Whether reviewers must not see the candidate's name and contact details yet:
     the latest screening is blind (or none exists yet and blind mode is on). For the
     routes that show an application (pipeline, profile)."""
-    latest = await session.scalar(
-        select(HireScreening.blind)
-        .where(HireScreening.application_id == application_id)
-        .order_by(HireScreening.created_at.desc())
-        .limit(1)
+    return application_id in await blind_application_ids(session, [application_id])
+
+
+async def blind_application_ids(
+    session: AsyncSession, application_ids: Sequence[uuid.UUID]
+) -> set[uuid.UUID]:
+    """``is_blind`` for many applications in one query: the ids that are blind."""
+    ids = list(dict.fromkeys(application_ids))
+    if not ids:
+        return set()
+    rows = await session.execute(
+        select(HireScreening.application_id, HireScreening.blind)
+        .where(HireScreening.application_id.in_(ids))
+        .ext(distinct_on(HireScreening.application_id))
+        .order_by(HireScreening.application_id, HireScreening.created_at.desc())
     )
-    if latest is not None:
-        return bool(latest)
-    return (await screening_settings(session)).blind.enabled
+    latest = {r.application_id: bool(r.blind) for r in rows}
+    unscreened = (
+        (await screening_settings(session)).blind.enabled if len(latest) < len(ids) else False
+    )
+    return {i for i in ids if latest.get(i, unscreened)}
 
 
 # ------------------------------------------------------------------ settings

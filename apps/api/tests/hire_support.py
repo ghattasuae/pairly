@@ -329,3 +329,12 @@ async def owner_rows(
         await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org_id)})
         result = await conn.execute(text(sql), params or {})
         return list(result.all()) if result.returns_rows else []
+
+
+async def set_blind_mode(api: HireApi, world: HireWorld, enabled: bool) -> None:
+    """The organisation's blind mode (on by default): off, reviewers see names at once."""
+    saved = await api.call(
+        "PUT", "/v1/hire/screening/settings", world, "admin", json={"blind_mode": enabled}
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["blind_mode"] is enabled

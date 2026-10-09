@@ -23,7 +23,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting) and ``hire_rediscovery_index``.
 
-Importing this module registers the Hire tables on ``Base.metadata``.
+Importing this module registers the Hire tables on ``Base.metadata`` and wires screening
+into the pipeline hooks (blind mode per application, screening results;
+``screening.reviewer.register``).
 """
 
 from __future__ import annotations
@@ -50,6 +52,7 @@ from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
 from pairly_hire.retention import RETENTION_RULES
 from pairly_hire.screening import models as screening_models  # noqa: F401  (its tables)
+from pairly_hire.screening import reviewer as screening_reviewer
 from pairly_hire.screening.permissions import SCREENING_PERMISSIONS
 from pairly_hire.screening.spec import HIRE_SCREENING
 from pairly_hire.screening.start import SCHEDULED_JOBS as SCREENING_JOBS
@@ -60,6 +63,9 @@ if TYPE_CHECKING:
     from fastapi import APIRouter
 
 _HERE = Path(__file__).resolve().parent
+
+# The pipeline and messaging read blind mode and screening results from screening.
+screening_reviewer.register()
 
 HIRE_MESSAGE: GraphSpec = GraphSpec(
     workflow="hire",

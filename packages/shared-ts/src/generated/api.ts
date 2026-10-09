@@ -3831,6 +3831,8 @@ export type components = {
              * Format: uuid
              */
             id: string;
+            /** Identity Hidden */
+            identity_hidden: boolean;
             /**
              * Job Id
              * Format: uuid
@@ -3888,6 +3890,8 @@ export type components = {
              * Format: uuid
              */
             id: string;
+            /** Identity Hidden */
+            identity_hidden: boolean;
             /**
              * Job Id
              * Format: uuid

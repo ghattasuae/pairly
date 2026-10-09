@@ -44,6 +44,7 @@ from .hire_support import (
     owner_rows,
     retire_documents,
     seed_hire_world,
+    set_blind_mode,
 )
 from .notify_support import notify_settings
 
@@ -234,9 +235,22 @@ async def test_apply_end_to_end(
             assert "gender" not in json.dumps(view.answers)
 
     # The hiring team sees the application, never the self-identification answers.
+    # Blind mode is on by default: no name or contact details until the shortlist.
     listed = await api.call("GET", "/v1/hire/applications", world, "interviewer")
     (item,) = listed.json()["items"]
     assert item["reference"] == reference
+    assert item["identity_hidden"] is True
+    assert item["candidate_name"] == f"Candidate {reference}"
+    blind = await api.call("GET", f"/v1/hire/applications/{item['id']}", world, "recruiter")
+    hidden = blind.json()
+    assert hidden["email"] == ""
+    assert hidden["phone"] is None
+    assert hidden["cv_document_id"] is None
+    assert "layla" not in json.dumps(hidden).casefold()
+    await set_blind_mode(api, world, False)
+    listed = await api.call("GET", "/v1/hire/applications", world, "interviewer")
+    (item,) = listed.json()["items"]
+    assert item["identity_hidden"] is False
     assert item["candidate_name"] == "Layla Haddad"
     detail = await api.call("GET", f"/v1/hire/applications/{item['id']}", world, "recruiter")
     body = detail.json()
@@ -607,6 +621,7 @@ async def test_public_form_cannot_change_another_persons_details(
             assert unseal(apps[1], "contact")["full_name"] == "Mallory Example"
             assert "contact_differs" in apps[1].review_reasons
             assert apps[1].needs_human_review is True
+    await set_blind_mode(api, world, False)
     items = (await api.call("GET", "/v1/hire/applications", world, "recruiter")).json()["items"]
     assert sorted(i["candidate_name"] for i in items) == ["Layla Haddad", "Mallory Example"]
 

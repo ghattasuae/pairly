@@ -69,7 +69,7 @@ from pairly_hire.permissions import (
     MESSAGE_CREATE,
     SETTINGS_MANAGE,
 )
-from pairly_hire.pipeline.hooks import blind_mode, screening_summary
+from pairly_hire.pipeline.hooks import application_blind, screening_summary
 from pairly_hire.pipeline.records import AppRecord, load_record
 
 log = structlog.get_logger("pairly_hire.api.messaging")
@@ -245,7 +245,7 @@ async def _message_out(
     session: AsyncSession, message: HireMessage, record: AppRecord, request: Request
 ) -> HireMessageOut:
     preview = await compose.preview(session, message, record, links(request))
-    blind = await blind_mode(session)
+    blind = await application_blind(session, record.app.id)
     masked = record.identity_hidden(blind)
     subject, text = preview.subject, preview.text
     if masked and record.full_name:

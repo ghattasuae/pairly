@@ -3897,6 +3897,10 @@
             "title": "Id",
             "type": "string"
           },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
           "job_id": {
             "format": "uuid",
             "title": "Job Id",
@@ -3997,6 +4001,7 @@
           "reference",
           "status",
           "candidate_name",
+          "identity_hidden",
           "needs_human_review",
           "review_reasons",
           "duplicate_hints",
@@ -4063,6 +4068,10 @@
             "title": "Id",
             "type": "string"
           },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
           "job_id": {
             "format": "uuid",
             "title": "Job Id",
@@ -4107,6 +4116,7 @@
           "reference",
           "status",
           "candidate_name",
+          "identity_hidden",
           "needs_human_review",
           "review_reasons",
           "duplicate_hints",

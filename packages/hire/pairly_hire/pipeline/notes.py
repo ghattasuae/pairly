@@ -33,7 +33,7 @@ from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_core.rbac import Actor, ActorKind, RoleRegistry, authorize
 from pairly_hire.messaging.library import NOTE_MENTION
 from pairly_hire.permissions import CANDIDATE_READ, NOTE_WRITE
-from pairly_hire.pipeline.hooks import blind_mode
+from pairly_hire.pipeline.hooks import application_blind
 from pairly_hire.pipeline.models import HireNote
 from pairly_hire.pipeline.records import ensure_entry, load_record
 
@@ -124,7 +124,7 @@ async def add_note(
         workflow=WORKFLOW,
         payload={"note_id": str(note.id), "mentions": [str(m) for m in wanted]},
     )
-    blind = await blind_mode(session)
+    blind = await application_blind(session, record.app.id)
     for user_id in wanted:
         await notify(
             session,

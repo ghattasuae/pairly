@@ -33,7 +33,7 @@ from pairly_hire.jobs import get_job
 from pairly_hire.links import LinkConfig, read_referral_token, referral_token
 from pairly_hire.models import HireApplication, HireCandidate, HireJob, JobStatus
 from pairly_hire.permissions import REFERRAL_CREATE, REFERRAL_READ
-from pairly_hire.pipeline.hooks import blind_mode
+from pairly_hire.pipeline.hooks import blind_applications
 from pairly_hire.pipeline.models import HirePipelineEntry, HireReferral, HireReferralLink
 from pairly_hire.pipeline.records import AppRecord
 from pairly_hire.pipeline.stages import stages_for_jobs
@@ -177,7 +177,7 @@ async def my_referrals(session: AsyncSession, actor: Actor) -> list[ReferralView
         )
     ).all()
     stages = await stages_for_jobs(session, list({r[3].id for r in rows}))
-    blind = await blind_mode(session)
+    blind = await blind_applications(session, [r[1].id for r in rows])
     out: list[ReferralView] = []
     for referral, app, candidate, job, entry in rows:
         record = AppRecord(app, candidate, job, entry, stages[job.id])
@@ -192,7 +192,7 @@ async def my_referrals(session: AsyncSession, actor: Actor) -> list[ReferralView
             ReferralView(
                 referral_id=referral.id,
                 job_title=job.title,
-                candidate=record.label(blind),
+                candidate=record.label(app.id in blind),
                 stage=stage.kind if stage.terminal else "in_progress",
                 stage_label=label,
                 referred_at=referral.created_at,

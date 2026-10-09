@@ -2,9 +2,11 @@
 # Copyright (c) 2026 Proofly Technology
 """Read models: the kanban board of a job and the candidate profile with its timeline.
 
-Both apply blind mode (``hooks.blind_mode``): until an application reached a stage that
-reveals identity, the card and the profile show "Candidate <reference>" and hide the
-contact details and the CV file (which names the person); everything else (stage, tags,
+Both apply blind mode per application (``hooks.blind_applications``, screening's
+``is_blind``): while an application is blind and has not reached a stage that reveals
+identity, the card and the profile show "Candidate <reference>" and hide the contact
+details and the CV file (which names the person), and message previews show the label
+instead of the name; everything else (stage, tags,
 notes, flags, messages) stays visible. The routes never return self-identification
 answers (they live in ``pairly_hire.selfid``, which this package never imports).
 
@@ -17,7 +19,7 @@ when screening has one (``hooks.screening_summary``).
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any, Final
 
@@ -30,7 +32,12 @@ from pairly_hire.messaging import library
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.messaging.prefs import prefs_for
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate, HireJob
-from pairly_hire.pipeline.hooks import ScreeningSummary, screening_summary
+from pairly_hire.pipeline.hooks import (
+    ScreeningSummary,
+    application_blind,
+    blind_applications,
+    screening_summary,
+)
 from pairly_hire.pipeline.models import HireNote, HirePipelineEntry, HireReferral, HireStageMove
 from pairly_hire.pipeline.records import AppRecord, load_record
 from pairly_hire.pipeline.stages import FIRST, StageSet, stages_for
@@ -120,6 +127,7 @@ async def board(
         )
     ).all()
     app_ids = [a.id for a, _, _ in rows]
+    blind_ids = await blind_applications(session, app_ids)
     referred = set(
         await session.scalars(
             select(HireReferral.application_id).where(HireReferral.application_id.in_(app_ids))
@@ -142,8 +150,8 @@ async def board(
             Card(
                 application_id=app.id,
                 reference=app.reference,
-                label=record.label(blind),
-                identity_hidden=record.identity_hidden(blind),
+                label=record.label(app.id in blind_ids),
+                identity_hidden=record.identity_hidden(app.id in blind_ids),
                 stage_key=record.stage_key if stages.get(record.stage_key) else FIRST,
                 stage_entered_at=entry.stage_entered_at
                 if entry
@@ -231,10 +239,19 @@ def message_view(message: HireMessage, delivery: str | None) -> MessageView:
     )
 
 
+def mask(value: str | None, name: str, label: str) -> str | None:
+    return value.replace(name, label) if value and name else value
+
+
+def mask_message(view: MessageView, name: str, label: str) -> MessageView:
+    return replace(view, subject=mask(view.subject, name, label), text=mask(view.text, name, label))
+
+
 async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bool) -> Profile:
     record = await load_record(session, application_id)
     app = record.app
-    hidden = record.identity_hidden(blind)
+    app_blind = await application_blind(session, app.id)
+    hidden = record.identity_hidden(app_blind)
     moves = list(
         await session.scalars(
             select(HireStageMove)
@@ -336,6 +353,10 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
         message_view(m, deliveries.get(m.notification_id) if m.notification_id else None)
         for m in messages
     ]
+    if hidden:
+        # The candidate's name never reaches the reviewer, not even in a message
+        # preview or its timeline entry. The email itself is sent with the name.
+        views = [mask_message(v, record.full_name, record.label(app_blind)) for v in views]
     for view in views:
         when = view.sent_at or view.created_at
         events.append(
@@ -380,7 +401,7 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
         record=record,
         blind_mode=blind,
         identity_hidden=hidden,
-        label=record.label(blind),
+        label=record.label(app_blind),
         contact=contact,
         files=files,
         tags=list(record.entry.tags or []) if record.entry else [],

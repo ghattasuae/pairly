@@ -24,6 +24,7 @@ the scan uses the fake scanner and parsing runs in the real sandbox.
 from __future__ import annotations
 
 import dataclasses
+import json
 import uuid
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
@@ -58,6 +59,7 @@ from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_core.workflow.services import GraphServices
 from pairly_hire.antispam import DUMMY_TOKEN
+from pairly_hire.messaging import library
 from pairly_hire.notice import CURRENT_VERSION
 from pairly_hire.scoring.aggregate import overall_score
 from pairly_hire.screening import graph as screening_graph
@@ -424,6 +426,95 @@ async def test_screening_end_to_end_blind_until_shortlisted(
     assert done["document_id"] is not None
     kinds = await record_kinds(owner_engine, world, done["decision_ids"])
     assert {"approval", "final_action"} <= set(kinds)
+
+
+async def test_blind_application_hides_identity_on_pipeline_and_messaging_routes(
+    screen_factory: ScreenFactory, world: HireWorld
+) -> None:
+    """Blind mode reaches every pipeline and messaging route (``pipeline.hooks`` wired to
+    ``screening.service.is_blind``) and lifts at the shortlist."""
+    api = await screen_factory()
+    job = await api.open_job(world)
+    app_id = await api.apply(world, job, "cv-0026")
+    view = await api.screening(world, app_id)
+    assert view["status"] == "awaiting_review"
+    assert view["blind"] is True
+    contact = contact_for(spec("cv-0026"))
+    secrets = [contact["full_name"], contact["email"], contact["phone"]]
+
+    async def get(path: str) -> dict[str, Any]:
+        response = await api.call("GET", path, world, "recruiter")
+        assert response.status_code == 200, (path, response.text)
+        return dict(response.json())
+
+    drafted = await api.call(
+        "POST",
+        f"/v1/hire/pipeline/applications/{app_id}/messages",
+        world,
+        "recruiter",
+        json={"template_key": library.STATUS_UPDATE},
+    )
+    assert drafted.status_code == 201, drafted.text
+    message_id = drafted.json()["id"]
+
+    async def routes() -> dict[str, dict[str, Any]]:
+        return {
+            "board": await get(f"/v1/hire/jobs/{job['id']}/pipeline"),
+            "profile": await get(f"/v1/hire/pipeline/applications/{app_id}"),
+            "list": await get(f"/v1/hire/applications?job_id={job['id']}"),
+            "detail": await get(f"/v1/hire/applications/{app_id}"),
+            "waiting": await get(f"/v1/hire/pipeline/waiting?job_id={job['id']}"),
+            "message": await get(f"/v1/hire/messages/{message_id}"),
+        }
+
+    def check_hidden(seen: dict[str, dict[str, Any]]) -> None:
+        for name, body in seen.items():
+            dumped = json.dumps(body, ensure_ascii=False)
+            for value in secrets:
+                assert value not in dumped, (name, value)
+        (card,) = seen["board"]["cards"]
+        assert card["identity_hidden"]
+        assert card["label"].startswith("Candidate ")
+        assert seen["profile"]["identity_hidden"]
+        assert seen["profile"]["contact"] is None
+        assert seen["profile"]["files"] == []
+        assert seen["list"]["items"][0]["identity_hidden"]
+        assert seen["detail"]["cv_document_id"] is None
+        assert seen["detail"]["files"] == {}
+        assert seen["waiting"]["items"][0]["label"].startswith("Candidate ")
+        assert seen["message"]["preview"]["masked"]
+
+    blind = await routes()
+    check_hidden(blind)
+    # The profile shows the screening result (``set_screening_view``), quotes from the
+    # blinded text only.
+    summary = blind["profile"]["screening"]
+    assert summary["status"] == "awaiting_review"
+    assert summary["overall"]
+    assert summary["criteria"]
+    assert {c["result"] for c in summary["criteria"]} <= {"met", "partly_met", "not_met", "unknown"}
+    # Turning the organisation's blind mode off later does not unblind a blind screening.
+    saved = await api.call(
+        "PUT", "/v1/hire/screening/settings", world, "admin", json={"blind_mode": False}
+    )
+    assert saved.status_code == 200, saved.text
+    check_hidden(await routes())
+
+    # The shortlist lifts blind mode on every route.
+    decided = await api.decide(world, view["approval_id"], "approve")
+    assert decided.status_code == 200, decided.text
+    shown = await routes()
+    (card,) = shown["board"]["cards"]
+    assert not card["identity_hidden"]
+    assert card["label"] == contact["full_name"]
+    assert shown["profile"]["contact"]["full_name"] == contact["full_name"]
+    assert shown["profile"]["contact"]["email"] == contact["email"]
+    assert shown["list"]["items"][0]["candidate_name"] == contact["full_name"]
+    assert shown["detail"]["email"] == contact["email"]
+    assert shown["detail"]["cv_document_id"] is not None
+    assert shown["waiting"]["items"][0]["label"] == contact["full_name"]
+    assert not shown["message"]["preview"]["masked"]
+    assert contact["full_name"] in shown["message"]["preview"]["text"]
 
 
 async def test_not_shortlisted_and_rerun(

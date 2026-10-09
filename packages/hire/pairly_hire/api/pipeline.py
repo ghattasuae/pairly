@@ -53,7 +53,7 @@ from pairly_hire.permissions import (
     PIPELINE_WRITE,
 )
 from pairly_hire.pipeline import moves, notes, referrals, views
-from pairly_hire.pipeline.hooks import blind_mode
+from pairly_hire.pipeline.hooks import blind_applications, blind_mode
 from pairly_hire.pipeline.records import AppRecord
 from pairly_hire.pipeline.rediscovery import KIND as CANDIDATE_KIND
 from pairly_hire.pipeline.rediscovery import candidate_applications
@@ -473,15 +473,6 @@ async def get_profile(
     messages = [
         HireMessageSummaryOut.model_validate(m, from_attributes=True) for m in result.messages
     ]
-    if result.identity_hidden:
-        # Blind mode: the candidate's name never reaches the reviewer, not even in a
-        # message preview. The email itself is sent with the name.
-        name = record.full_name
-        for m in messages:
-            if name and m.text:
-                m.text = m.text.replace(name, result.label)
-            if name and m.subject:
-                m.subject = m.subject.replace(name, result.label)
     return HireProfileOut(
         application_id=record.app.id,
         job_id=record.job.id,
@@ -571,8 +562,8 @@ async def waiting_longest(
 ) -> HireWaitingList:
     authorize(actor, CANDIDATE_READ)
     days = await sla_days(session)
-    blind = await blind_mode(session)
     items = (await waiting(session, job_id=job_id))[:limit]
+    blind = await blind_applications(session, [w.record.app.id for w in items])
     return HireWaitingList(
         sla_days=days,
         items=[
@@ -580,7 +571,7 @@ async def waiting_longest(
                 application_id=w.record.app.id,
                 job_id=w.record.job.id,
                 job_title=w.record.job.title,
-                label=w.record.label(blind),
+                label=w.record.label(w.record.app.id in blind),
                 reference=w.record.app.reference,
                 stage_key=w.record.stage_key,
                 stage_label=w.record.stage.label,
@@ -632,7 +623,6 @@ async def rediscover(
         )
     except EmbeddingUnavailable as exc:
         raise ServiceUnavailableError("search is not available right now") from exc
-    blind = await blind_mode(session)
     best: dict[uuid.UUID, Any] = {}
     for hit in hits:
         if hit.source_id not in best:
@@ -642,7 +632,9 @@ async def rediscover(
         apps = await candidate_applications(session, candidate_id)
         if not apps:
             continue
-        hidden = blind and not any(a["revealed"] for a in apps)
+        # Shown by name only when one of the candidate's applications shows it.
+        blind = await blind_applications(session, [uuid.UUID(a["application_id"]) for a in apps])
+        hidden = not any(a["revealed"] or uuid.UUID(a["application_id"]) not in blind for a in apps)
         out.append(
             HireRediscoveryHit(
                 candidate_id=candidate_id,
