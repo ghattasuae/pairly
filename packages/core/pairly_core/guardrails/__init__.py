@@ -8,12 +8,15 @@
     if report.needs_review: route to a person, showing finding.explain(locale)
 
 * ``scan``        ``scan_document``: deterministic detectors, never a model.
-* ``detectors``   hidden text, instructions (en, ar), keyword stuffing, metadata,
-                  unusual Unicode; a pluggable ``DetectorRegistry``.
+* ``detectors``   hidden text (fill colour, size, position, and the renderer check for
+                  covered or clipped text), instructions (en, ar), keyword stuffing,
+                  metadata, unusual Unicode; a pluggable ``DetectorRegistry``.
 * ``sanitize``    ``sanitize_for_model``: removes flagged spans, wraps the text in a
                   nonce-delimited data block, maps offsets back to the original.
 * ``classifier``  optional second stage on suspicious spans (fail closed). Imported
                   on its own: it depends on the model router.
+* ``doc_classifier`` optional whole-document pass for paraphrased instructions
+                  (off, sampled or always per workflow; add-only, fail closed).
 * ``pii``         ``PiiRedactor`` for logs, traces and LangFuse; ``redact_log_event``.
 * ``validation``  output schema, range and banned-content checks; ``quote_exists``.
 * ``explain``     reviewer sentences in English and Arabic.

@@ -9,22 +9,29 @@ PDF, per character:
   WCAG contrast ratio (1.0 for identical colours, 21 for black on white);
 * text rendering mode 3 (neither filled nor stroked: invisible);
 * a font smaller than ``min_font_pt``;
-* a centre outside the page (off-page, or cut off by the crop box).
+* a centre outside the page (off-page, or cut off by the crop box);
+* rendered pixels under the character show (almost) no contrast although its fill
+  colour looks fine: an opaque shape or image is drawn over it, or a clipping path cuts
+  it away (``covered_or_clipped``, from the renderer pass in ``documents.render``).
+  Runs shorter than ``render_min_chars`` visible characters are ignored, so a stray
+  thin glyph never raises a finding on its own.
 
-DOCX, per run: ``w:vanish`` / ``w:specVanish`` (hidden), white or near-white colour,
-a theme background colour, a tiny font.
+DOCX, per run: ``w:vanish`` / ``w:specVanish`` (hidden), a colour too close to the
+shading behind the run (``TextBlock.background``, white when nothing is painted), a
+theme background colour, a tiny font.
 
-Clipping paths and text covered by an opaque shape drawn on top are not modelled:
-pdfplumber does not report drawing order or clips. Those cases are left to the
-instruction and stuffing detectors, which read the same text.
+``RenderCheckDetector`` fails closed: a PDF page with text that the renderer did not
+check (page cap, time budget, too large, render error) raises, which records a
+detector error and sends the document to a person.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 
-from pairly_core.documents.model import BBox, Char, Page, Style
+from pairly_core.documents.model import RENDER_INCOMPLETE, BBox, Char, Page, Style
 from pairly_core.guardrails.base import ScanInput, evidence, union_bbox
 from pairly_core.guardrails.report import Finding, FindingType, Severity, Span
 from pairly_core.guardrails.textindex import PageIndex
@@ -40,7 +47,10 @@ _PRIORITY: tuple[str, ...] = (
     "docx_hidden",
     "off_page",
     "tiny_font",
+    "covered_or_clipped",
 )
+COVERED = "covered_or_clipped"
+_CID = re.compile(r"\(cid:\d+\)")
 
 
 def _linear(channel: int) -> float:
@@ -140,6 +150,13 @@ def _char_reasons(ch: Char, page: Page, scan: ScanInput) -> _Reasons:
     reasons = _style_reasons(ch.style, background_at(page, cx, cy), scan)
     if not (0 <= cx <= page.width and 0 <= cy <= page.height):
         reasons.add("off_page", Severity.HIGH)
+    rendered = ch.render_contrast
+    cfg = scan.config
+    if not reasons.codes and rendered is not None and rendered < cfg.min_contrast:
+        # The fill colour looks fine, yet nothing visible was drawn: covered or clipped.
+        high = rendered < cfg.high_contrast_below
+        reasons.add(COVERED, Severity.HIGH if high else Severity.MEDIUM)
+        reasons.details["rendered_contrast"] = round(rendered, 3)
     return reasons
 
 
@@ -226,6 +243,12 @@ class HiddenTextDetector:
                 copy.merge(reasons)
                 runs.append(_Run(start, end, copy, [box]))
         for run in runs:
+            if set(run.reasons.codes) == {COVERED}:
+                # pdfplumber writes an unmapped glyph as "(cid:N)": one character.
+                glyphs = _CID.sub("x", text[run.start : run.end])
+                visible = sum(1 for c in glyphs if not c.isspace())
+                if visible < scan.config.render_min_chars:
+                    continue
             yield self._finding(scan, run, page.number, "body")
         # Fail closed: characters we could not place remove their whole line, or every
         # occurrence of their text on the page when the line itself was not found.
@@ -233,6 +256,8 @@ class HiddenTextDetector:
             reasons = _Reasons()
             for ci in char_ids:
                 reasons.merge(_char_reasons(page.chars[ci], page, scan))
+            if set(reasons.codes) == {COVERED} and len(char_ids) < scan.config.render_min_chars:
+                continue
             boxes = [page.chars[ci].bbox for ci in char_ids]
             span = pidx.blocks[block_index] if block_index is not None else None
             if span is not None:
@@ -259,7 +284,9 @@ class HiddenTextDetector:
         for bi, block in enumerate(page.blocks):
             if not block.text.strip():
                 continue
-            background = WHITE
+            background = (
+                block.background if block.background and _is_hex(block.background) else WHITE
+            )
             if block.bbox is not None:
                 cx = (block.bbox.x0 + block.bbox.x1) / 2
                 cy = (block.bbox.top + block.bbox.bottom) / 2
@@ -302,3 +329,29 @@ class HiddenTextDetector:
             pending_region = block.region
         if pending is not None:
             yield self._finding(scan, pending, page.number, pending_region)
+
+
+class RenderCheckIncompleteError(RuntimeError):
+    """A PDF page with text was not checked by the renderer (fail closed)."""
+
+
+class RenderCheckDetector:
+    """Raises when the renderer pass did not check a PDF page that has text.
+
+    Only documents from the PDF parser carry render results; other parsers (DOCX,
+    OCR, text, hand-built test documents) are not affected. ``disabled`` (set by
+    configuration, never by a document) and ``no_text`` are not errors.
+    """
+
+    name = "render_check"
+
+    def detect(self, scan: ScanInput) -> Iterable[Finding]:
+        if scan.doc.parser.name != "pdf":
+            return ()
+        for page in scan.doc.pages:
+            if not any(ch.text.strip() for ch in page.chars):
+                continue
+            status = page.render.status if page.render is not None else "missing"
+            if status == "missing" or status in RENDER_INCOMPLETE:
+                raise RenderCheckIncompleteError(f"page {page.number}: {status}")
+        return ()

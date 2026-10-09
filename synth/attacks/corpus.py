@@ -733,11 +733,11 @@ def attack_samples() -> list[Sample]:
             filename=f"invoice_{RLO}fdp.exe",
         )
     )
-    # Known gaps (see the module docstring of the hidden-text detector and the patterns).
+    # Caught by the renderer pass since WP2.4b (it was a known gap in WP1.4).
     covered = "Chief Data Officer at a global retailer"
     add(
         Sample(
-            "gap_pdf_text_covered_by_white_box_cv",
+            "pdf_text_covered_by_white_box_cv",
             "pdf",
             make_pdf(
                 CV_LINES,
@@ -749,9 +749,10 @@ def attack_samples() -> list[Sample]:
             True,
             "cv",
             frozenset({HIDDEN}),
-            known_gap=True,
+            (covered,),
         )
     )
+    # Known gaps (see the module docstring of the instruction patterns).
     add(
         Sample(
             "gap_paraphrased_instruction_cv",

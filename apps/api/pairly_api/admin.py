@@ -38,6 +38,13 @@ resumable: rows already on the current KEK are skipped. ``--dry-run`` only count
 is left. See ``pairly_core.crypto.rotation`` for the full procedure:
 
     uv run pairly-admin crypto rotate [--org <uuid>] [--batch-size 500] [--dry-run]
+
+``crypto rotate-blind-index`` recomputes every stored blind index under the current
+blind index key (``PAIRLY_BLIND_INDEX_KEY_CURRENT``) from the encrypted source value,
+in audited batches; resumable, ``--dry-run`` counts what is left. See
+``pairly_core.crypto.blind_index`` for the key rollout:
+
+    uv run pairly-admin crypto rotate-blind-index [--org <uuid>] [--batch-size 500] [--dry-run]
 """
 
 from __future__ import annotations
@@ -59,6 +66,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 import pairly_core.models  # noqa: F401  (registers every core table, encrypted ones included)
 from pairly_core.audit import ActorType
 from pairly_core.config import to_asyncpg_url
+from pairly_core.crypto.blind_index_rotation import (
+    BlindIndexRotationReport,
+    rotate_blind_indexes,
+)
 from pairly_core.crypto.keys import CryptoConfigError, init_crypto
 from pairly_core.crypto.rotation import DEFAULT_BATCH, RotationReport, rotate_keys
 from pairly_core.db import Base, create_sessionmaker, set_tenant
@@ -165,6 +176,27 @@ async def rotate_crypto(
     engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
     try:
         return await rotate_keys(
+            create_sessionmaker(engine),
+            Base.metadata,
+            org_ids=org_ids,
+            batch_size=batch_size,
+            dry_run=dry_run,
+            actor_id=ADMIN_ACTOR,
+        )
+    finally:
+        await engine.dispose()
+
+
+async def rotate_blind_index(
+    owner_url: str,
+    *,
+    org_ids: Sequence[uuid.UUID] | None,
+    batch_size: int,
+    dry_run: bool,
+) -> BlindIndexRotationReport:
+    engine = create_async_engine(to_asyncpg_url(owner_url), pool_size=1, max_overflow=0)
+    try:
+        return await rotate_blind_indexes(
             create_sessionmaker(engine),
             Base.metadata,
             org_ids=org_ids,
@@ -283,6 +315,17 @@ def _parser() -> argparse.ArgumentParser:
     crypto_rotate.add_argument(
         "--dry-run", action="store_true", help="count rows still on an old KEK, change nothing"
     )
+    blind = crypto_commands.add_parser(
+        "rotate-blind-index",
+        help="rewrite blind indexes under the current blind index key (resumable, audited)",
+    )
+    blind.add_argument(
+        "--org", action="append", type=uuid.UUID, help="only this organisation (repeatable)"
+    )
+    blind.add_argument("--batch-size", type=int, default=DEFAULT_BATCH)
+    blind.add_argument(
+        "--dry-run", action="store_true", help="count indexes still to rewrite, change nothing"
+    )
     return parser
 
 
@@ -356,6 +399,8 @@ def _crypto(args: argparse.Namespace, owner_url: str) -> int:
     if not 1 <= args.batch_size <= 10_000:
         print("pairly-admin: --batch-size must be 1..10000", file=sys.stderr)
         return 2
+    if args.crypto_command == "rotate-blind-index":
+        return _blind_index(args, owner_url, ring.blind_index_current)
     report = asyncio.run(
         rotate_crypto(owner_url, org_ids=args.org, batch_size=args.batch_size, dry_run=args.dry_run)
     )
@@ -371,6 +416,27 @@ def _crypto(args: argparse.Namespace, owner_url: str) -> int:
     for key, count in sorted(report.failed.items()):
         print(f"  {key}: {count} rows could not be decrypted (left unchanged)", file=sys.stderr)
     print(f"Re-wrapped {report.total_rewrapped} rows, {report.total_failed} failed.")
+    return 1 if report.total_failed else 0
+
+
+def _blind_index(args: argparse.Namespace, owner_url: str, current: str) -> int:
+    report = asyncio.run(
+        rotate_blind_index(
+            owner_url, org_ids=args.org, batch_size=args.batch_size, dry_run=args.dry_run
+        )
+    )
+    print(f"Current blind index key version: {current}. Organisations: {report.orgs}.")
+    for key, count in sorted(report.failed.items()):
+        print(f"  {key}: {count} rows could not be recomputed (left unchanged)", file=sys.stderr)
+    if args.dry_run:
+        if not report.pending:
+            print("Nothing to rewrite: every blind index uses the current key.")
+        for key, count in sorted(report.pending.items()):
+            print(f"  {key}: {count} rows on an old key")
+        return 0
+    for key, count in sorted(report.rewritten.items()):
+        print(f"  {key}: {count} rows rewritten")
+    print(f"Rewrote {report.total_rewritten} blind indexes, {report.total_failed} failed.")
     return 1 if report.total_failed else 0
 
 

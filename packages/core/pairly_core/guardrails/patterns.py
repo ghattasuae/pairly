@@ -91,6 +91,15 @@ EN: tuple[InstructionPattern, ...] = (
     _p(
         "ranking_manipulation",
         H,
+        r"\b(?:rank|rate|score|place|put|list|move|keep)\s+(?:(?:this|the|my)\s+"
+        r"(?:candidate|applicant|cv|resume|profile|application|submission)|me|him|her|them)\s+"
+        r"(?:above|ahead\s+of|over|before|higher\s+than)\s+(?:all\s+)?(?:the\s+)?"
+        r"(?:others|other\s+(?:candidates|applicants|profiles|cvs)|everyone(?:\s+else)?|"
+        r"the\s+rest|rest)\b",
+    ),
+    _p(
+        "ranking_manipulation",
+        H,
         r"\b(?:give|assign|award|grant)\s+(?:this\s+|the\s+)?(?:candidate|applicant|cv|"
         r"resume|me|him|her|them)?\s*(?:a\s+|the\s+)?(?:perfect|maximum|max|top|highest|"
         r"full|10\s*/\s*10|100\s*/\s*100|5\s*/\s*5)\s*(?:score|rating|marks|points|grade)",
@@ -236,7 +245,8 @@ AR: tuple[InstructionPattern, ...] = (
         "ignore_instructions",
         H,
         r"(?<!\w)(?:تجاهل|اهمل|انس|انسي|تخط|الغ)\s+" + _AGAP + r"(?:التعليمات|الاوامر|التوجيهات|"
-        r"القواعد|المعايير|الارشادات|ما\s+سبق|كل\s+ما\s+سبق)",
+        r"القواعد|المعايير|الارشادات|ما\s+سبق|كل\s+ما\s+سبق|(?:معايير|قواعد|تعليمات|شروط)\s+"
+        r"(?:التقييم|الفرز|التصنيف|المراجعه|الاختيار|الوظيفه))",
         "ar",
     ),
     _p("role_override", H, r"(?:^|\s)انت\s+الان\s+", "ar"),
@@ -258,6 +268,13 @@ AR: tuple[InstructionPattern, ...] = (
         + r"(?:الاول|اولا|في\s+المرتبه\s+الاولي|في\s+المقدمه|الافضل|في\s+الصداره)",
         "ar",
     ),
+    # "Nominate / pick this applicant" (imperative; "رشحت" is a past-tense statement).
+    _p(
+        "ranking_manipulation",
+        H,
+        r"(?<!\w)(?:رشح|اختر|اختار|فضل)\s+(?:هذا|هذه)\s+(?:المتقدم|المرشح|المتقدمه|المرشحه)",
+        "ar",
+    ),
     _p(
         "ranking_manipulation",
         H,
@@ -273,18 +290,27 @@ AR: tuple[InstructionPattern, ...] = (
         r"التحويل|الطلب)",
         "ar",
     ),
+    # "Consider / mark / record this invoice as paid": an imperative aimed at the
+    # invoice itself. A CV line about a payments ledger ("سجل مدفوعات") is not one.
     _p(
         "approval_manipulation",
         H,
-        r"(?<!\w)(?:اعتبر|ضع\s+علامه|سجل)\s+" + _AGAP + r"(?:مدفوعه|مدفوع|كمدفوعه|معتمده)",
+        r"(?<!\w)(?:اعتبر|ضع\s+علامه(?:\s+علي)?|سجل)\s+(?:هذه\s+|هذا\s+)?"
+        r"(?:الفاتوره|الدفعه|المبلغ|الطلب)\s+(?:ك|علي\s+انها\s+|بانها\s+|انها\s+)?"
+        r"(?:مدفوعه|مدفوع|معتمده|معتمد)(?!\w)",
         "ar",
     ),
+    _p("approval_manipulation", H, r"(?<!\w)اعتبرها\s+(?:ك)?(?:مدفوعه|معتمده)(?!\w)", "ar"),
+    # A request to change bank details: an imperative ("حدث بيانات البنك"), or a verbal
+    # noun after a request word ("يرجى تحديث ...", "قم بتغيير ..."). A bare verbal noun
+    # is a statement ("تحققت من كل تغيير في البيانات البنكية"), not a request.
     _p(
         "bank_change",
         H,
-        r"(?<!\w)(?:غير|تغيير|حدث|تحديث|استبدل|عدل|تعديل)\s+" + _AGAP + r"(?:الحساب\s+البنكي|"
-        r"بيانات\s+البنك|تفاصيل\s+البنك|البيانات\s+البنكيه|رقم\s+الايبان|الايبان|رقم\s+الحساب|"
-        r"تفاصيل\s+الحساب)",
+        r"(?:(?<!\w)(?:غير|حدث|استبدل|عدل|بدل)\s+|(?<!\w)(?:يرجي|الرجاء|نرجو|نرجوا|يجب|"
+        r"ينبغي|يلزم)\s+(?:\S+\s+)?(?:تغيير|تحديث|تعديل|استبدال)\s+|(?<!\w)قم\s+ب(?:تغيير|"
+        r"تحديث|تعديل|استبدال)\s+)(?:\S+\s+){0,2}?(?:الحساب\s+البنكي|بيانات\s+البنك|"
+        r"تفاصيل\s+البنك|البيانات\s+البنكيه|رقم\s+الايبان|الايبان|رقم\s+الحساب|تفاصيل\s+الحساب)",
         "ar",
     ),
     _p(

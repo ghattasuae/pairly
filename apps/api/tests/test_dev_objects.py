@@ -34,7 +34,7 @@ def _ingestion() -> IngestionSettings:
     return IngestionSettings(
         env=Environment.TEST,
         s3_bucket="pairly-documents",
-        s3_access_key="pairly-app",
+        s3_access_key=SecretStr("pairly-app"),
         s3_secret_key=SecretStr(SECRET),
     )
 

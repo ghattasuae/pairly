@@ -38,6 +38,13 @@ class ParseOptions(BaseModel):
     max_unzipped_bytes: int = Field(default=300 * 1024 * 1024, ge=1)
     # Below this OCR page text is considered too short to be a real text layer.
     min_text_chars_per_page: int = Field(default=1, ge=0)
+    # Renderer-based visibility check for PDF text (``documents.render``): resolution,
+    # pages checked per document, and a time budget for the whole document. Pages past
+    # either limit are marked unchecked, which sends the document to a person.
+    render_check: bool = True
+    render_dpi: int = Field(default=110, ge=48, le=300)
+    render_max_pages: int = Field(default=30, ge=1, le=1000)
+    render_seconds: float = Field(default=20.0, gt=0, le=600)
 
 
 class ParseError(Exception):

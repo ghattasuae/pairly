@@ -1,0 +1,129 @@
+{
+ "generator_version": "1",
+ "count": 300,
+ "seed": 2026,
+ "faker": "40.41.0",
+ "labels": "synthetic, rule-based (synth/hire/labels.py); not human judgments",
+ "label_rules": {
+  "backend_engineer": {
+   "backend_experience": "years(backend:1.0,data_analyst:0.5,frontend:0.5)",
+   "python_or_go": "demonstrated(tags=;skills=Go,Python;list_credit=True)",
+   "databases_apis": "demonstrated(tags=api_design,databases;skills=PostgreSQL,REST APIs,gRPC;list_credit=True)",
+   "cloud_containers": "demonstrated(tags=cloud_ops;skills=AWS,Docker,Kubernetes;list_credit=True)",
+   "distributed_systems": "demonstrated(tags=distributed_systems,system_design;skills=Kafka;list_credit=True)",
+   "testing_quality": "demonstrated(tags=testing;skills=CI/CD,Jest,unit testing;list_credit=True)",
+   "mentoring": "demonstrated(tags=leadership,mentoring;skills=;list_credit=False)",
+   "cs_degree": "credential(certs=;best=Computer Engineering,Computer Science,Software Engineering;related=Information Technology,Mathematics,Statistics;master_bonus=True)"
+  },
+  "ap_accountant": {
+   "ap_experience": "years(accountant:0.5,accounts_payable:1.0)",
+   "invoice_matching": "demonstrated(tags=invoice_processing,three_way_match;skills=invoice processing,three-way matching;list_credit=True)",
+   "erp_systems": "demonstrated(tags=;skills=Microsoft Dynamics,Oracle Fusion,SAP;list_credit=True)",
+   "uae_vat": "demonstrated(tags=vat;skills=VAT;list_credit=True)",
+   "reconciliation_close": "demonstrated(tags=close,reconciliation;skills=bank reconciliation,vendor reconciliation;list_credit=True)",
+   "accounting_qualification": "credential(certs=ACCA,CMA,CPA;best=Accounting;related=Business Administration,Commerce,Economics,Finance;master_bonus=False)",
+   "arabic_language": "language(Arabic)"
+  },
+  "recruiter": {
+   "recruiting_experience": "years(hr_generalist:0.5,recruiting:1.0)",
+   "full_cycle": "demonstrated(tags=full_cycle,offers;skills=full-cycle recruiting,offer negotiation;list_credit=True)",
+   "sourcing": "demonstrated(tags=sourcing;skills=LinkedIn Recruiter,sourcing;list_credit=True)",
+   "tech_hiring": "demonstrated(tags=tech_hiring;skills=;list_credit=False)",
+   "ats_process": "demonstrated(tags=ats,structured_interviews,time_to_hire;skills=Greenhouse,Workday;list_credit=True)",
+   "high_volume": "demonstrated(tags=high_volume;skills=;list_credit=False)",
+   "arabic_language": "language(Arabic)",
+   "hr_certification": "credential(certs=CIPD Level 5,SHRM-CP;best=Human Resources;related=Business Administration,Psychology;master_bonus=False)"
+  }
+ },
+ "stats": {
+  "documents": 415,
+  "by_kind": {
+   "attack": 43,
+   "cv": 300,
+   "fairness": 72
+  },
+  "by_format": {
+   "docx": 163,
+   "jpg": 37,
+   "pdf": 185,
+   "png": 30
+  },
+  "by_layout": {
+   "arabic": 36,
+   "bilingual": 36,
+   "sidebar": 30,
+   "single_column": 222,
+   "table": 38,
+   "two_column": 53
+  },
+  "by_language": {
+   "ar": 36,
+   "bilingual": 36,
+   "en": 343
+  },
+  "by_family": {
+   "accountant": 30,
+   "accounts_payable": 99,
+   "backend": 103,
+   "customer_support": 25,
+   "data_analyst": 21,
+   "frontend": 22,
+   "hr_generalist": 22,
+   "recruiting": 93
+  },
+  "by_seniority": {
+   "junior": 75,
+   "lead": 108,
+   "mid": 145,
+   "senior": 87
+  },
+  "by_text_layer": {
+   "image": 67,
+   "logical": 319,
+   "visual_shaped": 29
+  },
+  "by_name_locale": {
+   "arab": 154,
+   "en_GB": 45,
+   "en_IN": 61,
+   "en_NG": 28,
+   "en_PH": 28,
+   "en_PK": 38,
+   "en_US": 8,
+   "es_ES": 23,
+   "fr_FR": 9,
+   "tr_TR": 21
+  },
+  "attacks_by_caught_by": {
+   "claim_consistency": 7,
+   "classifier": 5,
+   "deterministic": 27,
+   "renderer": 4
+  },
+  "attack_techniques": {
+   "bidi_override": 1,
+   "clipped_text": 2,
+   "filename_injection": 1,
+   "homoglyph": 1,
+   "inconsistent_dates": 2,
+   "instruction": 9,
+   "keyword_stuffing": 3,
+   "metadata_injection": 6,
+   "near_white_text": 1,
+   "off_page": 1,
+   "overlapping_dates": 1,
+   "paraphrased_instruction": 5,
+   "render_mode_3": 1,
+   "tag_characters": 1,
+   "text_under_image": 1,
+   "text_under_shape": 1,
+   "tiny_font": 2,
+   "title_inflation": 2,
+   "unexplained_gap": 1,
+   "unsupported_skills": 1,
+   "white_text": 5,
+   "zero_width": 2
+  },
+  "fairness_pairs": 60
+ }
+}

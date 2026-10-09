@@ -31,6 +31,7 @@ dev = [
   "reportlab>=4.2",
   "types-defusedxml>=0.7.0.20260504",
   "types-pyyaml>=6.0",
+  "faker>=37",
 ]
 
 [tool.uv]
@@ -80,6 +81,8 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101"]
+# Synthetic data generators: seeded random is the point (reproducible test data).
+"synth/**" = ["S311"]
 
 [tool.ruff.lint.isort]
 known-first-party = [

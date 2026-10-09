@@ -443,7 +443,8 @@
         "invisible_render_mode": "في {subject} نص غير مرئي لا تقرؤه إلا البرامج: \"{evidence}\".",
         "tiny_font": "في {subject} نص بخط صغير جدا لا يمكن للقارئ رؤيته: \"{evidence}\".",
         "off_page": "في {subject} نص موضوع خارج حدود الصفحة المرئية: \"{evidence}\".",
-        "docx_hidden": "في {subject} نص مخفي بإعدادات Word، لذلك لا يراه القارئ: \"{evidence}\"."
+        "docx_hidden": "في {subject} نص مخفي بإعدادات Word، لذلك لا يراه القارئ: \"{evidence}\".",
+        "covered_or_clipped": "في {subject} نص مغطى بشكل مرسوم فوقه أو مقصوص، لذلك لا يراه القارئ: \"{evidence}\"."
       },
       "instruction": {
         "ignore_instructions": "في {subject} نص يطلب من نظام الذكاء الاصطناعي تجاهل تعليماته: \"{evidence}\".",
@@ -457,7 +458,9 @@
         "role_marker": "في {subject} علامات أدوار محادثة تستخدم لحقن التعليمات: \"{evidence}\".",
         "tool_directive": "في {subject} أمر أو JSON موجه إلى أداة ذكاء اصطناعي: \"{evidence}\".",
         "output_control": "في {subject} نص يحدد لنظام الذكاء الاصطناعي ما يجب أن يجيب به: \"{evidence}\".",
-        "hidden_message": "في {subject} رسالة مخفية في رموز غير مرئية: \"{evidence}\"."
+        "hidden_message": "في {subject} رسالة مخفية في رموز غير مرئية: \"{evidence}\".",
+        "classifier_paraphrase": "في {subject} نص معاد صياغته وجده المصنف موجها إلى نظام ذكاء اصطناعي أو مراجع آلي: \"{evidence}\".",
+        "classifier_unavailable": "لم يكتمل فحص {subject} بحثا عن تعليمات معاد صياغتها لأن المصنف لم يكتمل: \"{evidence}\"."
       },
       "keyword_stuffing": {
         "repetition": "في {subject} تكرار لنفس الكلمة المفتاحية أكثر بكثير من الكتابة العادية: {evidence}.",

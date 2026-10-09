@@ -8,9 +8,10 @@ characters, look-alike letters and Arabic diacritics do not hide anything) and r
 the whole sentence around each match, which is what gets removed from model input.
 
 ``MetadataDetector`` runs the same patterns on PDF Info and XMP, DOCX core, app and
-custom properties, the file name and the email subject and headers. None of these
-reach a model; an instruction there is a sign of manipulation all the same. Long free
-text in file properties is reported as information.
+custom properties, DOCX review comments and footnotes, the file name and the email
+subject and headers. None of these reach a model; an instruction there is a sign of
+manipulation all the same. Long free text in file properties is reported as
+information.
 """
 
 from __future__ import annotations
@@ -181,6 +182,16 @@ class MetadataDetector:
                     evidence=evidence(value.strip()),
                     location=location,
                     details={"chars": len(value.strip())},
+                )
+        # Review comments and footnotes are not part of the page text, so the
+        # instruction detector never reads them: check them here, like properties.
+        for page in scan.doc.pages:
+            for block in page.blocks:
+                if block.region not in ("comment", "footnote") or not block.text.strip():
+                    continue
+                yield from _disguised(self.name, block.text, block.region)
+                yield from _instruction_findings(
+                    self.name, block.text, block.region, "metadata_instruction", Severity.MEDIUM
                 )
         ctx = scan.context
         if ctx.filename:

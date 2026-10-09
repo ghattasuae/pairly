@@ -6,7 +6,10 @@
   isolates are common in mixed Arabic and English text: low.
 * Zero-width characters (U+200B, U+2060, U+FEFF inside text, ...) inside or between
   Latin words split keywords and instructions so filters miss them: medium. ZWJ and
-  ZWNJ are only reported between Latin letters (Arabic and emoji use them).
+  ZWNJ are only reported next to Latin letters: one between two Latin letters, or a
+  run of two or more (mixed with ZWSP or word joiners) touching a Latin letter, as in
+  padded keywords ("Python<ZWJ><ZWJ> AWS"). A ZWNJ inside an Arabic or Persian word,
+  or a ZWJ in an emoji sequence, is ordinary text and is left alone.
 * Tag characters (U+E0000 to U+E007F) are invisible and can spell out a whole hidden
   ASCII message: high. The message is decoded and checked for instructions.
 * Long runs of variation selectors can smuggle bytes: high from 8 in a row.
@@ -105,6 +108,28 @@ class UnicodeDetector:
 
     def detect(self, scan: ScanInput) -> Iterable[Finding]:
         text = scan.text
+        # Runs of two or more mixed zero-width characters attached to a Latin word.
+        padded: list[tuple[int, int]] = []
+        for start, end in _runs(text, ZERO_WIDTH | JOINERS):
+            if end - start < 2:
+                continue
+            before = text[start - 1] if start > 0 else ""
+            after = text[end] if end < len(text) else ""
+            if _LATIN_ADJACENT.fullmatch(before) or _LATIN_ADJACENT.fullmatch(after):
+                padded.append((start, end))
+                yield self._finding(
+                    scan,
+                    "zero_width",
+                    Severity.MEDIUM,
+                    start,
+                    end,
+                    self._context(text, start, end),
+                    count=end - start,
+                )
+
+        def handled(start: int, end: int) -> bool:
+            return any(s <= start and end <= e for s, e in padded)
+
         for start, end in _runs(text, BIDI_OVERRIDES):
             yield self._finding(
                 scan, "bidi_override", Severity.HIGH, start, end, self._context(text, start, end)
@@ -114,6 +139,8 @@ class UnicodeDetector:
                 scan, "bidi_control", Severity.LOW, start, end, self._context(text, start, end)
             )
         for start, end in _runs(text, ZERO_WIDTH):
+            if handled(start, end):
+                continue
             if start == 0 and text[0] == "\ufeff" and end == 1:
                 continue  # a byte order mark at the very start is harmless
             inside = (
@@ -131,6 +158,8 @@ class UnicodeDetector:
                 self._context(text, start, end),
             )
         for start, end in _runs(text, JOINERS):
+            if handled(start, end):
+                continue
             if (
                 start > 0
                 and end < len(text)
