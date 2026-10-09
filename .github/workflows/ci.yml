@@ -84,7 +84,7 @@ jobs:
         run: uv run mypy packages/core packages/expense packages/hire
 
       - name: mypy (everything else)
-        run: uv run mypy packages/pay apps sdks/python scripts synth
+        run: uv run mypy packages/pay apps sdks/python scripts synth evals
 
       - name: Start Postgres (roles from infra/postgres/init)
         env:
@@ -291,10 +291,11 @@ jobs:
 
   # ------------------------------------------------------------------ evals
   evals:
-    # Placeholder. From WP2.10 this runs the PromptFoo suites and the Python eval
-    # runners, and a score below the thresholds in BRIEF.md 7.2 fails it. It is already
-    # part of `ci-ok`, so it becomes a merge gate with no settings change (BRIEF rule 6).
-    name: evals (merge gate from WP2.10)
+    # The eval runners (evals.guardrails_hire, evals.hire) and the gate (evals.gate):
+    # a measured metric outside evals/thresholds.yaml fails the build (BRIEF rule 6).
+    # No model API key in CI yet: model-dependent metrics are "pending_live_run",
+    # listed by the gate and not gating. Part of `ci-ok`, so it gates merges.
+    name: evals (merge gate)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -302,8 +303,27 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install
+        run: uv sync --all-packages
+
       - name: make evals
         run: make evals
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-results
+          path: |
+            evals/results/
+            evals/report.md
+          if-no-files-found: ignore
 
   # ------------------------------------------------------------------ docker
   docker:

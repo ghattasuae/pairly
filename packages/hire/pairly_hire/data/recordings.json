@@ -65,7 +65,7 @@
           "user_template": 1
         }
       },
-      "request_hash": "1490522f1a6f7f63322d00479df060e2ea95efd5f5372218a8fea16e888037b5",
+      "request_hash": "1078ad0c1cfb74037a5ba41aab4176a345393165de310c65254d24d3e755d8b6",
       "response": {
         "job_title": "Customer Support Lead",
         "knockout_questions": [
@@ -79,6 +79,7 @@
         ],
         "must_haves": [
           {
+            "anchors": [],
             "description": "Has led a customer support team.",
             "evidence": "Names a team they led, its size and what they improved.",
             "id": "team_leadership",
@@ -86,6 +87,7 @@
             "weight": 9
           },
           {
+            "anchors": [],
             "description": "Works fluently in English and Arabic.",
             "evidence": "Lists both languages and support work in both.",
             "id": "english_arabic",
@@ -93,6 +95,7 @@
             "weight": 7
           },
           {
+            "anchors": [],
             "description": "Has used a help desk tool every day.",
             "evidence": "Names Zendesk, Freshdesk or a similar tool.",
             "id": "help_desk",
@@ -102,6 +105,7 @@
         ],
         "nice_to_haves": [
           {
+            "anchors": [],
             "description": "Knows logistics or delivery operations.",
             "evidence": "Mentions work in logistics, delivery or transport.",
             "id": "logistics",
@@ -111,7 +115,7 @@
         ],
         "schema_version": 1
       },
-      "schema_hash": "8ed6868878845c6a6aee3a01cd41a7fce007430e5e85314ee8265ef1097ea9fa",
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
       "schema_name": "Rubric",
       "status": "ok",
       "stop_reason": "end_turn",
@@ -126,8 +130,8 @@
       "provider": "anthropic",
       "request": {
         "inputs": {
-          "description": "About the role\nYou will process supplier invoices for our offices in Abu Dhabi and make sure every payment is correct, approved and on time.\n\nWhat you will do\n- Check and code supplier invoices.\n- Match invoices to purchase orders and receipts.\n- Prepare payment runs for approval.\n- Answer supplier questions by email and phone.\n\nWhat you need\n- 3 years of experience in accounts payable.\n- Good knowledge of UAE VAT invoices.\n- Experience with an ERP system such as SAP or Oracle.\n\nNice to have\n- A recognised accounting qualification.\n- Spoken Arabic.",
-          "job_title": "Accounts Payable Specialist"
+          "description": "About the role\nYou will build and run the services that plan deliveries for our customers across the UAE. You join a team of six engineers who own their services from design to production.\n\nWhat you will do\n- Design, build and test Python services and APIs.\n- Run services on Kubernetes and keep them healthy in production.\n- Review code and help teammates grow.\n- Work with product and operations to plan changes.\n\nWhat you need\n- 5 years of experience building backend services in Python.\n- Experience running services on Kubernetes in production.\n- Good knowledge of PostgreSQL and SQL.\n- Clear written English for design documents and reviews.\n\nNice to have\n- Experience with event streaming such as Kafka.\n- Spoken or written Arabic.",
+          "job_title": "Senior Backend Engineer"
         },
         "settings": {
           "effort": null,
@@ -136,45 +140,73 @@
           "user_template": 1
         }
       },
-      "request_hash": "322e6c74a03ceecccdfa99db764442b8bbcb7d2220f3f2fdda487a7680346e5e",
+      "request_hash": "718b49d50737516aa4dd330407c2b1226a0bae235dcd59779cdabe3102958e27",
       "response": {
-        "job_title": "Accounts Payable Specialist",
-        "knockout_questions": [],
+        "job_title": "Senior Backend Engineer",
+        "knockout_questions": [
+          {
+            "expected_answer": "yes",
+            "id": "right_to_work_uae",
+            "question": "Do you have the right to work in the UAE, or will you need a visa from us?",
+            "question_ar": "هل لديك حق العمل في الإمارات، أم ستحتاج إلى تأشيرة منا؟",
+            "reason": "We can sponsor visas for this role, but a person needs to plan it."
+          }
+        ],
         "must_haves": [
           {
-            "description": "Has worked in accounts payable for about three years or more.",
-            "evidence": "Names AP roles with dates and the invoice work they did.",
-            "id": "ap_experience",
-            "name": "Accounts payable experience",
-            "weight": 8
+            "anchors": [],
+            "description": "Has built and maintained backend services in Python for several years.",
+            "evidence": "Names Python services or APIs they built, with their role and how long.",
+            "id": "python_backend",
+            "name": "Python backend services",
+            "weight": 9
           },
           {
-            "description": "Knows what a valid UAE VAT invoice needs.",
-            "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
-            "id": "uae_vat",
-            "name": "UAE VAT invoices",
+            "anchors": [],
+            "description": "Has run services on Kubernetes in production.",
+            "evidence": "Describes deploying or operating a production workload on Kubernetes.",
+            "id": "kubernetes_production",
+            "name": "Kubernetes in production",
             "weight": 7
           },
           {
-            "description": "Has used an ERP system for payables.",
-            "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
-            "id": "erp",
-            "name": "ERP system",
-            "weight": 5
+            "anchors": [],
+            "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
+            "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
+            "id": "postgresql",
+            "name": "PostgreSQL and SQL",
+            "weight": 6
+          },
+          {
+            "anchors": [],
+            "description": "Writes clear design documents and code reviews in English.",
+            "evidence": "The CV and answers are clear; mentions design docs or reviews.",
+            "id": "written_english",
+            "name": "Clear written English",
+            "weight": 4
           }
         ],
         "nice_to_haves": [
           {
-            "description": "Holds or studies for a recognised accounting qualification.",
-            "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
-            "id": "accounting_qualification",
-            "name": "Accounting qualification",
+            "anchors": [],
+            "description": "Has used event streaming such as Kafka.",
+            "evidence": "Mentions Kafka or a similar system in a project.",
+            "id": "event_streaming",
+            "name": "Event streaming",
             "weight": 3
+          },
+          {
+            "anchors": [],
+            "description": "Can work in Arabic.",
+            "evidence": "Lists Arabic as a language they speak or write.",
+            "id": "arabic",
+            "name": "Arabic",
+            "weight": 2
           }
         ],
         "schema_version": 1
       },
-      "schema_hash": "8ed6868878845c6a6aee3a01cd41a7fce007430e5e85314ee8265ef1097ea9fa",
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
       "schema_name": "Rubric",
       "status": "ok",
       "stop_reason": "end_turn",
@@ -283,8 +315,8 @@
       "provider": "anthropic",
       "request": {
         "inputs": {
-          "description": "About the role\nYou will build and run the services that plan deliveries for our customers across the UAE. You join a team of six engineers who own their services from design to production.\n\nWhat you will do\n- Design, build and test Python services and APIs.\n- Run services on Kubernetes and keep them healthy in production.\n- Review code and help teammates grow.\n- Work with product and operations to plan changes.\n\nWhat you need\n- 5 years of experience building backend services in Python.\n- Experience running services on Kubernetes in production.\n- Good knowledge of PostgreSQL and SQL.\n- Clear written English for design documents and reviews.\n\nNice to have\n- Experience with event streaming such as Kafka.\n- Spoken or written Arabic.",
-          "job_title": "Senior Backend Engineer"
+          "description": "About the role\nYou will process supplier invoices for our offices in Abu Dhabi and make sure every payment is correct, approved and on time.\n\nWhat you will do\n- Check and code supplier invoices.\n- Match invoices to purchase orders and receipts.\n- Prepare payment runs for approval.\n- Answer supplier questions by email and phone.\n\nWhat you need\n- 3 years of experience in accounts payable.\n- Good knowledge of UAE VAT invoices.\n- Experience with an ERP system such as SAP or Oracle.\n\nNice to have\n- A recognised accounting qualification.\n- Spoken Arabic.",
+          "job_title": "Accounts Payable Specialist"
         },
         "settings": {
           "effort": null,
@@ -293,67 +325,49 @@
           "user_template": 1
         }
       },
-      "request_hash": "e755072fcefb54cef7e7232aaf314a8f0df754a46f3c713d7ac296ec0d38dc4b",
+      "request_hash": "be0517799284e404408645abd8d4d1e5547101982350a850a15a3a3231c3f464",
       "response": {
-        "job_title": "Senior Backend Engineer",
-        "knockout_questions": [
-          {
-            "expected_answer": "yes",
-            "id": "right_to_work_uae",
-            "question": "Do you have the right to work in the UAE, or will you need a visa from us?",
-            "question_ar": "هل لديك حق العمل في الإمارات، أم ستحتاج إلى تأشيرة منا؟",
-            "reason": "We can sponsor visas for this role, but a person needs to plan it."
-          }
-        ],
+        "job_title": "Accounts Payable Specialist",
+        "knockout_questions": [],
         "must_haves": [
           {
-            "description": "Has built and maintained backend services in Python for several years.",
-            "evidence": "Names Python services or APIs they built, with their role and how long.",
-            "id": "python_backend",
-            "name": "Python backend services",
-            "weight": 9
+            "anchors": [],
+            "description": "Has worked in accounts payable for about three years or more.",
+            "evidence": "Names AP roles with dates and the invoice work they did.",
+            "id": "ap_experience",
+            "name": "Accounts payable experience",
+            "weight": 8
           },
           {
-            "description": "Has run services on Kubernetes in production.",
-            "evidence": "Describes deploying or operating a production workload on Kubernetes.",
-            "id": "kubernetes_production",
-            "name": "Kubernetes in production",
+            "anchors": [],
+            "description": "Knows what a valid UAE VAT invoice needs.",
+            "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
+            "id": "uae_vat",
+            "name": "UAE VAT invoices",
             "weight": 7
           },
           {
-            "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
-            "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
-            "id": "postgresql",
-            "name": "PostgreSQL and SQL",
-            "weight": 6
-          },
-          {
-            "description": "Writes clear design documents and code reviews in English.",
-            "evidence": "The CV and answers are clear; mentions design docs or reviews.",
-            "id": "written_english",
-            "name": "Clear written English",
-            "weight": 4
+            "anchors": [],
+            "description": "Has used an ERP system for payables.",
+            "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
+            "id": "erp",
+            "name": "ERP system",
+            "weight": 5
           }
         ],
         "nice_to_haves": [
           {
-            "description": "Has used event streaming such as Kafka.",
-            "evidence": "Mentions Kafka or a similar system in a project.",
-            "id": "event_streaming",
-            "name": "Event streaming",
+            "anchors": [],
+            "description": "Holds or studies for a recognised accounting qualification.",
+            "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
+            "id": "accounting_qualification",
+            "name": "Accounting qualification",
             "weight": 3
-          },
-          {
-            "description": "Can work in Arabic.",
-            "evidence": "Lists Arabic as a language they speak or write.",
-            "id": "arabic",
-            "name": "Arabic",
-            "weight": 2
           }
         ],
         "schema_version": 1
       },
-      "schema_hash": "8ed6868878845c6a6aee3a01cd41a7fce007430e5e85314ee8265ef1097ea9fa",
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
       "schema_name": "Rubric",
       "status": "ok",
       "stop_reason": "end_turn",

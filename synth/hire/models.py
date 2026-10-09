@@ -14,7 +14,7 @@ meaning of each score 0 to 4 for the rule-based labeler (``synth.hire.labels``) 
 the Arabic criterion names. Rules the labels follow:
 
 * scores are integers 0 to 4 on every criterion; no evidence means no credit;
-* the overall score is computed deterministically (``synth.hire.labels.overall_score``,
+* the overall score is computed deterministically (``pairly_hire.scoring.aggregate.overall_score``,
   the weighted mean as a percentage of the scale maximum), never by a model;
 * a knockout answer that differs from the rubric's ``expected_answer`` never rejects:
   it routes the application to a person (``human_review``).
@@ -27,12 +27,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from pairly_hire.rubric import Rubric
+from pairly_hire.rubric import SCALE_MAX, Rubric
 
 _ID = r"^[a-z][a-z0-9_]{1,47}$"
 _MONTH = re.compile(r"^\d{4}(-(0[1-9]|1[0-2]))?$")
-
-SCALE_MAX = 4
 
 
 class _Model(BaseModel):

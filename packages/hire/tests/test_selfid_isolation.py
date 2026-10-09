@@ -4,9 +4,10 @@
 
 Three independent checks:
 
-1. Imports: no module of ``pairly_hire.scoring`` imports, directly or through other
-   Hire modules, ``pairly_hire.selfid`` or the modules that know self-ID categories
-   (the import-linter contract in the root ``pyproject.toml`` says the same).
+1. Imports: no module of ``pairly_hire.scoring`` or ``pairly_hire.screening`` imports,
+   directly or through other Hire modules, ``pairly_hire.selfid`` or the modules that
+   know self-ID categories (the import-linter contract in the root ``pyproject.toml``
+   says the same).
 2. Schema: ``ScoringInput`` has no field named after a self-ID category, and the
    ``hire_applications`` table has no such column.
 3. Data flow: the stored application answers (``CheckedAnswers.stored``) only ever hold
@@ -65,12 +66,18 @@ def _closure(start: list[str]) -> set[str]:
 
 
 def test_scoring_package_cannot_reach_self_identification() -> None:
-    root = Path(__file__).resolve().parents[1] / "pairly_hire" / "scoring"
-    modules = [f"pairly_hire.scoring.{p.stem}" for p in root.glob("*.py") if p.stem != "__init__"]
-    reachable = _closure(["pairly_hire.scoring", *modules])
+    package = Path(__file__).resolve().parents[1] / "pairly_hire"
+    modules = [
+        f"pairly_hire.{pkg}.{p.stem}"
+        for pkg in ("scoring", "screening")
+        for p in (package / pkg).glob("*.py")
+        if p.stem != "__init__"
+    ]
+    reachable = _closure(["pairly_hire.scoring", "pairly_hire.screening", *modules])
     assert "pairly_hire.scoring.inputs" in reachable
+    assert "pairly_hire.screening.graph" in reachable
     leaked = {m for m in reachable if m.startswith(FORBIDDEN)}
-    assert leaked == set(), f"scoring reaches {sorted(leaked)}"
+    assert leaked == set(), f"scoring or screening reaches {sorted(leaked)}"
 
 
 def test_scoring_input_has_no_self_identification_field() -> None:

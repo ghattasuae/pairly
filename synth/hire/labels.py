@@ -32,20 +32,22 @@ The rules (``RULES`` maps each criterion of the three sample jobs to one):
   not listed 0. Evidence: the languages line.
 
 The overall score is the weighted mean of the criterion scores as a percentage of the
-scale maximum (``overall_score``). Knockout answers are synthetic application answers
+scale maximum (``overall_score``, imported from the plugin's
+``pairly_hire.scoring.aggregate`` so the labels and the product share one formula).
+Knockout answers are synthetic application answers
 ("yes" or "no", as the apply form takes them); one that differs from the rubric's
 ``expected_answer`` routes the CV to a person (``human_review``), never to a rejection.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final, Literal
 
-from pairly_hire.rubric import Rubric
+from pairly_hire.scoring.aggregate import overall_score
 from synth.hire.facts import CvFacts
-from synth.hire.models import SCALE_MAX, CriterionLabel, Job, JobLabels
+from synth.hire.models import CriterionLabel, Job, JobLabels
 from synth.hire.text import CvText
 
 MAX_EVIDENCE = 3
@@ -249,14 +251,6 @@ KNOCKOUT_ANSWERS: Final[dict[str, KnockoutAnswer]] = {
     ),
     "travel_ksa": lambda f: f.travel_ksa,
 }
-
-
-def overall_score(rubric: Rubric, scores: Mapping[str, int]) -> float:
-    """Deterministic overall score, 0 to 100. A missing criterion counts as 0."""
-    criteria = rubric.criteria
-    total = sum(c.weight for c in criteria)
-    points = sum(c.weight * scores.get(c.id, 0) for c in criteria)
-    return round(100 * points / (total * SCALE_MAX), 2)
 
 
 def label_job(job: Job, facts: CvFacts, text: CvText) -> JobLabels:

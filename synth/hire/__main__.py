@@ -7,11 +7,12 @@
         <dir>/index.json: every document with its file, ground truth and labels.
     python -m synth.hire manifests [--count N] [--seed S]
         Rewrite the committed ground-truth manifests (synth/hire/manifests/) and the
-        recorded classifier responses (synth/hire/recordings/).
+        scripted model responses (synth/hire/recordings/: the injection classifier, and
+        the screening prompts for the demo applications).
     python -m synth.hire --check [--count N] [--seed S]
         Rebuild the manifests in memory and fail when a committed manifest differs
-        from what the generators produce now. Only the eight recorded documents are
-        rendered and parsed (for the recordings bundle).
+        from what the generators produce now. Only the recorded documents are rendered
+        and parsed (for the recordings bundles).
 
 The committed manifests are for the defaults (300 regular CVs, seed 2026).
 """
@@ -27,6 +28,7 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Final
 
+from synth.hire import screening
 from synth.hire.dataset import DEFAULT_COUNT, DEFAULT_SEED, DocSpec, build
 from synth.hire.labels import rule_table
 from synth.hire.recordings import BUNDLE_PATH, build_bundle
@@ -113,6 +115,7 @@ def manifests(count: int, seed: int) -> dict[Path, str]:
     files[MANIFEST_DIR / "summary.json"] = json.dumps(summary, ensure_ascii=False, indent=1) + "\n"
     if count == DEFAULT_COUNT and seed == DEFAULT_SEED:
         files[BUNDLE_PATH] = build_bundle(specs)
+        files[screening.BUNDLE_PATH] = screening.build_bundle(specs)
     return files
 
 

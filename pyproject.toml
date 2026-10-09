@@ -123,7 +123,7 @@ extra_checks = true
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["packages", "apps", "sdks/python", "scripts/tests"]
+testpaths = ["packages", "apps", "sdks/python", "scripts/tests", "evals/tests"]
 # The repository root, so tests can import the synthetic data generators (synth/).
 pythonpath = ["."]
 addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra"]
@@ -173,10 +173,10 @@ source_modules = ["pairly_api", "pairly_worker", "pairly_mcp"]
 forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
 
 # Voluntary self-identification answers are for bias reporting only (brief 3.2.1). The
-# code that scores applications may never import them, nor the form builder that knows
-# their categories (packages/hire/tests/test_selfid_isolation.py checks it too).
+# code that screens and scores applications may never import them, nor the form builder
+# that knows their categories (packages/hire/tests/test_selfid_isolation.py checks it too).
 [[tool.importlinter.contracts]]
 name = "Hire scoring never sees self-identification"
 type = "forbidden"
-source_modules = ["pairly_hire.scoring"]
+source_modules = ["pairly_hire.scoring", "pairly_hire.screening"]
 forbidden_modules = ["pairly_hire.selfid", "pairly_hire.forms", "pairly_hire.applying", "pairly_hire.api"]
