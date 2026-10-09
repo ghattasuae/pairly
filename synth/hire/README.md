@@ -25,7 +25,7 @@ only the generators and the ground truth below.
 
 | File | Content |
 | --- | --- |
-| `jobs/*.yaml` | 3 sample jobs (backend engineer, AP accountant, recruiter) with locked-rubric YAML: criteria, weights, score anchors 0 to 4, evidence descriptions, knockout questions |
+| `jobs/*.yaml` | 3 sample jobs (backend engineer, AP accountant, recruiter) each with a Pairly Hire rubric (`pairly_hire.rubric`: must-haves, nice-to-haves, weights 1 to 10, evidence descriptions, yes or no knockout questions) and a `label_guide` (score anchors 0 to 4 and Arabic criterion names for the synthetic labeler) |
 | `manifests/cvs.jsonl` | one record per regular CV: format, layout, language, ground truth, persona, labels |
 | `manifests/attacks.jsonl` | attack CVs: the same, plus what each attack contains and what should flag it |
 | `manifests/fairness.jsonl` | fairness CVs (bases and variants) |
@@ -33,9 +33,11 @@ only the generators and the ground truth below.
 | `manifests/summary.json` | counts, Faker version, the labeling rule of every criterion |
 | `recordings/guardrails_document_classify.json` | scripted classifier responses for offline tests |
 
-The rubric models are in `models.py` (`Rubric`, `Criterion`, `KnockoutQuestion`). The
-hire plugin adopts or mirrors them (WP2.2). A knockout never rejects: a failed or
-missing answer routes the CV to a person (`on_fail: human_review`).
+The rubric model is the plugin's own (`pairly_hire.rubric.Rubric`): loading a job
+validates its rubric with it, so the sample rubrics are exactly what a recruiter could
+lock and cannot drift from the product. `synth` imports `pairly_hire`, never the other
+way round. A knockout never rejects: an answer that differs from the rubric's
+`expected_answer` routes the CV to a person (`knockout_route: human_review`).
 
 ## Documents
 
@@ -102,8 +104,9 @@ lines of the CV; empty for 0). The rules:
   diploma; else 0.
 * `language`: Native or Fluent 4, Professional 3, Conversational 2, Basic 1, none 0.
 
-The overall score is the rubric's weighted mean as a percentage (`Rubric.overall_score`),
-computed in code. Knockout answers are synthetic application answers.
+The overall score is the weighted mean as a percentage of the scale maximum
+(`labels.overall_score`), computed in code. Knockout answers are synthetic application
+answers, "yes" or "no" as the apply form takes them.
 
 Attack CVs are labelled from what they visibly claim: hidden text adds nothing,
 inflated claims are read literally. That is what a naive scorer would give, which the

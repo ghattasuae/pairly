@@ -1,121 +1,60 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Pydantic models for the synthetic Hire data: jobs and rubrics, CV ground truth,
-rubric labels and the manifest records.
+"""Pydantic models for the synthetic Hire data: jobs, CV ground truth, rubric labels
+and the manifest records.
 
-The rubric models are the YAML shape a locked rubric uses (``synth/hire/jobs/*.yaml``).
-The hire plugin adopts or mirrors them in WP2.2. Rules the shape enforces:
+A job's rubric is the canonical Pairly Hire rubric (``pairly_hire.rubric.Rubric``): the
+sample job YAMLs (``synth/hire/jobs/*.yaml``) hold exactly what a recruiter would lock,
+and loading them validates it with the plugin's own model, so the two cannot drift.
+synth depends on the plugin, never the other way round (``pairly_hire`` never imports
+``synth``; ``packages/hire/tests/test_synth_hire_data.py`` checks it).
 
-* scores are integers 0 to 4 on every criterion, each level has an anchor sentence;
-* weights are positive; the overall score is computed deterministically
-  (``Rubric.overall``), never by a model;
-* every criterion says what counts as evidence; no evidence means no credit;
-* knockout questions never reject: a failed knockout routes to a person
-  (``on_fail`` is always ``human_review``).
+What only the synthetic data needs sits beside the rubric, in ``Job.label_guide``: the
+meaning of each score 0 to 4 for the rule-based labeler (``synth.hire.labels``) and
+the Arabic criterion names. Rules the labels follow:
+
+* scores are integers 0 to 4 on every criterion; no evidence means no credit;
+* the overall score is computed deterministically (``synth.hire.labels.overall_score``,
+  the weighted mean as a percentage of the scale maximum), never by a model;
+* a knockout answer that differs from the rubric's ``expected_answer`` never rejects:
+  it routes the application to a person (``human_review``).
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from pairly_hire.rubric import Rubric
+
 _ID = r"^[a-z][a-z0-9_]{1,47}$"
 _MONTH = re.compile(r"^\d{4}(-(0[1-9]|1[0-2]))?$")
+
+SCALE_MAX = 4
 
 
 class _Model(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-# ------------------------------------------------------------------ jobs and rubrics
+# ------------------------------------------------------------------ jobs
 
 
-class ScoreAnchor(_Model):
-    score: int = Field(ge=0, le=4)
-    description: str = Field(min_length=3, max_length=300)
+class CriterionGuide(_Model):
+    """Synthetic-data notes on one rubric criterion: its Arabic name and the meaning of
+    each score from 0 to ``SCALE_MAX`` (index = score)."""
 
-
-class Criterion(_Model):
-    id: str = Field(pattern=_ID)
-    name: str = Field(min_length=2, max_length=120)
     name_ar: str | None = Field(default=None, max_length=160)
-    kind: Literal["must_have", "nice_to_have"]
-    weight: float = Field(gt=0, le=100)
-    description: str = Field(min_length=3, max_length=600)
-    # What counts as evidence in a CV (quoted text with its location).
-    evidence: str = Field(min_length=3, max_length=600)
-    anchors: tuple[ScoreAnchor, ...]
+    anchors: tuple[str, ...]
 
     @field_validator("anchors")
     @classmethod
-    def _five_levels(cls, value: tuple[ScoreAnchor, ...]) -> tuple[ScoreAnchor, ...]:
-        if [a.score for a in value] != [0, 1, 2, 3, 4]:
+    def _five_levels(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(value) != SCALE_MAX + 1 or not all(3 <= len(a) <= 300 for a in value):
             raise ValueError("anchors must describe scores 0, 1, 2, 3 and 4 in order")
         return value
-
-
-class KnockoutQuestion(_Model):
-    id: str = Field(pattern=_ID)
-    question: str = Field(min_length=3, max_length=300)
-    question_ar: str | None = Field(default=None, max_length=400)
-    answer_type: Literal["yes_no", "number"]
-    # yes_no: the answer that passes. number: the inclusive bounds that pass.
-    pass_if_yes: bool | None = None
-    min_value: float | None = None
-    max_value: float | None = None
-    # A failed knockout is never a rejection: it goes to a person with a suggestion.
-    on_fail: Literal["human_review"] = "human_review"
-
-    @model_validator(mode="after")
-    def _rule(self) -> KnockoutQuestion:
-        if self.answer_type == "yes_no" and self.pass_if_yes is None:
-            raise ValueError("a yes_no knockout needs pass_if_yes")
-        if self.answer_type == "number" and self.min_value is None and self.max_value is None:
-            raise ValueError("a number knockout needs min_value or max_value")
-        return self
-
-    def passes(self, answer: bool | float | int | None) -> bool | None:
-        """True or False, or None when there is no answer (a person decides)."""
-        if answer is None:
-            return None
-        if self.answer_type == "yes_no":
-            return bool(answer) is self.pass_if_yes
-        value = float(answer)
-        if self.min_value is not None and value < self.min_value:
-            return False
-        return not (self.max_value is not None and value > self.max_value)
-
-
-class Rubric(_Model):
-    schema_version: Literal[1] = 1
-    version: int = Field(ge=1)
-    scale_min: Literal[0] = 0
-    scale_max: Literal[4] = 4
-    # Overall = weighted mean of criterion scores, as a percentage of the scale maximum.
-    overall: Literal["weighted_mean_percent"] = "weighted_mean_percent"
-    criteria: tuple[Criterion, ...] = Field(min_length=1, max_length=20)
-    knockouts: tuple[KnockoutQuestion, ...] = Field(default=(), max_length=10)
-
-    @model_validator(mode="after")
-    def _ids(self) -> Rubric:
-        ids = [c.id for c in self.criteria]
-        if len(set(ids)) != len(ids):
-            raise ValueError("criterion ids must be unique")
-        kids = [k.id for k in self.knockouts]
-        if len(set(kids)) != len(kids):
-            raise ValueError("knockout ids must be unique")
-        if not any(c.kind == "must_have" for c in self.criteria):
-            raise ValueError("a rubric needs at least one must_have criterion")
-        return self
-
-    def overall_score(self, scores: Mapping[str, int]) -> float:
-        """Deterministic overall score, 0 to 100. A missing criterion counts as 0."""
-        total = sum(c.weight for c in self.criteria)
-        points = sum(c.weight * scores.get(c.id, 0) for c in self.criteria)
-        return round(100 * points / (total * self.scale_max), 2)
 
 
 class Job(_Model):
@@ -127,7 +66,18 @@ class Job(_Model):
     location: str
     employment_type: Literal["full_time", "part_time", "contract"]
     summary: str
+    # The locked policy version this rubric stands for (labels record it).
+    rubric_version: int = Field(default=1, ge=1)
     rubric: Rubric
+    label_guide: dict[str, CriterionGuide]
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Job:
+        if self.rubric.job_title != self.title:
+            raise ValueError("rubric.job_title must equal the job title")
+        if set(self.label_guide) != {c.id for c in self.rubric.criteria}:
+            raise ValueError("label_guide must cover exactly the rubric criteria")
+        return self
 
 
 # ------------------------------------------------------------------ CV ground truth
@@ -224,8 +174,9 @@ class JobLabels(_Model):
     rubric_version: int
     criteria: tuple[CriterionLabel, ...]
     overall: float
-    knockout_answers: dict[str, bool | int | None]
-    # "pass" or "human_review" (a failed or missing knockout); never "reject".
+    # Synthetic application answers, as an applicant gives them ("yes" or "no").
+    knockout_answers: dict[str, Literal["yes", "no"]]
+    # "pass" or "human_review" (an answer that differs from the rubric); never "reject".
     knockout_route: Literal["pass", "human_review"]
 
 

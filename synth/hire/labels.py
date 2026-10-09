@@ -31,19 +31,21 @@ The rules (``RULES`` maps each criterion of the three sample jobs to one):
 * ``language(name)``: Native or Fluent 4, Professional 3, Conversational 2, Basic 1,
   not listed 0. Evidence: the languages line.
 
-The overall score is the rubric's weighted mean (``Rubric.overall_score``). Knockout
-answers are synthetic application answers; a failed or missing one routes the CV to a
-person (``human_review``), never to a rejection.
+The overall score is the weighted mean of the criterion scores as a percentage of the
+scale maximum (``overall_score``). Knockout answers are synthetic application answers
+("yes" or "no", as the apply form takes them); one that differs from the rubric's
+``expected_answer`` routes the CV to a person (``human_review``), never to a rejection.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, Literal
 
+from pairly_hire.rubric import Rubric
 from synth.hire.facts import CvFacts
-from synth.hire.models import CriterionLabel, Job, JobLabels
+from synth.hire.models import SCALE_MAX, CriterionLabel, Job, JobLabels
 from synth.hire.text import CvText
 
 MAX_EVIDENCE = 3
@@ -238,15 +240,23 @@ RULES: Final[dict[str, dict[str, Rule]]] = {
 
 ACCOUNTING_FIELDS: Final = frozenset({"Accounting", "Finance", "Commerce"})
 
-KnockoutAnswer = Callable[[CvFacts], bool | int | None]
+KnockoutAnswer = Callable[[CvFacts], bool]
 KNOCKOUT_ANSWERS: Final[dict[str, KnockoutAnswer]] = {
     "right_to_work_uae": lambda f: f.right_to_work_uae,
-    "notice_period_days": lambda f: f.notice_period_days,
+    "start_within_60_days": lambda f: f.notice_period_days <= 60,
     "accounting_degree": lambda f: any(
         e.field in ACCOUNTING_FIELDS and e.degree != "diploma" for e in f.education
     ),
     "travel_ksa": lambda f: f.travel_ksa,
 }
+
+
+def overall_score(rubric: Rubric, scores: Mapping[str, int]) -> float:
+    """Deterministic overall score, 0 to 100. A missing criterion counts as 0."""
+    criteria = rubric.criteria
+    total = sum(c.weight for c in criteria)
+    points = sum(c.weight * scores.get(c.id, 0) for c in criteria)
+    return round(100 * points / (total * SCALE_MAX), 2)
 
 
 def label_job(job: Job, facts: CvFacts, text: CvText) -> JobLabels:
@@ -262,13 +272,16 @@ def label_job(job: Job, facts: CvFacts, text: CvText) -> JobLabels:
                 criterion_id=criterion.id, score=score, evidence=evidence, rule=rule.kind
             )
         )
-    answers = {k.id: KNOCKOUT_ANSWERS[k.id](facts) for k in job.rubric.knockouts}
-    passed = all(k.passes(answers[k.id]) is True for k in job.rubric.knockouts)
+    knockouts = job.rubric.knockout_questions
+    answers: dict[str, Literal["yes", "no"]] = {
+        k.id: "yes" if KNOCKOUT_ANSWERS[k.id](facts) else "no" for k in knockouts
+    }
+    passed = all(answers[k.id] == k.expected_answer for k in knockouts)
     return JobLabels(
         job_id=job.id,
-        rubric_version=job.rubric.version,
+        rubric_version=job.rubric_version,
         criteria=tuple(labels),
-        overall=job.rubric.overall_score({lab.criterion_id: lab.score for lab in labels}),
+        overall=overall_score(job.rubric, {lab.criterion_id: lab.score for lab in labels}),
         knockout_answers=answers,
         knockout_route="pass" if passed else "human_review",
     )

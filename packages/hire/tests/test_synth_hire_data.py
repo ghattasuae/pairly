@@ -6,23 +6,27 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
 import pytest
+import yaml
 from pydantic import ValidationError
 
+import pairly_hire
 from pairly_core.documents.docx import DocxParser
 from pairly_core.documents.ocr import ImageParser
 from pairly_core.documents.pdf import PdfParser
 from pairly_core.documents.registry import ParseOptions
 from pairly_core.guardrails import quote_exists
+from pairly_hire.rubric import Rubric, rubric_validator
 from synth.hire.__main__ import main as cli
 from synth.hire.dataset import DocSpec, build
 from synth.hire.facts import make_facts, transliterate
-from synth.hire.jobs import load_jobs
-from synth.hire.labels import label_all, rule_table
-from synth.hire.models import Criterion, KnockoutQuestion, Rubric
+from synth.hire.jobs import JOBS_DIR, load_jobs
+from synth.hire.labels import KNOCKOUT_ANSWERS, label_all, overall_score, rule_table
+from synth.hire.models import Job
 from synth.hire.text import build_text
 
 OPTIONS = ParseOptions(ocr_languages="eng")
@@ -36,44 +40,44 @@ def specs() -> list[DocSpec]:
 def test_jobs_and_rubrics_load() -> None:
     jobs = load_jobs()
     assert [j.id for j in jobs] == ["backend_engineer", "ap_accountant", "recruiter"]
+    lock = rubric_validator()
     for job in jobs:
         rubric = job.rubric
-        assert any(c.kind == "must_have" for c in rubric.criteria)
-        assert rubric.overall_score({c.id: 4 for c in rubric.criteria}) == 100.0
-        assert rubric.overall_score({}) == 0.0
-        assert all(k.on_fail == "human_review" for k in rubric.knockouts)
+        # The sample rubrics are canonical Hire rubrics: what a recruiter would lock.
+        assert isinstance(rubric, Rubric)
+        assert lock(rubric.to_yaml()) == rubric
+        assert rubric.must_haves
+        assert overall_score(rubric, {c.id: 4 for c in rubric.criteria}) == 100.0
+        assert overall_score(rubric, {}) == 0.0
         assert set(rule_table()[job.id]) == {c.id for c in rubric.criteria}
+        assert set(KNOCKOUT_ANSWERS) >= {k.id for k in rubric.knockout_questions}
 
 
-def test_rubric_rules_are_enforced() -> None:
-    anchors = [{"score": i, "description": f"Level {i}."} for i in range(5)]
-    criterion = {
-        "id": "skill",
-        "name": "Skill",
-        "kind": "must_have",
-        "weight": 10,
-        "description": "Has it.",
-        "evidence": "Lines that show it.",
-        "anchors": anchors,
-    }
-    Rubric(version=1, criteria=(Criterion.model_validate(criterion),))
+def test_job_rules_are_enforced() -> None:
+    data = yaml.safe_load((JOBS_DIR / "backend_engineer.yaml").read_text(encoding="utf-8"))
+    Job.model_validate(data)
+    guide = data["label_guide"]
+    first = next(iter(guide))
     with pytest.raises(ValidationError, match="anchors"):
-        Criterion.model_validate({**criterion, "anchors": anchors[::-1]})
-    with pytest.raises(ValidationError, match="must_have"):
-        Rubric(
-            version=1, criteria=(Criterion.model_validate({**criterion, "kind": "nice_to_have"}),)
-        )
-    c = Criterion.model_validate(criterion)
-    with pytest.raises(ValidationError, match="unique"):
-        Rubric(version=1, criteria=(c, c))
-    with pytest.raises(ValidationError, match="pass_if_yes"):
-        KnockoutQuestion(id="visa", question="Visa?", answer_type="yes_no")
-    with pytest.raises(ValidationError, match="min_value or max_value"):
-        KnockoutQuestion(id="notice", question="Notice?", answer_type="number")
-    notice = KnockoutQuestion(id="notice", question="Notice?", answer_type="number", max_value=60)
-    assert (notice.passes(30), notice.passes(90), notice.passes(None)) == (True, False, None)
-    visa = KnockoutQuestion(id="visa", question="Visa?", answer_type="yes_no", pass_if_yes=True)
-    assert (visa.passes(True), visa.passes(False)) == (True, False)
+        Job.model_validate({**data, "label_guide": {**guide, first: {"anchors": ["Only."]}}})
+    with pytest.raises(ValidationError, match="label_guide"):
+        Job.model_validate({**data, "label_guide": {k: v for k, v in guide.items() if k != first}})
+    with pytest.raises(ValidationError, match="job_title"):
+        Job.model_validate({**data, "rubric": {**data["rubric"], "job_title": "Other"}})
+    # The rubric rules are the plugin's own: weights 1 to 10, yes or no knockouts.
+    heavy = [{**c, "weight": 30} for c in data["rubric"]["must_haves"]]
+    with pytest.raises(ValidationError, match="weight"):
+        Job.model_validate({**data, "rubric": {**data["rubric"], "must_haves": heavy}})
+
+
+def test_hire_plugin_never_imports_synth() -> None:
+    plugin = Path(pairly_hire.__file__).resolve().parent
+    offenders = [
+        str(path.relative_to(plugin))
+        for path in plugin.rglob("*.py")
+        if re.search(r"^\s*(from|import)\s+synth\b", path.read_text(encoding="utf-8"), re.M)
+    ]
+    assert offenders == []
 
 
 def test_build_is_deterministic(specs: list[DocSpec]) -> None:

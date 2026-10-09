@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-# Synthetic sample job and rubric (WP2.1). Scores are 0 to 4 per criterion; the overall
-# score is the weighted mean as a percentage, computed in code, never by a model.
+# Synthetic sample job (WP2.1). `rubric` is a Pairly Hire rubric (pairly_hire.rubric), the
+# same YAML a recruiter locks. `label_guide` is synthetic-data only: what each score 0 to
+# 4 means for the rule-based labeler (synth/hire/labels.py). The overall score is the
+# weighted mean as a percentage, computed in code, never by a model.
 id: recruiter
 title: Talent Acquisition Partner
 title_ar: شريك استقطاب المواهب
@@ -9,125 +11,127 @@ family: recruiting
 seniority: mid
 location: Dubai, United Arab Emirates
 employment_type: full_time
-summary: >-
-  Hire engineers and analysts for teams in the UAE and Saudi Arabia, from intake to
-  offer, with structured interviews and a clean ATS.
+summary: Hire engineers and analysts for teams in the UAE and Saudi Arabia, from intake to offer,
+  with structured interviews and a clean ATS.
+rubric_version: 1
 rubric:
   schema_version: 1
-  version: 1
-  criteria:
-    - id: recruiting_experience
-      name: Recruiting experience
-      name_ar: الخبرة في التوظيف
-      kind: must_have
-      weight: 30
-      description: Years in recruiting; HR generalist work counts at half weight.
-      evidence: Job entries with a recruiting or HR title and dates.
-      anchors:
-        - {score: 0, description: No recruiting or HR role.}
-        - {score: 1, description: Less than 1 year.}
-        - {score: 2, description: 1 to 3 years.}
-        - {score: 3, description: 3 to 5 years.}
-        - {score: 4, description: 5 years or more.}
-    - id: full_cycle
-      name: Full-cycle recruiting and offers
-      name_ar: إدارة التوظيف كاملا والعروض
-      kind: must_have
-      weight: 20
-      description: Owns roles from intake to signed offer.
-      evidence: Achievement lines about full-cycle recruiting or offer negotiation.
-      anchors:
-        - {score: 0, description: No mention.}
-        - {score: 1, description: Listed as a skill only.}
-        - {score: 2, description: One achievement.}
-        - {score: 3, description: Two achievements.}
-        - {score: 4, description: Three or more achievements.}
-    - id: sourcing
-      name: Sourcing
-      name_ar: البحث عن المرشحين
-      kind: must_have
-      weight: 15
-      description: Finds and engages passive candidates.
-      evidence: Achievement lines about sourcing or LinkedIn Recruiter.
-      anchors:
-        - {score: 0, description: No mention.}
-        - {score: 1, description: Listed as a skill only.}
-        - {score: 2, description: One achievement.}
-        - {score: 3, description: Two achievements.}
-        - {score: 4, description: Three or more achievements.}
-    - id: tech_hiring
-      name: Technical hiring
-      name_ar: التوظيف التقني
-      kind: nice_to_have
-      weight: 10
-      description: Has hired engineers or analysts.
-      evidence: Achievement lines about hiring technical roles.
-      anchors:
-        - {score: 0, description: No mention.}
-        - {score: 1, description: Not used (no skills-list credit).}
-        - {score: 2, description: One achievement.}
-        - {score: 3, description: Two achievements.}
-        - {score: 4, description: Three or more achievements.}
-    - id: ats_process
-      name: ATS and interview process
-      name_ar: نظام تتبع المتقدمين وإجراءات المقابلات
-      kind: nice_to_have
-      weight: 10
-      description: Runs the ATS, structured interviews and time to hire.
-      evidence: Achievement lines about the ATS, structured interviews or time to hire.
-      anchors:
-        - {score: 0, description: No mention.}
-        - {score: 1, description: Listed as a skill only.}
-        - {score: 2, description: One achievement.}
-        - {score: 3, description: Two achievements.}
-        - {score: 4, description: Three or more achievements.}
-    - id: high_volume
-      name: High-volume hiring
-      name_ar: التوظيف بأعداد كبيرة
-      kind: nice_to_have
-      weight: 5
-      description: Has run hiring for many roles at once.
-      evidence: Achievement lines about high-volume hiring.
-      anchors:
-        - {score: 0, description: No mention.}
-        - {score: 1, description: Not used (no skills-list credit).}
-        - {score: 2, description: One achievement.}
-        - {score: 3, description: Two achievements.}
-        - {score: 4, description: Three or more achievements.}
-    - id: arabic_language
-      name: Arabic
-      name_ar: اللغة العربية
-      kind: nice_to_have
-      weight: 5
-      description: Can interview in Arabic.
-      evidence: The languages section.
-      anchors:
-        - {score: 0, description: Not listed.}
-        - {score: 1, description: Basic.}
-        - {score: 2, description: Conversational.}
-        - {score: 3, description: Professional.}
-        - {score: 4, description: Fluent or native.}
-    - id: hr_certification
-      name: HR certification
-      name_ar: شهادة مهنية في الموارد البشرية
-      kind: nice_to_have
-      weight: 5
-      description: SHRM or CIPD certificate, or an HR degree.
-      evidence: The certification or education entry.
-      anchors:
-        - {score: 0, description: None.}
-        - {score: 1, description: Diploma in a related field.}
-        - {score: 2, description: Degree in a related field.}
-        - {score: 3, description: Degree in human resources.}
-        - {score: 4, description: SHRM-CP or CIPD.}
-  knockouts:
-    - id: right_to_work_uae
-      question: Do you have the right to work in the UAE without a new visa sponsorship?
-      question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
-      answer_type: yes_no
-      pass_if_yes: true
-    - id: travel_ksa
-      question: Can you travel to Saudi Arabia for up to one week a month?
-      question_ar: هل يمكنك السفر إلى السعودية لمدة تصل إلى أسبوع شهريا؟
-      answer_type: yes_no
-      pass_if_yes: true
+  job_title: Talent Acquisition Partner
+  must_haves:
+  - id: recruiting_experience
+    name: Recruiting experience
+    description: Years in recruiting; HR generalist work counts at half weight.
+    evidence: Job entries with a recruiting or HR title and dates.
+    weight: 6
+  - id: full_cycle
+    name: Full-cycle recruiting and offers
+    description: Owns roles from intake to signed offer.
+    evidence: Achievement lines about full-cycle recruiting or offer negotiation.
+    weight: 4
+  - id: sourcing
+    name: Sourcing
+    description: Finds and engages passive candidates.
+    evidence: Achievement lines about sourcing or LinkedIn Recruiter.
+    weight: 3
+  nice_to_haves:
+  - id: tech_hiring
+    name: Technical hiring
+    description: Has hired engineers or analysts.
+    evidence: Achievement lines about hiring technical roles.
+    weight: 2
+  - id: ats_process
+    name: ATS and interview process
+    description: Runs the ATS, structured interviews and time to hire.
+    evidence: Achievement lines about the ATS, structured interviews or time to hire.
+    weight: 2
+  - id: high_volume
+    name: High-volume hiring
+    description: Has run hiring for many roles at once.
+    evidence: Achievement lines about high-volume hiring.
+    weight: 1
+  - id: arabic_language
+    name: Arabic
+    description: Can interview in Arabic.
+    evidence: The languages section.
+    weight: 1
+  - id: hr_certification
+    name: HR certification
+    description: SHRM or CIPD certificate, or an HR degree.
+    evidence: The certification or education entry.
+    weight: 1
+  knockout_questions:
+  - id: right_to_work_uae
+    question: Do you have the right to work in the UAE without a new visa sponsorship?
+    question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
+    expected_answer: 'yes'
+    reason: The role cannot sponsor a new visa.
+  - id: travel_ksa
+    question: Can you travel to Saudi Arabia for up to one week a month?
+    question_ar: هل يمكنك السفر إلى السعودية لمدة تصل إلى أسبوع شهريا؟
+    expected_answer: 'yes'
+    reason: The role covers teams in Saudi Arabia and needs regular visits.
+label_guide:
+  recruiting_experience:
+    name_ar: الخبرة في التوظيف
+    anchors:
+    - No recruiting or HR role.
+    - Less than 1 year.
+    - 1 to 3 years.
+    - 3 to 5 years.
+    - 5 years or more.
+  full_cycle:
+    name_ar: إدارة التوظيف كاملا والعروض
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  sourcing:
+    name_ar: البحث عن المرشحين
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  tech_hiring:
+    name_ar: التوظيف التقني
+    anchors:
+    - No mention.
+    - Not used (no skills-list credit).
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  ats_process:
+    name_ar: نظام تتبع المتقدمين وإجراءات المقابلات
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  high_volume:
+    name_ar: التوظيف بأعداد كبيرة
+    anchors:
+    - No mention.
+    - Not used (no skills-list credit).
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  arabic_language:
+    name_ar: اللغة العربية
+    anchors:
+    - Not listed.
+    - Basic.
+    - Conversational.
+    - Professional.
+    - Fluent or native.
+  hr_certification:
+    name_ar: شهادة مهنية في الموارد البشرية
+    anchors:
+    - None.
+    - Diploma in a related field.
+    - Degree in a related field.
+    - Degree in human resources.
+    - SHRM-CP or CIPD.
