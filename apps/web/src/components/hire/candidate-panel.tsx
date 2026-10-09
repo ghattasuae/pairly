@@ -5,6 +5,7 @@
 import {
   ArrowRight,
   AtSign,
+  CalendarClock,
   EyeOff,
   FileText,
   Flag,
@@ -51,6 +52,8 @@ export interface CandidatePanelProps {
   onOpenMessage: (messageId: string) => void;
   /** A stage's label in the reader's language. */
   stageLabel: (key: string) => string;
+  /** Open the scheduling panel (shown when the viewer may schedule interviews). */
+  onSchedule?: (() => void) | undefined;
 }
 
 const OPEN = new Set(["draft", "changes_requested", "submitted", "awaiting_approval"]);
@@ -78,10 +81,12 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
     onCompose,
     onOpenMessage,
     stageLabel,
+    onSchedule,
   },
   ref,
 ) {
   const t = useTranslations("Hire");
+  const tSchedule = useTranslations("Scheduling");
   const format = useFormatter();
   const locale = useLocale();
   const ids = useId();
@@ -169,6 +174,15 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
                 <Kbd className="ms-1">R</Kbd>
               </Button>
             )}
+          </div>
+        )}
+        {onSchedule && !terminal && (
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={onSchedule} data-schedule title={tSchedule("title")}>
+              <CalendarClock aria-hidden />
+              {tSchedule("open")}
+              <Kbd className="ms-1">S</Kbd>
+            </Button>
           </div>
         )}
       </header>

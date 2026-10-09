@@ -20,6 +20,8 @@
   candidate session, never a staff credential.
 * ``candidate_requests``: the hiring team's file requests to candidates and the admins'
   queue of candidates' data requests (WP2.9).
+* ``scheduling``: interviews, free times, self-scheduling links, availability, calendar
+  integrations, and the candidates' scheduling page (WP2.8).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -36,6 +38,7 @@ from pairly_hire.api import (
     pipeline,
     portal,
     public,
+    scheduling,
     screening,
     screening_mode,
 )
@@ -50,3 +53,4 @@ router.include_router(pipeline.router)
 router.include_router(messaging.router)
 router.include_router(portal.router)
 router.include_router(candidate_requests.router)
+router.include_router(scheduling.router)

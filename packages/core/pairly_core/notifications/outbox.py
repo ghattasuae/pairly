@@ -11,7 +11,8 @@ Format, version 1. For every message, in ``PAIRLY_OUTBOX_DIR``:
 
 * ``<id>.eml``: the RFC 5322 message, exactly as it would have been sent.
 * ``<id>.json``: ``{"v", "id", "created", "source", "from", "to", "subject", "text",
-  "html", "eml"}`` (``to`` is a list of bare addresses).
+  "html", "eml"}`` (``to`` is a list of bare addresses), plus ``attachments``
+  (``[{"filename", "content_type", "text"}]``) when the message has any.
 * one line appended to ``index.jsonl``: the same object without ``text`` and ``html``.
 
 ``id`` is ``<epoch milliseconds, 13 digits>-<16 hex>``, so names sort by time. Files are
@@ -64,6 +65,7 @@ def write_outbox_message(
     text: str,
     html: str | None,
     source: str,
+    attachments: list[dict[str, str]] | None = None,
 ) -> str:
     """Write one message in outbox format version 1. Returns its id."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -80,6 +82,8 @@ def write_outbox_message(
     }
     _write_atomic(directory / f"{message_id}.eml", raw)
     full = entry | {"text": text, "html": html}
+    if attachments:
+        full["attachments"] = attachments
     _write_atomic(directory / f"{message_id}.json", json.dumps(full).encode("utf-8"))
     line = (json.dumps(entry) + "\n").encode("utf-8")
     fd = os.open(directory / INDEX_FILE, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
@@ -110,6 +114,17 @@ class OutboxTransport:
             text=email.text,
             html=email.html,
             source=self.source,
+            attachments=[
+                {
+                    "filename": a.filename,
+                    "content_type": "; ".join(
+                        [a.mime_type, *(f"{k}={v}" for k, v in sorted(a.params.items()))]
+                    ),
+                    "text": a.text,
+                }
+                for a in email.attachments
+            ]
+            or None,
         )
 
     async def send(self, email: OutgoingEmail) -> str:

@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { ArrowRight, Clock, EyeOff, Filter, Flag, Loader2, Mail, Search, Share2, UserRoundX } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock, EyeOff, Filter, Flag, Loader2, Mail, Search, Share2, UserRoundX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/toaster";
 import { Link } from "@/i18n/navigation";
 import { errorKey } from "@/lib/action-result";
 import * as hireActions from "@/lib/actions/hire";
+import { jobInterviews } from "@/lib/actions/scheduling";
 import {
   actionKey,
   allTags,
@@ -41,10 +42,12 @@ import type {
   HireTeamMember,
   HireTemplate,
 } from "@/lib/hire/types";
+import { browserTimeZone, whenLabel, type Interview } from "@/lib/hire/scheduling";
 import { cn } from "@/lib/utils";
 
 import { CandidatePanel, type CandidatePanelHandle } from "./candidate-panel";
 import { ComposePanel } from "./compose-panel";
+import { SchedulingPanel, type SchedulingActions } from "./scheduling/scheduling-panel";
 
 export type HireActions = typeof hireActions;
 
@@ -58,15 +61,19 @@ export interface PipelineBoardProps {
   canNote: boolean;
   canMessage: boolean;
   totpEnabled: boolean;
+  /** The viewer may book, move and cancel interviews (`hire.interview.schedule`). */
+  canSchedule?: boolean;
   /** Overrides for stories and tests. Default to the server actions. */
   actions?: Partial<HireActions>;
+  schedulingActions?: Partial<SchedulingActions>;
 }
 
 type Panel =
   | { mode: "none" }
   | { mode: "loading"; id: string }
   | { mode: "profile"; profile: HireProfile }
-  | { mode: "compose"; profile: HireProfile; message: HireMessage };
+  | { mode: "compose"; profile: HireProfile; message: HireMessage }
+  | { mode: "schedule"; applicationId: string; profile: HireProfile | null };
 
 type BulkDialog =
   | { kind: "move"; stage: string; summary: HireBulkSummary }
@@ -85,8 +92,10 @@ function anyDialogOpen(): boolean {
  * - Move: the arrow on a card (one click), A on the selected card (one key), drag and
  *   drop, or the panel. An undo toast stays 10 seconds. Moving to Rejected drafts the
  *   rejection and opens it: one click submits it to the approval queue (R, then a click).
- * - Keyboard: J/K select, Enter opens, A advances, R rejects, N writes a note, X selects
- *   for a bulk action, / searches, Esc closes the panel.
+ * - Keyboard: J/K select, Enter opens, A advances, R rejects, N writes a note, S schedules
+ *   an interview, X selects for a bulk action, / searches, Esc closes the panel.
+ * - Interviews: a card with an upcoming interview shows its time; one click opens the
+ *   scheduling panel (`scheduling/scheduling-panel.tsx`) beside the board.
  * - Bulk: select cards, then move them (undo for the batch) or send a status update; a
  *   summary comes first whenever a rejection draft or an email would follow.
  * - Filters, the open candidate and the scroll position live in the URL.
@@ -101,10 +110,13 @@ export function PipelineBoard({
   canNote,
   canMessage,
   totpEnabled,
+  canSchedule = false,
   actions: overrides,
+  schedulingActions,
 }: PipelineBoardProps) {
   const t = useTranslations("Hire");
   const tScreen = useTranslations("Screen");
+  const tSchedule = useTranslations("Scheduling");
   const tErrors = useTranslations("Errors");
   const locale = useLocale();
   const toast = useToast();
@@ -127,6 +139,7 @@ export function PipelineBoard({
   const searchRef = useRef<HTMLInputElement | null>(null);
   const panelRef = useRef<CandidatePanelHandle | null>(null);
   const noteAfterOpen = useRef(false);
+  const [interviews, setInterviews] = useState<Record<string, Interview>>({});
 
   const visible = useMemo(() => filterCards(board.cards, state), [board.cards, state]);
   const grouped = useMemo(() => columns(board.stages, visible), [board.stages, visible]);
@@ -174,6 +187,25 @@ export function PipelineBoard({
 
   // ------------------------------------------------------------ data
 
+  const [interviewsTick, setInterviewsTick] = useState(0);
+  const loadInterviews = useCallback(() => setInterviewsTick((n) => n + 1), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const list = schedulingActions?.jobInterviews ?? jobInterviews;
+    void list(jobId).then((result) => {
+      if (cancelled || !result.ok) return;
+      const next: Record<string, Interview> = {};
+      for (const interview of result.interviews) {
+        if (!next[interview.application_id]) next[interview.application_id] = interview;
+      }
+      setInterviews(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, schedulingActions, interviewsTick]);
+
   const refreshBoard = useCallback(async () => {
     const result = await actions.loadBoard(jobId);
     if (result.ok) setBoard(result.board);
@@ -196,7 +228,9 @@ export function PipelineBoard({
       setSelected(id);
       setState((s) => ({ ...s, candidate: id }));
       noteAfterOpen.current = focusNote;
-      setPanel((p) => (p.mode !== "none" && "profile" in p && p.profile.application_id === id ? p : { mode: "loading", id }));
+      setPanel((p) =>
+        (p.mode === "profile" || p.mode === "compose") && p.profile.application_id === id ? p : { mode: "loading", id },
+      );
       const profile = await loadProfile(id);
       if (profile) setPanel((p) => (p.mode === "compose" && p.profile.application_id === id ? p : { mode: "profile", profile }));
       else setPanel({ mode: "none" });
@@ -210,6 +244,20 @@ export function PipelineBoard({
       panelRef.current?.focusNote();
     }
   }, [panel]);
+
+  const openSchedule = useCallback(
+    (id: string) => {
+      if (!canSchedule) return;
+      setSelected(id);
+      setState((s) => ({ ...s, candidate: id }));
+      setPanel((p) => ({
+        mode: "schedule",
+        applicationId: id,
+        profile: (p.mode === "profile" || p.mode === "compose") && p.profile.application_id === id ? p.profile : null,
+      }));
+    },
+    [canSchedule],
+  );
 
   const close = useCallback(() => {
     setPanel({ mode: "none" });
@@ -468,6 +516,9 @@ export function PipelineBoard({
       } else if ((key === "n" || key === "N") && current && canNote) {
         event.preventDefault();
         void open(current.application_id, true);
+      } else if ((key === "s" || key === "S") && current && canSchedule) {
+        event.preventDefault();
+        openSchedule(current.application_id);
       } else if ((key === "x" || key === "X") && current) {
         event.preventDefault();
         toggleBulk(current.application_id);
@@ -481,7 +532,7 @@ export function PipelineBoard({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advance, canNote, cardOf, close, open, ordered, panel.mode, reject, selected]);
+  }, [advance, canNote, canSchedule, cardOf, close, open, openSchedule, ordered, panel.mode, reject, selected]);
 
   // ------------------------------------------------------------ render
 
@@ -510,7 +561,9 @@ export function PipelineBoard({
             <span className="hidden items-center gap-1 lg:flex" aria-hidden>
               <Kbd>J</Kbd>
               <Kbd>K</Kbd> {t("keys.select")} <Kbd>A</Kbd> {t("keys.advanceShort")} <Kbd>R</Kbd> {t("keys.rejectShort")}{" "}
-              <Kbd>N</Kbd> {t("keys.noteShort")} <Kbd>X</Kbd> {t("keys.bulkShort")}
+              <Kbd>N</Kbd> {t("keys.noteShort")} {canSchedule && <Kbd>S</Kbd>}
+              {canSchedule && ` ${tSchedule("open")} `}
+              <Kbd>X</Kbd> {t("keys.bulkShort")}
             </span>
           </div>
         </div>
@@ -657,6 +710,8 @@ export function PipelineBoard({
                         onFocus={() => setSelected(card.application_id)}
                         onAdvance={() => void advance(card)}
                         onToggleBulk={() => toggleBulk(card.application_id)}
+                        interview={interviews[card.application_id] ?? null}
+                        onOpenInterview={canSchedule ? () => openSchedule(card.application_id) : null}
                       />
                     ))}
                   </ul>
@@ -676,6 +731,21 @@ export function PipelineBoard({
                 <Loader2 className="animate-spin" aria-hidden />
                 <span className="sr-only">{t("loading")}</span>
               </div>
+            ) : panel.mode === "schedule" ? (
+              <SchedulingPanel
+                key={panel.applicationId}
+                applicationId={panel.applicationId}
+                actions={schedulingActions}
+                onClose={() => {
+                  const back = panel.profile;
+                  if (back) setPanel({ mode: "profile", profile: back });
+                  else close();
+                }}
+                onChanged={() => {
+                  loadInterviews();
+                  void refreshBoard();
+                }}
+              />
             ) : panel.mode === "compose" ? (
               <div className="h-full overflow-y-auto px-5 py-5">
                 <ComposePanel
@@ -735,6 +805,7 @@ export function PipelineBoard({
                 }}
                 onCompose={(key) => void compose(key)}
                 onOpenMessage={(id) => void openMessage(id)}
+                onSchedule={canSchedule ? () => openSchedule(panel.profile.application_id) : undefined}
               />
             ) : null}
           </div>
@@ -798,6 +869,8 @@ function CardItem({
   onFocus,
   onAdvance,
   onToggleBulk,
+  interview,
+  onOpenInterview,
 }: {
   card: HireCard;
   next: { key: string } | null;
@@ -811,8 +884,12 @@ function CardItem({
   onFocus: () => void;
   onAdvance: () => void;
   onToggleBulk: () => void;
+  interview: Interview | null;
+  onOpenInterview: (() => void) | null;
 }) {
   const t = useTranslations("Hire");
+  const tSchedule = useTranslations("Scheduling");
+  const locale = useLocale();
   const terminal = ["hired", "rejected", "withdrawn"].includes(card.stage_key);
   return (
     <li>
@@ -898,6 +975,18 @@ function CardItem({
               {t(`messageStatus.${card.open_message}` as "messageStatus.draft")}
             </Badge>
           )}
+          {interview && (
+            <InterviewChip
+              interview={interview}
+              name={card.label}
+              locale={locale}
+              label={(when) =>
+                interview.starts_at ? tSchedule("chip", { time: when }) : tSchedule("chipProposed")
+              }
+              aria={(when) => tSchedule("chipLabel", { name: card.label, when })}
+              onOpen={onOpenInterview}
+            />
+          )}
           {card.tags.slice(0, 3).map((tag) => (
             <Badge key={tag} variant="default" className="font-normal">
               {tag}
@@ -906,5 +995,48 @@ function CardItem({
         </div>
       </article>
     </li>
+  );
+}
+
+function InterviewChip({
+  interview,
+  locale,
+  label,
+  aria,
+  onOpen,
+}: {
+  interview: Interview;
+  name: string;
+  locale: string;
+  label: (when: string) => string;
+  aria: (when: string) => string;
+  onOpen: (() => void) | null;
+}) {
+  const zone = browserTimeZone();
+  const when = interview.starts_at ? whenLabel(interview.starts_at, zone, locale) : "";
+  const content = (
+    <>
+      <CalendarClock className="size-3" aria-hidden />
+      {label(when)}
+    </>
+  );
+  if (!onOpen) {
+    return (
+      <Badge variant="outline" data-interview={interview.id} data-interview-status={interview.status}>
+        {content}
+      </Badge>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={aria(when || label(when))}
+      data-interview={interview.id}
+      data-interview-status={interview.status}
+      className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+    >
+      {content}
+    </button>
   );
 }

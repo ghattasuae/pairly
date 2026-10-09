@@ -53,6 +53,7 @@ from pairly_core.errors import BadRequestError, ForbiddenError
 from pairly_core.integrations.slack.blocks import SlackButton, message_blocks
 from pairly_core.integrations.slack.links import active_slack, slack_link_for_user
 from pairly_core.models import User
+from pairly_core.notifications.email import MAX_ATTACHMENTS, Attachment
 from pairly_core.notifications.models import (
     Notification,
     NotificationPreference,
@@ -145,6 +146,8 @@ class Extras:
     # Email: reply threading and the RFC 3834 header value.
     in_reply_to: str | None = None
     auto_submitted: str = "auto-generated"
+    # Email: text attachments (a calendar invitation), stored encrypted with the content.
+    attachments: Sequence[Attachment] = ()
     extra: Mapping[str, Any] = field(default_factory=dict)
 
 
@@ -352,6 +355,8 @@ async def notify(
     if not dedupe_key or len(dedupe_key) > MAX_DEDUPE_KEY:
         raise BadRequestError("invalid dedupe key")
     extras = extras or Extras()
+    if len(extras.attachments) > MAX_ATTACHMENTS:
+        raise BadRequestError("too many attachments")
     wanted = list(channels) if channels is not None else list(CHANNELS)
     if any(c not in CHANNELS for c in wanted):
         raise BadRequestError("unknown channel")
@@ -506,6 +511,8 @@ async def _notify_channel(
             content["auto_submitted"] = extras.auto_submitted
             content["in_reply_to"] = extras.in_reply_to
             content["list_unsubscribe"] = not policy.transactional and recipient.user_id is not None
+            if extras.attachments:
+                content["attachments"] = [a.to_json() for a in extras.attachments]
     status = {
         "send": NotificationStatus.SENT if channel == "in_app" else NotificationStatus.QUEUED,
         "defer": NotificationStatus.QUEUED,

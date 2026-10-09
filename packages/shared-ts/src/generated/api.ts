@@ -1875,6 +1875,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/public/scheduling/book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public Book */
+        post: operations["public_book_v1_hire_public_scheduling_book_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/scheduling/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public Cancel */
+        post: operations["public_cancel_v1_hire_public_scheduling_cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/scheduling/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public Read */
+        post: operations["public_read_v1_hire_public_scheduling_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/rediscovery/search": {
         parameters: {
             query?: never;
@@ -1943,6 +1994,264 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/scheduling/applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Panel */
+        get: operations["panel_v1_hire_scheduling_applications__application_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/applications/{application_id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check */
+        post: operations["check_v1_hire_scheduling_applications__application_id__check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/applications/{application_id}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create */
+        post: operations["create_v1_hire_scheduling_applications__application_id__interviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/applications/{application_id}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Slots */
+        post: operations["slots_v1_hire_scheduling_applications__application_id__slots_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/availability/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Availability */
+        get: operations["availability_v1_hire_scheduling_availability__user_id__get"];
+        /** Save Availability */
+        put: operations["save_availability_v1_hire_scheduling_availability__user_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/availability/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Availability */
+        get: operations["my_availability_v1_hire_scheduling_availability_me_get"];
+        /** Save My Availability */
+        put: operations["save_my_availability_v1_hire_scheduling_availability_me_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Integrations */
+        get: operations["integrations_v1_hire_scheduling_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Google Callback */
+        post: operations["google_callback_v1_hire_scheduling_integrations_google_callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations/google/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Google Disconnect */
+        post: operations["google_disconnect_v1_hire_scheduling_integrations_google_disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations/google/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Google Start */
+        post: operations["google_start_v1_hire_scheduling_integrations_google_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Interviews */
+        get: operations["list_interviews_v1_hire_scheduling_interviews_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/interviews/{interview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Interview */
+        get: operations["get_interview_v1_hire_scheduling_interviews__interview_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update */
+        patch: operations["update_v1_hire_scheduling_interviews__interview_id__patch"];
+        trace?: never;
+    };
+    "/v1/hire/scheduling/interviews/{interview_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_v1_hire_scheduling_interviews__interview_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/interviews/{interview_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link */
+        post: operations["link_v1_hire_scheduling_interviews__interview_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/interviews/{interview_id}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Outcome */
+        post: operations["outcome_v1_hire_scheduling_interviews__interview_id__outcome_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/screening/settings": {
         parameters: {
             query?: never;
@@ -1990,6 +2299,24 @@ export type paths = {
         get: operations["get_messaging_settings_v1_hire_settings_messaging_get"];
         /** Put Messaging Settings */
         put: operations["put_messaging_settings_v1_hire_settings_messaging_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings/scheduling": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_v1_hire_settings_scheduling_get"];
+        /** Put Settings */
+        put: operations["put_settings_v1_hire_settings_scheduling_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -4253,6 +4580,49 @@ export type components = {
             /** Token */
             token: string;
         };
+        /** HireAvailabilityIn */
+        HireAvailabilityIn: {
+            /** Buffer After Min */
+            buffer_after_min: number;
+            /** Buffer Before Min */
+            buffer_before_min: number;
+            /** Holidays */
+            holidays?: string[];
+            /** Max Per Day */
+            max_per_day?: number | null;
+            /** Timezone */
+            timezone: string;
+            /** Working Hours */
+            working_hours: {
+                [key: string]: string[][];
+            };
+        };
+        /** HireAvailabilityOut */
+        HireAvailabilityOut: {
+            /** Buffer After Min */
+            buffer_after_min: number;
+            /** Buffer Before Min */
+            buffer_before_min: number;
+            /** Holidays */
+            holidays: string[];
+            /** Max Per Day */
+            max_per_day: number | null;
+            /** Name */
+            name: string;
+            /** Saved */
+            saved: boolean;
+            /** Timezone */
+            timezone: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Working Hours */
+            working_hours: {
+                [key: string]: string[][];
+            };
+        };
         /** HireBoardOut */
         HireBoardOut: {
             /** Blind Mode */
@@ -4357,6 +4727,44 @@ export type components = {
             /** Will Move */
             will_move: number;
         };
+        /** HireBusyOut */
+        HireBusyOut: {
+            /** Blocks */
+            blocks: components["schemas"]["HireSlotOut"][];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** HireCalendarIntegrationsOut */
+        HireCalendarIntegrationsOut: {
+            /** Providers */
+            providers: components["schemas"]["HireCalendarProviderOut"][];
+            /** Using */
+            using: string;
+        };
+        /** HireCalendarProviderOut */
+        HireCalendarProviderOut: {
+            /** Account Email */
+            account_email: string | null;
+            /** Availability */
+            availability: string;
+            /** Configured */
+            configured: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Flag Enabled */
+            flag_enabled: boolean;
+            /** Label */
+            label: string;
+            /** Provider */
+            provider: string;
+            /** Status */
+            status: string | null;
+            /** Steps */
+            steps: string[];
+        };
         /** HireCardOut */
         HireCardOut: {
             /**
@@ -4404,6 +4812,27 @@ export type components = {
             jobs: components["schemas"]["HirePublicJob"][];
             organisation: components["schemas"]["HirePublicOrg"];
         };
+        /** HireCheckIn */
+        HireCheckIn: {
+            /** Duration Min */
+            duration_min: number;
+            /** Interview Id */
+            interview_id?: string | null;
+            /** Panel */
+            panel: string[];
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+        };
+        /** HireCheckOut */
+        HireCheckOut: {
+            /** Conflicts */
+            conflicts: components["schemas"]["HireConflictOut"][];
+            /** Ok */
+            ok: boolean;
+        };
         /** HireCheckTextIn */
         HireCheckTextIn: {
             /**
@@ -4426,6 +4855,27 @@ export type components = {
              * @default
              */
             title_ar: string;
+        };
+        /** HireConflictOut */
+        HireConflictOut: {
+            /** Name */
+            name: string | null;
+            /** Reason */
+            reason: string;
+            /** User Id */
+            user_id: string | null;
+        };
+        /** HireConnectIn */
+        HireConnectIn: {
+            /** Code */
+            code: string;
+            /** State */
+            state: string;
+        };
+        /** HireConnectOut */
+        HireConnectOut: {
+            /** Url */
+            url: string;
         };
         /** HireCriterionOut */
         HireCriterionOut: {
@@ -4586,6 +5036,102 @@ export type components = {
             }[];
             /** Version */
             version: number | null;
+        };
+        /** HireInterviewCreateIn */
+        HireInterviewCreateIn: {
+            /** Candidate Timezone */
+            candidate_timezone?: string | null;
+            /** Duration Min */
+            duration_min: number;
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+            /** Meeting Url */
+            meeting_url?: string | null;
+            /** Mode */
+            mode: string;
+            /** Panel */
+            panel: string[];
+            /** Starts At */
+            starts_at?: string | null;
+        };
+        /** HireInterviewOut */
+        HireInterviewOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Calendar Provider */
+            calendar_provider: string | null;
+            /** Can Record Outcome */
+            can_record_outcome: boolean;
+            /** Cancelled By */
+            cancelled_by: string | null;
+            /** Candidate Timezone */
+            candidate_timezone: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Duration Min */
+            duration_min: number;
+            /** Ends At */
+            ends_at: string | null;
+            /** Ics Sequence */
+            ics_sequence: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Link Active */
+            link_active: boolean;
+            /** Link Expires At */
+            link_expires_at: string | null;
+            /** Meeting Provider */
+            meeting_provider: string | null;
+            /** Meeting Url */
+            meeting_url: string | null;
+            /** Panel */
+            panel: components["schemas"]["HirePanelMemberOut"][];
+            /** Stage Key */
+            stage_key: string;
+            /** Starts At */
+            starts_at: string | null;
+            /** Status */
+            status: string;
+        };
+        /** HireInterviewUpdateIn */
+        HireInterviewUpdateIn: {
+            /** Candidate Timezone */
+            candidate_timezone?: string | null;
+            /**
+             * Clear Meeting Url
+             * @default false
+             */
+            clear_meeting_url: boolean;
+            /** Duration Min */
+            duration_min?: number | null;
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+            /** Meeting Url */
+            meeting_url?: string | null;
+            /** Panel */
+            panel?: string[] | null;
+            /** Starts At */
+            starts_at?: string | null;
         };
         /** HireJobDraftOut */
         HireJobDraftOut: {
@@ -4913,6 +5459,11 @@ export type components = {
              */
             note_id: string;
         };
+        /** HireOutcomeIn */
+        HireOutcomeIn: {
+            /** Outcome */
+            outcome: string;
+        };
         /** HireOverrideIn */
         HireOverrideIn: {
             /** Reason */
@@ -4921,6 +5472,18 @@ export type components = {
             scores: {
                 [key: string]: number;
             };
+        };
+        /** HirePanelMemberOut */
+        HirePanelMemberOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Timezone */
+            timezone: string;
         };
         /** HirePortalAppealIn */
         HirePortalAppealIn: {
@@ -5356,6 +5919,18 @@ export type components = {
             /** Updates Email */
             updates_email: boolean;
         };
+        /** HirePublicBookIn */
+        HirePublicBookIn: {
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Timezone */
+            timezone?: string | null;
+            /** Token */
+            token: string;
+        };
         /** HirePublicJob */
         HirePublicJob: {
             /** Country */
@@ -5449,6 +6024,57 @@ export type components = {
             min: string;
             /** Period */
             period: string | null;
+        };
+        /** HirePublicScheduleIn */
+        HirePublicScheduleIn: {
+            /** Timezone */
+            timezone?: string | null;
+            /** Token */
+            token: string;
+        };
+        /** HirePublicScheduleOut */
+        HirePublicScheduleOut: {
+            /** Duration Min */
+            duration_min: number;
+            /** Ends At */
+            ends_at: string | null;
+            /** Job Title */
+            job_title: string;
+            /** Meeting Url */
+            meeting_url: string | null;
+            /** Organisation */
+            organisation: string;
+            /** Panel Size */
+            panel_size: number;
+            /** Slots */
+            slots: components["schemas"]["HirePublicSlotOut"][];
+            /** Starts At */
+            starts_at: string | null;
+            /** State */
+            state: string;
+            /** Timezone */
+            timezone: string;
+            /** Token */
+            token?: string | null;
+        };
+        /** HirePublicSlotOut */
+        HirePublicSlotOut: {
+            /** Date */
+            date: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Sociable */
+            sociable: boolean;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /** Time */
+            time: string;
         };
         /** HireQueueItemOut */
         HireQueueItemOut: {
@@ -5629,6 +6255,79 @@ export type components = {
             screening_id: string;
             /** Status */
             status: string;
+        };
+        /** HireSchedulingPanelOut */
+        HireSchedulingPanelOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Candidate Timezone */
+            candidate_timezone: string;
+            /** Default Panel */
+            default_panel: string[];
+            /** Duration Min */
+            duration_min: number;
+            /** Google Configured */
+            google_configured: boolean;
+            /** Google Enabled */
+            google_enabled: boolean;
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /** Interviews */
+            interviews: components["schemas"]["HireInterviewOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Label */
+            label: string;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Label */
+            stage_label: string;
+            /** Stage Label Ar */
+            stage_label_ar: string;
+            /** Step Min */
+            step_min: number;
+            /** Team */
+            team: components["schemas"]["HirePanelMemberOut"][];
+            /** Viewer Timezone */
+            viewer_timezone: string;
+        };
+        /** HireSchedulingSettingsIn */
+        HireSchedulingSettingsIn: {
+            /** Duration Min */
+            duration_min?: number | null;
+            /** Horizon Days */
+            horizon_days?: number | null;
+            /** Link Days */
+            link_days?: number | null;
+            /** Notice Hours */
+            notice_hours?: number | null;
+            /** Step Min */
+            step_min?: number | null;
+            /** Timezone */
+            timezone?: string | null;
+        };
+        /** HireSchedulingSettingsOut */
+        HireSchedulingSettingsOut: {
+            /** Duration Min */
+            duration_min: number;
+            /** Horizon Days */
+            horizon_days: number;
+            /** Link Days */
+            link_days: number;
+            /** Notice Hours */
+            notice_hours: number;
+            /** Step Min */
+            step_min: number;
+            /** Timezone */
+            timezone: string;
         };
         /** HireScreeningCriterion */
         HireScreeningCriterion: {
@@ -5815,6 +6514,59 @@ export type components = {
             rejected_retention_months: number;
             /** Response Days */
             response_days: number;
+        };
+        /** HireSlotOut */
+        HireSlotOut: {
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Sociable */
+            sociable: boolean;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+        };
+        /** HireSlotsIn */
+        HireSlotsIn: {
+            /** Candidate Timezone */
+            candidate_timezone?: string | null;
+            /** Days */
+            days?: number | null;
+            /** Duration Min */
+            duration_min: number;
+            /** Interview Id */
+            interview_id?: string | null;
+            /** Panel */
+            panel: string[];
+            /** Start */
+            start?: string | null;
+        };
+        /** HireSlotsOut */
+        HireSlotsOut: {
+            /** Busy */
+            busy: components["schemas"]["HireBusyOut"][];
+            /** Duration Min */
+            duration_min: number;
+            /** Free */
+            free: string[];
+            /** Slots */
+            slots: components["schemas"]["HireSlotOut"][];
+            /** Timezone */
+            timezone: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
         };
         /** HireStageOut */
         HireStageOut: {
@@ -10886,6 +11638,105 @@ export interface operations {
             };
         };
     };
+    public_book_v1_hire_public_scheduling_book_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePublicBookIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePublicScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_cancel_v1_hire_public_scheduling_cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePublicScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePublicScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_read_v1_hire_public_scheduling_read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePublicScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePublicScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rediscover_v1_hire_rediscovery_search_post: {
         parameters: {
             query?: never;
@@ -10990,6 +11841,552 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireSelfIdReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    panel_v1_hire_scheduling_applications__application_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSchedulingPanelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_v1_hire_scheduling_applications__application_id__check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_v1_hire_scheduling_applications__application_id__interviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireInterviewCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    slots_v1_hire_scheduling_applications__application_id__slots_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireSlotsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSlotsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    availability_v1_hire_scheduling_availability__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireAvailabilityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_availability_v1_hire_scheduling_availability__user_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireAvailabilityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireAvailabilityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_availability_v1_hire_scheduling_availability_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireAvailabilityOut"];
+                };
+            };
+        };
+    };
+    save_my_availability_v1_hire_scheduling_availability_me_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireAvailabilityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireAvailabilityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    integrations_v1_hire_scheduling_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+        };
+    };
+    google_callback_v1_hire_scheduling_integrations_google_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireConnectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    google_disconnect_v1_hire_scheduling_integrations_google_disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+        };
+    };
+    google_start_v1_hire_scheduling_integrations_google_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireConnectOut"];
+                };
+            };
+        };
+    };
+    list_interviews_v1_hire_scheduling_interviews_get: {
+        parameters: {
+            query?: {
+                application_id?: string | null;
+                job_id?: string | null;
+                limit?: number;
+                mine?: boolean;
+                upcoming?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_interview_v1_hire_scheduling_interviews__interview_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_v1_hire_scheduling_interviews__interview_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireInterviewUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_v1_hire_scheduling_interviews__interview_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_v1_hire_scheduling_interviews__interview_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_v1_hire_scheduling_interviews__interview_id__outcome_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireOutcomeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewOut"];
                 };
             };
             /** @description Validation Error */
@@ -11149,6 +12546,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireMessagingSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_v1_hire_settings_scheduling_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSchedulingSettingsOut"];
+                };
+            };
+        };
+    };
+    put_settings_v1_hire_settings_scheduling_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireSchedulingSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSchedulingSettingsOut"];
                 };
             };
             /** @description Validation Error */

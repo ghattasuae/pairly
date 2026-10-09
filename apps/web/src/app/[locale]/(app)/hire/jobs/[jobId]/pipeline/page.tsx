@@ -84,6 +84,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
       canMove={permissions.includes("hire.candidate.decide")}
       canNote={permissions.includes("hire.note.write")}
       canMessage={permissions.includes("hire.message.create")}
+      canSchedule={permissions.includes("hire.interview.schedule")}
       totpEnabled={twoFactorEnabled(session)}
     />
   );

@@ -21,7 +21,10 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``search_sources``  ``hire_candidate`` (talent rediscovery, consent and retention).
 * ``scheduled_jobs``  ``hire_screening_start``: starts the screening of submitted
                    applications whose CV is ready, every minute (``screening.start``);
-                   ``hire_sla_drafts`` (anti-ghosting) and ``hire_rediscovery_index``.
+                   ``hire_sla_drafts`` (anti-ghosting), ``hire_rediscovery_index`` and
+                   ``hire_interview_reminders`` (24 hours and 1 hour before interviews).
+* ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
+                   interviews, once the deployment has a Google OAuth client.
 
 Importing this module registers the Hire tables on ``Base.metadata``, wires screening
 into the pipeline hooks (blind mode per application, screening results, the blind
@@ -36,6 +39,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pairly_core.flags.registry import FlagSpec
 from pairly_core.jobs.registry import JobSpec
 from pairly_core.plugins import DemoSeed
 from pairly_core.rbac import PermissionSpec
@@ -54,6 +58,11 @@ from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
 from pairly_hire.portal import models as portal_models  # noqa: F401  (tables)
 from pairly_hire.retention import RETENTION_RULES
+from pairly_hire.scheduling import models as scheduling_models  # noqa: F401  (tables)
+from pairly_hire.scheduling.permissions import SCHEDULING_PERMISSIONS
+from pairly_hire.scheduling.providers import FEATURE_FLAGS
+from pairly_hire.scheduling.reminders import JOB_NAME as REMINDERS_JOB
+from pairly_hire.scheduling.reminders import run_reminders_job
 from pairly_hire.screening import models as screening_models  # noqa: F401  (its tables)
 from pairly_hire.screening import reviewer as screening_reviewer
 from pairly_hire.screening.permissions import SCREENING_PERMISSIONS
@@ -107,6 +116,13 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         run=run_index_job,
         every_minutes=15,
     ),
+    JobSpec(
+        REMINDERS_JOB,
+        "Remind candidates and interviewers 24 hours and 1 hour before each interview",
+        "every 5 minutes",
+        run=run_reminders_job,
+        every_minutes=5,
+    ),
 )
 
 
@@ -120,7 +136,9 @@ def api_router() -> APIRouter:
 class HirePlugin:
     id: str = "hire"
     name: str = "Pairly Hire"
-    permissions: tuple[PermissionSpec, ...] = field(default=(*PERMISSIONS, *SCREENING_PERMISSIONS))
+    permissions: tuple[PermissionSpec, ...] = field(
+        default=(*PERMISSIONS, *SCREENING_PERMISSIONS, *SCHEDULING_PERMISSIONS)
+    )
     graphs: tuple[GraphSpec, ...] = (HIRE_SCREENING, HIRE_MESSAGE)
     demo_seeds: Mapping[str, DemoSeed] = field(
         default_factory=lambda: {"hire-demo": seed_hire_demo}
@@ -130,6 +148,7 @@ class HirePlugin:
     retention_rules: tuple[RetentionRule, ...] = RETENTION_RULES
     search_sources: tuple[SearchSource, ...] = SEARCH_SOURCES
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
+    feature_flags: tuple[FlagSpec, ...] = FEATURE_FLAGS
 
     def api_router(self) -> APIRouter:
         return api_router()
