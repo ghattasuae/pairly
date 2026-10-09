@@ -54,11 +54,14 @@ const people: Record<Who, { email: string; invite: string }> = {
   manager: { email: `${SLUG}-hire-manager@example.test`, invite: "" },
 };
 const statePath = (who: Who) => path.join(AUTH_STATE_DIR, `hire-${RUN}-${who}.json`);
-const candidates = {
-  ana: { name: "Ana Budget", email: `ana.${RUN}@example.test` },
-  ben: { name: "Ben Budget", email: `ben.${RUN}@example.test` },
-  cara: { name: "Cara Budget", email: `cara.${RUN}@example.test` },
-  dina: { name: "Dina Budget", email: `dina.${RUN}@example.test` },
+// Blind mode is on by default: until a stage reveals identity (shortlist), the board
+// shows "Candidate <reference>" instead of the name (`label`, set when they apply).
+type Candidate = { name: string; email: string; label: string };
+const candidates: Record<"ana" | "ben" | "cara" | "dina", Candidate> = {
+  ana: { name: "Ana Budget", email: `ana.${RUN}@example.test`, label: "" },
+  ben: { name: "Ben Budget", email: `ben.${RUN}@example.test`, label: "" },
+  cara: { name: "Cara Budget", email: `cara.${RUN}@example.test`, label: "" },
+  dina: { name: "Dina Budget", email: `dina.${RUN}@example.test`, label: "" },
 };
 const results: Record<string, { clicks: number; keys: number; typed: number; ms: number; budget: string; pass: boolean }> =
   {};
@@ -148,7 +151,7 @@ async function as(browser: Browser, who: Who): Promise<{ context: BrowserContext
 }
 
 /** Apply through the public API, the way the careers page does (dummy Turnstile token). */
-async function apply(request: APIRequestContext, who: { name: string; email: string }, ip: string): Promise<void> {
+async function apply(request: APIRequestContext, who: Candidate, ip: string): Promise<void> {
   const base = `${API}/v1/hire/public/careers/${SLUG}`;
   const headers = { "X-Pairly-Client-IP": ip };
   const detail = await request.get(`${base}/jobs/${JOB_SLUG}`, { headers });
@@ -185,14 +188,18 @@ async function apply(request: APIRequestContext, who: { name: string; email: str
   expect(uploaded.status(), await uploaded.text()).toBe(201);
   const submitted = await request.post(`${base}/applications/submit`, { headers, data: { token } });
   expect(submitted.status(), await submitted.text()).toBe(202);
+  who.label = `Candidate ${((await submitted.json()) as { reference: string }).reference}`;
 }
 
-const card = (page: Page, name: string) => page.locator("[data-card]").filter({ hasText: name });
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** The candidate as the board shows them: the blind label, or the name once revealed. */
+const shown = (who: Candidate) => new RegExp(`${escape(who.label)}|${escape(who.name)}`);
+const card = (page: Page, who: Candidate) => page.locator("[data-card]").filter({ hasText: shown(who) });
 
 async function openBoard(page: Page, query = ""): Promise<void> {
   await page.goto(`${pipelineUrl}${query}`);
   await expect(page.locator("[data-board]")).toBeVisible();
-  await expect(card(page, candidates.ana.name)).toBeVisible({ timeout: 20_000 });
+  await expect(card(page, candidates.ana)).toBeVisible({ timeout: 20_000 });
 }
 
 test("set up: organisation, Hire seed, recruiter and manager, four applicants", async ({ browser, request }) => {
@@ -217,7 +224,11 @@ test("set up: organisation, Hire seed, recruiter and manager, four applicants", 
   await page.locator(`[data-job-link="${JOB_SLUG}"]`).click();
   await page.waitForURL(/\/hire\/jobs\/[0-9a-f-]{36}\/pipeline/);
   pipelineUrl = new URL(page.url()).pathname;
-  for (const who of Object.values(candidates)) await expect(card(page, who.name)).toBeVisible();
+  for (const who of Object.values(candidates)) {
+    // Blind: the label, never the name, before a stage reveals identity.
+    await expect(card(page, who)).toContainText(who.label);
+    await expect(card(page, who)).not.toContainText(who.name);
+  }
   logCheck({ name: "hire budgets: set up", status: "pass", detail: `${SLUG} ${pipelineUrl}` });
   await context.close();
 });
@@ -225,16 +236,16 @@ test("set up: organisation, Hire seed, recruiter and manager, four applicants", 
 test("move a candidate to the next stage: 1 click", async ({ browser }) => {
   const { context, page } = await as(browser, "recruiter");
   await openBoard(page);
-  const ana = card(page, candidates.ana.name);
+  const ana = card(page, candidates.ana);
   await expect(ana).toHaveAttribute("data-stage", "applied");
   const budget = new Budget("move to next stage (click)", page);
   await budget.click(ana.locator("[data-advance]"));
-  await expect(card(page, candidates.ana.name)).toHaveAttribute("data-stage", "screening", { timeout: 10_000 });
+  await expect(card(page, candidates.ana)).toHaveAttribute("data-stage", "screening", { timeout: 10_000 });
   await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
   budget.done({ clicks: 1, keys: 0 }, "1 click");
   // The move is real: a reload shows it.
   await openBoard(page);
-  await expect(card(page, candidates.ana.name)).toHaveAttribute("data-stage", "screening");
+  await expect(card(page, candidates.ana)).toHaveAttribute("data-stage", "screening");
   await context.close();
 });
 
@@ -244,8 +255,10 @@ test("move a candidate to the next stage: 1 key", async ({ browser }) => {
   // The board opens with the first candidate selected (Ana, who applied first).
   const budget = new Budget("move to next stage (key)", page);
   await budget.press("a");
-  await expect(card(page, candidates.ana.name)).toHaveAttribute("data-stage", "shortlist", { timeout: 10_000 });
+  await expect(card(page, candidates.ana)).toHaveAttribute("data-stage", "shortlist", { timeout: 10_000 });
   budget.done({ clicks: 0, keys: 1 }, "1 key");
+  // The shortlist reveals identity.
+  await expect(card(page, candidates.ana)).toContainText(candidates.ana.name, { timeout: 10_000 });
   await context.close();
 });
 
@@ -253,7 +266,7 @@ test("add a note to a candidate: 2 clicks", async ({ browser }) => {
   const { context, page } = await as(browser, "recruiter");
   await openBoard(page);
   const budget = new Budget("add a note", page);
-  await budget.click(card(page, candidates.ben.name).getByText(candidates.ben.name));
+  await budget.click(card(page, candidates.ben).getByText(shown(candidates.ben)));
   const box = page.getByRole("textbox", { name: "Note" });
   await expect(box).toBeVisible({ timeout: 15_000 });
   await budget.write(box, "Clear answers on the knockout questions. Worth a call.");
@@ -270,10 +283,12 @@ test("send a templated message (non-sensitive): 3 clicks", async ({ browser }) =
   await openBoard(page);
   await clearMailbox();
   const budget = new Budget("send a templated message", page);
-  await budget.click(card(page, candidates.cara.name).getByText(candidates.cara.name));
+  await budget.click(card(page, candidates.cara).getByText(shown(candidates.cara)));
   await budget.click(page.locator('[data-template="hire.candidate.status_update"]'));
   const preview = page.locator("[data-preview]");
-  await expect(preview).toContainText(`Hello ${candidates.cara.name},`, { timeout: 15_000 });
+  // Blind: the preview shows the label; the email itself carries the name.
+  await expect(preview).toContainText(`Hello ${candidates.cara.label},`, { timeout: 15_000 });
+  await expect(preview).not.toContainText(candidates.cara.name);
   await budget.click(page.getByRole("button", { name: "Send", exact: true }));
   await expect(page.getByText("Message sent")).toBeVisible();
   budget.done({ clicks: 3, keys: 0 }, "3 clicks");
@@ -288,7 +303,7 @@ test("draft a rejection into the approval queue: 1 key + 1 click", async ({ brow
   test.setTimeout(150_000);
   const { context, page } = await as(browser, "recruiter");
   await openBoard(page);
-  const dinaId = await card(page, candidates.dina.name).getAttribute("data-card");
+  const dinaId = await card(page, candidates.dina).getAttribute("data-card");
   expect(dinaId).toBeTruthy();
   // The candidate is open beside the board (the place a recruiter decides from).
   await openBoard(page, `?candidate=${dinaId}`);
