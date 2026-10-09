@@ -179,7 +179,8 @@ because the flows need the API, the worker and Postgres too. It is not part of C
    ```
 
    `PAIRLY_E2E_BASE_URL` points the suite at another address (it must be trusted, see
-   step 1); `PAIRLY_WEB_PORT` changes the default port. `PAIRLY_E2E_SCRATCH` sets where
+   step 1); `LOCAL_WEB_PORT` and `LOCAL_API_PORT` (or `PAIRLY_WEB_PORT` and
+   `PAIRLY_API_PORT`) change the ports, see "Other ports" below. `PAIRLY_E2E_SCRATCH` sets where
    screenshots, saved sessions and the findings (`findings/axe.ndjson`, `copy.ndjson`,
    `rtl.ndjson`) are written. Axe results are
    logged there rather than failing the run, so read `axe.ndjson` after each run.
@@ -198,6 +199,25 @@ alone (its own organisation, seeded with `make demo-expense`, recorded model mod
 
 If you point the suite at another host than the one in emailed links, set
 `PAIRLY_E2E_EMAILED_HOST` to the emailed host so links are rewritten to yours.
+
+### Other ports (a second worktree, a busy port)
+
+Export the ports once and use the same shell for the stack and the suite:
+
+```bash
+export LOCAL_PG_PORT=55471 LOCAL_VALKEY_PORT=56471 LOCAL_API_PORT=8471 LOCAL_WEB_PORT=3471
+make local-up
+pnpm --filter @pairly/web e2e e2e/tests/10-hire-pipeline-budgets.spec.ts
+make local-down
+```
+
+Ports set in the environment win over `.env`, and `scripts/local_lib.sh` derives from
+them the public API and web URLs, the auth issuer and audience, and the CORS origin.
+This matters because `make env` writes those URLs into `.env` with the default ports
+(`http://localhost:3100`, `:8000`): without the derivation a stack on other ports would
+sign tokens for, email links to and allow the default origin, and sign-in or API calls
+from the suite would fail. Set one of those URLs explicitly in the environment only if
+it must differ from `http://localhost:<port>`.
 
 Against the Docker Compose stack (`PROFILES="web scan" make docker-dev`) instead, set
 `PAIRLY_E2E_STACK=docker` (the `make` calls then run with `STACK=docker`) and

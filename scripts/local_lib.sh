@@ -14,7 +14,9 @@
 #
 # Settings (environment, all optional):
 #   LOCAL_PG_PORT (55432), LOCAL_VALKEY_PORT (56379), LOCAL_PG_BIN, LOCAL_VALKEY_BIN,
-#   PAIRLY_LOCAL_DIR (.local). Secrets and the rest come from the repo-root .env
+#   PAIRLY_LOCAL_DIR (.local), LOCAL_API_PORT / LOCAL_WEB_PORT (or PAIRLY_API_PORT /
+#   PAIRLY_WEB_PORT; 8000 and 3100): set in the environment, they also derive the public
+#   URLs, auth issuer and audience and CORS origin (see local_settings). Secrets and the rest come from the repo-root .env
 #   (`make env`); a variable already set in the environment wins over .env.
 
 LOCAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -69,11 +71,36 @@ local_db_url() { # role password database [scheme]
 }
 
 # Values derived once .env is loaded.
+#
+# Ports: LOCAL_API_PORT / LOCAL_WEB_PORT (or PAIRLY_API_PORT / PAIRLY_WEB_PORT) given in
+# the environment win over .env, and then also decide every URL that names them: the
+# public API and web URLs, the auth issuer and audience, and the CORS origin are derived
+# from them unless that URL itself is set in the environment. A generated .env (a
+# worktree's `make env`) pins those URLs to the default ports, so without this a stack
+# started on other ports (the e2e suite, a second worktree) would issue tokens for, link
+# to and allow the wrong origin.
 local_settings() {
+  local env_api="${LOCAL_API_PORT:-${PAIRLY_API_PORT:-}}"
+  local env_web="${LOCAL_WEB_PORT:-${PAIRLY_WEB_PORT:-}}"
+  local name explicit=" "
+  for name in PAIRLY_PUBLIC_API_URL PAIRLY_PUBLIC_WEB_URL PAIRLY_AUTH_ISSUER \
+    PAIRLY_AUTH_AUDIENCE PAIRLY_CORS_ORIGINS; do
+    if eval "[ -n \"\${$name:-}\" ]"; then explicit="$explicit$name "; fi
+  done
   local_load_dotenv
   POSTGRES_DB="${POSTGRES_DB:-pairly}"
-  LOCAL_API_PORT="${PAIRLY_API_PORT:-8000}"
-  LOCAL_WEB_PORT="${PAIRLY_WEB_PORT:-3100}"
+  LOCAL_API_PORT="${env_api:-${PAIRLY_API_PORT:-8000}}"
+  LOCAL_WEB_PORT="${env_web:-${PAIRLY_WEB_PORT:-3100}}"
+  if [ -n "$env_api" ] && [[ "$explicit" != *" PAIRLY_PUBLIC_API_URL "* ]]; then
+    PAIRLY_PUBLIC_API_URL="http://localhost:${LOCAL_API_PORT}"
+  fi
+  if [ -n "$env_web" ]; then
+    for name in PAIRLY_PUBLIC_WEB_URL PAIRLY_AUTH_ISSUER PAIRLY_AUTH_AUDIENCE PAIRLY_CORS_ORIGINS; do
+      if [[ "$explicit" != *" $name "* ]]; then
+        printf -v "$name" '%s' "http://localhost:${LOCAL_WEB_PORT}"
+      fi
+    done
+  fi
   PAIRLY_PUBLIC_API_URL="${PAIRLY_PUBLIC_API_URL:-http://localhost:${LOCAL_API_PORT}}"
   PAIRLY_PUBLIC_WEB_URL="${PAIRLY_PUBLIC_WEB_URL:-http://localhost:${LOCAL_WEB_PORT}}"
   # Tesseract may lack Arabic on a developer machine; OCR then runs in English only.

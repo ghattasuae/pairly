@@ -16,13 +16,14 @@ import {
 } from "@playwright/test";
 
 import { clearMailbox, extractLink, toReachableUrl, waitForMessageTo } from "../utils/mail";
+import { API_PORT } from "../utils/origin";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
 import { makeArgs, REPO_ROOT } from "../utils/stack";
 import { totpFresh } from "../utils/totp";
 
 // Click budgets of the Hire pipeline (brief 5.3, UX acceptance targets), on the seed
-// data, against the running native stack (`make local-up`; PAIRLY_WEB_PORT and
-// PAIRLY_API_PORT name its ports):
+// data, against the running native stack (`make local-up`; LOCAL_WEB_PORT and
+// LOCAL_API_PORT, or PAIRLY_WEB_PORT and PAIRLY_API_PORT, name its ports):
 //
 // | Task                                           | Budget            |
 // | Move a candidate to the next stage             | 1 click or 1 key  |
@@ -40,7 +41,7 @@ const RUN = Date.now().toString(36);
 const SLUG = `hb-${RUN}`;
 const ADMIN_EMAIL = `admin+${RUN}@test.example`;
 const JOB_SLUG = "senior-backend-engineer";
-const API = (process.env.PAIRLY_E2E_API_URL ?? `http://127.0.0.1:${process.env.PAIRLY_API_PORT ?? "8000"}`).replace(
+const API = (process.env.PAIRLY_E2E_API_URL ?? `http://127.0.0.1:${API_PORT}`).replace(
   /\/$/,
   "",
 );
