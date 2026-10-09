@@ -16,8 +16,9 @@ PDF, per character:
   Runs shorter than ``render_min_chars`` visible characters are ignored, so a stray
   thin glyph never raises a finding on its own.
 
-DOCX, per run: ``w:vanish`` / ``w:specVanish`` (hidden), white or near-white colour,
-a theme background colour, a tiny font.
+DOCX, per run: ``w:vanish`` / ``w:specVanish`` (hidden), a colour too close to the
+shading behind the run (``TextBlock.background``, white when nothing is painted), a
+theme background colour, a tiny font.
 
 ``RenderCheckDetector`` fails closed: a PDF page with text that the renderer did not
 check (page cap, time budget, too large, render error) raises, which records a
@@ -283,7 +284,9 @@ class HiddenTextDetector:
         for bi, block in enumerate(page.blocks):
             if not block.text.strip():
                 continue
-            background = WHITE
+            background = (
+                block.background if block.background and _is_hex(block.background) else WHITE
+            )
             if block.bbox is not None:
                 cx = (block.bbox.x0 + block.bbox.x1) / 2
                 cy = (block.bbox.top + block.bbox.bottom) / 2

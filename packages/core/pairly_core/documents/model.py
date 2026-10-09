@@ -96,6 +96,8 @@ class TextBlock(_Model):
     confidence: float | None = None
     # Index of the DOCX paragraph or OCR line the block belongs to.
     group: int | None = None
+    # DOCX: the shading painted behind the run (``#rrggbb``), None for the page itself.
+    background: str | None = None
 
 
 class Fill(_Model):

@@ -7,6 +7,10 @@ Every run becomes a ``TextBlock`` carrying its effective style: font name, size,
 (``w:vanish`` / ``w:specVanish``). Effective means direct formatting first, then the
 run's character style chain, then the paragraph style chain, then document defaults.
 
+Each run's ``TextBlock.background`` is the shading painted behind it (run, paragraph,
+table cell or table style, see ``docx_shading``), so the hidden-text check compares
+text colour with the real background instead of assuming a white page.
+
 Text that a reader may not see is kept and labelled by region: headers and footers
 (every section, first and even page variants), text boxes, tables, comments and
 footnotes. Core properties (``docProps/core.xml``), app properties and custom
@@ -30,6 +34,7 @@ from xml.etree.ElementTree import Element
 from defusedxml import DefusedXmlException
 from defusedxml import ElementTree as SafeET
 
+from pairly_core.documents.docx_shading import Shading
 from pairly_core.documents.model import (
     NormalizedDocument,
     Page,
@@ -178,7 +183,8 @@ def _run_style(run: Any, paragraph: Any, defaults: _Defaults) -> Style:
 
 class DocxParser:
     name = "docx"
-    version = "1"
+    # 2: TextBlock.background from run, paragraph, cell and table-style shading.
+    version = "2"
     media_types = frozenset({DOCX})
 
     def parse(self, path: Path, options: ParseOptions) -> NormalizedDocument:
@@ -194,13 +200,16 @@ class DocxParser:
             raise ParseError("corrupt", f"not a readable DOCX: {type(exc).__name__}") from None
         warnings: list[ParseWarning] = []
         defaults = _Defaults(document)
+        theme_part = _read_part(path, "word/theme/theme1.xml")
+        shading = Shading(document, _safe_xml(theme_part) if theme_part else None)
         blocks: list[TextBlock] = []
         tables: list[Table] = []
         lines: list[str] = []
         group = [0]
 
-        def add_paragraph(paragraph: Any, region: Region) -> None:
+        def add_paragraph(paragraph: Any, region: Region, behind: str | None = None) -> None:
             texts: list[str] = []
+            para_bg = shading.paragraph(paragraph) or behind
             for run in paragraph.runs:
                 if not run.text:
                     continue
@@ -211,6 +220,7 @@ class DocxParser:
                         source="docx",
                         region=region,
                         group=group[0],
+                        background=shading.run(run) or para_bg,
                     )
                 )
                 texts.append(run.text)
@@ -220,11 +230,13 @@ class DocxParser:
 
         def add_table(table: Any) -> None:
             rows: list[list[str | None]] = []
+            table_bg = shading.table(table)
             for row in table.rows:
                 rows.append([cell.text for cell in row.cells])
                 for cell in row.cells:
+                    cell_bg = shading.cell(cell) or table_bg
                     for paragraph in cell.paragraphs:
-                        add_paragraph(paragraph, "table")
+                        add_paragraph(paragraph, "table", cell_bg)
             tables.append(Table(rows=rows))
 
         for item in document.iter_inner_content():
