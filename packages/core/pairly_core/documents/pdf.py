@@ -7,6 +7,10 @@ rendering mode (3 = invisible) and an ``off_page`` flag; words (split where the 
 changes); lines as blocks with their dominant style; tables. Pages without a text
 layer but with images are rendered (pypdfium2, through pdfplumber) and OCR'd.
 
+Page text and lines come from ``documents.pdf_text`` (reading order across columns,
+Arabic presentation forms normalised and put back in logical order); every character
+keeps its box and records its offset in the page text.
+
 Per page, a renderer-based visibility check (``documents.render``): characters whose
 rendered pixels show no contrast (covered by a shape, clipped) carry
 ``Char.render_contrast``, and ``Page.render`` says whether the page was checked.
@@ -43,6 +47,7 @@ from pairly_core.documents.model import (
     TextBlock,
     Word,
 )
+from pairly_core.documents.pdf_text import lay_out
 from pairly_core.documents.registry import ParseError, ParseOptions
 from pairly_core.documents.render import PageRenderer
 from pairly_core.ingestion.sniff import PDF
@@ -195,7 +200,8 @@ def _fills(page: Any, warnings: list[ParseWarning], number: int) -> list[Fill]:
 class PdfParser:
     name = "pdf"
     # 2: renderer-based visibility check (Page.render, Char.render_contrast).
-    version = "2"
+    # 3: own reading order (columns, right-to-left text, Char.offset).
+    version = "3"
     media_types = frozenset({PDF})
 
     def parse(self, path: Path, options: ParseOptions) -> NormalizedDocument:
@@ -282,18 +288,20 @@ class PdfParser:
     ) -> Page:
         width, height = float(page.width), float(page.height)
         raw_chars: list[dict[str, Any]] = list(page.chars)
+        layout = lay_out(raw_chars, width)
         chars: list[Char] = []
-        for obj in raw_chars:
+        for i, obj in enumerate(raw_chars):
             if budget[0] <= 0:
                 budget[0] = -1
                 break
             box = _bbox(obj)
             chars.append(
                 Char(
-                    text=str(obj.get("text", "")),
+                    text=layout.glyphs[i],
                     bbox=box,
                     style=_style(obj),
                     off_page=box.outside(width, height),
+                    offset=layout.offsets[i],
                 )
             )
             budget[0] -= 1
@@ -315,13 +323,18 @@ class PdfParser:
             )
 
         blocks: list[TextBlock] = []
-        for index, line in enumerate(page.extract_text_lines(return_chars=True, strip=True)):
-            box = _bbox(line)
+        for index, (seg, start, end) in enumerate(layout.segments):
+            box = BBox(
+                x0=round(seg.x0, 3),
+                top=round(seg.top, 3),
+                x1=round(seg.x1, 3),
+                bottom=round(seg.bottom, 3),
+            )
             blocks.append(
                 TextBlock(
-                    text=str(line["text"]),
+                    text=layout.text[start:end],
                     bbox=box,
-                    style=_dominant(line.get("chars", [])),
+                    style=_dominant(raw_chars[i] for i in seg.chars),
                     source="pdf",
                     off_page=box.outside(width, height),
                     group=index,
@@ -340,7 +353,7 @@ class PdfParser:
             warnings.append(ParseWarning(code="table_error", message="tables skipped", page=number))
 
         fills = _fills(page, warnings, number)
-        text = page.extract_text() or ""
+        text = layout.text
         image_count = len(page.images)
         result = Page(
             number=number,

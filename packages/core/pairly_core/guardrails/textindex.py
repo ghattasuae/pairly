@@ -6,8 +6,11 @@
 its blocks in order (PDF and OCR: lines joined by newlines; DOCX: runs of a paragraph
 concatenated, paragraphs joined by newlines; comments and footnotes are not part of
 the text), so each block is found by a forward search from the end of the previous
-one. PDF characters are then aligned inside their line: the characters whose centre
-lies in the line's box, in reading order (x), matched one by one against the line text.
+one. PDF characters carry their offset in the page text (``Char.offset``, recorded by
+the parser, which also handles columns and right-to-left text); each is checked
+against the text before use. Without recorded offsets, characters are aligned inside
+their line: the characters whose centre lies in the line's box, in reading order (x),
+matched one by one against the line text.
 
 Anything that cannot be placed exactly gets ``None``. Callers fail closed on that: the
 hidden-text detector then removes the whole line, or every occurrence of the hidden
@@ -67,10 +70,36 @@ def _block_spans(page: Page, base: int) -> list[tuple[int, int] | None]:
     return spans
 
 
+def _recorded(
+    page: Page, spans: list[tuple[int, int] | None], text: str, base: int
+) -> tuple[list[int | None], list[int | None]] | None:
+    """Offsets the parser recorded (``Char.offset``), checked against the text."""
+    if not page.chars or all(ch.offset is None for ch in page.chars):
+        return None
+    starts = [(s[0], s[1], bi) for bi, s in enumerate(spans) if s is not None]
+    offsets: list[int | None] = [None] * len(page.chars)
+    owners: list[int | None] = [None] * len(page.chars)
+    for ci, ch in enumerate(page.chars):
+        if ch.offset is None or not ch.text:
+            continue
+        at = base + ch.offset
+        if not text.startswith(ch.text, at) or ch.offset + len(ch.text) > len(page.text):
+            continue  # fail closed: an offset that does not match is not used
+        offsets[ci] = at
+        for start, end, bi in starts:
+            if start <= at < end:
+                owners[ci] = bi
+                break
+    return offsets, owners
+
+
 def _align_chars(
-    page: Page, spans: list[tuple[int, int] | None], text: str
+    page: Page, spans: list[tuple[int, int] | None], text: str, base: int = 0
 ) -> tuple[list[int | None], list[int | None]]:
-    """Map PDF chars to offsets via the line (block) whose box holds their centre."""
+    """Map PDF chars to offsets: recorded ones, else via the line whose box holds them."""
+    recorded = _recorded(page, spans, text, base)
+    if recorded is not None:
+        return recorded
     offsets: list[int | None] = [None] * len(page.chars)
     owners: list[int | None] = [None] * len(page.chars)
     lines = [
@@ -121,7 +150,7 @@ def build_index(doc: NormalizedDocument) -> TextIndex:
     base = 0
     for page in doc.pages:
         spans = _block_spans(page, base)
-        offsets, owners = _align_chars(page, spans, text)
+        offsets, owners = _align_chars(page, spans, text, base)
         pages.append(
             PageIndex(
                 number=page.number,

@@ -66,6 +66,8 @@ class Char(_Model):
     bbox: BBox
     style: Style
     off_page: bool = False
+    # Offset of the character's text in ``Page.text`` (PDF, see ``documents.pdf_text``).
+    offset: int | None = None
     # Contrast between the darkest and lightest rendered pixels under the character
     # (WCAG ratio, 1.0 = one flat colour), kept only when low; see ``documents.render``.
     render_contrast: float | None = None

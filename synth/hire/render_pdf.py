@@ -217,7 +217,8 @@ class PdfCv:
 
     def _font(self, line: Line, text: str) -> tuple[str, float]:
         size, bold = _SIZES.get(line.kind, (self.style.body_size, False))
-        if has_rtl(text):
+        # Helvetica covers Latin-1 only: an Arabic comma alone needs the DejaVu font too.
+        if has_rtl(text) or any(ord(c) > 0xFF for c in text):
             return _arabic_font(), size
         return ("Helvetica-Bold" if bold else "Helvetica"), size
 

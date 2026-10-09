@@ -18,7 +18,8 @@ parsers the sandbox runs (in process, renderer check included), scans each with
   findings: reported apart, never counted as misses or false positives.
 * every false positive with its finding codes, so threshold decisions can be made.
 * label evidence validity: the share of rubric label evidence quotes found in the
-  parsed text, per format and layout (clean English CVs with a logical text layer).
+  parsed text, per format and layout (clean CVs in every
+  language; scans excluded).
 
 The optional model classifier is not run here (it needs a live model; the committed
 recordings are scripted test answers, not model output). Thresholds are not changed.
@@ -108,11 +109,7 @@ def run(count: int, seed: int, include_scans: bool) -> dict[str, Any]:
                     leaked=[p for p in attack.payloads if p and p in sanitized],
                 )
             rows.append(row)
-            if (
-                record.kind != "attack"
-                and record.language == "en"
-                and record.text_layer == "logical"
-            ):
+            if record.kind != "attack" and record.text_layer != "image":
                 text = doc.text
                 for labels in record.labels:
                     for crit in labels.criteria:
