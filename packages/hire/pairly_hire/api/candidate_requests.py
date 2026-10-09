@@ -21,7 +21,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, StringConstraints
 from sqlalchemy import case, select
 
@@ -30,15 +30,17 @@ from pairly_core.crypto.types import seal, unseal
 from pairly_core.errors import ConflictError, ForbiddenError, NotFoundError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_hire.api.common import web_url
 from pairly_hire.models import HireCandidate
 from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_CREATE, SETTINGS_MANAGE
-from pairly_hire.pipeline.records import hidden_identities, load_record
+from pairly_hire.pipeline.records import hidden_identities, load_record, organisation_name
 from pairly_hire.portal.models import (
     DataRequestStatus,
     DocumentRequestStatus,
     HireDataRequest,
     HireDocumentRequest,
 )
+from pairly_hire.portal.notices import notify_file_requested
 from pairly_hire.sealing import read_sealed
 
 router = APIRouter(tags=["hire"])
@@ -110,6 +112,7 @@ def _document_out(row: HireDocumentRequest, hidden: bool) -> HireDocumentRequest
 async def create_document_request(
     application_id: uuid.UUID,
     body: HireDocumentRequestIn,
+    request: Request,
     actor: CurrentActor,
     session: OrgSession,
 ) -> HireDocumentRequestOut:
@@ -138,6 +141,18 @@ async def create_document_request(
         entity_id=row.id,
         workflow=WORKFLOW,
         payload={"application_id": str(record.app.id)},
+    )
+    # The candidate hears of it by email, with the way into the portal.
+    await notify_file_requested(
+        session,
+        request_id=row.id,
+        email=record.email,
+        locale=record.candidate.locale,
+        org_name=await organisation_name(session, record.app.org_id),
+        job_title=(record.job.title_ar if record.candidate.locale == "ar" else "")
+        or record.job.title,
+        label=(body.label_ar if record.candidate.locale == "ar" else None) or body.label,
+        portal_url=f"{web_url(request)}/{record.candidate.locale}/portal/login",
     )
     hidden = record.app.id in await hidden_identities(session, [record.app])
     return _document_out(row, hidden)

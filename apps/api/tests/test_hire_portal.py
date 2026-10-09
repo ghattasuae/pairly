@@ -758,3 +758,105 @@ async def api_apply_same(
     listed = await api.call("GET", f"/v1/hire/applications?job_id={job['id']}", world, "recruiter")
     (found,) = [a for a in listed.json()["items"] if a["reference"] == reference]
     return str(found["id"]), email
+
+
+async def _notices(owner: AsyncEngine, world: HireWorld, template: str) -> list[Any]:
+    return await owner_rows(
+        owner,
+        world.org_id,
+        "SELECT recipient_user_id, channel, category, urgency, status, dedupe_key "
+        "FROM notifications WHERE org_id = :o AND template_key = :t ORDER BY created_at",
+        {"o": world.org_id, "t": template},
+    )
+
+
+async def test_notices_for_admins_recruiters_and_the_candidate(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine, tmp_path: Path
+) -> None:
+    """Data requests go to Hire admins (in the app and by email, urgent, with a deadline);
+    replies and files to the job's recruiter (digest-friendly updates); a file request is
+    emailed to the candidate. No notice names the candidate."""
+    api = hire_api
+    job = await open_job(api, world)
+    app_id, email = await _apply(api, world, job, "Dana Khalil")
+    admin = world.people["admin"][0]
+    recruiter = world.people["recruiter"][0]
+    db = create_sessionmaker(owner_engine)()
+    set_tenant(db, world.org_id, None)
+    async with db, db.begin():
+        stored = await record_decision(
+            db,
+            DecisionDraft(
+                kind=DecisionKind.SCORE,
+                workflow="hire",
+                entity_type="hire.application",
+                entity_id=app_id,
+                actor_type=ActorType.SYSTEM,
+                actor_id="test.screening",
+                output={"overall": 60.0},
+                confidence=0.9,
+            ),
+        )
+    session = await _signed_in(api, world, email, tmp_path)
+
+    # A file request: the candidate is emailed, with the way into the portal.
+    asked = await api.call(
+        "POST",
+        f"/v1/hire/pipeline/applications/{app_id}/document-requests",
+        world,
+        "recruiter",
+        json={"label": "Portfolio"},
+    )
+    assert asked.status_code == 201, asked.text
+    mails = await deliver(api, world, tmp_path / "files")
+    (mail,) = [m for m in mails if email in m["to"] and "asked you for a file" in m["subject"]]
+    assert "Portfolio" in mail["subject"]
+    assert "/en/portal/login" in mail["text"]
+
+    # Deletion, human review and export: urgent notices to each Hire admin.
+    assert (
+        await api.client.post("/v1/hire/portal/privacy/deletion-request", json={}, headers=session)
+    ).status_code == 201
+    assert (
+        await api.client.post(
+            "/v1/hire/portal/privacy/appeals",
+            json={"decision_id": stored.id, "reason": "Please have a person look again."},
+            headers=session,
+        )
+    ).status_code == 201
+    assert (
+        await api.client.get("/v1/hire/portal/privacy/export", headers=session)
+    ).status_code == 200
+    rows = await _notices(owner_engine, world, "hire.portal.data_request")
+    assert {r.recipient_user_id for r in rows} == {admin}
+    assert {r.channel for r in rows} == {"in_app", "email"}
+    assert {r.category for r in rows} == {"data_requests"}
+    assert {r.urgency for r in rows} == {"urgent"}
+    kinds = sorted({r.dedupe_key.split(":")[1] for r in rows})
+    assert kinds == ["deletion", "export", "human_review"]
+    assert len(rows) == 6
+
+    # A reply and an uploaded file: the job's recruiter (who also asked for the file).
+    replied = await api.client.post(
+        f"/v1/hire/portal/applications/{app_id}/messages",
+        json={"text": "Thank you, happy to talk."},
+        headers=session,
+    )
+    assert replied.status_code in (200, 201), replied.text
+    uploaded = await api.client.post(
+        f"/v1/hire/portal/document-requests/{asked.json()['id']}/file",
+        files={"file": ("portfolio.pdf", cv_pdf("portfolio"), "application/pdf")},
+        headers=session,
+    )
+    assert uploaded.status_code in (200, 201), uploaded.text
+    rows = await _notices(owner_engine, world, "hire.portal.candidate_activity")
+    assert {r.recipient_user_id for r in rows} == {recruiter}
+    assert {r.category for r in rows} == {"updates"}
+    assert sorted({r.dedupe_key.split(":")[1] for r in rows}) == ["file", "reply"]
+
+    # Nothing names the candidate: the in-app items and emails to staff.
+    mails = await deliver(api, world, tmp_path / "staff")
+    staff = [m for m in mails if email not in m["to"]]
+    assert staff
+    for m in staff:
+        assert "Dana" not in m["subject"] + m["text"]

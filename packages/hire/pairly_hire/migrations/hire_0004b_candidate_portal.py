@@ -37,7 +37,9 @@ for them. ``hire_stage_moves.actor_type`` now accepts ``candidate`` (a withdrawa
 the portal).
 
 System templates: ``hire.portal.login_link`` and ``hire.application.withdrawn`` (email,
-English and Arabic, ``candidate_comms``), version 1 shared rows, skipped when present.
+English and Arabic, ``candidate_comms``) and the portal notices of
+``pairly_hire.portal.notices`` (data requests, candidate activity, file requests),
+version 1 shared rows, skipped when present.
 
 Revision ID: hire_0004b
 Revises: hire_0004a
@@ -329,6 +331,7 @@ def _seed_templates() -> None:
         lint_source,
         parse_declarations,
     )
+    from pairly_hire.portal.notices import NOTICE_TEMPLATES
     from pairly_hire.portal.templates import PORTAL_TEMPLATES
 
     bind = op.get_bind()
@@ -344,7 +347,7 @@ def _seed_templates() -> None:
         "AND key = CAST(:key AS text) AND channel = CAST(:channel AS text) "
         "AND locale = CAST(:locale AS text) AND version = 1)"
     )
-    for t in PORTAL_TEMPLATES:
+    for t in (*PORTAL_TEMPLATES, *NOTICE_TEMPLATES):
         specs = parse_declarations(t.variables)
         source = TemplateSource(t.channel, t.locale, t.subject, t.body, t.body_html, specs)  # type: ignore[arg-type]
         if any(i.severity == "error" for i in lint_source(source)):

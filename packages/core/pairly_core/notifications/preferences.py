@@ -63,6 +63,11 @@ CATEGORIES: Final[Mapping[str, CategoryPolicy]] = {
     "receipts": CategoryPolicy(True, frozenset({"email"}), configurable=False),
     "candidate_comms": CategoryPolicy(True, frozenset({"email"}), configurable=False),
     "vendor_comms": CategoryPolicy(True, frozenset({"email"}), configurable=False),
+    # A person's request about their own data (export, deletion, human review): admins
+    # must act within a legal deadline, so always urgent and never switched off.
+    "data_requests": CategoryPolicy(
+        True, frozenset({"email", "in_app"}), always_urgent=True, configurable=False
+    ),
 }
 DEFAULT_POLICY: Final = CategoryPolicy(False, frozenset({"email", "in_app"}))
 

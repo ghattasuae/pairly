@@ -13,7 +13,7 @@
 The separation is enforced, not promised: ``pairly_hire.scoring`` may not import this
 package; the pipeline, messaging and scheduling may not import its table or the subject
 export; the portal reaches the table only through ``export`` (import-linter contracts in
-the root ``pyproject.toml`` and ``tests/test_selfid_isolation.py``), the application answers that scoring reads never
-hold these values (they go straight to this table), and the routes that show an
-application never read it.
+the root ``pyproject.toml`` and ``tests/test_selfid_isolation.py``), the application
+answers that scoring reads never hold these values (they go straight to this table),
+and the routes that show an application never read it.
 """

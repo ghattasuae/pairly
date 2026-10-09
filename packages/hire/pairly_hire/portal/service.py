@@ -69,6 +69,7 @@ from pairly_hire.models import (
 from pairly_hire.pipeline import moves
 from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.pipeline.stages import stages_for_jobs
+from pairly_hire.portal import notices
 from pairly_hire.portal.auth import PortalIdentity
 from pairly_hire.portal.models import (
     DataRequestKind,
@@ -132,6 +133,36 @@ async def candidate_row(session: AsyncSession, identity: PortalIdentity) -> Hire
     if row is None:
         raise NotFoundError("not found")
     return row
+
+
+async def _latest_reference(session: AsyncSession, identity: PortalIdentity) -> str:
+    apps = await own_applications(session, identity)
+    latest = max(apps, key=lambda a: a.created_at, default=None)
+    return latest.reference if latest is not None else "-"
+
+
+async def _tell_recruiters(
+    session: AsyncSession,
+    app: HireApplication,
+    *,
+    activity: str,
+    event_id: uuid.UUID,
+    also: uuid.UUID | None = None,
+) -> None:
+    job = await session.scalar(select(HireJob).where(HireJob.id == app.job_id))
+    recruiters = {u for u in (job.created_by if job else None, also) if u is not None}
+    if not recruiters or job is None:
+        return
+    await notices.notify_recruiters(
+        session,
+        recruiters=recruiters,
+        activity=activity,
+        event_id=str(event_id),
+        # Blind-safe: the reference, never the name.
+        label=f"Candidate {app.reference}",
+        job_title=job.title,
+        link=f"/hire/jobs/{job.id}/pipeline?candidate={app.id}",
+    )
 
 
 async def own_applications(
@@ -336,7 +367,7 @@ async def messages(
 async def reply(
     session: AsyncSession, identity: PortalIdentity, application_id: uuid.UUID, text: str
 ) -> PortalMessage:
-    await own_application(session, identity, application_id)
+    app = await own_application(session, identity, application_id)
     message = await record_reply(
         session,
         application_id,
@@ -344,6 +375,7 @@ async def reply(
         actor_id=identity.actor_id,
         actor_type=ActorType.CANDIDATE,
     )
+    await _tell_recruiters(session, app, activity="reply", event_id=message.id)
     shown = _portal_message(message)
     if shown is None:  # pragma: no cover - a reply always has its text
         raise BadRequestError("the reply could not be stored")
@@ -462,6 +494,7 @@ async def attach_requested(
         entity_id=row.id,
         payload={"application_id": str(app.id), "document_id": str(document.id)},
     )
+    await _tell_recruiters(session, app, activity="file", event_id=row.id, also=row.requested_by)
     return row
 
 
@@ -642,7 +675,7 @@ async def appeal(
     )
     if existing is not None:
         raise ConflictError("you already asked for a review of this step")
-    return await create_appeal(
+    view = await create_appeal(
         session,
         identity.actor(),
         decision_id=row.id,
@@ -650,6 +683,13 @@ async def appeal(
         requester_id=requester_id(identity),
         reason=reason,
     )
+    await notices.notify_data_request(
+        session,
+        kind="human_review",
+        request_id=str(view.id),
+        reference=await _latest_reference(session, identity),
+    )
+    return view
 
 
 async def appeals(session: AsyncSession, identity: PortalIdentity) -> list[AppealView]:
@@ -699,6 +739,12 @@ async def request_deletion(
         entity_type="hire.data_request",
         entity_id=row.id,
         payload={"kind": row.kind, "with_note": cleaned is not None},
+    )
+    await notices.notify_data_request(
+        session,
+        kind="deletion",
+        request_id=str(row.id),
+        reference=await _latest_reference(session, identity),
     )
     return row, True
 
@@ -816,5 +862,12 @@ async def export_data(session: AsyncSession, identity: PortalIdentity) -> dict[s
         entity_type="hire.candidate",
         entity_id=identity.candidate_id,
         payload={"applications": len(out_apps)},
+    )
+    # Already delivered, but admins still hear of it (once a day per candidate).
+    await notices.notify_data_request(
+        session,
+        kind="export",
+        request_id=f"{identity.candidate_id}:{datetime.now(UTC).date().isoformat()}",
+        reference=await _latest_reference(session, identity),
     )
     return data
