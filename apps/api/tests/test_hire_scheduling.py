@@ -31,11 +31,12 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from pairly_core.db import create_sessionmaker, set_tenant
+from pairly_core.db import create_sessionmaker, set_portal_subject, set_tenant
 from pairly_core.integrations.slack.transport import FakeSlackTransport
 from pairly_core.notifications.delivery import Transports, deliver_org
 from pairly_core.notifications.outbox import OutboxTransport
 from pairly_core.scheduling.ics import read_ics
+from pairly_hire.portal.auth import portal_subject
 from pairly_hire.scheduling import providers
 from pairly_hire.scheduling.emails import SchedulingEnv
 from pairly_hire.scheduling.reminders import send_due_reminders
@@ -842,7 +843,7 @@ async def test_tenant_isolation_of_every_scheduling_table(
 ) -> None:
     api = hire_api
     job = await open_job(api, world)
-    ids = await applicants(api, world, job, ["Iso Late"])
+    ids = await applicants(api, world, job, ["Iso Late", "Not Booked"])
     panel = [uid(world, "recruiter")]
     found = await slots(api, world, ids["Iso Late"], panel)
     booked = await book(api, world, ids["Iso Late"], panel, found["slots"][0]["start"])
@@ -917,3 +918,40 @@ async def test_tenant_isolation_of_every_scheduling_table(
     with pytest.raises(Exception, match="permission denied"):
         async with session, session.begin():
             await session.execute(text("DELETE FROM hire_interviews"))
+
+    # The portal's restrictive layer (hire_0004b, extended by hire_0005): a candidate's
+    # portal session sees only their own interview and its panel rows, and nothing of
+    # the team's settings, calendars or connections; another candidate sees nothing.
+    session = maker()
+    set_tenant(session, world.org_id, None)
+    async with session, session.begin():
+        candidates = {
+            name: (
+                await session.execute(
+                    text("SELECT candidate_id FROM hire_applications WHERE id = :a"),
+                    {"a": ids[name]},
+                )
+            ).scalar_one()
+            for name in ("Iso Late", "Not Booked")
+        }
+    expected = {
+        "Iso Late": {"hire_interviews": 1, "hire_interview_panelists": 1},
+        "Not Booked": {"hire_interviews": 0, "hire_interview_panelists": 0},
+    }
+    for name, candidate_id in candidates.items():
+        session = maker()
+        set_tenant(session, world.org_id, None)
+        set_portal_subject(session, portal_subject(candidate_id))
+        async with session, session.begin():
+            for table in NEW_TABLES:
+                seen = await session.execute(text(f"SELECT count(*) FROM {table}"))  # noqa: S608
+                assert seen.scalar_one() == expected[name].get(table, 0), (name, table)
+    session = maker()
+    set_tenant(session, world.org_id, None)
+    set_portal_subject(session, portal_subject(candidates["Iso Late"]))
+    with pytest.raises(Exception, match="row-level security"):
+        async with session, session.begin():
+            await session.execute(
+                text("INSERT INTO hire_scheduling_settings (org_id) VALUES (:o)"),
+                {"o": world.org_id},
+            )

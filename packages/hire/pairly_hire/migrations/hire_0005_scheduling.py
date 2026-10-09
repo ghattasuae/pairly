@@ -8,6 +8,11 @@ SELECT, INSERT and UPDATE and never DELETE): ``hire_scheduling_settings``,
 ``hire_calendar_blocks``, ``hire_calendar_connections``
 (``pairly_hire.scheduling.models``).
 
+Under a candidate's portal subject (hire_0004b) the restrictive layer applies here too:
+``hire_interviews`` shows only that candidate's rows, ``hire_interview_panelists`` only
+the panels of those interviews, and the settings, calendar blocks and calendar
+connections show nothing.
+
 Children point at their parents by ``(org_id, id)``, so no row can reference another
 organisation's.
 
@@ -37,6 +42,12 @@ depends_on: str | Sequence[str] | None = None
 _SYSTEM_ACTOR = "pairly.migrations.hire_0005"
 _RW = "SELECT, INSERT, UPDATE"
 _STAGE_KEY = "'^[a-z][a-z0-9_]{0,31}$'"
+_PORTAL_HIDDEN = (
+    "hire_scheduling_settings",
+    "hire_interviewer_settings",
+    "hire_calendar_blocks",
+    "hire_calendar_connections",
+)
 _STATUSES = "'proposed', 'booked', 'rescheduled', 'cancelled', 'completed', 'no_show'"
 
 
@@ -293,7 +304,36 @@ def upgrade() -> None:
     )
     _finish(t)
 
+    _portal_policies()
     _seed_templates()
+
+
+def _portal_policies() -> None:
+    """The restrictive portal layer of hire_0004b for the scheduling tables.
+
+    A candidate's portal session (``app.portal_subject``) sees only that candidate's
+    interviews and their panel rows (the portal shows a panel size, never who), and
+    nothing of the hiring team's settings, calendars or calendar connections. Staff,
+    agents and jobs never set a portal subject, so nothing changes for them.
+    """
+    own = "NOT hire_portal_active() OR candidate_id = hire_portal_candidate()"
+    op.execute(
+        "CREATE POLICY hire_interviews_portal_subject ON hire_interviews AS RESTRICTIVE "
+        f"USING ({own}) WITH CHECK ({own})"
+    )
+    panel = (
+        "NOT hire_portal_active() OR interview_id IN (SELECT i.id FROM hire_interviews i "
+        "WHERE i.candidate_id = hire_portal_candidate())"
+    )
+    op.execute(
+        "CREATE POLICY hire_interview_panelists_portal_subject ON hire_interview_panelists "
+        f"AS RESTRICTIVE USING ({panel}) WITH CHECK ({panel})"
+    )
+    for table in _PORTAL_HIDDEN:
+        op.execute(
+            f"CREATE POLICY {table}_portal_subject ON {table} AS RESTRICTIVE "
+            "USING (NOT hire_portal_active()) WITH CHECK (NOT hire_portal_active())"
+        )
 
 
 def _seed_templates() -> None:
