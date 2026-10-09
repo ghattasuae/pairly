@@ -64,6 +64,7 @@ from pairly_core.decisions.service import (
 )
 from pairly_core.errors import NotFoundError
 from pairly_core.policy_versions import PolicyError, get_policy
+from pairly_hire.reveal import revealed_ids
 from pairly_hire.rubric import POLICY_KIND, Rubric, parse_rubric
 from pairly_hire.scoring.aggregate import overall_score
 from pairly_hire.scoring.model import CvScoreOutput
@@ -126,16 +127,18 @@ def touch(row: HireScreening) -> None:
 
 
 async def is_blind(session: AsyncSession, application_id: uuid.UUID) -> bool:
-    """Whether reviewers must not see the candidate's name and contact details yet:
-    the latest screening is blind (or none exists yet and blind mode is on). For the
-    routes that show an application (pipeline, profile)."""
+    """Whether reviewers must not see the candidate's name and contact details now
+    (``blind_application_ids`` for one application)."""
     return application_id in await blind_application_ids(session, [application_id])
 
 
 async def blind_application_ids(
     session: AsyncSession, application_ids: Sequence[uuid.UUID]
 ) -> set[uuid.UUID]:
-    """``is_blind`` for many applications in one query: the ids that are blind."""
+    """The ids that are blind for reviewers now, in two queries: blind mode applies (the
+    latest screening ran blind, or there is none yet and the organisation's blind mode
+    is on) and the application's one reveal state is not set (``pairly_hire.reveal``:
+    the shortlist approval or a move into a stage that reveals identity)."""
     ids = list(dict.fromkeys(application_ids))
     if not ids:
         return set()
@@ -149,7 +152,10 @@ async def blind_application_ids(
     unscreened = (
         (await screening_settings(session)).blind.enabled if len(latest) < len(ids) else False
     )
-    return {i for i in ids if latest.get(i, unscreened)}
+    applies = [i for i in ids if latest.get(i, unscreened)]
+    if not applies:
+        return set()
+    return set(applies) - await revealed_ids(session, applies)
 
 
 # ------------------------------------------------------------------ settings

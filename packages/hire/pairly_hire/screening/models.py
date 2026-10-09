@@ -6,7 +6,9 @@
   ids, statuses, digests, offsets and the overall score; everything read from the CV
   (the guardrail report with its evidence text, the parsed profile, the criterion
   scores with their quotes and "why not higher", the knockout answers, the flags) is
-  in ``details``, encrypted. ``blind`` is true until a person shortlists the candidate.
+  in ``details``, encrypted. ``blind`` says whether the screening ran blind (what the
+  scoring model read); whether reviewers may see who the candidate is now is the
+  application's one reveal state (``pairly_hire.reveal``).
 * ``hire_screening_settings``: per organisation: blind mode, whether university names
   are hidden, the gap a claim check calls unexplained, and the whole-document injection
   classifier mode (Hire default ``always``).
@@ -123,7 +125,7 @@ class HireScreening(Base, OrgScoped):
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, default=ScreeningStatus.PROCESSING.value
     )
-    # Hidden from scoring and reviewers until a person shortlists (brief 3.3.3).
+    # The screening ran blind (brief 3.3.3); reviewers' view: ``pairly_hire.reveal``.
     blind: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     blind_config: Mapped[dict[str, Any]] = _jsonb("'{}'::jsonb")
     review_reasons: Mapped[list[str]] = _jsonb()

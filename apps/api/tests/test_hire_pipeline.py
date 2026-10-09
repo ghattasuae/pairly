@@ -275,6 +275,8 @@ async def test_undo_reverts_the_same_persons_recent_move(
     )
     assert [a.action for a in actions if a.action.startswith("hire.candidate.")] == [
         "hire.candidate.moved",
+        # The shortlist reveals identity (the one reveal state); the undo keeps it.
+        "hire.candidate.identity_revealed",
         "hire.candidate.move_undone",
         "hire.candidate.moved",
     ]

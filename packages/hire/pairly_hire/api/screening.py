@@ -8,8 +8,9 @@
   each criterion's score, confidence, evidence quotes with their location in the CV,
   "why not higher" and flags, the guardrail findings with a one-sentence explanation,
   claim and AI-generated flags (information only), knockouts with suggested actions,
-  review reasons, overrides and decision record ids. While the screening is blind the
-  response holds no name, contact details or CV file id: ``text`` is the CV with the
+  review reasons, overrides and decision record ids. While the application is blind
+  (the screening ran blind and its one reveal state, ``pairly_hire.reveal``, is not
+  set) the response holds no name, contact details or CV file id: ``text`` is the CV with the
   blind spans replaced (``[name]``, ``[university]``...), every evidence item carries
   its offsets in that text too, and guardrail evidence is redacted the same way.
 * ``POST /v1/hire/applications/{id}/screening/overrides`` (``hire.screening.override``,
@@ -317,7 +318,9 @@ async def screening_view(
         enabled=bool(row.blind_config.get("enabled", True)),
         universities=bool(row.blind_config.get("universities", True)),
     )
-    blind = row.blind
+    # The one reveal state (``pairly_hire.reveal``): blind while the screening ran blind
+    # and nobody revealed the application yet (shortlist approval or a revealing stage).
+    blind = row.blind and app.identity_revealed_at is None
     sources = _sources(app, details)
     original = await _original_text(request, session, row)
     shown: DisplayText | None = None

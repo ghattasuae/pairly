@@ -7,6 +7,8 @@
 * a person only (``hire.candidate.decide``, a second factor sign-in), never an agent;
 * one row in ``hire_stage_moves`` and one audit event (``hire.candidate.moved``) per
   move, in the same transaction;
+* a move into a stage that reveals identity sets the application's one reveal state
+  (``pairly_hire.reveal``, audited); an undo never clears it;
 * the application's status follows the outcome stages: ``rejected`` (with
   ``rejected_at`` and the retention date of ``pairly_hire.retention``), ``withdrawn``,
   and back to ``received`` when it leaves them;
@@ -51,6 +53,7 @@ from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.pipeline.records import AppRecord, ensure_entry, load_record
 from pairly_hire.pipeline.stages import REJECTED, WITHDRAWN, Stage
 from pairly_hire.retention import retention_until
+from pairly_hire.reveal import reveal_identity, stage_source
 
 WORKFLOW: Final = "hire"
 ENTITY: Final = "hire.application"
@@ -108,7 +111,6 @@ async def _record_move(
     entry = await ensure_entry(session, record)
     entry.stage_key = to.key
     entry.stage_entered_at = now
-    entry.revealed = entry.revealed or to.reveal_identity
     entry.updated_at = now
     months = (await org_settings(session)).rejected_retention_months
     _apply_status(record.app, to, now, months)
@@ -150,6 +152,16 @@ async def _record_move(
             "with_reason": bool(reason),
         },
     )
+    if to.reveal_identity:
+        # The one reveal state (pairly_hire.reveal), set once. An undo never hides it.
+        await reveal_identity(
+            session,
+            record.app,
+            source=stage_source(to.key),
+            actor_type=kind,
+            actor_id=actor_id,
+            payload={"move_id": str(move.id)},
+        )
     return move
 
 
