@@ -39,3 +39,16 @@ Dataset: `synth.hire`, 300 CVs, seed 2026; 348 documents screened (scans skipped
 
 Per-field extraction ceilings, per-category redaction rates, claim-check rates on clean CVs and stage timings are in `evals/results/hire.json`.
 <!-- END hire -->
+
+### Blind redaction gate
+
+`hire.blind.regular_cvs_with_profile` (min 1.0) is the blind redaction gate. The
+screening graph parses the CV into a profile before it blinds the text, so the
+production path always redacts with the parsed profile as well as the application
+form's contact details. `hire.blind.regular_cvs_form_only` (0.9832 in this run) measures
+redaction with the form's contact details and the patterns only, which is not how
+screening runs: it is listed as informational and does not gate. The misses are names
+written in another script (bilingual CVs), which only the parsed profile knows. When a
+parse is missing, the screening is flagged `blind_without_profile` and goes to a
+person. No other threshold changed.
+

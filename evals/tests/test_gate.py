@@ -154,3 +154,30 @@ def test_report_section_is_replaced_in_place(tmp_path: Path) -> None:
     assert "Other runner's text." in text
     assert "| Rubric scoring agreement with labels | pending live run |" in text
     assert "| Evidence quotes checked | 10 |" in text
+
+
+def test_informational_metrics_are_listed_not_gating(tmp_path: Path) -> None:
+    statuses = _statuses(
+        tmp_path,
+        [
+            {"id": "i", "file": "r.json", "path": "i", "informational": True, "why": "context"},
+            {"id": "gone", "file": "r.json", "path": "nope", "informational": True, "why": "x"},
+        ],
+        {"r.json": {"i": 0.5}},
+    )
+    # A low value never fails an informational metric; a missing one still fails closed.
+    assert statuses == {"i": "INFO", "gone": "FAIL"}
+    for bad in (
+        {"id": "b", "file": "r.json", "path": "i", "informational": True, "min": 1.0, "why": "x"},
+        {"id": "b", "file": "r.json", "path": "i", "informational": True},
+        {"id": "b", "file": "r.json", "path": "i", "informational": False, "why": "x"},
+    ):
+        with pytest.raises(ThresholdsError):
+            load_thresholds(_write(tmp_path, [bad], {}))
+
+
+def test_blind_gate_is_the_parsed_profile_path() -> None:
+    by_id = {m["id"]: m for m in load_thresholds(THRESHOLDS)}
+    assert by_id["hire.blind.regular_cvs_with_profile"]["min"] == 1.0
+    assert by_id["hire.blind.regular_cvs_form_only"].get("informational") is True
+    assert by_id["hire.blind.fairness_cvs_form_only"]["min"] == 1.0

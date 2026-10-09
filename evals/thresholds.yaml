@@ -64,14 +64,19 @@ metrics:
     file: hire.json
     path: fairness.blind_marker_removal.with_parsed_profile.regular_cvs.rate
     min: 1.0
-    why: With a correct CV parse, every protected marker of every CV is hidden.
+    why: >-
+      The production path: the screening graph blinds with the parsed CV profile
+      (parse_cv runs before blind), so every protected marker of every CV is hidden
+      from the scoring model. This is the blind redaction gate.
   - id: hire.blind.regular_cvs_form_only
     file: hire.json
     path: fairness.blind_marker_removal.form_contact_only.regular_cvs.rate
-    min: 0.98
+    informational: true
     why: >-
-      Without a parsed profile only the form's contact details and the patterns are
-      used; a name in another script (bilingual CVs) needs the parsed profile.
+      Not the production path: redaction with only the form's contact details and the
+      patterns. Listed to show what the parsed profile adds (a name in another script,
+      as in bilingual CVs, needs it). A screening that blinds without a profile is
+      flagged blind_without_profile and goes to a person.
   - id: hire.fairness.identical_input
     file: hire.json
     path: fairness.blinded_input_identical_rate

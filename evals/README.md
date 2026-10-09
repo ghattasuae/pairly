@@ -13,11 +13,13 @@ uv run python -m evals.gate        # exit 1 when a measured metric misses its th
 - `thresholds.yaml`: one entry per gated metric (result file, path, `min`, `max` or
   `equals`, and why). Initial values; ask before lowering any of them.
 - `gate.py`: reads the thresholds and the result files. `PASS`, `FAIL` (outside the
-  threshold, missing, not a number, or measured with no threshold yet) or `PENDING`
-  (`{"status": "pending_live_run"}`: needs a real model; listed, not gating).
+  threshold, missing, not a number, or measured with no threshold yet), `PENDING`
+  (`{"status": "pending_live_run"}`: needs a real model; listed, not gating) or `INFO`
+  (`informational: true` with a `why`: listed for context, never gating, still fails
+  when missing).
 - `results/`: the latest result of each runner (JSON).
-- `report.md`: generated sections, one per runner. Numbers quoted anywhere must come
-  from here, never be written by hand.
+- `report.md`: generated sections, one per runner, and notes on the gate after them.
+  Numbers quoted anywhere must come from here, never be written by hand.
 
 The CI `evals` job runs `make evals` on every pull request and is part of `ci-ok`.
 
