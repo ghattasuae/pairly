@@ -926,6 +926,7 @@ function QueueRow({
       className={cn("flex items-start gap-2 px-3 py-2", current && "bg-accent")}
       data-queue-item={entry.application_id}
       data-stage={entry.stage_key}
+      data-screening-status={entry.screening_status ?? "none"}
       aria-current={current ? "true" : undefined}
     >
       <Checkbox
