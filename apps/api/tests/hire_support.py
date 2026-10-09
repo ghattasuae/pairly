@@ -183,6 +183,7 @@ class HireApi:
         notice_version: str | None = None,
         locale: str = "en",
         ip: str = "198.51.100.7",
+        referral: str | None = None,
     ) -> httpx.Response:
         from pairly_hire.notice import CURRENT_VERSION
 
@@ -201,6 +202,8 @@ class HireApi:
             "self_identification": self_id or {},
             "turnstile_token": turnstile,
         }
+        if referral is not None:
+            body["referral"] = referral
         return await self.client.post(
             f"/v1/hire/public/careers/{world.slug}/jobs/{job_slug}/applications",
             json=body,

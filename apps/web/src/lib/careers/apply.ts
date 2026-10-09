@@ -55,6 +55,14 @@ export interface ApplyBody {
   knockouts: Record<string, "yes" | "no">;
   self_identification: Record<string, string>;
   turnstile_token: string;
+  /** An employee's referral token (`?ref=` of the job page), if the visitor came by one. */
+  referral?: string;
+}
+
+const REFERRAL = /^rf1\.[0-9a-f]{32}\.[0-9a-f]{32}\.[A-Za-z0-9_-]{43}$/;
+
+export function isReferralToken(value: unknown): value is string {
+  return typeof value === "string" && REFERRAL.test(value);
 }
 
 function text(value: unknown, max: number): string | null {
@@ -121,6 +129,7 @@ export function parseApplyBody(raw: unknown): ApplyBody | null {
     knockouts: knockouts as Record<string, "yes" | "no">,
     self_identification: selfId,
     turnstile_token: token,
+    ...(isReferralToken(body.referral) ? { referral: body.referral } : {}),
   };
 }
 

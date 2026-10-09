@@ -97,7 +97,8 @@ def test_agent_only_reads_and_proposes() -> None:
 
 def test_employee_only_holds_submit_type_actions() -> None:
     held = {p for p in REGISTRY.permissions_for_role("employee") if p.startswith("hire.")}
-    assert held == {P.JOB_READ}
+    # Open jobs, and their own referral links with the stage of the people they referred.
+    assert held == {P.JOB_READ, P.REFERRAL_CREATE, P.REFERRAL_READ}
 
 
 def test_lock_and_publish_need_a_second_factor() -> None:

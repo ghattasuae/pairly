@@ -128,6 +128,8 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         RETENTION_JOB,
         "expense_stuck_note_sweep",
         "hire_screening_start",
+        "hire_sla_drafts",
+        "hire_rediscovery_index",
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
@@ -141,6 +143,9 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     # Hire: start pending screenings every minute, one at a time.
     screening = jobs["hire_screening_start"]
     assert (screening.minute, screening.unique) == (set(range(60)), True)
+    # Hire: anti-ghosting drafts and the rediscovery index, every 15 minutes.
+    for name in ("hire_sla_drafts", "hire_rediscovery_index"):
+        assert (jobs[name].minute, jobs[name].unique) == ({0, 15, 30, 45}, True)
     # Each cron coroutine is wrapped to record its runs in job_runs.
     assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
     # The retention dry run is daily at 02:15 UTC, one at a time.

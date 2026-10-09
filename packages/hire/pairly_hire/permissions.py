@@ -11,8 +11,18 @@ Who does what by default:
   (``pairly_core.rbac.STEP_UP_ACTIONS``): a locked rubric is what candidates are later
   measured against, and a published job is visible to everyone.
 * Interviewers read jobs, rubrics and the candidates they meet.
-* Employees read the organisation's open jobs (referrals come later). They hold
-  nothing else, and never see drafts (``SEES_DRAFTS``).
+* Employees read the organisation's open jobs and make referral links for them
+  (``hire.referral.create``); they see only the stage of the people they referred
+  (``hire.referral.read``), never scores or notes. They hold nothing else, and never
+  see drafts (``SEES_DRAFTS``).
+* Moving a candidate between pipeline stages is a decision about them
+  (``hire.candidate.decide``, second factor). Notes and tags (``hire.note.write``) are
+  for the whole hiring team. Customising a job's stages is ``hire.pipeline.write``.
+* Messages to candidates: the hiring team drafts them, asks the AI for a personal
+  paragraph, sends non-sensitive ones and submits sensitive ones (rejections, offers)
+  for approval (``hire.message.create``). Approving a sensitive message is
+  ``hire.message.approve`` (second factor); the person who submitted it can never
+  approve it (segregation of duties in the approval engine).
 * Self-identification answers (``hire.selfid.read``) are for bias reporting only:
   admins and auditors, never the people who decide on candidates, and never the agent.
 * The agent role only reads and proposes.
@@ -42,6 +52,12 @@ SELFID_READ: Final = "hire.selfid.read"
 SETTINGS_MANAGE: Final = "hire.settings.manage"
 DOCUMENT_READ: Final = "hire.document.read"
 DOCUMENT_UPLOAD: Final = "hire.document.upload"
+NOTE_WRITE: Final = "hire.note.write"
+PIPELINE_WRITE: Final = "hire.pipeline.write"
+MESSAGE_CREATE: Final = "hire.message.create"
+MESSAGE_APPROVE: Final = "hire.message.approve"
+REFERRAL_CREATE: Final = "hire.referral.create"
+REFERRAL_READ: Final = "hire.referral.read"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -98,4 +114,32 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         frozenset({*_HIRING_TEAM, R.AUDITOR, R.AGENT}),
     ),
     PermissionSpec(DOCUMENT_UPLOAD, "Upload application files", frozenset({R.ADMIN, *_HIRING})),
+    PermissionSpec(
+        NOTE_WRITE,
+        "Add notes and tags to candidates",
+        frozenset({R.ADMIN, *_HIRING, R.INTERVIEWER}),
+    ),
+    PermissionSpec(
+        PIPELINE_WRITE, "Customise a job's pipeline stages", frozenset({R.ADMIN, R.RECRUITER})
+    ),
+    PermissionSpec(
+        MESSAGE_CREATE,
+        "Draft messages to candidates, send updates, and submit rejections and offers for approval",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        MESSAGE_APPROVE,
+        "Approve a rejection or an offer before it is sent",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        REFERRAL_CREATE,
+        "Make referral links for open jobs",
+        frozenset({*_HIRING_TEAM, R.EMPLOYEE}),
+    ),
+    PermissionSpec(
+        REFERRAL_READ,
+        "See the stage of the people you referred",
+        frozenset({*_HIRING_TEAM, R.EMPLOYEE}),
+    ),
 )

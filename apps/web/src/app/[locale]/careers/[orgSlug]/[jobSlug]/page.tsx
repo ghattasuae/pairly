@@ -11,10 +11,12 @@ import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { jsonLdScript, localDescription, localTitle } from "@/lib/careers/format";
 import { fetchJob } from "@/lib/careers/server";
+import { isReferralToken } from "@/lib/careers/apply";
 import { serverEnv } from "@/lib/env";
 
 interface Props {
   params: Promise<{ locale: string; orgSlug: string; jobSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -40,8 +42,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** `/[locale]/careers/[orgSlug]/[jobSlug]`: one open job, with JobPosting JSON-LD. Public. */
-export default async function JobPage({ params }: Props) {
+export default async function JobPage({ params, searchParams }: Props) {
   const { locale: raw, orgSlug, jobSlug } = await params;
+  // An employee's referral link: carried to the apply form (the API checks it).
+  const ref = (await searchParams)?.ref;
+  const referral = typeof ref === "string" && isReferralToken(ref) ? ref : null;
+  const applyHref = `/careers/${orgSlug}/${jobSlug}/apply${referral ? `?ref=${referral}` : ""}`;
   const locale = toLocale(raw);
   setRequestLocale(locale);
   const job = await fetchJob(orgSlug, jobSlug, locale);
@@ -73,13 +79,13 @@ export default async function JobPage({ params }: Props) {
           <JobFacts job={job} className="grid gap-2 text-sm sm:grid-cols-2" />
         </section>
         <Button asChild size="lg" className="min-h-11">
-          <Link href={`/careers/${orgSlug}/${jobSlug}/apply`}>{t("applyCta")}</Link>
+          <Link href={applyHref}>{t("applyCta")}</Link>
         </Button>
       </header>
       <JobDescription text={localDescription(job, locale)} />
       <div className="border-t border-border pt-6">
         <Button asChild size="lg" className="min-h-11">
-          <Link href={`/careers/${orgSlug}/${jobSlug}/apply`}>{t("applyCta")}</Link>
+          <Link href={applyHref}>{t("applyCta")}</Link>
         </Button>
       </div>
     </article>
