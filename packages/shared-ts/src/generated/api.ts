@@ -5170,8 +5170,8 @@ export type components = {
              * @enum {string}
              */
             locale: "en" | "ar";
-            /** Org Slug */
-            org_slug: string;
+            /** Org */
+            org: string;
         };
         /** HirePortalLinkOut */
         HirePortalLinkOut: {

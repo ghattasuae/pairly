@@ -127,12 +127,17 @@ def _token(
 
 
 def _uuid(value: str) -> uuid.UUID | None:
-    if len(value) != 32:
+    if len(value) != 32 or not all(c in "0123456789abcdef" for c in value):
         return None
     try:
         return uuid.UUID(hex=value)
     except ValueError:
         return None
+
+
+def parse_hex_uuid(value: str) -> uuid.UUID | None:
+    """A 32 character lowercase hex id (as tokens carry them), or ``None``."""
+    return _uuid(value)
 
 
 def parse(prefix: str, token: str) -> Claim | None:

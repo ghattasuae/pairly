@@ -6834,14 +6834,14 @@
             "title": "Locale",
             "type": "string"
           },
-          "org_slug": {
-            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-            "title": "Org Slug",
+          "org": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+            "title": "Org",
             "type": "string"
           }
         },
         "required": [
-          "org_slug",
+          "org",
           "email"
         ],
         "title": "HirePortalLinkIn",

@@ -9,7 +9,8 @@ keeps the portal session in an HTTP-only cookie scoped to the portal and sends i
 
 Without a session (``Cache-Control: no-store``, rate limited per IP):
 
-* ``POST /portal/login-link`` ``{"org_slug", "email", "locale"}``: 202 whatever the
+* ``POST /portal/login-link`` ``{"org", "email", "locale"}`` (``org``: the careers
+  slug or the organisation id an expired link names): 202 whatever the
   address, so nobody learns who applied. When the organisation has a candidate with that
   address, a magic link goes to it (30 minutes, single use). 10 per hour per IP, 5 per
   hour per address.
@@ -68,7 +69,8 @@ from pairly_core.models import Organisation
 from pairly_core.notifications.service import Recipient, notify
 from pairly_hire.antispam import SlidingWindowLimiter, client_ip
 from pairly_hire.api.common import web_url
-from pairly_hire.careers import careers_org
+from pairly_hire.careers import CareersOrg, careers_org
+from pairly_hire.jobs import org_settings
 from pairly_hire.models import HireCandidate
 from pairly_hire.portal import auth, service
 from pairly_hire.portal.models import HireDocumentRequest
@@ -126,7 +128,9 @@ def _no_store(body: Any, status: int = 200) -> JSONResponse:
 class HirePortalLinkIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    org_slug: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{0,62}$")]
+    # The careers page slug, or the organisation id (32 hex characters, as an expired
+    # magic link names it).
+    org: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{0,79}$")]
     email: Annotated[str, StringConstraints(max_length=320)]
     locale: Literal["en", "ar"] = "en"
 
@@ -356,6 +360,26 @@ async def _detail(
 # ------------------------------------------------------------------ sign-in
 
 
+async def _portal_org(session: RequestSession, org: str) -> CareersOrg | None:
+    """The organisation by careers slug or by id, bound to ``session``; ``None`` for an
+    unknown, inactive or hidden one (the caller answers the same either way)."""
+    org_id = auth.parse_hex_uuid(org)
+    if org_id is None:
+        found = await careers_org(session, org)
+        await session.commit()
+        if found is not None:
+            set_tenant(session, found.id, None)
+        return found
+    set_tenant(session, org_id, None)
+    row = await session.scalar(select(Organisation).where(Organisation.id == org_id))
+    if row is None or row.status != "active":
+        return None
+    settings = await org_settings(session)
+    if not settings.careers_enabled:
+        return None
+    return CareersOrg(id=row.id, name=row.name, slug=row.slug)
+
+
 @router.post("/login-link", status_code=202, response_model=HirePortalLinkOut)
 async def login_link(
     body: HirePortalLinkIn, request: Request, session: RequestSession
@@ -365,11 +389,9 @@ async def login_link(
     email = normalize_email(body.email)
     if email is None:
         raise BadRequestError("please give a valid email address")
-    _hit(request, "link_email", f"{body.org_slug}|{email}")
-    org = await careers_org(session, body.org_slug)
-    await session.commit()
+    _hit(request, "link_email", f"{body.org}|{email}")
+    org = await _portal_org(session, body.org)
     if org is not None:
-        set_tenant(session, org.id, None)
         bidx = blind_index("email", email, org.id)
         candidate = await session.scalar(
             select(HireCandidate).where(HireCandidate.email_bidx == bidx)

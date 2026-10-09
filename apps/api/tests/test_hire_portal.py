@@ -145,7 +145,7 @@ async def test_login_links_expire_are_bound_and_never_tell_who_applied(
     async def ask(address: str, slug: str = world.slug) -> httpx.Response:
         return await api.client.post(
             "/v1/hire/portal/login-link",
-            json={"org_slug": slug, "email": address, "locale": "ar"},
+            json={"org": slug, "email": address, "locale": "ar"},
             headers=api.public("203.0.113.9"),
         )
 
@@ -185,7 +185,9 @@ async def test_login_links_expire_are_bound_and_never_tell_who_applied(
     # The other organisation's careers page does not know this candidate.
     assert (await ask(email, other.slug)).status_code == 202
     assert not [m for m in await deliver(api, other, tmp_path / "other") if email in m["to"]]
-    # The second candidate's link signs them in, as themselves only.
+    # By organisation id (what an expired link names): the second candidate's new link
+    # signs them in, as themselves only.
+    assert (await ask(second, world.org_id.hex)).status_code == 202
     session = await _signed_in(api, world, second, tmp_path)
     me = (await api.client.get("/v1/hire/portal/me", headers=session)).json()
     assert me["email"] == second
