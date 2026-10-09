@@ -955,3 +955,88 @@ async def test_tenant_isolation_of_every_scheduling_table(
                 text("INSERT INTO hire_scheduling_settings (org_id) VALUES (:o)"),
                 {"o": world.org_id},
             )
+
+
+# ------------------------------------------------------------------ profile timeline
+
+
+async def test_interviews_on_the_profile_timeline_blind_safe(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    ids = await applicants(api, world, job, ["Layla Timeline", "Karim Done"])
+    panel = [uid(world, "interviewer")]
+    found = await slots(api, world, ids["Layla Timeline"], panel)
+    first, second = found["slots"][0]["start"], found["slots"][1]["start"]
+    booked = await book(api, world, ids["Layla Timeline"], panel, first)
+    assert booked.status_code == 201, booked.text
+    interview = booked.json()
+    moved = await api.call(
+        "PATCH",
+        f"/v1/hire/scheduling/interviews/{interview['id']}",
+        world,
+        "recruiter",
+        json={"starts_at": second},
+    )
+    assert moved.status_code == 200, moved.text
+    cancelled = await api.client.post(
+        f"/v1/hire/scheduling/interviews/{interview['id']}/cancel",
+        headers=api.headers(world, "recruiter", extra=key()),
+    )
+    assert cancelled.status_code == 200, cancelled.text
+
+    profile = await api.call(
+        "GET", f"/v1/hire/pipeline/applications/{ids['Layla Timeline']}", world, "recruiter"
+    )
+    assert profile.status_code == 200, profile.text
+    body = profile.json()
+    assert body["identity_hidden"] is True
+    events = [e for e in body["timeline"] if e["kind"] == "interview"]
+    assert [e["detail"]["status"] for e in events] == ["cancelled", "rescheduled", "booked"]
+    assert all(e["detail"]["interview_id"] == interview["id"] for e in events)
+    assert all(e["detail"]["by_candidate"] is False for e in events)
+    assert all(e["detail"]["by"] for e in events)
+    rescheduled = events[1]["detail"]
+    assert datetime.fromisoformat(rescheduled["starts_at"]) == datetime.fromisoformat(second)
+    assert datetime.fromisoformat(rescheduled["previous_starts_at"]) == datetime.fromisoformat(
+        first
+    )
+    # Blind: nothing in the interview events names the candidate, and no meeting link.
+    dumped = json.dumps(events)
+    assert "Layla" not in dumped
+    assert "https://" not in dumped
+    assert "@" not in dumped
+
+    # An outcome (completed) shows up too.
+    other = await book(
+        api,
+        world,
+        ids["Karim Done"],
+        panel,
+        (datetime.now(UTC) + timedelta(days=2)).isoformat(),
+        force=True,
+    )
+    assert other.status_code == 201, other.text
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE hire_interviews SET starts_at = now() - interval '2 hours', "
+        "ends_at = now() - interval '75 minutes' WHERE id = :i",
+        {"i": other.json()["id"]},
+    )
+    done = await api.call(
+        "POST",
+        f"/v1/hire/scheduling/interviews/{other.json()['id']}/outcome",
+        world,
+        "interviewer",
+        json={"outcome": "completed"},
+    )
+    assert done.status_code == 200, done.text
+    profile = await api.call(
+        "GET", f"/v1/hire/pipeline/applications/{ids['Karim Done']}", world, "recruiter"
+    )
+    kinds = [e["detail"]["status"] for e in profile.json()["timeline"] if e["kind"] == "interview"]
+    assert kinds == ["completed", "booked"]
+    # Layla's events never leak into Karim's profile.
+    assert interview["id"] not in json.dumps(profile.json()["timeline"])

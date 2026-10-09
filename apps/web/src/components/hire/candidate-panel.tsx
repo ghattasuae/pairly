@@ -57,6 +57,7 @@ export interface CandidatePanelProps {
 }
 
 const OPEN = new Set(["draft", "changes_requested", "submitted", "awaiting_approval"]);
+const INTERVIEW_EVENTS = new Set(["booked", "rescheduled", "cancelled", "completed", "no_show"]);
 
 /**
  * The candidate profile beside the board (brief 3.4.2 and 5.3: never lose your place):
@@ -455,6 +456,8 @@ function TimelineItem({
       <Send aria-hidden className="rtl:-scale-x-100" />
     ) : event.kind === "flag" ? (
       <Flag aria-hidden />
+    ) : event.kind === "interview" ? (
+      <CalendarClock aria-hidden />
     ) : (
       <ArrowRight aria-hidden className="rtl:rotate-180" />
     );
@@ -472,6 +475,9 @@ function TimelineItem({
         : t("timeline.message", {
             status: t(`messageStatus.${text("status") ?? "sent"}` as "messageStatus.sent"),
           });
+      break;
+    case "interview":
+      title = t(`timeline.interview.${INTERVIEW_EVENTS.has(text("status") ?? "") ? text("status") : "booked"}` as "timeline.interview.booked");
       break;
     case "note":
     case "application":
@@ -491,13 +497,39 @@ function TimelineItem({
       <p className="font-medium">
         {title}
         {text("by") && <span className="font-normal text-muted-foreground"> · {text("by")}</span>}
+        {event.kind === "interview" && detail.by_candidate === true && (
+          <span className="font-normal text-muted-foreground"> · {t("timeline.interview.byCandidate")}</span>
+        )}
       </p>
       {text("text") && <p className="whitespace-pre-wrap text-muted-foreground">{text("text")}</p>}
       {text("subject") && <p className="text-muted-foreground">{text("subject")}</p>}
+      {event.kind === "interview" && <InterviewWhen detail={detail} format={format} t={t} />}
       {Array.isArray(detail.reasons) && <p className="text-muted-foreground">{(detail.reasons as string[]).join(", ")}</p>}
       <time className="text-xs text-muted-foreground" dateTime={event.at}>
         {format.dateTime(new Date(event.at), { dateStyle: "medium", timeStyle: "short" })}
       </time>
     </li>
+  );
+}
+
+/** When an interview event's interview is (and was, for a reschedule). */
+function InterviewWhen({
+  detail,
+  format,
+  t,
+}: {
+  detail: Record<string, unknown>;
+  format: ReturnType<typeof useFormatter>;
+  t: ReturnType<typeof useTranslations<"Hire">>;
+}) {
+  const when = (key: string): string | null =>
+    typeof detail[key] === "string" ? format.dateTime(new Date(detail[key] as string), { dateStyle: "medium", timeStyle: "short" }) : null;
+  const starts = when("starts_at");
+  const previous = when("previous_starts_at");
+  if (!starts) return null;
+  return (
+    <p className="text-muted-foreground" data-interview-when>
+      {previous ? t("timeline.interview.moved", { from: previous, to: starts }) : t("timeline.interview.at", { when: starts })}
+    </p>
   );
 }

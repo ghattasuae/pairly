@@ -14,8 +14,10 @@ The routes never return self-identification answers (they live in
 
 The timeline lists every event of an application, newest first: the application, its
 acknowledgement, flags (needs a person, duplicate hints), stage moves, notes, messages
-(drafted, submitted for approval, sent, declined), a referral, and the screening result
-when screening has one (``hooks.screening_summary``).
+(drafted, submitted for approval, sent, declined), a referral, interviews (booked,
+rescheduled, cancelled, completed, no-show; ``pairly_hire.interviews``, times and who
+acted only, so blind-safe), and the screening result when screening has one
+(``hooks.screening_summary``).
 """
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pairly_core.models import User
 from pairly_core.notifications.models import Notification
 from pairly_hire.blindtext import Redactor
+from pairly_hire.interviews import interview_history
 from pairly_hire.messaging import library
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.messaging.prefs import prefs_for
@@ -390,6 +393,29 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
                     "subject": view.subject,
                     "sensitive": view.sensitive,
                     "delivery": view.delivery,
+                },
+            )
+        )
+    interview_events = await interview_history(session, app.id)
+    staff = await _users(session, {e.actor_id for e in interview_events if e.actor_id})
+    for iv in interview_events:
+        events.append(
+            Event(
+                iv.at,
+                "interview",
+                f"Interview {iv.kind.replace('_', ' ')}",
+                {
+                    "interview_id": str(iv.interview_id),
+                    "status": iv.kind,
+                    "starts_at": iv.starts_at.isoformat() if iv.starts_at else None,
+                    "previous_starts_at": (
+                        iv.previous_starts_at.isoformat() if iv.previous_starts_at else None
+                    ),
+                    "duration_min": iv.duration_min,
+                    "by_candidate": iv.by == "candidate",
+                    "by": None
+                    if iv.by == "candidate"
+                    else staff.get(iv.actor_id or "", "the hiring team"),
                 },
             )
         )

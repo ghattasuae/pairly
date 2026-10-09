@@ -1362,7 +1362,17 @@
       "application": "قدم طلبه",
       "flag": "بحاجة إلى مراجعة شخص",
       "referral": "رشحه موظف",
-      "screening": "نتيجة الفرز"
+      "screening": "نتيجة الفرز",
+      "interview": {
+        "booked": "تم حجز المقابلة",
+        "rescheduled": "تم تغيير موعد المقابلة",
+        "cancelled": "أُلغيت المقابلة",
+        "completed": "اكتملت المقابلة",
+        "no_show": "لم يحضر المرشح",
+        "byCandidate": "من المرشح",
+        "at": "الموعد: {when}",
+        "moved": "من {from} إلى {to}"
+      }
     },
     "compose": {
       "back": "عودة إلى الملف",

@@ -16,6 +16,10 @@ Reading:
 * ``upcoming_interviews_for_candidate(session, env, candidate_id)``: for the candidate
   portal: the candidate's open interviews (booked ones with the join link and the link
   to change or cancel; proposed ones with the link to choose a time).
+* ``interview_history(session, application_id)``: what happened to the application's
+  interviews (booked, rescheduled, cancelled, completed, no-show), from the audit chain,
+  for the candidate profile timeline. Times and who acted only: no meeting links,
+  panel members or free text, so it is blind-safe as it is.
 * ``suggest`` and ``check_slot`` (``service``): times where the whole panel is free, and
   why one time is not.
 
@@ -40,6 +44,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.approvals.service import member_permissions
 from pairly_core.models import Membership, User
+from pairly_core.models.audit import AuditEvent
 from pairly_core.rbac import RoleRegistry
 from pairly_hire.models import HireJob
 from pairly_hire.pipeline.hooks import application_blind
@@ -56,6 +61,7 @@ from pairly_hire.scheduling.permissions import INTERVIEW_READ
 from pairly_hire.scheduling.providers import google_config, google_enabled
 from pairly_hire.scheduling.rules import Interviewer, interviewers, org_scheduling
 from pairly_hire.scheduling.service import (
+    ENTITY,
     check_slot,
     interviews_for_application,
     panel_of,
@@ -65,10 +71,12 @@ from pairly_hire.scheduling.service import (
 
 __all__ = [
     "CandidateInterview",
+    "InterviewHistoryEvent",
     "InterviewView",
     "PanelData",
     "PanelMember",
     "check_slot",
+    "interview_history",
     "interview_view",
     "scheduling_panel",
     "suggest",
@@ -310,6 +318,92 @@ async def upcoming_interviews_for_candidate(
                 panel_size=len(await panel_of(session, interview.id)),
                 meeting_url=meeting_url_of(interview) if interview.status in ACTIVE else None,
                 schedule_url=schedule_url(env, interview) if link_ok else None,
+            )
+        )
+    return out
+
+
+# ------------------------------------------------------------------ history (timeline)
+
+_HISTORY_ACTIONS: Final = {
+    "hire.interview.booked": "booked",
+    "hire.interview.rescheduled": "rescheduled",
+    "hire.interview.cancelled": "cancelled",
+    "hire.interview.outcome_recorded": "outcome",
+}
+_OUTCOME_KINDS: Final = frozenset({"completed", "no_show"})
+
+
+@dataclass(frozen=True, slots=True)
+class InterviewHistoryEvent:
+    """One thing that happened to an interview (the profile timeline)."""
+
+    at: datetime
+    interview_id: uuid.UUID
+    # ``booked``, ``rescheduled``, ``cancelled``, ``completed`` or ``no_show``.
+    kind: str
+    starts_at: datetime | None
+    # The earlier time of a rescheduled interview.
+    previous_starts_at: datetime | None
+    duration_min: int | None
+    # ``candidate`` (through their link) or ``team``; ``actor_id`` is the staff user
+    # for a team action (None for the candidate or the system).
+    by: str
+    actor_id: str | None
+
+
+def _when(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+async def interview_history(
+    session: AsyncSession, application_id: uuid.UUID
+) -> list[InterviewHistoryEvent]:
+    """The application's interview events, oldest first (audit chain, same tenant)."""
+    ids = [
+        str(i)
+        for i in await session.scalars(
+            select(HireInterview.id).where(HireInterview.application_id == application_id)
+        )
+    ]
+    if not ids:
+        return []
+    rows = await session.scalars(
+        select(AuditEvent)
+        .where(
+            AuditEvent.entity_type == ENTITY,
+            AuditEvent.entity_id.in_(ids),
+            AuditEvent.action.in_(tuple(_HISTORY_ACTIONS)),
+        )
+        .order_by(AuditEvent.seq)
+    )
+    out: list[InterviewHistoryEvent] = []
+    for row in rows:
+        payload = row.payload or {}
+        if payload.get("application_id") != str(application_id):
+            continue
+        kind = _HISTORY_ACTIONS[row.action]
+        if kind == "outcome":
+            kind = str(payload.get("status"))
+            if kind not in _OUTCOME_KINDS:
+                continue
+        by_candidate = payload.get("by") == "candidate" or row.actor_type == "candidate"
+        duration = payload.get("duration_min")
+        out.append(
+            InterviewHistoryEvent(
+                at=row.occurred_at,
+                interview_id=uuid.UUID(str(row.entity_id)),
+                kind=kind,
+                starts_at=_when(payload.get("starts_at")),
+                previous_starts_at=_when(payload.get("from")) if kind == "rescheduled" else None,
+                duration_min=duration if isinstance(duration, int) else None,
+                by="candidate" if by_candidate else "team",
+                actor_id=None if by_candidate or row.actor_type != "user" else row.actor_id,
             )
         )
     return out

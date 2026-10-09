@@ -19,6 +19,11 @@ The default source is scheduling itself
 use). It runs in the caller's session: in the portal that is the candidate's portal
 session, so Row Level Security shows only that candidate's interviews (hire_0005).
 ``set_interview_source`` swaps it (tests; ``None`` restores scheduling). Read per call.
+
+``interview_history(session, application_id)`` is what the pipeline's profile timeline
+shows: booked, rescheduled, cancelled, completed and no-show events with their times
+and who acted (``scheduling.api.interview_history``). It carries no meeting links,
+panel members or free text, so it is safe while the application is blind.
 """
 
 from __future__ import annotations
@@ -152,3 +157,39 @@ async def upcoming_interviews(
         (i for i in found if i.application_id in wanted),
         key=lambda i: (i.starts_at is None, i.starts_at or datetime.min.replace(tzinfo=UTC)),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class InterviewEvent:
+    """One interview event on the profile timeline (staff only)."""
+
+    at: datetime
+    interview_id: uuid.UUID
+    # ``booked``, ``rescheduled``, ``cancelled``, ``completed`` or ``no_show``.
+    kind: str
+    starts_at: datetime | None
+    previous_starts_at: datetime | None
+    duration_min: int | None
+    # ``candidate`` or ``team``; ``actor_id`` names the staff user of a team action.
+    by: str
+    actor_id: str | None
+
+
+async def interview_history(
+    session: AsyncSession, application_id: uuid.UUID
+) -> list[InterviewEvent]:
+    from pairly_hire.scheduling.api import interview_history as _history
+
+    return [
+        InterviewEvent(
+            at=e.at,
+            interview_id=e.interview_id,
+            kind=e.kind,
+            starts_at=e.starts_at,
+            previous_starts_at=e.previous_starts_at,
+            duration_min=e.duration_min,
+            by=e.by,
+            actor_id=e.actor_id,
+        )
+        for e in await _history(session, application_id)
+    ]

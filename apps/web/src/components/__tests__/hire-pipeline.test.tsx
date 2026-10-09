@@ -312,6 +312,48 @@ describe("PipelineBoard", () => {
     );
   });
 
+  it("shows interview events on the timeline: booked, moved, cancelled, outcomes", async () => {
+    const c = BOARD.cards[0]!;
+    const iv = { interview_id: "i1", duration_min: 45, by_candidate: false, by: "Mona Manager", previous_starts_at: null };
+    setup(actions(), {
+      initialState: { q: "", tag: null, flag: null, candidate: c.application_id, x: 0, y: 0 },
+      initialProfile: profile(c, {
+        blind_mode: true,
+        identity_hidden: true,
+        timeline: [
+          { at: "2026-10-05T10:00:00Z", kind: "interview", title: "Interview no show", detail: { ...iv, status: "no_show", starts_at: "2026-10-04T06:00:00Z" } },
+          { at: "2026-10-04T10:00:00Z", kind: "interview", title: "Interview completed", detail: { ...iv, status: "completed", starts_at: "2026-10-04T06:00:00Z" } },
+          { at: "2026-10-03T10:00:00Z", kind: "interview", title: "Interview cancelled", detail: { ...iv, status: "cancelled", by: null, by_candidate: true, starts_at: "2026-10-09T06:00:00Z" } },
+          {
+            at: "2026-10-02T11:00:00Z",
+            kind: "interview",
+            title: "Interview rescheduled",
+            detail: { ...iv, status: "rescheduled", starts_at: "2026-10-09T06:00:00Z", previous_starts_at: "2026-10-08T06:00:00Z" },
+          },
+          { at: "2026-10-02T10:00:00Z", kind: "interview", title: "Interview booked", detail: { ...iv, status: "booked", starts_at: "2026-10-08T06:00:00Z" } },
+          { at: "2026-10-01T10:00:00Z", kind: "application", title: "Applied", detail: {} },
+        ],
+      }),
+    });
+    const timeline = await waitFor(() => {
+      const el = document.querySelector("[data-timeline]");
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    const items = [...timeline.querySelectorAll('[data-event="interview"]')].map((el) => el.querySelector("p")?.textContent);
+    expect(items).toEqual([
+      "Candidate did not attend · Mona Manager",
+      "Interview completed · Mona Manager",
+      "Interview cancelled · by the candidate",
+      "Interview moved · Mona Manager",
+      "Interview booked · Mona Manager",
+    ]);
+    const moved = timeline.querySelectorAll('[data-event="interview"]')[3] as HTMLElement;
+    expect(moved.querySelector("[data-interview-when]")?.textContent).toMatch(/^From .+ to .+$/);
+    const booked = timeline.querySelectorAll('[data-event="interview"]')[4] as HTMLElement;
+    expect(booked.querySelector("[data-interview-when]")?.textContent).toMatch(/^For /);
+  });
+
   it("sends a templated update in three clicks with the exact preview", async () => {
     const a = setup();
     await userEvent.click(screen.getByText("Person 1"));

@@ -1362,7 +1362,17 @@
       "application": "Applied",
       "flag": "Flagged for a person",
       "referral": "Referred by an employee",
-      "screening": "Screening result"
+      "screening": "Screening result",
+      "interview": {
+        "booked": "Interview booked",
+        "rescheduled": "Interview moved",
+        "cancelled": "Interview cancelled",
+        "completed": "Interview completed",
+        "no_show": "Candidate did not attend",
+        "byCandidate": "by the candidate",
+        "at": "For {when}",
+        "moved": "From {from} to {to}"
+      }
     },
     "compose": {
       "back": "Back to the profile",
