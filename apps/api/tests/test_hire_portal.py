@@ -974,3 +974,33 @@ async def test_login_link_answers_known_and_unknown_addresses_in_the_same_time(
     mails = await deliver(api, world, tmp_path / "links")
     assert len([m for m in mails if email in m["to"] and "/en/portal/login#" in m["text"]]) == 1
     assert "nobody" not in json.dumps(mails)
+
+
+async def test_link_lifetimes_30_minutes_from_the_portal_72_hours_from_the_acknowledgement(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine, tmp_path: Path
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    _, email = await _apply(api, world, job, "Lina Farah")
+    ack_token = _link(await deliver(api, world, tmp_path), email)
+    asked = await api.client.post(
+        "/v1/hire/portal/login-link",
+        json={"org": world.slug, "email": email, "locale": "en"},
+        headers=api.public("203.0.113.77"),
+    )
+    assert asked.status_code == 202
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT purpose, extract(epoch FROM expires_at - created_at) AS seconds, used_at "
+        "FROM hire_portal_tokens WHERE org_id = :o ORDER BY created_at",
+        {"o": world.org_id},
+    )
+    lifetimes = {r.purpose: int(r.seconds) for r in rows}
+    assert lifetimes["request"] == 30 * 60
+    (ack,) = [p for p in lifetimes if p != "request"]
+    assert lifetimes[ack] == 72 * 3600
+    assert all(r.used_at is None for r in rows)
+    # Single use: the acknowledgement link opens one session, then never again.
+    assert (await _session(api, ack_token)).status_code == 200
+    assert (await _session(api, ack_token)).status_code == 404
