@@ -100,7 +100,7 @@ class ScreeningReviewerView:
                 )
             )
         overall = (
-            f"{float(row.overall_score):.1f} / {SCALE_MAX}"
+            f"{float(row.overall_score):.0f} / 100"
             if row.overall_score is not None
             else None
         )

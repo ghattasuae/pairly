@@ -215,6 +215,7 @@ export function Referrals({ jobs, referrals }: { jobs: HireJob[]; referrals: Hir
 /** The jobs the hiring team works on, each one click from its pipeline. */
 export function JobsList({ jobs }: { jobs: HireJob[] }) {
   const t = useTranslations("Hire");
+  const tScreen = useTranslations("Screen");
   const locale = useLocale();
   const ids = useId();
   return (
@@ -227,10 +228,10 @@ export function JobsList({ jobs }: { jobs: HireJob[] }) {
       ) : (
         <ul className="divide-y rounded-xl border bg-surface">
           {jobs.map((job) => (
-            <li key={job.id}>
+            <li key={job.id} className="flex items-stretch">
               <Link
                 href={`/hire/jobs/${job.id}/pipeline`}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-accent/40"
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-accent/40"
                 data-job-link={job.slug}
               >
                 <span className="min-w-0">
@@ -240,6 +241,13 @@ export function JobsList({ jobs }: { jobs: HireJob[] }) {
                 <Badge variant={job.status === "open" ? "default" : "outline"}>
                   {t(`jobStatus.${job.status}` as "jobStatus.open")}
                 </Badge>
+              </Link>
+              <Link
+                href={`/hire/jobs/${job.id}/screen`}
+                className="flex items-center border-s px-4 text-sm text-primary hover:bg-accent/40"
+                data-screen-link={job.slug}
+              >
+                {tScreen("open")}
               </Link>
             </li>
           ))}

@@ -16,6 +16,7 @@ import { Checkbox, Select } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { useToast } from "@/components/ui/toaster";
+import { Link } from "@/i18n/navigation";
 import { errorKey } from "@/lib/action-result";
 import * as hireActions from "@/lib/actions/hire";
 import {
@@ -103,6 +104,7 @@ export function PipelineBoard({
   actions: overrides,
 }: PipelineBoardProps) {
   const t = useTranslations("Hire");
+  const tScreen = useTranslations("Screen");
   const tErrors = useTranslations("Errors");
   const locale = useLocale();
   const toast = useToast();
@@ -496,6 +498,9 @@ export function PipelineBoard({
             <h1 className="font-display text-3xl leading-tight tracking-tight">{board.job_title}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Link href={`/hire/jobs/${jobId}/screen`} className="text-sm text-primary underline-offset-4 hover:underline" data-screen-link>
+              {tScreen("open")}
+            </Link>
             {board.blind_mode && (
               <Badge variant="signal" title={t("blindHelp")}>
                 <EyeOff className="size-3" aria-hidden />
