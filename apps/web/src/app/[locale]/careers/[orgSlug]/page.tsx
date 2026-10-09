@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { JobList } from "@/components/careers/job-parts";
+import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { fetchCareers } from "@/lib/careers/server";
 import { serverEnv } from "@/lib/env";
@@ -41,6 +42,7 @@ export default async function CareersPage({ params }: Props) {
   const careers = await fetchCareers(orgSlug, locale);
   if (!careers) notFound();
   const t = await getTranslations({ locale, namespace: "Careers" });
+  const tPortal = await getTranslations({ locale, namespace: "Portal" });
   const org = careers.organisation.name;
   return (
     <div className="space-y-10">
@@ -57,6 +59,12 @@ export default async function CareersPage({ params }: Props) {
         </div>
         <JobList orgSlug={orgSlug} jobs={careers.jobs} />
       </section>
+      <p className="text-sm text-muted-foreground">
+        {tPortal("signIn.title")}:{" "}
+        <Link href={`/portal?org=${orgSlug}`} className="text-primary underline-offset-4 hover:underline" data-portal-link>
+          {tPortal("signIn.send")}
+        </Link>
+      </p>
     </div>
   );
 }

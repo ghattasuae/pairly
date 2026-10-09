@@ -53,8 +53,8 @@ from pairly_hire.permissions import (
     PIPELINE_WRITE,
 )
 from pairly_hire.pipeline import moves, notes, referrals, views
-from pairly_hire.pipeline.hooks import blind_applications, blind_mode
-from pairly_hire.pipeline.records import AppRecord
+from pairly_hire.pipeline.hooks import blind_applications, blind_mode, identity_redactor
+from pairly_hire.pipeline.records import AppRecord, load_record
 from pairly_hire.pipeline.rediscovery import KIND as CANDIDATE_KIND
 from pairly_hire.pipeline.rediscovery import candidate_applications
 from pairly_hire.pipeline.stages import Stage, StageSet, save_stages, stages_for
@@ -635,6 +635,12 @@ async def rediscover(
         # Shown by name only when one of the candidate's applications shows it.
         blind = await blind_applications(session, [uuid.UUID(a["application_id"]) for a in apps])
         hidden = not any(a["revealed"] or uuid.UUID(a["application_id"]) not in blind for a in apps)
+        snippet = hit.text[:300]
+        if hidden:
+            # The indexed CV text may still name the person: redacted while blind.
+            first = await load_record(session, uuid.UUID(apps[0]["application_id"]))
+            redact = await identity_redactor(session, first.app.id, first.identity_contacts())
+            snippet = redact(snippet)
         out.append(
             HireRediscoveryHit(
                 candidate_id=candidate_id,
@@ -643,7 +649,7 @@ async def rediscover(
                 applications=[
                     {k: v for k, v in a.items() if k not in {"name", "revealed"}} for a in apps
                 ],
-                snippet=hit.text[:300],
+                snippet=snippet,
                 score=hit.score,
             )
         )

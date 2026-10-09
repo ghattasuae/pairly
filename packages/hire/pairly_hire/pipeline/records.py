@@ -8,9 +8,10 @@ same rules:
 
 * an application without an entry is in the first stage and never had an update;
 * identity is hidden while the application is blind (``hooks.blind_applications``,
-  screening's answer) until it reached a stage that reveals it (``identity_hidden``);
-  hidden, the candidate reads as "Candidate <reference>". ``hidden_identities`` answers
-  the same for many applications at once (lists that do not load whole records).
+  screening's answer, which already reads the application's one reveal state,
+  ``pairly_hire.reveal``) and was never revealed (``identity_hidden``); hidden, the
+  candidate reads as "Candidate <reference>". ``hidden_identities`` answers the same for
+  many applications at once (lists that do not load whole records).
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from pairly_core.models import Organisation
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate, HireJob
 from pairly_hire.pipeline.hooks import blind_applications
 from pairly_hire.pipeline.models import HirePipelineEntry
-from pairly_hire.pipeline.stages import FIRST, Stage, StageSet, stages_for, stages_for_jobs
+from pairly_hire.pipeline.stages import FIRST, Stage, StageSet, stages_for
 
 HIDDEN_LABEL: Final = "Candidate {reference}"
 
@@ -40,9 +41,10 @@ def stage_of(stages: StageSet, entry: HirePipelineEntry | None) -> Stage:
     return stages.get(key) or stages.stages[0]
 
 
-def is_revealed(stages: StageSet, entry: HirePipelineEntry | None) -> bool:
-    """The application reached a stage that reveals identity (once is enough)."""
-    return stage_of(stages, entry).reveal_identity or (entry is not None and entry.revealed)
+def is_revealed(app: HireApplication) -> bool:
+    """The application's one reveal state (``pairly_hire.reveal``): set by the shortlist
+    approval or a move into a stage that reveals identity, never cleared."""
+    return app.identity_revealed_at is not None
 
 
 def hidden_label(app: HireApplication) -> str:
@@ -67,7 +69,7 @@ class AppRecord:
 
     @property
     def revealed(self) -> bool:
-        return is_revealed(self.stages, self.entry)
+        return is_revealed(self.app)
 
     def identity_hidden(self, blind_mode: bool) -> bool:
         return blind_mode and not self.revealed
@@ -76,6 +78,18 @@ class AppRecord:
     def contact(self) -> dict[str, Any]:
         value = unseal(self.app, "contact")
         return value if isinstance(value, dict) else {}
+
+    def identity_contacts(self) -> list[dict[str, Any]]:
+        """What the application and the candidate row say about the person (for the blind
+        redactor of free text, ``hooks.identity_redactor``)."""
+        row = {
+            "full_name": unseal(self.candidate, "full_name"),
+            "email": unseal(self.candidate, "email"),
+            "phone": unseal(self.candidate, "phone"),
+            "location": unseal(self.candidate, "location"),
+            "profile_url": unseal(self.candidate, "profile_url"),
+        }
+        return [self.contact, row]
 
     @property
     def full_name(self) -> str:
@@ -109,20 +123,9 @@ async def hidden_identities(
     session: AsyncSession, apps: Sequence[HireApplication]
 ) -> set[uuid.UUID]:
     """The ids of ``apps`` whose candidate identity reviewers must not see now: blind
-    (``hooks.blind_applications``) and not yet at a stage that reveals identity."""
+    (``hooks.blind_applications``) and never revealed (``pairly_hire.reveal``)."""
     blind = await blind_applications(session, [a.id for a in apps])
-    if not blind:
-        return set()
-    entries = {
-        e.application_id: e
-        for e in await session.scalars(
-            select(HirePipelineEntry).where(HirePipelineEntry.application_id.in_(blind))
-        )
-    }
-    stages = await stages_for_jobs(session, list({a.job_id for a in apps if a.id in blind}))
-    return {
-        a.id for a in apps if a.id in blind and not is_revealed(stages[a.job_id], entries.get(a.id))
-    }
+    return {a.id for a in apps if a.id in blind and not is_revealed(a)}
 
 
 async def load_record(
@@ -163,7 +166,6 @@ async def ensure_entry(session: AsyncSession, record: AppRecord) -> HirePipeline
         job_id=record.app.job_id,
         stage_key=FIRST,
         stage_entered_at=record.app.submitted_at or now,
-        revealed=False,
         tags=[],
         created_at=now,
         updated_at=now,

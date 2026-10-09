@@ -5,6 +5,9 @@
 * ``GET  /v1/approvals``                   inbox (only workflows where the actor holds
                                              the approval type's decision permission)
 * ``GET  /v1/approvals/{id}``              one approval: context, payload, chain, history
+                                             (as the workflow's view filter shows them,
+                                             ``pairly_core.approvals.views``; the hash is
+                                             always the stored payload's)
 * ``POST /v1/approvals/{id}/decision``     approve | reject | request_changes
                                              (``Idempotency-Key`` header required)
 * ``GET|POST /v1/approval-delegations``    the caller's delegations and out-of-office
@@ -48,6 +51,7 @@ from pairly_core.approvals.service import (
     list_inbox,
     revoke_delegation,
 )
+from pairly_core.approvals.views import approval_view
 from pairly_core.audit import actor_ref
 from pairly_core.errors import BadRequestError, NotFoundError, ServiceUnavailableError
 from pairly_core.identity import CurrentActor, OrgSession
@@ -151,6 +155,11 @@ class ApprovalDetailOut(ApprovalOut):
     context: dict[str, Any]
     payload: dict[str, Any]
     payload_hash: str
+    # What the workflow hid from the approver's view of ``payload`` and ``context`` (for
+    # example a candidate's name while blind), with one sentence saying so. The hash and
+    # the decision always bind the real stored payload.
+    masked_fields: list[str] = []
+    display_note: str | None = None
     submitted_by_type: str
     submitted_by_id: str
     policy_version_id: uuid.UUID
@@ -280,11 +289,14 @@ async def detail(
     found = await get_detail(session, actor, approval_id)
     approval = found.approval
     active = found.steps[approval.current_step] if approval.current_step is not None else None
+    shown = await approval_view(session, approval)
     return ApprovalDetailOut(
         **_summary(approval, active, found.sla),
-        context=approval.context,
-        payload=approval.payload,
+        context=shown.context,
+        payload=shown.payload,
         payload_hash=approval.payload_hash,
+        masked_fields=list(shown.masked),
+        display_note=shown.note,
         submitted_by_type=approval.submitted_by_type,
         submitted_by_id=approval.submitted_by_id,
         policy_version_id=approval.policy_version_id,

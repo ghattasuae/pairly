@@ -635,6 +635,7 @@
     "notFound": "This item is not available to you any more.",
     "loadError": "The details could not be loaded. Pick the item again to retry.",
     "whatHappens": "What you are approving",
+    "blindMasked": "The candidate's name, email and phone are hidden in blind mode. The approval still covers the real message, and the email goes out with the real details.",
     "evidence": "Evidence",
     "openDocument": "Open the document on its own page",
     "context": "Context",
@@ -1434,5 +1435,311 @@
     "invalid": "The link is not valid or has expired. Use the link in our latest email to you.",
     "unavailableTitle": "Not available right now",
     "unavailable": "We could not load your preferences. Try again in a few minutes."
+  },
+  "Screen": {
+    "title": "Screening mode",
+    "eyebrow": "Screening",
+    "open": "Screen candidates",
+    "position": "{position} of {total}",
+    "empty": "No candidates in this job yet.",
+    "noMatch": "No candidate matches your search.",
+    "search": "Search name, reference or tag",
+    "queue": "Candidates",
+    "showQueue": "Show the list",
+    "hideQueue": "Hide the list",
+    "previous": "Previous candidate (K)",
+    "next": "Next candidate (J)",
+    "loading": "Loading",
+    "notScreened": "Not screened yet. Read the CV yourself: nothing here was scored by the AI.",
+    "running": "The screening is still running. Scores appear here when it finishes.",
+    "cvUnavailable": "The CV text is not available here. Open the profile in the pipeline to see the files.",
+    "document": "CV",
+    "scores": "Scores",
+    "stage": "Stage: {stage}",
+    "needsPerson": "Needs a person",
+    "blind": {
+      "on": "Blind mode on",
+      "off": "Blind mode off",
+      "explain": "Hidden until the shortlist: name, photo, age and date of birth, gender markers, nationality, marital status, address and contact details{universities, select, true {, and university names} other {}}. Hidden parts read like [name] or [university].",
+      "explainOff": "Reviewers see names and contact details for new screenings.",
+      "revealed": "Identity shown for this candidate",
+      "hidden": "Identity hidden for this candidate",
+      "toggle": "Blind mode for new screenings",
+      "toggleHelp": "Applies to screenings that start after the change. Candidates screened blind stay hidden until they are shortlisted.",
+      "changed": "Blind mode changed",
+      "placeholder": "hidden in blind mode"
+    },
+    "score": {
+      "overall": "Overall",
+      "overallValue": "{score} out of 100",
+      "of": "{score} of {max}",
+      "ai": "AI gave {score}",
+      "overridden": "Changed by a person",
+      "confidence": "AI confidence {value}%",
+      "mustHave": "Must have",
+      "weight": "Weight {weight}",
+      "evidence": "Evidence from the CV",
+      "showInCv": "Show in the CV",
+      "noEvidence": "No quote",
+      "flags": "Flags",
+      "flagsInfo": "Information only. Flags never lower a score; a person decides.",
+      "checks": "Checks on the CV",
+      "knockouts": "Knockout questions",
+      "knockoutMismatch": "The answer differs from what the job needs. A person checks it.",
+      "aiNote": "AI note: {note}"
+    },
+    "why": {
+      "title": "Why not higher",
+      "notScored": "The AI could not score this, so a person decides.",
+      "top": "Full marks: the CV shows the top level.",
+      "noEvidence": "No quote in the CV supports this, so it gets no credit.",
+      "nextLevel": "Scored {score} of {max}. A higher score needs this: {next}",
+      "generic": "Scored {score} of {max}."
+    },
+    "flags": {
+      "end_before_start": "A job on the CV ends before it starts. Ask the candidate.",
+      "future_date": "A job on the CV starts after today. Ask the candidate.",
+      "overlapping_roles": "Two jobs overlap for a long time. This can be normal; ask if it matters.",
+      "unexplained_gap": "There is a long gap between two jobs with nothing listed. Gaps have many good reasons.",
+      "title_inflation": "A senior title appears after less experience than it usually needs. Check the role.",
+      "unsupported_skills": "Several listed skills are not mentioned anywhere else on the CV.",
+      "boilerplate": "The CV uses many generic phrases and few specifics. It may be AI written; this is not a penalty.",
+      "mass_application": "The same CV file was sent to several jobs here.",
+      "unknown": "The screening flagged this for a person to look at."
+    },
+    "criterionFlags": {
+      "no_evidence": "No supporting quote was found in the CV.",
+      "evidence_rejected": "Some quotes the AI gave were not in the CV, so they were not counted.",
+      "low_confidence": "The AI was not sure about this score.",
+      "not_scored": "The AI did not score this.",
+      "why_dropped": "The AI explanation did not pass the checks, so it is not shown."
+    },
+    "override": {
+      "open": "Change score",
+      "title": "Change the score of {criterion}",
+      "score": "New score",
+      "reason": "Why you change it (at least 10 characters)",
+      "save": "Save change",
+      "cancel": "Cancel",
+      "saved": "Score changed",
+      "help": "Your change and reason are kept with the decision record and used to improve the rubric."
+    },
+    "actions": {
+      "label": "Actions",
+      "advance": "Advance",
+      "hold": "Hold",
+      "reject": "Draft rejection",
+      "note": "Note",
+      "schedule": "Schedule",
+      "tag": "Tag",
+      "select": "Select",
+      "compare": "Compare",
+      "search": "Search",
+      "scheduleSoon": "Scheduling is not available yet. It arrives with the scheduling update.",
+      "keys": "Keys"
+    },
+    "toast": {
+      "moved": "{name} moved to {stage}",
+      "held": "{name} is on hold",
+      "tagged": "Tag added to {name}",
+      "noted": "Note added",
+      "undo": "Undo",
+      "undone": "Undone",
+      "undoFailed": "Could not undo",
+      "rejectDraft": "Rejection drafted for {name}"
+    },
+    "note": {
+      "title": "Note for the hiring team",
+      "placeholder": "What should the team know?",
+      "save": "Add note",
+      "cancel": "Cancel"
+    },
+    "tag": {
+      "title": "Add a tag",
+      "placeholder": "Type a tag and press Enter",
+      "save": "Add tag",
+      "cancel": "Cancel"
+    },
+    "reject": {
+      "title": "Rejection draft",
+      "help": "It goes to the approval queue. Nothing is sent until another person approves it."
+    },
+    "bulk": {
+      "selected": "{count, plural, one {# selected} other {# selected}}",
+      "moveTo": "Move to stage",
+      "apply": "Move",
+      "tag": "Tag all",
+      "clear": "Clear",
+      "summaryTitle": "Check before it happens",
+      "confirm": "Go ahead"
+    },
+    "compare": {
+      "title": "Compare candidates",
+      "open": "Compare ({count})",
+      "close": "Close",
+      "need": "Select two or three candidates with X, then press C.",
+      "criterion": "Criterion",
+      "firstQuote": "First quote"
+    },
+    "help": {
+      "title": "Keyboard",
+      "keys": "J and K: next and previous. A: advance. H: hold. R: draft a rejection. N: note. S: schedule. T: tag. X: select. C: compare. /: search."
+    }
+  },
+  "Portal": {
+    "eyebrow": "Candidate portal",
+    "title": "Your applications",
+    "nav": {
+      "label": "Portal",
+      "applications": "Applications",
+      "privacy": "Privacy centre",
+      "signOut": "Sign out"
+    },
+    "signIn": {
+      "title": "Follow your application",
+      "intro": "We email you a link. No password needed.",
+      "email": "Email address",
+      "send": "Email me a link",
+      "sending": "Sending",
+      "sent": "If you applied with this address, a link is on its way. It works once and for 30 minutes.",
+      "needOrg": "Open this page from the link in your email, or from the careers page of the company you applied to.",
+      "expiredTitle": "This link does not work any more",
+      "expired": "A link works once and for a short time. Ask for a new one below.",
+      "opening": "Signing you in",
+      "signedOut": "You signed out."
+    },
+    "steps": {
+      "received": {
+        "label": "Application received",
+        "help": "We have your application."
+      },
+      "in_review": {
+        "label": "Being reviewed",
+        "help": "A person on the hiring team reviews it. An AI assistant helps, but a person decides."
+      },
+      "moving_forward": {
+        "label": "Moving forward",
+        "help": "You passed the first review."
+      },
+      "interview": {
+        "label": "Interviews",
+        "help": "The team wants to talk with you."
+      },
+      "offer": {
+        "label": "Offer",
+        "help": "The team is working on an offer."
+      },
+      "hired": {
+        "label": "Hired",
+        "help": "Welcome to the team."
+      },
+      "not_selected": {
+        "label": "Not selected",
+        "help": "The team decided not to move forward. We sent you a message about it."
+      },
+      "withdrawn": {
+        "label": "Withdrawn",
+        "help": "You withdrew this application."
+      }
+    },
+    "state": {
+      "done": "Done",
+      "current": "Now",
+      "ahead": "Next"
+    },
+    "app": {
+      "reference": "Reference {reference}",
+      "appliedOn": "Applied on {date}",
+      "since": "Since {date}",
+      "open": "See details",
+      "timeline": "Where it stands",
+      "filesWanted": "{count, plural, one {# file requested} other {# files requested}}",
+      "interviews": "Upcoming interviews",
+      "noInterviews": "No interviews planned yet.",
+      "join": "Join the meeting",
+      "reschedule": "Reschedule",
+      "cancelInterview": "Cancel",
+      "messages": "Messages",
+      "noMessages": "No messages yet.",
+      "fromCompany": "From the hiring team",
+      "fromYou": "From you",
+      "replyLabel": "Your message to the hiring team",
+      "send": "Send",
+      "sent": "Message sent",
+      "documents": "Files the team asked for",
+      "noDocuments": "The team has not asked for any files.",
+      "upload": "Upload a file for {label}",
+      "received": "Received",
+      "uploading": "Uploading",
+      "uploaded": "File received",
+      "withdraw": "Withdraw this application",
+      "withdrawTitle": "Withdraw your application?",
+      "withdrawBody": "The hiring team will stop considering it, and we email you to confirm. You cannot undo this here.",
+      "withdrawConfirm": "Yes, withdraw",
+      "withdrawn": "You withdrew this application. We sent you an email to confirm.",
+      "back": "All applications",
+      "updated": "Your status changed.",
+      "live": "This page updates by itself."
+    },
+    "jobs": {
+      "title": "Other open jobs",
+      "applied": "You applied",
+      "apply": "See the job and apply",
+      "none": "No other open jobs right now."
+    },
+    "privacy": {
+      "title": "Privacy centre",
+      "intro": "See and control what we keep about you.",
+      "download": "Download my data",
+      "downloadHelp": "One file with what you sent us and what we sent you.",
+      "deleteTitle": "Ask us to delete your data",
+      "deleteHelp": "An admin reviews your request and replies by email. Nothing is deleted automatically.",
+      "deleteNote": "Anything we should know (optional)",
+      "deleteSend": "Send the request",
+      "deleteSent": "We received your request. An admin will handle it.",
+      "deleteAlready": "You already have an open request. An admin will handle it.",
+      "decisionsTitle": "AI-assisted steps",
+      "decisionsHelp": "Each step has an id. You can ask a person to review any of them.",
+      "noDecisions": "No AI-assisted steps yet.",
+      "kind": {
+        "score": "Scoring against the job's criteria",
+        "extraction": "Reading your CV",
+        "shortlist_suggestion": "Suggestion for the shortlist",
+        "human_override": "A person changed a score",
+        "appeal_outcome": "Result of a review"
+      },
+      "receipt": "See the receipt",
+      "review": "Ask for a human review",
+      "reviewTitle": "Ask a person to review this step",
+      "reviewReason": "Why do you want a review? (at least 10 characters)",
+      "reviewSend": "Send",
+      "reviewSent": "A person will review it. You can follow it here.",
+      "reviewed": "Review requested",
+      "appealsTitle": "Your review requests",
+      "appealStatus": {
+        "open": "Waiting for a person",
+        "resolved": "Answered"
+      },
+      "requestsTitle": "Your data requests",
+      "requestStatus": {
+        "open": "Open",
+        "completed": "Done",
+        "declined": "Declined"
+      },
+      "receiptTitle": "Decision receipt",
+      "receiptIntro": "What this step was, when it happened and what it produced.",
+      "decisionId": "Decision id",
+      "decidedAt": "Decided on {date}",
+      "outcome": "Result",
+      "policies": "Rules used"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "not_signed_in": "Your session ended. Ask for a new link.",
+      "rate_limited": "Too many tries. Wait a little and try again.",
+      "conflict": "This was already done.",
+      "too_large": "The file is too large.",
+      "invalid_input": "Check what you entered and try again."
+    }
   }
 }

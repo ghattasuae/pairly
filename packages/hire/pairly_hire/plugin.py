@@ -23,9 +23,10 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting) and ``hire_rediscovery_index``.
 
-Importing this module registers the Hire tables on ``Base.metadata`` and wires screening
-into the pipeline hooks (blind mode per application, screening results;
-``screening.reviewer.register``).
+Importing this module registers the Hire tables on ``Base.metadata``, wires screening
+into the pipeline hooks (blind mode per application, screening results, the blind
+redactor for free text; ``screening.reviewer.register``) and registers the approver's
+view of a message while blind (``messaging.approval_view.register``).
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ from pairly_core.retention.rules import RetentionRule
 from pairly_core.search.sources import SearchSource
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
+from pairly_hire.messaging import approval_view as message_approval_view
 from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
 from pairly_hire.messaging.sla import JOB_NAME as SLA_JOB
@@ -50,6 +52,7 @@ from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_APPROVE, MESSAGE_CRE
 from pairly_hire.pipeline import models as pipeline_models  # noqa: F401  (tables)
 from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
+from pairly_hire.portal import models as portal_models  # noqa: F401  (tables)
 from pairly_hire.retention import RETENTION_RULES
 from pairly_hire.screening import models as screening_models  # noqa: F401  (its tables)
 from pairly_hire.screening import reviewer as screening_reviewer
@@ -66,6 +69,8 @@ _HERE = Path(__file__).resolve().parent
 
 # The pipeline and messaging read blind mode and screening results from screening.
 screening_reviewer.register()
+# Approvers of a message see the candidate's name, email and phone masked while blind.
+message_approval_view.register()
 
 HIRE_MESSAGE: GraphSpec = GraphSpec(
     workflow="hire",

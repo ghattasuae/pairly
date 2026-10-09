@@ -62,6 +62,8 @@ function detail(s: ApprovalSummary, patch: Partial<ApprovalDetail> = {}): Approv
     context: {},
     payload: { amount: "120.00", currency: "AED" },
     payload_hash: "abc",
+    masked_fields: [],
+    display_note: null,
     submitted_by_type: "user",
     submitted_by_id: "someone",
     policy_version_id: "33333333-3333-4333-8333-333333333333",
@@ -296,5 +298,36 @@ describe("ApprovalLinkLanding", () => {
     const describe = vi.fn(async () => ({ kind: "ready" as const, link: { ...link, has_second_factor: false }, email: "a@b.test" }));
     renderWithIntl(<ApprovalLinkLanding sso={{ google: false, microsoft: false }} totpEnabled describe={describe} />);
     expect(await screen.findByRole("button", { name: "Sign in again with my code" })).toBeInTheDocument();
+  });
+});
+
+describe("InboxView, blind mode", () => {
+  it("says when the candidate's details are hidden from the approver", async () => {
+    const load = vi.fn(async (id: string) => {
+      const s = items.find((i) => i.id === id)!;
+      return {
+        ok: true as const,
+        detail: detail(s, {
+          payload: { text: "Dear [name hidden in blind mode]," },
+          masked_fields: ["name", "email", "phone"],
+          display_note: "hidden",
+        }),
+      };
+    });
+    renderWithIntl(
+      <InboxView
+        filters={DEFAULT_FILTERS}
+        initialItems={items}
+        initialCursor={null}
+        initialItem={null}
+        initialDetail={null}
+        workflows={["pay"]}
+        meId={ME}
+        totpEnabled
+        actions={{ load, decide: vi.fn(), loadPage: vi.fn() }}
+      />,
+    );
+    expect(await screen.findByText(/hidden in blind mode\. The approval still covers/)).toBeInTheDocument();
+    expect(document.querySelector("[data-blind-masked]")).not.toBeNull();
   });
 });

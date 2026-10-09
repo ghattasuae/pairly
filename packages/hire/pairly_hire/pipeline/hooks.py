@@ -15,6 +15,13 @@ The pipeline must not depend on how it stores them, so it reads them through:
   criterion evidence of an application, for the profile timeline and, for a rejection,
   for an optional short reason. Default: none (the profile shows "not screened yet",
   and a rejection has no AI reason).
+* ``TextRedactorSource.redactor(session, application_id, contacts)``: the blind
+  redactor for free text shown to reviewers while an application is blind (notes,
+  move reasons, message previews, custom form answers): the candidate's known identity
+  from ``contacts`` and, from screening, the names the parsed CV gives and the
+  organisation's university setting (``pairly_hire.blindtext``). Default: the same
+  redactor from ``contacts`` alone. ``identity_redactor`` fails closed: if it cannot be
+  built, every text reads "[hidden in blind mode]".
 
 Screening registers its implementations with ``set_blind_mode_source`` and
 ``set_screening_view`` when its module is imported (for example from the plugin
@@ -25,11 +32,13 @@ self-identification answers: screening may not see them (``pairly_hire.scoring``
 from __future__ import annotations
 
 import uuid
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Final, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from pairly_hire.blindtext import Redactor, identity_sources, redactor
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +75,28 @@ class ScreeningView(Protocol):
     ) -> ScreeningSummary | None: ...
 
 
+class TextRedactorSource(Protocol):
+    async def redactor(
+        self,
+        session: AsyncSession,
+        application_id: uuid.UUID,
+        contacts: Sequence[Mapping[str, Any]],
+    ) -> Redactor: ...
+
+
+HIDDEN_TEXT: Final = "[hidden in blind mode]"
+
+
+class _ContactRedactor:
+    async def redactor(
+        self,
+        session: AsyncSession,
+        application_id: uuid.UUID,
+        contacts: Sequence[Mapping[str, Any]],
+    ) -> Redactor:
+        return redactor(identity_sources(*contacts))
+
+
 class _BlindOff:
     async def enabled(self, session: AsyncSession) -> bool:
         return False
@@ -85,12 +116,19 @@ class _NoScreening:
 
 _blind: BlindModeSource = _BlindOff()
 _screening: ScreeningView = _NoScreening()
+_redactor: TextRedactorSource = _ContactRedactor()
 
 
 def set_blind_mode_source(source: BlindModeSource | None) -> None:
     """Register the blind mode setting (None: back to the default, off)."""
     global _blind
     _blind = source if source is not None else _BlindOff()
+
+
+def set_text_redactor(source: TextRedactorSource | None) -> None:
+    """Register the free text redactor (None: back to the default, contacts only)."""
+    global _redactor
+    _redactor = source if source is not None else _ContactRedactor()
 
 
 def set_screening_view(view: ScreeningView | None) -> None:
@@ -129,3 +167,18 @@ async def screening_summary(
     session: AsyncSession, application_id: uuid.UUID
 ) -> ScreeningSummary | None:
     return await _screening.summary(session, application_id)
+
+
+def _hide_all(text: str) -> str:
+    return HIDDEN_TEXT if text else text
+
+
+async def identity_redactor(
+    session: AsyncSession, application_id: uuid.UUID, contacts: Sequence[Mapping[str, Any]]
+) -> Redactor:
+    """The redactor for free text of a blind application (see the module docstring)."""
+    try:
+        return await _redactor.redactor(session, application_id, contacts)
+    except Exception:
+        # Fail closed: without a redactor, show none of the text.
+        return _hide_all

@@ -7,8 +7,9 @@
   uses the default stages.
 * ``hire_pipeline_entries``: where one application stands: its stage, when it got
   there, its tags, when the candidate last heard from us (``last_update_at``, for the
-  anti-ghosting SLA) and whether its identity was revealed (blind mode). An application
-  without a row is in the first stage (``applied``) and never had an update.
+  anti-ghosting SLA). An application without a row is in the first stage (``applied``)
+  and never had an update. Whether its identity was revealed (blind mode) lives on the
+  application (``hire_applications.identity_revealed_at``, ``pairly_hire.reveal``).
 * ``hire_stage_moves``: every stage change, append only (SELECT and INSERT for the
   application role). An undo is a new row pointing at the move it reverts
   (``undo_of``); a bulk action shares one ``batch_id``.
@@ -27,7 +28,6 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -119,10 +119,6 @@ class HirePipelineEntry(Base, OrgScoped):
     job_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     stage_key: Mapped[str] = mapped_column(String(32), nullable=False)
     stage_entered_at: Mapped[datetime] = _created()
-    # Blind mode: set once the application reached a stage that reveals identity.
-    revealed: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
-    )
     tags: Mapped[list[str]] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
     )
@@ -141,7 +137,8 @@ class HireStageMove(Base, OrgScoped):
         _job_fk(MOVES),
         CheckConstraint(f"to_stage ~ '{STAGE_KEY_PATTERN}'", name="to_stage_format"),
         CheckConstraint(
-            "actor_type IN ('user', 'agent', 'api_key', 'system')", name="actor_type_valid"
+            "actor_type IN ('user', 'agent', 'api_key', 'system', 'candidate')",
+            name="actor_type_valid",
         ),
         Index("ix_hire_stage_moves_application", "org_id", "application_id", "created_at"),
         Index("ix_hire_stage_moves_batch", "org_id", "batch_id"),

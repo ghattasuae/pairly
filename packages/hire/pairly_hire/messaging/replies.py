@@ -6,8 +6,8 @@
 (``hire_messages``, direction ``inbound``, status ``received``, purpose ``reply``): the
 text is encrypted, it appears in the profile timeline and the conversation, and it is
 audited without its text. The caller (the portal, after it verified the candidate's
-magic link) passes the application id; nothing here trusts the text: it is shown as
-plain text and never sent to a model.
+session, as ``ActorType.CANDIDATE``) passes the application id; nothing here trusts the
+text: it is shown as plain text and never sent to a model.
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ async def record_reply(
     text: str,
     subject: str | None = None,
     actor_id: str = PORTAL_ACTOR,
+    actor_type: ActorType = ActorType.SYSTEM,
 ) -> HireMessage:
     """Store a candidate's reply on their application. Raises ``BadRequestError`` on an
     empty or too long text, ``NotFoundError`` for an unknown application."""
@@ -57,7 +58,7 @@ async def record_reply(
         sensitive=False,
         status=MessageStatus.RECEIVED.value,
         ai_fields=[],
-        created_by_type=ActorType.SYSTEM.value,
+        created_by_type=actor_type.value,
         created_by_id=actor_id,
         created_at=now,
         updated_at=now,
@@ -77,7 +78,7 @@ async def record_reply(
     await append_audit(
         session,
         action="hire.message.received",
-        actor_type=ActorType.SYSTEM,
+        actor_type=actor_type,
         actor_id=actor_id,
         entity_type="hire.message",
         entity_id=message.id,

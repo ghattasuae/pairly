@@ -4,10 +4,12 @@
 
 The executor has already re-checked the approval in the database (a person with
 ``hire.screening.approve`` approved this exact payload, with a second factor). The
-action marks the screening ``shortlisted`` and lifts blind mode: from now on reviewers
+action marks the screening ``shortlisted`` and reveals the application's identity
+(``pairly_hire.reveal``, the one reveal state every reader uses): from now on reviewers
 see the candidate's name and contact details (brief 3.3.3, "until the shortlist
-stage"). It never changes the application's pipeline stage or messages anyone; the
-pipeline (WP2.5) reads the screening's status.
+stage"). The screening's own ``blind`` keeps saying how it ran. It never changes the
+application's pipeline stage or messages anyone; the pipeline (WP2.5) reads the
+screening's status.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pairly_core.approvals.executor import EXECUTOR_ACTOR_ID, ExecutorRefusedError
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.workflow.spec import FinalActionCall
+from pairly_hire.reveal import SHORTLIST_SOURCE, reveal_application
 from pairly_hire.screening.models import ScreeningStatus
 from pairly_hire.screening.service import (
     SCREENING_ENTITY,
@@ -45,9 +48,16 @@ async def shortlist(session: AsyncSession, call: FinalActionCall) -> Mapping[str
         raise ExecutorRefusedError("screening_not_awaiting_review")
     now = datetime.now(UTC)
     row.status = ScreeningStatus.SHORTLISTED.value
-    row.blind = False
     row.revealed_at = row.decided_at = row.updated_at = now
     await session.flush()
+    await reveal_application(
+        session,
+        row.application_id,
+        source=SHORTLIST_SOURCE,
+        actor_type=ActorType.SYSTEM,
+        actor_id=EXECUTOR_ACTOR_ID,
+        payload={"screening_id": str(row.id), "approval_id": str(call.approval_id)},
+    )
     await append_audit(
         session,
         action="hire.screening.shortlisted",

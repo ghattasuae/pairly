@@ -19,6 +19,7 @@ leaks to another request through the connection pool (the setting is transaction
 
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -56,9 +57,15 @@ from pairly_core.config import Settings
 
 ORG_SETTING = "app.org_id"
 SUBJECT_SETTING = "app.auth_subject"
+# An external person signed in to a portal (a candidate, later a vendor), for example
+# ``hire_candidate:<uuid>``. Empty for staff, agents and jobs. A workflow may add
+# restrictive Row Level Security policies keyed on it (``set_portal_subject``).
+PORTAL_SETTING = "app.portal_subject"
 
 _INFO_ORG = "pairly.org_id"
 _INFO_SUBJECT = "pairly.auth_subject"
+_INFO_PORTAL = "pairly.portal_subject"
+_PORTAL_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}:[0-9a-f-]{36}$")
 
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
@@ -136,6 +143,23 @@ def set_tenant(session: AsyncSession, org_id: uuid.UUID | None, auth_subject: st
     session.info[_INFO_SUBJECT] = auth_subject
 
 
+def set_portal_subject(session: AsyncSession, subject: str | None) -> None:
+    """Mark ``session`` as acting for one external portal person (``kind:<uuid>``), or
+    clear it. Like ``set_tenant``: before the transaction begins, applies from the next
+    transaction start. Workflows key restrictive RLS policies on ``app.portal_subject``
+    so a portal session can only ever see that person's own rows."""
+    if session.in_transaction():
+        raise TenantError("set the portal subject before the transaction begins")
+    if subject is not None and not _PORTAL_RE.fullmatch(subject):
+        raise TenantError("invalid portal subject")
+    session.info[_INFO_PORTAL] = subject
+
+
+def current_portal_subject(session: AsyncSession | Session) -> str | None:
+    value = session.info.get(_INFO_PORTAL)
+    return value if isinstance(value, str) else None
+
+
 def current_org(session: AsyncSession | Session) -> uuid.UUID | None:
     value = session.info.get(_INFO_ORG)
     return value if isinstance(value, uuid.UUID) else None
@@ -144,11 +168,13 @@ def current_org(session: AsyncSession | Session) -> uuid.UUID | None:
 def _apply_settings(session: Session, _tx: SessionTransaction, conn: Connection) -> None:
     org = session.info.get(_INFO_ORG)
     subject = session.info.get(_INFO_SUBJECT)
-    # Always set both, so a value can never survive from an earlier context.
+    portal = session.info.get(_INFO_PORTAL)
+    # Always set all three, so a value can never survive from an earlier context.
     conn.execute(
         select(
             func.set_config(ORG_SETTING, str(org) if org is not None else "", True),
             func.set_config(SUBJECT_SETTING, subject or "", True),
+            func.set_config(PORTAL_SETTING, portal or "", True),
         )
     )
 

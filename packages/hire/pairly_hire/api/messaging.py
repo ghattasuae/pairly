@@ -69,7 +69,7 @@ from pairly_hire.permissions import (
     MESSAGE_CREATE,
     SETTINGS_MANAGE,
 )
-from pairly_hire.pipeline.hooks import application_blind, screening_summary
+from pairly_hire.pipeline.hooks import application_blind, identity_redactor, screening_summary
 from pairly_hire.pipeline.records import AppRecord, load_record
 
 log = structlog.get_logger("pairly_hire.api.messaging")
@@ -248,10 +248,15 @@ async def _message_out(
     blind = await application_blind(session, record.app.id)
     masked = record.identity_hidden(blind)
     subject, text = preview.subject, preview.text
-    if masked and record.full_name:
+    if masked:
         label = record.label(blind)
-        subject = subject.replace(record.full_name, label) if subject else subject
-        text = text.replace(record.full_name, label) if text else text
+        if record.full_name:
+            subject = subject.replace(record.full_name, label) if subject else subject
+            text = text.replace(record.full_name, label) if text else text
+        # Typed values (a personal note, a reason) may name the person too.
+        redact = await identity_redactor(session, record.app.id, record.identity_contacts())
+        subject = redact(subject) if subject else subject
+        text = redact(text) if text else text
     entry = library.entry(message.template_key or "")
     prefs = await prefs_for(session, record.candidate.id)
     return HireMessageOut(

@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { ArrowLeft, Check, ExternalLink, FileText, Loader2, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, EyeOff, FileText, Loader2, RotateCcw, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import type * as React from "react";
@@ -204,6 +204,15 @@ export function ApprovalPanel({
         {detail && (
           <>
             <Section title={t("whatHappens")} id={`${headingId}-payload`}>
+              {(detail.masked_fields ?? []).length > 0 && (
+                <p
+                  data-blind-masked
+                  className="flex items-start gap-2 rounded-xl border border-dashed border-signal/50 bg-signal-soft/60 p-3 text-sm"
+                >
+                  <EyeOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  <span>{t("blindMasked")}</span>
+                </p>
+              )}
               <div className="rounded-xl border bg-surface p-4">
                 <JsonView value={detail.payload} />
               </div>

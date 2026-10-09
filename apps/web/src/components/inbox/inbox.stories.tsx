@@ -50,6 +50,8 @@ function detail(s: ApprovalSummary): ApprovalDetail {
     context: { submitted_by: "Sample Person", policy: "expense.limits v3", risk: "low" },
     payload: { amount: "120.00", currency: "AED", merchant: "Sample Cafe LLC", category: "Meals" },
     payload_hash: "9f2c4e6a8b0d1f3e5a7c9e1b3d5f7a9c",
+    masked_fields: [],
+    display_note: null,
     submitted_by_type: "user",
     submitted_by_id: "someone",
     policy_version_id: "33333333-3333-4333-8333-333333333333",

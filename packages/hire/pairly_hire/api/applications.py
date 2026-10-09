@@ -9,7 +9,8 @@
   While an application is blind (screening's blind mode, until the shortlist or a stage
   that reveals identity, ``pipeline.records.hidden_identities``) the name reads
   "Candidate <reference>" and the contact details, CV and files are left out
-  (``identity_hidden``).
+  (``identity_hidden``); custom form answers go through the blind redactor with the
+  candidate's known identity (``hooks.identity_redactor``).
 * ``GET /v1/hire/reports/self-identification`` (``hire.selfid.read``): totals per
   category and option for one job, for bias reporting only. Counts under
   ``MIN_REPORT_COUNT`` are shown as ``null`` so nobody can be singled out. Each read is
@@ -36,9 +37,11 @@ from pairly_core.errors import NotFoundError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.policy_versions import get_policy
 from pairly_core.rbac import ActorKind, authorize
+from pairly_hire.blindtext import redact_values
 from pairly_hire.jobs import get_job, org_settings, save_settings
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate
 from pairly_hire.permissions import CANDIDATE_READ, JOB_READ, SELFID_READ, SETTINGS_MANAGE
+from pairly_hire.pipeline.hooks import identity_redactor
 from pairly_hire.pipeline.records import hidden_identities, hidden_label
 from pairly_hire.retention import apply_retention_months
 from pairly_hire.rubric import parse_rubric
@@ -212,6 +215,17 @@ async def get_application(
             )
     hidden = app.id in await hidden_identities(session, [app])
     contact = {} if hidden else _contact(app)
+    questions = dict(stored.get("questions", {})) if isinstance(stored, dict) else {}
+    if hidden and questions:
+        # Custom form answers are free text: redacted with the candidate's identity.
+        known = {
+            "full_name": unseal(candidate, "full_name"),
+            "email": unseal(candidate, "email"),
+            "phone": unseal(candidate, "phone"),
+            "location": unseal(candidate, "location"),
+        }
+        redact = await identity_redactor(session, app.id, [_contact(app), known])
+        questions = redact_values(questions, redact)
     return HireApplicationDetail(
         **_summary(app, candidate, hidden),
         email="" if hidden else str(unseal(candidate, "email") or ""),
@@ -221,7 +235,7 @@ async def get_application(
         rubric_policy_id=app.rubric_policy_id,
         rubric_version=policy.version if policy else None,
         form_policy_id=app.form_policy_id,
-        answers=dict(stored.get("questions", {})) if isinstance(stored, dict) else {},
+        answers=questions,
         knockouts=knockouts,
         consent_version=app.consent_version,
         consent_at=app.consent_at,

@@ -47,7 +47,7 @@ endif
 .PHONY: help install hooks env dev demo demo-expense demo-hire down logs ps test evals lint format typecheck
 .PHONY: local-up local-down local-status local-test local-logs
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
-.PHONY: bootstrap-org dev-seed-approval audit-anchor-now
+.PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -157,6 +157,12 @@ dev-seed-approval: ## Development only: one pending approval for the web e2e sui
 		echo 'usage: make dev-seed-approval ORG=<org slug> EMAIL=<approver email> [ARGS="--link approve --decision"]'; exit 2; fi
 	$(RUN_SEED) python -m pairly_api.devseed approval \
 		--org-slug "$(ORG)" --approver-email "$(EMAIL)" $(ARGS)
+
+dev-seed-hire-screening: ## Development only: the screening e2e job, recordings and synthetic CVs (ORG, OUT, COUNT)
+	@if [ -z "$(ORG)" ] || [ -z "$(OUT)" ]; then \
+		echo 'usage: make dev-seed-hire-screening ORG=<org slug> OUT=<directory> [COUNT=20]'; exit 2; fi
+	$(RUN_SEED) python scripts/e2e_hire_screening_seed.py \
+		--org-slug "$(ORG)" --out "$(OUT)" --count "$(or $(COUNT),20)"
 
 audit-anchor-now: ## Development only: sign and store every org's audit chain head now (normally nightly)
 	$(RUN_WORKER) python -m pairly_worker.run_now audit_anchor_nightly

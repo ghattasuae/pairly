@@ -289,6 +289,15 @@ class HireApplication(Base, OrgScoped):
             "status <> 'rejected' OR (rejected_at IS NOT NULL AND retention_until IS NOT NULL)",
             name="rejected_has_retention",
         ),
+        CheckConstraint(
+            "(identity_revealed_at IS NULL) = (identity_revealed_by IS NULL)",
+            name="identity_revealed_pair",
+        ),
+        CheckConstraint(
+            "identity_revealed_by IS NULL OR identity_revealed_by ~ "
+            "'^(shortlist|stage:[a-z][a-z0-9_]{0,31})$'",
+            name="identity_revealed_by_format",
+        ),
         Index("ix_hire_applications_job", "org_id", "job_id", "status", "submitted_at"),
         Index("ix_hire_applications_candidate", "org_id", "candidate_id"),
         Index("ix_hire_applications_cv", "org_id", "cv_document_id"),
@@ -345,6 +354,13 @@ class HireApplication(Base, OrgScoped):
     rejected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # When a rejected application becomes due for deletion (``pairly_hire.retention``).
     retention_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Blind mode: the one reveal state of this application (``pairly_hire.reveal``). Set
+    # once, by the shortlist approval or a move into a stage that reveals identity,
+    # whichever comes first; never cleared. ``shortlist`` or ``stage:<key>``.
+    identity_revealed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    identity_revealed_by: Mapped[str | None] = mapped_column(String(40), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
 

@@ -21,7 +21,8 @@ The apply flow (``pairly_hire.applying``; ``Cache-Control: no-store``):
   201): one file per request through the engine's ingestion (workflow ``hire``). 40
   per hour per IP.
 * ``POST /{org_slug}/applications/submit`` (JSON ``{"token"}``, 202): the CV must be
-  there. Queues the acknowledgement email. 20 per hour per IP. After the response, the
+  there. Queues the acknowledgement email, with a magic link to the candidate portal
+  (``pairly_hire.portal.auth``, single use, three days). 20 per hour per IP. After the response, the
   screening starts (``pairly_hire.screening.start``; a person always decides).
 
 Tenant handling: the slug is resolved by ``hire_careers_org(slug)`` (SECURITY DEFINER,
@@ -91,6 +92,7 @@ from pairly_hire.links import links_from_settings
 from pairly_hire.models import HireJob, JobStatus
 from pairly_hire.notice import CURRENT_VERSION, NOTICES
 from pairly_hire.pipeline.referrals import attach_referral
+from pairly_hire.portal.auth import ACKNOWLEDGEMENT_TTL, issue_login_token
 from pairly_hire.rubrics import locked_rubric
 from pairly_hire.screening.start import start_after_submit
 from pairly_hire.selfid.schema import CATEGORIES
@@ -554,14 +556,23 @@ async def submit(
         raise NotFoundError("job not found")
     settings = await org_settings(session)
     locale = app.consent_locale
+    # The acknowledgement carries a magic link to the candidate portal (single use,
+    # ``ACKNOWLEDGEMENT_TTL``); once used or expired, the portal sends a fresh one.
+    token, _ = await issue_login_token(
+        session,
+        org_id=org.id,
+        candidate_id=app.candidate_id,
+        locale=locale,
+        purpose="acknowledgement",
+        ttl=ACKNOWLEDGEMENT_TTL,
+    )
     done = await submit_application(
         session,
         app,
         org_name=org.name,
         job_title=job.title_ar if locale == "ar" and job.title_ar else job.title,
         response_days=settings.response_days,
-        # TODO(WP2.9): a magic link to the candidate portal instead of the careers page.
-        portal_url=f"{web_url(request)}/{locale}/careers/{org.slug}",
+        portal_url=f"{web_url(request)}/{locale}/portal/login#{token}",
     )
     out = HireSubmitOut(
         status=done.application.status,

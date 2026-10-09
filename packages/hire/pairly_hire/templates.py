@@ -9,8 +9,8 @@ how to ask for a human review or deletion, and a link to the candidate portal.
 Migration ``hire_0001`` stores these as version 1 shared rows (``org_id`` NULL); an
 organisation customises them by saving its own version.
 
-TODO(WP2.9): ``portal_url`` is a placeholder (the careers page) until the candidate
-portal and its magic link exist.
+``portal_url`` is a magic link to the candidate portal (``pairly_hire.portal.auth``:
+single use, three days; the portal sends a fresh one on request).
 
 Copy style: short plain sentences, never an em dash.
 """

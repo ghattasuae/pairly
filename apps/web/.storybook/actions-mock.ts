@@ -77,3 +77,19 @@ export const referralLink = unavailable;
 export const myReferrals = unavailable;
 export const readCandidatePreferences = unavailable;
 export const saveCandidatePreferences = unavailable;
+// Pairly Hire screening mode (lib/actions/screening.ts).
+export const loadQueue = unavailable;
+export const loadCandidate = unavailable;
+export const overrideScores = unavailable;
+export const setBlindMode = unavailable;
+// Pairly Hire candidate portal (lib/actions/portal.ts).
+export const requestPortalLink = unavailable;
+export const openPortalSession = unavailable;
+export const signOutOfPortal = unavailable;
+export const loadPortalApplications = unavailable;
+export const loadPortalApplication = unavailable;
+export const withdrawApplication = unavailable;
+export const replyToCompany = unavailable;
+export const loadPrivacy = unavailable;
+export const requestDeletion = unavailable;
+export const requestHumanReview = unavailable;
