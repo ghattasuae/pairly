@@ -17,8 +17,10 @@ too; an application, message, request or decision of anyone else reads as not fo
 * ``document_requests`` / ``attach_requested``: files the hiring team asked for.
 * ``open_jobs``: other open jobs of the organisation (applying goes through the careers
   apply flow).
-* Privacy centre: ``export_data`` (their own data as JSON; self-identification answers
-  stay apart, see ``NOT_EXPORTED``), ``request_deletion`` (a data request for admins,
+* Privacy centre: ``export_data`` (their own data as JSON, including the
+  self-identification answers they gave, read through the one narrow reader
+  ``pairly_hire.selfid.export``; what reviewers wrote and the screening computed stays
+  out, see ``NOT_EXPORTED``), ``request_deletion`` (a data request for admins,
   never an automatic deletion), ``decisions`` / ``receipt`` (decision records about
   their applications and the candidate-facing receipt, ``subject_receipt``),
   ``appeal`` / ``appeals`` (a human review request by decision id, through the
@@ -78,6 +80,7 @@ from pairly_hire.portal.models import (
 from pairly_hire.portal.status import MoveFact, Timeline, timeline
 from pairly_hire.portal.templates import WITHDRAWN
 from pairly_hire.sealing import read_sealed
+from pairly_hire.selfid.export import subject_answers
 
 if TYPE_CHECKING:
     from pairly_hire.scheduling.emails import SchedulingEnv
@@ -90,8 +93,9 @@ SENT: Final = frozenset({MessageStatus.QUEUED.value, MessageStatus.SENT.value})
 VISIBLE_KINDS: Final = ("extraction", "score", "shortlist_suggestion", "human_override")
 SHOWN_KINDS: Final = (*VISIBLE_KINDS, "appeal_outcome")
 NOT_EXPORTED: Final = (
-    "Self-identification answers are kept apart and used only for bias reporting, so they "
-    "are not in this file. Ask for them with a data request."
+    "Your self-identification answers are included as you gave them; the hiring team never "
+    "sees them, only bias reports with counts. Reviewers' notes, tags and scores are not in "
+    "this file: ask for a human review of a decision to have it explained."
 )
 MAX_DELETION_NOTE: Final = 1000
 
@@ -724,6 +728,7 @@ async def export_data(session: AsyncSession, identity: PortalIdentity) -> dict[s
     prefs = await prefs_for(session, identity.candidate_id)
     views = {v.id: v for v in await applications(session, identity)}
     apps = await own_applications(session, identity)
+    self_id = await subject_answers(session, [a.id for a in apps], locale=candidate.locale)
     out_apps: list[dict[str, Any]] = []
     for app in apps:
         view = views.get(app.id)
@@ -760,6 +765,7 @@ async def export_data(session: AsyncSession, identity: PortalIdentity) -> dict[s
                     {"label": r.label, "status": r.status, "requested_at": _iso(r.created_at)}
                     for r in await document_requests(session, identity, app.id)
                 ],
+                "self_identification": self_id.get(app.id, []),
             }
         )
     data: dict[str, Any] = {

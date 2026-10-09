@@ -1708,7 +1708,7 @@
       "title": "Privacy centre",
       "intro": "See and control what we keep about you.",
       "download": "Download my data",
-      "downloadHelp": "One file with what you sent us and what we sent you.",
+      "downloadHelp": "One file with what you sent us (including any self-identification answers) and what we sent you.",
       "deleteTitle": "Ask us to delete your data",
       "deleteHelp": "An admin reviews your request and replies by email. Nothing is deleted automatically.",
       "deleteNote": "Anything we should know (optional)",

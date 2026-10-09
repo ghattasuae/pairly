@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -198,8 +199,8 @@ async def test_candidates_never_reach_each_other(
 ) -> None:
     api = hire_api
     job = await open_job(api, world)
-    mine, email = await _apply(api, world, job, "Huda Karim")
-    theirs, _ = await _apply(api, world, job, "Omar Saleh")
+    mine, email = await _apply(api, world, job, "Huda Karim", self_id={"gender": "woman"})
+    theirs, _ = await _apply(api, world, job, "Omar Saleh", self_id={"gender": "man"})
     foreign_job = await open_job(api, other)
     foreign, _ = await _apply(api, other, foreign_job, "Lina Aziz")
     note = await api.call(
@@ -259,6 +260,24 @@ async def test_candidates_never_reach_each_other(
         visible = list(await db.scalars(select(HireApplication.id)))
         notes = list(await db.scalars(select(HireNote.id)))
         raw = (await db.execute(text("SELECT count(*) FROM hire_screenings"))).scalar_one()
+        self_id = list(
+            await db.execute(text("SELECT application_id FROM hire_self_identification"))
+        )
+    assert [r.application_id for r in self_id] == [uuid.UUID(mine)]
+    # Read only: a portal session never writes self-identification answers.
+    db = create_sessionmaker(api.engine)()
+    set_tenant(db, world.org_id, None)
+    set_portal_subject(db, portal_subject(own))
+    with pytest.raises(Exception, match="row-level security"):
+        async with db, db.begin():
+            await db.execute(
+                text(
+                    "INSERT INTO hire_self_identification (org_id, application_id, job_id, "
+                    "answers) SELECT org_id, id, job_id, answers FROM hire_applications "
+                    "WHERE id = :a"
+                ),
+                {"a": mine},
+            )
     assert visible == [uuid.UUID(mine)]
     assert notes == []
     assert raw == 0
@@ -495,8 +514,12 @@ async def test_privacy_centre_export_deletion_and_human_review(
 ) -> None:
     api = hire_api
     job = await open_job(api, world)
-    app_id, email = await _apply(api, world, job, "Tala Mansour")
-    other_app, other_email = await _apply(api, world, job, "Yara Daher")
+    app_id, email = await _apply(
+        api, world, job, "Tala Mansour", self_id={"gender": "woman", "age_range": "25_34"}
+    )
+    other_app, other_email = await _apply(
+        api, world, job, "Yara Daher", self_id={"disability": "yes"}
+    )
     await api.call(
         "POST",
         f"/v1/hire/pipeline/applications/{app_id}/notes",
@@ -549,10 +572,20 @@ async def test_privacy_centre_export_deletion_and_human_review(
         "fast-track",
         '"overall"',
         "python",
-        "self_identification",
+        "disability",
     ):
         assert secret not in dumped, secret
-    assert "Self-identification answers are kept apart" in data["not_included"]
+    # The candidate's own self-identification answers, as they gave them (and only theirs).
+    assert data["applications"][0]["self_identification"] == [
+        {
+            "category": "age_range",
+            "question": "Age range",
+            "answer": "25_34",
+            "answer_label": "25 to 34",
+        },
+        {"category": "gender", "question": "Gender", "answer": "woman", "answer_label": "Woman"},
+    ]
+    assert "the hiring team never sees them" in data["not_included"]
 
     deletion = await api.client.post(
         "/v1/hire/portal/privacy/deletion-request",

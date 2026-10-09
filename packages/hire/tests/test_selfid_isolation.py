@@ -99,3 +99,20 @@ def test_stored_answers_never_carry_self_identification() -> None:
     stored = checked.stored()
     assert set(stored) == {"questions", "knockouts"}
     assert not set(stored["questions"]) & set(CATEGORIES)
+
+
+def test_only_the_portal_export_reads_a_candidates_own_answers() -> None:
+    """``pairly_hire.selfid.export`` (a candidate's own answers, for their data export)
+    has exactly one importer: the portal service. Bias reporting reads the table itself,
+    as aggregates only."""
+    package = Path(__file__).resolve().parents[1] / "pairly_hire"
+    importers = set()
+    for path in package.rglob("*.py"):
+        if "migrations" in path.parts:
+            continue
+        if any(
+            i == "pairly_hire.selfid.export" or i.startswith("pairly_hire.selfid.export.")
+            for i in _imports(path)
+        ):
+            importers.add(".".join(path.relative_to(package.parent).with_suffix("").parts))
+    assert importers == {"pairly_hire.portal.service"}

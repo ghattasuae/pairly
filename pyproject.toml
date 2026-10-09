@@ -182,20 +182,27 @@ source_modules = ["pairly_hire.scoring", "pairly_hire.screening"]
 forbidden_modules = ["pairly_hire.selfid", "pairly_hire.forms", "pairly_hire.applying", "pairly_hire.api"]
 
 # The pipeline and messaging show and write about candidates; they never read the
-# self-identification answers either (WP2.5, WP2.7).
+# self-identification answers either (WP2.5, WP2.7), not even the candidate's own
+# (``pairly_hire.selfid.export``, the portal's data export only).
 [[tool.importlinter.contracts]]
 name = "Hire pipeline and messaging never read self-identification answers"
 type = "forbidden"
 source_modules = ["pairly_hire.pipeline", "pairly_hire.messaging"]
-forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]
 
-# The candidate portal shows candidates their own data; self-identification answers stay
-# with bias reporting (WP2.9), and the portal never reaches into the staff routes.
+# The candidate portal shows candidates their own data and never reaches into the staff
+# routes (WP2.9). Self-identification answers have exactly two readers: bias reporting
+# (``pairly_hire.api.reports``, aggregates) and the candidate's own data export, through
+# the one narrow function ``pairly_hire.selfid.export.subject_answers`` (only the
+# candidate's applications, Row Level Security by portal subject, hire_0004b). That edge
+# is the only one ignored here; the portal may not import the table any other way.
+# tests/test_selfid_isolation.py checks that the portal service is its only importer.
 [[tool.importlinter.contracts]]
-name = "Hire candidate portal never reads self-identification answers"
+name = "Hire candidate portal reads self-identification only through the subject export"
 type = "forbidden"
 source_modules = ["pairly_hire.portal"]
 forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
+ignore_imports = ["pairly_hire.selfid.export -> pairly_hire.selfid.models"]
 
 # Scheduling shows candidates to interviewers (blind-safe); it never reads the
 # self-identification answers, and the service layer never imports routes (WP2.8).
@@ -203,4 +210,4 @@ forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
 name = "Hire scheduling never reads self-identification answers"
 type = "forbidden"
 source_modules = ["pairly_hire.scheduling"]
-forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]

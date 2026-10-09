@@ -27,7 +27,10 @@ subject is set:
   of that candidate's applications;
 * what reviewers write or the screening computes (``hire_notes``, ``hire_screenings``,
   ``hire_screening_settings``, ``hire_rubric_drafts``, ``hire_referrals``,
-  ``hire_referral_links``, ``hire_self_identification``) shows nothing at all.
+  ``hire_referral_links``) shows nothing at all;
+* ``hire_self_identification`` shows only the rows of that candidate's applications and
+  accepts no writes (the candidate's own answers, for their data export,
+  ``pairly_hire.selfid.export``).
 
 Staff, agents and jobs never set a portal subject, so these policies change nothing
 for them. ``hire_stage_moves.actor_type`` now accepts ``candidate`` (a withdrawal from
@@ -70,6 +73,7 @@ _BY_CANDIDATE = (
     *_NEW,
 )
 _BY_APPLICATION = ("hire_pipeline_entries", "hire_stage_moves")
+_SELF_ID = "hire_self_identification"
 _HIDDEN = (
     "hire_notes",
     "hire_screenings",
@@ -77,7 +81,6 @@ _HIDDEN = (
     "hire_rubric_drafts",
     "hire_referrals",
     "hire_referral_links",
-    "hire_self_identification",
 )
 
 
@@ -307,6 +310,16 @@ def _portal_policies() -> None:
             f"CREATE POLICY {table}_portal_subject ON {table} AS RESTRICTIVE "
             "USING (NOT hire_portal_active()) WITH CHECK (NOT hire_portal_active())"
         )
+    # The candidate's own self-identification answers, read only, for their data export
+    # (``pairly_hire.selfid.export``); a portal session can never write them.
+    own_apps = (
+        "NOT hire_portal_active() OR application_id IN (SELECT a.id FROM hire_applications a "
+        "WHERE a.candidate_id = hire_portal_candidate())"
+    )
+    op.execute(
+        f"CREATE POLICY {_SELF_ID}_portal_subject ON {_SELF_ID} AS RESTRICTIVE "
+        f"USING ({own_apps}) WITH CHECK (NOT hire_portal_active())"
+    )
 
 
 def _seed_templates() -> None:
@@ -357,7 +370,7 @@ def _seed_templates() -> None:
 def downgrade() -> None:
     for table in reversed(_NEW):
         op.drop_table(table)
-    for table in (*_HIDDEN, *_BY_APPLICATION, *_BY_CANDIDATE, "hire_candidates"):
+    for table in (_SELF_ID, *_HIDDEN, *_BY_APPLICATION, *_BY_CANDIDATE, "hire_candidates"):
         if table not in _NEW:
             op.execute(f"DROP POLICY IF EXISTS {table}_portal_subject ON {table}")
     op.execute("DROP FUNCTION IF EXISTS hire_portal_candidate()")

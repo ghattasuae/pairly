@@ -4,8 +4,10 @@
 
 One row per application that answered at least one self-identification question. The
 answers are encrypted (``EncryptedJSON``); the application role may insert and read
-rows but never change them. Reading needs ``hire.selfid.read`` and only ever produces
-aggregates with small counts suppressed (``pairly_hire.api.reports``).
+rows but never change them. Staff reading needs ``hire.selfid.read`` and only ever produces
+aggregates with small counts suppressed (``pairly_hire.api.reports``); the candidate's own
+data export reads their rows through ``pairly_hire.selfid.export`` (portal session, Row
+Level Security by portal subject).
 
 Kept in its own module tree so the scoring code cannot import it (see the package
 docstring).
