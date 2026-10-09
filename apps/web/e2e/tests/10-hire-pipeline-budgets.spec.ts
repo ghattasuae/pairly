@@ -280,7 +280,7 @@ test("send a templated message (non-sensitive): 3 clicks", async ({ browser }) =
   // The worker delivers it to the candidate (development outbox).
   const mail = await waitForMessageTo(candidates.cara.email, 120_000);
   expect(mail.Text).toContain(`Hello ${candidates.cara.name},`);
-  expect(mail.Text).not.toContain("—");
+  expect(mail.Text).not.toContain("\u2014"); // no em dash
   await context.close();
 });
 
