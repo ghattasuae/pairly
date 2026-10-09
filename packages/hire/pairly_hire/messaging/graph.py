@@ -68,6 +68,7 @@ from pairly_core.workflow.spec import FinalActionCall
 from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import CHANNEL, frozen_values, mark_updated
 from pairly_hire.messaging.models import HireMessage, MessageStatus
+from pairly_hire.models import ApplicationStatus
 from pairly_hire.permissions import MESSAGE_CREATE
 from pairly_hire.pipeline.records import load_record
 
@@ -229,6 +230,9 @@ async def send_candidate_message(session: AsyncSession, call: FinalActionCall) -
     if message.status != MessageStatus.AWAITING_APPROVAL.value:
         raise ExecutorRefusedError("message_not_awaiting_approval")
     record = await load_record(session, message.application_id)
+    if record.app.status == ApplicationStatus.WITHDRAWN.value:
+        # The candidate withdrew from the portal while it waited: nothing is sent.
+        raise ExecutorRefusedError("application_withdrawn")
     try:
         results = await notify(
             session,

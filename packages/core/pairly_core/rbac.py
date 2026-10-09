@@ -355,6 +355,24 @@ class ActorKind(StrEnum):
     AGENT = "agent"
     # A scoped API key (pairly_core.api_keys): read, propose and upload only.
     API_KEY = "api_key"
+    # An external person signed in to a workflow's portal (a candidate through a magic
+    # link). Never produced by the staff authentication; may only hold a workflow's
+    # ``portal`` and ``appeal.create`` permissions (``CANDIDATE_ALLOWED``).
+    CANDIDATE = "candidate"
+
+
+# What a portal actor may ever be allowed to do, whatever it holds: read its own portal
+# data and file an appeal (``<workflow>.portal.*``, ``<workflow>.appeal.create``).
+CANDIDATE_ALLOWED_RESOURCES = frozenset({"portal"})
+CANDIDATE_ALLOWED_EXACT = frozenset({("appeal", "create")})
+
+
+def candidate_may_hold(permission: str) -> bool:
+    parts = permission.split(".")
+    if len(parts) != 3 or parts[0] == CORE_NAMESPACE:
+        return False
+    resource, action = parts[1], parts[2]
+    return resource in CANDIDATE_ALLOWED_RESOURCES or (resource, action) in CANDIDATE_ALLOWED_EXACT
 
 
 def api_key_may_hold(permission: str) -> bool:
@@ -420,6 +438,8 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
         reason = "agent_action_not_allowed"
     elif actor.kind is ActorKind.API_KEY and not api_key_may_hold(permission):
         reason = "api_key_action_not_allowed"
+    elif actor.kind is ActorKind.CANDIDATE and not candidate_may_hold(permission):
+        reason = "candidate_action_not_allowed"
     elif (
         actor.kind is ActorKind.USER
         and requires_second_factor(permission)

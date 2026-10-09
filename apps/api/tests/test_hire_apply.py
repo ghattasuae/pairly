@@ -278,7 +278,8 @@ async def test_apply_end_to_end(
     assert BACKEND.draft.title_ar in message["subject"]
     assert reference in message["text"]
     assert "10" in message["text"]
-    assert f"/ar/careers/{world.slug}" in message["text"]
+    # A magic link to the candidate portal, in the candidate's language.
+    assert "/ar/portal/login#pl1." in message["text"]
     assert "—" not in message["text"]
 
     audit = [

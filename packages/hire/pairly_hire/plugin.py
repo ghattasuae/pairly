@@ -52,6 +52,7 @@ from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_APPROVE, MESSAGE_CRE
 from pairly_hire.pipeline import models as pipeline_models  # noqa: F401  (tables)
 from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
+from pairly_hire.portal import models as portal_models  # noqa: F401  (tables)
 from pairly_hire.retention import RETENTION_RULES
 from pairly_hire.screening import models as screening_models  # noqa: F401  (its tables)
 from pairly_hire.screening import reviewer as screening_reviewer

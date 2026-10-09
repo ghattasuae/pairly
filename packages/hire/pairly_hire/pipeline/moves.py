@@ -22,6 +22,12 @@ application has not moved since. Undoing a rejection cancels its draft; once the
 was submitted for approval the move cannot be undone here (the approval is the place
 to stop it). An undo is a new move pointing at the one it reverts.
 
+``withdraw`` is the candidate's own move to ``withdrawn`` from the portal
+(``ActorKind.CANDIDATE``, only their own application, never after an outcome other than
+an unannounced rejection): it cancels the open drafts of the application, and a
+rejection still waiting for approval is never sent (``messaging.graph`` refuses to send
+to a withdrawn application).
+
 ``bulk_summary`` says what a bulk action would do before anything happens: how many
 applications move, from which stages, how many drafts it would create, and that
 nothing is sent. Bulk moves share a ``batch_id`` so one undo reverts them all.
@@ -51,7 +57,7 @@ from pairly_hire.models import ApplicationStatus, HireApplication
 from pairly_hire.permissions import CANDIDATE_DECIDE
 from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.pipeline.records import AppRecord, ensure_entry, load_record
-from pairly_hire.pipeline.stages import REJECTED, WITHDRAWN, Stage
+from pairly_hire.pipeline.stages import HIRED, REJECTED, WITHDRAWN, Stage
 from pairly_hire.retention import retention_until
 from pairly_hire.reveal import reveal_identity, stage_source
 
@@ -236,6 +242,58 @@ async def move_next(
     if following is None:
         raise ConflictError("the candidate is already at the end of the pipeline")
     return await move(session, actor, application_id, following.key, links=links)
+
+
+@dataclass(frozen=True, slots=True)
+class WithdrawResult:
+    move: MoveResult
+    cancelled_drafts: list[uuid.UUID]
+
+
+async def withdraw(
+    session: AsyncSession, actor: Actor, application_id: uuid.UUID
+) -> WithdrawResult:
+    """The candidate withdraws their own application (see the module docstring)."""
+    if actor.kind is not ActorKind.CANDIDATE:
+        raise ForbiddenError("only the candidate can withdraw their application")
+    record = await load_record(session, application_id, lock=True)
+    if record.candidate.id != actor.id:
+        raise NotFoundError("application not found")
+    if record.app.status == ApplicationStatus.WITHDRAWN.value:
+        raise ConflictError("this application was already withdrawn")
+    if record.stage.kind == "hired" or record.stage_key == HIRED:
+        raise ConflictError("this application has an outcome; contact the hiring team")
+    if record.stage.kind == "rejected" and await _rejection_sent(session, record.app.id):
+        raise ConflictError("this application has an outcome; contact the hiring team")
+    to = record.stages.require(WITHDRAWN)
+    from_stage = record.stage_key
+    moved = await _record_move(session, actor, record, to, reason=None, batch_id=None, undo_of=None)
+    kind, actor_id = actor_ref(actor)
+    cancelled: list[uuid.UUID] = []
+    for draft in await session.scalars(
+        select(HireMessage)
+        .where(
+            HireMessage.application_id == record.app.id,
+            HireMessage.status.in_(
+                [MessageStatus.DRAFT.value, MessageStatus.CHANGES_REQUESTED.value]
+            ),
+        )
+        .with_for_update()
+    ):
+        await cancel_draft(session, draft, Author(kind, actor_id))
+        cancelled.append(draft.id)
+    return WithdrawResult(MoveResult(moved.id, record.app.id, from_stage, to.key), cancelled)
+
+
+async def _rejection_sent(session: AsyncSession, application_id: uuid.UUID) -> bool:
+    found = await session.scalar(
+        select(HireMessage.id).where(
+            HireMessage.application_id == application_id,
+            HireMessage.purpose == MessagePurpose.REJECTION.value,
+            HireMessage.status.in_([MessageStatus.QUEUED.value, MessageStatus.SENT.value]),
+        )
+    )
+    return found is not None
 
 
 @dataclass(frozen=True, slots=True)

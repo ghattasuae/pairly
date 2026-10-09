@@ -137,7 +137,8 @@ class HireStageMove(Base, OrgScoped):
         _job_fk(MOVES),
         CheckConstraint(f"to_stage ~ '{STAGE_KEY_PATTERN}'", name="to_stage_format"),
         CheckConstraint(
-            "actor_type IN ('user', 'agent', 'api_key', 'system')", name="actor_type_valid"
+            "actor_type IN ('user', 'agent', 'api_key', 'system', 'candidate')",
+            name="actor_type_valid",
         ),
         Index("ix_hire_stage_moves_application", "org_id", "application_id", "created_at"),
         Index("ix_hire_stage_moves_batch", "org_id", "batch_id"),

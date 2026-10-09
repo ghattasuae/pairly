@@ -827,6 +827,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/data-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Data Requests */
+        get: operations["list_data_requests_v1_hire_data_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/data-requests/{request_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Data Request */
+        post: operations["resolve_data_request_v1_hire_data_requests__request_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/jobs": {
         parameters: {
             query?: never;
@@ -1279,6 +1313,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/pipeline/applications/{application_id}/document-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Document Requests */
+        get: operations["list_document_requests_v1_hire_pipeline_applications__application_id__document_requests_get"];
+        put?: never;
+        /** Create Document Request */
+        post: operations["create_document_request_v1_hire_pipeline_applications__application_id__document_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/pipeline/applications/{application_id}/messages": {
         parameters: {
             query?: never;
@@ -1392,6 +1444,261 @@ export type paths = {
         get: operations["waiting_longest_v1_hire_pipeline_waiting_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Applications */
+        get: operations["list_applications_v1_hire_portal_applications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Application */
+        get: operations["get_application_v1_hire_portal_applications__application_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/applications/{application_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply */
+        post: operations["reply_v1_hire_portal_applications__application_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/applications/{application_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw */
+        post: operations["withdraw_v1_hire_portal_applications__application_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/document-requests/{request_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Requested */
+        post: operations["upload_requested_v1_hire_portal_document_requests__request_id__file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jobs */
+        get: operations["jobs_v1_hire_portal_jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/login-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login Link */
+        post: operations["login_link_v1_hire_portal_login_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_v1_hire_portal_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Privacy */
+        get: operations["privacy_v1_hire_portal_privacy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/privacy/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Appeal */
+        post: operations["appeal_v1_hire_portal_privacy_appeals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/privacy/decisions/{decision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Decision Receipt */
+        get: operations["decision_receipt_v1_hire_portal_privacy_decisions__decision_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/privacy/deletion-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deletion Request */
+        post: operations["deletion_request_v1_hire_portal_privacy_deletion_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/privacy/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export */
+        get: operations["export_v1_hire_portal_privacy_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Session */
+        post: operations["open_session_v1_hire_portal_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign Out */
+        post: operations["sign_out_v1_hire_portal_sign_out_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2465,7 +2772,7 @@ export type components = {
          * ActorType
          * @enum {string}
          */
-        ActorType: "user" | "agent" | "system" | "api_key";
+        ActorType: "user" | "agent" | "system" | "api_key" | "candidate";
         /** AnchorKeyOut */
         AnchorKeyOut: {
             /** Algorithm */
@@ -4112,6 +4419,86 @@ export type components = {
             /** Result */
             result: string;
         };
+        /** HireDataRequestOut */
+        HireDataRequestOut: {
+            /** Candidate Email */
+            candidate_email: string;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate Name */
+            candidate_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Handled At */
+            handled_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /** Status */
+            status: string;
+        };
+        /** HireDataRequestResolveIn */
+        HireDataRequestResolveIn: {
+            /** Outcome */
+            outcome: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "completed" | "declined";
+        };
+        /** HireDocumentRequestIn */
+        HireDocumentRequestIn: {
+            /** Label */
+            label: string;
+            /**
+             * Label Ar
+             * @default
+             */
+            label_ar: string;
+        };
+        /** HireDocumentRequestOut */
+        HireDocumentRequestOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Id */
+            document_id: string | null;
+            /** Fulfilled At */
+            fulfilled_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Status */
+            status: string;
+        };
         /** HireDraftIn */
         HireDraftIn: {
             /** Locale */
@@ -4517,6 +4904,343 @@ export type components = {
             scores: {
                 [key: string]: number;
             };
+        };
+        /** HirePortalAppealIn */
+        HirePortalAppealIn: {
+            /** Decision Id */
+            decision_id: string;
+            /** Reason */
+            reason: string;
+        };
+        /** HirePortalAppealOut */
+        HirePortalAppealOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decision Id */
+            decision_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Outcome */
+            outcome: string | null;
+            /** Outcome Text */
+            outcome_text: string | null;
+            /**
+             * Sla Due At
+             * Format: date-time
+             */
+            sla_due_at: string;
+            /** Status */
+            status: string;
+        };
+        /** HirePortalApplicationDetailOut */
+        HirePortalApplicationDetailOut: {
+            /** Can Withdraw */
+            can_withdraw: boolean;
+            /** Document Requests */
+            document_requests: components["schemas"]["HirePortalDocumentRequestOut"][];
+            /** Final */
+            final: boolean;
+            /** History */
+            history: components["schemas"]["HirePortalStepOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Interviews */
+            interviews: components["schemas"]["HirePortalInterviewOut"][];
+            /** Job Title */
+            job_title: string;
+            /** Job Title Ar */
+            job_title_ar: string;
+            /** Messages */
+            messages: components["schemas"]["HirePortalMessageOut"][];
+            /** Open Document Requests */
+            open_document_requests: number;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /**
+             * Status Since
+             * Format: date-time
+             */
+            status_since: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+        };
+        /** HirePortalApplicationOut */
+        HirePortalApplicationOut: {
+            /** Can Withdraw */
+            can_withdraw: boolean;
+            /** Final */
+            final: boolean;
+            /** History */
+            history: components["schemas"]["HirePortalStepOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Interviews */
+            interviews: components["schemas"]["HirePortalInterviewOut"][];
+            /** Job Title */
+            job_title: string;
+            /** Job Title Ar */
+            job_title_ar: string;
+            /** Open Document Requests */
+            open_document_requests: number;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /**
+             * Status Since
+             * Format: date-time
+             */
+            status_since: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+        };
+        /** HirePortalDataRequestOut */
+        HirePortalDataRequestOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Handled At */
+            handled_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+        };
+        /** HirePortalDecisionOut */
+        HirePortalDecisionOut: {
+            /** Appealed */
+            appealed: boolean;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Can Appeal */
+            can_appeal: boolean;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /** Decision Id */
+            decision_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Kind */
+            kind: string;
+            /** Reference */
+            reference: string;
+        };
+        /** HirePortalDeletionIn */
+        HirePortalDeletionIn: {
+            /** Note */
+            note?: string | null;
+        };
+        /** HirePortalDeletionOut */
+        HirePortalDeletionOut: {
+            /** Created */
+            created: boolean;
+            request: components["schemas"]["HirePortalDataRequestOut"];
+        };
+        /** HirePortalDocumentRequestOut */
+        HirePortalDocumentRequestOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Received At */
+            received_at: string | null;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Status */
+            status: string;
+        };
+        /** HirePortalFileOut */
+        HirePortalFileOut: {
+            request: components["schemas"]["HirePortalDocumentRequestOut"];
+        };
+        /** HirePortalInterviewOut */
+        HirePortalInterviewOut: {
+            /** Cancel Url */
+            cancel_url: string | null;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Format */
+            format: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Join Url */
+            join_url: string | null;
+            /** Location */
+            location: string | null;
+            /** Reschedule Url */
+            reschedule_url: string | null;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Timezone */
+            timezone: string;
+            /** Title */
+            title: string;
+        };
+        /** HirePortalJobOut */
+        HirePortalJobOut: {
+            /** Applied */
+            applied: boolean;
+            /** Employment Type */
+            employment_type: string;
+            /** Location */
+            location: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Work Model */
+            work_model: string;
+        };
+        /** HirePortalLinkIn */
+        HirePortalLinkIn: {
+            /** Email */
+            email: string;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Org Slug */
+            org_slug: string;
+        };
+        /** HirePortalLinkOut */
+        HirePortalLinkOut: {
+            /** Sent */
+            sent: boolean;
+        };
+        /** HirePortalMeOut */
+        HirePortalMeOut: {
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            /** Locale */
+            locale: string;
+            /** Org Slug */
+            org_slug: string;
+            /** Organisation */
+            organisation: string;
+        };
+        /** HirePortalMessageOut */
+        HirePortalMessageOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Direction */
+            direction: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Subject */
+            subject: string | null;
+            /** Text */
+            text: string;
+        };
+        /** HirePortalPrivacyOut */
+        HirePortalPrivacyOut: {
+            /** Appeals */
+            appeals: components["schemas"]["HirePortalAppealOut"][];
+            /** Data Requests */
+            data_requests: components["schemas"]["HirePortalDataRequestOut"][];
+            /** Decisions */
+            decisions: components["schemas"]["HirePortalDecisionOut"][];
+        };
+        /** HirePortalReplyIn */
+        HirePortalReplyIn: {
+            /** Text */
+            text: string;
+        };
+        /** HirePortalSessionOut */
+        HirePortalSessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Locale */
+            locale: string;
+            /** Session Token */
+            session_token: string;
+        };
+        /** HirePortalStepOut */
+        HirePortalStepOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Step */
+            step: string;
+        };
+        /** HirePortalTokenIn */
+        HirePortalTokenIn: {
+            /** Token */
+            token: string;
+        };
+        /** HirePortalWithdrawIn */
+        HirePortalWithdrawIn: {
+            /**
+             * Confirm
+             * @constant
+             */
+            confirm: true;
         };
         /** HirePrefsIn */
         HirePrefsIn: {
@@ -7947,6 +8671,72 @@ export interface operations {
             };
         };
     };
+    list_data_requests_v1_hire_data_requests_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "completed" | "declined") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDataRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_data_request_v1_hire_data_requests__request_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireDataRequestResolveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_jobs_v1_hire_jobs_get: {
         parameters: {
             query?: {
@@ -8992,6 +9782,72 @@ export interface operations {
             };
         };
     };
+    list_document_requests_v1_hire_pipeline_applications__application_id__document_requests_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDocumentRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_document_request_v1_hire_pipeline_applications__application_id__document_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireDocumentRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDocumentRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_message_v1_hire_pipeline_applications__application_id__messages_post: {
         parameters: {
             query?: never;
@@ -9214,6 +10070,419 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    list_applications_v1_hire_portal_applications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalApplicationOut"][];
+                };
+            };
+        };
+    };
+    get_application_v1_hire_portal_applications__application_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalApplicationDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_v1_hire_portal_applications__application_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalReplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalMessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_v1_hire_portal_applications__application_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalApplicationDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_requested_v1_hire_portal_document_requests__request_id__file_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalFileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    jobs_v1_hire_portal_jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalJobOut"][];
+                };
+            };
+        };
+    };
+    login_link_v1_hire_portal_login_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalLinkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_v1_hire_portal_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalMeOut"];
+                };
+            };
+        };
+    };
+    privacy_v1_hire_portal_privacy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalPrivacyOut"];
+                };
+            };
+        };
+    };
+    appeal_v1_hire_portal_privacy_appeals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalAppealIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalAppealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decision_receipt_v1_hire_portal_privacy_decisions__decision_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decision_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deletion_request_v1_hire_portal_privacy_deletion_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalDeletionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalDeletionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_v1_hire_portal_privacy_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    open_session_v1_hire_portal_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_out_v1_hire_portal_sign_out_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
