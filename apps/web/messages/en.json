@@ -412,7 +412,8 @@
     "policy_check": "Policy check",
     "approval": "Approval",
     "final_action": "Final action",
-    "appeal_outcome": "Appeal outcome"
+    "appeal_outcome": "Appeal outcome",
+    "human_override": "Human override"
   },
   "Notifications": {
     "bell": "Notifications",

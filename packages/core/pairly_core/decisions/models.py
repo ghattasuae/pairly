@@ -62,6 +62,8 @@ class DecisionKind(StrEnum):
     APPROVAL = "approval"
     FINAL_ACTION = "final_action"
     APPEAL_OUTCOME = "appeal_outcome"
+    # A person changed what an AI step produced (e.g. a screening score), with a reason.
+    HUMAN_OVERRIDE = "human_override"
 
 
 # Kinds that record what a person did (the rest record what an AI step produced).
@@ -71,8 +73,12 @@ HUMAN_KINDS = frozenset(
         DecisionKind.APPROVAL,
         DecisionKind.FINAL_ACTION,
         DecisionKind.APPEAL_OUTCOME,
+        DecisionKind.HUMAN_OVERRIDE,
     }
 )
+# Human kinds whose result is still deterministic from the stored inputs: replay runs
+# their handler (never a model, never the person) instead of refusing.
+REPLAYABLE_HUMAN_KINDS = frozenset({DecisionKind.HUMAN_OVERRIDE})
 
 
 class ReplayMode(StrEnum):

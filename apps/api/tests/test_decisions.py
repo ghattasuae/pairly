@@ -1182,3 +1182,24 @@ async def test_overdue_appeal_notifies_its_deciders(
         create_sessionmaker(engine), org_a.org_id, template_key="core.appeal.escalated"
     )
     assert len(again) == len(rows)
+
+
+def test_human_override_is_a_replayable_human_kind_allowed_by_the_database() -> None:
+    import importlib.util
+
+    from pairly_core.decisions.models import (
+        HUMAN_KINDS,
+        REPLAYABLE_HUMAN_KINDS,
+        DecisionKind,
+    )
+
+    assert DecisionKind.HUMAN_OVERRIDE in HUMAN_KINDS
+    assert {DecisionKind.HUMAN_OVERRIDE} == REPLAYABLE_HUMAN_KINDS
+    path = Path(__file__).resolve().parents[1] / "alembic/versions/0017_human_override_kind.py"
+    spec = importlib.util.spec_from_file_location("migration_0017", path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    allowed = {k.strip(" '") for k in module._AFTER.split(",")}
+    assert allowed == {k.value for k in DecisionKind}

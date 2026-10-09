@@ -16,9 +16,10 @@
   - ``record_suggestion``: kind ``shortlist_suggestion``. The knockout results with
     their suggested actions, the review reasons and the flags: what the person is
     asked to look at. Never an outcome. Replay handler ``hire.screening_suggestion``.
-  - ``record_override``: kind ``score`` by a person, superseding the newest score
-    record, with the person's reason (encrypted). Same replay handler: replaying it
-    recomputes the overall score from the overridden scores and the rubric.
+  - ``record_override``: kind ``human_override`` (a human kind that stays replayable,
+    ``REPLAYABLE_HUMAN_KINDS``), superseding the newest record, with the person's
+    reason (encrypted). Same replay handler: replaying it recomputes the overall score
+    from the overridden scores and the rubric.
 * Replay handlers (``pairly_core.decisions.replay.register_handler``), registered when
   this module is imported (the plugin imports it):
   - ``hire.score_aggregation``: re-reads the rubric version the record names (its hash
@@ -341,7 +342,7 @@ async def record_override(
     return await record_decision(
         session,
         DecisionDraft(
-            kind=DecisionKind.SCORE,
+            kind=DecisionKind.HUMAN_OVERRIDE,
             workflow=WORKFLOW,
             entity_type=ENTITY_TYPE,
             entity_id=str(row.application_id),
@@ -387,7 +388,7 @@ async def replay_score(inp: HandlerInput) -> HandlerResult:
     if not isinstance(stored, Mapping):
         raise ReplayFailedError("stored_inputs_invalid")
     details: dict[str, Any] = {}
-    if output.get("override"):
+    if inp.record.kind == DecisionKind.HUMAN_OVERRIDE.value or output.get("override"):
         replayed_scores = {str(k): int(v) for k, v in stored.items()}
     else:
         criteria = inp.record.evidence.get("criteria")

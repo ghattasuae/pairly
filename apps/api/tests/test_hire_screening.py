@@ -838,8 +838,10 @@ async def test_reviewer_permissions_overrides_and_isolation(
         "FROM decision_records WHERE id = :i",
         {"i": override_id},
     )
-    assert (row.kind, row.actor_type, row.has_reason) == ("score", "user", True)
+    assert (row.kind, row.actor_type, row.has_reason) == ("human_override", "user", True)
     assert row.supersedes is not None
+    # A human override is a person's decision, yet its result stays replayable: the
+    # handler recomputes the overall score from the person's scores and the rubric.
     replayed = await api.call(
         "POST", f"/v1/decisions/{override_id}/replay", world, "admin", json={"mode": "recorded"}
     )

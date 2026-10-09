@@ -7,6 +7,8 @@
 1. checks the record is intact (``verify_record``: decrypts, content hash, audit chain);
    a record that is not intact fails closed;
 2. refuses records of a person's action (``HUMAN_KINDS``): a person cannot be re-run;
+   except ``REPLAYABLE_HUMAN_KINDS`` (``human_override``), whose handler recomputes the
+   deterministic result from the person's stored values;
 3. re-runs every stored model call with the same request, prompt version and model
    settings through ``ModelRouter.replay``: the recorded response by default (exact),
    or the live model when asked. Live replays of a model without temperature 0 are
@@ -40,6 +42,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.decisions.models import (
     HUMAN_KINDS,
+    REPLAYABLE_HUMAN_KINDS,
     DecisionKind,
     DecisionRecord,
     DecisionReplay,
@@ -409,7 +412,8 @@ async def _run(
     problem = await verify_record(session, record)
     if problem is not None:
         raise ReplayFailedError(f"record_not_intact:{problem}")
-    if DecisionKind(record.kind) in HUMAN_KINDS:
+    kind = DecisionKind(record.kind)
+    if kind in HUMAN_KINDS and kind not in REPLAYABLE_HUMAN_KINDS:
         raise ReplayFailedError("human_decision_not_replayable")
     sensitive = open_sensitive(record) or {}
     if not isinstance(sensitive, Mapping):

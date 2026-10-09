@@ -412,7 +412,8 @@
     "policy_check": "فحص السياسة",
     "approval": "اعتماد",
     "final_action": "إجراء نهائي",
-    "appeal_outcome": "نتيجة الطعن"
+    "appeal_outcome": "نتيجة الطعن",
+    "human_override": "تجاوز بشري"
   },
   "Notifications": {
     "bell": "الإشعارات",
