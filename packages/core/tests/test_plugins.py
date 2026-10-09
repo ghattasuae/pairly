@@ -169,3 +169,26 @@ def test_plugin_migration_locations(tmp_path: Path) -> None:
     assert found == [str(tmp_path.resolve())]
     with pytest.raises(PluginError, match="not a directory"):
         plugins.plugin_migration_locations([_WithMigrations("alpha", tmp_path / "missing")])
+
+
+def test_plugin_prompt_roots(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class _WithPrompts:
+        id: str
+        prompt_roots: object = ()
+
+    good = tmp_path / "good"
+    (good / "zeta_draft").mkdir(parents=True)
+    (good / "__pycache__").mkdir()
+    found = plugins.plugin_prompt_roots([_WithPrompts("zeta", (good,)), _WithPrompts("alpha")])
+    assert found == [good.resolve()]
+
+    # A plugin may never ship (and so replace) a core or another plugin's prompt.
+    bad = tmp_path / "bad"
+    (bad / "core_extract").mkdir(parents=True)
+    with pytest.raises(PluginError, match="outside its namespace"):
+        plugins.plugin_prompt_roots([_WithPrompts("zeta", (bad,))])
+    with pytest.raises(PluginError, match="not a directory"):
+        plugins.plugin_prompt_roots([_WithPrompts("zeta", (tmp_path / "missing",))])
+    with pytest.raises(PluginError, match="must be a sequence"):
+        plugins.plugin_prompt_roots([_WithPrompts("zeta", good)])

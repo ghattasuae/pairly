@@ -27,8 +27,9 @@ Rules enforced in code:
 * Every check fails closed: unknown roles grant nothing, unknown permissions are held
   by nobody.
 * Step-up (second factor) rule, brief 6.1: a person may use a permission whose action is
-  ``approve``, ``decide``, ``manage`` or ``export`` only when the sign-in that minted the
-  token included a TOTP code (``amr`` contains ``otp``). The rule is keyed on the action,
+  ``approve``, ``decide``, ``manage``, ``export``, ``lock`` or ``publish`` only when the
+  sign-in that minted the token included a TOTP code (``amr`` contains ``otp``). The rule
+  is keyed on the action,
   not on role names, so custom roles and future workflows inherit it, and the people it
   hits are exactly those who hold such permissions (admins, approvers, finance
   controllers, and anyone who decides candidates). A token without ``amr`` fails closed.
@@ -62,7 +63,10 @@ EMPLOYEE_ALLOWED_ACTIONS = frozenset({"read", "submit", "create", "upload"})
 # API keys (pairly_core.api_keys) act like agents, plus submitting documents.
 API_KEY_ALLOWED_ACTIONS = frozenset({"read", "propose", "upload"})
 # Actions that need a second factor (TOTP) in the current sign-in. See the module docstring.
-STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export"})
+# ``lock`` (freeze a versioned artefact, such as a hiring rubric, that later decisions are
+# measured against) and ``publish`` (make something visible outside the organisation,
+# such as a job ad) are human commitments of the same weight as a decision (ADR 0010).
+STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export", "lock", "publish"})
 # The ``amr`` value (RFC 8176 "one-time password") the web app puts in the token after a
 # successful TOTP verification.
 SECOND_FACTOR_AMR = "otp"

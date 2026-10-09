@@ -234,6 +234,9 @@ def test_missing_permission_wins_over_second_factor(registry: RoleRegistry) -> N
 def test_requires_second_factor() -> None:
     assert requires_second_factor("pay.invoice.approve")
     assert requires_second_factor("core.users.manage")
+    # Locking and publishing are human commitments too (ADR 0010).
+    assert requires_second_factor("hire.rubric.lock")
+    assert requires_second_factor("hire.job.publish")
     assert not requires_second_factor("pay.invoice.read")
     assert not requires_second_factor("core.decision.propose")
 

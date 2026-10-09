@@ -23,6 +23,10 @@ Optional attributes, read with ``getattr`` so a plugin only declares what it use
 * ``migrations_dir``: the directory of the plugin's Alembic revisions, its own branch
   (``branch_labels``) that ``depends_on`` the core revision it needs. The Alembic
   environment adds it to the version locations (``plugin_migration_locations``).
+* ``prompt_roots``: directories of the plugin's versioned prompt files
+  (``<root>/<task>/<version>.md``, ``pairly_core.llm.prompt_registry``). Every task
+  directory must be named ``<plugin id>_...``, so a plugin can never replace a core
+  prompt or another plugin's. The model router loads them (``plugin_prompt_roots``).
 
 Discovery fails closed: a plugin that cannot be loaded, does not satisfy the protocol,
 has an invalid id, or collides with another plugin raises ``PluginError`` instead of
@@ -255,3 +259,33 @@ def plugin_migration_locations(plugins: Iterable[Any]) -> list[str]:
             raise PluginError(f"workflow plugin {plugin.id!r}: migrations_dir is not a directory")
         locations.append(str(path.resolve()))
     return locations
+
+
+# ------------------------------------------------------------------ optional: prompts
+
+
+def plugin_prompt_roots(plugins: Iterable[Any]) -> list[Path]:
+    """The prompt directories plugins declare (``prompt_roots``), sorted by plugin id.
+
+    Fails closed: a declared root that is not a directory, or that holds a task directory
+    outside the plugin's namespace (``<plugin id>_...``), raises ``PluginError``.
+    """
+    roots: list[Path] = []
+    for plugin in sorted(plugins, key=lambda p: str(p.id)):
+        declared = getattr(plugin, "prompt_roots", None) or ()
+        if isinstance(declared, str | bytes | Path):
+            raise PluginError(f"workflow plugin {plugin.id!r}: prompt_roots must be a sequence")
+        for item in declared:
+            path = Path(item)
+            if not path.is_dir():
+                raise PluginError(f"workflow plugin {plugin.id!r}: prompt root is not a directory")
+            for task in sorted(p.name for p in path.iterdir() if p.is_dir()):
+                if task.startswith(("_", ".")):
+                    continue
+                if not task.startswith(f"{plugin.id}_"):
+                    raise PluginError(
+                        f"workflow plugin {plugin.id!r}: prompt task {task!r} is outside its "
+                        "namespace"
+                    )
+            roots.append(path.resolve())
+    return roots

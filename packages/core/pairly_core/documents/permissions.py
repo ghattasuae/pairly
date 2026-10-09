@@ -13,7 +13,7 @@ and a workflow may take over its documents' permissions by declaring
 So a workflow-scoped member (``workflow='pay'``), who holds no ``core.*`` permission,
 can work with pay documents as soon as the pay plugin declares ``pay.document.*``; and
 until a workflow declares them, only unscoped memberships reach its documents.
-TODO(M2/M4): declare ``hire.document.*`` and ``pay.document.*`` in the plugins.
+Pairly Hire declares ``hire.document.*``. TODO(M4): declare ``pay.document.*`` in the pay plugin.
 
 The agent role reads documents (``read`` is allowed for agents) but never uploads.
 """
