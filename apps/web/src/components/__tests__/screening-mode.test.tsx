@@ -46,6 +46,18 @@ vi.mock("@/lib/actions/screening", () => ({
   setBlindMode: vi.fn(),
 }));
 
+vi.mock("@/lib/actions/scheduling", () => ({
+  loadScheduling: vi.fn(async () => ({ ok: false, code: "unavailable" })),
+  findSlots: vi.fn(),
+  checkSlot: vi.fn(),
+  createInterview: vi.fn(),
+  updateInterview: vi.fn(),
+  cancelInterview: vi.fn(),
+  resendLink: vi.fn(),
+  recordOutcome: vi.fn(),
+  jobInterviews: vi.fn(),
+}));
+
 Element.prototype.scrollIntoView = vi.fn();
 class NoObserver {
   observe() {}
@@ -55,6 +67,7 @@ class NoObserver {
 vi.stubGlobal("ResizeObserver", NoObserver);
 
 const { ScreeningMode } = await import("../hire/screening-mode");
+const schedulingActions = await import("@/lib/actions/scheduling");
 const { Toaster } = await import("../ui/toaster");
 
 const JOB = "99999999-9999-4999-8999-999999999999";
@@ -320,6 +333,7 @@ function setup(a = actions(), patch: Record<string, unknown> = {}) {
   return a;
 }
 
+const CLOSE_SCHEDULING = "Close";
 const label = () => document.querySelector("[data-candidate-label]")?.textContent;
 
 beforeEach(() => {
@@ -445,11 +459,28 @@ describe("ScreeningMode", () => {
     await waitFor(() => expect(a.bulkMove).toHaveBeenCalledTimes(1));
   });
 
-  it("keeps S disabled with a reason until scheduling is available", async () => {
+  it("keeps S disabled while the API says scheduling is not available", async () => {
     setup();
     expect(document.querySelector('[data-action="schedule"]')).toBeDisabled();
+    expect(document.querySelector('[data-action="schedule"]')).not.toHaveAttribute("aria-describedby");
     fireEvent.keyDown(window, { key: "s" });
-    expect(await screen.findByText(/Scheduling is not available yet/)).toBeInTheDocument();
+    await waitFor(() => expect(schedulingActions.loadScheduling).not.toHaveBeenCalled());
+  });
+
+  it("opens the scheduling panel for the current candidate with S and with the button", async () => {
+    vi.mocked(schedulingActions.loadScheduling).mockClear();
+    setup(actions(), { queue: { ...QUEUE, scheduling_available: true } });
+    const button = document.querySelector<HTMLButtonElement>('[data-action="schedule"]')!;
+    expect(button).toBeEnabled();
+    fireEvent.keyDown(window, { key: "s" });
+    await waitFor(() => expect(schedulingActions.loadScheduling).toHaveBeenCalledWith(id(1)));
+    // The real scheduling panel (here its error state: the mocked load fails) and its
+    // close button bring the scores back.
+    const close = await screen.findByRole("button", { name: CLOSE_SCHEDULING });
+    await userEvent.click(close);
+    expect(screen.queryByRole("button", { name: CLOSE_SCHEDULING })).toBeNull();
+    await userEvent.click(button);
+    await waitFor(() => expect(schedulingActions.loadScheduling).toHaveBeenCalledTimes(2));
   });
 
   it("overrides a score with a required reason", async () => {

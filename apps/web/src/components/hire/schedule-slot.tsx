@@ -7,9 +7,10 @@ import type * as React from "react";
 
 /**
  * Where screening mode's "S: schedule" opens scheduling (WP2.8). Scheduling registers its
- * panel here (`registerSchedulePanel`); until it does, and until the API says scheduling
- * is available (`scheduling_available` on the queue), the action stays disabled and says
- * why. Screening mode never depends on how scheduling works.
+ * panel here (`registerSchedulePanel`, done by `scheduling/screening-schedule-panel.tsx`,
+ * which screening mode imports). The action is enabled when a panel is registered and the
+ * API says scheduling is available (`scheduling_available` on the queue). Screening mode
+ * never depends on how scheduling works.
  */
 export interface SchedulePanelProps {
   applicationId: string;

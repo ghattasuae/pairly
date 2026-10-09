@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { CompareView } from "./compare-view";
 import { ComposePanel } from "./compose-panel";
 import { schedulePanel, ScheduleSlot } from "./schedule-slot";
+import "./scheduling/screening-schedule-panel";
 import { ScorePanel } from "./score-panel";
 import { ScreeningDocument } from "./screening-document";
 
@@ -481,7 +482,6 @@ export function ScreeningMode({
       } else if (key === "s") {
         handled();
         if (scheduling) setPanel({ mode: "schedule" });
-        else toast.show({ tone: "info", title: t("actions.scheduleSoon") });
       } else if (key === "x" && current) {
         handled();
         toggleSelect(current);
@@ -1046,7 +1046,6 @@ function ActionBar({
         icon={<CalendarClock aria-hidden />}
         onClick={onSchedule}
         disabled={disabled || !scheduling}
-        {...(scheduling ? {} : { hint: t("actions.scheduleSoon") })}
       />
       <ActionButton data="tag" label={t("actions.tag")} keyName="t" icon={<Tag aria-hidden />} onClick={onTag} disabled={disabled || !canNote} />
       <ActionButton data="select" label={t("actions.select")} keyName="x" icon={<ListChecks aria-hidden />} onClick={onSelect} disabled={disabled} />

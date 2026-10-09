@@ -1539,7 +1539,6 @@
       "select": "Select",
       "compare": "Compare",
       "search": "Search",
-      "scheduleSoon": "Scheduling is not available yet. It arrives with the scheduling update.",
       "keys": "Keys"
     },
     "toast": {
