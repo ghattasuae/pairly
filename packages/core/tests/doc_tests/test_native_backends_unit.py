@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+from pydantic import SecretStr
 
 from pairly_core.audit_anchor.store import (
     FilesystemAnchorStore,
@@ -188,7 +189,7 @@ def test_signed_urls(tmp_path: Path) -> None:
     assert parts.path == f"{DEV_OBJECTS_PATH}/{key}"
     q = {k: v[0] for k, v in parse_qs(parts.query).items()}
     assert q["disposition"].startswith('attachment; filename="Receipt _.pdf"')
-    good = {
+    good: dict[str, Any] = {
         "expires": int(q["expires"]),
         "content_type": q["type"],
         "disposition": q["disposition"],
@@ -272,7 +273,7 @@ def test_outbox_is_refused_outside_dev(tmp_path: Path) -> None:
             outbox_dir=str(tmp_path),
             public_web_url="https://app.example.test",
             public_api_url="https://api.example.test",
-            signed_link_secret="x" * 40,
+            signed_link_secret=SecretStr("x" * 40),
         )
     with pytest.raises(ConfigError, match="outbox_dir"):
         load_notification_settings(env=Environment.TEST, email_transport="outbox")
@@ -283,7 +284,7 @@ async def test_outbox_writes_eml_json_and_index(tmp_path: Path) -> None:
         env=Environment.DEVELOPMENT,
         email_transport="outbox",
         outbox_dir=str(tmp_path),
-        signed_link_secret="x" * 40,
+        signed_link_secret=SecretStr("x" * 40),
     )
     transport = email_transport_from_settings(settings)
     assert isinstance(transport, OutboxTransport)
