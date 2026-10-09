@@ -6,6 +6,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { auditA11y } from "../utils/axe";
 import { applyApi, as, make, onboard, seedOrg, statePath } from "../utils/hire";
 import { logCheck, SCRATCH_ROOT } from "../utils/report";
 
@@ -149,5 +150,23 @@ test("recruiter screens 20 candidates in screening mode under 10 minutes", async
   });
   expect(elapsed).toBeLessThan(BUDGET_MS);
   expect(maxKeys).toBeLessThanOrEqual(2);
+  await context.close();
+});
+
+test("screening mode passes axe in English and Arabic", async ({ browser }) => {
+  const { context, page } = await as(browser, statePath(RUN, "recruiter"));
+  const counts: Record<string, number> = {};
+  for (const locale of ["en", "ar"] as const) {
+    await page.goto(screenUrl.replace(/^\/en\//, `/${locale}/`));
+    await expect(page.locator("[data-screening-mode]")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    counts[locale] = await auditA11y(page, "hire screening mode", locale, "light");
+  }
+  logCheck({
+    name: "hire screening mode: axe",
+    status: counts.en === 0 && counts.ar === 0 ? "pass" : "fail",
+    detail: JSON.stringify(counts),
+  });
+  expect(counts).toEqual({ en: 0, ar: 0 });
   await context.close();
 });
