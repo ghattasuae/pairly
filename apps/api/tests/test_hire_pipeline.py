@@ -1223,3 +1223,37 @@ async def test_a_submission_whose_run_never_started_is_restarted(
     after = (await api.call("GET", f"/v1/hire/messages/{draft_id}", world, "recruiter")).json()
     assert after["status"] == "awaiting_approval"
     assert after["approval_id"]
+
+
+async def test_candidate_replies_land_in_the_conversation(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    from pairly_core.errors import BadRequestError
+    from pairly_hire.messaging.replies import record_reply
+
+    api = hire_api
+    job = await open_job(api, world)
+    app_id = (await apply_many(api, world, job, ["Reply Person"]))["Reply Person"]
+    session = create_sessionmaker(api.engine)()
+    set_tenant(session, world.org_id, None)
+    async with session, session.begin():
+        with pytest.raises(BadRequestError):
+            await record_reply(session, uuid.UUID(app_id), text="   ")
+        await record_reply(
+            session,
+            uuid.UUID(app_id),
+            text="Thank you, Tuesday works for me.",
+            subject="Re: interview",
+        )
+    profile = (
+        await api.call("GET", f"/v1/hire/pipeline/applications/{app_id}", world, "recruiter")
+    ).json()
+    (reply,) = [m for m in profile["messages"] if m["status"] == "received"]
+    assert reply["text"] == "Thank you, Tuesday works for me."
+    assert reply["purpose"] == "reply"
+    events = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT payload FROM audit_events WHERE action = 'hire.message.received'",
+    )
+    assert "Tuesday" not in json.dumps([e.payload for e in events])
