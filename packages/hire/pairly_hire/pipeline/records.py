@@ -79,6 +79,18 @@ class AppRecord:
         value = unseal(self.app, "contact")
         return value if isinstance(value, dict) else {}
 
+    def identity_contacts(self) -> list[dict[str, Any]]:
+        """What the application and the candidate row say about the person (for the blind
+        redactor of free text, ``hooks.identity_redactor``)."""
+        row = {
+            "full_name": unseal(self.candidate, "full_name"),
+            "email": unseal(self.candidate, "email"),
+            "phone": unseal(self.candidate, "phone"),
+            "location": unseal(self.candidate, "location"),
+            "profile_url": unseal(self.candidate, "profile_url"),
+        }
+        return [self.contact, row]
+
     @property
     def full_name(self) -> str:
         return str(self.contact.get("full_name") or unseal(self.candidate, "full_name") or "")

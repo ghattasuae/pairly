@@ -24,10 +24,13 @@ the decrypted values).
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Final
 
 from pairly_hire.screening.blind import (
+    PLACEHOLDER,
+    BlindCategory,
     BlindConfig,
     BlindSources,
     identity_spans,
@@ -71,8 +74,16 @@ def identity_sources(
 
 def redact_free_text(text: str, sources: BlindSources, *, universities: bool = True) -> str:
     """``text`` with the candidate's identity and protected markers replaced
-    (``[name]``, ``[contact]``...). Always on: call it only while blind."""
-    return redact_text(text, sources, BlindConfig(enabled=True, universities=universities))
+    (``[name]``, ``[contact]``...). Always on: call it only while blind. In free text
+    the candidate's known home location is an address wherever it shows (in a CV the
+    redactor hides it only on the line that gives the home address)."""
+    out = redact_text(text, sources, BlindConfig(enabled=True, universities=universities))
+    for location in sorted(sources.locations, key=len, reverse=True):
+        for part in {location, *(p.strip() for p in re.split(r"[,،]", location))}:
+            if len(part) >= 3:
+                pattern = r"(?<!\w)" + r"\s+".join(map(re.escape, part.split())) + r"(?!\w)"
+                out = re.sub(pattern, PLACEHOLDER[BlindCategory.ADDRESS], out, flags=re.I)
+    return out
 
 
 def redactor(sources: BlindSources, *, universities: bool = True) -> Redactor:

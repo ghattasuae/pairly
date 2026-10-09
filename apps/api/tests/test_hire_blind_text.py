@@ -33,8 +33,10 @@ PHONE = "+971 50 123 4567"
 HIDDEN = "hidden in blind mode"
 
 
-async def _apply(api: HireApi, world: HireWorld, job: dict[str, Any], **kw: Any) -> tuple[str, str]:
-    email = f"layla.{uuid.uuid4().hex[:8]}@example.test"
+async def _apply(
+    api: HireApi, world: HireWorld, job: dict[str, Any], *, email: str | None = None, **kw: Any
+) -> tuple[str, str]:
+    email = email or f"layla.{uuid.uuid4().hex[:8]}@example.test"
     reference = await api.apply(
         world,
         job["slug"],
@@ -139,3 +141,84 @@ async def test_blind_approver_sees_the_message_masked_and_approves_the_real_one(
     assert after["masked_fields"] == []
     assert after["display_note"] is None
     assert after["payload"] == stored.payload
+
+
+async def test_free_text_is_redacted_for_reviewers_while_blind(
+    hire_api: HireApi, world: HireWorld
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    form = await api.call(
+        "PUT",
+        f"/v1/hire/jobs/{job['id']}/form",
+        world,
+        "recruiter",
+        json={"questions": [{"id": "why_us", "kind": "text", "label": "Why us?"}]},
+    )
+    assert form.status_code == 200, form.text
+    email = f"layla.{uuid.uuid4().hex[:8]}@example.test"
+    answer = f"I am {NAME}. Write to {email} or call {PHONE}. I live in Dubai."
+    app_id, _ = await _apply(api, world, job, email=email, answers={"why_us": answer})
+    secrets = (NAME, "Layla", "Haddad", email, PHONE, "Dubai")
+
+    note = f"Called Layla on {PHONE}; she lives in Dubai. Ms Haddad wrote from {email}."
+    added = await api.call(
+        "POST",
+        f"/v1/hire/pipeline/applications/{app_id}/notes",
+        world,
+        "recruiter",
+        json={"body": note},
+    )
+    assert added.status_code == 201, added.text
+    moved = await api.client.post(
+        f"/v1/hire/pipeline/applications/{app_id}/move",
+        json={"to_stage": "screening", "reason": "Layla Haddad answered the knockouts"},
+        headers=api.headers(world, "recruiter", extra=_key()),
+    )
+    assert moved.status_code == 200, moved.text
+    drafted = await api.call(
+        "POST",
+        f"/v1/hire/pipeline/applications/{app_id}/messages",
+        world,
+        "recruiter",
+        json={
+            "template_key": "hire.candidate.status_update",
+            "values": {"personal_note": f"Layla, we will call {PHONE} next week."},
+        },
+    )
+    assert drafted.status_code == 201, drafted.text
+
+    async def get(path: str) -> dict[str, Any]:
+        response = await api.call("GET", path, world, "recruiter")
+        assert response.status_code == 200, (path, response.text)
+        return dict(response.json())
+
+    profile = await get(f"/v1/hire/pipeline/applications/{app_id}")
+    detail = await get(f"/v1/hire/applications/{app_id}")
+    message = await get(f"/v1/hire/messages/{drafted.json()['id']}")
+    # The draft's own input values come back as typed, for the person editing them;
+    # everything shown about the message (preview, timeline) is redacted.
+    assert message.pop("values")["personal_note"].startswith("Layla, ")
+    for name, body in (("profile", profile), ("detail", detail), ("message", message)):
+        dumped = json.dumps(body, ensure_ascii=False)
+        for secret in secrets:
+            assert secret not in dumped, (name, secret)
+    shown_note = next(e for e in profile["timeline"] if e["kind"] == "note")["detail"]["text"]
+    assert shown_note == (
+        "Called [name] on [contact]; [gender] lives in [address]. "
+        "[gender] [name] wrote from [contact]."
+    )
+    stage = next(e for e in profile["timeline"] if e["kind"] == "stage")
+    assert stage["detail"]["reason"] == "[name] answered the knockouts"
+    assert detail["answers"]["why_us"] == (
+        "I am [name]. Write to [contact] or call [contact]. I live in [address]."
+    )
+    assert "[name], we will call [contact] next week." in message["preview"]["text"]
+    assert message["preview"]["masked"]
+
+    # Revealed: everything reads as written.
+    assert (await move(api, world, app_id, "shortlist")).status_code == 200
+    profile = await get(f"/v1/hire/pipeline/applications/{app_id}")
+    shown_note = next(e for e in profile["timeline"] if e["kind"] == "note")["detail"]["text"]
+    assert shown_note == note
+    assert (await get(f"/v1/hire/applications/{app_id}"))["answers"]["why_us"] == answer

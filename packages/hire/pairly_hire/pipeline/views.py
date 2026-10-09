@@ -3,12 +3,14 @@
 """Read models: the kanban board of a job and the candidate profile with its timeline.
 
 Both apply blind mode per application (``hooks.blind_applications``, screening's
-``is_blind``): while an application is blind and has not reached a stage that reveals
-identity, the card and the profile show "Candidate <reference>" and hide the contact
-details and the CV file (which names the person), and message previews show the label
-instead of the name; everything else (stage, tags,
-notes, flags, messages) stays visible. The routes never return self-identification
-answers (they live in ``pairly_hire.selfid``, which this package never imports).
+``is_blind``, which reads the application's one reveal state): while an application is
+blind, the card and the profile show "Candidate <reference>" and hide the contact
+details and the CV file (which names the person), message previews show the label
+instead of the name, and free text (notes, move reasons, message subjects and text)
+goes through the blind redactor with the candidate's known identity
+(``hooks.identity_redactor``). Everything else (stage, tags, flags) stays visible.
+The routes never return self-identification answers (they live in
+``pairly_hire.selfid``, which this package never imports).
 
 The timeline lists every event of an application, newest first: the application, its
 acknowledgement, flags (needs a person, duplicate hints), stage moves, notes, messages
@@ -28,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.models import User
 from pairly_core.notifications.models import Notification
+from pairly_hire.blindtext import Redactor
 from pairly_hire.messaging import library
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.messaging.prefs import prefs_for
@@ -36,6 +39,7 @@ from pairly_hire.pipeline.hooks import (
     ScreeningSummary,
     application_blind,
     blind_applications,
+    identity_redactor,
     screening_summary,
 )
 from pairly_hire.pipeline.models import HireNote, HirePipelineEntry, HireReferral, HireStageMove
@@ -243,8 +247,17 @@ def mask(value: str | None, name: str, label: str) -> str | None:
     return value.replace(name, label) if value and name else value
 
 
-def mask_message(view: MessageView, name: str, label: str) -> MessageView:
-    return replace(view, subject=mask(view.subject, name, label), text=mask(view.text, name, label))
+def mask_message(
+    view: MessageView, name: str, label: str, redact: Redactor | None = None
+) -> MessageView:
+    """The message as a reviewer may see it while blind: the name reads as the label,
+    and with ``redact`` every other mention of the person is redacted too."""
+
+    def run(value: str | None) -> str | None:
+        masked = mask(value, name, label)
+        return redact(masked) if redact is not None and masked else masked
+
+    return replace(view, subject=run(view.subject), text=run(view.text))
 
 
 async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bool) -> Profile:
@@ -293,6 +306,13 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
     summary = await screening_summary(session, app.id)
     prefs = await prefs_for(session, record.candidate.id)
     stages = record.stages
+    # Free text people wrote may name the candidate: redacted while blind.
+    redact: Redactor | None = (
+        await identity_redactor(session, app.id, record.identity_contacts()) if hidden else None
+    )
+
+    def shown(text: str | None) -> str | None:
+        return redact(text) if redact is not None and text else text
 
     def stage_label(key: str) -> str:
         stage = stages.get(key)
@@ -330,7 +350,7 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
                     "from": mv.from_stage,
                     "to": mv.to_stage,
                     "by": people.get(mv.actor_id, "system"),
-                    "reason": reason,
+                    "reason": shown(reason if isinstance(reason, str) else None),
                     "undo": mv.undo_of is not None,
                 },
             )
@@ -344,7 +364,7 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
                 {
                     "note_id": str(note.id),
                     "by": people.get(str(note.author_id), "a colleague"),
-                    "text": str(read_sealed(note, "body") or ""),
+                    "text": shown(str(read_sealed(note, "body") or "")) or "",
                     "mentions": [people.get(m, "a colleague") for m in note.mentions],
                 },
             )
@@ -356,7 +376,7 @@ async def profile(session: AsyncSession, application_id: uuid.UUID, *, blind: bo
     if hidden:
         # The candidate's name never reaches the reviewer, not even in a message
         # preview or its timeline entry. The email itself is sent with the name.
-        views = [mask_message(v, record.full_name, record.label(app_blind)) for v in views]
+        views = [mask_message(v, record.full_name, record.label(app_blind), redact) for v in views]
     for view in views:
         when = view.sent_at or view.created_at
         events.append(

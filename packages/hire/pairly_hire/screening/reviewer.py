@@ -11,22 +11,28 @@
   ``ScreeningSummary`` for the candidate profile and a rejection's optional reason.
   Criterion results come from the credited scores (a person's override wins); quotes
   are the accepted evidence, which comes from the blinded CV text the model read.
+* ``ScreeningTextRedactor``: the blind redactor for free text (``blindtext``) with the
+  candidate's known identity from the contacts the pipeline passes plus the names,
+  email, phone, links and home location the parsed CV gave (the latest screening's
+  profile), and the organisation's university setting.
 
-``register()`` installs both; the plugin module calls it on import.
+``register()`` installs all three; the plugin module calls it on import.
 """
 
 from __future__ import annotations
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pairly_hire.blindtext import Redactor, identity_sources, redactor
 from pairly_hire.pipeline import hooks
 from pairly_hire.rubric import SCALE_MAX
 from pairly_hire.screening.models import HireScreening
+from pairly_hire.screening.profile import ParsedProfile
 from pairly_hire.screening.service import (
     blind_application_ids,
     read_details,
@@ -107,6 +113,28 @@ class ScreeningReviewerView:
         )
 
 
+class ScreeningTextRedactor:
+    async def redactor(
+        self,
+        session: AsyncSession,
+        application_id: uuid.UUID,
+        contacts: Sequence[Mapping[str, Any]],
+    ) -> Redactor:
+        row = await session.scalar(
+            select(HireScreening)
+            .where(HireScreening.application_id == application_id)
+            .order_by(HireScreening.created_at.desc())
+            .limit(1)
+        )
+        profile: ParsedProfile | None = None
+        if row is not None:
+            raw = read_details(row).get("profile")
+            profile = ParsedProfile.from_dict(raw) if isinstance(raw, dict) else None
+        universities = (await screening_settings(session)).blind.universities
+        return redactor(identity_sources(*contacts, profile=profile), universities=universities)
+
+
 def register() -> None:
     hooks.set_blind_mode_source(ScreeningBlindSource())
     hooks.set_screening_view(ScreeningReviewerView())
+    hooks.set_text_redactor(ScreeningTextRedactor())
