@@ -91,6 +91,15 @@ EN: tuple[InstructionPattern, ...] = (
     _p(
         "ranking_manipulation",
         H,
+        r"\b(?:rank|rate|score|place|put|list|move|keep)\s+(?:(?:this|the|my)\s+"
+        r"(?:candidate|applicant|cv|resume|profile|application|submission)|me|him|her|them)\s+"
+        r"(?:above|ahead\s+of|over|before|higher\s+than)\s+(?:all\s+)?(?:the\s+)?"
+        r"(?:others|other\s+(?:candidates|applicants|profiles|cvs)|everyone(?:\s+else)?|"
+        r"the\s+rest|rest)\b",
+    ),
+    _p(
+        "ranking_manipulation",
+        H,
         r"\b(?:give|assign|award|grant)\s+(?:this\s+|the\s+)?(?:candidate|applicant|cv|"
         r"resume|me|him|her|them)?\s*(?:a\s+|the\s+)?(?:perfect|maximum|max|top|highest|"
         r"full|10\s*/\s*10|100\s*/\s*100|5\s*/\s*5)\s*(?:score|rating|marks|points|grade)",
@@ -236,7 +245,8 @@ AR: tuple[InstructionPattern, ...] = (
         "ignore_instructions",
         H,
         r"(?<!\w)(?:تجاهل|اهمل|انس|انسي|تخط|الغ)\s+" + _AGAP + r"(?:التعليمات|الاوامر|التوجيهات|"
-        r"القواعد|المعايير|الارشادات|ما\s+سبق|كل\s+ما\s+سبق)",
+        r"القواعد|المعايير|الارشادات|ما\s+سبق|كل\s+ما\s+سبق|(?:معايير|قواعد|تعليمات|شروط)\s+"
+        r"(?:التقييم|الفرز|التصنيف|المراجعه|الاختيار|الوظيفه))",
         "ar",
     ),
     _p("role_override", H, r"(?:^|\s)انت\s+الان\s+", "ar"),
@@ -256,6 +266,13 @@ AR: tuple[InstructionPattern, ...] = (
         + r"(?:المرشح|المتقدم|السيره)\s+"
         + _AGAP
         + r"(?:الاول|اولا|في\s+المرتبه\s+الاولي|في\s+المقدمه|الافضل|في\s+الصداره)",
+        "ar",
+    ),
+    # "Nominate / pick this applicant" (imperative; "رشحت" is a past-tense statement).
+    _p(
+        "ranking_manipulation",
+        H,
+        r"(?<!\w)(?:رشح|اختر|اختار|فضل)\s+(?:هذا|هذه)\s+(?:المتقدم|المرشح|المتقدمه|المرشحه)",
         "ar",
     ),
     _p(
