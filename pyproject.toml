@@ -123,7 +123,7 @@ extra_checks = true
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["packages", "apps", "sdks/python", "scripts/tests"]
+testpaths = ["packages", "apps", "sdks/python", "scripts/tests", "evals/tests"]
 # The repository root, so tests can import the synthetic data generators (synth/).
 pythonpath = ["."]
 addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra"]

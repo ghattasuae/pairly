@@ -1,0 +1,484 @@
+{
+ "generated_by": "python -m evals.hire",
+ "dataset": {
+  "generator": "synth.hire",
+  "count": 300,
+  "seed": 2026,
+  "scans_included": false,
+  "documents": 348,
+  "screened": 348,
+  "errors": [],
+  "error_count": 0
+ },
+ "model_answers": "scripted from synthetic ground truth (synth.hire.screening); not model output. Every model-dependent metric is pending_live_run.",
+ "replay_deterministic": true,
+ "replay_mismatches": [],
+ "extraction": {
+  "what": "Share of ground-truth values the extraction framework accepts (evidence located in the parsed CV, value parsed and backed by its quote) when the model's answer is the ground truth: the ceiling set by parsing, evidence location and value checks. Not a model accuracy.",
+  "deterministic_ceiling": {
+   "rate": 0.9966,
+   "values": 12227,
+   "per_field": {
+    "certifications": {
+     "values": 101,
+     "accepted": 101,
+     "rate": 1.0
+    },
+    "contact.city": {
+     "values": 348,
+     "accepted": 348,
+     "rate": 1.0
+    },
+    "contact.country": {
+     "values": 348,
+     "accepted": 348,
+     "rate": 1.0
+    },
+    "contact.email": {
+     "values": 348,
+     "accepted": 345,
+     "rate": 0.9914
+    },
+    "contact.name": {
+     "values": 348,
+     "accepted": 343,
+     "rate": 0.9856
+    },
+    "contact.other_name": {
+     "values": 36,
+     "accepted": 36,
+     "rate": 1.0
+    },
+    "contact.phone": {
+     "values": 348,
+     "accepted": 343,
+     "rate": 0.9856
+    },
+    "education.degree": {
+     "values": 436,
+     "accepted": 436,
+     "rate": 1.0
+    },
+    "education.end_year": {
+     "values": 436,
+     "accepted": 436,
+     "rate": 1.0
+    },
+    "education.field": {
+     "values": 436,
+     "accepted": 436,
+     "rate": 1.0
+    },
+    "education.institution": {
+     "values": 436,
+     "accepted": 436,
+     "rate": 1.0
+    },
+    "experience.employer": {
+     "values": 1052,
+     "accepted": 1052,
+     "rate": 1.0
+    },
+    "experience.end": {
+     "values": 747,
+     "accepted": 747,
+     "rate": 1.0
+    },
+    "experience.start": {
+     "values": 1052,
+     "accepted": 1052,
+     "rate": 1.0
+    },
+    "experience.title": {
+     "values": 1052,
+     "accepted": 1052,
+     "rate": 1.0
+    },
+    "languages": {
+     "values": 778,
+     "accepted": 778,
+     "rate": 1.0
+    },
+    "links": {
+     "values": 319,
+     "accepted": 302,
+     "rate": 0.9467
+    },
+    "skills": {
+     "values": 3606,
+     "accepted": 3594,
+     "rate": 0.9967
+    }
+   },
+   "per_text_layer": {
+    "logical": {
+     "values": 11164,
+     "accepted": 11139,
+     "rate": 0.9978
+    },
+    "visual_shaped": {
+     "values": 1063,
+     "accepted": 1046,
+     "rate": 0.984
+    }
+   }
+  },
+  "model_accuracy": {
+   "status": "pending_live_run",
+   "reason": "needs model output; scripted recordings echo the ground truth"
+  }
+ },
+ "evidence_validity": {
+  "rate": 1.0,
+  "quotes": 3894,
+  "valid": 3894,
+  "invalid_examples": [],
+  "rejected_quotes": {},
+  "measured_on": "recorded (scripted) scoring results; live results: none yet"
+ },
+ "rubric_agreement": {
+  "status": "pending_live_run",
+  "reason": "agreement with the synthetic labels is only meaningful for a live model: the recordings are scripted from those labels"
+ },
+ "scripted_credit": {
+  "what": "Scripted answers carry the synthetic label and its evidence lines. Credit is lost where a line cannot be quoted from the blinded text. This measures the pipeline, not a model.",
+  "criteria": 2677,
+  "criteria_with_lost_credit": 0,
+  "share_with_lost_credit": 0.0,
+  "overall_points_lost": {
+   "mean": 0.0,
+   "max": 0.0
+  }
+ },
+ "fairness": {
+  "pairs": 60,
+  "blind_marker_removal": {
+   "form_contact_only": {
+    "what": "Sources: the application form's contact details and patterns only.",
+    "fairness_cvs": {
+     "rate": 1.0,
+     "markers": 819,
+     "removed": 819,
+     "per_category": {
+      "address": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "age": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "contact": {
+       "markers": 216,
+       "removed": 216,
+       "rate": 1.0
+      },
+      "gender": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "name": {
+       "markers": 219,
+       "removed": 219,
+       "rate": 1.0
+      },
+      "nationality": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "university": {
+       "markers": 96,
+       "removed": 96,
+       "rate": 1.0
+      }
+     },
+     "leaks": []
+    },
+    "regular_cvs": {
+     "rate": 0.9832,
+     "markers": 2143,
+     "removed": 2107,
+     "per_category": {
+      "address": {
+       "markers": 215,
+       "removed": 215,
+       "rate": 1.0
+      },
+      "age": {
+       "markers": 74,
+       "removed": 74,
+       "rate": 1.0
+      },
+      "contact": {
+       "markers": 648,
+       "removed": 648,
+       "rate": 1.0
+      },
+      "gender": {
+       "markers": 70,
+       "removed": 70,
+       "rate": 1.0
+      },
+      "name": {
+       "markers": 779,
+       "removed": 743,
+       "rate": 0.9538
+      },
+      "nationality": {
+       "markers": 70,
+       "removed": 70,
+       "rate": 1.0
+      },
+      "university": {
+       "markers": 287,
+       "removed": 287,
+       "rate": 1.0
+      }
+     },
+     "leaks": [
+      "cv-0014:name",
+      "cv-0023:name",
+      "cv-0050:name",
+      "cv-0062:name",
+      "cv-0073:name",
+      "cv-0074:name",
+      "cv-0077:name",
+      "cv-0080:name",
+      "cv-0086:name",
+      "cv-0088:name",
+      "cv-0097:name",
+      "cv-0104:name",
+      "cv-0107:name",
+      "cv-0109:name",
+      "cv-0110:name",
+      "cv-0117:name",
+      "cv-0127:name",
+      "cv-0130:name",
+      "cv-0134:name",
+      "cv-0145:name",
+      "cv-0154:name",
+      "cv-0160:name",
+      "cv-0168:name",
+      "cv-0171:name",
+      "cv-0175:name",
+      "cv-0181:name",
+      "cv-0204:name",
+      "cv-0208:name",
+      "cv-0220:name",
+      "cv-0222:name"
+     ]
+    }
+   },
+   "with_parsed_profile": {
+    "what": "Sources: the form and the parsed CV profile (scripted from the ground truth, so this assumes a correct parse).",
+    "fairness_cvs": {
+     "rate": 1.0,
+     "markers": 819,
+     "removed": 819,
+     "per_category": {
+      "address": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "age": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "contact": {
+       "markers": 216,
+       "removed": 216,
+       "rate": 1.0
+      },
+      "gender": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "name": {
+       "markers": 219,
+       "removed": 219,
+       "rate": 1.0
+      },
+      "nationality": {
+       "markers": 72,
+       "removed": 72,
+       "rate": 1.0
+      },
+      "university": {
+       "markers": 96,
+       "removed": 96,
+       "rate": 1.0
+      }
+     },
+     "leaks": []
+    },
+    "regular_cvs": {
+     "rate": 1.0,
+     "markers": 2143,
+     "removed": 2143,
+     "per_category": {
+      "address": {
+       "markers": 215,
+       "removed": 215,
+       "rate": 1.0
+      },
+      "age": {
+       "markers": 74,
+       "removed": 74,
+       "rate": 1.0
+      },
+      "contact": {
+       "markers": 648,
+       "removed": 648,
+       "rate": 1.0
+      },
+      "gender": {
+       "markers": 70,
+       "removed": 70,
+       "rate": 1.0
+      },
+      "name": {
+       "markers": 779,
+       "removed": 779,
+       "rate": 1.0
+      },
+      "nationality": {
+       "markers": 70,
+       "removed": 70,
+       "rate": 1.0
+      },
+      "university": {
+       "markers": 287,
+       "removed": 287,
+       "rate": 1.0
+      }
+     },
+     "leaks": []
+    }
+   }
+  },
+  "blinded_input_identical_rate": 1.0,
+  "blinded_input_byte_identical_rate": 0.9333,
+  "identical_input_note": "Identical apart from where a PDF wraps a line (a longer name or email moves a line break).",
+  "pipeline_overall_delta_scripted": {
+   "what": "Overall score difference across each pair with scripted answers: tests the deterministic part (redaction, evidence, aggregation), not a model.",
+   "max": 0.0,
+   "mean": 0.0,
+   "per_dimension_max": {
+    "age": 0.0,
+    "gender": 0.0,
+    "name": 0.0,
+    "nationality": 0.0,
+    "photo": 0.0
+   }
+  },
+  "aggregation_identical_for_identical_scores": 1.0,
+  "model_score_delta": {
+   "status": "pending_live_run",
+   "reason": "needs model scores on the counterfactual pairs"
+  }
+ },
+ "injection": {
+  "guardrails": {
+   "source": "evals/results/guardrails_hire.json",
+   "document_level": {
+    "true_positives": 31,
+    "false_negatives": 5,
+    "false_positives": 0,
+    "true_negatives": 305,
+    "precision": 1.0,
+    "recall": 0.8611,
+    "false_positive_rate": 0.0,
+    "recall_without_classifier_attacks": 1.0
+   },
+   "type_level_recall": 0.8611,
+   "payload_leaks_after_sanitize": 3
+  },
+  "scoring_input_payload_leaks": {
+   "what": "Attack payloads found in the text the scoring model reads (after guardrails, sanitising and blind redaction).",
+   "deterministic_scope": {
+    "payloads": 21,
+    "leaks": 0,
+    "documents": []
+   },
+   "classifier_scope": {
+    "status": "pending_live_run",
+    "reason": "paraphrased instructions are removed only by the model classifier; scripted classifier answers prove the plumbing, not detection"
+   },
+   "classifier_scope_without_classifier": {
+    "payloads": 5,
+    "leaks": 5,
+    "documents": [
+     "atk-paraphrased-ar-1-docx",
+     "atk-paraphrased-ar-2-docx",
+     "atk-paraphrased-en-1-pdf",
+     "atk-paraphrased-en-2-docx",
+     "atk-paraphrased-en-3-pdf"
+    ]
+   }
+  }
+ },
+ "claims": {
+  "what": "Claim checks on the parsed profile (scripted from the ground truth, so this assumes a correct parse). Flags are information only.",
+  "attacks": 7,
+  "recall": 1.0,
+  "missed": [],
+  "clean_cvs": 233,
+  "clean_flag_rate_per_code": {
+   "unexplained_gap": 0.0773
+  },
+  "ai_signal_rate_per_code": {}
+ },
+ "knockouts": {
+  "applications": 348,
+  "route_agreement": 1.0,
+  "rejections": 0
+ },
+ "latency_cost": {
+  "what": "Deterministic stages on this machine, per CV, in process (not gating).",
+  "stages": {
+   "blind": {
+    "mean_ms": 0.7,
+    "p95_ms": 1.04
+   },
+   "checks": {
+    "mean_ms": 0.57,
+    "p95_ms": 0.84
+   },
+   "guardrails": {
+    "mean_ms": 3.88,
+    "p95_ms": 7.48
+   },
+   "parse": {
+    "mean_ms": 55.6,
+    "p95_ms": 71.24
+   },
+   "sanitize": {
+    "mean_ms": 0.07,
+    "p95_ms": 0.1
+   }
+  },
+  "model_latency": {
+   "status": "pending_live_run",
+   "reason": "needs live model calls"
+  },
+  "model_cost_usd_per_cv": {
+   "status": "pending_live_run",
+   "reason": "needs live model calls (recordings cost 0)"
+  }
+ },
+ "recordings": {
+  "bundle": "synth/hire/recordings/hire_screening.json",
+  "applications": 7,
+  "answered": 7,
+  "current": true,
+  "note": "scripted from synthetic ground truth; not model output"
+ },
+ "seconds": 40.8
+}

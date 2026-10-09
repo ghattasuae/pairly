@@ -164,8 +164,10 @@ test: ## Run Python and JS tests
 	$(UV) run --frozen pytest --cov --cov-report=term-missing
 	$(PNPM) test
 
-evals: ## Run eval suites (WP2.10)
-	@echo "make evals: not implemented yet (WP2.10: PromptFoo suites and python runners)."
+evals: ## Run the eval suites (guardrails, Hire screening) and the threshold gate
+	nice -n 10 $(UV) run python -m evals.guardrails_hire
+	nice -n 10 $(UV) run python -m evals.hire
+	$(UV) run python -m evals.gate
 
 lint: ## Lint Python, import contracts and JS
 	$(UV) run ruff check .
@@ -180,7 +182,7 @@ format: ## Auto-format and auto-fix Python
 
 typecheck: ## mypy (strict on packages/core, packages/expense and packages/hire) and tsc
 	$(UV) run mypy packages/core packages/expense packages/hire
-	$(UV) run mypy packages/pay apps sdks/python scripts synth
+	$(UV) run mypy packages/pay apps sdks/python scripts synth evals
 	$(PNPM) typecheck
 
 # ---------------------------------------------------------------- CI checks, run locally

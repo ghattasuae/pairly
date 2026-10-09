@@ -121,6 +121,10 @@ class CvContact(ExtractionModel):
     name: Annotated[
         Extracted[str], Rule(required=True, max_length=200, description="The candidate's name")
     ]
+    other_name: Annotated[
+        Extracted[str],
+        Rule(max_length=200, description="The name in another script, when the CV also gives it"),
+    ]
     email: Annotated[Extracted[str], Rule(max_length=254, description="Email address")]
     phone: Annotated[Extracted[str], Rule(max_length=40, description="Phone number")]
     city: Annotated[Extracted[str], Rule(max_length=120, description="City they live in")]
@@ -221,6 +225,7 @@ class ParsedProfile:
     """Evidenced values only. Empty lists or ``None`` where nothing could be relied on."""
 
     name: Located | None = None
+    other_name: Located | None = None
     email: Located | None = None
     phone: Located | None = None
     city: Located | None = None
@@ -243,6 +248,7 @@ class ParsedProfile:
             "parsed": self.parsed,
             "contact": {
                 "name": one(self.name),
+                "other_name": one(self.other_name),
                 "email": one(self.email),
                 "phone": one(self.phone),
                 "city": one(self.city),
@@ -286,6 +292,7 @@ class ParsedProfile:
                 )
         return cls(
             name=loc(contact.get("name")),
+            other_name=loc(contact.get("other_name")),
             email=loc(contact.get("email")),
             phone=loc(contact.get("phone")),
             city=loc(contact.get("city")),
@@ -346,6 +353,7 @@ def parsed_profile(result: ExtractionResult[CvProfile]) -> ParsedProfile:
     )
     return ParsedProfile(
         name=_usable(data.contact.name),
+        other_name=_usable(data.contact.other_name),
         email=_usable(data.contact.email),
         phone=_usable(data.contact.phone),
         city=_usable(data.contact.city),

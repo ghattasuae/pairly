@@ -42,7 +42,8 @@ from pairly_hire.screening.profile import Job, ParsedProfile
 class ClaimConfig:
     gap_months: int = 6
     overlap_months: int = 3
-    unsupported_skills_min: int = 6
+    # Tuned on the synthetic corpus: clean CVs list up to 9 skills no other line uses.
+    unsupported_skills_min: int = 12
     mass_application_jobs: int = 3
 
 

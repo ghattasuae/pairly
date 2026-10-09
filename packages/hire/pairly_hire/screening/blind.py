@@ -116,7 +116,7 @@ class BlindSources:
         locations = text(contact.get("location"))
         institutions: list[str] = []
         if profile is not None:
-            for item in (profile.name,):
+            for item in (profile.name, profile.other_name):
                 if item is not None:
                     names.append(item.value)
             if profile.email is not None:

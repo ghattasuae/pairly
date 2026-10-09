@@ -183,6 +183,7 @@ def scripted_profile(spec: DocSpec) -> dict[str, Any]:
     gt = spec.record.ground_truth
     found: list[dict[str, Any] | None] = [
         _answer("contact.name", gt.contact.name, _line(spec, "contact:name")),
+        _answer("contact.other_name", gt.contact.name_alt, _line(spec, "contact:name_alt")),
         _answer("contact.email", gt.contact.email, _line(spec, "contact:email")),
         _answer("contact.phone", gt.contact.phone, _line(spec, "contact:phone")),
         _answer("contact.city", gt.contact.city, _line(spec, "contact:city")),
