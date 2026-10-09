@@ -130,6 +130,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         "hire_screening_start",
         "hire_sla_drafts",
         "hire_rediscovery_index",
+        "hire_interview_reminders",
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
