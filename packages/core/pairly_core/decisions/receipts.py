@@ -82,6 +82,9 @@ RECEIPT_POLICY: Final[Mapping[str, Mapping[Audience, Visibility]]] = {
     "confidence": _rule(_S, _S, _S),
     "policy_versions": _rule(_S, _S, _S),
     "prompt_versions": _rule(_S, _S, _O),
+    # Which model and prompt version decided, and nothing else about the call (no
+    # provider settings, tiers, call ids or hashes): shown to the subject too.
+    "versions": _rule(_S, _S, _S),
     "model": _rule(_S, _S, _O),
     "model_call_ids": _rule(_S, _S, _O),
     "inputs": _rule(_S, _S, _O),
@@ -93,6 +96,11 @@ RECEIPT_POLICY: Final[Mapping[str, Mapping[Audience, Visibility]]] = {
     # Evidence: what was seen and which rules applied. Fraud and injection signals stay
     # internal, so a subject cannot learn how to avoid them.
     "evidence.*": _rule(_S, _S, _O),
+    # Per-criterion internals (model score, confidence, flags) and the review flags stay
+    # internal; a workflow gives the subject its own per-criterion view (Hire: rubric
+    # anchor text and the candidate's quotes, ``pairly_hire.portal.service.receipt``).
+    "evidence.criteria": _rule(_S, _S, _O),
+    "evidence.flags": _rule(_S, _S, _O),
     "evidence.rule_results": _rule(_S, _S, _S),
     "evidence.quote_locations": _rule(_S, _S, _S),
     "evidence.citations": _rule(_S, _S, _S),
@@ -103,6 +111,11 @@ RECEIPT_POLICY: Final[Mapping[str, Mapping[Audience, Visibility]]] = {
     "personal_data.fields": _rule(_S, _R, _S),
     "personal_data.raw": _rule(_S, _R, _S),
     "personal_data.quotes": _rule(_S, _R, _S),
+    # The subject's own evidence quotes (Hire screening: quoted from their CV).
+    "personal_data.evidence": _rule(_S, _R, _S),
+    # Generated explanations and quotes that failed validation stay internal.
+    "personal_data.why_not_higher": _rule(_S, _R, _O),
+    "personal_data.rejected_quotes": _rule(_S, _R, _O),
     "personal_data.facts": _rule(_S, _R, _S),
     "personal_data.reasons": _rule(_S, _R, _S),
     "personal_data.old_value": _rule(_S, _R, _S),
@@ -146,6 +159,19 @@ class ReceiptContext:
     superseded_by: str | None = None
 
 
+def versions(row: DecisionRecord) -> dict[str, Any] | None:
+    """The model name and the prompt task and version of a record, nothing more."""
+    model = (row.model or {}).get("model")
+    prompts = [
+        {"task": p.get("task"), "version": p.get("version")}
+        for p in row.prompt_versions or ()
+        if isinstance(p, Mapping)
+    ]
+    if model is None and not prompts:
+        return None
+    return {"model": model if isinstance(model, str) else None, "prompts": prompts}
+
+
 def full_receipt(row: DecisionRecord, ctx: ReceiptContext) -> dict[str, Any]:
     """Every section, before redaction."""
     sensitive = dict(ctx.sensitive or {})
@@ -162,6 +188,7 @@ def full_receipt(row: DecisionRecord, ctx: ReceiptContext) -> dict[str, Any]:
         "confidence": row.confidence,
         "policy_versions": list(row.policy_versions),
         "prompt_versions": list(row.prompt_versions),
+        "versions": versions(row),
         "model": dict(row.model),
         "model_call_ids": [str(c) for c in row.model_call_ids],
         "inputs": dict(row.inputs),

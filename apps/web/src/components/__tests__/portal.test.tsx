@@ -30,6 +30,7 @@ const { PortalLogin } = await import("../portal/portal-login");
 const { PortalHome, POLL_MS } = await import("../portal/portal-home");
 const { ApplicationDetail } = await import("../portal/application-detail");
 const { PrivacyCentre } = await import("../portal/privacy-centre");
+const { ReceiptCriteria } = await import("../portal/receipt-criteria");
 
 const APP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ORG = "0123456789abcdef0123456789abcdef";
@@ -175,6 +176,24 @@ describe("candidate portal", () => {
     await waitFor(() => expect(withdraw).toHaveBeenCalledWith(APP_ID));
     expect(await screen.findByText(/We sent you an email to confirm/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Withdraw this application" })).toBeNull();
+  });
+
+  it("shows each criterion of a screening with its rubric meaning and the candidate's words", () => {
+    renderWithIntl(
+      <ReceiptCriteria
+        criteria={[
+          { criterion_id: "python", name: "Python", score: 3, scale_max: 4, anchor: "Solid experience.", your_evidence: ["built payment APIs in Python"] },
+          { criterion_id: "aws", name: "AWS", score: 0, scale_max: 4, anchor: "No evidence in the application.", your_evidence: [] },
+        ]}
+        versions={{ model: "claude-x", prompts: [{ task: "hire_score", version: "v3" }] }}
+      />,
+    );
+    const python = document.querySelector('[data-criterion="python"]') as HTMLElement;
+    expect(python).toHaveTextContent("3 of 4");
+    expect(python).toHaveTextContent("This score means: Solid experience.");
+    expect(python).toHaveTextContent("built payment APIs in Python");
+    expect(document.querySelector('[data-criterion="aws"]')).toHaveTextContent("Nothing in your application was quoted");
+    expect(document.querySelector("[data-receipt-versions]")).toHaveTextContent("Model: claude-x. Prompt version: hire_score v3.");
   });
 
   it("shows a booked interview with its links and one waiting for a time", () => {

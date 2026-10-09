@@ -42,7 +42,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.crypto.types import seal, unseal
 from pairly_core.decisions.appeals import AppealView, clean_text, create_appeal
-from pairly_core.decisions.models import Appeal, DecisionRecord, RequesterType
+from pairly_core.decisions.models import Appeal, DecisionKind, DecisionRecord, RequesterType
 from pairly_core.decisions.receipts import ReceiptContext, SubjectRef, subject_receipt
 from pairly_core.decisions.service import (
     get_record,
@@ -55,6 +55,7 @@ from pairly_core.errors import BadRequestError, ConflictError, NotFoundError
 from pairly_core.ingestion.models import Document
 from pairly_core.models import Organisation
 from pairly_core.notifications.service import Recipient, notify
+from pairly_core.policy_versions import get_policy
 from pairly_hire.interviews import PortalInterview, upcoming_interviews
 from pairly_hire.messaging.models import HireMessage, MessagePurpose, MessageStatus
 from pairly_hire.messaging.prefs import prefs_for
@@ -80,6 +81,8 @@ from pairly_hire.portal.models import (
 )
 from pairly_hire.portal.status import MoveFact, Timeline, timeline
 from pairly_hire.portal.templates import WITHDRAWN
+from pairly_hire.rubric import POLICY_KIND as RUBRIC_POLICY_KIND
+from pairly_hire.rubric import SCALE_MAX, Rubric, parse_rubric
 from pairly_hire.sealing import read_sealed
 from pairly_hire.selfid.export import subject_answers
 
@@ -633,6 +636,46 @@ async def _own_decision(
     raise NotFoundError("decision not found")
 
 
+async def _criteria_for_subject(
+    session: AsyncSession, row: DecisionRecord, sensitive: Mapping[str, Any] | None
+) -> list[dict[str, Any]]:
+    """Per criterion, for the candidate: the outcome (score of the scale), the rubric's
+    anchor text for that score, and their own quotes the score rests on. Never the
+    model's own score, confidence, flags, rejected quotes or generated explanations."""
+    scores = (row.output or {}).get("scores")
+    if not isinstance(scores, Mapping):
+        return []
+    rubric: Rubric | None = None
+    if row.rubric_version_id is not None:
+        policy = await get_policy(session, row.rubric_version_id)
+        if policy is not None and policy.kind == RUBRIC_POLICY_KIND:
+            try:
+                rubric = parse_rubric(policy.content)
+            except (ValueError, TypeError):
+                rubric = None
+    by_id = {c.id: c for c in rubric.criteria} if rubric is not None else {}
+    quotes = (sensitive or {}).get("evidence")
+    quotes = quotes if isinstance(quotes, Mapping) else {}
+    out: list[dict[str, Any]] = []
+    for cid, raw in scores.items():
+        if not isinstance(raw, int):
+            continue
+        criterion = by_id.get(str(cid))
+        levels = criterion.scale_anchors if criterion is not None else ()
+        own = quotes.get(cid)
+        out.append(
+            {
+                "criterion_id": str(cid),
+                "name": criterion.name if criterion is not None else str(cid),
+                "score": raw,
+                "scale_max": SCALE_MAX,
+                "anchor": levels[raw] if 0 <= raw < len(levels) else None,
+                "your_evidence": [str(q) for q in own] if isinstance(own, list) else [],
+            }
+        )
+    return out
+
+
 async def receipt(
     session: AsyncSession, identity: PortalIdentity, decision_id: str
 ) -> dict[str, Any]:
@@ -650,6 +693,8 @@ async def receipt(
         ),
         subject,
     )
+    if row.kind == DecisionKind.SCORE.value:
+        data["criteria"] = await _criteria_for_subject(session, row, sensitive)
     await _audit(
         session,
         identity,

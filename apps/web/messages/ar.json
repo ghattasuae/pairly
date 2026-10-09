@@ -1748,7 +1748,13 @@
       "decisionId": "رقم القرار",
       "decidedAt": "تاريخ القرار {date}",
       "outcome": "النتيجة",
-      "policies": "القواعد المستخدمة"
+      "policies": "القواعد المستخدمة",
+      "criteriaTitle": "كيف قُيّم كل معيار",
+      "criterionScore": "{score} من {max}",
+      "criterionMeans": "معنى هذه الدرجة: {anchor}",
+      "yourWords": "من طلبك",
+      "noWords": "لم يُقتبس شيء من طلبك لهذا المعيار.",
+      "versions": "النموذج: {model}. إصدار التعليمات: {prompts}."
     },
     "errors": {
       "generic": "حدث خطأ. حاول مرة أخرى.",

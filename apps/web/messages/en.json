@@ -1748,7 +1748,13 @@
       "decisionId": "Decision id",
       "decidedAt": "Decided on {date}",
       "outcome": "Result",
-      "policies": "Rules used"
+      "policies": "Rules used",
+      "criteriaTitle": "How each criterion was scored",
+      "criterionScore": "{score} of {max}",
+      "criterionMeans": "This score means: {anchor}",
+      "yourWords": "From your application",
+      "noWords": "Nothing in your application was quoted for this criterion.",
+      "versions": "Model: {model}. Prompt version: {prompts}."
     },
     "errors": {
       "generic": "Something went wrong. Try again.",

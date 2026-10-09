@@ -6,6 +6,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 
 import { JsonView } from "@/components/data/json-view";
 import { PortalSignIn } from "@/components/portal/portal-sign-in";
+import { ReceiptCriteria, type ReceiptCriterion, type ReceiptVersions } from "@/components/portal/receipt-criteria";
 import { Unavailable } from "@/components/states/unavailable";
 import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
@@ -24,6 +25,8 @@ type Receipt = {
   decided_at: string | null;
   outcome?: Record<string, unknown>;
   policy_versions?: { name?: string; version?: number }[];
+  criteria?: ReceiptCriterion[];
+  versions?: ReceiptVersions | null;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -92,6 +95,7 @@ export default async function PortalReceiptPage({ params }: Props) {
           </div>
         </section>
       )}
+      {receipt.criteria && receipt.criteria.length > 0 && <ReceiptCriteria criteria={receipt.criteria} versions={receipt.versions ?? null} />}
     </article>
   );
 }

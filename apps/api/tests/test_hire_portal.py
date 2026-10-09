@@ -34,10 +34,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from pairly_core.audit import ActorType
 from pairly_core.db import create_sessionmaker, set_portal_subject, set_tenant
 from pairly_core.decisions.models import DecisionKind
-from pairly_core.decisions.service import DecisionDraft, record_decision
+from pairly_core.decisions.service import DecisionDraft, PromptRef, record_decision
+from pairly_core.policy_versions import get_policy
 from pairly_hire.models import HireApplication
 from pairly_hire.pipeline.models import HireNote
 from pairly_hire.portal.auth import portal_subject
+from pairly_hire.rubric import parse_rubric
 
 from .hire_support import HireApi, HireWorld, cv_pdf, hire_api, open_job, owner_rows
 from .test_hire_pipeline import _key, deliver, move, other, world
@@ -534,11 +536,20 @@ async def test_privacy_centre_export_deletion_and_human_review(
         "recruiter",
         json={"tags": ["fast-track"]},
     )
-    # One AI-assisted decision about each application (a score record).
+    # One AI-assisted decision about each application (a score record, as screening
+    # writes it: the job's rubric version, quotes, model and prompt metadata, flags).
     ids: dict[str, str] = {}
     db = create_sessionmaker(owner_engine)()
     set_tenant(db, world.org_id, None)
     async with db, db.begin():
+        rubric_id = (
+            await db.execute(
+                text("SELECT rubric_policy_id FROM hire_jobs WHERE id = :j"), {"j": job["id"]}
+            )
+        ).scalar_one()
+        policy = await get_policy(db, rubric_id)
+        assert policy is not None
+        criterion = parse_rubric(policy.content).criteria[0]
         for app in (app_id, other_app):
             stored = await record_decision(
                 db,
@@ -549,7 +560,19 @@ async def test_privacy_centre_export_deletion_and_human_review(
                     entity_id=app,
                     actor_type=ActorType.SYSTEM,
                     actor_id="test.screening",
-                    output={"scores": {"python": 3}, "overall": 70.0},
+                    rubric_version_id=rubric_id,
+                    prompt_versions=[PromptRef("hire_score", "v3", "prompt-hash-secret")],
+                    model={"provider": "anthropic", "model": "claude-x", "tier": "high"},
+                    output={"scores": {criterion.id: 3}, "overall": 70.0},
+                    evidence={
+                        "criteria": [{"criterion_id": criterion.id, "model_score": 3}],
+                        "flags": [{"code": "unexplained_gap", "kind": "claim"}],
+                    },
+                    sensitive={
+                        "evidence": {criterion.id: ["built payment APIs in Python"]},
+                        "why_not_higher": {criterion.id: "Generated: no lead role"},
+                        "reason": "Internal note: pricey",
+                    },
                     confidence=0.9,
                 ),
             )
@@ -631,8 +654,37 @@ async def test_privacy_centre_export_deletion_and_human_review(
     )
     assert receipt.status_code == 200, receipt.text
     assert receipt.json()["audience"] == "subject"
-    assert "actor" not in receipt.json()
-    assert "model" not in receipt.json()
+    shown = receipt.json()
+    assert "actor" not in shown
+    assert "model" not in shown
+    # Per criterion: the outcome, the rubric's anchor text and the candidate's own quotes;
+    # the model and prompt version only; nothing internal.
+    assert shown["criteria"] == [
+        {
+            "criterion_id": criterion.id,
+            "name": criterion.name,
+            "score": 3,
+            "scale_max": 4,
+            "anchor": criterion.scale_anchors[3],
+            "your_evidence": ["built payment APIs in Python"],
+        }
+    ]
+    assert shown["versions"] == {
+        "model": "claude-x",
+        "prompts": [{"task": "hire_score", "version": "v3"}],
+    }
+    dumped_receipt = json.dumps(shown)
+    for hidden in (
+        "anthropic",
+        "prompt-hash-secret",
+        "unexplained_gap",
+        "Generated:",
+        "Internal note",
+        "model_score",
+        other_email,
+        ids[other_app],
+    ):
+        assert hidden not in dumped_receipt, hidden
     foreign = await api.client.get(
         f"/v1/hire/portal/privacy/decisions/{ids[other_app]}", headers=session
     )

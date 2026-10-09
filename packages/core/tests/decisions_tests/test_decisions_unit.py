@@ -224,6 +224,54 @@ def test_subject_sees_only_their_own_decision_without_internal_notes() -> None:
         subject_receipt(row, ctx, SubjectRef("invoice", "inv-2"))
 
 
+def test_subject_sees_a_screening_with_own_quotes_and_versions_only() -> None:
+    row = _row(
+        workflow="hire",
+        entity_type="hire.application",
+        entity_id="app-1",
+        kind="score",
+        model={"provider": "anthropic", "model": "claude-x", "tier": "high", "from_recording": 1},
+        prompt_versions=[{"task": "hire_score", "version": "v3", "hash": "secret-hash"}],
+        output={"scores": {"python": 3}, "overall": 70.0},
+        evidence={
+            "criteria": [{"criterion_id": "python", "model_score": 3, "confidence": 0.9}],
+            "flags": [{"code": "unexplained_gap", "kind": "claim"}],
+            "guardrail_findings": [{"code": "hidden_text"}],
+        },
+    )
+    sensitive = {
+        "evidence": {"python": ["built payment APIs in Python"]},
+        "why_not_higher": {"python": "No lead role shown."},
+        "rejected_quotes": {"python": ["made up"]},
+        "reason": "Internal: strong but pricey",
+    }
+    data = subject_receipt(
+        row,
+        ReceiptContext(sensitive=sensitive, intact=True),
+        SubjectRef("hire.application", "app-1"),
+    )
+    assert data["versions"] == {
+        "model": "claude-x",
+        "prompts": [{"task": "hire_score", "version": "v3"}],
+    }
+    assert data["personal_data"] == {"evidence": sensitive["evidence"]}
+    assert data["evidence"] == {}
+    assert data["outcome"] == {"scores": {"python": 3}, "overall": 70.0}
+    dumped = json.dumps(data)
+    for hidden in (
+        "anthropic",
+        "secret-hash",
+        "unexplained_gap",
+        "hidden_text",
+        "made up",
+        "No lead role",
+        "Internal:",
+        "model_score",
+        "from_recording",
+    ):
+        assert hidden not in dumped, hidden
+
+
 def test_policy_is_data_and_fails_closed_for_unknown_sections() -> None:
     assert visibility("brand_new_section", Audience.INTERNAL_FULL) is Visibility.OMIT
     assert visibility("evidence.unknown", Audience.SUBJECT) is Visibility.OMIT
