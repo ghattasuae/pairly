@@ -99,11 +99,7 @@ class ScreeningReviewerView:
                     quotes=quotes,
                 )
             )
-        overall = (
-            f"{float(row.overall_score):.0f} / 100"
-            if row.overall_score is not None
-            else None
-        )
+        overall = f"{float(row.overall_score):.0f} / 100" if row.overall_score is not None else None
         scored_at = row.updated_at.isoformat() if scoring and row.updated_at else None
         return hooks.ScreeningSummary(
             status=row.status,

@@ -52,7 +52,7 @@ test("set up: organisation, Hire seed, one application with an acknowledgement l
   );
   const mail = await waitForMessageTo(CANDIDATE.email, 120_000);
   expect(mail.Text).toContain(reference);
-  expect(mail.Text).not.toContain("—");
+  expect(mail.Text).not.toContain("\u2014"); // no em dash
   portalLink = mail.Text.match(/https?:\/\/\S+\/en\/portal\/login#pl1\.\S+/)?.[0] ?? "";
   expect(portalLink, mail.Text).not.toBe("");
   results.reference = reference;

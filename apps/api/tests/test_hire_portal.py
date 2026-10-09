@@ -487,7 +487,7 @@ async def test_withdraw_reply_and_requested_files(
     confirmation = [m for m in mails if email in m["to"] and "withdrew" in m["subject"]]
     assert len(confirmation) == 1
     assert "Karim Odeh" in confirmation[0]["text"]
-    assert "—" not in confirmation[0]["text"]
+    assert "\u2014" not in confirmation[0]["text"]
 
 
 async def test_privacy_centre_export_deletion_and_human_review(
