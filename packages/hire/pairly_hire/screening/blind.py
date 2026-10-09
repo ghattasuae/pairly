@@ -342,6 +342,11 @@ _UNIVERSITY_RE: Final = re.compile(
 _SEGMENT_RE: Final = re.compile(r"[^|•·\t\n]+")
 _WIDE_SPACE_RE: Final = re.compile(r"\s{3,}")
 _ADDRESS_START_RE: Final = re.compile(r"(?im)^[^\S\n]*(?:p\.?\s?o\.?\s+box|ص\.?\s?ب)[^\n]*")
+# A languages line: a language level next to the word.
+_LANGUAGE_LINE_RE: Final = re.compile(
+    r"(?i)\b(?:native|fluent|professional|conversational|basic|beginner|intermediate|"
+    r"advanced|mother\s+tongue)\b|اللغات|اللغة"
+)
 # Words a name part never hides on its own (particles shared by many names).
 _NAME_STOP: Final = frozenset(
     {"al", "el", "bin", "ibn", "abu", "bint", "de", "da", "del", "der", "van", "von", "la", "le"}
@@ -351,6 +356,16 @@ _NAME_STOP: Final = frozenset(
 def _word_re(phrase: str) -> re.Pattern[str]:
     parts = [re.escape(p) for p in phrase.split()]
     return re.compile(r"(?<!\w)" + r"[\s\-]+".join(parts) + r"(?!\w)", re.IGNORECASE)
+
+
+def _name_re(phrase: str) -> re.Pattern[str]:
+    """Like ``_word_re``, but a letter outside ASCII matches any one visible character:
+    a PDF may drop or replace a letter its font cannot map ("Şafii" read as "?afii"),
+    or a CV may write the name without accents. Arabic names are matched as written."""
+    if any("\u0600" <= ch <= "\u06ff" for ch in phrase):
+        return _word_re(phrase)
+    parts = ["".join(re.escape(ch) if ch.isascii() else r"\S" for ch in p) for p in phrase.split()]
+    return re.compile(r"(?<![^\W\x00])" + r"[\s\-]+".join(parts) + r"(?!\w)", re.IGNORECASE)
 
 
 def _name_parts(name: str) -> list[str]:
@@ -388,6 +403,12 @@ def _segments(text: str, start: int, end: int) -> Iterable[tuple[int, int]]:
         yield position, piece.end()
 
 
+def _line_of(text: str, position: int) -> str:
+    start = text.rfind("\n", 0, position) + 1
+    end = text.find("\n", position)
+    return text[start : end if end >= 0 else len(text)]
+
+
 def _find(pattern: re.Pattern[str], text: str, category: BlindCategory) -> list[BlindSpan]:
     return [
         BlindSpan(m.start(), m.end(), category)
@@ -413,9 +434,9 @@ def detect(text: str, sources: BlindSources, config: BlindConfig) -> list[BlindS
             labelled_values.append((category, value))
     # Names: in full first, then each part of the name on its own.
     for name in sources.names:
-        found += _find(_word_re(name), text, BlindCategory.NAME)
+        found += _find(_name_re(name), text, BlindCategory.NAME)
         for part in _name_parts(name):
-            found += _find(_word_re(part), text, BlindCategory.NAME)
+            found += _find(_name_re(part), text, BlindCategory.NAME)
     # Contact details.
     found += _find(_EMAIL_RE, text, BlindCategory.CONTACT)
     found += _find(_URL_RE, text, BlindCategory.CONTACT)
@@ -437,7 +458,12 @@ def detect(text: str, sources: BlindSources, config: BlindConfig) -> list[BlindS
     found += _find(_MARITAL_RE, text, BlindCategory.MARITAL_STATUS)
     found += _find(_DEMONYM_RE, text, BlindCategory.NATIONALITY)
     for category, value in labelled_values:
-        found += _find(_word_re(value), text, category)
+        # The same word as a language ("Spanish (Native)") is a skill, not a nationality.
+        found += [
+            span
+            for span in _find(_word_re(value), text, category)
+            if not _LANGUAGE_LINE_RE.search(_line_of(text, span.start))
+        ]
     # The home address: an address line, and the line that names the home city.
     found += _find(_ADDRESS_START_RE, text, BlindCategory.ADDRESS)
     homes = {loc.casefold() for loc in sources.locations}
