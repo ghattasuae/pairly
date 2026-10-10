@@ -4,7 +4,7 @@
 
 import { Bell, BellRing, CheckCheck, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 
 import {
   DropdownMenu,
@@ -26,14 +26,16 @@ export function NotificationBell() {
   const t = useTranslations("Notifications");
   const format = useFormatter();
   const router = useRouter();
+  const locale = useLocale();
   const { items, unread, markRead, markAllRead, loaded } = useNotifications();
   const shown = items.slice(0, 8);
   const label = unread > 0 ? t("bellUnread", { count: unread }) : t("bell");
 
   const open = (id: string, link: string | null) => {
     void markRead(id);
-    const path = inAppPath(link);
-    // Paths from the API carry their own locale prefix: the plain Next router, not next-intl's.
+    // Links without a locale (`/hire/...`) get the current one; the result always
+    // carries its locale prefix, so the plain Next router, not next-intl's.
+    const path = inAppPath(link, locale);
     if (path) router.push(path);
   };
 

@@ -197,6 +197,24 @@ describe("links and tokens", () => {
     expect(inAppPath("/en/inbox?<script>")).not.toContain("<");
   });
 
+  it("puts the current locale in front of notification paths stored without one", () => {
+    expect(inAppPath("/hire/data-requests", "en")).toBe("/en/hire/data-requests");
+    expect(inAppPath("/hire/data-requests?request=abc-1", "ar")).toBe("/ar/hire/data-requests?request=abc-1");
+    // A path that has its locale keeps it.
+    expect(inAppPath("/ar/hire/data-requests", "en")).toBe("/ar/hire/data-requests");
+    // Without a locale to add, the old rule stands.
+    expect(inAppPath("/hire/data-requests")).toBeNull();
+    expect(inAppPath("/hire/data-requests", "xx")).toBeNull();
+    // Never for absolute or protocol-relative links, nor what the parser rewrites.
+    expect(inAppPath("https://evil.example/hire/data-requests", "en")).toBeNull();
+    expect(inAppPath("//evil.example/hire/data-requests", "en")).toBeNull();
+    expect(inAppPath("/\\evil.example/hire", "en")).toBeNull();
+    expect(inAppPath("javascript:alert(1)", "en")).toBeNull();
+    expect(inAppPath("hire/data-requests", "en")).toBeNull();
+    expect(inAppPath("/hire/../admin", "en")).toBeNull();
+    expect(inAppPath("/hire/<x>", "en")).toBeNull();
+  });
+
   it("reads approval link tokens from the fragment in both forms", () => {
     expect(TOKEN).toHaveLength(43);
     expect(readLinkToken(`#${TOKEN}`)).toBe(TOKEN);
