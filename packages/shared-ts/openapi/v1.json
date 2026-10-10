@@ -6028,6 +6028,14 @@
             ],
             "title": "Closed At"
           },
+          "co_recruiter_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Co Recruiter Ids",
+            "type": "array"
+          },
           "country": {
             "anyOf": [
               {
@@ -6088,6 +6096,18 @@
           "location": {
             "title": "Location",
             "type": "string"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
           },
           "published_at": {
             "anyOf": [
@@ -6221,6 +6241,8 @@
           "rubric_policy_id",
           "form_policy_id",
           "created_by",
+          "owner_id",
+          "co_recruiter_ids",
           "published_at",
           "closed_at",
           "created_at",
@@ -8783,6 +8805,30 @@
           "submitted_at"
         ],
         "title": "HireQueueItemOut",
+        "type": "object"
+      },
+      "HireRecruitersIn": {
+        "additionalProperties": false,
+        "properties": {
+          "co_recruiter_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Co Recruiter Ids",
+            "type": "array"
+          },
+          "owner_id": {
+            "format": "uuid",
+            "title": "Owner Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner_id"
+        ],
+        "title": "HireRecruitersIn",
         "type": "object"
       },
       "HireRediscoveryHit": {
@@ -17407,6 +17453,59 @@
           }
         },
         "summary": "Publish",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/recruiters": {
+      "put": {
+        "operationId": "put_recruiters_v1_hire_jobs__job_id__recruiters_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireRecruitersIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Recruiters",
         "tags": [
           "hire"
         ]

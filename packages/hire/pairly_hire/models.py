@@ -53,7 +53,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pairly_core.crypto.types import EncryptedJSON, EncryptedString, Sealed
@@ -159,6 +159,7 @@ class HireJob(Base, OrgScoped):
             "status <> 'open' OR (rubric_policy_id IS NOT NULL AND form_policy_id IS NOT NULL)",
             name="open_needs_rubric_and_form",
         ),
+        CheckConstraint("cardinality(co_recruiter_ids) <= 10", name="co_recruiters_limit"),
         Index("ix_hire_jobs_status", "org_id", "status", "published_at"),
     )
 
@@ -192,6 +193,14 @@ class HireJob(Base, OrgScoped):
     # The person who created the job (NULL for jobs a demo seed created).
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    # The owner recruiter (defaults to the creator) and optional co-recruiters: the
+    # people told about candidate replies, uploads and SLA alerts (hire_0006).
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    co_recruiter_ids: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(Uuid), nullable=False, default=list, server_default=text("'{}'::uuid[]")
     )
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -1072,6 +1072,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/jobs/{job_id}/recruiters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Recruiters */
+        put: operations["put_recruiters_v1_hire_jobs__job_id__recruiters_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/jobs/{job_id}/rubric": {
         parameters: {
             query?: never;
@@ -5205,6 +5222,8 @@ export type components = {
         HireJobOut: {
             /** Closed At */
             closed_at: string | null;
+            /** Co Recruiter Ids */
+            co_recruiter_ids: string[];
             /** Country */
             country: string | null;
             /**
@@ -5229,6 +5248,8 @@ export type components = {
             id: string;
             /** Location */
             location: string;
+            /** Owner Id */
+            owner_id: string | null;
             /** Published At */
             published_at: string | null;
             /** Rubric Policy Id */
@@ -6116,6 +6137,16 @@ export type components = {
             submitted_at: string | null;
             /** Tags */
             tags: string[];
+        };
+        /** HireRecruitersIn */
+        HireRecruitersIn: {
+            /** Co Recruiter Ids */
+            co_recruiter_ids?: string[];
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
         };
         /** HireRediscoveryHit */
         HireRediscoveryHit: {
@@ -10046,6 +10077,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_recruiters_v1_hire_jobs__job_id__recruiters_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireRecruitersIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

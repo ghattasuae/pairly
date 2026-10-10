@@ -81,6 +81,7 @@ from pairly_hire.portal.models import (
 )
 from pairly_hire.portal.status import MoveFact, Timeline, timeline
 from pairly_hire.portal.templates import WITHDRAWN
+from pairly_hire.recruiters import job_recruiters
 from pairly_hire.rubric import POLICY_KIND as RUBRIC_POLICY_KIND
 from pairly_hire.rubric import SCALE_MAX, Rubric, parse_rubric
 from pairly_hire.sealing import read_sealed
@@ -153,7 +154,9 @@ async def _tell_recruiters(
     also: uuid.UUID | None = None,
 ) -> None:
     job = await session.scalar(select(HireJob).where(HireJob.id == app.job_id))
-    recruiters = {u for u in (job.created_by if job else None, also) if u is not None}
+    recruiters = job_recruiters(job) if job is not None else set()
+    if also is not None:
+        recruiters.add(also)
     if not recruiters or job is None:
         return
     await notices.notify_recruiters(

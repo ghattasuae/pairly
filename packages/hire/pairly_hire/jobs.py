@@ -119,6 +119,7 @@ async def create_job(session: AsyncSession, actor: Actor, values: dict[str, Any]
         slug=await unique_slug(session, str(values["title"])),
         status=JobStatus.DRAFT.value,
         created_by=actor.id,
+        owner_id=actor.id,
         **{k: values[k] for k in EDITABLE if k in values},
     )
     session.add(job)

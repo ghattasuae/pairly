@@ -113,6 +113,58 @@ async def test_job_crud_with_permissions_and_audit(
     assert actions.count("hire.job.updated") == 1
 
 
+async def test_recruiter_assignment(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = hire_api
+    created = await api.call("POST", "/v1/hire/jobs", world, "manager", json=JOB)
+    job = created.json()
+    manager = world.people["manager"][0]
+    recruiter = world.people["recruiter"][0]
+    employee = world.people["employee"][0]
+    # The creator owns the job by default.
+    assert job["owner_id"] == str(manager)
+    assert job["co_recruiter_ids"] == []
+    path = f"/v1/hire/jobs/{job['id']}/recruiters"
+    body = {"owner_id": str(recruiter), "co_recruiter_ids": [str(manager)]}
+
+    for name in ("employee", "interviewer", "auditor"):
+        refused = await api.call("PUT", path, world, name, json=body)
+        assert refused.status_code == 403, name
+    # Only members who can read candidates may be assigned.
+    outsider = await api.call(
+        "PUT", path, world, "recruiter", json=body | {"co_recruiter_ids": [str(employee)]}
+    )
+    assert outsider.status_code == 400
+    stranger = await api.call(
+        "PUT", path, world, "recruiter", json=body | {"owner_id": str(uuid.uuid4())}
+    )
+    assert stranger.status_code == 400
+
+    assigned = await api.call(
+        "PUT",
+        path,
+        world,
+        "recruiter",
+        json=body | {"co_recruiter_ids": [str(manager), str(recruiter)]},
+    )
+    assert assigned.status_code == 200, assigned.text
+    # The owner is never listed again as a co-recruiter.
+    assert assigned.json()["owner_id"] == str(recruiter)
+    assert assigned.json()["co_recruiter_ids"] == [str(manager)]
+    fetched = await api.call("GET", f"/v1/hire/jobs/{job['id']}", world, "interviewer")
+    assert fetched.json()["owner_id"] == str(recruiter)
+
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT payload FROM audit_events WHERE action = 'hire.job.recruiters_assigned'",
+    )
+    assert len(rows) == 1
+    assert rows[0].payload["before"]["owner_id"] == str(manager)
+    assert rows[0].payload["co_recruiter_ids"] == [str(manager)]
+
+
 async def test_publish_needs_a_locked_rubric_and_a_second_factor(
     hire_api: HireApi, world: HireWorld
 ) -> None:

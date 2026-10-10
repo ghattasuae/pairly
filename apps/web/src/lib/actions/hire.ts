@@ -21,6 +21,7 @@ import type {
   HireBulkMessageSummary,
   HireBulkResult,
   HireBulkSummary,
+  HireJob,
   HireMessage,
   HireMove,
   HireProfile,
@@ -190,6 +191,25 @@ export async function setTags(applicationId: string, tags: string[]): Promise<Ac
 export async function loadTeam(): Promise<ActionResult<{ team: HireTeamMember[] }>> {
   const result = await callApi((api) => api.GET("/v1/hire/pipeline/team"));
   return toAction(result, (team) => ({ team }));
+}
+
+// ------------------------------------------------------------------ recruiters
+
+/** The job's owner recruiter and co-recruiters (told about replies, uploads, SLA alerts). */
+export async function setRecruiters(input: {
+  jobId: string;
+  ownerId: string;
+  coRecruiterIds: string[];
+}): Promise<ActionResult<{ job: HireJob }>> {
+  const parsed = z.object({ jobId: uuid, ownerId: uuid, coRecruiterIds: z.array(uuid).max(10) }).safeParse(input);
+  if (!parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.PUT("/v1/hire/jobs/{job_id}/recruiters", {
+      params: { path: { job_id: parsed.data.jobId } },
+      body: { owner_id: parsed.data.ownerId, co_recruiter_ids: parsed.data.coRecruiterIds },
+    }),
+  );
+  return toAction(result, (job) => ({ job }));
 }
 
 // ------------------------------------------------------------------ messages

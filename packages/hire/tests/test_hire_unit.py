@@ -297,3 +297,18 @@ def test_demo_text_has_no_em_dash_and_passes_its_own_checks() -> None:
         assert checks.inclusive_en == []
         assert checks.inclusive_ar == []
         assert checks.sanity_en == []
+
+
+def test_job_recruiters_are_the_owner_and_the_co_recruiters() -> None:
+    from pairly_hire.models import HireJob
+    from pairly_hire.recruiters import job_recruiters, owner_of
+
+    creator, owner, co = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    seeded = HireJob(created_by=None, owner_id=None, co_recruiter_ids=[])
+    assert job_recruiters(seeded) == set()
+    legacy = HireJob(created_by=creator, owner_id=None, co_recruiter_ids=[])
+    assert owner_of(legacy) == creator
+    assert job_recruiters(legacy) == {creator}
+    assigned = HireJob(created_by=creator, owner_id=owner, co_recruiter_ids=[co])
+    # The creator stops hearing about the job once someone else owns it.
+    assert job_recruiters(assigned) == {owner, co}

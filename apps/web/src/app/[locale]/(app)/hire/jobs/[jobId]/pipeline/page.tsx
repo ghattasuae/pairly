@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { JobRecruiters } from "@/components/hire/job-recruiters";
 import { PipelineBoard } from "@/components/hire/pipeline-board";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { Unavailable } from "@/components/states/unavailable";
@@ -54,7 +55,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
   const permissions = viewer.me.permissions;
   if (!permissions.includes("hire.candidate.read")) notFound();
   const state = parseBoardState(query);
-  const [board, profile, templates, team] = await Promise.all([
+  const [board, profile, templates, team, job] = await Promise.all([
     callApi((api) => api.GET("/v1/hire/jobs/{job_id}/pipeline", { params: { path: { job_id: jobId } } })),
     state.candidate
       ? callApi((api) =>
@@ -65,6 +66,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
       : Promise.resolve(null),
     callApi((api) => api.GET("/v1/hire/messages/templates", { params: { query: { locale } } })),
     callApi((api) => api.GET("/v1/hire/pipeline/team")),
+    callApi((api) => api.GET("/v1/hire/jobs/{job_id}", { params: { path: { job_id: jobId } } })),
   ]);
   if (!board.ok) {
     if (board.code === "not_found") notFound();
@@ -75,17 +77,28 @@ export default async function PipelinePage({ params, searchParams }: Props) {
     );
   }
   return (
-    <PipelineBoard
-      board={board.data}
-      initialState={state}
-      initialProfile={profile?.ok ? profile.data : null}
-      templates={templates.ok ? templates.data : []}
-      team={team.ok ? team.data : []}
-      canMove={permissions.includes("hire.candidate.decide")}
-      canNote={permissions.includes("hire.note.write")}
-      canMessage={permissions.includes("hire.message.create")}
-      canSchedule={permissions.includes("hire.interview.schedule")}
-      totpEnabled={twoFactorEnabled(session)}
-    />
+    <>
+      {job.ok && (
+        <div className="mx-auto w-full max-w-7xl px-5 pt-4 sm:px-8">
+          <JobRecruiters
+            job={job.data}
+            team={team.ok ? team.data : []}
+            canEdit={permissions.includes("hire.job.write")}
+          />
+        </div>
+      )}
+      <PipelineBoard
+        board={board.data}
+        initialState={state}
+        initialProfile={profile?.ok ? profile.data : null}
+        templates={templates.ok ? templates.data : []}
+        team={team.ok ? team.data : []}
+        canMove={permissions.includes("hire.candidate.decide")}
+        canNote={permissions.includes("hire.note.write")}
+        canMessage={permissions.includes("hire.message.create")}
+        canSchedule={permissions.includes("hire.interview.schedule")}
+        totpEnabled={twoFactorEnabled(session)}
+      />
+    </>
   );
 }

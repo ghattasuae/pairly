@@ -1433,6 +1433,17 @@
       "open": "Open",
       "paused": "Paused",
       "closed": "Closed"
+    },
+    "recruiters": {
+      "title": "Recruiters",
+      "owner": "Owner recruiter",
+      "co": "Co-recruiters",
+      "help": "The owner and co-recruiters hear about candidate replies, uploads and candidates waiting too long.",
+      "save": "Save recruiters",
+      "saved": "Recruiters saved.",
+      "none": "Nobody yet",
+      "unknown": "Someone outside the team",
+      "summary": "Owner: {owner}. Co-recruiters: {count}."
     }
   },
   "CandidatePrefs": {

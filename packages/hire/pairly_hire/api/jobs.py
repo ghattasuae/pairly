@@ -21,6 +21,8 @@ All under ``/v1/hire/jobs`` with a signed-in person or key (``CurrentActor``):
 * ``PUT /jobs/{id}/rubric`` (``hire.rubric.write``): a person's edited draft.
 * ``POST /jobs/{id}/rubric/lock`` (``hire.rubric.lock``, second factor).
 * ``GET`` and ``PUT /jobs/{id}/form`` (read: ``hire.job.read``; save: ``hire.job.write``).
+* ``PUT /jobs/{id}/recruiters`` (``hire.job.write``): the owner recruiter and up to ten
+  co-recruiters, the people told about candidate replies, uploads and SLA alerts.
 
 Writes are people only (an API key or agent may read) and audited in the request's
 transaction. Model failures answer 503 and nothing changes.
@@ -38,7 +40,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 from sqlalchemy import select
 
 from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
-from pairly_core.identity import CurrentActor, OrgSession
+from pairly_core.identity import Context, CurrentActor, OrgSession
 from pairly_core.llm.errors import ModelUnavailable
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_hire.api.common import model_router
@@ -66,6 +68,7 @@ from pairly_hire.permissions import (
     RUBRIC_WRITE,
     SEES_DRAFTS,
 )
+from pairly_hire.recruiters import MAX_CO_RECRUITERS, assign_recruiters
 from pairly_hire.rubric import Rubric, parse_rubric
 from pairly_hire.rubrics import (
     get_draft,
@@ -144,6 +147,8 @@ class HireJobOut(BaseModel):
     rubric_policy_id: uuid.UUID | None
     form_policy_id: uuid.UUID | None
     created_by: uuid.UUID | None
+    owner_id: uuid.UUID | None
+    co_recruiter_ids: list[uuid.UUID]
     published_at: datetime | None
     closed_at: datetime | None
     created_at: datetime
@@ -152,6 +157,13 @@ class HireJobOut(BaseModel):
     @classmethod
     def of(cls, job: HireJob) -> HireJobOut:
         return cls.model_validate(job, from_attributes=True)
+
+
+class HireRecruitersIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    owner_id: uuid.UUID
+    co_recruiter_ids: list[uuid.UUID] = Field(default_factory=list, max_length=MAX_CO_RECRUITERS)
 
 
 class HireJobList(BaseModel):
@@ -373,6 +385,28 @@ async def patch(
             raise BadRequestError(f"{key.replace('_', ' ')} cannot be empty")
     job = await get_job(session, job_id, lock=True)
     return HireJobOut.of(await update_job(session, actor, job, changes))
+
+
+@router.put("/{job_id}/recruiters", response_model=HireJobOut)
+async def put_recruiters(
+    job_id: uuid.UUID,
+    body: HireRecruitersIn,
+    actor: CurrentActor,
+    session: OrgSession,
+    ctx: Context,
+) -> HireJobOut:
+    authorize(actor, JOB_WRITE)
+    _person(actor, "assign recruiters")
+    job = await get_job(session, job_id, lock=True)
+    job = await assign_recruiters(
+        session,
+        actor,
+        ctx.registry,
+        job,
+        owner_id=body.owner_id,
+        co_recruiter_ids=body.co_recruiter_ids,
+    )
+    return HireJobOut.of(job)
 
 
 @router.get("/{job_id}/checks", response_model=HireTextChecks)

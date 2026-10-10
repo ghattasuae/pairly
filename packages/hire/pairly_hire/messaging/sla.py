@@ -58,6 +58,7 @@ from pairly_hire.pipeline.records import AppRecord, ensure_entry
 from pairly_hire.pipeline.rediscovery import org_ids
 from pairly_hire.pipeline.stages import stages_for_jobs
 from pairly_hire.pipeline.views import OPEN_MESSAGE, days_between
+from pairly_hire.recruiters import job_recruiters
 
 log = structlog.get_logger("pairly_hire.sla")
 
@@ -150,9 +151,7 @@ async def waiting(
 async def _recipients(
     session: AsyncSession, registry: RoleRegistry, job: HireJob
 ) -> list[uuid.UUID]:
-    people: set[uuid.UUID] = set()
-    if job.created_by is not None:
-        people.add(job.created_by)
+    people = job_recruiters(job)
     if not people:
         people = await role_members(session, ["recruiter"], WORKFLOW)
     perms = await member_permissions(session, registry, people)
