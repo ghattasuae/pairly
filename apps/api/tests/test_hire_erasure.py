@@ -34,7 +34,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_core.audit import AuditRecord, verify_records
 from pairly_core.crypto.envelope import Aad
-from pairly_core.crypto.types import Sealed, encrypted_columns, seal
+from pairly_core.crypto.types import Sealed, encrypted_columns
+from pairly_core.crypto.types import seal as _seal
 from pairly_core.db import Base, create_sessionmaker, set_tenant
 from pairly_core.decisions.models import Appeal, DecisionRecord
 from pairly_core.decisions.service import verify_record
@@ -60,6 +61,13 @@ from .test_hire_screening import Screen, ScreenFactory, screen_factory, spec, wo
 __all__ = ["screen_factory", "world"]  # fixtures
 
 CANDIDATE = "cv-0026"
+
+
+def seal(model: Any, column: str, value: Any, *, org_id: uuid.UUID, row_id: object) -> Any:
+    """A value for an encrypted column (typed ``Any``: the column expects ``Sealed``)."""
+    return _seal(model, column, value, org_id=org_id, row_id=row_id)
+
+
 OTHER = "cv-0029"
 
 
@@ -127,7 +135,8 @@ async def _haystack(
             for row_id, sealed in rows.all():
                 assert isinstance(sealed, Sealed)
                 aad = Aad.for_row(org_id, table.name, enc.column, row_id)
-                value = col.type.decode(sealed.open_bytes(aad))
+                decoder: Any = col.type
+                value = decoder.decode(sealed.open_bytes(aad))
                 out += [(f"{table.name}.{enc.column} (decrypted)", t) for t in _texts(value)]
     for key, obj in store.objects.items():
         if f"orgs/{org_id}/" in key:

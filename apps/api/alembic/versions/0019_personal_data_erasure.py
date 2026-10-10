@@ -38,6 +38,7 @@ Create Date: 2026-10-10
 """
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -54,7 +55,7 @@ _NEW_STATUSES = f"{_OLD_STATUSES}, 'erased'"
 ERASED_TEXT = "[erased]"
 
 
-def _ts(name: str) -> sa.Column[sa.DateTime]:
+def _ts(name: str) -> sa.Column[Any]:
     return sa.Column(name, sa.DateTime(timezone=True), nullable=True)
 
 

@@ -28,6 +28,7 @@ const OPEN: HireDataRequest = {
   created_at: "2026-09-01T08:00:00Z",
   due_at: "2026-10-01T08:00:00Z",
   handled_at: null,
+  erasure_pending: false,
 };
 
 describe("DataRequests", () => {
