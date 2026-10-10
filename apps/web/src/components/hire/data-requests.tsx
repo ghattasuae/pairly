@@ -18,7 +18,9 @@ import type { HireDataRequest } from "@/lib/hire/types";
  * deadline of each. Opening one shows the candidate's note and what the admin can do:
  * record it as completed or declined, or (deletion only) erase the candidate's personal
  * data by hand, with a written reason and a confirmation. Nothing is ever erased on its
- * own; the API requires a second factor and audits every step.
+ * own; the API requires a second factor and audits every step. An erasure whose stored
+ * files are not deleted yet keeps the request open: the page says so, shows the last
+ * error and offers to retry (the API retries on its own too).
  */
 export function DataRequests({
   requests,
@@ -68,12 +70,12 @@ export function DataRequests({
     if (fresh?.ok) replace(fresh.request);
   };
 
-  const done = (result: Awaited<ReturnType<typeof resolve>>, ok: string) => {
+  const done = (result: Awaited<ReturnType<typeof resolve>>, ok: string | ((r: HireDataRequest) => string)) => {
     setBusy(false);
     setConfirming(false);
     if (result.ok) {
       replace(result.request);
-      setMessage(ok);
+      setMessage(typeof ok === "string" ? ok : ok(result.request));
     } else {
       setMessage(tErr(errorKey(result.code) as "generic"));
     }
@@ -85,10 +87,19 @@ export function DataRequests({
     done(await resolve({ id: current.id, status, outcome: text }), t("recorded"));
   };
 
+  const erasedMessage = (r: HireDataRequest) => (r.status === "completed" ? t("erased") : t("erasing"));
+
   const eraseNow = async () => {
     if (!current) return;
     setBusy(true);
-    done(await erase({ id: current.id, reason }), t("erased"));
+    done(await erase({ id: current.id, reason }), erasedMessage);
+  };
+
+  // A retry reuses the reason the admin wrote when they started the erasure.
+  const retry = async () => {
+    if (!current) return;
+    setBusy(true);
+    done(await erase({ id: current.id, reason: current.outcome ?? reason }), erasedMessage);
   };
 
   if (rows.length === 0) {
@@ -112,6 +123,7 @@ export function DataRequests({
                   {t(`status.${r.status === "open" || r.status === "completed" ? r.status : "declined"}`)}
                 </Badge>
                 {overdue(r) && <Badge className="text-destructive">{t("overdue")}</Badge>}
+                {r.erasure_pending && <Badge variant="outline">{t("pendingTitle")}</Badge>}
               </span>
               <span className="text-muted-foreground">
                 {r.status === "open" ? t("due", { date: day(r.due_at) }) : t("handled", { date: day(r.handled_at ?? r.created_at) })}
@@ -149,7 +161,22 @@ export function DataRequests({
             )}
           </dl>
 
-          {current.status === "open" && (
+          {current.status === "open" && current.erasure_pending && (
+            <div className="space-y-2 rounded-md border border-destructive/40 p-3" role="alert">
+              <p className="font-medium">{t("pendingTitle")}</p>
+              <p className="text-xs text-muted-foreground">{t("pendingHelp")}</p>
+              {current.erasure_error && (
+                <p className="text-xs text-destructive" dir="ltr">
+                  {t("pendingError", { error: current.erasure_error })}
+                </p>
+              )}
+              <Button size="sm" variant="destructive" disabled={busy} onClick={() => void retry()}>
+                {t("retry")}
+              </Button>
+            </div>
+          )}
+
+          {current.status === "open" && !current.erasure_pending && (
             <div className="space-y-5">
               <label className="block space-y-1">
                 <span className="block font-medium">{t("recordLabel")}</span>

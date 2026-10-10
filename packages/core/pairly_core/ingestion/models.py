@@ -62,6 +62,10 @@ class DocumentStatus(StrEnum):
     REJECTED = "rejected"
     PARSED = "parsed"
     PARSE_FAILED = "parse_failed"
+    # The person's data was erased (``erased_at``); the bytes are removed from the object
+    # store after the erasure commits (``objects_erased_at``). Only the hash, size and
+    # timestamps stay, for the audit trail.
+    ERASED = "erased"
 
 
 class DocumentSource(StrEnum):
@@ -188,6 +192,11 @@ class Document(Base, OrgScoped, Timestamped):
     parse_result_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     parse_warnings: Mapped[list[str]] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
+    # Erasure of the person's data (migration 0019).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    objects_erased_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()

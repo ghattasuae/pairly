@@ -77,4 +77,48 @@ describe("DataRequests", () => {
     expect(await screen.findByText("Personal data erased. The request is completed.")).toBeInTheDocument();
     expect(resolve).not.toHaveBeenCalled();
   });
+
+  it("keeps an erasure whose files remain open, shows the error and retries with the same reason", async () => {
+    const user = userEvent.setup();
+    const pending: HireDataRequest = {
+      ...OPEN,
+      candidate_name: "Erased candidate",
+      candidate_email: "erased@erased.invalid",
+      note: null,
+      outcome: "Asked by email to delete everything.",
+      erasure_pending: true,
+      erasure_error: "object_store_delete_failed",
+    };
+    const load = vi.fn().mockResolvedValue({ ok: true, request: pending });
+    const completed: HireDataRequest = {
+      ...pending,
+      status: "completed",
+      erasure_pending: false,
+      erasure_error: null,
+      handled_at: "2026-10-10T08:05:00Z",
+    };
+    const erase = vi.fn().mockResolvedValue({ ok: true, request: completed });
+    renderWithIntl(
+      <DataRequests
+        requests={[pending]}
+        initialId={pending.id}
+        load={load}
+        resolve={vi.fn()}
+        erase={erase}
+        now={new Date("2026-09-10T00:00:00Z")}
+      />,
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(within(alert).getByText("Erasure in progress")).toBeInTheDocument();
+    expect(within(alert).getByText("Last attempt: object_store_delete_failed")).toBeInTheDocument();
+    // Only the erasure can complete it: no "mark completed" while files remain.
+    expect(screen.queryByRole("button", { name: "Mark completed" })).not.toBeInTheDocument();
+
+    await user.click(within(alert).getByRole("button", { name: "Retry now" }));
+    await waitFor(() =>
+      expect(erase).toHaveBeenCalledWith({ id: pending.id, reason: "Asked by email to delete everything." }),
+    );
+    expect(await screen.findByText("Personal data erased. The request is completed.")).toBeInTheDocument();
+  });
 });

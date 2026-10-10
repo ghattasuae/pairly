@@ -16,8 +16,11 @@
 * ``GET  /v1/hire/data-requests/{id}`` (``hire.settings.manage``): one request.
 * ``POST /v1/hire/data-requests/{id}/erase`` (``hire.settings.manage``, second factor,
   people only): ``{"reason"}``. The admin's manual erasure of the candidate's personal
-  data for an open deletion request (``pairly_hire.erasure``); completes the request with
-  the reason as its outcome. Audited. Never automatic.
+  data for an open deletion request (``pairly_hire.erasure``): the database part commits
+  first, then the stored files are deleted and the request completes with the reason as
+  its outcome. When the files cannot be deleted yet, the request stays open with
+  ``erasure_pending`` and ``erasure_error`` (the ``hire_erasure_objects`` job retries;
+  asking again retries now). Audited. Never automatic.
 
 Every data request carries ``due_at``, its deadline (``portal.notices.SLA_DAYS``).
 """
@@ -32,13 +35,14 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, StringConstraints
 from sqlalchemy import case, select
 
-from pairly_core.audit import audit_actor_action
+from pairly_core.audit import ActorType, audit_actor_action
 from pairly_core.crypto.types import seal, unseal
 from pairly_core.errors import ConflictError, ForbiddenError, NotFoundError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_hire.api.common import web_url
-from pairly_hire.erasure import erase_for_request
+from pairly_hire.erasure import erase_for_request, finish_erasure
 from pairly_hire.models import HireCandidate
 from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_CREATE, SETTINGS_MANAGE
 from pairly_hire.pipeline.records import hidden_identities, load_record, organisation_name
@@ -91,6 +95,9 @@ class HireDataRequestOut(BaseModel):
     created_at: datetime
     due_at: datetime
     handled_at: datetime | None
+    # Erasure started and the stored files are not all removed yet (request still open).
+    erasure_pending: bool = False
+    erasure_error: str | None = None
 
 
 class HireDataRequestEraseIn(BaseModel):
@@ -206,6 +213,9 @@ def _data_out(row: HireDataRequest, candidate: HireCandidate | None) -> HireData
         created_at=row.created_at,
         due_at=row.created_at + timedelta(days=SLA_DAYS.get(row.kind, 30)),
         handled_at=row.handled_at,
+        erasure_pending=row.erasure_started_at is not None
+        and row.status == DataRequestStatus.OPEN.value,
+        erasure_error=row.erasure_error,
     )
 
 
@@ -255,6 +265,9 @@ async def resolve_data_request(
         raise NotFoundError("request not found")
     if row.status != DataRequestStatus.OPEN.value:
         raise ConflictError("this request was already resolved")
+    if row.erasure_started_at is not None:
+        # Only the erasure completes it, once the stored files are gone (fail closed).
+        raise ConflictError("this request is being erased")
     row.status = body.status
     row.handled_by = actor.id
     row.handled_at = datetime.now(UTC)
@@ -305,10 +318,19 @@ async def get_data_request(
 async def erase_data_request(
     request_id: uuid.UUID,
     body: HireDataRequestEraseIn,
+    request: Request,
     actor: CurrentActor,
     session: OrgSession,
 ) -> HireDataRequestOut:
     authorize(actor, SETTINGS_MANAGE)
     _person(actor)
-    row, candidate, _ = await erase_for_request(session, actor, request_id, reason=body.reason)
+    _, candidate, _ = await erase_for_request(session, actor, request_id, reason=body.reason)
+    # The rows are erased for good before any file is deleted: a failure from here on
+    # leaves the request open with its error, never a file without its erasure.
+    await session.commit()
+    runtime = getattr(request.app.state, "workflow_runtime", None)
+    store = runtime.services.store if isinstance(runtime, WorkflowRuntime) else None
+    row = await finish_erasure(
+        session, store, request_id, actor_type=ActorType.USER, actor_id=str(actor.id)
+    )
     return _data_out(row, candidate)

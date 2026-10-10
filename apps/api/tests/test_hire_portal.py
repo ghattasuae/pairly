@@ -780,14 +780,21 @@ async def test_admin_erases_a_candidate_only_by_hand_with_a_reason(
     others = await api.call("GET", f"/v1/hire/applications?job_id={job['id']}", world, "admin")
     assert len(others.json()["items"]) == 2
     assert other_email
-    actions = await owner_rows(
+    started = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT payload FROM audit_events WHERE action = 'hire.data_request.erasure_started'",
+    )
+    (audit,) = started
+    assert audit.payload["applications"] == 1
+    assert reason["reason"] not in str(audit.payload)
+    (completed,) = await owner_rows(
         owner_engine,
         world.org_id,
         "SELECT payload FROM audit_events WHERE action = 'hire.data_request.erased'",
     )
-    (audit,) = actions
-    assert audit.payload["applications_cleared"] == 1
-    assert reason["reason"] not in str(audit.payload)
+    assert completed.payload["documents_removed"] == 1
+    assert reason["reason"] not in str(completed.payload)
 
 
 async def test_portal_shows_upcoming_interviews_with_their_links(

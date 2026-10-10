@@ -1978,11 +1978,16 @@
     "markDeclined": "Decline",
     "recorded": "Request updated.",
     "eraseTitle": "Erase this candidate's personal data",
-    "eraseHelp": "Clears their name, contact details and application answers, and closes the request. It needs a two-factor sign-in, it is recorded in the audit log, and it cannot be undone.",
+    "eraseHelp": "Erases everything about them: name, contact details, answers, files, messages, notes, interview details and the personal part of decision records. Only ids, hashes, dates and outcomes stay for the audit trail. The request closes once their files are deleted. It needs a two-factor sign-in, it is recorded in the audit log, and it cannot be undone.",
     "reasonLabel": "Reason (required)",
     "erase": "Erase personal data",
     "confirmTitle": "Erase this candidate's personal data?",
-    "confirmBody": "This cannot be undone. Their name, contact details and application answers will be cleared.",
-    "erased": "Personal data erased. The request is completed."
+    "confirmBody": "This cannot be undone. All of their personal data and files will be erased.",
+    "erased": "Personal data erased. The request is completed.",
+    "erasing": "Personal data erased. Their files are not deleted yet, so the request stays open.",
+    "pendingTitle": "Erasure in progress",
+    "pendingHelp": "Their personal data is erased. The request completes once their stored files are deleted; Pairly retries every few minutes, or erase again to retry now.",
+    "pendingError": "Last attempt: {error}",
+    "retry": "Retry now"
   }
 }

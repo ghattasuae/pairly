@@ -28,6 +28,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     Uuid,
@@ -131,6 +132,12 @@ class HireDataRequest(Base, OrgScoped):
         CheckConstraint(f"status IN ({_in(DataRequestStatus)})", name="status_valid"),
         CheckConstraint("(status = 'open') = (handled_at IS NULL)", name="handled_when_closed"),
         Index("ix_hire_data_requests_status", "org_id", "status", "created_at"),
+        Index(
+            "ix_hire_data_requests_erasure_pending",
+            "org_id",
+            "erasure_started_at",
+            postgresql_where=text("status = 'open' AND erasure_started_at IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -148,6 +155,16 @@ class HireDataRequest(Base, OrgScoped):
     handled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # What the admin did and why, encrypted.
     outcome: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    # Erasure (``pairly_hire.erasure``): the database part committed at
+    # ``erasure_started_at``; the request completes once the stored files are gone.
+    # ``erasure_error`` says why they are not yet (shown to the admin; retried).
+    erasure_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    erasure_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    erasure_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
 
 class HireDocumentRequest(Base, OrgScoped):

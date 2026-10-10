@@ -349,6 +349,7 @@ async def guardrails(state: ScreeningState, runtime: Ctx) -> Command[Any]:
         classifier.update(
             ran=True,
             calls=outcome.calls,
+            call_ids=list(outcome.call_ids),
             cost_micros=outcome.cost_micros,
             spans_returned=outcome.spans_returned,
             spans_invalid=outcome.spans_invalid,

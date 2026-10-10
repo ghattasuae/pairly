@@ -90,6 +90,9 @@ class ModelCall(Base, OrgScoped):
     entity_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     entity_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     request_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Set when the person's data was erased: ``request`` then holds ``{"erased": true}``
+    # and ``response`` is NULL; hashes, tokens and cost stay (migration 0019).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class LLMBudgetReservation(Base, OrgScoped):

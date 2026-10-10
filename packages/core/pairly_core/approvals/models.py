@@ -145,6 +145,9 @@ class Approval(Base, OrgScoped):
     )
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Set when the subject's data was erased: ``context`` and ``payload`` then hold
+    # ``{"erased": true}`` (migration 0019).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class ApprovalStep(Base, OrgScoped):

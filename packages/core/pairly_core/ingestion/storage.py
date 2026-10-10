@@ -100,6 +100,11 @@ class ObjectStore(Protocol):
 
     async def get_bytes(self, key: str, *, max_bytes: int) -> bytes: ...
 
+    async def delete(self, key: str) -> None:
+        """Remove the object. Removing a missing object succeeds (idempotent), so a
+        retried erasure never fails on what an earlier attempt already removed."""
+        ...
+
     def presigned_get_url(
         self, key: str, *, expires_in: int, filename: str | None, content_type: str
     ) -> str:
@@ -150,6 +155,9 @@ class InMemoryObjectStore:
         if len(obj.data) > max_bytes:
             raise StorageError("object larger than allowed")
         return obj.data
+
+    async def delete(self, key: str) -> None:
+        self.objects.pop(check_key(key), None)
 
     def presigned_get_url(
         self, key: str, *, expires_in: int, filename: str | None, content_type: str
@@ -312,6 +320,12 @@ class S3ObjectStore:
         if not isinstance(data, bytes) or len(data) > max_bytes:
             raise StorageError("object larger than allowed")
         return data
+
+    async def delete(self, key: str) -> None:
+        check_key(key)
+        # S3 answers 204 for a missing key too; a versioned bucket keeps a delete marker
+        # (operators must not enable versioning without a lifecycle rule for erasure).
+        await self._call("delete_object", Key=key)
 
     def presigned_get_url(
         self, key: str, *, expires_in: int, filename: str | None, content_type: str

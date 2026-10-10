@@ -186,6 +186,19 @@ class FilesystemObjectStore:
         await asyncio.to_thread(path.write_bytes, data)
         return len(data)
 
+    def _delete_sync(self, key: str) -> None:
+        path = self._path(key)
+        path.unlink(missing_ok=True)
+        self._meta_path(path).unlink(missing_ok=True)
+
+    async def delete(self, key: str) -> None:
+        try:
+            await asyncio.to_thread(self._delete_sync, key)
+        except ValueError:
+            raise
+        except OSError as exc:
+            raise StorageError(f"object store delete failed: {type(exc).__name__}") from exc
+
     async def read_object(self, key: str, *, max_bytes: int) -> tuple[bytes, str]:
         """Verified bytes and the stored media type (for the development route)."""
         return await asyncio.to_thread(self._read_sync, key, max_bytes)

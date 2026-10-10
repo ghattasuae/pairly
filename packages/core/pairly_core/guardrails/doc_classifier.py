@@ -243,6 +243,8 @@ class DocumentClassification:
     spans_invalid: int = 0
     added: list[str] = field(default_factory=list)
     error: str | None = None
+    # Ids of the model calls made (they hold the document text: erasure finds them here).
+    call_ids: list[str] = field(default_factory=list)
 
 
 def _locate(text: str, span: FlaggedSpan, by_id: dict[str, Segment]) -> tuple[int, int] | None:
@@ -315,6 +317,8 @@ async def classify_document(
             log.warning("guardrails.doc_classifier_failed", error=outcome.error)
             break
         outcome.calls += 1
+        if call.call_id:
+            outcome.call_ids.append(call.call_id)
         outcome.cost_micros += call.cost_micros
         outcome.spans_returned += len(call.spans)
         allowed = {s.id for s in group}

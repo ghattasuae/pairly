@@ -169,6 +169,8 @@ class Notification(Base, OrgScoped):
     )
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Set when the recipient's or the subject's data was erased (``content`` NULL).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class NotificationPreference(Base, OrgScoped):

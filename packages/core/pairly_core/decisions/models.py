@@ -185,6 +185,11 @@ class DecisionRecord(Base, OrgScoped):
     )
     # Personal data: field snapshot, facts, quote text, the human reason. Encrypted.
     sensitive: Mapped[Sealed | None] = mapped_column(EncryptedJSON(), nullable=True)
+    # Set when the person's data was erased: ``sensitive`` is NULL from then on, the
+    # content hash and the audit chain stay (``verify_record`` answers ``erased``).
+    sensitive_erased_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     final_action: Mapped[str | None] = mapped_column(String(64), nullable=True)
     actor_type: Mapped[str] = mapped_column(String(16), nullable=False)
     actor_id: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -276,6 +281,10 @@ class Appeal(Base, OrgScoped):
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
     )
     reason: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    # Set when the requester's data was erased (the reason then reads ``[erased]``).
+    reason_erased_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     outcome: Mapped[str | None] = mapped_column(String(24), nullable=True)
     outcome_text: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)

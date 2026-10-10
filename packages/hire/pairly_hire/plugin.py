@@ -22,7 +22,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``scheduled_jobs``  ``hire_screening_start``: starts the screening of submitted
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting), ``hire_rediscovery_index`` and
-                   ``hire_interview_reminders`` (24 hours and 1 hour before interviews).
+                   ``hire_interview_reminders`` (24 hours and 1 hour before interviews);
+                   ``hire_erasure_objects``: removes the stored files of erasures a
+                   person started, then completes their requests (``erasure``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
                    interviews, once the deployment has a Google OAuth client.
 
@@ -47,6 +49,8 @@ from pairly_core.retention.rules import RetentionRule
 from pairly_core.search.sources import SearchSource
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
+from pairly_hire.erasure import JOB_NAME as ERASURE_JOB
+from pairly_hire.erasure import run_erasure_job
 from pairly_hire.messaging import approval_view as message_approval_view
 from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
@@ -121,6 +125,13 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "Remind candidates and interviewers 24 hours and 1 hour before each interview",
         "every 5 minutes",
         run=run_reminders_job,
+        every_minutes=5,
+    ),
+    JobSpec(
+        ERASURE_JOB,
+        "Remove the stored files of candidate erasures a person started, then complete them",
+        "every 5 minutes",
+        run=run_erasure_job,
         every_minutes=5,
     ),
 )

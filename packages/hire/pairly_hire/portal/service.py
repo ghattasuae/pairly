@@ -816,6 +816,27 @@ async def export_data(session: AsyncSession, identity: PortalIdentity) -> dict[s
     was sent, as JSON. Never another person's data, and never what reviewers wrote or
     the screening computed (scores, notes, tags, flags). Audited."""
     candidate = await candidate_row(session, identity)
+    if candidate.erased_at is not None:
+        # Nothing about the person is held any more: an empty export that says so.
+        await _audit(
+            session,
+            identity,
+            "hire.portal.data_exported",
+            entity_type="hire.candidate",
+            entity_id=identity.candidate_id,
+            payload={"applications": 0, "erased": True},
+        )
+        return {
+            "format": EXPORT_FORMAT,
+            "generated_at": datetime.now(UTC).isoformat(),
+            "erased": True,
+            "erased_at": _iso(candidate.erased_at),
+            "candidate": None,
+            "applications": [],
+            "decisions": [],
+            "reviews_requested": [],
+            "data_requests": [],
+        }
     org_name = await session.scalar(
         select(Organisation.name).where(Organisation.id == identity.org_id)
     )

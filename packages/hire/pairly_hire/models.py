@@ -260,6 +260,8 @@ class HireCandidate(Base, OrgScoped):
     location: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
     profile_url: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
     locale: Mapped[str] = mapped_column(String(2), nullable=False, default="en")
+    # When the candidate's personal data was erased (``pairly_hire.erasure``).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
 

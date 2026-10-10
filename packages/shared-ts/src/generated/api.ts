@@ -4968,6 +4968,13 @@ export type components = {
              * Format: date-time
              */
             due_at: string;
+            /** Erasure Error */
+            erasure_error?: string | null;
+            /**
+             * Erasure Pending
+             * @default false
+             */
+            erasure_pending: boolean;
             /** Handled At */
             handled_at: string | null;
             /**

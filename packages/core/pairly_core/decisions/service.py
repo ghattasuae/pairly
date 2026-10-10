@@ -47,6 +47,11 @@ from pairly_core.webhooks.events import DECISION_RECORDED as DECISION_RECORDED_E
 from pairly_core.webhooks.events import publish_event
 
 DECISION_RECORDED: Final = "core.decision.recorded"
+# The personal part of records was erased (payload: ``decision_ids``, never content).
+DECISION_SENSITIVE_ERASED: Final = "core.decision.sensitive_erased"
+# What ``verify_record`` answers for a record whose personal part was erased, with the
+# erasure on the audit chain: it existed, was intact up to then, and was erased.
+ERASED: Final = "erased"
 MAX_PUBLIC_BYTES: Final = 256 * 1024
 MAX_SENSITIVE_BYTES: Final = 512 * 1024
 
@@ -506,14 +511,77 @@ async def recorded_hash(session: AsyncSession, decision_id: str) -> str | None:
     return value if isinstance(value, str) else None
 
 
+async def erase_sensitive(
+    session: AsyncSession,
+    rows: Sequence[DecisionRecord],
+    *,
+    actor_type: ActorType | str,
+    actor_id: str | uuid.UUID | None,
+    workflow: str | None = None,
+    payload: Mapping[str, Any] | None = None,
+) -> list[str]:
+    """Erase the personal part (``sensitive``) of ``rows``, once, and record that on the
+    audit chain with the record ids. Everything else stays: ids, references, outputs
+    without personal data, the content hash and the hash on the audit chain. Returns the
+    ids erased now (already erased records are skipped)."""
+    now = datetime.now(UTC)
+    erased: list[str] = []
+    for row in rows:
+        if row.sensitive_erased_at is not None:
+            continue
+        row.sensitive = None
+        row.sensitive_erased_at = now
+        erased.append(row.id)
+    if erased:
+        await session.flush()
+        await append_audit(
+            session,
+            action=DECISION_SENSITIVE_ERASED,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            entity_type="decision_record",
+            workflow=workflow,
+            payload={**(payload or {}), "decision_ids": sorted(erased)},
+        )
+    return erased
+
+
+async def erasure_recorded(session: AsyncSession, decision_id: str) -> bool:
+    """Whether the audit chain holds the erasure of this record's personal part."""
+    found = await session.scalar(
+        select(AuditEvent.id)
+        .where(
+            AuditEvent.action == DECISION_SENSITIVE_ERASED,
+            AuditEvent.payload.contains({"decision_ids": [decision_id]}),
+        )
+        .limit(1)
+    )
+    return found is not None
+
+
 async def verify_record(session: AsyncSession, row: DecisionRecord) -> str | None:
     """``None`` when the record is intact, else why not (fail closed).
 
     Intact means: ``sensitive`` decrypts, the recomputed content hash equals the stored
     one, and both equal the hash written to the audit chain when the record was made.
+
+    An erased record (``sensitive_erased_at`` set, ``sensitive`` gone) cannot have its
+    hash recomputed. It answers ``erased`` when the stored hash still equals the one on
+    the audit chain and the chain holds the erasure of this record; otherwise it is
+    reported as tampered like any other mismatch.
     """
     from pairly_core.crypto.envelope import DecryptionError
 
+    if row.sensitive_erased_at is not None or (
+        row.sensitive is None and await erasure_recorded(session, row.id)
+    ):
+        if row.sensitive is not None or row.sensitive_erased_at is None:
+            return "erasure_incomplete"
+        if await recorded_hash(session, row.id) != row.content_hash:
+            return "audit_hash_mismatch"
+        if not await erasure_recorded(session, row.id):
+            return "erasure_not_recorded"
+        return ERASED
     try:
         sensitive = open_sensitive(row)
     except (DecryptionError, ValueError, TypeError):

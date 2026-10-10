@@ -5103,6 +5103,22 @@
             "title": "Due At",
             "type": "string"
           },
+          "erasure_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erasure Error"
+          },
+          "erasure_pending": {
+            "default": false,
+            "title": "Erasure Pending",
+            "type": "boolean"
+          },
           "handled_at": {
             "anyOf": [
               {

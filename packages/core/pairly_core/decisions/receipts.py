@@ -204,7 +204,12 @@ def full_receipt(row: DecisionRecord, ctx: ReceiptContext) -> dict[str, Any]:
             "audit_event_ids": [str(a) for a in row.audit_event_ids],
             "approval_ids": [str(a) for a in row.approval_ids],
         },
-        "integrity": {"content_hash": row.content_hash, "intact": ctx.intact},
+        "integrity": {
+            "content_hash": row.content_hash,
+            "intact": ctx.intact,
+            # The personal part was erased on request; the record itself remains.
+            "erased": row.sensitive_erased_at is not None,
+        },
     }
 
 
