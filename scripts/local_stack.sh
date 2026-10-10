@@ -11,7 +11,7 @@
 #   scripts/local_stack.sh test      # pytest against fresh local test databases
 #   scripts/local_stack.sh migrate   # alembic upgrade heads (owner role)
 #   scripts/local_stack.sh logs [api|worker|web]
-#   scripts/local_stack.sh exec owner|app|worker -- CMD...   # CMD with that process's env
+#   scripts/local_stack.sh exec owner|app|worker|demo -- CMD...   # CMD with that process's env
 #
 # What replaces the Docker-only services (development and test only; the settings refuse
 # each of them in production):
@@ -249,12 +249,13 @@ exec_with() {
   local kind="$1"
   shift
   [ "${1:-}" = "--" ] && shift
-  [ "$#" -gt 0 ] || local_die "usage: $0 exec owner|app|worker -- CMD..."
+  [ "$#" -gt 0 ] || local_die "usage: $0 exec owner|app|worker|demo -- CMD..."
   case "$kind" in
     owner) local_owner_env ;;
     app) local_app_env ;;
     worker) local_worker_env ;;
-    *) local_die "usage: $0 exec owner|app|worker -- CMD..." ;;
+    demo) local_demo_env ;;
+    *) local_die "usage: $0 exec owner|app|worker|demo -- CMD..." ;;
   esac
   # Extra variables for this command only, e.g. PAIRLY_DEVSEED=1 (LOCAL_EXTRA_ENV).
   if [ -n "${LOCAL_EXTRA_ENV:-}" ]; then
@@ -284,7 +285,7 @@ case "${1:-}" in
     exec_with "$@"
     ;;
   *)
-    echo "usage: $0 up|down|status|test|migrate|logs [service]|exec owner|app|worker -- CMD..." >&2
+    echo "usage: $0 up|down|status|test|migrate|logs [service]|exec owner|app|worker|demo -- CMD..." >&2
     exit 2
     ;;
 esac

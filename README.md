@@ -19,6 +19,7 @@ Pairly is open source (AGPL-3.0) with a commercial license option. It has one wo
 make install      # Python and JS dependencies
 make test         # Python and JS tests
 make dev          # start the native stack: web http://localhost:3100, API http://localhost:8000
+make demo         # the native stack plus a complete Hire and expense demo, offline
 make local-status # what runs, with health checks
 make local-test   # pytest against fresh local test databases
 make local-down   # stop everything
@@ -29,7 +30,17 @@ Valkey as local processes (data in `.local/`), runs the migrations and starts th
 the worker and the web app in the background at low priority. Email goes to files in
 `.local/mail` and documents to `.local/objects`. See `infra/README.md` for the details.
 
-To try the expense example: `make bootstrap-org NAME="Acme Ltd" SLUG=acme
+`make demo` starts the stack like `make dev` and seeds the organisation `demo`, offline
+in recorded model mode (no API key): people for every role (admin, recruiter, hiring
+manager, interviewer, an employee who refers, and the expense roles) with their
+invitations accepted, two open backend engineer jobs with locked rubrics, ten synthetic
+CVs screened from the committed recordings, candidates in every pipeline stage, a CV
+with hidden white text that the guardrails flag, two booked interviews on the fake
+calendar, a candidate waiting past the response SLA, and the expense example. It prints
+the sign-in addresses: sign in with a magic link, which lands in `.local/mail`. Running
+it again changes nothing. The stack keeps running until `make local-down`.
+
+To try the expense example in your own organisation: `make bootstrap-org NAME="Acme Ltd" SLUG=acme
 ADMIN_EMAIL=you@acme.test`, open the printed invite link, then `make demo-expense
 SLUG=acme`.
 

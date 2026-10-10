@@ -67,10 +67,11 @@ env: ## Create .env with random secrets, or append the keys an existing one lack
 # ---------------------------------------------------------------- native stack (default)
 dev: local-up ## Start the native stack (Postgres, Valkey, api, worker, web on :3100), no containers
 
-demo: dev ## Native stack up; then `make bootstrap-org` and `make demo-expense` seed a demo
-	@echo ""
-	@echo "make demo: the stack is up. Create an organisation with make bootstrap-org, then"
-	@echo "seed the expense example with make demo-expense SLUG=<slug>."
+demo: local-up ## Native stack up plus a complete Hire and expense demo (org "demo"), offline
+	$(UV) run python -m pairly_hire.recordings --check
+	$(UV) run python -m pairly_hire.messaging.recordings --check
+	$(UV) run python -m synth.expense --check
+	nice -n 10 $(LOCAL) exec demo -- python scripts/demo_seed.py
 
 local-up: env ## Start Postgres, Valkey, migrations, api, worker and web as local processes
 	$(LOCAL) up

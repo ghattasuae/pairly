@@ -201,6 +201,18 @@ local_owner_env() {
   )
 }
 
+# The demo seed (scripts/demo_seed.py, development only): the app env (signed links,
+# outbox, recorded model mode), the owner role like pairly-admin, and the auth database
+# so it can create the invited people's sign-in accounts the way the invite page does.
+local_demo_env() {
+  local_app_env
+  LOCAL_ENV+=(
+    "PAIRLY_DATABASE_URL_OWNER=$(local_db_url pairly_owner "$PAIRLY_OWNER_DB_PASSWORD" "$POSTGRES_DB" postgresql+asyncpg)"
+    "PAIRLY_AUTH_DATABASE_URL=$(local_db_url pairly_auth "$PAIRLY_AUTH_DB_PASSWORD" "$POSTGRES_DB")"
+    "PAIRLY_DEVSEED=1"
+  )
+}
+
 # The web app (the compose `web` service, with the outbox instead of Mailpit).
 local_web_env() {
   local mode="$1"
