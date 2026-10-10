@@ -731,6 +731,65 @@ async def test_privacy_centre_export_deletion_and_human_review(
     assert [c.actor_type for c in created] == ["candidate"]
 
 
+async def test_admin_erases_a_candidate_only_by_hand_with_a_reason(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine, tmp_path: Path
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    app_id, email = await _apply(api, world, job, "Rami Haddad")
+    _, other_email = await _apply(api, world, job, "Lina Saleh")
+    session = await _signed_in(api, world, email, tmp_path)
+    asked = await api.client.post(
+        "/v1/hire/portal/privacy/deletion-request", json={}, headers=session
+    )
+    assert asked.status_code == 201, asked.text
+    request_id = asked.json()["request"]["id"]
+    one = await api.call("GET", f"/v1/hire/data-requests/{request_id}", world, "admin")
+    assert one.status_code == 200, one.text
+    assert one.json()["candidate_email"] == email
+    assert one.json()["due_at"] > one.json()["created_at"]
+    path = f"/v1/hire/data-requests/{request_id}/erase"
+    reason = {"reason": "Candidate asked by email to delete everything."}
+
+    # Admins only, with a second factor, and always with a written reason.
+    assert (await api.call("POST", path, world, "recruiter", json=reason)).status_code == 403
+    no_otp = await api.call("POST", path, world, "admin", otp=False, json=reason)
+    assert no_otp.status_code == 403
+    assert no_otp.json()["code"] == "second_factor_required"
+    short = await api.call("POST", path, world, "admin", json={"reason": "ok"})
+    assert short.status_code == 422
+    # Asking deletes nothing.
+    listed = await api.call("GET", "/v1/hire/data-requests", world, "admin")
+    assert {r["candidate_email"] for r in listed.json()} == {email}
+
+    erased = await api.call("POST", path, world, "admin", json=reason)
+    assert erased.status_code == 200, erased.text
+    done = erased.json()
+    assert done["status"] == "completed"
+    assert done["outcome"] == reason["reason"]
+    assert email not in erased.text
+    assert done["candidate_name"] == "Erased candidate"
+    again = await api.call("POST", path, world, "admin", json=reason)
+    assert again.status_code == 409
+
+    profile = await api.call("GET", f"/v1/hire/pipeline/applications/{app_id}", world, "recruiter")
+    assert profile.status_code == 200, profile.text
+    assert "Rami" not in profile.text
+    assert email not in profile.text
+    # The other candidate is untouched; the application row itself stays.
+    others = await api.call("GET", f"/v1/hire/applications?job_id={job['id']}", world, "admin")
+    assert len(others.json()["items"]) == 2
+    assert other_email
+    actions = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT payload FROM audit_events WHERE action = 'hire.data_request.erased'",
+    )
+    (audit,) = actions
+    assert audit.payload["applications_cleared"] == 1
+    assert reason["reason"] not in str(audit.payload)
+
+
 async def test_portal_shows_upcoming_interviews_with_their_links(
     hire_api: HireApi, world: HireWorld, tmp_path: Path
 ) -> None:

@@ -5062,6 +5062,22 @@
         "title": "HireCriterionOut",
         "type": "object"
       },
+      "HireDataRequestEraseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "HireDataRequestEraseIn",
+        "type": "object"
+      },
       "HireDataRequestOut": {
         "properties": {
           "candidate_email": {
@@ -5080,6 +5096,11 @@
           "created_at": {
             "format": "date-time",
             "title": "Created At",
+            "type": "string"
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
             "type": "string"
           },
           "handled_at": {
@@ -5140,6 +5161,7 @@
           "note",
           "outcome",
           "created_at",
+          "due_at",
           "handled_at"
         ],
         "title": "HireDataRequestOut",
@@ -16594,6 +16616,102 @@
           }
         },
         "summary": "List Data Requests",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/data-requests/{request_id}": {
+      "get": {
+        "operationId": "get_data_request_v1_hire_data_requests__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDataRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Data Request",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/data-requests/{request_id}/erase": {
+      "post": {
+        "operationId": "erase_data_request_v1_hire_data_requests__request_id__erase_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireDataRequestEraseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDataRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Erase Data Request",
         "tags": [
           "hire"
         ]

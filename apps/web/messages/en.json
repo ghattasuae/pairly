@@ -1947,5 +1947,42 @@
     "save": "Save",
     "saved": "Saved.",
     "invalid": "Check the times and dates, then save again."
+  },
+  "HireDataRequests": {
+    "title": "Data requests",
+    "intro": "Candidates' requests about their personal data, open ones first, each with its deadline.",
+    "listLabel": "Data requests",
+    "detailLabel": "Request",
+    "empty": "No data requests yet.",
+    "pick": "Open a request to see it and act on it.",
+    "kind": {
+      "deletion": "Deletion request",
+      "other": "Data request"
+    },
+    "status": {
+      "open": "Open",
+      "completed": "Completed",
+      "declined": "Declined"
+    },
+    "overdue": "Overdue",
+    "due": "Due {date}",
+    "handled": "Handled {date}",
+    "candidate": "Candidate",
+    "received": "Received",
+    "deadline": "Deadline",
+    "note": "Their note",
+    "outcome": "Outcome",
+    "recordLabel": "What you did",
+    "recordHelp": "Write what you did and why. The candidate's request is closed with this note.",
+    "markCompleted": "Mark completed",
+    "markDeclined": "Decline",
+    "recorded": "Request updated.",
+    "eraseTitle": "Erase this candidate's personal data",
+    "eraseHelp": "Clears their name, contact details and application answers, and closes the request. It needs a two-factor sign-in, it is recorded in the audit log, and it cannot be undone.",
+    "reasonLabel": "Reason (required)",
+    "erase": "Erase personal data",
+    "confirmTitle": "Erase this candidate's personal data?",
+    "confirmBody": "This cannot be undone. Their name, contact details and application answers will be cleared.",
+    "erased": "Personal data erased. The request is completed."
   }
 }

@@ -844,6 +844,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/data-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Data Request */
+        get: operations["get_data_request_v1_hire_data_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/data-requests/{request_id}/erase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Erase Data Request */
+        post: operations["erase_data_request_v1_hire_data_requests__request_id__erase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/data-requests/{request_id}/resolve": {
         parameters: {
             query?: never;
@@ -4908,6 +4942,11 @@ export type components = {
             /** Result */
             result: string;
         };
+        /** HireDataRequestEraseIn */
+        HireDataRequestEraseIn: {
+            /** Reason */
+            reason: string;
+        };
         /** HireDataRequestOut */
         HireDataRequestOut: {
             /** Candidate Email */
@@ -4924,6 +4963,11 @@ export type components = {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
             /** Handled At */
             handled_at: string | null;
             /**
@@ -9556,6 +9600,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireDataRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_data_request_v1_hire_data_requests__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    erase_data_request_v1_hire_data_requests__request_id__erase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireDataRequestEraseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDataRequestOut"];
                 };
             };
             /** @description Validation Error */

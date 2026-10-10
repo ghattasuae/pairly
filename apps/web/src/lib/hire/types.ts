@@ -27,4 +27,5 @@ export type HireWaiting = S["HireWaitingOut"];
 export type HireRediscoveryHit = S["HireRediscoveryHit"];
 export type HireReferral = S["HireReferralOut"];
 export type HireJob = S["HireJobOut"];
+export type HireDataRequest = S["HireDataRequestOut"];
 export type HirePrefs = S["HirePrefsOut"];

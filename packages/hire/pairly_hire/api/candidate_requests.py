@@ -13,12 +13,19 @@
 * ``POST /v1/hire/data-requests/{id}/resolve`` (``hire.settings.manage``, second factor):
   ``{"status": "completed" | "declined", "outcome"}``. Records what the admin did; it
   never deletes anything itself (hard rule 1: people delete data, agents never do).
+* ``GET  /v1/hire/data-requests/{id}`` (``hire.settings.manage``): one request.
+* ``POST /v1/hire/data-requests/{id}/erase`` (``hire.settings.manage``, second factor,
+  people only): ``{"reason"}``. The admin's manual erasure of the candidate's personal
+  data for an open deletion request (``pairly_hire.erasure``); completes the request with
+  the reason as its outcome. Audited. Never automatic.
+
+Every data request carries ``due_at``, its deadline (``portal.notices.SLA_DAYS``).
 """
 
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, Request
@@ -31,6 +38,7 @@ from pairly_core.errors import ConflictError, ForbiddenError, NotFoundError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_hire.api.common import web_url
+from pairly_hire.erasure import erase_for_request
 from pairly_hire.models import HireCandidate
 from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_CREATE, SETTINGS_MANAGE
 from pairly_hire.pipeline.records import hidden_identities, load_record, organisation_name
@@ -40,7 +48,7 @@ from pairly_hire.portal.models import (
     HireDataRequest,
     HireDocumentRequest,
 )
-from pairly_hire.portal.notices import notify_file_requested
+from pairly_hire.portal.notices import SLA_DAYS, notify_file_requested
 from pairly_hire.sealing import read_sealed
 
 router = APIRouter(tags=["hire"])
@@ -81,7 +89,14 @@ class HireDataRequestOut(BaseModel):
     note: str | None
     outcome: str | None
     created_at: datetime
+    due_at: datetime
     handled_at: datetime | None
+
+
+class HireDataRequestEraseIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=2000)]
 
 
 class HireDataRequestResolveIn(BaseModel):
@@ -189,6 +204,7 @@ def _data_out(row: HireDataRequest, candidate: HireCandidate | None) -> HireData
         note=note if isinstance(note, str) else None,
         outcome=outcome if isinstance(outcome, str) else None,
         created_at=row.created_at,
+        due_at=row.created_at + timedelta(days=SLA_DAYS.get(row.kind, 30)),
         handled_at=row.handled_at,
     )
 
@@ -257,4 +273,42 @@ async def resolve_data_request(
     candidate = await session.scalar(
         select(HireCandidate).where(HireCandidate.id == row.candidate_id)
     )
+    return _data_out(row, candidate)
+
+
+@router.get("/data-requests/{request_id}", response_model=HireDataRequestOut)
+async def get_data_request(
+    request_id: uuid.UUID, actor: CurrentActor, session: OrgSession
+) -> HireDataRequestOut:
+    authorize(actor, SETTINGS_MANAGE)
+    found = (
+        await session.execute(
+            select(HireDataRequest, HireCandidate)
+            .join(HireCandidate, HireCandidate.id == HireDataRequest.candidate_id)
+            .where(HireDataRequest.id == request_id)
+        )
+    ).first()
+    if found is None:
+        raise NotFoundError("request not found")
+    await audit_actor_action(
+        session,
+        actor,
+        "hire.data_request.viewed",
+        entity_type="hire.data_request",
+        entity_id=request_id,
+        workflow=WORKFLOW,
+    )
+    return _data_out(found[0], found[1])
+
+
+@router.post("/data-requests/{request_id}/erase", response_model=HireDataRequestOut)
+async def erase_data_request(
+    request_id: uuid.UUID,
+    body: HireDataRequestEraseIn,
+    actor: CurrentActor,
+    session: OrgSession,
+) -> HireDataRequestOut:
+    authorize(actor, SETTINGS_MANAGE)
+    _person(actor)
+    row, candidate, _ = await erase_for_request(session, actor, request_id, reason=body.reason)
     return _data_out(row, candidate)

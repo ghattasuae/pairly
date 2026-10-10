@@ -37,6 +37,8 @@ DATA_REQUEST: Final = "hire.portal.data_request"
 CANDIDATE_ACTIVITY: Final = "hire.portal.candidate_activity"
 FILE_REQUESTED: Final = "hire.portal.file_requested"
 WORKFLOW: Final = "hire"
+# The admins' data requests page (apps/web hire/data-requests).
+DATA_REQUESTS_PAGE: Final = "/hire/data-requests"
 SLA_DAYS: Final = {"export": 30, "deletion": 30, "human_review": 7}
 
 
@@ -166,6 +168,9 @@ async def notify_data_request(
 ) -> datetime:
     """Tell every Hire admin (in the app and by email, urgent). Returns the deadline."""
     due = due_date(kind, now)
+    link = DATA_REQUESTS_PAGE
+    if kind == "deletion":
+        link = f"{DATA_REQUESTS_PAGE}?request={request_id}"
     for admin in await hire_admins(session):
         await notify(
             session,
@@ -179,7 +184,7 @@ async def notify_data_request(
             dedupe_key=f"hire.data_request:{kind}:{request_id}:{admin}",
             channels=["in_app", "email"],
             urgency=Urgency.URGENT,
-            extras=Extras(link="/hire", extra={"kind": kind, "due_at": due.isoformat()}),
+            extras=Extras(link=link, extra={"kind": kind, "due_at": due.isoformat()}),
             workflow=WORKFLOW,
         )
     return due
