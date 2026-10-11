@@ -4,7 +4,7 @@
 
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { StepUpPrompt } from "@/components/states/step-up-prompt";
@@ -107,36 +107,40 @@ export function ShortlistReview({
   const next = nextStage(stages, SHORTLIST_STAGE);
   const done = Object.keys(outcomes).length;
 
-  const focusCandidate = (delta: number) => {
-    const items = [...(list.current?.querySelectorAll<HTMLElement>("[data-shortlist-candidate]") ?? [])];
-    if (items.length === 0) return;
-    const current = items.findIndex((el) => el.contains(document.activeElement));
-    const index = current < 0 ? (delta > 0 ? 0 : items.length - 1) : Math.min(items.length - 1, Math.max(0, current + delta));
-    items[index]?.focus();
-    items[index]?.scrollIntoView?.({ block: "nearest" });
-  };
-
-  const onKeyDown = (event: React.KeyboardEvent) => {
-    if (event.altKey || event.ctrlKey || event.metaKey || isTextField(event.target)) return;
-    const key = event.key.toLowerCase();
-    if (key === "j" || key === "k") {
+  // J and K work from anywhere on the page (the focus starts on the body); A, H and R
+  // choose for the candidate that holds the focus. Never while typing or in a dialog.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (isTextField(event.target) || document.querySelector('[role="dialog"]')) return;
+      const items = [...(list.current?.querySelectorAll<HTMLElement>("[data-shortlist-candidate]") ?? [])];
+      if (items.length === 0) return;
+      const key = event.key.toLowerCase();
+      const current = items.findIndex((el) => el.contains(document.activeElement));
+      if (key === "j" || key === "k") {
+        event.preventDefault();
+        const delta = key === "j" ? 1 : -1;
+        const index = current < 0 ? (delta > 0 ? 0 : items.length - 1) : Math.min(items.length - 1, Math.max(0, current + delta));
+        items[index]?.focus();
+        items[index]?.scrollIntoView?.({ block: "nearest" });
+        return;
+      }
+      const decision = decisionForKey(key);
+      const article = items[current];
+      if (!decision || !article) return;
+      const radio = article.querySelector<HTMLInputElement>(`input[type="radio"][value="${decision}"]`);
+      if (!radio || radio.disabled) return;
       event.preventDefault();
-      focusCandidate(key === "j" ? 1 : -1);
-      return;
-    }
-    const decision = decisionForKey(key);
-    if (!decision) return;
-    const article = (event.target as HTMLElement).closest<HTMLElement>("[data-shortlist-candidate]");
-    const radio = article?.querySelector<HTMLInputElement>(`input[type="radio"][value="${decision}"]`);
-    if (!radio || radio.disabled) return;
-    event.preventDefault();
-    // Commit the choice now, so the reason field and the record button exist and are enabled.
-    flushSync(() => radio.click());
-    const target = needsReason(decision)
-      ? article?.querySelector<HTMLElement>("textarea")
-      : article?.querySelector<HTMLElement>("[data-record]");
-    target?.focus();
-  };
+      // Commit the choice now, so the reason field and the record button exist and are enabled.
+      flushSync(() => radio.click());
+      const target = needsReason(decision)
+        ? article.querySelector<HTMLElement>("textarea")
+        : article.querySelector<HTMLElement>("[data-record]");
+      target?.focus();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const record = useCallback(
     async (candidate: ShortlistCandidate, decision: Decision, reason: string): Promise<string | null> => {
@@ -223,7 +227,7 @@ export function ShortlistReview({
       {candidates.length === 0 ? (
         <p className="rounded-xl border bg-surface p-5 text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <ol ref={list} className="space-y-4" aria-labelledby={headingId} onKeyDown={onKeyDown}>
+        <ol ref={list} className="space-y-4" aria-labelledby={headingId}>
           {candidates.map((candidate) => (
             <li key={candidate.card.application_id}>
               <CandidateReview
@@ -272,6 +276,7 @@ function CandidateReview({
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const self = useRef<HTMLElement>(null);
   const summary = summarize(screening);
   const quotes = highlights(candidate);
   const interview = currentInterview(candidate.interviews);
@@ -293,6 +298,8 @@ function CandidateReview({
     const failure = await onRecord(candidate, decision, reason);
     setPending(false);
     setError(failure);
+    // The form is replaced by the outcome: keep the focus on this candidate, so J goes on.
+    if (failure === null) requestAnimationFrame(() => self.current?.focus());
   };
 
   const outcomeText = (o: Outcome): string => {
@@ -312,6 +319,7 @@ function CandidateReview({
 
   return (
     <article
+      ref={self}
       tabIndex={-1}
       aria-labelledby={`${ids}-name`}
       className="space-y-4 rounded-xl border bg-surface p-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 sm:p-5"

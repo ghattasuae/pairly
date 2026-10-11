@@ -213,7 +213,8 @@ describe("ShortlistReview", () => {
     const a = actions();
     a.moveCandidate.mockResolvedValue(MOVE(1, "interview"));
     render(a);
-    article(1).focus();
+    await user.keyboard("j");
+    expect(article(1)).toHaveFocus();
     await user.keyboard("a");
     expect(within(article(1)).getByLabelText("Advance to Interview")).toBeChecked();
     expect(within(article(1)).getByRole("button", { name: "Record decision" })).toHaveFocus();
@@ -225,8 +226,8 @@ describe("ShortlistReview", () => {
     expect(article(1)).toHaveAttribute("data-decided", "advance");
     expect(screen.getByText("1 of 3 decided")).toBeInTheDocument();
 
-    // J moves to the next candidate.
-    article(1).focus();
+    // The focus stays on the decided candidate; J moves to the next one.
+    await waitFor(() => expect(article(1)).toHaveFocus());
     await user.keyboard("j");
     expect(article(2)).toHaveFocus();
   });

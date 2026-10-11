@@ -56,6 +56,8 @@ from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.identity import load_actor
+from pairly_core.ingestion.settings import load_ingestion_settings
+from pairly_core.ingestion.storage import object_store_from_settings
 from pairly_core.invitations import (
     accept_invitation,
     bootstrap_organisation,
@@ -65,19 +67,23 @@ from pairly_core.invitations import (
     normalize_email,
 )
 from pairly_core.llm.bundle import import_recordings, parse_bundle
+from pairly_core.llm.settings import load_llm_settings
 from pairly_core.models.tenancy import Invitation, User
 from pairly_core.plugins import SeedContext, demo_seeds, discover_plugins
 from pairly_core.policy_versions import publish_policy_version
 from pairly_core.rbac import Actor, ActorKind, RoleRegistry, build_registry
+from pairly_core.retrieval.embeddings import build_embedder
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
 from pairly_hire.forms import DEFAULT_FORM, form_validator
 from pairly_hire.forms import POLICY_KIND as FORM_KIND
 from pairly_hire.links import links_from_env
 from pairly_hire.messaging.compose import Author
+from pairly_hire.messaging.prefs import set_prefs
 from pairly_hire.messaging.sla import sla_days, waiting
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate, HireJob, JobStatus
 from pairly_hire.pipeline import moves
 from pairly_hire.pipeline.records import load_record
+from pairly_hire.pipeline.rediscovery import index_candidate
 from pairly_hire.rubric import POLICY_KIND as RUBRIC_KIND
 from pairly_hire.rubric import policy_name, rubric_validator
 from pairly_hire.scheduling import service as scheduling
@@ -113,6 +119,8 @@ REFERRER_EMAIL: Final = "demo-hire-referrer@example.test"
 DOCX: Final = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 SCREENING_WAIT_SECONDS: Final = 420
 STAGE_ORDER: Final = ("applied", "screening", "shortlist", "interview", "offer", "hired")
+# A skill on the talent pool candidate's CV: one search for it finds them (e2e spec 15).
+TALENT_SKILL: Final = "gRPC"
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +153,7 @@ class Applicant:
     spec: DocSpec
     waiting: bool = False  # left untouched for longer than the response SLA
     interview: bool = False
+    talent_pool: bool = False  # agrees to be considered for future roles (rediscovery)
 
 
 def _fail(message: str) -> None:
@@ -182,7 +191,7 @@ def applicants() -> list[Applicant]:
         ),
         Applicant("fair-01-base", second, "interview", by_id["fair-01-base"], interview=True),
         Applicant(clean[0].record.id, second, "applied", clean[0], waiting=True),
-        Applicant(clean[1].record.id, second, "withdrawn", clean[1]),
+        Applicant(clean[1].record.id, second, "withdrawn", clean[1], talent_pool=True),
         Applicant(extras.hidden_key, second, "applied", extras.hidden),
     ]
 
@@ -637,6 +646,42 @@ async def arrange(
     return lines
 
 
+async def talent_pool(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    org_id: uuid.UUID,
+    people: Sequence[Applicant],
+) -> list[str]:
+    """Step 6: consent to the talent pool, then index the candidate now (the worker's
+    ``hire_rediscovery_index`` job would only pick them up on its next 15 minute run)."""
+    store = object_store_from_settings(load_ingestion_settings(env=os.environ["PAIRLY_ENV"]))
+    embedder = build_embedder(load_llm_settings())
+    lines: list[str] = []
+    for applicant in people:
+        if not applicant.talent_pool:
+            continue
+        if TALENT_SKILL not in applicant.spec.record.ground_truth.skills:
+            _fail(f"{applicant.key} has no {TALENT_SKILL} on the CV")
+        async with sessionmaker() as session:
+            set_tenant(session, org_id, None)
+            async with session.begin():
+                app = await _application(session, org_id, applicant)
+                if app is None:
+                    _fail(f"no application for {applicant.key}")
+                assert app is not None  # noqa: S101
+                await set_prefs(
+                    session,
+                    org_id=org_id,
+                    candidate_id=app.candidate_id,
+                    updates_email=None,
+                    talent_pool=True,
+                )
+                outcome = await index_candidate(
+                    session, app.candidate_id, embedder=embedder, store=store
+                )
+        lines.append(f"{applicant.key}: in the talent pool ({outcome}), skill {TALENT_SKILL}")
+    return lines
+
+
 async def summary(
     sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid.UUID
 ) -> dict[str, Any]:
@@ -686,6 +731,7 @@ async def run(owner_url: str, auth_url: str, api_url: str, web_url: str) -> None
         seeded.lines.extend(await apply_all(sessionmaker, seeded.org_id, people, api_url))
         seeded.lines.extend(await wait_for_screening(sessionmaker, seeded.org_id, people))
         seeded.lines.extend(await arrange(sessionmaker, registry, seeded.org_id, people))
+        seeded.lines.extend(await talent_pool(sessionmaker, seeded.org_id, people))
         result = await summary(sessionmaker, seeded.org_id)
     finally:
         await engine.dispose()
@@ -704,6 +750,7 @@ async def run(owner_url: str, auth_url: str, api_url: str, web_url: str) -> None
     print("  - Open a screened candidate for the scores and the evidence quotes, and the")
     print(f'    flagged CV with the hidden text "{HIDDEN_TEXT}".')
     print("  - Sign in as the interviewer for the two booked interviews.")
+    print(f'  - Hire home, "Find a past candidate": search "{TALENT_SKILL}" for the talent pool.')
     print(f"  - Careers page: {web_url.rstrip('/')}/en/careers/{ORG_SLUG}")
     print("  - Expense example: sign in as the expense submitter and upload a receipt from")
     print("    synth/expense/receipts, then decide it as the expense approver.")
