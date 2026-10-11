@@ -73,7 +73,7 @@ export default async function HirePage({ params }: Props) {
         <p>{t("home.intro")}</p>
       </PageHeader>
       {team && waiting?.ok && <WaitingCard waiting={waiting.data} />}
-      {team && <JobsList jobs={working} />}
+      {team && <JobsList jobs={working} canEdit={permissions.includes("hire.job.write")} />}
       {team && <RediscoverySearch />}
       {refers && <Referrals jobs={open} referrals={referrals?.ok ? referrals.data : []} />}
     </div>

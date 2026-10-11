@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { Check, Clock, Copy, Loader2, Search, Share2, UsersRound } from "lucide-react";
+import { Check, Clock, Copy, Loader2, Plus, Search, Share2, UsersRound } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import type * as React from "react";
@@ -213,16 +213,28 @@ export function Referrals({ jobs, referrals }: { jobs: HireJob[]; referrals: Hir
 }
 
 /** The jobs the hiring team works on, each one click from its pipeline. */
-export function JobsList({ jobs }: { jobs: HireJob[] }) {
+export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?: boolean }) {
   const t = useTranslations("Hire");
   const tScreen = useTranslations("Screen");
   const locale = useLocale();
   const ids = useId();
   return (
     <section aria-labelledby={ids} className="space-y-3">
-      <h2 id={ids} className="eyebrow">
-        {t("home.jobs")}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id={ids} className="eyebrow">
+          {t("home.jobs")}
+        </h2>
+        {canEdit && (
+          <Link
+            href="/hire/jobs/new"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-[0.8rem] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none"
+            data-new-job
+          >
+            <Plus aria-hidden className="size-4" />
+            {t("home.newJob")}
+          </Link>
+        )}
+      </div>
       {jobs.length === 0 ? (
         <EmptyState icon={<UsersRound aria-hidden />} title={t("home.noJobs")} />
       ) : (
@@ -242,6 +254,15 @@ export function JobsList({ jobs }: { jobs: HireJob[] }) {
                   {t(`jobStatus.${job.status}` as "jobStatus.open")}
                 </Badge>
               </Link>
+              {canEdit && (
+                <Link
+                  href={`/hire/jobs/${job.id}`}
+                  className="flex items-center border-s px-4 text-sm text-primary hover:bg-accent/40"
+                  data-edit-link={job.slug}
+                >
+                  {t("home.edit")}
+                </Link>
+              )}
               <Link
                 href={`/hire/jobs/${job.id}/screen`}
                 className="flex items-center border-s px-4 text-sm text-primary hover:bg-accent/40"

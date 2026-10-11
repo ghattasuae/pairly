@@ -1426,7 +1426,9 @@
       "myReferrals": "Your referrals",
       "noReferrals": "Nobody referred yet.",
       "jobs": "Jobs",
-      "noJobs": "No jobs yet."
+      "noJobs": "No jobs yet.",
+      "newJob": "New job",
+      "edit": "Edit"
     },
     "jobStatus": {
       "draft": "Draft",
@@ -1989,5 +1991,142 @@
     "pendingHelp": "Their personal data is erased. The request completes once their stored files are deleted; Pairly retries every few minutes, or erase again to retry now.",
     "pendingError": "Last attempt: {error}",
     "retry": "Retry now"
+  },
+  "HireJob": {
+    "newTitle": "New job",
+    "editTitle": "Edit job",
+    "newIntro": "Write a short brief. The AI drafts the description and the rubric, and you decide what goes out.",
+    "editIntro": "Edit the job, its rubric, then lock the rubric and publish.",
+    "back": "Back to Hire",
+    "brief": {
+      "title": "1. Brief",
+      "label": "Brief, about three lines",
+      "hint": "The role and team, the must-haves, the nice-to-haves and the salary. Never anything about age, gender, nationality or other personal traits.",
+      "placeholder": "Senior backend engineer for the delivery planning team in Dubai, hybrid.\nMust have 5 years of Python backend work and PostgreSQL.\nKafka is a plus. Salary 30000 to 38000 AED a month, shown."
+    },
+    "draft": {
+      "button": "Draft the description",
+      "working": "Drafting...",
+      "done": "Draft ready. Read it, change what you want, then save.",
+      "unavailable": "AI drafting is not available right now. Write the description yourself."
+    },
+    "job": {
+      "title": "2. Job description",
+      "jobTitle": "Job title",
+      "team": "Team (optional)",
+      "location": "Location",
+      "country": "Country code",
+      "countryHint": "Two letters, for example AE.",
+      "workModel": "Work model",
+      "employment": "Employment type",
+      "descriptionEn": "Description in English",
+      "arabicToggle": "Include an Arabic version",
+      "titleAr": "Job title in Arabic",
+      "descriptionAr": "Description in Arabic"
+    },
+    "workModel": {
+      "onsite": "On site",
+      "hybrid": "Hybrid",
+      "remote": "Remote"
+    },
+    "employment": {
+      "full_time": "Full time",
+      "part_time": "Part time",
+      "contract": "Contract",
+      "temporary": "Temporary",
+      "internship": "Internship"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Open",
+      "paused": "Paused",
+      "closed": "Closed"
+    },
+    "salary": {
+      "title": "Salary range",
+      "min": "From",
+      "max": "To",
+      "currency": "Currency",
+      "period": "Per",
+      "per": {
+        "month": "Month",
+        "year": "Year",
+        "hour": "Hour"
+      },
+      "show": "Show the salary on the job post",
+      "shown": "Candidates see the range on the careers page.",
+      "hidden": "The range stays internal. Candidates do not see it."
+    },
+    "checks": {
+      "run": "Check the text",
+      "clear": "No inclusive-language suggestions or requirement warnings.",
+      "inclusive": "Inclusive-language suggestions",
+      "sanity": "Requirement warnings",
+      "use": "Use “{word}”",
+      "accepted": "Replaced with “{word}”.",
+      "stale": "The text changed since the check. Check the text again."
+    },
+    "problem": {
+      "title": "Write a job title of at least 2 characters.",
+      "location": "Write a location of at least 2 characters.",
+      "salary": "The salary range is not valid. Use numbers, with From no higher than To."
+    },
+    "create": "Create the job",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "Saved.",
+    "unsaved": "Unsaved changes",
+    "rubric": {
+      "title": "3. Rubric",
+      "intro": "What the job needs and how to recognise it in an application. Every application is scored against the locked version.",
+      "saveFirst": "Create the job first. The rubric is drafted from its description.",
+      "needsDescription": "Save the job with an English description first. The rubric is drafted from it.",
+      "draft": "Draft the rubric",
+      "redraft": "Draft it again",
+      "writeYourself": "Write it yourself",
+      "drafted": "Rubric drafted. Check every criterion before you lock it.",
+      "unavailable": "AI drafting is not available right now. Write the rubric yourself.",
+      "save": "Save the rubric",
+      "saved": "Rubric saved.",
+      "problem": "Some of the rubric is missing or not valid. The marked fields need a look.",
+      "lock": "Lock the rubric",
+      "locking": "Locking...",
+      "locked": "Rubric locked as version {version}.",
+      "lockedBadge": "Locked, version {version}",
+      "changedSince": "Changed since version {version}",
+      "mustHaves": "Must-haves",
+      "niceToHaves": "Nice-to-haves",
+      "knockouts": "Knockout questions",
+      "knockoutsHint": "Yes or no questions on the application form. A different answer never rejects anyone: it sends the application to a person with the reason.",
+      "none": "None yet.",
+      "addMust": "Add a must-have",
+      "addNice": "Add a nice-to-have",
+      "addKnockout": "Add a knockout question",
+      "needMust": "Add at least one must-have.",
+      "tooMany": "Use at most 12 criteria in each group and 6 knockout questions.",
+      "name": "Criterion",
+      "weight": "Weight, 1 to 10",
+      "description": "What it means for this job",
+      "evidence": "What evidence looks like",
+      "evidenceHint": "What a reviewer, and the scoring, look for in an application.",
+      "anchors": "Score anchors (optional)",
+      "anchorsHint": "What each score means for this criterion. Leave all empty to use the default anchors.",
+      "score": "Score {score}",
+      "remove": "Remove {name}",
+      "question": "Question",
+      "questionAr": "Question in Arabic (optional)",
+      "expected": "Answer needed",
+      "yes": "Yes",
+      "no": "No",
+      "reason": "Why the job needs it",
+      "reasonHint": "Shown to the person who reviews a different answer."
+    },
+    "publish": {
+      "button": "Publish",
+      "working": "Publishing...",
+      "done": "Published. The job is open on the careers page.",
+      "needs": "To publish: save the job, then lock the current rubric.",
+      "conflict": "The job cannot be published yet. Lock the rubric and write the English description first."
+    }
   }
 }
