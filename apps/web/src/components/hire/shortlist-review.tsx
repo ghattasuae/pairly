@@ -80,7 +80,7 @@ export function ShortlistReview({
   jobId,
   jobTitle,
   stages,
-  candidates,
+  candidates: initialCandidates,
   canDecide,
   canNote,
   canMessage,
@@ -91,9 +91,14 @@ export function ShortlistReview({
   const tErrors = useTranslations("Errors");
   const locale = useLocale();
   const actions = useMemo(() => ({ ...DEFAULT_ACTIONS, ...overrides }), [overrides]);
+  // The shortlist as it was opened: decided candidates stay on screen with their outcome,
+  // even when a refresh would drop them from the shortlist stage.
+  const [candidates] = useState(initialCandidates);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [stepUp, setStepUp] = useState(false);
   const list = useRef<HTMLOListElement>(null);
+  // The candidate that last held the focus (index), for J and K after a form unmounts.
+  const last = useRef(-1);
   const headingId = useId();
 
   const stageLabel = useCallback(
@@ -116,7 +121,9 @@ export function ShortlistReview({
       const items = [...(list.current?.querySelectorAll<HTMLElement>("[data-shortlist-candidate]") ?? [])];
       if (items.length === 0) return;
       const key = event.key.toLowerCase();
-      const current = items.findIndex((el) => el.contains(document.activeElement));
+      const found = items.findIndex((el) => el.contains(document.activeElement));
+      // A recorded decision replaces the focused form: carry on from that candidate.
+      const current = found >= 0 ? found : document.activeElement === document.body ? last.current : -1;
       if (key === "j" || key === "k") {
         event.preventDefault();
         const delta = key === "j" ? 1 : -1;
@@ -227,7 +234,16 @@ export function ShortlistReview({
       {candidates.length === 0 ? (
         <p className="rounded-xl border bg-surface p-5 text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <ol ref={list} className="space-y-4" aria-labelledby={headingId}>
+        <ol
+          ref={list}
+          className="space-y-4"
+          aria-labelledby={headingId}
+          onFocus={(event) => {
+            const items = [...(list.current?.querySelectorAll<HTMLElement>("[data-shortlist-candidate]") ?? [])];
+            const index = items.findIndex((el) => el.contains(event.target));
+            if (index >= 0) last.current = index;
+          }}
+        >
           {candidates.map((candidate) => (
             <li key={candidate.card.application_id}>
               <CandidateReview

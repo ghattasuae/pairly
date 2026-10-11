@@ -230,6 +230,10 @@ describe("ShortlistReview", () => {
     await waitFor(() => expect(article(1)).toHaveFocus());
     await user.keyboard("j");
     expect(article(2)).toHaveFocus();
+    // With the focus lost to the page (a form unmounted), J carries on from the last one.
+    article(2).blur();
+    await user.keyboard("j");
+    expect(article(3)).toHaveFocus();
   });
 
   it("needs a reason to hold, then keeps it as a note and tags the candidate", async () => {
