@@ -258,6 +258,23 @@ describe("JobEditor", () => {
     expect(a.publish).toHaveBeenCalledWith(JOB.id);
   });
 
+  it("keeps the status lines and labels in the page direction; only the Arabic fields read right to left", () => {
+    const { container } = renderWithIntl(
+      <JobEditor job={{ ...JOB, title_ar: "مهندس", description_ar: "وصف" }} totpEnabled actions={actions()} />,
+    );
+    expect(screen.getByLabelText("Description in Arabic")).toHaveAttribute("dir", "rtl");
+    expect(screen.getByLabelText("Job title in Arabic")).toHaveAttribute("dir", "rtl");
+    const status = container.querySelector('[data-checks-clear="ar"]');
+    expect(status).not.toBeNull();
+    expect(status!.closest('[dir="rtl"]')).toBeNull();
+    expect(screen.getByText("Description in Arabic").closest('[dir="rtl"]')).toBeNull();
+    // Nothing but the Arabic inputs carries a right-to-left direction.
+    for (const el of container.querySelectorAll('[dir="rtl"]')) {
+      expect(["INPUT", "TEXTAREA"]).toContain(el.tagName);
+      expect(el).toHaveAttribute("lang", "ar");
+    }
+  });
+
   it("renders in Arabic, right to left, without English copy", () => {
     renderWithIntl(<JobEditor job={{ ...JOB, title_ar: "مهندس", description_ar: "وصف" }} totpEnabled actions={actions()} />, "ar");
     expect(screen.getByRole("button", { name: "اكتب مسودة الوصف" })).toBeInTheDocument();
