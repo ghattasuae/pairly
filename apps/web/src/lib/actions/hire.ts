@@ -73,16 +73,23 @@ export async function moveCandidate(input: {
   applicationId: string;
   toStage: string;
   idempotencyKey: string;
+  /** Why (sealed on the move, shown on the timeline); optional. */
+  reason?: string;
 }): Promise<ActionResult<{ move: HireMove }>> {
   const parsed = z
-    .object({ applicationId: uuid, toStage: stageKey, idempotencyKey: key })
+    .object({
+      applicationId: uuid,
+      toStage: stageKey,
+      idempotencyKey: key,
+      reason: z.string().trim().max(500).optional(),
+    })
     .safeParse(input);
   if (!parsed.success) return bad;
-  const { applicationId, toStage, idempotencyKey } = parsed.data;
+  const { applicationId, toStage, idempotencyKey, reason } = parsed.data;
   const result = await callApi((api) =>
     api.POST("/v1/hire/pipeline/applications/{application_id}/move", {
       params: { path: { application_id: applicationId } },
-      body: { to_stage: toStage },
+      body: reason ? { to_stage: toStage, reason } : { to_stage: toStage },
       headers: idempotency(idempotencyKey),
     }),
   );

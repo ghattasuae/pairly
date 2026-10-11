@@ -2128,5 +2128,56 @@
       "needs": "To publish: save the job, then lock the current rubric.",
       "conflict": "The job cannot be published yet. Lock the rubric and write the English description first."
     }
+  },
+  "Shortlist": {
+    "title": "Shortlist review",
+    "eyebrow": "Hiring manager",
+    "count": "{count, plural, =0 {Nobody is on the shortlist yet.} one {# candidate on the shortlist} other {# candidates on the shortlist}}",
+    "progress": "{done} of {total} decided",
+    "keysHint": "J and K move between candidates. A, H and R choose advance, hold or reject. Ctrl and Enter records it.",
+    "backToPipeline": "Open the pipeline",
+    "empty": "Move candidates to the shortlist on the pipeline, then review them here.",
+    "overall": "{score} out of 100",
+    "notScored": "Not scored",
+    "needsPerson": "Needs a person",
+    "summary": "Summary",
+    "roleAt": "{role} at {employer}",
+    "noSummary": "No parsed CV summary. Open the CV from the pipeline.",
+    "skills": "Skills",
+    "scores": "Rubric scores",
+    "scoreOf": "{score} of {max}",
+    "mustHave": "Must have",
+    "noScores": "Not screened yet. Nothing here was scored by the AI.",
+    "evidence": "Evidence highlights",
+    "noEvidence": "No quotes from the CV yet.",
+    "interview": "Interview",
+    "noInterview": "No interview yet",
+    "interviewAt": "{status}, {when}",
+    "decision": "Your decision",
+    "advance": "Advance to {stage}",
+    "hold": "Hold",
+    "reject": "Draft a rejection",
+    "reason": "Reason",
+    "reasonRequired": "Reason, required",
+    "reasonOptional": "Reason, optional",
+    "reasonHelpHold": "Kept as a note on the candidate for the hiring team.",
+    "reasonHelpReject": "Kept on the move. The rejection email goes to the approval queue; nothing is sent until someone else approves it.",
+    "record": "Record decision",
+    "recording": "Recording",
+    "problem": {
+      "reasonRequired": "Write a reason for this decision.",
+      "reasonShort": "Write a reason of at least {min} characters.",
+      "reasonLong": "Keep the reason under {max} characters."
+    },
+    "done": {
+      "advance": "Moved to {stage}.",
+      "hold": "On hold. The reason is on the candidate's notes.",
+      "reject": "Rejection submitted for approval. Nothing is sent until someone else approves it.",
+      "rejectMoved": "Moved to {stage}. The rejection draft waits in the pipeline."
+    },
+    "draftNotSubmitted": "Moved to {stage}, but the rejection draft could not be submitted for approval. Finish it in the pipeline.",
+    "openDraft": "Open the draft",
+    "noRight": "Your role can view the shortlist but not record decisions.",
+    "holdNote": "On hold: {reason}"
   }
 }

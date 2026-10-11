@@ -8,6 +8,7 @@ import { JobRecruiters } from "@/components/hire/job-recruiters";
 import { PipelineBoard } from "@/components/hire/pipeline-board";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { Unavailable } from "@/components/states/unavailable";
+import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { getSession, twoFactorEnabled } from "@/lib/auth/server";
@@ -55,6 +56,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
   const permissions = viewer.me.permissions;
   if (!permissions.includes("hire.candidate.read")) notFound();
   const state = parseBoardState(query);
+  const tShortlist = await getTranslations({ locale, namespace: "Shortlist" });
   const [board, profile, templates, team, job] = await Promise.all([
     callApi((api) => api.GET("/v1/hire/jobs/{job_id}/pipeline", { params: { path: { job_id: jobId } } })),
     state.candidate
@@ -78,15 +80,24 @@ export default async function PipelinePage({ params, searchParams }: Props) {
   }
   return (
     <>
-      {job.ok && (
-        <div className="mx-auto w-full max-w-7xl px-5 pt-4 sm:px-8">
-          <JobRecruiters
-            job={job.data}
-            team={team.ok ? team.data : []}
-            canEdit={permissions.includes("hire.job.write")}
-          />
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-start justify-between gap-3 px-5 pt-4 sm:px-8">
+        <div className="min-w-0 flex-1">
+          {job.ok && (
+            <JobRecruiters
+              job={job.data}
+              team={team.ok ? team.data : []}
+              canEdit={permissions.includes("hire.job.write")}
+            />
+          )}
         </div>
-      )}
+        <Link
+          href={`/hire/jobs/${jobId}/shortlist`}
+          className="text-sm text-primary hover:underline"
+          data-shortlist-link
+        >
+          {tShortlist("title")}
+        </Link>
+      </div>
       <PipelineBoard
         board={board.data}
         initialState={state}
