@@ -476,9 +476,9 @@ export function JobEditor({
           {t("job.arabicToggle")}
         </label>
         {arabic && (
-          <div className="space-y-4" lang="ar" dir="rtl">
+          <div className="space-y-4">
             <FieldRow label={t("job.titleAr")} htmlFor={`${ids}-tar`}>
-              <Input id={`${ids}-tar`} value={fields.title_ar} maxLength={160} onChange={(e) => set("title_ar", e.target.value)} />
+              <Input id={`${ids}-tar`} dir="rtl" lang="ar" value={fields.title_ar} maxLength={160} onChange={(e) => set("title_ar", e.target.value)} />
             </FieldRow>
             <TextBlock
               id={`${ids}-dar`}
