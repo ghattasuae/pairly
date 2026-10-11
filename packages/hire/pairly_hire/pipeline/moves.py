@@ -28,6 +28,13 @@ an unannounced rejection): it cancels the open drafts of the application, and a
 rejection still waiting for approval is never sent (``messaging.graph`` refuses to send
 to a withdrawn application).
 
+``move_for_interview`` is the system's own move when an interview is booked (by the team
+or by the candidate through their link): the application goes to the job's
+``interview`` stage when it is in an earlier active stage, never backwards, never out of
+an outcome and never past ``interview`` (an application at ``offer`` stays there). The
+move is recorded like any other, with the system as its actor and the reason
+"interview booked", and audited, so the candidate's portal timeline shows "Interviews".
+
 ``bulk_summary`` says what a bulk action would do before anything happens: how many
 applications move, from which stages, how many drafts it would create, and that
 nothing is sent. Bulk moves share a ``batch_id`` so one undo reverts them all.
@@ -44,7 +51,7 @@ from typing import Final
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pairly_core.audit import actor_ref, audit_actor_action
+from pairly_core.audit import ActorType, actor_ref, append_audit, audit_actor_action
 from pairly_core.crypto.types import seal
 from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from pairly_core.rbac import Actor, ActorKind, authorize
@@ -68,6 +75,10 @@ UNDONE: Final = "hire.candidate.move_undone"
 UNDO_SECONDS: Final = 60
 MAX_BULK: Final = 200
 MAX_REASON: Final = 500
+# The system's own moves (``move_for_interview``): the actor id of the move and its audit.
+SYSTEM_ACTOR: Final = "hire.scheduling"
+INTERVIEW: Final = "interview"
+INTERVIEW_BOOKED: Final = "interview booked"
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,14 +115,16 @@ def _apply_status(app: HireApplication, to: Stage, now: datetime, months: int) -
 
 async def _record_move(
     session: AsyncSession,
-    actor: Actor,
+    actor: Actor | None,
     record: AppRecord,
     to: Stage,
     *,
     reason: str | None,
     batch_id: uuid.UUID | None,
     undo_of: uuid.UUID | None,
+    extra: dict[str, str] | None = None,
 ) -> HireStageMove:
+    """One move row and its audit event. ``actor`` None: the system moved it."""
     now = datetime.now(UTC)
     from_stage = record.stage_key
     entry = await ensure_entry(session, record)
@@ -120,7 +133,7 @@ async def _record_move(
     entry.updated_at = now
     months = (await org_settings(session)).rejected_retention_months
     _apply_status(record.app, to, now, months)
-    kind, actor_id = actor_ref(actor)
+    kind, actor_id = actor_ref(actor) if actor is not None else (ActorType.SYSTEM, SYSTEM_ACTOR)
     move = HireStageMove(
         id=uuid.uuid4(),
         org_id=record.app.org_id,
@@ -141,23 +154,38 @@ async def _record_move(
         setattr(move, "reason", sealed)  # noqa: B010 (typed column, sealed value)
     session.add(move)
     await session.flush()
-    await audit_actor_action(
-        session,
-        actor,
-        UNDONE if undo_of else MOVED,
-        entity_type=ENTITY,
-        entity_id=record.app.id,
-        workflow=WORKFLOW,
-        payload={
-            "job_id": str(record.app.job_id),
-            "from": from_stage,
-            "to": to.key,
-            "move_id": str(move.id),
-            "batch_id": str(batch_id) if batch_id else None,
-            "undo_of": str(undo_of) if undo_of else None,
-            "with_reason": bool(reason),
-        },
-    )
+    payload: dict[str, str | bool | None] = {
+        "job_id": str(record.app.job_id),
+        "from": from_stage,
+        "to": to.key,
+        "move_id": str(move.id),
+        "batch_id": str(batch_id) if batch_id else None,
+        "undo_of": str(undo_of) if undo_of else None,
+        "with_reason": bool(reason),
+        **(extra or {}),
+    }
+    action = UNDONE if undo_of else MOVED
+    if actor is not None:
+        await audit_actor_action(
+            session,
+            actor,
+            action,
+            entity_type=ENTITY,
+            entity_id=record.app.id,
+            workflow=WORKFLOW,
+            payload=payload,
+        )
+    else:
+        await append_audit(
+            session,
+            action=action,
+            actor_type=ActorType.SYSTEM,
+            actor_id=SYSTEM_ACTOR,
+            entity_type=ENTITY,
+            entity_id=record.app.id,
+            workflow=WORKFLOW,
+            payload=payload,
+        )
     if to.reveal_identity:
         # The one reveal state (pairly_hire.reveal), set once. An undo never hides it.
         await reveal_identity(
@@ -230,6 +258,32 @@ async def move(
         else:
             draft_id = existing.id
     return MoveResult(moved.id, record.app.id, from_stage, to.key, draft_id)
+
+
+async def move_for_interview(
+    session: AsyncSession, application_id: uuid.UUID, *, interview_id: uuid.UUID
+) -> MoveResult | None:
+    """Move an application to ``interview`` because one was booked (see the module
+    docstring). None when it stays where it is."""
+    record = await load_record(session, application_id, lock=True)
+    to = record.stages.get(INTERVIEW)
+    if to is None or to.kind != "active" or record.stage.kind != "active":
+        return None
+    here = record.stages.position(record.stage_key)
+    if here < 0 or here >= record.stages.position(to.key):
+        return None
+    from_stage = record.stage_key
+    moved = await _record_move(
+        session,
+        None,
+        record,
+        to,
+        reason=INTERVIEW_BOOKED,
+        batch_id=None,
+        undo_of=None,
+        extra={"cause": "interview_booked", "interview_id": str(interview_id)},
+    )
+    return MoveResult(moved.id, record.app.id, from_stage, to.key)
 
 
 async def move_next(

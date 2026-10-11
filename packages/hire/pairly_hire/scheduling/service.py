@@ -26,6 +26,11 @@ So two candidates racing for the last slot of the same panel get one booking and
 ``slot_taken``, and one self-scheduling link books once (``link_nonce`` changes with
 every booking; the old link reads as ``used``).
 
+A first booking (by the team or by the candidate) moves the application to the job's
+``interview`` stage when it is earlier in the pipeline, as a system move with the reason
+"interview booked" (``pipeline.moves.move_for_interview``): never backwards, never past
+``interview``.
+
 Calendar events are written through the organiser's provider (the fake calendar, or
 Google when connected) with the interview's ICS UID; a provider failure fails the
 change (fail closed).
@@ -74,6 +79,7 @@ from pairly_core.scheduling.availability import (
 from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import Author
 from pairly_hire.models import ApplicationStatus
+from pairly_hire.pipeline.moves import move_for_interview
 from pairly_hire.pipeline.records import AppRecord, load_record
 from pairly_hire.scheduling import emails
 from pairly_hire.scheduling import templates as tpl
@@ -893,6 +899,9 @@ async def _book(
             "forced": force and not by_candidate,
         },
     )
+    if not was_booked:
+        # A booked interview moves the application to the interview stage (never back).
+        await move_for_interview(session, record.app.id, interview_id=interview.id)
 
 
 async def _set_panel(

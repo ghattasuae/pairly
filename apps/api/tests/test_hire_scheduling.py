@@ -384,6 +384,9 @@ async def test_self_scheduling_link_books_once_in_the_candidates_zone(
     assert booked.status_code == 200, booked.text
     assert booked.json()["state"] == "booked"
     assert booked.json()["meeting_url"]
+    # Booking moved the application to the interview stage (a system move).
+    profile = await api.call("GET", f"/v1/hire/pipeline/applications/{app_id}", world, "recruiter")
+    assert profile.json()["stage_key"] == "interview"
     next_token = booked.json()["token"]
     assert next_token
     assert next_token != token
@@ -991,7 +994,10 @@ async def test_interviews_on_the_profile_timeline_blind_safe(
     )
     assert profile.status_code == 200, profile.text
     body = profile.json()
-    assert body["identity_hidden"] is True
+    # Booking moved the application to the interview stage, which reveals identity; the
+    # interview events themselves never carry the candidate's details.
+    assert body["stage_key"] == "interview"
+    assert body["identity_hidden"] is False
     events = [e for e in body["timeline"] if e["kind"] == "interview"]
     assert [e["detail"]["status"] for e in events] == ["cancelled", "rescheduled", "booked"]
     assert all(e["detail"]["interview_id"] == interview["id"] for e in events)
@@ -1040,3 +1046,92 @@ async def test_interviews_on_the_profile_timeline_blind_safe(
     assert kinds == ["completed", "booked"]
     # Layla's events never leak into Karim's profile.
     assert interview["id"] not in json.dumps(profile.json()["timeline"])
+
+
+# ------------------------------------------------------------------ booking moves the stage
+
+
+async def _stage(api: HireApi, world: HireWorld, app_id: str) -> str:
+    profile = await api.call("GET", f"/v1/hire/pipeline/applications/{app_id}", world, "recruiter")
+    assert profile.status_code == 200, profile.text
+    return str(profile.json()["stage_key"])
+
+
+async def _move(api: HireApi, world: HireWorld, app_id: str, stage: str) -> None:
+    moved = await api.client.post(
+        f"/v1/hire/pipeline/applications/{app_id}/move",
+        json={"to_stage": stage},
+        headers=api.headers(world, "recruiter", extra=key()),
+    )
+    assert moved.status_code == 200, moved.text
+
+
+async def test_booking_moves_the_application_to_interview_never_backwards(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    ids = await applicants(api, world, job, ["Ali Applied", "Omar Offer", "Lina Link"])
+    panel = [uid(world, "interviewer")]
+
+    # The team books an applied candidate: a system move to interview, audited.
+    app_id = ids["Ali Applied"]
+    found = await slots(api, world, app_id, panel)
+    assert (await book(api, world, app_id, panel, found["slots"][0]["start"])).status_code == 201
+    assert await _stage(api, world, app_id) == "interview"
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT from_stage, to_stage, actor_type, actor_id, reason IS NOT NULL AS has_reason "
+        "FROM hire_stage_moves WHERE application_id = :a ORDER BY created_at",
+        {"a": app_id},
+    )
+    assert [(r.from_stage, r.to_stage, r.actor_type, r.actor_id, r.has_reason) for r in rows] == [
+        ("applied", "interview", "system", "hire.scheduling", True)
+    ]
+    audit = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT actor_type, payload->>'cause' AS cause, payload->>'to' AS to_stage "
+        "FROM audit_events WHERE action = 'hire.candidate.moved' AND entity_id = :a",
+        {"a": app_id},
+    )
+    assert [(a.actor_type, a.cause, a.to_stage) for a in audit] == [
+        ("system", "interview_booked", "interview")
+    ]
+    # The reason shows on the profile timeline.
+    profile = await api.call("GET", f"/v1/hire/pipeline/applications/{app_id}", world, "recruiter")
+    assert "interview booked" in profile.text
+
+    # An application at offer stays at offer (never backwards).
+    offer_id = ids["Omar Offer"]
+    await _move(api, world, offer_id, "offer")
+    found = await slots(api, world, offer_id, panel)
+    assert (await book(api, world, offer_id, panel, found["slots"][-1]["start"])).status_code == 201
+    assert await _stage(api, world, offer_id) == "offer"
+    moves = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT count(*) AS n FROM hire_stage_moves "
+        "WHERE application_id = :a AND actor_type = 'system'",
+        {"a": offer_id},
+    )
+    assert moves[0].n == 0
+
+    # A second call (another booking later) never moves it again.
+    link_id = ids["Lina Link"]
+    await _move(api, world, link_id, "shortlist")
+    await send_link(api, world, link_id, panel)
+    assert await _stage(api, world, link_id) == "shortlist"  # a link alone books nothing
+    session = create_sessionmaker(api.engine)()
+    set_tenant(session, world.org_id, None)
+    async with session, session.begin():
+        from pairly_hire.pipeline.moves import move_for_interview
+
+        app_uuid = uuid.UUID(link_id)
+        first = await move_for_interview(session, app_uuid, interview_id=uuid.uuid4())
+        again = await move_for_interview(session, app_uuid, interview_id=uuid.uuid4())
+    assert first is not None
+    assert (first.from_stage, first.to_stage) == ("shortlist", "interview")
+    assert again is None  # already there: no second move
+    assert await _stage(api, world, link_id) == "interview"
