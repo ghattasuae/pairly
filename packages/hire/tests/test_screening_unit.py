@@ -45,10 +45,14 @@ from pairly_hire.screening.profile import (
 from synth.hire.dataset import DocSpec, build
 from synth.hire.jobs import load_jobs
 from synth.hire.screening import (
+    HIDDEN_TEXT,
     SCREENING_AS_OF,
+    BundleRouter,
     contact_for,
+    demo_extras,
     job_by_id,
     parse_spec,
+    recordings_text,
     screen,
     screening_rubric,
 )
@@ -241,6 +245,44 @@ def test_no_evidence_no_credit_for_hidden_redacted_and_invented_quotes() -> None
     assert by_id[ids[5]].flags == ("not_scored",)
     assert f"score_missing:{ids[5]}" in result.reasons
     assert result.overall == overall_score(rubric, result.scores)
+
+
+def test_demo_hidden_text_cv_is_scored_as_if_the_hidden_line_were_not_there() -> None:
+    """``make demo``'s hidden white text CV: the guardrails flag and remove the line, no
+    model input (sanitised or blinded, CV parse or scoring request) holds it, and the
+    recorded overall score equals the score of the same CV without the line."""
+    extras = demo_extras(list(specs().values()))
+    job = job_by_id("backend_engineer")
+    hidden = asyncio.run(screen(extras.hidden, job))
+    clean = asyncio.run(screen(extras.hidden_base, job))
+    needle = HIDDEN_TEXT.casefold()
+    assert needle in hidden.doc.text.casefold()  # in the file, white on white
+    assert needle not in clean.doc.text.casefold()
+    assert hidden.report.flagged
+    assert any(
+        f.type.value == "hidden_text" and f.remove and needle in f.evidence.casefold()
+        for f in hidden.report.findings
+    )
+    assert needle not in hidden.guarded.text.casefold()
+    assert hidden.blinded is not None
+    assert needle not in hidden.blinded.text.casefold()
+    # Every CV parse and scoring request. The injection classifier is the guardrail
+    # itself: it reads the raw text as quoted data to find lines like this one.
+    for entry in hidden.entries:
+        if entry["task"] != "guardrails_document_classify":
+            assert needle not in json.dumps(entry).casefold(), entry["task"]
+    assert hidden.scoring is not None
+    assert clean.scoring is not None
+    assert hidden.scoring.overall == clean.scoring.overall
+    assert hidden.scoring.scores == clean.scoring.scores
+    # The committed bundle answers the hidden text CV and both clean extras offline.
+    router = BundleRouter.of(json.loads(recordings_text())["entries"])
+    for spec in extras.all():
+        replayed = asyncio.run(screen(spec, job, router=router))
+        assert replayed.scoring is not None, spec.record.id
+    replayed = asyncio.run(screen(extras.hidden, job, router=router))
+    assert replayed.scoring is not None
+    assert replayed.scoring.overall == clean.scoring.overall
 
 
 def test_why_not_higher_is_plain_text_without_protected_attributes() -> None:

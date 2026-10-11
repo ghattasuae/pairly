@@ -68,6 +68,7 @@ env: ## Create .env with random secrets, or append the keys an existing one lack
 dev: local-up ## Start the native stack (Postgres, Valkey, api, worker, web on :3100), no containers
 
 demo: local-up ## Native stack up plus a complete Hire and expense demo (org "demo"), offline
+	$(UV) run python -m synth.hire --check
 	$(UV) run python -m pairly_hire.recordings --check
 	$(UV) run python -m pairly_hire.messaging.recordings --check
 	$(UV) run python -m synth.expense --check

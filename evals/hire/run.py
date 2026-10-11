@@ -41,6 +41,7 @@ from synth.hire.screening import (
     BundleRouter,
     Case,
     contact_for,
+    demo_extras,
     job_by_id,
     parse_spec,
     recordings_text,
@@ -582,16 +583,19 @@ def recordings_metrics(specs: dict[str, DocSpec]) -> dict[str, Any]:
     router = BundleRouter.of(parse_bundle(recordings_text()))
     job = job_by_id(DEMO_JOB)
     complete = 0
-    for doc_id in DEMO_APPLICATIONS:
-        case = asyncio.run(screen(specs[doc_id], job, router=router))
+    # The recorded demo CVs plus the three extra CVs ``make demo`` applies.
+    todo = [specs[doc_id] for doc_id in DEMO_APPLICATIONS]
+    todo += demo_extras(list(specs.values())).all()
+    for spec in todo:
+        case = asyncio.run(screen(spec, job, router=router))
         complete += int(
             case.scoring is not None and case.profile is not None and case.profile.parsed
         )
     return {
         "bundle": "synth/hire/recordings/hire_screening.json",
-        "applications": len(DEMO_APPLICATIONS),
+        "applications": len(todo),
         "answered": complete,
-        "current": complete == len(DEMO_APPLICATIONS),
+        "current": complete == len(todo),
         "note": SCRIPTED_NOTE,
     }
 
