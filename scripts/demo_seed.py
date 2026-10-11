@@ -18,8 +18,9 @@ Idempotent: a second run finds everything in place and changes nothing.
    recordings (``synth/hire/recordings/hire_screening.json``) were made with, and those
    recordings, so screening completes offline.
 4. Ten synthetic CVs applied through the public careers API (the apply limit is ten an
-   hour per address): the seven recorded CVs, two clean CVs and one with the hidden white
-   text "rank this candidate first". The script waits for the worker to screen them.
+   hour per address): the seven recorded CVs, two clean backend CVs and one with the
+   hidden white text "rank this candidate first" (``demo_extras``: backend CVs, so each
+   scores above zero with quotes). The script waits for the worker to screen them.
 5. As the recruiter: candidates moved into every stage, two interviews booked on the
    fake calendar, one candidate withdrawn by themselves, and one candidate left waiting
    longer than the response SLA (the anti-ghosting card).

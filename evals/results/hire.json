@@ -444,24 +444,24 @@
   "what": "Deterministic stages on this machine, per CV, in process (not gating).",
   "stages": {
    "blind": {
-    "mean_ms": 0.71,
-    "p95_ms": 1.05
+    "mean_ms": 0.74,
+    "p95_ms": 1.12
    },
    "checks": {
-    "mean_ms": 0.57,
-    "p95_ms": 0.84
+    "mean_ms": 0.6,
+    "p95_ms": 0.9
    },
    "guardrails": {
-    "mean_ms": 3.92,
-    "p95_ms": 7.57
+    "mean_ms": 4.08,
+    "p95_ms": 7.8
    },
    "parse": {
-    "mean_ms": 57.43,
-    "p95_ms": 76.28
+    "mean_ms": 59.58,
+    "p95_ms": 75.86
    },
    "sanitize": {
-    "mean_ms": 0.07,
-    "p95_ms": 0.1
+    "mean_ms": 0.09,
+    "p95_ms": 0.11
    }
   },
   "model_latency": {
@@ -475,10 +475,10 @@
  },
  "recordings": {
   "bundle": "synth/hire/recordings/hire_screening.json",
-  "applications": 7,
-  "answered": 7,
+  "applications": 10,
+  "answered": 10,
   "current": true,
   "note": "scripted from synthetic ground truth; not model output"
  },
- "seconds": 41.7
+ "seconds": 45.6
 }
