@@ -1913,26 +1913,19 @@
   "CalendarSettings": {
     "connections": "Calendar connections",
     "using": "Interviews use {provider}.",
-    "useFake": "the demo calendar (no calendar account is connected)",
-    "useGoogle": "your Google Calendar",
     "status": {
       "available": "Ready to connect",
-      "needs_setup": "Not connected",
-      "planned": "Planned"
+      "needs_setup": "Not connected"
     },
     "connected": "Connected as {email}",
     "connectedShort": "Connected",
-    "notConnected": "Not connected",
     "steps": "What is needed",
-    "connect": "Connect Google Calendar",
+    "connect": {
+      "google": "Connect Google Calendar",
+      "microsoft": "Connect Microsoft 365"
+    },
     "disconnect": "Disconnect",
-    "flag": "Feature flag hire.scheduling.google: {state}",
-    "on": "on",
-    "off": "off",
-    "client": "Google OAuth client on this server: {state}",
-    "configured": "set up",
-    "missing": "not set up",
-    "connectedNow": "Your Google Calendar is connected.",
+    "connectedNow": "Your calendar is connected: {provider}.",
     "availability": "When you can interview",
     "availabilityHelp": "Suggested times only fall inside these hours, in your time zone.",
     "timezone": "Time zone",
@@ -1954,7 +1947,101 @@
     "holidays": "Days off (one date per line, YYYY-MM-DD)",
     "save": "Save",
     "saved": "Saved.",
-    "invalid": "Check the times and dates, then save again."
+    "invalid": "Check the times and dates, then save again.",
+    "use": {
+      "fake": "the demo calendar (no calendar account is connected)",
+      "google": "your Google Calendar",
+      "microsoft": "your Microsoft 365 calendar"
+    },
+    "name": {
+      "google": "Google Calendar and Google Meet",
+      "microsoft": "Microsoft 365 and Teams",
+      "zoom": "Zoom"
+    },
+    "disconnectNamed": "Disconnect {provider}",
+    "zoomPersonal": "Zoom is set up once for the whole organisation by an administrator.",
+    "setup": {
+      "google": [
+        "An administrator creates a Google Cloud project for your organisation.",
+        "In that project, turn on the Google Calendar API.",
+        "Set up the OAuth consent screen (internal to your Google Workspace).",
+        "Create an OAuth client of type web application, with the Pairly callback URL.",
+        "Give the client id, secret and callback URL to Pairly as PAIRLY_GOOGLE_CLIENT_ID, PAIRLY_GOOGLE_CLIENT_SECRET and PAIRLY_GOOGLE_REDIRECT_URL.",
+        "Turn on the hire.scheduling.google feature flag in Settings, Feature flags.",
+        "Each interviewer then connects their own calendar here."
+      ],
+      "microsoft": [
+        "An administrator registers an app in Microsoft Entra ID for your organisation (accounts in your organisational directory).",
+        "Add the delegated Microsoft Graph permissions Calendars.ReadWrite, User.Read and offline_access, and grant admin consent.",
+        "Add a web redirect URI with the Pairly callback URL and create a client secret.",
+        "Give the application id, secret and callback URL to Pairly as PAIRLY_MICROSOFT_CLIENT_ID, PAIRLY_MICROSOFT_CLIENT_SECRET and PAIRLY_MICROSOFT_REDIRECT_URL (and your tenant id as PAIRLY_MICROSOFT_TENANT, optional).",
+        "Turn on the hire.scheduling.microsoft feature flag in Settings, Feature flags.",
+        "Each interviewer then connects their own calendar here."
+      ],
+      "zoom": [
+        "An administrator of your Zoom account creates a Server-to-Server OAuth app in the Zoom App Marketplace.",
+        "Give the app the scopes to create, update and delete meetings (meeting:write:admin, or the granular meeting scopes).",
+        "Activate the app, then copy its account id, client id and client secret.",
+        "Save them below in the Zoom form (they are stored encrypted and checked with Zoom first).",
+        "Turn on the hire.scheduling.zoom feature flag in Settings, Feature flags.",
+        "Organisers need a Zoom user in that account with their email, or set one host user for every interview."
+      ]
+    },
+    "org": {
+      "title": "Organisation calendar set-up",
+      "body": "What each calendar and meeting service needs before interviews can use it. Only administrators see this.",
+      "review": "{count, plural, one {# calendar change is waiting for review} other {# calendar changes are waiting for review}}",
+      "reviewNone": "No calendar changes are waiting for review.",
+      "state": {
+        "connected": "In use",
+        "needs_setup": "Needs set-up"
+      },
+      "flag": "Feature flag {flag}: {state}",
+      "on": "on",
+      "off": "off",
+      "people": "{count, plural, =0 {Nobody has connected yet} one {# person connected} other {# people connected}}",
+      "missingTitle": "Still needed",
+      "missing": {
+        "server_client": "The app registration on this server",
+        "zoom_app": "The organisation's Zoom app (the form below)",
+        "feature_flag": "Turn on the feature flag",
+        "people_connect": "At least one person connects their calendar"
+      },
+      "zoom": {
+        "title": "Zoom app",
+        "help": "Your Zoom account's Server-to-Server OAuth app. Pairly checks it with Zoom before saving and stores it encrypted. The client secret is never shown again.",
+        "none": "No Zoom app saved yet.",
+        "savedAt": "A Zoom app is saved, last checked {date}.",
+        "savedOnly": "A Zoom app is saved.",
+        "lastError": "Last error: {code}",
+        "accountId": "Account id",
+        "clientId": "Client id",
+        "clientSecret": "Client secret",
+        "secretKept": "Saved (enter a new one to replace it)",
+        "host": "Host user email (optional)",
+        "save": "Check and save",
+        "replace": "Check and replace",
+        "remove": "Remove Zoom app",
+        "saved": "Zoom app checked and saved.",
+        "removed": "Zoom app removed.",
+        "invalid": "Check the fields, then save again.",
+        "failed": "Zoom did not accept these details. Check them, then try again."
+      },
+      "reviewList": {
+        "title": "Calendar changes waiting for review",
+        "empty": "Nothing is waiting.",
+        "what": "{provider}: {action}",
+        "action": {
+          "create": "create an event",
+          "update": "change an event",
+          "cancel": "cancel an event",
+          "other": "change"
+        },
+        "refused": "The service refused it, nothing was written.",
+        "unknown": "The outcome is unknown: check the calendar.",
+        "open": "Open the candidate"
+      }
+    }
   },
   "HireDataRequests": {
     "title": "Data requests",

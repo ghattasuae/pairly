@@ -1913,26 +1913,19 @@
   "CalendarSettings": {
     "connections": "ربط التقويمات",
     "using": "تستخدم المقابلات {provider}.",
-    "useFake": "التقويم التجريبي (لا يوجد حساب تقويم مربوط)",
-    "useGoogle": "تقويم Google الخاص بك",
     "status": {
       "available": "جاهز للربط",
-      "needs_setup": "غير مربوط",
-      "planned": "مخطط له"
+      "needs_setup": "غير مربوط"
     },
     "connected": "مربوط بالحساب {email}",
     "connectedShort": "مربوط",
-    "notConnected": "غير مربوط",
     "steps": "ما المطلوب",
-    "connect": "اربط تقويم Google",
+    "connect": {
+      "google": "اربط تقويم Google",
+      "microsoft": "اربط Microsoft 365"
+    },
     "disconnect": "افصل الربط",
-    "flag": "خاصية hire.scheduling.google: {state}",
-    "on": "مفعلة",
-    "off": "متوقفة",
-    "client": "عميل Google OAuth على هذا الخادم: {state}",
-    "configured": "مضبوط",
-    "missing": "غير مضبوط",
-    "connectedNow": "تم ربط تقويم Google الخاص بك.",
+    "connectedNow": "تم ربط تقويمك: {provider}.",
     "availability": "متى يمكنك إجراء المقابلات",
     "availabilityHelp": "الأوقات المقترحة تقع ضمن هذه الساعات فقط، بتوقيتك.",
     "timezone": "المنطقة الزمنية",
@@ -1954,7 +1947,101 @@
     "holidays": "أيام العطلة (تاريخ في كل سطر، YYYY-MM-DD)",
     "save": "احفظ",
     "saved": "تم الحفظ.",
-    "invalid": "راجع الأوقات والتواريخ ثم احفظ مرة أخرى."
+    "invalid": "راجع الأوقات والتواريخ ثم احفظ مرة أخرى.",
+    "use": {
+      "fake": "التقويم التجريبي (لا يوجد حساب تقويم مربوط)",
+      "google": "تقويم Google الخاص بك",
+      "microsoft": "تقويم Microsoft 365 الخاص بك"
+    },
+    "name": {
+      "google": "تقويم Google و Google Meet",
+      "microsoft": "Microsoft 365 و Teams",
+      "zoom": "Zoom"
+    },
+    "disconnectNamed": "افصل {provider}",
+    "zoomPersonal": "يضبط المسؤول Zoom مرة واحدة للمؤسسة كلها.",
+    "setup": {
+      "google": [
+        "ينشئ المسؤول مشروع Google Cloud لمؤسستك.",
+        "فعّل Google Calendar API في ذلك المشروع.",
+        "اضبط شاشة الموافقة OAuth (داخلية لمساحة Google Workspace الخاصة بك).",
+        "أنشئ عميل OAuth من نوع تطبيق ويب، مع رابط الرجوع الخاص بـ Pairly.",
+        "أعط Pairly معرّف العميل والسر ورابط الرجوع باسم PAIRLY_GOOGLE_CLIENT_ID و PAIRLY_GOOGLE_CLIENT_SECRET و PAIRLY_GOOGLE_REDIRECT_URL.",
+        "فعّل الخاصية hire.scheduling.google من الإعدادات، الخصائص.",
+        "بعد ذلك يربط كل مُقابِل تقويمه هنا."
+      ],
+      "microsoft": [
+        "يسجّل المسؤول تطبيقا في Microsoft Entra ID لمؤسستك (حسابات دليل مؤسستك).",
+        "أضف صلاحيات Microsoft Graph المفوّضة Calendars.ReadWrite و User.Read و offline_access، وامنح موافقة المسؤول.",
+        "أضف رابط رجوع ويب برابط Pairly وأنشئ سرا للعميل.",
+        "أعط Pairly معرّف التطبيق والسر ورابط الرجوع باسم PAIRLY_MICROSOFT_CLIENT_ID و PAIRLY_MICROSOFT_CLIENT_SECRET و PAIRLY_MICROSOFT_REDIRECT_URL (ومعرّف المستأجر باسم PAIRLY_MICROSOFT_TENANT، اختياري).",
+        "فعّل الخاصية hire.scheduling.microsoft من الإعدادات، الخصائص.",
+        "بعد ذلك يربط كل مُقابِل تقويمه هنا."
+      ],
+      "zoom": [
+        "ينشئ مسؤول حساب Zoom تطبيق Server-to-Server OAuth في Zoom App Marketplace.",
+        "امنح التطبيق صلاحيات إنشاء الاجتماعات وتعديلها وحذفها (meeting:write:admin أو صلاحيات الاجتماعات المفصّلة).",
+        "فعّل التطبيق، ثم انسخ معرّف الحساب ومعرّف العميل وسر العميل.",
+        "احفظها في نموذج Zoom أدناه (تُخزَّن مشفرة ويتم التحقق منها مع Zoom أولا).",
+        "فعّل الخاصية hire.scheduling.zoom من الإعدادات، الخصائص.",
+        "يحتاج المنظِّمون إلى مستخدم Zoom في ذلك الحساب ببريدهم، أو حدّد مستخدما مضيفا واحدا لكل المقابلات."
+      ]
+    },
+    "org": {
+      "title": "إعداد التقويم للمؤسسة",
+      "body": "ما تحتاجه كل خدمة تقويم واجتماعات قبل أن تستخدمها المقابلات. يرى هذا المسؤولون فقط.",
+      "review": "{count, plural, one {تغيير واحد في التقويم بانتظار المراجعة} two {تغييران في التقويم بانتظار المراجعة} few {# تغييرات في التقويم بانتظار المراجعة} many {# تغييرا في التقويم بانتظار المراجعة} other {# تغيير في التقويم بانتظار المراجعة}}",
+      "reviewNone": "لا توجد تغييرات في التقويم بانتظار المراجعة.",
+      "state": {
+        "connected": "قيد الاستخدام",
+        "needs_setup": "يحتاج إلى إعداد"
+      },
+      "flag": "الخاصية {flag}: {state}",
+      "on": "مفعلة",
+      "off": "متوقفة",
+      "people": "{count, plural, =0 {لم يربط أحد بعد} one {شخص واحد ربط تقويمه} two {شخصان ربطا تقويمهما} few {# أشخاص ربطوا تقاويمهم} many {# شخصا ربطوا تقاويمهم} other {# شخص ربطوا تقاويمهم}}",
+      "missingTitle": "ما زال مطلوبا",
+      "missing": {
+        "server_client": "تسجيل التطبيق على هذا الخادم",
+        "zoom_app": "تطبيق Zoom الخاص بالمؤسسة (النموذج أدناه)",
+        "feature_flag": "فعّل الخاصية",
+        "people_connect": "أن يربط شخص واحد على الأقل تقويمه"
+      },
+      "zoom": {
+        "title": "تطبيق Zoom",
+        "help": "تطبيق Server-to-Server OAuth في حساب Zoom الخاص بك. يتحقق Pairly منه مع Zoom قبل الحفظ ويخزّنه مشفرا. لا يُعرض سر العميل مرة أخرى.",
+        "none": "لم يُحفظ تطبيق Zoom بعد.",
+        "savedAt": "تطبيق Zoom محفوظ، آخر تحقق {date}.",
+        "savedOnly": "تطبيق Zoom محفوظ.",
+        "lastError": "آخر خطأ: {code}",
+        "accountId": "معرّف الحساب",
+        "clientId": "معرّف العميل",
+        "clientSecret": "سر العميل",
+        "secretKept": "محفوظ (أدخل سرا جديدا لاستبداله)",
+        "host": "بريد المستخدم المضيف (اختياري)",
+        "save": "تحقق واحفظ",
+        "replace": "تحقق واستبدل",
+        "remove": "احذف تطبيق Zoom",
+        "saved": "تم التحقق من تطبيق Zoom وحفظه.",
+        "removed": "تم حذف تطبيق Zoom.",
+        "invalid": "راجع الحقول ثم احفظ مرة أخرى.",
+        "failed": "لم يقبل Zoom هذه البيانات. راجعها ثم حاول مرة أخرى."
+      },
+      "reviewList": {
+        "title": "تغييرات التقويم بانتظار المراجعة",
+        "empty": "لا شيء بانتظار المراجعة.",
+        "what": "{provider}: {action}",
+        "action": {
+          "create": "إنشاء موعد",
+          "update": "تعديل موعد",
+          "cancel": "إلغاء موعد",
+          "other": "تغيير"
+        },
+        "refused": "رفضت الخدمة الطلب، ولم يُكتب شيء.",
+        "unknown": "النتيجة غير معروفة: راجع التقويم.",
+        "open": "افتح المرشح"
+      }
+    }
   },
   "HireDataRequests": {
     "title": "طلبات البيانات",

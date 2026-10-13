@@ -30,9 +30,12 @@ vi.mock("@/lib/actions/scheduling", () => ({
   recordOutcome: vi.fn(),
   jobInterviews: vi.fn(),
   loadIntegrations: vi.fn(),
-  startGoogle: vi.fn(),
-  finishGoogle: vi.fn(),
-  disconnectGoogle: vi.fn(),
+  startConnect: vi.fn(),
+  finishConnect: vi.fn(),
+  disconnectCalendar: vi.fn(),
+  loadOrgIntegrations: vi.fn(),
+  saveZoom: vi.fn(),
+  removeZoom: vi.fn(),
   myAvailability: vi.fn(),
   saveMyAvailability: vi.fn(),
 }));
@@ -290,7 +293,7 @@ describe("CalendarSettings", () => {
           max_per_day: 4,
           holidays: [],
         }}
-        actions={{ startGoogle: vi.fn(), finishGoogle: vi.fn(), disconnectGoogle: vi.fn(), saveMyAvailability: save }}
+        actions={{ startConnect: vi.fn(), finishConnect: vi.fn(), disconnectCalendar: vi.fn(), saveMyAvailability: save }}
       />,
     );
     expect(screen.getByText("Not connected")).toBeInTheDocument();

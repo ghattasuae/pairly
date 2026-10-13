@@ -30,10 +30,9 @@ Signed in. Reads need ``hire.interview.read``; changes ``hire.interview.schedule
 * ``PUT  /settings/scheduling/integrations/zoom``     the organisation's Zoom app
                                                       (``settings.manage``), checked first
 * ``POST /settings/scheduling/integrations/zoom/remove``
-
-TODO(web): the calendar settings page in ``apps/web`` still shows Microsoft and Zoom as
-planned; it should read ``/settings/scheduling/integrations``, offer the Microsoft
-connect button and the Zoom app form to administrators.
+* ``GET  /settings/scheduling/operations``            external calendar writes waiting
+                                                      for a person's review
+                                                      (``settings.manage``)
 
 Public, no sign-in, rate limited (the candidate's ``hs1`` token in the body, never in
 a URL):
@@ -1079,6 +1078,41 @@ async def org_integrations(actor: CurrentActor, session: OrgSession) -> HireOrgI
     return HireOrgIntegrationsOut(
         providers=found,
         operations_needing_review=await operations.needing_review(session),
+    )
+
+
+class HireCalendarOperationOut(BaseModel):
+    id: uuid.UUID
+    provider: str
+    kind: str
+    action: str
+    # The provider refused (nothing was written) rather than an unknown outcome.
+    rejected: bool
+    attempts: int
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+    interview_id: uuid.UUID
+    job_id: uuid.UUID | None
+    application_id: uuid.UUID | None
+
+
+class HireCalendarOperationsOut(BaseModel):
+    items: list[HireCalendarOperationOut]
+    total: int
+
+
+@router.get("/settings/scheduling/operations", response_model=HireCalendarOperationsOut)
+async def operations_for_review(
+    actor: CurrentActor, session: OrgSession
+) -> HireCalendarOperationsOut:
+    """External calendar writes the reconciliation job could not settle, newest first
+    (``settings.manage``). Ids and error codes only, never the intended event."""
+    authorize(actor, SETTINGS_MANAGE)
+    items = await operations.review_items(session)
+    return HireCalendarOperationsOut(
+        items=[HireCalendarOperationOut.model_validate(i, from_attributes=True) for i in items],
+        total=await operations.needing_review(session),
     )
 
 

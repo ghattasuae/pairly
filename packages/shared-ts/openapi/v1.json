@@ -5125,6 +5125,122 @@
         "title": "HireCalendarIntegrationsOut",
         "type": "object"
       },
+      "HireCalendarOperationOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "kind",
+          "action",
+          "rejected",
+          "attempts",
+          "last_error",
+          "created_at",
+          "updated_at",
+          "interview_id",
+          "job_id",
+          "application_id"
+        ],
+        "title": "HireCalendarOperationOut",
+        "type": "object"
+      },
+      "HireCalendarOperationsOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalendarOperationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "HireCalendarOperationsOut",
+        "type": "object"
+      },
       "HireCalendarProviderOut": {
         "properties": {
           "account_email": {
@@ -9730,6 +9846,130 @@
           "conditions_ar"
         ],
         "title": "HireOfferTemplateOut",
+        "type": "object"
+      },
+      "HireOrgIntegrationOut": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "connected_people": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connected People"
+          },
+          "flag_enabled": {
+            "title": "Flag Enabled",
+            "type": "boolean"
+          },
+          "flag_key": {
+            "title": "Flag Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "state",
+          "flag_key",
+          "flag_enabled",
+          "configured",
+          "connected_people",
+          "status",
+          "verified_at",
+          "last_error",
+          "missing",
+          "steps"
+        ],
+        "title": "HireOrgIntegrationOut",
+        "type": "object"
+      },
+      "HireOrgIntegrationsOut": {
+        "properties": {
+          "operations_needing_review": {
+            "title": "Operations Needing Review",
+            "type": "integer"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/HireOrgIntegrationOut"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "providers",
+          "operations_needing_review"
+        ],
+        "title": "HireOrgIntegrationsOut",
         "type": "object"
       },
       "HireOtherScorecardOut": {
@@ -14930,6 +15170,48 @@
           "has_open_draft"
         ],
         "title": "HireWaitingOut",
+        "type": "object"
+      },
+      "HireZoomIn": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Account Id",
+            "type": "string"
+          },
+          "client_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_secret": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Client Secret",
+            "type": "string"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "maxLength": 254,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          }
+        },
+        "required": [
+          "account_id",
+          "client_id",
+          "client_secret"
+        ],
+        "title": "HireZoomIn",
         "type": "object"
       },
       "HitOut": {
@@ -27785,6 +28067,89 @@
         ]
       }
     },
+    "/v1/hire/scheduling/integrations/microsoft/callback": {
+      "post": {
+        "operationId": "microsoft_callback_v1_hire_scheduling_integrations_microsoft_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireConnectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Microsoft Callback",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations/microsoft/disconnect": {
+      "post": {
+        "operationId": "microsoft_disconnect_v1_hire_scheduling_integrations_microsoft_disconnect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Microsoft Disconnect",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scheduling/integrations/microsoft/start": {
+      "post": {
+        "operationId": "microsoft_start_v1_hire_scheduling_integrations_microsoft_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireConnectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Microsoft Start",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/scheduling/interviews": {
       "get": {
         "operationId": "list_interviews_v1_hire_scheduling_interviews_get",
@@ -28504,6 +28869,112 @@
           }
         },
         "summary": "Put Settings",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/scheduling/integrations": {
+      "get": {
+        "description": "The organisation's view (``settings.manage``): for Google, Microsoft and Zoom,\nwhether it is in use and what is still missing.",
+        "operationId": "org_integrations_v1_hire_settings_scheduling_integrations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOrgIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Org Integrations",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/scheduling/integrations/zoom": {
+      "put": {
+        "operationId": "save_zoom_v1_hire_settings_scheduling_integrations_zoom_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireZoomIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Zoom",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/scheduling/integrations/zoom/remove": {
+      "post": {
+        "operationId": "remove_zoom_v1_hire_settings_scheduling_integrations_zoom_remove_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarIntegrationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Remove Zoom",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/settings/scheduling/operations": {
+      "get": {
+        "description": "External calendar writes the reconciliation job could not settle, newest first\n(``settings.manage``). Ids and error codes only, never the intended event.",
+        "operationId": "operations_for_review_v1_hire_settings_scheduling_operations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalendarOperationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Operations For Review",
         "tags": [
           "hire"
         ]

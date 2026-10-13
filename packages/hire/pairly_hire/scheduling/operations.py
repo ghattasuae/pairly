@@ -36,7 +36,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.integrations.calendar.base import CalendarError
-from pairly_hire.scheduling.models import HireCalendarOperation, OperationStatus
+from pairly_hire.scheduling.models import (
+    HireCalendarOperation,
+    HireInterview,
+    OperationStatus,
+)
 
 LOCAL_PROVIDERS: Final = frozenset({"fake"})
 
@@ -148,3 +152,50 @@ async def needing_review(session: AsyncSession) -> int:
         .where(HireCalendarOperation.status == OperationStatus.FAILED.value)
     )
     return int(found or 0)
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewItem:
+    """A failed external write, with where to look (the interview's application)."""
+
+    id: uuid.UUID
+    provider: str
+    kind: str
+    action: str
+    rejected: bool
+    attempts: int
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+    interview_id: uuid.UUID
+    job_id: uuid.UUID | None
+    application_id: uuid.UUID | None
+
+
+async def review_items(session: AsyncSession, *, limit: int = 50) -> list[ReviewItem]:
+    """The operations a person should check, newest first (ids and codes only: never the
+    intended state, which may hold a meeting link)."""
+    rows = await session.execute(
+        select(HireCalendarOperation, HireInterview.job_id, HireInterview.application_id)
+        .outerjoin(HireInterview, HireInterview.id == HireCalendarOperation.interview_id)
+        .where(HireCalendarOperation.status == OperationStatus.FAILED.value)
+        .order_by(HireCalendarOperation.updated_at.desc(), HireCalendarOperation.id)
+        .limit(limit)
+    )
+    return [
+        ReviewItem(
+            id=op.id,
+            provider=op.provider,
+            kind=op.kind,
+            action=op.action,
+            rejected=op.rejected,
+            attempts=op.attempts,
+            last_error=op.last_error,
+            created_at=op.created_at,
+            updated_at=op.updated_at,
+            interview_id=op.interview_id,
+            job_id=job_id,
+            application_id=application_id,
+        )
+        for op, job_id, application_id in rows.all()
+    ]

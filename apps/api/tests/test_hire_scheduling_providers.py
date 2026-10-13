@@ -592,7 +592,10 @@ async def test_a_refused_write_and_a_lost_zoom_meeting(
 
 
 async def test_organisation_integration_status_for_microsoft_and_zoom(
-    hire_api: HireApi, world: HireWorld, monkeypatch: pytest.MonkeyPatch
+    hire_api: HireApi,
+    world: HireWorld,
+    monkeypatch: pytest.MonkeyPatch,
+    owner_engine: AsyncEngine,
 ) -> None:
     api = hire_api
     path = "/v1/hire/settings/scheduling/integrations"
@@ -626,3 +629,35 @@ async def test_organisation_integration_status_for_microsoft_and_zoom(
     assert by["zoom"]["verified_at"]
     assert by["google"]["state"] == "needs_setup"
     assert "zoom-secret-1" not in after.text
+
+    # Writes waiting for review: counted on the status, listed for administrators only.
+    review = "/v1/hire/settings/scheduling/operations"
+    assert (await api.call("GET", review, world, "recruiter")).status_code == 403
+    empty = await api.call("GET", review, world, "admin")
+    assert empty.json() == {"items": [], "total": 0}
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "INSERT INTO hire_calendar_operations (id, org_id, interview_id, organizer_id, "
+        "provider, kind, action, client_request_id, intended, status, rejected, attempts, "
+        "last_error) VALUES (:id, :org, :iv, :who, 'microsoft', 'event', 'create', :key, "
+        "CAST(:intended AS jsonb), 'failed', false, 5, 'microsoft_unavailable')",
+        {
+            "id": uuid.uuid4(),
+            "org": world.org_id,
+            "iv": uuid.uuid4(),
+            "who": world.people["recruiter"][0],
+            "key": uuid.uuid4().hex,
+            "intended": json.dumps({"meeting_url": "https://teams.example/secret"}),
+        },
+    )
+    listed = await api.call("GET", review, world, "admin")
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["total"] == 1
+    (item,) = listed.json()["items"]
+    assert item["provider"] == "microsoft"
+    assert item["last_error"] == "microsoft_unavailable"
+    assert item["application_id"] is None  # the interview is not visible here
+    assert "teams.example" not in listed.text  # never the intended event
+    status = await api.call("GET", path, world, "admin")
+    assert status.json()["operations_needing_review"] == 1

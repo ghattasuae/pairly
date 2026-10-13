@@ -3017,6 +3017,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/scheduling/integrations/microsoft/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Microsoft Callback */
+        post: operations["microsoft_callback_v1_hire_scheduling_integrations_microsoft_callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations/microsoft/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Microsoft Disconnect */
+        post: operations["microsoft_disconnect_v1_hire_scheduling_integrations_microsoft_disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scheduling/integrations/microsoft/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Microsoft Start */
+        post: operations["microsoft_start_v1_hire_scheduling_integrations_microsoft_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/scheduling/interviews": {
         parameters: {
             query?: never;
@@ -3220,6 +3271,82 @@ export type paths = {
         get: operations["get_settings_v1_hire_settings_scheduling_get"];
         /** Put Settings */
         put: operations["put_settings_v1_hire_settings_scheduling_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings/scheduling/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Org Integrations
+         * @description The organisation's view (``settings.manage``): for Google, Microsoft and Zoom,
+         *     whether it is in use and what is still missing.
+         */
+        get: operations["org_integrations_v1_hire_settings_scheduling_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings/scheduling/integrations/zoom": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Zoom */
+        put: operations["save_zoom_v1_hire_settings_scheduling_integrations_zoom_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings/scheduling/integrations/zoom/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Zoom */
+        post: operations["remove_zoom_v1_hire_settings_scheduling_integrations_zoom_remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/settings/scheduling/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Operations For Review
+         * @description External calendar writes the reconciliation job could not settle, newest first
+         *     (``settings.manage``). Ids and error codes only, never the intended event.
+         */
+        get: operations["operations_for_review_v1_hire_settings_scheduling_operations_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -5812,6 +5939,52 @@ export type components = {
             /** Using */
             using: string;
         };
+        /** HireCalendarOperationOut */
+        HireCalendarOperationOut: {
+            /** Action */
+            action: string;
+            /** Application Id */
+            application_id: string | null;
+            /** Attempts */
+            attempts: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Kind */
+            kind: string;
+            /** Last Error */
+            last_error: string | null;
+            /** Provider */
+            provider: string;
+            /** Rejected */
+            rejected: boolean;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** HireCalendarOperationsOut */
+        HireCalendarOperationsOut: {
+            /** Items */
+            items: components["schemas"]["HireCalendarOperationOut"][];
+            /** Total */
+            total: number;
+        };
         /** HireCalendarProviderOut */
         HireCalendarProviderOut: {
             /** Account Email */
@@ -7332,6 +7505,40 @@ export type components = {
             name: string;
             /** Name Ar */
             name_ar: string;
+        };
+        /** HireOrgIntegrationOut */
+        HireOrgIntegrationOut: {
+            /** Configured */
+            configured: boolean;
+            /** Connected People */
+            connected_people: number | null;
+            /** Flag Enabled */
+            flag_enabled: boolean;
+            /** Flag Key */
+            flag_key: string;
+            /** Label */
+            label: string;
+            /** Last Error */
+            last_error: string | null;
+            /** Missing */
+            missing: string[];
+            /** Provider */
+            provider: string;
+            /** State */
+            state: string;
+            /** Status */
+            status: string | null;
+            /** Steps */
+            steps: string[];
+            /** Verified At */
+            verified_at: string | null;
+        };
+        /** HireOrgIntegrationsOut */
+        HireOrgIntegrationsOut: {
+            /** Operations Needing Review */
+            operations_needing_review: number;
+            /** Providers */
+            providers: components["schemas"]["HireOrgIntegrationOut"][];
         };
         /** HireOtherScorecardOut */
         HireOtherScorecardOut: {
@@ -9219,6 +9426,17 @@ export type components = {
             stage_label: string;
             /** Waiting Days */
             waiting_days: number;
+        };
+        /** HireZoomIn */
+        HireZoomIn: {
+            /** Account Id */
+            account_id: string;
+            /** Client Id */
+            client_id: string;
+            /** Client Secret */
+            client_secret: string;
+            /** Host */
+            host?: string | null;
         };
         /** HitOut */
         HitOut: {
@@ -16654,6 +16872,79 @@ export interface operations {
             };
         };
     };
+    microsoft_callback_v1_hire_scheduling_integrations_microsoft_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireConnectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    microsoft_disconnect_v1_hire_scheduling_integrations_microsoft_disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+        };
+    };
+    microsoft_start_v1_hire_scheduling_integrations_microsoft_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireConnectOut"];
+                };
+            };
+        };
+    };
     list_interviews_v1_hire_scheduling_interviews_get: {
         parameters: {
             query?: {
@@ -17177,6 +17468,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    org_integrations_v1_hire_settings_scheduling_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOrgIntegrationsOut"];
+                };
+            };
+        };
+    };
+    save_zoom_v1_hire_settings_scheduling_integrations_zoom_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireZoomIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_zoom_v1_hire_settings_scheduling_integrations_zoom_remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarIntegrationsOut"];
+                };
+            };
+        };
+    };
+    operations_for_review_v1_hire_settings_scheduling_operations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalendarOperationsOut"];
                 };
             };
         };

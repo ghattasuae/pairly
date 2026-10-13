@@ -17,13 +17,37 @@ import type { Availability, CalendarIntegrations } from "@/lib/hire/scheduling";
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 type Day = (typeof DAYS)[number];
 
+type ConnectKey = calendarActions.CalendarProviderKey;
+const CONNECTABLE = new Set<string>(["google", "microsoft"]);
+// Which provider a consent round trip started with (the state token does not say).
+const PENDING_KEY = "pairly.calendar.connect";
+
+function rememberPending(provider: ConnectKey) {
+  try {
+    window.sessionStorage.setItem(PENDING_KEY, provider);
+  } catch {
+    // Storage off: the page falls back to the hint in the callback's query.
+  }
+}
+
+function takePending(): ConnectKey | null {
+  try {
+    const value = window.sessionStorage.getItem(PENDING_KEY);
+    window.sessionStorage.removeItem(PENDING_KEY);
+    return value === "google" || value === "microsoft" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Settings, Calendar: the person's calendar connections and when they can interview.
  *
- * Google Calendar shows "not connected" with the steps an administrator takes (a Google
- * Cloud project and an OAuth client, then the `hire.scheduling.google` flag); nothing here
- * creates an account. Microsoft 365 and Zoom are planned (M3). After Google's consent
- * screen the browser comes back here with `?code&state`, which is finished once.
+ * Google Calendar and Microsoft 365 each show their state and, when the organisation and
+ * this server have them set up, a connect or disconnect button for this person. A
+ * provider that is not set up shows the steps an administrator takes; nothing here
+ * creates an account. Zoom is the organisation's (see `CalendarOrgSettings`). After the
+ * consent screen the browser comes back here with `?code&state`, finished once.
  */
 export function CalendarSettings({
   initialIntegrations,
@@ -33,26 +57,24 @@ export function CalendarSettings({
 }: {
   initialIntegrations: CalendarIntegrations;
   initialAvailability: Availability | null;
-  callback?: { code: string; state: string } | null;
-  actions?: Pick<
-    typeof calendarActions,
-    "startGoogle" | "finishGoogle" | "disconnectGoogle" | "saveMyAvailability"
-  >;
+  callback?: { code: string; state: string; hint?: ConnectKey } | null;
+  actions?: Pick<typeof calendarActions, "startConnect" | "finishConnect" | "disconnectCalendar" | "saveMyAvailability">;
 }) {
   const t = useTranslations("CalendarSettings");
   const [integrations, setIntegrations] = useState(initialIntegrations);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!callback) return;
     window.history.replaceState(null, "", window.location.pathname);
+    const provider = takePending() ?? callback.hint ?? "google";
     let cancelled = false;
-    void actions.finishGoogle(callback.code, callback.state).then((result) => {
+    void actions.finishConnect(provider, callback.code, callback.state).then((result) => {
       if (cancelled) return;
       if (result.ok) {
         setIntegrations(result.integrations);
-        setMessage(t("connectedNow"));
+        setMessage(t("connectedNow", { provider: t(`name.${provider}`) }));
       } else setMessage(t("invalid"));
     });
     return () => {
@@ -60,20 +82,35 @@ export function CalendarSettings({
     };
   }, [actions, callback, t]);
 
-  const connect = async () => {
-    setBusy(true);
-    const result = await actions.startGoogle();
-    setBusy(false);
-    if (result.ok) window.location.assign(result.url);
+  const connect = async (provider: ConnectKey) => {
+    setBusy(provider);
+    const result = await actions.startConnect(provider);
+    setBusy(null);
+    if (result.ok) {
+      rememberPending(provider);
+      window.location.assign(result.url);
+    } else setMessage(t("invalid"));
+  };
+
+  const disconnect = async (provider: ConnectKey) => {
+    setBusy(provider);
+    const result = await actions.disconnectCalendar(provider);
+    setBusy(null);
+    if (result.ok) setIntegrations(result.integrations);
     else setMessage(t("invalid"));
   };
 
-  const disconnect = async () => {
-    setBusy(true);
-    const result = await actions.disconnectGoogle();
-    setBusy(false);
-    if (result.ok) setIntegrations(result.integrations);
+  // The steps in the page's language (the API's are English); the API's as a fallback.
+  const setupSteps = (provider: string, fallback: string[]): string[] => {
+    if (provider !== "google" && provider !== "microsoft" && provider !== "zoom") return fallback;
+    const found: unknown = t.raw(`setup.${provider}`);
+    return Array.isArray(found) && found.every((s) => typeof s === "string") ? found : fallback;
   };
+
+  const using =
+    integrations.using === "google" || integrations.using === "microsoft"
+      ? t(`use.${integrations.using}`)
+      : t("use.fake");
 
   return (
     <div className="space-y-10">
@@ -82,7 +119,7 @@ export function CalendarSettings({
           {t("connections")}
         </h2>
         <p className="text-sm" data-calendar-using={integrations.using}>
-          {t("using", { provider: integrations.using === "google" ? t("useGoogle") : t("useFake") })}
+          {t("using", { provider: using })}
         </p>
         {message && (
           <p role="status" className="text-sm font-medium">
@@ -90,59 +127,65 @@ export function CalendarSettings({
           </p>
         )}
         <ul className="grid gap-3 md:grid-cols-3">
-          {integrations.providers.map((provider) => (
-            <li
-              key={provider.provider}
-              className="space-y-3 rounded-xl border bg-surface p-5 shadow-soft"
-              data-calendar-provider={provider.provider}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-medium">{provider.label}</p>
-                <Badge variant={provider.connected ? "default" : "outline"}>
-                  {provider.connected ? (
-                    <CalendarCheck2 className="size-3" aria-hidden />
-                  ) : (
-                    <CalendarOff className="size-3" aria-hidden />
-                  )}
-                  {provider.connected ? t("connectedShort") : t(`status.${provider.availability}` as "status.planned")}
-                </Badge>
-              </div>
-              {provider.connected && provider.account_email && (
-                <p className="text-xs text-muted-foreground">{t("connected", { email: provider.account_email })}</p>
-              )}
-              {provider.provider === "google" && (
-                <dl className="space-y-1 text-xs text-muted-foreground">
-                  <dt className="sr-only">{t("flag", { state: "" })}</dt>
-                  <dd>{t("flag", { state: provider.flag_enabled ? t("on") : t("off") })}</dd>
-                  <dt className="sr-only">{t("client", { state: "" })}</dt>
-                  <dd>{t("client", { state: provider.configured ? t("configured") : t("missing") })}</dd>
-                </dl>
-              )}
-              {!provider.connected && (
-                <details className="text-sm" open={provider.provider === "google"}>
-                  <summary className="cursor-pointer font-medium">{t("steps")}</summary>
-                  <ol className="mt-2 list-decimal space-y-1 ps-5 text-xs text-muted-foreground">
-                    {provider.steps.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ol>
-                </details>
-              )}
-              {provider.provider === "google" &&
-                (provider.connected ? (
-                  <Button type="button" size="sm" variant="outline" onClick={() => void disconnect()} disabled={busy}>
-                    {t("disconnect")}
-                  </Button>
-                ) : (
-                  provider.availability === "available" && (
-                    <Button type="button" size="sm" onClick={() => void connect()} disabled={busy}>
-                      {busy && <Loader2 className="animate-spin" aria-hidden />}
-                      {t("connect")}
+          {integrations.providers.map((provider) => {
+            const key = CONNECTABLE.has(provider.provider) ? (provider.provider as ConnectKey) : null;
+            const label = t(`name.${provider.provider === "zoom" ? "zoom" : (key ?? "google")}`);
+            return (
+              <li
+                key={provider.provider}
+                className="space-y-3 rounded-xl border bg-surface p-5 shadow-soft"
+                data-calendar-provider={provider.provider}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium">{label}</p>
+                  <Badge variant={provider.connected ? "default" : "outline"}>
+                    {provider.connected ? (
+                      <CalendarCheck2 className="size-3" aria-hidden />
+                    ) : (
+                      <CalendarOff className="size-3" aria-hidden />
+                    )}
+                    {provider.connected
+                      ? t("connectedShort")
+                      : t(provider.availability === "available" ? "status.available" : "status.needs_setup")}
+                  </Badge>
+                </div>
+                {provider.connected && provider.account_email && (
+                  <p className="text-xs text-muted-foreground">{t("connected", { email: provider.account_email })}</p>
+                )}
+                {provider.provider === "zoom" && <p className="text-xs text-muted-foreground">{t("zoomPersonal")}</p>}
+                {!provider.connected && provider.availability !== "available" && (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">{t("steps")}</summary>
+                    <ol className="mt-2 list-decimal space-y-1 ps-5 text-xs text-muted-foreground" dir="auto">
+                      {setupSteps(provider.provider, provider.steps).map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+                {key &&
+                  (provider.connected ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void disconnect(key)}
+                      disabled={busy !== null}
+                      aria-label={t("disconnectNamed", { provider: label })}
+                    >
+                      {t("disconnect")}
                     </Button>
-                  )
-                ))}
-            </li>
-          ))}
+                  ) : (
+                    provider.availability === "available" && (
+                      <Button type="button" size="sm" onClick={() => void connect(key)} disabled={busy !== null}>
+                        {busy === key && <Loader2 className="animate-spin" aria-hidden />}
+                        {t(`connect.${key}`)}
+                      </Button>
+                    )
+                  ))}
+              </li>
+            );
+          })}
         </ul>
       </section>
       {initialAvailability && <AvailabilityForm initial={initialAvailability} save={actions.saveMyAvailability} />}

@@ -16,6 +16,7 @@ import type {
   Availability,
   CalendarIntegrations,
   Interview,
+  OrgIntegrations,
   SchedulingPanelData,
   SlotCheck,
   SlotsResult,
@@ -247,23 +248,92 @@ export async function loadIntegrations(): Promise<ActionResult<{ integrations: C
   return toAction(result, (integrations) => ({ integrations }));
 }
 
-export async function startGoogle(): Promise<ActionResult<{ url: string }>> {
-  const result = await callApi((api) => api.POST("/v1/hire/scheduling/integrations/google/start"));
+const calendarProvider = z.enum(["google", "microsoft"]);
+export type CalendarProviderKey = z.infer<typeof calendarProvider>;
+
+/** The consent URL of `provider` (Google or Microsoft 365) for the signed-in person. */
+export async function startConnect(provider: CalendarProviderKey): Promise<ActionResult<{ url: string }>> {
+  const parsed = calendarProvider.safeParse(provider);
+  if (!parsed.success) return bad;
+  const result = await callApi((api) =>
+    parsed.data === "microsoft"
+      ? api.POST("/v1/hire/scheduling/integrations/microsoft/start")
+      : api.POST("/v1/hire/scheduling/integrations/google/start"),
+  );
   return toAction(result, (data) => ({ url: data.url }));
 }
 
-export async function finishGoogle(code: string, state: string): Promise<ActionResult<{ integrations: CalendarIntegrations }>> {
-  const parsed = z.object({ code: z.string().min(1).max(512), state: z.string().min(1).max(300) }).safeParse({ code, state });
+/** Finish the consent round trip (`?code&state` on the way back). */
+export async function finishConnect(
+  provider: CalendarProviderKey,
+  code: string,
+  state: string,
+): Promise<ActionResult<{ integrations: CalendarIntegrations }>> {
+  const parsed = z
+    .object({ provider: calendarProvider, code: z.string().min(1).max(512), state: z.string().min(1).max(300) })
+    .safeParse({ provider, code, state });
   if (!parsed.success) return bad;
+  const body = { code: parsed.data.code, state: parsed.data.state };
   const result = await callApi((api) =>
-    api.POST("/v1/hire/scheduling/integrations/google/callback", { body: parsed.data }),
+    parsed.data.provider === "microsoft"
+      ? api.POST("/v1/hire/scheduling/integrations/microsoft/callback", { body })
+      : api.POST("/v1/hire/scheduling/integrations/google/callback", { body }),
   );
   return toAction(result, (integrations) => ({ integrations }));
 }
 
-export async function disconnectGoogle(): Promise<ActionResult<{ integrations: CalendarIntegrations }>> {
-  const result = await callApi((api) => api.POST("/v1/hire/scheduling/integrations/google/disconnect"));
+export async function disconnectCalendar(
+  provider: CalendarProviderKey,
+): Promise<ActionResult<{ integrations: CalendarIntegrations }>> {
+  const parsed = calendarProvider.safeParse(provider);
+  if (!parsed.success) return bad;
+  const result = await callApi((api) =>
+    parsed.data === "microsoft"
+      ? api.POST("/v1/hire/scheduling/integrations/microsoft/disconnect")
+      : api.POST("/v1/hire/scheduling/integrations/google/disconnect"),
+  );
   return toAction(result, (integrations) => ({ integrations }));
+}
+
+/** The organisation's view of Google, Microsoft and Zoom (`hire.settings.manage`). */
+export async function loadOrgIntegrations(): Promise<ActionResult<{ org: OrgIntegrations }>> {
+  const result = await callApi((api) => api.GET("/v1/hire/settings/scheduling/integrations"));
+  return toAction(result, (org) => ({ org }));
+}
+
+const zoomField = z.string().trim().min(1).max(128);
+
+/** Save the organisation's Zoom app (checked with Zoom first). The secret goes one way:
+ * the API never returns it. */
+export async function saveZoom(input: {
+  accountId: string;
+  clientId: string;
+  clientSecret: string;
+  host: string;
+}): Promise<ActionResult<{ org: OrgIntegrations }>> {
+  const parsed = z
+    .object({
+      accountId: zoomField,
+      clientId: zoomField,
+      clientSecret: zoomField,
+      host: z.union([z.literal(""), z.email().max(254)]),
+    })
+    .safeParse({ ...input, host: input.host.trim() });
+  if (!parsed.success) return bad;
+  const p = parsed.data;
+  const saved = await callApi((api) =>
+    api.PUT("/v1/hire/settings/scheduling/integrations/zoom", {
+      body: { account_id: p.accountId, client_id: p.clientId, client_secret: p.clientSecret, host: p.host || null },
+    }),
+  );
+  if (!saved.ok) return { ok: false, code: saved.code };
+  return loadOrgIntegrations();
+}
+
+export async function removeZoom(): Promise<ActionResult<{ org: OrgIntegrations }>> {
+  const removed = await callApi((api) => api.POST("/v1/hire/settings/scheduling/integrations/zoom/remove"));
+  if (!removed.ok) return { ok: false, code: removed.code };
+  return loadOrgIntegrations();
 }
 
 export async function myAvailability(): Promise<ActionResult<{ availability: Availability }>> {
