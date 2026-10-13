@@ -40,7 +40,7 @@ export function NotProvisioned({ email, code }: { email: string; code: string })
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>
           {t("candidate")}{" "}
-          <Link href="/portal" className="font-medium text-primary hover:underline" data-portal-link>
+          <Link href="/portal" className="link-inline font-medium" data-portal-link>
             {t("candidateLink")}
           </Link>
         </p>

@@ -1456,6 +1456,18 @@
       "none": "Nobody yet",
       "unknown": "Someone outside the team",
       "summary": "Owner: {owner}. Co-recruiters: {count}."
+    },
+    "offerStatus": {
+      "draft": "Offer drafted",
+      "pending_approval": "Offer awaiting approval",
+      "changes_requested": "Offer changes requested",
+      "approved": "Offer approved",
+      "rejected": "Offer not approved",
+      "failed": "Offer not sent",
+      "sending": "Offer sent",
+      "accepted": "Offer accepted",
+      "declined": "Offer declined",
+      "withdrawn": "Offer withdrawn"
     }
   },
   "CandidatePrefs": {
@@ -2739,7 +2751,8 @@
       "interview": "Interview",
       "offer": "Offer",
       "hired": "Hired"
-    }
+    },
+    "results": "Selection rates by group"
   },
   "HireCalibration": {
     "title": "Rubric calibration",

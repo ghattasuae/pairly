@@ -21,7 +21,7 @@ export function BackupCodeNotice({ remaining }: { remaining: number | null }) {
         </h2>
         <p className="text-muted-foreground">
           {remaining === null ? t("unknown") : t("remaining", { count: remaining })}{" "}
-          <Link href="/settings/security" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link href="/settings/security" className="link-inline font-medium">
             {t("manage")}
           </Link>
         </p>

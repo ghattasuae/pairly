@@ -2,7 +2,28 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { ArrowRight, CalendarClock, Clock, EyeOff, Filter, Flag, Loader2, Mail, Search, Share2, UserRoundX } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CalendarClock,
+  CircleCheck,
+  CircleX,
+  Clock,
+  EyeOff,
+  FilePen,
+  Filter,
+  Flag,
+  Hourglass,
+  Loader2,
+  Mail,
+  type LucideIcon,
+  Search,
+  Send,
+  Share2,
+  TriangleAlert,
+  Undo2,
+  UserRoundX,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
@@ -975,6 +996,7 @@ function CardItem({
               {t(`messageStatus.${card.open_message}` as "messageStatus.draft")}
             </Badge>
           )}
+          {card.offer_status && <OfferStatusBadge status={card.offer_status} />}
           {interview && (
             <InterviewChip
               interview={interview}
@@ -995,6 +1017,33 @@ function CardItem({
         </div>
       </article>
     </li>
+  );
+}
+
+/** Icon per offer status, so the badge never relies on colour alone. */
+const OFFER_ICONS: Record<string, LucideIcon> = {
+  draft: FilePen,
+  pending_approval: Hourglass,
+  changes_requested: FilePen,
+  approved: BadgeCheck,
+  rejected: CircleX,
+  failed: TriangleAlert,
+  sending: Send,
+  accepted: CircleCheck,
+  declined: CircleX,
+  withdrawn: Undo2,
+};
+
+/** The newest offer's status on a pipeline card (words plus icon). Unknown values are skipped. */
+export function OfferStatusBadge({ status }: { status: string }) {
+  const t = useTranslations("Hire");
+  const Icon = Object.hasOwn(OFFER_ICONS, status) ? OFFER_ICONS[status] : undefined;
+  if (!Icon) return null;
+  return (
+    <Badge variant={status === "accepted" ? "default" : "outline"} data-offer-state={status}>
+      <Icon className="size-3" aria-hidden />
+      {t(`offerStatus.${status}` as "offerStatus.draft")}
+    </Badge>
   );
 }
 

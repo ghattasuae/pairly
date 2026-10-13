@@ -381,9 +381,21 @@ test("2. offer: from a template, approved by the hiring manager and HR, accepted
   logCheck({ name: "hire complete 2: offer from template, approved, accepted in the portal", status: "pass" });
 });
 
-test("2b. the pipeline shows the accepted offer", async () => {
-  // The board API returns `offer_status` per card, but the pipeline board does not render it.
-  test.fixme(true, "pipeline card has no offer status UI (HireBoardCardOut.offer_status is not rendered)");
+test("2b. the pipeline shows the accepted offer", async ({ browser }) => {
+  const { applicationId } = loadShared();
+  expect(applicationId, "step 2 found the application").toBeTruthy();
+  const recruiter = await as(browser, STATES.recruiter);
+  const r = recruiter.page;
+  await r.goto("/en/hire");
+  await r.locator(`[data-job-link="${OFFER_JOB}"]`).click();
+  await r.waitForURL(/\/hire\/jobs\/[0-9a-f-]{36}\/pipeline/);
+  const card = r.locator(`[data-card="${applicationId}"]`);
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  const badge = card.locator("[data-offer-state]");
+  await expect(badge).toHaveAttribute("data-offer-state", "accepted", { timeout: 20_000 });
+  await expect(badge).toHaveText("Offer accepted");
+  await recruiter.context.close();
+  logCheck({ name: "hire complete 2b: the pipeline card shows the accepted offer", status: "pass" });
 });
 
 test("3. reference: the referee answers through the emailed link, the recruiter sees the summary", async ({ browser }) => {

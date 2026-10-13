@@ -8,15 +8,26 @@ import type { HireSurveyGroup, HireSurveyNamed, HireSurveyResults } from "@/lib/
 const QUESTIONS = ["overall", "communication", "respect"] as const;
 const OUTCOMES = ["hired", "rejected", "withdrawn"] as const;
 
-function Group({ title, group, min }: { title: string; group: HireSurveyGroup; min: number }) {
+function Group({
+  title,
+  group,
+  min,
+  level = "h3",
+}: {
+  title: string;
+  group: HireSurveyGroup;
+  min: number;
+  level?: "h2" | "h3";
+}) {
   const t = useTranslations("HireSurveyResults");
   const format = useFormatter();
   const id = useId();
+  const Heading = level;
   return (
     <section aria-labelledby={id} className="space-y-2 rounded-lg border p-4" data-survey-group>
-      <h3 id={id} className="font-medium">
+      <Heading id={id} className={level === "h2" ? "font-display text-xl" : "font-medium"}>
         {title}
-      </h3>
+      </Heading>
       {group.suppressed ? (
         <p className="text-sm text-muted-foreground">{t("hidden", { count: group.responses, min })}</p>
       ) : (
@@ -78,7 +89,7 @@ export function SurveyResults({ results, named }: { results: HireSurveyResults; 
           </p>
         </div>
       </div>
-      <Group title={t("overall")} group={results.overall} min={results.min_group} />
+      <Group title={t("overall")} group={results.overall} min={results.min_group} level="h2" />
       <div className="space-y-3">
         <h2 className="font-display text-xl">{t("byOutcome")}</h2>
         <div className="grid gap-3 md:grid-cols-3">

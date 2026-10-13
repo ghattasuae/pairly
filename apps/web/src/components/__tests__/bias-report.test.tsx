@@ -13,6 +13,15 @@ vi.mock("@/lib/actions/fairness", () => ({ startFairnessRun: vi.fn() }));
 const { BiasReport } = await import("../hire/bias-report");
 const { FairnessRunButton } = await import("../hire/fairness-run-button");
 
+/** Heading levels in document order; each one may go at most one level deeper than the last. */
+function headingLevels(): number[] {
+  return Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((h) => Number(h.tagName[1]));
+}
+function expectNoSkippedLevels(levels: number[], start: number): void {
+  expect(levels[0]).toBe(start);
+  levels.slice(1).forEach((level, i) => expect(level - (levels[i] ?? start)).toBeLessThanOrEqual(1));
+}
+
 function group(patch: Partial<HireBiasGroup>): HireBiasGroup {
   return {
     group: "man",
@@ -86,6 +95,22 @@ describe("BiasReport", () => {
     unmount();
     renderWithIntl(<BiasReport report={REPORT} exportHref={null} />);
     expect(screen.queryByRole("link", { name: "Download the bias audit pack" })).toBeNull();
+  });
+
+  it("keeps the heading outline: section h2, category h3, step h4", () => {
+    renderWithIntl(<BiasReport report={REPORT} exportHref={null} />);
+    const levels = headingLevels();
+    expectNoSkippedLevels(levels, 2);
+    expect(levels).toEqual([2, 2, 3, 4]);
+    expect(screen.getByRole("heading", { level: 2, name: "Selection rates by group" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Gender" })).toBeInTheDocument();
+  });
+
+  it("underlines the audit pack link inside the text, in Arabic too", () => {
+    renderWithIntl(<BiasReport report={REPORT} exportHref="/api/hire/bias/export" />, "ar");
+    const link = screen.getByRole("link", { name: "نزّل حزمة تدقيق التحيز" });
+    expect(link).toHaveClass("link-inline");
+    expect(screen.getByRole("heading", { level: 2, name: "نسب الاختيار حسب الفئة" })).toBeInTheDocument();
   });
 
   it("renders in Arabic", () => {

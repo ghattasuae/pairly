@@ -116,7 +116,7 @@ function FairnessSummary({ summary, action }: { summary: Record<string, unknown>
   const run = summary as FairnessRunSummary | null;
   return (
     <div className="space-y-2 rounded-lg border p-4 text-sm" data-fairness>
-      <p className="font-medium">{t("title")}</p>
+      <h2 className="font-display text-xl">{t("title")}</h2>
       {run ? (
         <>
           <p className="text-muted-foreground">
@@ -160,6 +160,7 @@ export function BiasReport({
 }) {
   const t = useTranslations("HireBias");
   const stageLabel = (key: string) => stageLabels[key] ?? key;
+  const resultsId = useId();
   return (
     <div className="space-y-8" data-bias-report>
       <div className="space-y-2 rounded-lg border p-4 text-sm">
@@ -168,7 +169,7 @@ export function BiasReport({
         <p className="text-muted-foreground">{t("notLegal")}</p>
         {exportHref ? (
           <p>
-            <a href={exportHref} download className="text-primary hover:underline" data-bias-export>
+            <a href={exportHref} download className="link-inline" data-bias-export>
               {t("export")}
             </a>{" "}
             <span className="text-xs text-muted-foreground">{t("exportNote")}</span>
@@ -176,9 +177,14 @@ export function BiasReport({
         ) : null}
       </div>
       <FairnessSummary summary={report.fairness ?? null} action={fairnessAction} />
-      {report.categories.map((c) => (
-        <Category key={c.category} category={c} stageLabel={stageLabel} />
-      ))}
+      <section aria-labelledby={resultsId} className="space-y-8" data-bias-results>
+        <h2 id={resultsId} className="font-display text-xl">
+          {t("results")}
+        </h2>
+        {report.categories.map((c) => (
+          <Category key={c.category} category={c} stageLabel={stageLabel} />
+        ))}
+      </section>
     </div>
   );
 }

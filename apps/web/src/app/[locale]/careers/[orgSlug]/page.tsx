@@ -61,7 +61,7 @@ export default async function CareersPage({ params }: Props) {
       </section>
       <p className="text-sm text-muted-foreground">
         {tPortal("signIn.title")}:{" "}
-        <Link href={`/portal?org=${orgSlug}`} className="text-primary underline-offset-4 hover:underline" data-portal-link>
+        <Link href={`/portal?org=${orgSlug}`} className="link-inline" data-portal-link>
           {tPortal("signIn.send")}
         </Link>
       </p>

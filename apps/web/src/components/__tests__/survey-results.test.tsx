@@ -9,6 +9,15 @@ import { renderWithIntl } from "../../../test/intl";
 
 const { SurveyResults } = await import("../hire/survey-results");
 
+/** Heading levels in document order; each one may go at most one level deeper than the last. */
+function headingLevels(): number[] {
+  return Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((h) => Number(h.tagName[1]));
+}
+function expectNoSkippedLevels(levels: number[], start: number): void {
+  expect(levels[0]).toBe(start);
+  levels.slice(1).forEach((level, i) => expect(level - (levels[i] ?? start)).toBeLessThanOrEqual(1));
+}
+
 const RESULTS: HireSurveyResults = {
   invited: 20,
   responses: 8,
@@ -60,6 +69,15 @@ describe("SurveyResults", () => {
     expect(screen.getByText("Answers with a name attached")).toBeInTheDocument();
     expect(screen.getByText("Clear process.")).toBeInTheDocument();
     expect(screen.getByText(/Overall experience: 4/)).toBeInTheDocument();
+  });
+
+  it("keeps the heading outline: h2 sections, h3 groups under By outcome", () => {
+    renderWithIntl(<SurveyResults results={RESULTS} named={[]} />);
+    const levels = headingLevels();
+    expectNoSkippedLevels(levels, 2);
+    expect(levels).toEqual([2, 2, 3, 3, 3, 2]);
+    expect(screen.getByRole("heading", { level: 2, name: "All outcomes" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Hired" })).toBeInTheDocument();
   });
 
   it("renders in Arabic", () => {

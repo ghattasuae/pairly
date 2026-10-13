@@ -46,7 +46,7 @@ vi.mock("@/lib/actions/hire", () => ({
 
 Element.prototype.scrollIntoView = vi.fn();
 
-const { PipelineBoard } = await import("../hire/pipeline-board");
+const { PipelineBoard, OfferStatusBadge } = await import("../hire/pipeline-board");
 const { ComposePanel } = await import("../hire/compose-panel");
 const { Toaster } = await import("../ui/toaster");
 
@@ -265,6 +265,37 @@ describe("PipelineBoard", () => {
     const screening = screen.getByRole("listitem", { name: "Screening" });
     expect(within(screening).getByText("Person 3")).toBeInTheDocument();
     expect(within(screening).getByText("9 days")).toBeInTheDocument();
+  });
+
+  it("shows the newest offer's status on the card, in words with an icon", () => {
+    const board = { ...BOARD, cards: [card(1, { stage_key: "hired", offer_status: "accepted" }), card(2)] };
+    setup(actions(), { board });
+    const badge = document.querySelector('[data-card="00000001-0000-4000-8000-000000000000"] [data-offer-state]');
+    expect(badge).toHaveAttribute("data-offer-state", "accepted");
+    expect(badge).toHaveTextContent("Offer accepted");
+    expect(badge?.querySelector("svg")).not.toBeNull();
+    expect(document.querySelector('[data-card="00000002-0000-4000-8000-000000000000"] [data-offer-state]')).toBeNull();
+  });
+
+  it("labels every offer status in English and Arabic, and skips unknown ones", () => {
+    const cases: [string, string, string][] = [
+      ["draft", "Offer drafted", "مسودة عرض"],
+      ["pending_approval", "Offer awaiting approval", "العرض بانتظار الموافقة"],
+      ["sending", "Offer sent", "أرسل العرض"],
+      ["accepted", "Offer accepted", "قبل المرشح العرض"],
+      ["declined", "Offer declined", "رفض المرشح العرض"],
+      ["withdrawn", "Offer withdrawn", "سحب العرض"],
+    ];
+    for (const [status, en, ar] of cases) {
+      const a = renderWithIntl(<OfferStatusBadge status={status} />);
+      expect(screen.getByText(en)).toBeInTheDocument();
+      a.unmount();
+      const b = renderWithIntl(<OfferStatusBadge status={status} />, "ar");
+      expect(screen.getByText(ar)).toBeInTheDocument();
+      b.unmount();
+    }
+    const { container } = renderWithIntl(<OfferStatusBadge status="constructor" />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("moves a candidate to the next stage in one click, with a 10 second undo", async () => {

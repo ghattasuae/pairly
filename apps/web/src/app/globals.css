@@ -205,6 +205,16 @@
       100% 100%;
   }
 
+  /* A link inside running text: always underlined, so it never relies on colour alone
+     (WCAG 1.4.1, axe link-in-text-block). Focus uses the global :focus-visible ring. */
+  .link-inline {
+    @apply text-primary underline decoration-1 underline-offset-4;
+  }
+
+  .link-inline:hover {
+    @apply decoration-2;
+  }
+
   /* Small-caps label above sections. */
   .eyebrow {
     @apply text-[0.7rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase;
