@@ -55,6 +55,9 @@ Erased in step 1:
   like the others (by entity id).
 * pre-employment checklist: the file names (step 1) and the encrypted files (step 2,
   with the other stored files); the status and dates stay.
+* experience survey: a response the candidate chose to name becomes anonymous (its
+  comment removed); their unused survey link stops working. Anonymous responses were
+  never linked to them.
 * references: the referee's name and address (replaced), their answers (removed), the
   kept reference summaries (content emptied); their links and sessions end. Status and
   times stay.
@@ -127,6 +130,7 @@ from pairly_hire.scheduling.models import HireInterview
 from pairly_hire.screening.models import HireScreening
 from pairly_hire.screening.service import read_details
 from pairly_hire.selfid.models import HireSelfIdentification
+from pairly_hire.survey.models import HireSurveyInvite, HireSurveyResponse
 
 WORKFLOW: Final = "hire"
 ENTITY: Final = "hire.data_request"
@@ -232,6 +236,7 @@ class ErasureCounts:
     references: int = 0
     offers: int = 0
     checklist: int = 0
+    surveys: int = 0
     screenings: int = 0
     notifications: int = 0
     decisions: int = 0
@@ -551,6 +556,29 @@ async def _erase_checklist(session: AsyncSession, scope: _Scope, now: datetime) 
     return count
 
 
+async def _erase_survey(session: AsyncSession, scope: _Scope) -> int:
+    count = 0
+    for invite in await session.scalars(
+        select(HireSurveyInvite)
+        .where(
+            HireSurveyInvite.candidate_id == scope.candidate_id, HireSurveyInvite.status == "sent"
+        )
+        .with_for_update()
+    ):
+        invite.status = "used"
+    for response in await session.scalars(
+        select(HireSurveyResponse)
+        .where(HireSurveyResponse.candidate_id == scope.candidate_id)
+        .with_for_update()
+    ):
+        response.named = False
+        response.candidate_id = None
+        response.application_id = None
+        response.comment = None
+        count += 1
+    return count
+
+
 async def _erase_offers(session: AsyncSession, scope: _Scope, now: datetime) -> int:
     count = 0
     for offer in await session.scalars(
@@ -842,6 +870,7 @@ async def erase_candidate(
     references = await _erase_references(session, scope, now)
     offers = await _erase_offers(session, scope, now)
     checklist = await _erase_checklist(session, scope, now)
+    surveys = await _erase_survey(session, scope)
     screenings = await _erase_screenings(session, scope, now)
     await _erase_portal(session, scope)
     documents = await _erase_documents(session, scope, now)
@@ -862,6 +891,7 @@ async def erase_candidate(
         references=references,
         offers=offers,
         checklist=checklist,
+        surveys=surveys,
         screenings=screenings,
         notifications=notifications,
         decisions=decisions,

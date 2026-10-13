@@ -33,6 +33,7 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_scorecard_reminders``: feedback reminders 2 and 24 hours after
                    an interview, and "remind me later" (``interviewing.reminders``);
                    ``hire_checklist_retention``: checklist file retention after hire;
+                   ``hire_survey_invites``: the candidate experience survey;
                    ``hire_erasure_objects``: removes the stored files of erasures a
                    person started, then completes their requests (``erasure``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
@@ -106,6 +107,9 @@ from pairly_hire.screening.spec import HIRE_SCREENING
 from pairly_hire.screening.start import SCHEDULED_JOBS as SCREENING_JOBS
 from pairly_hire.seed import seed_hire_demo
 from pairly_hire.selfid import models as selfid_models  # noqa: F401  (registers its table)
+from pairly_hire.survey import models as survey_models  # noqa: F401  (tables)
+from pairly_hire.survey.service import JOB_NAME as SURVEY_JOB
+from pairly_hire.survey.service import run_invites_job as run_survey_invites_job
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -212,6 +216,14 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "every hour",
         run=run_checklist_retention_job,
         every_minutes=60,
+    ),
+    JobSpec(
+        SURVEY_JOB,
+        "Invite candidates to the experience survey once their process ended "
+        "(hired, rejected once told, withdrawn)",
+        "every 15 minutes",
+        run=run_survey_invites_job,
+        every_minutes=15,
     ),
     JobSpec(
         ERASURE_JOB,

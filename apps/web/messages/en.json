@@ -2514,5 +2514,21 @@
       "verified": "Verified",
       "waived": "Not needed"
     }
+  },
+  "Survey": {
+    "title": "Your experience",
+    "opening": "Opening the survey...",
+    "heading": "How was applying for {job}?",
+    "anonymous": "Five short questions. Your answers are anonymous unless you choose to add your name.",
+    "scale": "1 is poor, 5 is excellent.",
+    "attachName": "Add my name to my answers so the hiring team can follow up.",
+    "submit": "Send my answers",
+    "thanks": "Thank you. Your answers help us treat every candidate better.",
+    "linkInvalid": "This link has already been used or has expired.",
+    "recommend": {
+      "yes": "Yes",
+      "no": "No",
+      "unsure": "Not sure"
+    }
   }
 }

@@ -57,6 +57,7 @@ from pairly_hire.references.models import HireReferenceRequest, HireReferenceSum
 from pairly_hire.scheduling.models import HireInterview
 from pairly_hire.screening.models import HireScreening
 from pairly_hire.selfid.models import HireSelfIdentification
+from pairly_hire.survey.models import HireSurveyResponse
 from synth.hire.screening import contact_for
 
 from .hire_support import HireWorld, owner_rows
@@ -362,10 +363,26 @@ async def _gather(
             item.file_name = seal(
                 HireChecklistItem, "file_name", f"{name} passport.pdf", org_id=org, row_id=item.id
             )
+            response = HireSurveyResponse(
+                id=uuid.uuid4(),
+                org_id=org,
+                job_id=app.job_id,
+                outcome="hired",
+                locale="en",
+                answers={"overall": 4},
+                named=True,
+                candidate_id=cid,
+                application_id=app.id,
+                answered_on=now.date(),
+            )
+            response.comment = seal(
+                HireSurveyResponse, "comment", f"{name} liked it.", org_id=org, row_id=response.id
+            )
             session.add(interview)
             session.add(reference)
             session.add(offer)
             session.add(item)
+            session.add(response)
             await session.flush()
             session.add(ref_summary)
             session.add_all(

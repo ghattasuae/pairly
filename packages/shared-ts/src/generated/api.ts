@@ -2433,6 +2433,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/public/surveys/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer Survey */
+        post: operations["answer_survey_v1_hire_public_surveys_answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/surveys/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** View Survey */
+        post: operations["view_survey_v1_hire_public_surveys_view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/rediscovery/search": {
         parameters: {
             query?: never;
@@ -3031,6 +3065,40 @@ export type paths = {
         get: operations["get_settings_v1_hire_settings_scheduling_get"];
         /** Put Settings */
         put: operations["put_settings_v1_hire_settings_scheduling_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/surveys/named": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Named */
+        get: operations["named_v1_hire_surveys_named_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/surveys/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Results */
+        get: operations["survey_results_v1_hire_surveys_results_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -8347,6 +8415,117 @@ export type components = {
             response_days: number;
             /** Status */
             status: string;
+        };
+        /** HireSurveyAnsweredOut */
+        HireSurveyAnsweredOut: {
+            /** Named */
+            named: boolean;
+            /** Ok */
+            ok: boolean;
+        };
+        /** HireSurveyAnswerIn */
+        HireSurveyAnswerIn: {
+            /** Answers */
+            answers: {
+                [key: string]: string | number | null;
+            };
+            /**
+             * Attach Name
+             * @default false
+             */
+            attach_name: boolean;
+            /** Token */
+            token: string;
+        };
+        /** HireSurveyFormOut */
+        HireSurveyFormOut: {
+            /** Company */
+            company: string;
+            /** Job Title */
+            job_title: string;
+            /** Questions */
+            questions: components["schemas"]["HireSurveyQuestionOut"][];
+        };
+        /** HireSurveyGroupOut */
+        HireSurveyGroupOut: {
+            /** Averages */
+            averages: {
+                [key: string]: number | null;
+            };
+            /** Recommend */
+            recommend: {
+                [key: string]: number;
+            };
+            /** Responses */
+            responses: number;
+            /** Suppressed */
+            suppressed: boolean;
+        };
+        /** HireSurveyNamedOut */
+        HireSurveyNamedOut: {
+            /**
+             * Answered On
+             * Format: date
+             */
+            answered_on: string;
+            /** Answers */
+            answers: {
+                [key: string]: string | number;
+            };
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Comment */
+            comment: string | null;
+            /** Outcome */
+            outcome: string;
+            /**
+             * Response Id
+             * Format: uuid
+             */
+            response_id: string;
+        };
+        /** HireSurveyQuestionOut */
+        HireSurveyQuestionOut: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Options */
+            options: string[];
+            /** Required */
+            required: boolean;
+        };
+        /** HireSurveyResultsOut */
+        HireSurveyResultsOut: {
+            /** By Outcome */
+            by_outcome: {
+                [key: string]: components["schemas"]["HireSurveyGroupOut"];
+            };
+            /** Invited */
+            invited: number;
+            /** Min Group */
+            min_group: number;
+            overall: components["schemas"]["HireSurveyGroupOut"];
+            /** Response Rate */
+            response_rate: number | null;
+            /** Responses */
+            responses: number;
+        };
+        /** HireSurveyViewIn */
+        HireSurveyViewIn: {
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Token */
+            token: string;
         };
         /** HireTagsIn */
         HireTagsIn: {
@@ -14673,6 +14852,72 @@ export interface operations {
             };
         };
     };
+    answer_survey_v1_hire_public_surveys_answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireSurveyAnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSurveyAnsweredOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    view_survey_v1_hire_public_surveys_view_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireSurveyViewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSurveyFormOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rediscover_v1_hire_rediscovery_search_post: {
         parameters: {
             query?: never;
@@ -16005,6 +16250,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireSchedulingSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    named_v1_hire_surveys_named_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSurveyNamedOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    survey_results_v1_hire_surveys_results_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                since?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireSurveyResultsOut"];
                 };
             };
             /** @description Validation Error */

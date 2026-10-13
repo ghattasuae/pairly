@@ -283,6 +283,7 @@ def test_plugin_declares_graph_jobs_and_search_kind() -> None:
         "hire_interview_reminders",
         "hire_scorecard_reminders",
         "hire_checklist_retention",
+        "hire_survey_invites",
         "hire_erasure_objects",
     }
     kinds = {s.kind.key for s in plugin.search_sources}  # type: ignore[attr-defined]

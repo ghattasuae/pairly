@@ -149,3 +149,6 @@ export const answerOffer = unavailable;
 export const requestChecklist = unavailable;
 export const reviewChecklistItem = unavailable;
 export const saveChecklistConfig = unavailable;
+// Candidate experience survey (lib/actions/survey.ts).
+export const viewSurvey = unavailable;
+export const answerSurvey = unavailable;

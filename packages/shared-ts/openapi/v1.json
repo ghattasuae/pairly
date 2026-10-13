@@ -13016,6 +13016,296 @@
         "title": "HireSubmitOut",
         "type": "object"
       },
+      "HireSurveyAnswerIn": {
+        "additionalProperties": false,
+        "properties": {
+          "answers": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Answers",
+            "type": "object"
+          },
+          "attach_name": {
+            "default": false,
+            "title": "Attach Name",
+            "type": "boolean"
+          },
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "answers"
+        ],
+        "title": "HireSurveyAnswerIn",
+        "type": "object"
+      },
+      "HireSurveyAnsweredOut": {
+        "properties": {
+          "named": {
+            "title": "Named",
+            "type": "boolean"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "named"
+        ],
+        "title": "HireSurveyAnsweredOut",
+        "type": "object"
+      },
+      "HireSurveyFormOut": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/HireSurveyQuestionOut"
+            },
+            "title": "Questions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "company",
+          "job_title",
+          "questions"
+        ],
+        "title": "HireSurveyFormOut",
+        "type": "object"
+      },
+      "HireSurveyGroupOut": {
+        "properties": {
+          "averages": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Averages",
+            "type": "object"
+          },
+          "recommend": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Recommend",
+            "type": "object"
+          },
+          "responses": {
+            "title": "Responses",
+            "type": "integer"
+          },
+          "suppressed": {
+            "title": "Suppressed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "responses",
+          "suppressed",
+          "averages",
+          "recommend"
+        ],
+        "title": "HireSurveyGroupOut",
+        "type": "object"
+      },
+      "HireSurveyNamedOut": {
+        "properties": {
+          "answered_on": {
+            "format": "date",
+            "title": "Answered On",
+            "type": "string"
+          },
+          "answers": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Answers",
+            "type": "object"
+          },
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "response_id": {
+            "format": "uuid",
+            "title": "Response Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "response_id",
+          "application_id",
+          "outcome",
+          "answers",
+          "comment",
+          "answered_on"
+        ],
+        "title": "HireSurveyNamedOut",
+        "type": "object"
+      },
+      "HireSurveyQuestionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "required",
+          "label",
+          "options"
+        ],
+        "title": "HireSurveyQuestionOut",
+        "type": "object"
+      },
+      "HireSurveyResultsOut": {
+        "properties": {
+          "by_outcome": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HireSurveyGroupOut"
+            },
+            "title": "By Outcome",
+            "type": "object"
+          },
+          "invited": {
+            "title": "Invited",
+            "type": "integer"
+          },
+          "min_group": {
+            "title": "Min Group",
+            "type": "integer"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/HireSurveyGroupOut"
+          },
+          "response_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Rate"
+          },
+          "responses": {
+            "title": "Responses",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invited",
+          "responses",
+          "response_rate",
+          "overall",
+          "by_outcome",
+          "min_group"
+        ],
+        "title": "HireSurveyResultsOut",
+        "type": "object"
+      },
+      "HireSurveyViewIn": {
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "HireSurveyViewIn",
+        "type": "object"
+      },
       "HireTagsIn": {
         "additionalProperties": false,
         "properties": {
@@ -24321,6 +24611,88 @@
         ]
       }
     },
+    "/v1/hire/public/surveys/answer": {
+      "post": {
+        "operationId": "answer_survey_v1_hire_public_surveys_answer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireSurveyAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSurveyAnsweredOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Survey",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/public/surveys/view": {
+      "post": {
+        "operationId": "view_survey_v1_hire_public_surveys_view_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireSurveyViewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSurveyFormOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "View Survey",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/rediscovery/search": {
       "post": {
         "operationId": "rediscover_v1_hire_rediscovery_search_post",
@@ -26181,6 +26553,127 @@
           }
         },
         "summary": "Put Settings",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/surveys/named": {
+      "get": {
+        "operationId": "named_v1_hire_surveys_named_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireSurveyNamedOut"
+                  },
+                  "title": "Response Named V1 Hire Surveys Named Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Named",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/surveys/results": {
+      "get": {
+        "operationId": "survey_results_v1_hire_surveys_results_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireSurveyResultsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Survey Results",
         "tags": [
           "hire"
         ]

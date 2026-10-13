@@ -53,6 +53,10 @@ Who does what by default:
   (``hire.checklist.read``, ``hire.checklist.write``). Hiring managers and interviewers
   never see the files.
 
+* Candidate experience survey results (M3) are totals for HR and admins
+  (``hire.survey.read``); a single answer is visible only when its author chose to
+  attach their name.
+
 Declaring ``hire.document.*`` makes the engine use them instead of ``core.document.*``
 for documents of the ``hire`` workflow (CVs), so a member limited to Hire can open them.
 """
@@ -96,6 +100,7 @@ OFFER_APPROVE: Final = "hire.offer.approve"
 OFFER_COMPENSATION: Final = "hire.offer.compensation"
 CHECKLIST_READ: Final = "hire.checklist.read"
 CHECKLIST_WRITE: Final = "hire.checklist.write"
+SURVEY_READ: Final = "hire.survey.read"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -238,6 +243,11 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
     PermissionSpec(
         CHECKLIST_WRITE,
         "Set the documents to collect per job, request them, verify or waive them",
+        frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        SURVEY_READ,
+        "View candidate experience survey results (totals; named answers only by choice)",
         frozenset({R.ADMIN, R.RECRUITER}),
     ),
     PermissionSpec(
