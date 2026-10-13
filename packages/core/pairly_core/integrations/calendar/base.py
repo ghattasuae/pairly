@@ -76,6 +76,10 @@ class EventSpec:
     # A link chosen by a person; providers keep it as the location.
     meeting_url: str | None = None
     timezone: str = "UTC"
+    # The caller's idempotency key for a create (lowercase hex, 32 characters). Providers
+    # that can use it make a retried create return the same event: Google takes it as
+    # the event id (known before the call), Microsoft Graph as ``transactionId``.
+    client_request_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,12 +88,16 @@ class EventRef:
     event_id: str
     meeting_url: str | None = None
     meeting_provider: str | None = None
+    # The provider's own ICS UID when it does not take ours (Microsoft Graph).
+    ical_uid: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class MeetingLink:
     url: str
     provider: str
+    # The provider's meeting id (Zoom), kept to move or delete the meeting later.
+    meeting_id: str | None = None
 
 
 class CalendarProvider(Protocol):
@@ -113,9 +121,17 @@ class CalendarProvider(Protocol):
 
 
 class MeetingProvider(Protocol):
-    """Meeting links outside a calendar event (Zoom, later). Google Meet links come with
-    the Google calendar event instead."""
+    """Meeting links outside a calendar event (Zoom). Google Meet and Teams links come
+    with the calendar event instead."""
 
     name: str
 
     async def create_meeting(self, organizer: CalendarUser, event: EventSpec) -> MeetingLink: ...
+
+    async def update_meeting(
+        self, organizer: CalendarUser, meeting_id: str, event: EventSpec
+    ) -> None: ...
+
+    async def delete_meeting(self, organizer: CalendarUser, meeting_id: str) -> None:
+        """Delete the meeting. A meeting that is already gone is not an error."""
+        ...

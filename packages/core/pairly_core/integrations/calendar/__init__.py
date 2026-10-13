@@ -5,8 +5,10 @@
 * ``base``       the interface: free/busy, events with an ICS UID, meeting links.
 * ``fake``       deterministic calendars for development, tests and the demo.
 * ``google``     Google Calendar and Meet, OAuth per person (off until configured).
-* ``microsoft``  Microsoft 365 (Graph): planned for M3, not available yet.
-* ``zoom``       Zoom meetings (Server-to-Server OAuth): planned for M3, not available yet.
+* ``microsoft``  Microsoft 365 (Graph) and Teams, OAuth per person (off until configured).
+* ``zoom``       Zoom meeting links, Server-to-Server OAuth per organisation (off until
+                 configured), combined with a calendar provider.
+* ``http``       status codes and JSON bodies shared by ``microsoft`` and ``zoom``.
 
 This package imports nothing on purpose (see ``pairly_core.notifications``).
 """

@@ -737,7 +737,11 @@ async def test_google_connection_with_a_mocked_google(
     assert google["availability"] == "needs_setup"
     assert google["connected"] is False
     assert status.json()["using"] == "fake"
-    assert {p["availability"] for p in status.json()["providers"][1:]} == {"planned"}
+    assert {p["provider"]: p["availability"] for p in status.json()["providers"]} == {
+        "google": "needs_setup",
+        "microsoft": "needs_setup",
+        "zoom": "planned",
+    }
     # Flag off: no connect.
     start = await api.call(
         "POST", "/v1/hire/scheduling/integrations/google/start", world, "interviewer"

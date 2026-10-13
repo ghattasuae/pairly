@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Which calendar each person uses, and their Google connection.
+"""Which calendar each person uses, and their Google or Microsoft connection.
 
 A person uses Google Calendar when all three hold: the organisation turned on
 ``hire.scheduling.google``, the deployment has a Google OAuth client
 (``load_google_oauth_config``), and the person connected their calendar (an active
-``hire_calendar_connections`` row). Everyone else uses the fake calendar
+``hire_calendar_connections`` row). Microsoft 365 is the same with
+``hire.scheduling.microsoft`` and ``load_microsoft_oauth_config``. A person with both
+uses Google. Everyone else uses the fake calendar
 (``pairly_core.integrations.calendar.fake``), stored in ``hire_calendar_blocks`` and
 seeded per organisation. No external account is ever created here.
 
@@ -14,8 +16,9 @@ and gives the organiser's provider for writing events. A provider that fails rai
 ``CalendarError``: callers fail closed (no slot is offered or held on a calendar we could
 not read).
 
-The Google HTTP client uses ``set_google_transport`` in tests (a mocked transport);
-in production it is the default transport, with a timeout.
+The HTTP client of the external providers uses ``set_google_transport`` in tests (a
+mocked transport answering Google, Microsoft and Zoom alike); in production it is the
+default transport, with a timeout.
 """
 
 from __future__ import annotations
@@ -48,6 +51,12 @@ from pairly_core.integrations.calendar.google import (
     GoogleOAuthConfig,
     load_google_oauth_config,
 )
+from pairly_core.integrations.calendar.microsoft import (
+    MicrosoftGraphCalendarProvider,
+    MicrosoftOAuth,
+    MicrosoftOAuthConfig,
+    load_microsoft_oauth_config,
+)
 from pairly_core.rbac import Actor
 from pairly_core.scheduling.availability import Interval
 from pairly_hire.scheduling.fake_store import DbFakeCalendarStore
@@ -64,13 +73,27 @@ log = structlog.get_logger("pairly_hire.scheduling.providers")
 
 WORKFLOW: Final = "hire"
 GOOGLE_FLAG: Final = "hire.scheduling.google"
+MICROSOFT_FLAG: Final = "hire.scheduling.microsoft"
+ZOOM_FLAG: Final = "hire.scheduling.zoom"
 FEATURE_FLAGS: Final[tuple[FlagSpec, ...]] = (
     FlagSpec(
         GOOGLE_FLAG,
         "Use Google Calendar and Google Meet for interviews (needs a Google OAuth client)",
         default=False,
     ),
+    FlagSpec(
+        MICROSOFT_FLAG,
+        "Use Microsoft 365 calendars and Teams for interviews (needs a Microsoft Entra app)",
+        default=False,
+    ),
+    FlagSpec(
+        ZOOM_FLAG,
+        "Use Zoom meeting links for interviews (needs the organisation's Zoom app)",
+        default=False,
+    ),
 )
+# The calendar providers a person can connect, in order of preference.
+CALENDAR_PROVIDERS: Final = ("google", "microsoft")
 
 _google_transport: httpx.AsyncBaseTransport | None = None
 
@@ -93,12 +116,44 @@ def google_config() -> GoogleOAuthConfig | None:
     return load_google_oauth_config()
 
 
-async def google_enabled(session: AsyncSession) -> bool:
+def microsoft_config() -> MicrosoftOAuthConfig | None:
+    return load_microsoft_oauth_config()
+
+
+async def flag_on(session: AsyncSession, key: str) -> bool:
     """The organisation's flag; an unregistered flag reads as off (fail closed)."""
     try:
-        return await is_enabled(session, GOOGLE_FLAG)
+        return await is_enabled(session, key)
     except FlagError:
         return False
+
+
+async def google_enabled(session: AsyncSession) -> bool:
+    return await flag_on(session, GOOGLE_FLAG)
+
+
+async def microsoft_enabled(session: AsyncSession) -> bool:
+    return await flag_on(session, MICROSOFT_FLAG)
+
+
+async def ready_calendar_providers(session: AsyncSession) -> dict[str, Any]:
+    """The external calendar providers this organisation and deployment can use, with
+    the OAuth client of each (flag on and client configured)."""
+    out: dict[str, Any] = {}
+    google = google_config()
+    if google is not None and await google_enabled(session):
+        out["google"] = google
+    microsoft = microsoft_config()
+    if microsoft is not None and await microsoft_enabled(session):
+        out["microsoft"] = microsoft
+    return out
+
+
+def oauth_for(provider: str, config: Any, client: httpx.AsyncClient) -> Any:
+    """The OAuth helper of ``provider`` (``GoogleOAuth`` or ``MicrosoftOAuth``)."""
+    if provider == "microsoft":
+        return MicrosoftOAuth(config, client)
+    return GoogleOAuth(config, client)
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,10 +166,16 @@ class Person:
 
 
 class ConnectionTokens:
-    """``TokenSource`` for one Google connection: the refresh token, decrypted only when
-    an access token is needed, exchanged once per instance."""
+    """``TokenSource`` for one Google or Microsoft connection: the refresh token,
+    decrypted only when an access token is needed, exchanged once per instance.
 
-    def __init__(self, oauth: GoogleOAuth, connection: HireCalendarConnection) -> None:
+    Microsoft may return a new refresh token on refresh; it is not stored here (a read
+    must not write), so a Microsoft connection lives as long as its first refresh token
+    (90 days by default) and then asks the person to reconnect."""
+
+    def __init__(
+        self, oauth: GoogleOAuth | MicrosoftOAuth, connection: HireCalendarConnection
+    ) -> None:
         self.oauth = oauth
         self.connection = connection
         self._token: str | None = None
@@ -139,6 +200,7 @@ class CalendarSet:
 
     fake: FakeCalendarProvider
     google: GoogleCalendarProvider | None = None
+    microsoft: MicrosoftGraphCalendarProvider | None = None
     users: dict[uuid.UUID, CalendarUser] = field(default_factory=dict)
     providers: dict[uuid.UUID, CalendarProvider] = field(default_factory=dict)
 
@@ -169,40 +231,48 @@ class CalendarSet:
 async def calendar_set(
     session: AsyncSession, org_id: uuid.UUID, seed: str, people: Sequence[Person]
 ) -> AsyncIterator[CalendarSet]:
-    """The calendars of ``people`` for one request (closes the Google client after)."""
+    """The calendars of ``people`` for one request (closes the HTTP client after)."""
     fake = FakeCalendarProvider(DbFakeCalendarStore(session, org_id), seed=seed)
-    config = google_config()
-    if config is None or not people or not await google_enabled(session):
+    ready = await ready_calendar_providers(session) if people else {}
+    if not ready:
         yield CalendarSet(fake)
         return
-    connections = {
-        c.user_id: c
-        for c in await session.scalars(
-            select(HireCalendarConnection).where(
-                HireCalendarConnection.provider == "google",
-                HireCalendarConnection.status == "active",
-                HireCalendarConnection.user_id.in_([p.id for p in people]),
-            )
+    rows = await session.scalars(
+        select(HireCalendarConnection).where(
+            HireCalendarConnection.provider.in_(list(ready)),
+            HireCalendarConnection.status == "active",
+            HireCalendarConnection.user_id.in_([p.id for p in people]),
         )
-    }
+    )
+    connections: dict[uuid.UUID, HireCalendarConnection] = {}
+    for row in sorted(rows, key=lambda r: CALENDAR_PROVIDERS.index(r.provider)):
+        connections.setdefault(row.user_id, row)
     if not connections:
         yield CalendarSet(fake)
         return
     async with google_client() as client:
-        oauth = GoogleOAuth(config, client)
-        google = GoogleCalendarProvider(client)
-        found = CalendarSet(fake, google)
+        found = CalendarSet(
+            fake,
+            GoogleCalendarProvider(client) if "google" in ready else None,
+            MicrosoftGraphCalendarProvider(client) if "microsoft" in ready else None,
+        )
+        oauth = {name: oauth_for(name, config, client) for name, config in ready.items()}
         for person in people:
             connection = connections.get(person.id)
             if connection is None:
+                continue
+            provider: CalendarProvider | None = (
+                found.google if connection.provider == "google" else found.microsoft
+            )
+            if provider is None:  # pragma: no cover - filtered by the query
                 continue
             found.users[person.id] = CalendarUser(
                 str(person.id),
                 person.email,
                 person.timezone,
-                tokens=ConnectionTokens(oauth, connection),
+                tokens=ConnectionTokens(oauth[connection.provider], connection),
             )
-            found.providers[person.id] = google
+            found.providers[person.id] = provider
         yield found
 
 
@@ -242,23 +312,26 @@ async def save_google_connection(
     refresh_token: str,
     scopes: str,
     account_email: str | None,
+    provider: str = "google",
 ) -> None:
-    """Store (or replace) the actor's Google connection, the token encrypted. Audited
-    without the token."""
+    """Store (or replace) the actor's Google or Microsoft connection, the token
+    encrypted. Audited without the token."""
+    if provider not in CALENDAR_PROVIDERS:
+        raise ConflictError("unknown calendar provider")
     if not refresh_token:
-        raise ConflictError("Google did not return a refresh token; connect again")
+        raise ConflictError("the calendar did not return a refresh token; connect again")
     row = await session.scalar(
         select(HireCalendarConnection)
         .where(
             HireCalendarConnection.user_id == actor.id,
-            HireCalendarConnection.provider == "google",
+            HireCalendarConnection.provider == provider,
         )
         .with_for_update()
     )
     now = datetime.now(UTC)
     if row is None:
         row = HireCalendarConnection(
-            id=uuid.uuid4(), org_id=actor.org_id, user_id=actor.id, provider="google"
+            id=uuid.uuid4(), org_id=actor.org_id, user_id=actor.id, provider=provider
         )
         session.add(row)
     row.refresh_token = _sealed(
@@ -288,7 +361,7 @@ async def save_google_connection(
         entity_type="hire.calendar_connection",
         entity_id=row.id,
         workflow=WORKFLOW,
-        payload={"provider": "google", "scopes": row.scopes},
+        payload={"provider": provider, "scopes": row.scopes},
     )
 
 

@@ -21,7 +21,9 @@ Calendar (``GoogleCalendarProvider``):
   &sendUpdates=none`` with the attendees, the ICS UID (``iCalUID``), the sequence and,
   when a meeting is wanted, ``conferenceData.createRequest`` for Google Meet
   (``hangoutsMeet``) with a request id derived from the UID (a retry never makes a
-  second meeting).
+  second meeting). With a ``client_request_id`` the event id is ours (Google allows
+  lowercase hex), so it is known before the call and a retried insert answers 409,
+  which reads the existing event instead of making a second one.
 * ``update_event``: ``PATCH`` of the same fields; ``cancel_event``: ``DELETE``
   (404 and 410 count as done).
 
@@ -65,6 +67,7 @@ SCOPES: Final = (
 )
 TIMEOUT_SECONDS: Final = 15.0
 _EVENT_ID: Final = re.compile(r"^[A-Za-z0-9_-]{1,1024}$")
+_REQUEST_ID: Final = re.compile(r"^[0-9a-f]{32}$")
 
 
 def _event_path(event_id: str) -> str:
@@ -329,13 +332,21 @@ class GoogleCalendarProvider:
         return out
 
     async def create_event(self, organizer: CalendarUser, event: EventSpec) -> EventRef:
+        body = event_body(event, with_conference=True)
+        if event.client_request_id:
+            if not _REQUEST_ID.match(event.client_request_id):
+                raise CalendarError("google_bad_request_id", transient=False)
+            body["id"] = event.client_request_id
         response = await self._request(
             "POST",
             "/calendars/primary/events",
             organizer,
             params={"conferenceDataVersion": "1", "sendUpdates": "none"},
-            json=event_body(event, with_conference=True),
+            json=body,
         )
+        if response.status_code == 409 and event.client_request_id:
+            # A retried insert: the event exists already, read it.
+            response = await self._request("GET", _event_path(event.client_request_id), organizer)
         if response.status_code not in (200, 201):
             raise _status_error(response, "google")
         data = _json(response, "google")

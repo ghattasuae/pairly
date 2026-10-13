@@ -156,6 +156,10 @@ def test_plugin_declares_scheduling_permissions_flag_and_job() -> None:
     assert "hire.interview.schedule" not in interviewer
     assert "hire.interview.schedule" in registry.permissions_for_role("recruiter")
     flags = {f.key: f.default for f in plugin.feature_flags}  # type: ignore[attr-defined]
-    assert flags == {"hire.scheduling.google": False}
+    assert flags == {
+        "hire.scheduling.google": False,
+        "hire.scheduling.microsoft": False,
+        "hire.scheduling.zoom": False,
+    }
     jobs = {j.name: j.every_minutes for j in plugin.scheduled_jobs}  # type: ignore[attr-defined]
     assert jobs["hire_interview_reminders"] == 5

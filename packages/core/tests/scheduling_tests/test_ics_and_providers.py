@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
 """Calendar files (RFC 5545), the fake calendar, the Google provider against a mocked
-transport (never Google itself), the M3 stubs, and calendar attachments on email."""
+transport (never Google itself), and calendar attachments on email."""
 
 from __future__ import annotations
 
@@ -39,8 +39,6 @@ from pairly_core.integrations.calendar.google import (
     conference_request_id,
     load_google_oauth_config,
 )
-from pairly_core.integrations.calendar.microsoft import MicrosoftGraphCalendarProvider
-from pairly_core.integrations.calendar.zoom import ZoomMeetingProvider
 from pairly_core.notifications.email import (
     Attachment,
     OutgoingEmail,
@@ -261,22 +259,6 @@ async def test_fake_calendar_is_deterministic_and_records_events() -> None:
     assert link.url == ref.meeting_url
 
 
-async def test_m3_stubs_say_not_available() -> None:
-    user = CalendarUser("u", "u@example.test")
-    window = Interval(START, END)
-    with pytest.raises(CalendarError, match="not_available"):
-        await MicrosoftGraphCalendarProvider().free_busy([user], window)
-    spec = EventSpec(uid="iv-0000000000000000@x", sequence=0, summary="s", start=START, end=END)
-    with pytest.raises(CalendarError, match="not_available"):
-        await MicrosoftGraphCalendarProvider().create_event(user, spec)
-    with pytest.raises(CalendarError, match="not_available"):
-        await MicrosoftGraphCalendarProvider().update_event(user, EventRef("m", "1"), spec)
-    with pytest.raises(CalendarError, match="not_available"):
-        await MicrosoftGraphCalendarProvider().cancel_event(user, EventRef("m", "1"), spec)
-    with pytest.raises(CalendarError, match="not_available"):
-        await ZoomMeetingProvider().create_meeting(user, spec)
-
-
 # ------------------------------------------------------------------ Google (mocked)
 
 
@@ -340,6 +322,10 @@ class _Google:
             )
         if request.method == "PATCH":
             return httpx.Response(200, json={"id": "evt123"})
+        if request.method == "GET" and path.endswith("/events/" + "a" * 32):
+            return httpx.Response(
+                200, json={"id": "a" * 32, "hangoutLink": "https://meet.google.com/x"}
+            )
         if request.method == "DELETE":
             return httpx.Response(204)
         return httpx.Response(404)
@@ -483,3 +469,27 @@ async def test_google_errors_and_oauth() -> None:
             "PAIRLY_GOOGLE_REDIRECT_URL": "https://app.example/cb",
         }
     ) == GoogleOAuthConfig("id", "secret", "https://app.example/cb")
+
+
+async def test_google_insert_with_our_event_id_is_idempotent() -> None:
+    google = _Google()
+    spec = EventSpec(
+        uid="iv-0123456789abcdef@pairly.localhost",
+        sequence=0,
+        summary="Interview",
+        start=START,
+        end=END,
+        client_request_id="a" * 32,
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(google)) as client:
+        provider = GoogleCalendarProvider(client)
+        await provider.create_event(_user(), spec)
+        assert json.loads(google.requests[0].content)["id"] == "a" * 32
+        # A retried insert answers 409: the existing event is read, not made twice.
+        google.status["/calendar/v3/calendars/primary/events"] = 409
+        ref = await provider.create_event(_user(), spec)
+        assert ref.event_id == "a" * 32
+        assert ref.meeting_url == "https://meet.google.com/x"
+        assert [r.method for r in google.requests] == ["POST", "POST", "GET"]
+        with pytest.raises(CalendarError, match="bad_request_id"):
+            await provider.create_event(_user(), replace(spec, client_request_id="../x"))

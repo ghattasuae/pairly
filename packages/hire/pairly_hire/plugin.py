@@ -41,7 +41,10 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_fairness_runs``: a weekly counterfactual fairness run per
                    organisation (``analytics.fairness``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
-                   interviews, once the deployment has a Google OAuth client.
+                   interviews, once the deployment has a Google OAuth client;
+                   ``hire.scheduling.microsoft`` (off): Microsoft 365 and Teams, once
+                   it has a Microsoft Entra app; ``hire.scheduling.zoom`` (off): Zoom
+                   links, once an administrator saved the organisation's Zoom app.
 
 Importing this module registers the Hire tables on ``Base.metadata``, wires screening
 into the pipeline hooks (blind mode per application, screening results, the blind

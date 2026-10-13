@@ -22,6 +22,8 @@ Signed in. Reads need ``hire.interview.read``; changes ``hire.interview.schedule
 * ``POST /scheduling/integrations/google/start``     the Google consent URL (flag and client)
 * ``POST /scheduling/integrations/google/callback``  ``{"code", "state"}``
 * ``POST /scheduling/integrations/google/disconnect``
+* ``POST /scheduling/integrations/microsoft/start|callback|disconnect``  the same for
+  Microsoft 365 (``hire.scheduling.microsoft`` and the deployment's Entra app)
 
 Public, no sign-in, rate limited (the candidate's ``hs1`` token in the body, never in
 a URL):
@@ -54,7 +56,6 @@ from pairly_core.errors import (
 )
 from pairly_core.identity import AppContext, Context, CurrentActor, OrgSession, RequestSession
 from pairly_core.integrations.calendar.base import CalendarError
-from pairly_core.integrations.calendar.google import GoogleOAuth
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.scheduling.availability import AvailabilityError, Interval, sociable, zone
 from pairly_hire.antispam import SlidingWindowLimiter, client_ip
@@ -776,62 +777,80 @@ GOOGLE_STEPS: Final = [
     "Turn on the hire.scheduling.google feature flag in Settings, Feature flags.",
     "Each interviewer then connects their own calendar here.",
 ]
+MICROSOFT_STEPS: Final = [
+    "An administrator registers an app in Microsoft Entra ID for your organisation "
+    "(accounts in your organisational directory).",
+    "Add the delegated Microsoft Graph permissions Calendars.ReadWrite, User.Read and "
+    "offline_access, and grant admin consent.",
+    "Add a web redirect URI with the Pairly callback URL and create a client secret.",
+    "Give the application id, secret and callback URL to Pairly as "
+    "PAIRLY_MICROSOFT_CLIENT_ID, PAIRLY_MICROSOFT_CLIENT_SECRET and "
+    "PAIRLY_MICROSOFT_REDIRECT_URL (and your tenant id as PAIRLY_MICROSOFT_TENANT, "
+    "optional).",
+    "Turn on the hire.scheduling.microsoft feature flag in Settings, Feature flags.",
+    "Each interviewer then connects their own calendar here.",
+]
+_LABELS: Final = {
+    "google": "Google Calendar and Google Meet",
+    "microsoft": "Microsoft 365 and Teams",
+}
+_STEPS: Final = {"google": GOOGLE_STEPS, "microsoft": MICROSOFT_STEPS}
+
+
+async def _flag_and_config(session: AsyncSession, provider: str) -> tuple[bool, Any]:
+    if provider == "microsoft":
+        return await providers.microsoft_enabled(session), providers.microsoft_config()
+    return await providers.google_enabled(session), providers.google_config()
 
 
 @router.get("/scheduling/integrations", response_model=HireCalendarIntegrationsOut)
 async def integrations(actor: CurrentActor, session: OrgSession) -> HireCalendarIntegrationsOut:
     authorize(actor, INTERVIEW_READ)
-    flag = await providers.google_enabled(session)
-    configured = providers.google_config() is not None
     mine = {c.provider: c for c in await providers.my_connections(session, actor.id)}
-    google = mine.get("google")
-    connected = google is not None and google.status == "active"
-    return HireCalendarIntegrationsOut(
-        using="google" if flag and configured and connected else "fake",
-        providers=[
+    found: list[HireCalendarProviderOut] = []
+    using = "fake"
+    for name in providers.CALENDAR_PROVIDERS:
+        flag, config = await _flag_and_config(session, name)
+        configured = config is not None
+        row = mine.get(name)
+        connected = row is not None and row.status == "active"
+        if using == "fake" and flag and configured and connected:
+            using = name
+        found.append(
             HireCalendarProviderOut(
-                provider="google",
-                label="Google Calendar and Google Meet",
+                provider=name,
+                label=_LABELS[name],
                 availability="available" if flag and configured else "needs_setup",
                 flag_enabled=flag,
                 configured=configured,
                 connected=connected,
-                status=google.status if google else None,
-                account_email=google.account_email if google and connected else None,
-                steps=GOOGLE_STEPS,
-            ),
-            HireCalendarProviderOut(
-                provider="microsoft",
-                label="Microsoft 365 and Teams",
-                availability="planned",
-                flag_enabled=False,
-                configured=False,
-                connected=False,
-                status=None,
-                account_email=None,
-                steps=["Planned for a later version (M3)."],
-            ),
-            HireCalendarProviderOut(
-                provider="zoom",
-                label="Zoom",
-                availability="planned",
-                flag_enabled=False,
-                configured=False,
-                connected=False,
-                status=None,
-                account_email=None,
-                steps=["Planned for a later version (M3)."],
-            ),
-        ],
+                status=row.status if row else None,
+                account_email=row.account_email if row and connected else None,
+                steps=_STEPS[name],
+            )
+        )
+    found.append(
+        HireCalendarProviderOut(
+            provider="zoom",
+            label="Zoom",
+            availability="planned",
+            flag_enabled=False,
+            configured=False,
+            connected=False,
+            status=None,
+            account_email=None,
+            steps=["Planned for a later version (M3)."],
+        )
     )
+    return HireCalendarIntegrationsOut(using=using, providers=found)
 
 
-async def _google_ready(session: AsyncSession) -> Any:
-    config = providers.google_config()
-    if not await providers.google_enabled(session):
-        raise ConflictError("Google Calendar is turned off for this organisation")
+async def _ready(session: AsyncSession, provider: str) -> Any:
+    flag, config = await _flag_and_config(session, provider)
+    if not flag:
+        raise ConflictError(f"{_LABELS[provider]} is turned off for this organisation")
     if config is None:
-        raise ServiceUnavailableError("Google Calendar is not set up on this server")
+        raise ServiceUnavailableError(f"{_LABELS[provider]} is not set up on this server")
     return config
 
 
@@ -842,32 +861,32 @@ def _secret(request: Request) -> str:
     return secret
 
 
-@router.post("/scheduling/integrations/google/start", response_model=HireConnectOut)
-async def google_start(
-    request: Request, actor: CurrentActor, session: OrgSession
+async def _start(
+    provider: str, request: Request, actor: Actor, session: AsyncSession
 ) -> HireConnectOut:
     authorize(actor, INTERVIEW_READ)
     _person(actor)
-    config = await _google_ready(session)
+    config = await _ready(session, provider)
     state = connect_state(_secret(request), actor.org_id, actor.id)
     async with providers.google_client() as client:
-        url = GoogleOAuth(config, client).authorization_url(state, login_hint=actor.email)
+        url = providers.oauth_for(provider, config, client).authorization_url(
+            state, login_hint=actor.email
+        )
     return HireConnectOut(url=url)
 
 
-@router.post("/scheduling/integrations/google/callback", response_model=HireCalendarIntegrationsOut)
-async def google_callback(
-    body: HireConnectIn, request: Request, actor: CurrentActor, session: OrgSession
+async def _callback(
+    provider: str, body: HireConnectIn, request: Request, actor: Actor, session: AsyncSession
 ) -> HireCalendarIntegrationsOut:
     authorize(actor, INTERVIEW_READ)
     _person(actor)
-    config = await _google_ready(session)
+    config = await _ready(session, provider)
     claim = read_connect_state(_secret(request), body.state)
     if claim is None or claim.org_id != actor.org_id or claim.user_id != actor.id:
         raise BadRequestError("this connection request is not valid any more; start again")
     async with providers.google_client() as client:
         try:
-            tokens = await GoogleOAuth(config, client).exchange_code(body.code)
+            tokens = await providers.oauth_for(provider, config, client).exchange_code(body.code)
         except CalendarError as exc:
             raise _calendar_failed(exc) from None
     await providers.save_google_connection(
@@ -876,8 +895,32 @@ async def google_callback(
         refresh_token=tokens.refresh_token or "",
         scopes=tokens.scope,
         account_email=actor.email,
+        provider=provider,
     )
     return await integrations(actor, session)
+
+
+async def _disconnect(
+    provider: str, actor: Actor, session: AsyncSession
+) -> HireCalendarIntegrationsOut:
+    authorize(actor, INTERVIEW_READ)
+    _person(actor)
+    await providers.disconnect(session, actor, provider)
+    return await integrations(actor, session)
+
+
+@router.post("/scheduling/integrations/google/start", response_model=HireConnectOut)
+async def google_start(
+    request: Request, actor: CurrentActor, session: OrgSession
+) -> HireConnectOut:
+    return await _start("google", request, actor, session)
+
+
+@router.post("/scheduling/integrations/google/callback", response_model=HireCalendarIntegrationsOut)
+async def google_callback(
+    body: HireConnectIn, request: Request, actor: CurrentActor, session: OrgSession
+) -> HireCalendarIntegrationsOut:
+    return await _callback("google", body, request, actor, session)
 
 
 @router.post(
@@ -886,10 +929,32 @@ async def google_callback(
 async def google_disconnect(
     actor: CurrentActor, session: OrgSession
 ) -> HireCalendarIntegrationsOut:
-    authorize(actor, INTERVIEW_READ)
-    _person(actor)
-    await providers.disconnect(session, actor, "google")
-    return await integrations(actor, session)
+    return await _disconnect("google", actor, session)
+
+
+@router.post("/scheduling/integrations/microsoft/start", response_model=HireConnectOut)
+async def microsoft_start(
+    request: Request, actor: CurrentActor, session: OrgSession
+) -> HireConnectOut:
+    return await _start("microsoft", request, actor, session)
+
+
+@router.post(
+    "/scheduling/integrations/microsoft/callback", response_model=HireCalendarIntegrationsOut
+)
+async def microsoft_callback(
+    body: HireConnectIn, request: Request, actor: CurrentActor, session: OrgSession
+) -> HireCalendarIntegrationsOut:
+    return await _callback("microsoft", body, request, actor, session)
+
+
+@router.post(
+    "/scheduling/integrations/microsoft/disconnect", response_model=HireCalendarIntegrationsOut
+)
+async def microsoft_disconnect(
+    actor: CurrentActor, session: OrgSession
+) -> HireCalendarIntegrationsOut:
+    return await _disconnect("microsoft", actor, session)
 
 
 # ------------------------------------------------------------------ public (candidates)

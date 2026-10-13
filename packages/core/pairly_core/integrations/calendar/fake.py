@@ -176,4 +176,12 @@ class FakeMeetingProvider:
     name = "fake"
 
     async def create_meeting(self, organizer: CalendarUser, event: EventSpec) -> MeetingLink:
-        return MeetingLink(fake_meeting_url(event.uid), self.name)
+        return MeetingLink(fake_meeting_url(event.uid), self.name, f"fake-{event.uid}")
+
+    async def update_meeting(
+        self, organizer: CalendarUser, meeting_id: str, event: EventSpec
+    ) -> None:
+        return None
+
+    async def delete_meeting(self, organizer: CalendarUser, meeting_id: str) -> None:
+        return None

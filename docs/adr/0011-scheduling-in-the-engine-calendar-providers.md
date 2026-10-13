@@ -37,7 +37,19 @@ tested without credentials, and development must work with no external account a
    * `GoogleCalendarProvider` and `GoogleOAuth`: free/busy, events with Meet through
      `conferenceData`, OAuth per person (offline access, narrow scopes). Tested against a
      mocked HTTP transport only. `sendUpdates=none`: Pairly sends its own invitations.
-   * Microsoft Graph and Zoom: stubs that answer `not_available`, planned for M3.
+   * `MicrosoftGraphCalendarProvider` and `MicrosoftOAuth` (M3): free/busy through
+     `getSchedule`, events through `/me/events` with attendees, `transactionId` (a
+     retried create returns the same event) and Teams through `isOnlineMeeting` with
+     `onlineMeetingProvider: teamsForBusiness`; OAuth per person like Google, refresh
+     token encrypted. Graph assigns its own `iCalUId` (read only): it comes back on
+     `EventRef.ical_uid`, and our ICS UID is kept as an extended property. Graph has no
+     `sendUpdates=none`, so Exchange also sends its own invitation for the organiser's
+     event (ASK: keep attendees on the Outlook event, or only the panel). Tested against
+     a mocked transport only. Off by default: `hire.scheduling.microsoft` plus
+     `PAIRLY_MICROSOFT_CLIENT_ID`, `PAIRLY_MICROSOFT_CLIENT_SECRET`,
+     `PAIRLY_MICROSOFT_REDIRECT_URL` (and `PAIRLY_MICROSOFT_TENANT`, by default
+     `organizations`).
+   * Zoom: a stub that answers `not_available`, planned for M3.
 
 3. **Email attachments** in the notification engine: `Extras.attachments` carries text
    attachments (calendar files) through the encrypted notification content to SMTP,
