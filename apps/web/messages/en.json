@@ -2417,7 +2417,7 @@
   },
   "Offers": {
     "title": "Offer",
-    "intro": "Build the offer from a template. It needs the hiring manager's and HR's approval (and finance above the threshold) before it can be sent. The candidate accepts or declines in their portal.",
+    "intro": "Build the offer from a template. It needs the hiring manager's and HR's approval (and finance above the threshold) before it can be sent. That one approval covers the offer and its exact email, so sending needs no second approval. The candidate accepts or declines in their portal.",
     "none": "No offer yet.",
     "new": "New offer",
     "template": "Template",
@@ -2437,7 +2437,7 @@
     "starts": "Starts {date}",
     "chain": "Approval chain",
     "compensationHidden": "Compensation is visible only to people allowed to see it.",
-    "sendingNote": "The offer email waits for its own approval, then the candidate can read it in the portal.",
+    "sendingNote": "The approved offer email is queued. The candidate can read the offer in the portal once it goes out.",
     "field": {
       "currency": "Currency",
       "base_monthly": "Basic salary (monthly)",

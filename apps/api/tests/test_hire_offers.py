@@ -7,9 +7,11 @@ candidate's answer in the portal.
   ``hire.offer.compensation`` (auditors read offers without it, interviewers not at all).
 * Approval chain from the YAML rules: the hiring manager, then HR, and finance above
   the threshold; the submitter never approves (segregation of duties).
-* Sent only after approval, as a sensitive message with its own approval; the candidate
-  sees it in the portal only then, accepts or declines once (a decision record by the
-  candidate, audited), and the board shows the status.
+* One approval per offer: the chain's approval binds the exact offer email (its
+  rendered hash), so after the chain the email is sent once with no second approval;
+  any change to the offer after the approval blocks the send. The candidate sees it in
+  the portal only then, accepts or declines once (a decision record by the candidate,
+  audited), and the board shows the status.
 * The PDF letter in English and Arabic.
 """
 
@@ -151,6 +153,14 @@ async def test_offer_chain_send_and_the_candidates_answer(
     detail = (await api.call("GET", f"/v1/approvals/{approval}", world, "manager")).json()
     assert detail["payload"]["annual_total"] == "312000.00"
     assert "base_monthly" not in detail["payload"]  # the breakdown stays encrypted
+    # The same approval binds the exact offer email; approvers read it in the context.
+    assert len(detail["payload"]["message_sha256"]) == 64
+    assert detail["context"]["email_text"]
+    frozen_id = detail["payload"]["message_id"]
+    frozen = (await api.call("GET", f"/v1/hire/messages/{frozen_id}", world, "recruiter")).json()
+    assert frozen["template_key"] == "hire.candidate.offer"
+    assert frozen["status"] == "awaiting_approval"
+    assert frozen["approval_id"] == approval
     # HR cannot jump the hiring manager; the submitter never approves.
     assert (await decide(api, world, "recruiter", approval)).status_code == 403
     assert (await decide(api, world, "manager", approval)).status_code == 200
@@ -167,7 +177,7 @@ async def test_offer_chain_send_and_the_candidates_answer(
     (card,) = [c for c in board["cards"] if c["application_id"] == app_id]
     assert card["offer_status"] == "approved"
 
-    # The candidate sees nothing until the offer email itself is approved and sent.
+    # The candidate sees nothing until the offer email is sent.
     portal = await _signed_in(api, world, email, tmp_path / "a")
     path = f"/v1/hire/portal/applications/{app_id}/offer"
     assert (await api.client.get(path, headers=portal)).status_code == 404
@@ -175,12 +185,23 @@ async def test_offer_chain_send_and_the_candidates_answer(
     assert sent.status_code == 200, sent.text
     assert sent.json()["status"] == "sending"
     message_id = sent.json()["message_id"]
+    assert message_id == frozen_id
     message = (await api.call("GET", f"/v1/hire/messages/{message_id}", world, "recruiter")).json()
     assert message["template_key"] == "hire.candidate.offer"
-    assert message["approval_id"] is not None
-    assert (await api.client.get(path, headers=portal)).status_code == 404
-    assert (await decide(api, world, "recruiter", message["approval_id"])).status_code == 403
-    assert (await decide(api, world, "manager", message["approval_id"])).status_code == 200
+    # No second approval: the offer chain's approval sent it.
+    assert message["approval_id"] == approval
+    assert message["status"] in {"queued", "sent"}
+    (note,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT approval_id FROM notifications WHERE id = "
+        "(SELECT notification_id FROM hire_messages WHERE id = :m)",
+        {"m": message_id},
+    )
+    assert str(note.approval_id) == approval
+    # Sent once: the offer is no longer approved, and the approval is spent.
+    again_send = await api.call("POST", f"/v1/hire/offers/{offer['id']}/send", world, "recruiter")
+    assert again_send.status_code == 409
     seen = await api.client.get(path, headers=portal)
     assert seen.status_code == 200, seen.text
     got = seen.json()
@@ -298,6 +319,94 @@ async def test_changes_requested_then_withdrawn_and_declined(
     )
     assert fresh.status_code == 201, fresh.text
     assert uuid.UUID(fresh.json()["id"]) != uuid.UUID(offer["id"])
+
+
+async def test_a_change_after_the_approval_blocks_the_send(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    """The chain approved one offer and one email: an offer changed afterwards (here
+    behind the API's back) is never sent, and the frozen email of a withdrawn or
+    sent-back offer is cancelled."""
+    api = hire_api
+    job = await open_job(api, world)
+    app_id, _ = await _apply(api, world, job, "Huda Karim")
+    offer = await submitted(api, world, app_id, "recruiter")
+    approval = offer["approval_id"]
+    assert (await decide(api, world, "manager", approval)).status_code == 200
+    assert (await decide(api, world, "admin", approval)).status_code == 200
+    (approved,) = (await offers(api, world, app_id))["items"]
+    assert approved["status"] == "approved"
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE hire_offers SET start_date = start_date + 1 WHERE id = :i",
+        {"i": offer["id"]},
+    )
+    refused = await api.call("POST", f"/v1/hire/offers/{offer['id']}/send", world, "recruiter")
+    assert refused.status_code == 409, refused.text
+    assert "offer_or_email_changed" in refused.text
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT status, notification_id FROM hire_messages WHERE id = :m",
+        {"m": approved["message_id"]},
+    )
+    assert row.status == "awaiting_approval"
+    assert row.notification_id is None
+    used = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT id FROM notifications WHERE approval_id = :a",
+        {"a": approval},
+    )
+    assert used == []
+    # Withdrawn: its frozen email is cancelled and can never go out.
+    withdrawn = await api.call(
+        "POST", f"/v1/hire/offers/{offer['id']}/withdraw", world, "recruiter"
+    )
+    assert withdrawn.status_code == 200
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT status FROM hire_messages WHERE id = :m",
+        {"m": approved["message_id"]},
+    )
+    assert row.status == "cancelled"
+
+
+async def test_sent_back_offer_freezes_a_new_email_on_resubmit(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    app_id, _ = await _apply(api, world, job, "Rami Aziz")
+    offer = await submitted(api, world, app_id, "recruiter")
+    first_message = offer["message_id"]
+    back = await decide(api, world, "manager", offer["approval_id"], "request_changes")
+    assert back.status_code == 200, back.text
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT status FROM hire_messages WHERE id = :m",
+        {"m": first_message},
+    )
+    assert row.status == "cancelled"
+    edited = await api.call(
+        "PUT",
+        f"/v1/hire/offers/{offer['id']}",
+        world,
+        "recruiter",
+        json={"expected_version": offer["version"], "job_title": "Senior Analyst"},
+    )
+    assert edited.status_code == 200, edited.text
+    again = await api.call("POST", f"/v1/hire/offers/{offer['id']}/submit", world, "recruiter")
+    assert again.status_code == 200, again.text
+    (fresh,) = (await offers(api, world, app_id))["items"]
+    assert fresh["message_id"] not in (None, first_message)
+    assert fresh["approval_id"] not in (None, offer["approval_id"])
+    detail = (await api.call("GET", f"/v1/approvals/{fresh['approval_id']}", world, "manager"))
+    assert detail.json()["payload"]["job_title"] == "Senior Analyst"
+    assert detail.json()["payload"]["message_id"] == fresh["message_id"]
 
 
 def _text(data: bytes) -> str:

@@ -5,12 +5,18 @@
 * ``create_offer`` / ``update_offer`` (``hire.offer.create``): from a template, with the
   compensation (encrypted), the start date and the conditions. Editable while ``draft``
   or ``changes_requested``; each edit raises ``version``.
-* ``submit_offer``: ``pending_approval``; the API then starts the ``hire_offer`` run as
-  the submitter, so the approval engine excludes them from every step.
-* After the chain approved: ``send_offer`` drafts the offer email (the sensitive
-  ``hire.candidate.offer`` template, with the portal link) and submits it; the email
-  goes out only after its own approval (sensitive template gating). Then the offer is
-  visible to the candidate in the portal (``visible_to_candidate``).
+* ``submit_offer``: ``pending_approval``. It also drafts the offer email (the sensitive
+  ``hire.candidate.offer`` template, with the portal link) and freezes its values, so
+  the exact email is known before anyone approves. The API then starts the
+  ``hire_offer`` run as the submitter, so the approval engine excludes them from every
+  step.
+* One approval per offer: the chain's approval payload (``approval_payload``) binds the
+  offer and the hash of that exact rendered email (``message_sha256``, registered with
+  ``allow_bound_message``). After the chain approved, ``send_offer`` queues that email
+  with ``notify(approval_id=<the offer approval>)``, which checks the hash once more and
+  allows one send. Any change to the offer, the template or the values after the
+  approval breaks a hash and blocks the send (fail closed). Then the offer is visible
+  to the candidate in the portal (``visible_to_candidate``).
 * ``respond`` (the candidate, in the portal): accept or decline, once, recorded as a
   decision record (actor ``candidate``) and audited.
 * ``withdraw``: the hiring team takes back an offer the candidate has not answered.
@@ -34,14 +40,24 @@ from typing import Any, Final
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pairly_core.approvals.models import Approval, ApprovalStatus
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.crypto.types import seal
 from pairly_core.decisions.models import DecisionKind
 from pairly_core.decisions.service import DecisionDraft, record_decision
 from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
+from pairly_core.notifications.service import (
+    BOUND_MESSAGE_KEY,
+    Recipient,
+    SensitiveTemplateError,
+    message_hash,
+    notify,
+    sensitive_message_payload,
+)
+from pairly_core.rbac import RoleRegistry
 from pairly_hire.links import LinkConfig
 from pairly_hire.messaging import compose
-from pairly_hire.messaging.compose import Author
+from pairly_hire.messaging.compose import CHANNEL, Author, frozen_values, mark_updated
 from pairly_hire.messaging.library import OFFER as OFFER_TEMPLATE
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.offers.models import EDITABLE, LIVE, HireOffer, OfferStatus, as_list
@@ -147,6 +163,70 @@ def payload_of(row: HireOffer) -> dict[str, Any]:
         "version": int(row.version),
         "submitted_by": str(row.submitted_by) if row.submitted_by else "",
     }
+
+
+async def bound_message(session: AsyncSession, row: HireOffer) -> HireMessage | None:
+    """The offer email frozen at submission (``submit_offer``), if any."""
+    if row.message_id is None:
+        return None
+    return await session.scalar(
+        select(HireMessage).where(HireMessage.id == row.message_id).with_for_update()
+    )
+
+
+async def message_payload_of(
+    session: AsyncSession, message: HireMessage, record: AppRecord
+) -> dict[str, Any]:
+    """The engine's payload of the exact offer email (what ``notify`` will hash)."""
+    return await sensitive_message_payload(
+        session,
+        recipient=Recipient.external(record.email, locale=message.locale),
+        template_key=OFFER_TEMPLATE,
+        variables=frozen_values(message),
+        channel=CHANNEL,
+    )
+
+
+async def approval_payload(
+    session: AsyncSession, row: HireOffer, record: AppRecord, message: HireMessage
+) -> dict[str, Any]:
+    """The offer chain's payload: the offer (``payload_of``) plus the hash of its exact
+    rendered email, so the final approval authorises that email too."""
+    rendered = await message_payload_of(session, message, record)
+    return payload_of(row) | {
+        "message_id": str(message.id),
+        BOUND_MESSAGE_KEY: message_hash(rendered),
+    }
+
+
+async def cancel_bound_message(
+    session: AsyncSession, row: HireOffer, author: Author, reason: str
+) -> None:
+    """The offer will not be sent as approved: its frozen email is cancelled."""
+    message = await bound_message(session, row)
+    if message is None or message.status not in (
+        MessageStatus.SUBMITTED.value,
+        MessageStatus.AWAITING_APPROVAL.value,
+    ):
+        return
+    message.status = MessageStatus.CANCELLED.value
+    message.status_reason = reason[:64]
+    message.updated_at = datetime.now(UTC)
+    await session.flush()
+    await append_audit(
+        session,
+        action="hire.message.cancelled",
+        actor_type=author.type,
+        actor_id=author.id,
+        entity_type="hire.message",
+        entity_id=message.id,
+        workflow=WORKFLOW,
+        payload={
+            "application_id": str(message.application_id),
+            "offer_id": str(row.id),
+            "reason": reason,
+        },
+    )
 
 
 async def audit_offer(
@@ -298,9 +378,33 @@ async def update_offer(
     return row
 
 
-async def submit_offer(session: AsyncSession, row: HireOffer, actor_id: uuid.UUID) -> HireOffer:
+async def submit_offer(
+    session: AsyncSession,
+    row: HireOffer,
+    actor_id: uuid.UUID,
+    record: AppRecord,
+    *,
+    links: LinkConfig,
+) -> HireOffer:
+    """Submit for the chain, with the offer email drafted and frozen now: the chain's
+    approval binds that exact email (``approval_payload``)."""
     if row.status not in EDITABLE:
         raise ConflictError("this offer is already submitted")
+    if record.app.id != row.application_id:
+        raise ConflictError("this offer belongs to another application")
+    author = Author(ActorType.USER, str(actor_id))
+    await cancel_bound_message(session, row, author, "offer_resubmitted")
+    message = await compose.create_draft(
+        session,
+        record,
+        author,
+        template_key=OFFER_TEMPLATE,
+        values={"offer_url": offer_url(links, row)},
+        links=links,
+        locale=row.locale,
+    )
+    await compose.submit_message(session, message, record, author, links=links)
+    row.message_id = message.id
     row.status = OfferStatus.PENDING_APPROVAL.value
     row.status_reason = None
     row.submitted_by = actor_id
@@ -321,38 +425,95 @@ def offer_url(links: LinkConfig, row: HireOffer) -> str:
     return f"{links.web_url}/{row.locale}/portal/applications/{row.application_id}/offer"
 
 
+class OfferEmailRefusedError(ConflictError):
+    """The offer email no longer matches what the chain approved (nothing is sent)."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"the offer email cannot be sent as approved: {reason}")
+        self.reason = reason
+
+
 async def send_offer(
     session: AsyncSession,
     row: HireOffer,
     record: AppRecord,
     author: Author,
     *,
-    links: LinkConfig,
+    registry: RoleRegistry,
 ) -> HireMessage:
-    """Draft and submit the offer email; the caller starts its approval run."""
+    """Queue the offer email the chain approved, under that same approval (once).
+
+    Checks, all fail closed: the offer is ``approved``; its approval is approved and
+    its payload still equals ``approval_payload`` now (the offer and the rendered email
+    are unchanged); then ``notify`` re-checks the decisions, the email hash and that
+    the approval was never used for another message."""
     if row.status != OfferStatus.APPROVED.value:
         raise ConflictError("an offer is sent only after its approval")
-    message = await compose.create_draft(
-        session,
-        record,
-        author,
-        template_key=OFFER_TEMPLATE,
-        values={"offer_url": offer_url(links, row)},
-        links=links,
-        locale=row.locale,
-    )
-    await compose.submit_message(session, message, record, author, links=links)
+    if row.approval_id is None or record.app.id != row.application_id:
+        raise OfferEmailRefusedError("no_approval")
+    message = await bound_message(session, row)
+    if (
+        message is None
+        or message.status != MessageStatus.AWAITING_APPROVAL.value
+        or message.approval_id != row.approval_id
+    ):
+        raise OfferEmailRefusedError("no_frozen_email")
+    approval = await session.scalar(select(Approval).where(Approval.id == row.approval_id))
+    if approval is None or approval.status != ApprovalStatus.APPROVED.value:
+        raise OfferEmailRefusedError("not_approved")
+    if dict(approval.payload) != await approval_payload(session, row, record, message):
+        raise OfferEmailRefusedError("offer_or_email_changed")
+    try:
+        results = await notify(
+            session,
+            recipient=Recipient.external(record.email, locale=message.locale),
+            template_key=OFFER_TEMPLATE,
+            variables=frozen_values(message),
+            dedupe_key=f"hire.msg:{message.id}",
+            channels=[CHANNEL],
+            approval_id=row.approval_id,
+            registry=registry,
+            workflow=WORKFLOW,
+            actor_type=author.type,
+            actor_id=author.id,
+        )
+    except SensitiveTemplateError as exc:
+        raise OfferEmailRefusedError(exc.reason) from None
+    sent = next((r for r in results if r.channel == CHANNEL), None)
+    if sent is None or sent.notification_id is None:
+        raise OfferEmailRefusedError("not_queued")
+    now = datetime.now(UTC)
+    message.status = MessageStatus.QUEUED.value
+    message.notification_id = sent.notification_id
+    message.sent_at = now
+    message.updated_at = now
+    await mark_updated(record, session, now)
     row.status = OfferStatus.SENDING.value
-    row.message_id = message.id
-    row.updated_at = datetime.now(UTC)
+    row.updated_at = now
     await session.flush()
+    await append_audit(
+        session,
+        action="hire.message.sent",
+        actor_type=author.type,
+        actor_id=author.id,
+        entity_type="hire.message",
+        entity_id=message.id,
+        workflow=WORKFLOW,
+        payload={
+            "application_id": str(message.application_id),
+            "template_key": message.template_key,
+            "notification_id": str(sent.notification_id),
+            "approval_id": str(row.approval_id),
+            "offer_id": str(row.id),
+        },
+    )
     await audit_offer(
         session,
         row,
         "hire.offer.send_requested",
         actor_type=author.type,
         actor_id=author.id,
-        extra={"message_id": str(message.id)},
+        extra={"message_id": str(message.id), "approval_id": str(row.approval_id)},
     )
     return message
 
@@ -397,6 +558,9 @@ async def withdraw(session: AsyncSession, row: HireOffer, actor_id: uuid.UUID) -
     row.status = OfferStatus.WITHDRAWN.value
     row.status_reason = "withdrawn"
     row.updated_at = datetime.now(UTC)
+    await cancel_bound_message(
+        session, row, Author(ActorType.USER, str(actor_id)), "offer_withdrawn"
+    )
     await session.flush()
     await audit_offer(
         session, row, "hire.offer.withdrawn", actor_type=ActorType.USER, actor_id=str(actor_id)

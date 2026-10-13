@@ -14,8 +14,9 @@ currency, bonus target, the annual total) is encrypted and shown only to people 
                               -> rejected | failed
     draft, changes_requested, approved, sending -> withdrawn
 
-``sending``: the offer email (a sensitive message) waits for its own approval; the
-candidate sees the offer once that email was sent (``message_id``).
+``message_id``: the offer email, drafted and frozen at submission; the offer chain's
+approval binds its exact rendered hash. ``sending``: that email was queued under the
+same approval (no second approval); the candidate sees the offer once it was sent.
 """
 
 from __future__ import annotations

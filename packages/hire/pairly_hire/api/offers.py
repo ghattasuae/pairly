@@ -12,10 +12,12 @@ Signed in:
 * ``POST /applications/{id}/offers``           build an offer from a template (201;
                                                ``hire.offer.create`` and compensation)
 * ``PUT  /offers/{id}``                        edit a draft (naming the version edited)
-* ``POST /offers/{id}/submit``                 submit for approval; the run starts after
-                                               the response, as the submitter
-* ``POST /offers/{id}/send``                   after approval: the offer email, a
-                                               sensitive message with its own approval
+* ``POST /offers/{id}/submit``                 submit for approval, with the offer email
+                                               frozen; the run starts after the
+                                               response, as the submitter
+* ``POST /offers/{id}/send``                   after approval: queues the exact offer
+                                               email the chain approved, once (no
+                                               second approval)
 * ``POST /offers/{id}/withdraw``               take back an unanswered offer
 * ``GET  /offers/{id}/pdf?locale=``            the letter (compensation permission)
 
@@ -45,11 +47,16 @@ from sqlalchemy import select
 
 from pairly_core.approvals.models import Approval, ApprovalStep
 from pairly_core.audit import ActorType
-from pairly_core.errors import BadRequestError, ForbiddenError, NotFoundError
+from pairly_core.errors import (
+    BadRequestError,
+    ForbiddenError,
+    NotFoundError,
+    ServiceUnavailableError,
+)
 from pairly_core.identity import CurrentActor, OrgSession, RequestSession
-from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_core.rbac import Actor, ActorKind, RoleRegistry, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
-from pairly_hire.api.messaging import _runtime, start_message_run
+from pairly_hire.api.messaging import _runtime
 from pairly_hire.api.pipeline import links
 from pairly_hire.api.portal import NO_STORE, Portal, _hit
 from pairly_hire.messaging.compose import Author
@@ -240,6 +247,14 @@ def _writer(actor: Actor) -> uuid.UUID:
     return _user(actor)
 
 
+def _registry(request: Request) -> RoleRegistry:
+    """The process's role registry (``notify`` re-checks the offer's approvers)."""
+    registry = getattr(getattr(request.app.state, "pairly", None), "registry", None)
+    if not isinstance(registry, RoleRegistry):
+        raise ServiceUnavailableError("sending is not available here; try again later")
+    return registry
+
+
 async def start_offer_run(runtime: WorkflowRuntime, actor: Actor, offer_id: uuid.UUID) -> None:
     """After the response: start the approval graph as the submitter."""
     try:
@@ -351,7 +366,8 @@ async def submit_offer(
     user = _writer(actor)
     runtime = _runtime(request)
     row = await service.get_offer(session, offer_id, lock=True)
-    await service.submit_offer(session, row, user)
+    record = await load_record(session, row.application_id, lock=True)
+    await service.submit_offer(session, row, user, record, links=links(request))
     background.add_task(start_offer_run, runtime, actor, row.id)
     return await _offer_out(session, actor, row)
 
@@ -360,18 +376,15 @@ async def submit_offer(
 async def send_offer(
     offer_id: uuid.UUID,
     request: Request,
-    background: BackgroundTasks,
     actor: CurrentActor,
     session: OrgSession,
 ) -> HireOfferOut:
     user = _writer(actor)
-    runtime = _runtime(request)
     row = await service.get_offer(session, offer_id, lock=True)
     record = await load_record(session, row.application_id, lock=True)
-    message = await service.send_offer(
-        session, row, record, Author(ActorType.USER, str(user)), links=links(request)
+    await service.send_offer(
+        session, row, record, Author(ActorType.USER, str(user)), registry=_registry(request)
     )
-    background.add_task(start_message_run, runtime, actor, message.id)
     return await _offer_out(session, actor, row)
 
 

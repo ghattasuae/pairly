@@ -69,6 +69,7 @@ from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import CHANNEL, frozen_values, mark_updated
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.models import ApplicationStatus
+from pairly_hire.offers.models import HireOffer
 from pairly_hire.permissions import MESSAGE_CREATE
 from pairly_hire.pipeline.records import load_record
 
@@ -142,6 +143,11 @@ async def _audit(
     )
 
 
+async def _offer_bound(session: AsyncSession, message_id: uuid.UUID) -> bool:
+    found = await session.scalar(select(HireOffer.id).where(HireOffer.message_id == message_id))
+    return found is not None
+
+
 def _title(message: HireMessage, job_title: str, reference: str) -> str:
     entry = library.entry(message.template_key or "")
     what = entry.label if entry is not None else "Message"
@@ -154,6 +160,9 @@ async def propose(state: MessageState, runtime: Ctx) -> Command[Any]:
     async with ctx.transaction() as session:
         message = await _locked(session, message_id)
         if message.status != MessageStatus.SUBMITTED.value or message.template_key is None:
+            return Command(goto=END)
+        if await _offer_bound(session, message.id):
+            # An offer's email is approved by the offer's own chain, never here.
             return Command(goto=END)
         record = await load_record(session, message.application_id)
         payload = await sensitive_message_payload(
@@ -379,6 +388,10 @@ async def restart_stuck(
                     select(HireMessage.id, HireMessage.submitted_by).where(
                         HireMessage.status == MessageStatus.SUBMITTED.value,
                         HireMessage.run_id.is_(None),
+                        # An offer's email waits for the offer chain, not for a run here.
+                        ~select(HireOffer.id)
+                        .where(HireOffer.message_id == HireMessage.id)
+                        .exists(),
                         HireMessage.updated_at < datetime.now(UTC) - STUCK_AFTER,
                     )
                 )

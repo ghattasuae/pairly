@@ -24,6 +24,11 @@ Per channel, in order:
    approval payload with ``sensitive_message_payload``, so the approver sees the exact
    text that will be sent, and any change to the template or the values afterwards
    breaks the hash and blocks the send.
+   A workflow approval may also bind one message (``allow_bound_message``): for a
+   template key registered with that approval type, the approval's own payload carries
+   ``message_sha256`` (the ``message_hash`` of exactly this rendered message), and its
+   stored payload must still hash to its ``payload_hash``. So one approval chain (an
+   offer) authorises its exact email once, and nothing else.
 6. Preferences (``pairly_core.notifications.preferences.plan``).
 7. The row (content encrypted) and an audit event.
 """
@@ -89,6 +94,22 @@ class NotificationActions:
     UNSUBSCRIBED = "core.notification.unsubscribed"
     SENSITIVE_REFUSED = "core.notification.sensitive_refused"
     RECEIPT_SKIPPED = "core.notification.receipt_skipped"
+
+
+# Template key -> approval types whose payload may bind one rendered message of it.
+_BOUND_MESSAGES: dict[str, frozenset[str]] = {}
+BOUND_MESSAGE_KEY: Final = "message_sha256"
+
+
+def allow_bound_message(template_key: str, approval_type: str) -> None:
+    """Let an approval of ``approval_type`` authorise one message of ``template_key``
+    whose ``message_hash`` its payload carries as ``message_sha256``. Plugins call this
+    at import (idempotent)."""
+    _BOUND_MESSAGES[template_key] = _BOUND_MESSAGES.get(template_key, frozenset()) | {approval_type}
+
+
+def bound_message_types(template_key: str) -> frozenset[str]:
+    return _BOUND_MESSAGES.get(template_key, frozenset())
 
 
 class SensitiveTemplateError(ForbiddenError):
@@ -248,11 +269,28 @@ async def _recipient_basics(
     return prefs.locale, prefs.timezone, email
 
 
+def _binds(approval: Approval, template_key: str, digest: str) -> bool:
+    """The approval covers this message: its payload is the message itself, or (for a
+    registered approval type) its intact payload names this message's hash."""
+    if approval.payload_hash == digest:
+        return True
+    if approval.approval_type not in bound_message_types(template_key):
+        return False
+    payload = approval.payload if isinstance(approval.payload, dict) else {}
+    if payload.get(BOUND_MESSAGE_KEY) != digest:
+        return False
+    try:
+        return message_hash(payload) == approval.payload_hash
+    except (TypeError, ValueError):
+        return False
+
+
 async def _check_sensitive(
     session: AsyncSession,
     registry: RoleRegistry | None,
     approval_id: uuid.UUID | None,
     digest: str,
+    template_key: str,
 ) -> Approval:
     if approval_id is None:
         raise SensitiveTemplateError("approval_missing")
@@ -265,7 +303,7 @@ async def _check_sensitive(
         raise SensitiveTemplateError("approval_not_found")
     if approval.status != ApprovalStatus.APPROVED.value:
         raise SensitiveTemplateError("approval_not_approved")
-    if approval.payload_hash != digest:
+    if not _binds(approval, template_key, digest):
         raise SensitiveTemplateError("payload_hash_mismatch")
     try:
         await _decisions_valid(session, registry, approval)
@@ -466,7 +504,7 @@ async def _notify_channel(
         if not single_channel:
             raise SensitiveTemplateError("one_channel_per_approval")
         try:
-            await _check_sensitive(session, registry, approval_id, digest)
+            await _check_sensitive(session, registry, approval_id, digest, template.key)
         except SensitiveTemplateError as exc:
             # The caller's transaction rolls back; callers record the refusal in a fresh
             # transaction with ``record_sensitive_refusal`` (the executor's pattern).

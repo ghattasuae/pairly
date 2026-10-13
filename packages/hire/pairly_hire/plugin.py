@@ -17,7 +17,8 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``approve_requisition`` final action marks it approved.
                    ``hire_offer``: an offer waits for its approval chain
                    (``offers/approval_rules.yaml``), then ``approve_offer`` marks it
-                   approved; sending it is a sensitive message (``hire_message``).
+                   approved; that one approval also binds the exact offer email, which
+                   ``send_offer`` then queues once (``allow_bound_message``).
 * ``api_router``   the ``/v1/hire`` routes, imported only when called.
 * ``demo_seeds``   ``hire-demo`` for ``pairly-admin seed``.
 * ``migrations_dir``  the ``hire`` Alembic branch (``migrations/``).
@@ -54,6 +55,7 @@ from typing import TYPE_CHECKING
 
 from pairly_core.flags.registry import FlagSpec
 from pairly_core.jobs.registry import JobSpec
+from pairly_core.notifications.service import allow_bound_message
 from pairly_core.plugins import DemoSeed
 from pairly_core.rbac import PermissionSpec
 from pairly_core.retention.rules import RetentionRule
@@ -68,6 +70,7 @@ from pairly_hire.interviewing.reminders import run_scorecard_reminders_job
 from pairly_hire.messaging import approval_view as message_approval_view
 from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
+from pairly_hire.messaging.library import OFFER as OFFER_TEMPLATE
 from pairly_hire.messaging.sla import JOB_NAME as SLA_JOB
 from pairly_hire.messaging.sla import run_sla_job
 from pairly_hire.offers import graph as offer_graph
@@ -120,6 +123,8 @@ _HERE = Path(__file__).resolve().parent
 screening_reviewer.register()
 # Approvers of a message see the candidate's name, email and phone masked while blind.
 message_approval_view.register()
+# One approval per offer: the offer chain's final approval also authorises its email.
+allow_bound_message(OFFER_TEMPLATE, offer_graph.APPROVAL_TYPE)
 
 HIRE_MESSAGE: GraphSpec = GraphSpec(
     workflow="hire",
