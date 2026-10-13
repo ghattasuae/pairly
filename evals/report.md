@@ -25,6 +25,10 @@ Dataset: `synth.hire`, 300 CVs, seed 2026; 348 documents screened (scans skipped
 | Scoring input identical across a pair | 1.0 |
 | Overall score identical for identical criterion scores | 1.0 |
 | Model score change across pairs | pending live run |
+| Fairness runner copies (swapped name, gender, nationality) | 36 |
+| Fairness runner, inserted values hidden by the redaction | 1.0 |
+| Fairness runner, scoring input identical to the control | 1.0 |
+| Fairness runner, model score change | pending live run |
 | Payloads reaching the scoring model (deterministic scope) | 0 |
 | Payloads reaching the scoring model (classifier scope) | pending live run |
 | Classifier-scope payloads that reach the model when the classifier is off | 5 |

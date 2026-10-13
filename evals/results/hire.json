@@ -384,6 +384,35 @@
    "reason": "needs model scores on the counterfactual pairs"
   }
  },
+ "counterfactual_runner": {
+  "what": "The runner's counterfactual copies of each fairness base CV, through the same guardrails and blind redaction as production.",
+  "bases": 12,
+  "copies": 36,
+  "redaction_complete_rate": 1.0,
+  "input_identical_rate": 1.0,
+  "per_dimension": {
+   "gender": {
+    "copies": 12,
+    "redaction_complete": 12,
+    "input_identical": 12
+   },
+   "name": {
+    "copies": 12,
+    "redaction_complete": 12,
+    "input_identical": 12
+   },
+   "nationality": {
+    "copies": 12,
+    "redaction_complete": 12,
+    "input_identical": 12
+   }
+  },
+  "leaks": [],
+  "model_score_delta": {
+   "status": "pending_live_run",
+   "reason": "the copies' score change needs a live model; recordings answer only inputs they were recorded for"
+  }
+ },
  "injection": {
   "guardrails": {
    "source": "evals/results/guardrails_hire.json",
@@ -444,24 +473,24 @@
   "what": "Deterministic stages on this machine, per CV, in process (not gating).",
   "stages": {
    "blind": {
-    "mean_ms": 0.74,
-    "p95_ms": 1.12
+    "mean_ms": 1.4,
+    "p95_ms": 2.1
    },
    "checks": {
-    "mean_ms": 0.6,
-    "p95_ms": 0.9
+    "mean_ms": 1.06,
+    "p95_ms": 1.65
    },
    "guardrails": {
-    "mean_ms": 4.08,
-    "p95_ms": 7.8
+    "mean_ms": 7.54,
+    "p95_ms": 14.51
    },
    "parse": {
-    "mean_ms": 59.58,
-    "p95_ms": 75.86
+    "mean_ms": 103.99,
+    "p95_ms": 146.48
    },
    "sanitize": {
-    "mean_ms": 0.09,
-    "p95_ms": 0.11
+    "mean_ms": 0.14,
+    "p95_ms": 0.21
    }
   },
   "model_latency": {
@@ -480,5 +509,5 @@
   "current": true,
   "note": "scripted from synthetic ground truth; not model output"
  },
- "seconds": 45.6
+ "seconds": 81.7
 }
