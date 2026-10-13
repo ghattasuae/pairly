@@ -101,6 +101,11 @@ OFFER_COMPENSATION: Final = "hire.offer.compensation"
 CHECKLIST_READ: Final = "hire.checklist.read"
 CHECKLIST_WRITE: Final = "hire.checklist.write"
 SURVEY_READ: Final = "hire.survey.read"
+ANALYTICS_READ: Final = "hire.analytics.read"
+BIAS_READ: Final = "hire.bias.read"
+BIAS_EXPORT: Final = "hire.bias.export"
+FAIRNESS_RUN: Final = "hire.fairness.run"
+CALIBRATION_WRITE: Final = "hire.calibration.write"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -249,6 +254,31 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         SURVEY_READ,
         "View candidate experience survey results (totals; named answers only by choice)",
         frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        ANALYTICS_READ,
+        "View hiring analytics, fairness test results and calibration agreement",
+        frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        BIAS_READ,
+        "View the bias and adverse-impact report (group totals only, small groups hidden)",
+        frozenset({R.ADMIN, R.RECRUITER, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        BIAS_EXPORT,
+        "Export the bias audit pack (needs two-factor sign-in, audited)",
+        frozenset({R.ADMIN, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        FAIRNESS_RUN,
+        "Start a counterfactual fairness test on screened applications",
+        frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        CALIBRATION_WRITE,
+        "Label applications per criterion to calibrate the screening rubric",
+        frozenset({R.ADMIN, *_HIRING}),
     ),
     PermissionSpec(
         REFERENCE_WRITE,

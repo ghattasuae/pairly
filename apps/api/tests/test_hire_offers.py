@@ -404,7 +404,7 @@ async def test_sent_back_offer_freezes_a_new_email_on_resubmit(
     (fresh,) = (await offers(api, world, app_id))["items"]
     assert fresh["message_id"] not in (None, first_message)
     assert fresh["approval_id"] not in (None, offer["approval_id"])
-    detail = (await api.call("GET", f"/v1/approvals/{fresh['approval_id']}", world, "manager"))
+    detail = await api.call("GET", f"/v1/approvals/{fresh['approval_id']}", world, "manager")
     assert detail.json()["payload"]["job_title"] == "Senior Analyst"
     assert detail.json()["payload"]["message_id"] == fresh["message_id"]
 

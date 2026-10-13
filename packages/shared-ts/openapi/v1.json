@@ -3826,6 +3826,195 @@
         "title": "HireAiDraftOut",
         "type": "object"
       },
+      "HireAnalyticsOut": {
+        "properties": {
+          "agreement": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Agreement",
+            "type": "array"
+          },
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "cost_per_screened_application": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "ghosting_rate": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "interviewer_load": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Interviewer Load",
+            "type": "array"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "jobs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Jobs",
+            "type": "object"
+          },
+          "override_rate": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "scheduling_time_saved": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/HireAnalyticsSettingsOut"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "sla": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Sla",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "stage_conversion": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Stage Conversion",
+            "type": "array"
+          },
+          "survey": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireSurveyResultsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "time_in_stage": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Time In Stage",
+            "type": "array"
+          },
+          "time_to_first_response": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "time_to_hire": {
+            "$ref": "#/components/schemas/HireMetricOut"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "generated_at",
+          "job_id",
+          "since",
+          "until",
+          "applications",
+          "settings",
+          "time_to_first_response",
+          "time_in_stage",
+          "time_to_hire",
+          "stage_conversion",
+          "sources",
+          "sla",
+          "ghosting_rate",
+          "interviewer_load",
+          "scheduling_time_saved",
+          "agreement",
+          "override_rate",
+          "flags",
+          "cost_per_screened_application",
+          "survey",
+          "jobs"
+        ],
+        "title": "HireAnalyticsOut",
+        "type": "object"
+      },
+      "HireAnalyticsSettingsOut": {
+        "properties": {
+          "agreement_threshold": {
+            "title": "Agreement Threshold",
+            "type": "number"
+          },
+          "ghost_days": {
+            "title": "Ghost Days",
+            "type": "integer"
+          },
+          "minutes_per_booking": {
+            "title": "Minutes Per Booking",
+            "type": "integer"
+          },
+          "sla_days": {
+            "title": "Sla Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sla_days",
+          "ghost_days",
+          "agreement_threshold",
+          "minutes_per_booking"
+        ],
+        "title": "HireAnalyticsSettingsOut",
+        "type": "object"
+      },
       "HireApplicationDetail": {
         "properties": {
           "acknowledged_at": {
@@ -7870,6 +8059,60 @@
         "title": "HireMessagingSettingsOut",
         "type": "object"
       },
+      "HireMetricOut": {
+        "properties": {
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/HireRecordLinkOut"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "records_total": {
+            "title": "Records Total",
+            "type": "integer"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "unit",
+          "n",
+          "records",
+          "records_total",
+          "detail"
+        ],
+        "title": "HireMetricOut",
+        "type": "object"
+      },
       "HireModelCallOut": {
         "properties": {
           "call_id": {
@@ -10535,6 +10778,41 @@
           "submitted_at"
         ],
         "title": "HireQueueItemOut",
+        "type": "object"
+      },
+      "HireRecordLinkOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "job_id",
+          "label"
+        ],
+        "title": "HireRecordLinkOut",
         "type": "object"
       },
       "HireRecruitersIn": {
@@ -19511,6 +19789,132 @@
         "summary": "Put Flag",
         "tags": [
           "flags"
+        ]
+      }
+    },
+    "/v1/hire/analytics": {
+      "get": {
+        "operationId": "analytics_v1_hire_analytics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ghost_days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ghost Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agreement_threshold",
+            "required": false,
+            "schema": {
+              "default": 60,
+              "maximum": 100,
+              "minimum": 0,
+              "title": "Agreement Threshold",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minutes_per_booking",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 240,
+              "minimum": 0,
+              "title": "Minutes Per Booking",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireAnalyticsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analytics",
+        "tags": [
+          "hire"
         ]
       }
     },

@@ -1429,7 +1429,11 @@
       "noJobs": "No jobs yet.",
       "newJob": "New job",
       "edit": "Edit",
-      "requisitions": "Requisitions: request a role or approve one"
+      "requisitions": "Requisitions: request a role or approve one",
+      "analytics": "Hiring analytics",
+      "bias": "Bias and adverse-impact report",
+      "surveys": "Candidate survey results",
+      "calibration": "Rubric calibration"
     },
     "jobStatus": {
       "draft": "Draft",
@@ -2529,6 +2533,72 @@
       "yes": "Yes",
       "no": "No",
       "unsure": "Not sure"
+    }
+  },
+  "HireAnalytics": {
+    "title": "Hiring analytics",
+    "intro": "How hiring is going, computed from your own records. Every number opens the records behind it. Nothing here is a sample or a guess, except where a number says it is an estimate.",
+    "filters": "Filters",
+    "job": "Job",
+    "allJobs": "All jobs",
+    "since": "Applied from",
+    "until": "Applied before",
+    "ghostDays": "Ghosting after (days)",
+    "threshold": "AI shortlist score",
+    "minutes": "Minutes saved per self-booked interview",
+    "apply": "Update",
+    "scope": "{count, plural, =0 {No applications in this period.} one {Based on # application.} other {Based on # applications.}}",
+    "noData": "No data yet",
+    "sample": "{n, plural, one {from # record} other {from # records}}",
+    "records": "{count, plural, one {Show the record} other {Show the # records}}",
+    "recordsCapped": "Showing {shown} of {total}.",
+    "pending": "{count, plural, =0 {Every candidate has heard from us.} one {# candidate has not heard from us yet.} other {# candidates have not heard from us yet.}}",
+    "unit": {
+      "hours": "{value} h",
+      "days": "{value} days",
+      "minutes": "{value} min"
+    },
+    "section": {
+      "speed": "Speed and waiting",
+      "funnel": "Funnel and sources",
+      "interviews": "Interviews",
+      "ai": "AI and people",
+      "survey": "Candidate experience"
+    },
+    "metric": {
+      "firstResponse": "Time to first response (median)",
+      "timeToHire": "Time to hire (median)",
+      "timeInStage": "Time in stage (median)",
+      "slaGhosting": "Waiting over the {days} day reply time now",
+      "slaApprovals": "Approval steps past their due time",
+      "ghosting": "Ghosting rate (no update for {days} days or more)",
+      "sources": "Source effectiveness (hire rate)",
+      "timeSaved": "Scheduling time saved (estimate)",
+      "interviewerLoad": "Interviewer load",
+      "agreement": "AI and human agreement",
+      "disagreement": "Decisions that differ from the AI score",
+      "overrides": "Override rate",
+      "injection": "Prompt injection or hidden text caught",
+      "claims": "Claim consistency flags",
+      "signals": "AI-generated application signals",
+      "cost": "Model cost per screened application"
+    },
+    "conversion": "{from} to {to}",
+    "conversionMethod": "Share of the applications that reached a stage (or a later one) that went on to the next stage.",
+    "reached": "{reached} reached, {moved} moved on",
+    "sourceDetail": "{applications} applied, {shortlisted} shortlisted, {hired} hired",
+    "timeSavedMethod": "Estimate: interviews the candidate booked through the self-scheduling link, times {minutes} minutes of back and forth each booking is assumed to save.",
+    "agreementMethod": "A person's shortlist decision compared with the AI score: {threshold} or more reads as shortlist.",
+    "upcoming": "{count, plural, =0 {none to come} one {# to come} other {# to come}}",
+    "someone": "A team member",
+    "infoOnly": "Information only: a flag never changes a score.",
+    "recordedMode": "Recorded mode: the model answers came from recordings, so there was no provider cost.",
+    "survey": {
+      "overall": "Overall experience (average)",
+      "outOf5": "{value} out of 5",
+      "hidden": "Hidden: fewer than {min} answers",
+      "counts": "{responses} answers from {invited} invitations",
+      "open": "Open the survey results"
     }
   }
 }

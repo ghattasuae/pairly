@@ -29,6 +29,7 @@
   the candidate's answer in the portal (M3).
 * ``checklist``: the pre-employment checklist, its documents and their retention (M3).
 * ``survey``: the candidate experience survey and its results (M3).
+* ``analytics``: hiring analytics, every number with its records (M3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -38,6 +39,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from pairly_hire.api import (
+    analytics,
     applications,
     candidate_requests,
     checklist,
@@ -73,3 +75,4 @@ router.include_router(references.router)
 router.include_router(offers.router)
 router.include_router(checklist.router)
 router.include_router(survey.router)
+router.include_router(analytics.router)

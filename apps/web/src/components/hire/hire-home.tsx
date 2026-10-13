@@ -277,3 +277,28 @@ export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?:
     </section>
   );
 }
+
+const REPORTS = [
+  { key: "analytics", href: "/hire/analytics", permission: "hire.analytics.read" },
+] as const;
+
+/** Links to the Hire reports the person may open (the API checks again on every call). */
+export function HireReportLinks({
+  permissions,
+  labels,
+}: {
+  permissions: readonly string[];
+  labels: Partial<Record<string, string>>;
+}) {
+  const shown = REPORTS.filter((r) => permissions.includes(r.permission));
+  if (shown.length === 0) return null;
+  return (
+    <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" data-report-links>
+      {shown.map((r) => (
+        <Link key={r.key} href={r.href} className="text-primary hover:underline">
+          {labels[r.key]}
+        </Link>
+      ))}
+    </nav>
+  );
+}

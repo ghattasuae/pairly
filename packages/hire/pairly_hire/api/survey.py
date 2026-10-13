@@ -150,7 +150,10 @@ async def survey_results(
     since: date | None = None,
 ) -> HireSurveyResultsOut:
     authorize(actor, SURVEY_READ)
-    r = await service.aggregate_results(session, job_id=job_id, since=since)
+    return results_out(await service.aggregate_results(session, job_id=job_id, since=since))
+
+
+def results_out(r: service.SurveyResults) -> HireSurveyResultsOut:
     return HireSurveyResultsOut(
         invited=r.invited,
         responses=r.responses,

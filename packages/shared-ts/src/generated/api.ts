@@ -742,6 +742,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analytics */
+        get: operations["analytics_v1_hire_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications": {
         parameters: {
             query?: never;
@@ -5218,6 +5235,59 @@ export type components = {
             /** Prompt Version */
             prompt_version: string;
         };
+        /** HireAnalyticsOut */
+        HireAnalyticsOut: {
+            /** Agreement */
+            agreement: components["schemas"]["HireMetricOut"][];
+            /** Applications */
+            applications: number;
+            cost_per_screened_application: components["schemas"]["HireMetricOut"];
+            /** Flags */
+            flags: components["schemas"]["HireMetricOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            ghosting_rate: components["schemas"]["HireMetricOut"];
+            /** Interviewer Load */
+            interviewer_load: components["schemas"]["HireMetricOut"][];
+            /** Job Id */
+            job_id: string | null;
+            /** Jobs */
+            jobs: {
+                [key: string]: string;
+            };
+            override_rate: components["schemas"]["HireMetricOut"];
+            scheduling_time_saved: components["schemas"]["HireMetricOut"];
+            settings: components["schemas"]["HireAnalyticsSettingsOut"];
+            /** Since */
+            since: string | null;
+            /** Sla */
+            sla: components["schemas"]["HireMetricOut"][];
+            /** Sources */
+            sources: components["schemas"]["HireMetricOut"][];
+            /** Stage Conversion */
+            stage_conversion: components["schemas"]["HireMetricOut"][];
+            survey: components["schemas"]["HireSurveyResultsOut"] | null;
+            /** Time In Stage */
+            time_in_stage: components["schemas"]["HireMetricOut"][];
+            time_to_first_response: components["schemas"]["HireMetricOut"];
+            time_to_hire: components["schemas"]["HireMetricOut"];
+            /** Until */
+            until: string | null;
+        };
+        /** HireAnalyticsSettingsOut */
+        HireAnalyticsSettingsOut: {
+            /** Agreement Threshold */
+            agreement_threshold: number;
+            /** Ghost Days */
+            ghost_days: number;
+            /** Minutes Per Booking */
+            minutes_per_booking: number;
+            /** Sla Days */
+            sla_days: number;
+        };
         /** HireApplicationDetail */
         HireApplicationDetail: {
             /** Acknowledged At */
@@ -6568,6 +6638,25 @@ export type components = {
             /** Sla Days */
             sla_days: number;
         };
+        /** HireMetricOut */
+        HireMetricOut: {
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Key */
+            key: string;
+            /** N */
+            n: number;
+            /** Records */
+            records: components["schemas"]["HireRecordLinkOut"][];
+            /** Records Total */
+            records_total: number;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number | null;
+        };
         /** HireModelCallOut */
         HireModelCallOut: {
             /**
@@ -7522,6 +7611,17 @@ export type components = {
             submitted_at: string | null;
             /** Tags */
             tags: string[];
+        };
+        /** HireRecordLinkOut */
+        HireRecordLinkOut: {
+            /** Id */
+            id: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
         };
         /** HireRecruitersIn */
         HireRecruitersIn: {
@@ -11303,6 +11403,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FlagOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analytics_v1_hire_analytics_get: {
+        parameters: {
+            query?: {
+                agreement_threshold?: number;
+                ghost_days?: number | null;
+                job_id?: string | null;
+                minutes_per_booking?: number;
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireAnalyticsOut"];
                 };
             };
             /** @description Validation Error */

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { JobsList, RediscoverySearch, Referrals, WaitingCard } from "@/components/hire/hire-home";
+import { HireReportLinks, JobsList, RediscoverySearch, Referrals, WaitingCard } from "@/components/hire/hire-home";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
@@ -81,6 +81,9 @@ export default async function HirePage({ params }: Props) {
           </Link>
         </p>
       )}
+      <HireReportLinks permissions={permissions} labels={{
+        analytics: t("home.analytics"),
+      }} />
       {team && <JobsList jobs={working} canEdit={permissions.includes("hire.job.write")} />}
       {team && <RediscoverySearch />}
       {refers && <Referrals jobs={open} referrals={referrals?.ok ? referrals.data : []} />}
