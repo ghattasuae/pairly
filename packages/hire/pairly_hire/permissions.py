@@ -48,6 +48,11 @@ Who does what by default:
   is visible only with ``hire.offer.compensation`` (the hiring team, admins and finance
   controllers); auditors read offers without it.
 
+* The pre-employment checklist (M3) holds identity documents: only HR (recruiters) and
+  admins configure it, request documents, open files, verify or waive them
+  (``hire.checklist.read``, ``hire.checklist.write``). Hiring managers and interviewers
+  never see the files.
+
 Declaring ``hire.document.*`` makes the engine use them instead of ``core.document.*``
 for documents of the ``hire`` workflow (CVs), so a member limited to Hire can open them.
 """
@@ -89,6 +94,8 @@ OFFER_READ: Final = "hire.offer.read"
 OFFER_WRITE: Final = "hire.offer.create"
 OFFER_APPROVE: Final = "hire.offer.approve"
 OFFER_COMPENSATION: Final = "hire.offer.compensation"
+CHECKLIST_READ: Final = "hire.checklist.read"
+CHECKLIST_WRITE: Final = "hire.checklist.write"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -222,6 +229,16 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         OFFER_COMPENSATION,
         "See and set the compensation in offers",
         frozenset({R.ADMIN, *_HIRING, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        CHECKLIST_READ,
+        "View pre-employment checklists and open their documents (ID, degree, visa)",
+        frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        CHECKLIST_WRITE,
+        "Set the documents to collect per job, request them, verify or waive them",
+        frozenset({R.ADMIN, R.RECRUITER}),
     ),
     PermissionSpec(
         REFERENCE_WRITE,

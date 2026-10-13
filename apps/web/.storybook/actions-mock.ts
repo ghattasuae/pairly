@@ -145,3 +145,7 @@ export const saveReference = unavailable;
 export const createOffer = unavailable;
 export const offerAction = unavailable;
 export const answerOffer = unavailable;
+// Pre-employment checklist (lib/actions/checklist.ts).
+export const requestChecklist = unavailable;
+export const reviewChecklistItem = unavailable;
+export const saveChecklistConfig = unavailable;

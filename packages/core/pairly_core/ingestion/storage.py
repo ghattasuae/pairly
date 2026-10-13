@@ -10,6 +10,8 @@ tenant's object or leak into storage logs:
     orgs/<org uuid>/blobs/sha256/<first two hex>/<sha256>          original bytes
     orgs/<org uuid>/derived/<sha256>/<artifact name>                derived artifacts
     orgs/<org uuid>/compliance/<export uuid>.zip                    compliance packs
+    orgs/<org uuid>/sealed/<object uuid>                            files a workflow stores
+                                                                    encrypted (envelope)
 
 Signed GET URLs are short lived and are only created by callers that already passed an
 RBAC check (see ``pairly_api.routes.documents``). The download name and type in the URL
@@ -43,7 +45,9 @@ _KEY_RE = re.compile(
     r"^orgs/[0-9a-f-]{36}/"
     r"(blobs/sha256/[0-9a-f]{2}/[0-9a-f]{64}|derived/[0-9a-f]{64}/[a-z0-9][a-z0-9._-]{0,127}"
     # Compliance packs (pairly_core.decisions.compliance).
-    r"|compliance/[0-9a-f-]{36}\.zip)$"
+    r"|compliance/[0-9a-f-]{36}\.zip"
+    # Files a workflow encrypts itself before storing them (``sealed_key``).
+    r"|sealed/[0-9a-f-]{36})$"
 )
 
 
@@ -69,6 +73,13 @@ def derived_key(org_id: uuid.UUID, sha256: str, artifact: str) -> str:
     if not _ARTIFACT_RE.fullmatch(artifact):
         raise ValueError("invalid artifact name")
     return f"orgs/{org_id}/derived/{sha256}/{artifact}"
+
+
+def sealed_key(org_id: uuid.UUID, object_id: uuid.UUID) -> str:
+    """Key of a file a workflow stores encrypted (its bytes are an envelope token)."""
+    if not isinstance(org_id, uuid.UUID) or not isinstance(object_id, uuid.UUID):
+        raise ValueError("sealed keys need an org UUID and an object UUID")
+    return f"orgs/{org_id}/sealed/{object_id}"
 
 
 def check_key(key: str) -> str:

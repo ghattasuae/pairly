@@ -2184,7 +2184,8 @@
     "openKit": "Interview kit",
     "openDebrief": "Debrief",
     "openReferences": "References",
-    "openOffer": "Offer"
+    "openOffer": "Offer",
+    "openChecklist": "Pre-employment checklist"
   },
   "Requisitions": {
     "title": "Requisitions",
@@ -2486,5 +2487,32 @@
     "decline": "Decline the offer",
     "accepted": "You accepted this offer. The hiring team will be in touch about next steps.",
     "declined": "You declined this offer. Thank you for letting us know."
+  },
+  "Checklist": {
+    "title": "Pre-employment checklist",
+    "intro": "Documents the candidate uploads in their portal. Files are encrypted, open to HR and admins only, and removed {days} days after hire.",
+    "none": "No documents requested yet.",
+    "request": "Request through the portal",
+    "missing": "Not requested yet: {list}.",
+    "open": "Open the file",
+    "verify": "Mark verified",
+    "waive": "Not needed",
+    "receivedAt": "Received {when}",
+    "keptUntil": "Kept until {when}",
+    "purged": "The file was removed after its retention period.",
+    "configure": "Documents for this job",
+    "newDocument": "New document, for example Police clearance",
+    "add": "Add",
+    "remove": "Remove {label}",
+    "retention": "Days to keep files after hire",
+    "retentionHint": "1 to 365 days. Files are removed after this.",
+    "saveConfig": "Save the documents",
+    "savedConfig": "Saved for this job.",
+    "status": {
+      "requested": "Requested",
+      "received": "Received",
+      "verified": "Verified",
+      "waived": "Not needed"
+    }
   }
 }

@@ -76,6 +76,7 @@ from pairly_hire.careers import CareersOrg, careers_org
 from pairly_hire.jobs import org_settings
 from pairly_hire.models import HireCandidate
 from pairly_hire.offers import service as offer_service
+from pairly_hire.onboarding import portal as checklist
 from pairly_hire.portal import auth, service
 from pairly_hire.portal.models import HireDocumentRequest
 from pairly_hire.portal.templates import LOGIN_LINK
@@ -607,6 +608,16 @@ async def upload_requested(
             )
         except TooLargeError:
             return rejected_response(request, RejectReason.TOO_LARGE, WORKFLOW)
+        if row.checklist_item_id is not None:
+            # A pre-employment document: stored encrypted on its checklist item, never
+            # as a shared document (no parsing, no search, HR and admins only).
+            data = received.file.path.read_bytes()
+            row = await checklist.attach_checklist_file(
+                session, services.store, identity, row, data=data, filename=received.filename
+            )
+            await session.commit()
+            out = HirePortalFileOut(request=_request_out(row))
+            return _no_store(out.model_dump(mode="json"), 201)
         outcome = await ingest_spooled(
             session,
             services.store,

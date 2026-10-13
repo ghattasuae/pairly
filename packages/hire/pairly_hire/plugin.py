@@ -23,7 +23,8 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``migrations_dir``  the ``hire`` Alembic branch (``migrations/``).
 * ``prompt_roots``  the versioned prompts ``hire_jd_draft``, ``hire_rubric_draft`` and
                    ``hire_cv_score`` and ``hire_message_draft``.
-* ``retention_rules``  ``hire.applications.rejected`` (dry run, per-organisation months).
+* ``retention_rules``  ``hire.applications.rejected`` (dry run, per-organisation months)
+                   and ``hire.checklist.documents`` (checklist files after hire).
 * ``search_sources``  ``hire_candidate`` (talent rediscovery, consent and retention).
 * ``scheduled_jobs``  ``hire_screening_start``: starts the screening of submitted
                    applications whose CV is ready, every minute (``screening.start``);
@@ -31,6 +32,7 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_interview_reminders`` (24 hours and 1 hour before interviews);
                    ``hire_scorecard_reminders``: feedback reminders 2 and 24 hours after
                    an interview, and "remind me later" (``interviewing.reminders``);
+                   ``hire_checklist_retention``: checklist file retention after hire;
                    ``hire_erasure_objects``: removes the stored files of erasures a
                    person started, then completes their requests (``erasure``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
@@ -69,6 +71,9 @@ from pairly_hire.messaging.sla import JOB_NAME as SLA_JOB
 from pairly_hire.messaging.sla import run_sla_job
 from pairly_hire.offers import graph as offer_graph
 from pairly_hire.offers import models as offer_models  # noqa: F401  (tables)
+from pairly_hire.onboarding import models as onboarding_models  # noqa: F401  (tables)
+from pairly_hire.onboarding.service import JOB_NAME as CHECKLIST_RETENTION_JOB
+from pairly_hire.onboarding.service import run_retention_job as run_checklist_retention_job
 from pairly_hire.permissions import (
     CANDIDATE_READ,
     MESSAGE_APPROVE,
@@ -199,6 +204,14 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "every 5 minutes",
         run=run_scorecard_reminders_job,
         every_minutes=5,
+    ),
+    JobSpec(
+        CHECKLIST_RETENTION_JOB,
+        "Set the retention of pre-employment checklist files once the candidate is hired, "
+        "and remove the files past it",
+        "every hour",
+        run=run_checklist_retention_job,
+        every_minutes=60,
     ),
     JobSpec(
         ERASURE_JOB,

@@ -423,6 +423,9 @@ function CandidateReview({
               <Link href={`/hire/applications/${card.application_id}/offer`} className="text-primary hover:underline" data-offer-link>
                 {t("openOffer")}
               </Link>
+              <Link href={`/hire/applications/${card.application_id}/checklist`} className="text-primary hover:underline" data-checklist-link>
+                {t("openChecklist")}
+              </Link>
             </p>
           )}
         </section>

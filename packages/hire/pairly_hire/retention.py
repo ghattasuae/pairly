@@ -12,6 +12,12 @@ application in the organisation (``apply_retention_months``).
 
 Like every rule today this is a dry run: the engine counts and reports, nothing is
 deleted (``pairly_core.retention.service``).
+
+``hire.checklist.documents``: pre-employment checklist files (ID, degree, visa) past
+their short retention, ``retention_until`` = hired at + the job's days (default 90,
+``pairly_hire.onboarding``). The engine counts them like the others; the
+``hire_checklist_retention`` job sets the dates and removes the files the hiring team's
+own setting says to remove (encrypted objects first, then the row's pointer, audited).
 """
 
 from __future__ import annotations
@@ -25,8 +31,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.retention.rules import RetentionRule
 from pairly_hire.models import ApplicationStatus, HireApplication
+from pairly_hire.onboarding.models import HireChecklistItem
 
 RULE_KEY: Final = "hire.applications.rejected"
+CHECKLIST_RULE_KEY: Final = "hire.checklist.documents"
 
 
 def retention_until(rejected_at: datetime, months: int) -> datetime:
@@ -45,6 +53,14 @@ RETENTION_RULES: Final[tuple[RetentionRule, ...]] = (
         "retention_until",
         0,
         lambda: (HireApplication.status == ApplicationStatus.REJECTED.value,),
+    ),
+    RetentionRule(
+        CHECKLIST_RULE_KEY,
+        "Pre-employment checklist files past their retention after hire (default 90 days)",
+        HireChecklistItem,
+        "retention_until",
+        0,
+        lambda: (HireChecklistItem.purged_at.is_(None), HireChecklistItem.object_key.is_not(None)),
     ),
 )
 

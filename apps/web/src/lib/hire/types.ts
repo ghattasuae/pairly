@@ -54,3 +54,6 @@ export type HireOffer = S["HireOfferOut"];
 export type HireOfferList = S["HireOfferListOut"];
 export type HireOfferTemplate = S["HireOfferTemplateOut"];
 export type HirePortalOffer = S["HirePortalOfferOut"];
+export type HireChecklist = S["HireChecklistOut"];
+export type HireChecklistItem = S["HireChecklistItemOut"];
+export type HireChecklistConfig = S["HireChecklistConfigOut"];

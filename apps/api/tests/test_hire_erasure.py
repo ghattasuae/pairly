@@ -48,6 +48,7 @@ from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.replies import record_reply
 from pairly_hire.models import HireApplication, HireCandidate
 from pairly_hire.offers.models import HireOffer
+from pairly_hire.onboarding.models import HireChecklistItem
 from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.portal.auth import PortalIdentity
 from pairly_hire.portal.models import HireDataRequest, HirePortalSession, HirePortalToken
@@ -347,9 +348,24 @@ async def _gather(
             offer.response_note = seal(
                 HireOffer, "response_note", f"{name} accepts.", org_id=org, row_id=offer.id
             )
+            item = HireChecklistItem(
+                id=uuid.uuid4(),
+                org_id=org,
+                application_id=app.id,
+                candidate_id=cid,
+                job_id=app.job_id,
+                key="id_document",
+                label="Passport",
+                status="requested",
+                requested_by=recruiter,
+            )
+            item.file_name = seal(
+                HireChecklistItem, "file_name", f"{name} passport.pdf", org_id=org, row_id=item.id
+            )
             session.add(interview)
             session.add(reference)
             session.add(offer)
+            session.add(item)
             await session.flush()
             session.add(ref_summary)
             session.add_all(

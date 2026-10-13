@@ -180,7 +180,8 @@ class HireDocumentRequest(Base, OrgScoped):
         _candidate_fk(DOCUMENT_REQUESTS),
         CheckConstraint(f"status IN ({_in(DocumentRequestStatus)})", name="status_valid"),
         CheckConstraint(
-            "status <> 'received' OR document_id IS NOT NULL", name="received_has_document"
+            "status <> 'received' OR document_id IS NOT NULL OR checklist_item_id IS NOT NULL",
+            name="received_has_document",
         ),
         Index("ix_hire_document_requests_application", "org_id", "application_id", "created_at"),
     )
@@ -197,6 +198,9 @@ class HireDocumentRequest(Base, OrgScoped):
     requested_by: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )
+    # A pre-employment checklist document (hire_0015): the file is stored encrypted on
+    # the checklist item (``pairly_hire.onboarding``), never as a shared document.
+    checklist_item_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

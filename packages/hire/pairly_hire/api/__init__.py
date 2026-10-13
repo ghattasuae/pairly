@@ -27,6 +27,7 @@
 * ``references``: reference checks, the referee's form and the summary (M3).
 * ``offers``: offers from templates, their approval chain, the PDF letter, sending, and
   the candidate's answer in the portal (M3).
+* ``checklist``: the pre-employment checklist, its documents and their retention (M3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -38,6 +39,7 @@ from fastapi import APIRouter
 from pairly_hire.api import (
     applications,
     candidate_requests,
+    checklist,
     interviewing,
     jobs,
     messaging,
@@ -67,3 +69,4 @@ router.include_router(requisitions.router)
 router.include_router(interviewing.router)
 router.include_router(references.router)
 router.include_router(offers.router)
+router.include_router(checklist.router)

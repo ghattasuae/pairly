@@ -132,6 +132,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         "hire_rediscovery_index",
         "hire_interview_reminders",
         "hire_scorecard_reminders",
+        "hire_checklist_retention",
         "hire_erasure_objects",
     }
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7

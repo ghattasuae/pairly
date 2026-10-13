@@ -53,6 +53,8 @@ Erased in step 1:
 * offers: the compensation (emptied) and the candidate's note on their answer; the
   status, dates and the answer stay. Their approvals and decision records are erased
   like the others (by entity id).
+* pre-employment checklist: the file names (step 1) and the encrypted files (step 2,
+  with the other stored files); the status and dates stay.
 * references: the referee's name and address (replaced), their answers (removed), the
   kept reference summaries (content emptied); their links and sessions end. Status and
   times stay.
@@ -104,6 +106,7 @@ from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.models import HireCandidatePrefs, HireMessage
 from pairly_hire.models import HireApplication, HireCandidate
 from pairly_hire.offers.models import HireOffer
+from pairly_hire.onboarding.models import HireChecklistItem
 from pairly_hire.pipeline.models import HireNote, HireStageMove
 from pairly_hire.pipeline.rediscovery import remove_candidate
 from pairly_hire.portal.models import (
@@ -228,6 +231,7 @@ class ErasureCounts:
     feedback: int = 0
     references: int = 0
     offers: int = 0
+    checklist: int = 0
     screenings: int = 0
     notifications: int = 0
     decisions: int = 0
@@ -533,6 +537,20 @@ async def _erase_references(session: AsyncSession, scope: _Scope, now: datetime)
     return count
 
 
+async def _erase_checklist(session: AsyncSession, scope: _Scope, now: datetime) -> int:
+    """File names now; the encrypted files themselves in step 2 (``finish_erasure``)."""
+    count = 0
+    for item in await session.scalars(
+        select(HireChecklistItem)
+        .where(HireChecklistItem.candidate_id == scope.candidate_id)
+        .with_for_update()
+    ):
+        item.file_name = None
+        item.updated_at = now
+        count += 1
+    return count
+
+
 async def _erase_offers(session: AsyncSession, scope: _Scope, now: datetime) -> int:
     count = 0
     for offer in await session.scalars(
@@ -823,6 +841,7 @@ async def erase_candidate(
     feedback = await _erase_feedback(session, scope)
     references = await _erase_references(session, scope, now)
     offers = await _erase_offers(session, scope, now)
+    checklist = await _erase_checklist(session, scope, now)
     screenings = await _erase_screenings(session, scope, now)
     await _erase_portal(session, scope)
     documents = await _erase_documents(session, scope, now)
@@ -842,6 +861,7 @@ async def erase_candidate(
         feedback=feedback,
         references=references,
         offers=offers,
+        checklist=checklist,
         screenings=screenings,
         notifications=notifications,
         decisions=decisions,
@@ -951,13 +971,26 @@ async def finish_erasure(
     if row.status != DataRequestStatus.OPEN.value or row.erasure_started_at is None:
         raise ConflictError("this request has no erasure in progress")
     docs = await _pending_documents(session, row.candidate_id)
+    checklist = list(
+        await session.scalars(
+            select(HireChecklistItem)
+            .where(
+                HireChecklistItem.candidate_id == row.candidate_id,
+                HireChecklistItem.object_key.is_not(None),
+            )
+            .with_for_update()
+        )
+    )
     error: str | None = None
-    if docs and store is None:
+    if (docs or checklist) and store is None:
         error = STORE_UNAVAILABLE
-    elif docs and store is not None:
+    elif (docs or checklist) and store is not None:
         try:
             for key in await _keys_to_delete(session, docs):
                 await store.delete(key)
+            for item in checklist:
+                assert item.object_key is not None  # noqa: S101 (selected so)
+                await store.delete(item.object_key)
         except (StorageError, ValueError):
             error = STORE_FAILED
     now = datetime.now(UTC)
@@ -980,6 +1013,9 @@ async def finish_erasure(
     for doc in docs:
         doc.objects_erased_at = now
         doc.parse_result_key = None
+    for item in checklist:
+        item.object_key = None
+        item.purged_at = item.purged_at or now
     row.erasure_error = None
     row.status = DataRequestStatus.COMPLETED.value
     row.handled_at = now
@@ -995,6 +1031,7 @@ async def finish_erasure(
         payload={
             "candidate_id": str(row.candidate_id),
             "documents_removed": len(docs),
+            "checklist_files_removed": len(checklist),
             "attempts": row.erasure_attempts,
             "reason_given": row.outcome is not None,
         },

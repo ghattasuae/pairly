@@ -776,6 +776,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Checklist */
+        get: operations["get_checklist_v1_hire_applications__application_id__checklist_get"];
+        put?: never;
+        /** Request Checklist */
+        post: operations["request_checklist_v1_hire_applications__application_id__checklist_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/debrief": {
         parameters: {
             query?: never;
@@ -931,6 +949,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/checklist-items/{item_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item File */
+        get: operations["item_file_v1_hire_checklist_items__item_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/checklist-items/{item_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Item */
+        post: operations["review_item_v1_hire_checklist_items__item_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/data-requests": {
         parameters: {
             query?: never;
@@ -1068,6 +1120,24 @@ export type paths = {
         head?: never;
         /** Patch */
         patch: operations["patch_v1_hire_jobs__job_id__patch"];
+        trace?: never;
+    };
+    "/v1/hire/jobs/{job_id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config */
+        get: operations["get_config_v1_hire_jobs__job_id__checklist_get"];
+        /** Save Config */
+        put: operations["save_config_v1_hire_jobs__job_id__checklist_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/hire/jobs/{job_id}/checks": {
@@ -5471,6 +5541,110 @@ export type components = {
              * Format: date-time
              */
             starts_at: string;
+        };
+        /** HireChecklistConfigIn */
+        HireChecklistConfigIn: {
+            /** Items */
+            items: components["schemas"]["HireChecklistDocIn"][];
+            /**
+             * Retention Days
+             * @default 90
+             */
+            retention_days: number;
+        };
+        /** HireChecklistConfigOut */
+        HireChecklistConfigOut: {
+            /** Items */
+            items: components["schemas"]["HireChecklistDocOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Retention Days */
+            retention_days: number;
+            /** Saved */
+            saved: boolean;
+        };
+        /** HireChecklistDocIn */
+        HireChecklistDocIn: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Label Ar
+             * @default
+             */
+            label_ar: string;
+        };
+        /** HireChecklistDocOut */
+        HireChecklistDocOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
+        };
+        /** HireChecklistItemOut */
+        HireChecklistItemOut: {
+            /** Content Type */
+            content_type: string | null;
+            /** Has File */
+            has_file: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Purged At */
+            purged_at: string | null;
+            /** Received At */
+            received_at: string | null;
+            /** Retention Until */
+            retention_until: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /** Status */
+            status: string;
+        };
+        /** HireChecklistOut */
+        HireChecklistOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Can Write */
+            can_write: boolean;
+            /** Items */
+            items: components["schemas"]["HireChecklistItemOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Missing */
+            missing: components["schemas"]["HireChecklistDocOut"][];
+            /** Retention Days */
+            retention_days: number;
+        };
+        /** HireChecklistReviewIn */
+        HireChecklistReviewIn: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "verified" | "waived";
         };
         /** HireCheckOut */
         HireCheckOut: {
@@ -11027,6 +11201,68 @@ export interface operations {
             };
         };
     };
+    get_checklist_v1_hire_applications__application_id__checklist_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireChecklistOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_checklist_v1_hire_applications__application_id__checklist_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireChecklistOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_debrief_v1_hire_applications__application_id__debrief_get: {
         parameters: {
             query?: {
@@ -11394,6 +11630,70 @@ export interface operations {
             };
         };
     };
+    item_file_v1_hire_checklist_items__item_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_item_v1_hire_checklist_items__item_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireChecklistReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireChecklistOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_data_requests_v1_hire_data_requests_get: {
         parameters: {
             query?: {
@@ -11747,6 +12047,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_config_v1_hire_jobs__job_id__checklist_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireChecklistConfigOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_config_v1_hire_jobs__job_id__checklist_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireChecklistConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireChecklistConfigOut"];
                 };
             };
             /** @description Validation Error */
