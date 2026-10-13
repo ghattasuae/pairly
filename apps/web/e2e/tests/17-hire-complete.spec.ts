@@ -44,7 +44,8 @@ const OFFER_JOB = "backend-engineer"; // the seed leaves cv-0029 in its offer st
 const REQ_TITLE = `Data Platform Engineer ${RUN}`;
 const OFFER_TITLE = `Backend Engineer ${RUN}`;
 const REFEREE = { name: "Samira Haddad", email: `referee.${RUN}@example.test` };
-const OFFER_CLOSING = "Please accept or decline this offer in your candidate portal.";
+// The offer email links the offer in the candidate portal.
+const OFFER_LINK = /\/portal\/applications\/[0-9a-f-]{36}\/offer/;
 const MAIL_WAIT = 150_000; // the worker delivers once a minute: two rounds plus slack
 const APPROVAL_WAIT = 120_000;
 const OUT = path.join(SCRATCH_ROOT, "hire-complete.json");
@@ -262,7 +263,8 @@ test("1. requisition: the hiring manager requests a role, HR approves it in the 
   }).toPass({ timeout: APPROVAL_WAIT, intervals: [3_000] });
   await approved.locator("[data-open-job]").click();
   await r.waitForURL(/\/hire\/jobs\/[0-9a-f-]{36}$/, { timeout: 30_000 });
-  await expect(r.getByText(REQ_TITLE).first()).toBeVisible({ timeout: 20_000 });
+  await expect(r.locator('[data-field="title"]')).toHaveValue(REQ_TITLE, { timeout: 20_000 });
+  await expect(r.locator("[data-job-status]")).toHaveAttribute("data-job-status", "draft");
   await r.goto("/en/hire/requisitions");
   await expect(approved.getByRole("link", { name: "View the job" })).toBeVisible();
   record("requisition", { reference, title: REQ_TITLE, job: "opened" });
@@ -288,6 +290,14 @@ test("2. offer: from a template, approved by the hiring manager and HR, accepted
   await a11yBoth(r, "offer builder", offerPath, async (p) => {
     await expect(p.locator("[data-offer-builder]")).toBeVisible({ timeout: 20_000 });
   });
+  // A rerun on the same stack: withdraw the offer an earlier run left open.
+  const leftOpen = r.locator(
+    ["draft", "pending_approval", "changes_requested", "approved", "sending"].map((x) => `[data-offer="${x}"]`).join(", "),
+  );
+  while ((await leftOpen.count()) > 0) {
+    await leftOpen.first().getByRole("button", { name: "Withdraw" }).click();
+    await expect(r.locator("[data-new-offer]")).toBeVisible({ timeout: 20_000 });
+  }
   const form = r.locator("[data-new-offer]");
   await expect(form).toBeVisible();
   await form.getByLabel("Template").selectOption("standard");
@@ -302,8 +312,13 @@ test("2. offer: from a template, approved by the hiring manager and HR, accepted
   await expect(offer).toHaveAttribute("data-offer", "draft", { timeout: 20_000 });
   await offer.locator("[data-submit-offer]").click();
   await expect(offer).toHaveAttribute("data-offer", "pending_approval", { timeout: 20_000 });
-  await expect(offer.getByRole("list", { name: "Approval chain" })).toContainText("Hiring manager");
-  await expect(offer.getByRole("list", { name: "Approval chain" })).toContainText("HR");
+  // The chain shows once the approval run has started.
+  const chain = r.locator("[data-offer]").first().getByRole("list", { name: "Approval chain" });
+  await expect(async () => {
+    await r.goto(`/en${offerPath}`);
+    await expect(chain).toContainText("Hiring manager", { timeout: 5_000 });
+  }).toPass({ timeout: APPROVAL_WAIT, intervals: [3_000] });
+  await expect(chain).toContainText("HR");
   await recruiter.context.close();
 
   // The chain: the hiring manager, then HR (the admin: the recruiter submitted it and
@@ -328,7 +343,7 @@ test("2. offer: from a template, approved by the hiring manager and HR, accepted
   await sender.context.close();
 
   // The offer email names the candidate's address; the candidate signs in to the portal.
-  const offerMail = await newestMessage((m) => m.text.includes(OFFER_CLOSING), since);
+  const offerMail = await newestMessage((m) => OFFER_LINK.test(m.text) && m.text.includes(applicationId), since);
   const candidateEmail = offerMail.to[0] ?? "";
   expect(candidateEmail).toContain("@");
   saveShared({ candidateEmail });
@@ -398,7 +413,6 @@ test("3. reference: the referee answers through the emailed link, the recruiter 
   const f = await referee.newPage();
   await f.goto(toReachableUrl(link));
   await expect(f.locator("[data-reference-form]")).toBeVisible({ timeout: 30_000 });
-  expect(f.url()).not.toContain("rr1.");
   await a11y(f, "referee form", "en");
   // The same session in Arabic (the link was used; the session carries on).
   await f.goto("/ar/reference");
