@@ -32,8 +32,9 @@ A first booking (by the team or by the candidate) moves the application to the j
 ``interview``.
 
 Calendar events are written through the organiser's provider (the fake calendar, or
-Google when connected) with the interview's ICS UID; a provider failure fails the
-change (fail closed).
+Google or Microsoft when connected) with the interview's ICS UID; the meeting link comes
+from Zoom when the organisation uses it (``meetings``), else from the calendar (Meet,
+Teams). A provider failure fails the change (fail closed).
 """
 
 from __future__ import annotations
@@ -41,7 +42,8 @@ from __future__ import annotations
 import hashlib
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from contextlib import AsyncExitStack
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
@@ -61,9 +63,11 @@ from pairly_core.errors import (
 )
 from pairly_core.integrations.calendar.base import (
     CalendarError,
+    CalendarUser,
     EventAttendee,
     EventRef,
     EventSpec,
+    MeetingProvider,
 )
 from pairly_core.rbac import RoleRegistry
 from pairly_core.scheduling.availability import (
@@ -81,7 +85,7 @@ from pairly_hire.messaging.compose import Author
 from pairly_hire.models import ApplicationStatus
 from pairly_hire.pipeline.moves import move_for_interview
 from pairly_hire.pipeline.records import AppRecord, load_record
-from pairly_hire.scheduling import emails
+from pairly_hire.scheduling import emails, meetings
 from pairly_hire.scheduling import templates as tpl
 from pairly_hire.scheduling.emails import CandidateMail, PanelMail, SchedulingEnv
 from pairly_hire.scheduling.models import (
@@ -92,7 +96,7 @@ from pairly_hire.scheduling.models import (
     InterviewStatus,
 )
 from pairly_hire.scheduling.permissions import INTERVIEW_READ
-from pairly_hire.scheduling.providers import CalendarSet, Person, calendar_set
+from pairly_hire.scheduling.providers import CalendarSet, Person, calendar_set, google_client
 from pairly_hire.scheduling.rules import Interviewer, OrgScheduling, interviewers, org_scheduling
 from pairly_hire.scheduling.tokens import new_nonce, schedule_token
 from pairly_hire.sealing import read_sealed
@@ -444,8 +448,52 @@ async def _write_event(
     organizer = await _organizer(session, interview)
     org = await org_scheduling(session)
     person = Person(organizer.id, organizer.email, organizer.rules.timezone)
-    async with calendar_set(session, interview.org_id, org.seed, [person]) as calendars:
-        await _write_with(calendars, session, interview, record, panel, person, cancel=cancel)
+    zoom = await meetings.zoom_credentials(session)
+    async with AsyncExitStack() as stack:
+        calendars = await stack.enter_async_context(
+            calendar_set(session, interview.org_id, org.seed, [person])
+        )
+        meeting: MeetingProvider | None = None
+        if zoom is not None:
+            client = await stack.enter_async_context(google_client())
+            meeting = meetings.zoom_provider(client, zoom)
+        await _write_with(
+            calendars, session, interview, record, panel, person, cancel=cancel, meeting=meeting
+        )
+
+
+async def _write_meeting(
+    meeting: MeetingProvider | None,
+    interview: HireInterview,
+    user: CalendarUser,
+    spec: EventSpec,
+    *,
+    cancel: bool,
+) -> EventSpec:
+    """The interview's meeting outside the calendar (Zoom). Returns the event to write:
+    with the Zoom link as its location when there is one.
+
+    * A Zoom meeting no longer used (cancelled, or a person typed another link) is
+      deleted, when Zoom is still configured.
+    * Otherwise an existing Zoom meeting is moved with the interview.
+    * A first booking without a link gets a new Zoom meeting when Zoom is in use."""
+    current = emails.meeting_url_of(interview)
+    zoom_id = interview.meeting_external_id
+    if zoom_id and (cancel or interview.meeting_provider != "zoom"):
+        if meeting is not None:
+            await meeting.delete_meeting(user, zoom_id)
+            interview.meeting_external_id = None
+        return spec
+    if interview.meeting_provider == "zoom" and current:
+        if zoom_id and meeting is not None:
+            await meeting.update_meeting(user, zoom_id, spec)
+        return replace(spec, meeting_url=current, want_meeting=False)
+    if cancel or meeting is None or current:
+        return spec
+    link = await meeting.create_meeting(user, spec)
+    _set_meeting(interview, link.url, meeting.name)
+    interview.meeting_external_id = (link.meeting_id or "")[:64] or None
+    return replace(spec, meeting_url=link.url, want_meeting=False)
 
 
 async def _write_with(
@@ -457,6 +505,7 @@ async def _write_with(
     person: Person,
     *,
     cancel: bool,
+    meeting: MeetingProvider | None = None,
 ) -> None:
     provider = calendars.provider_for(person.id)
     user = calendars.user(person)
@@ -472,6 +521,7 @@ async def _write_with(
         else None
     )
     try:
+        spec = await _write_meeting(meeting, interview, user, spec, cancel=cancel)
         if cancel:
             if ref is not None:
                 await provider.cancel_event(user, ref, spec)
@@ -485,7 +535,7 @@ async def _write_with(
         raise CalendarUnavailableError() from None
     interview.calendar_provider = provider.name
     interview.calendar_event_id = ref.event_id[:256]
-    if interview.meeting_provider != "manual" and ref.meeting_url:
+    if interview.meeting_provider not in ("manual", "zoom") and ref.meeting_url:
         _set_meeting(interview, ref.meeting_url, ref.meeting_provider or provider.name)
 
 

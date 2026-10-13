@@ -20,8 +20,12 @@ the application role gets SELECT, INSERT and UPDATE, never DELETE.
   person is taken off it; rows are never deleted).
 * ``hire_calendar_blocks``: the fake calendar's stored busy time (``kind`` ``seed``:
   generated per person and local day; ``event``: interviews written through it).
-* ``hire_calendar_connections``: a person's own calendar account (Google today). The
-  refresh token and the account address are encrypted, bound to the row.
+* ``hire_calendar_connections``: a person's own calendar account (Google or Microsoft
+  365). The refresh token and the account address are encrypted, bound to the row.
+* ``hire_meeting_integrations`` (``hire_0019``): an organisation's meeting-link app
+  (Zoom Server-to-Server OAuth): account id, client id, client secret and host user,
+  all encrypted, bound to the row. ``status`` ``active`` once a token was obtained with
+  them, ``revoked`` when an administrator removed it (the secret is overwritten).
 """
 
 from __future__ import annotations
@@ -57,6 +61,7 @@ INTERVIEWS = "hire_interviews"
 PANELISTS = "hire_interview_panelists"
 BLOCKS = "hire_calendar_blocks"
 CONNECTIONS = "hire_calendar_connections"
+MEETING_INTEGRATIONS = "hire_meeting_integrations"
 
 STAGE_KEY_PATTERN: Final = "^[a-z][a-z0-9_]{0,31}$"
 DEFAULT_TIMEZONE: Final = "Asia/Dubai"
@@ -238,6 +243,8 @@ class HireInterview(Base, OrgScoped):
     meeting_provider: Mapped[str | None] = mapped_column(String(16), nullable=True)
     calendar_provider: Mapped[str | None] = mapped_column(String(16), nullable=True)
     calendar_event_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    # The meeting provider's own id (Zoom), to move or delete the meeting (hire_0019).
+    meeting_external_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ics_uid: Mapped[str] = mapped_column(String(200), nullable=False)
     ics_sequence: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
@@ -332,4 +339,26 @@ class HireCalendarConnection(Base, OrgScoped):
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     last_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
     connected_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+
+
+class HireMeetingIntegration(Base, OrgScoped):
+    __tablename__ = MEETING_INTEGRATIONS
+    __table_args__ = (
+        UniqueConstraint("org_id", "provider", name="uq_hire_meeting_integrations"),
+        CheckConstraint("provider IN ('zoom')", name="provider_valid"),
+        CheckConstraint("status IN ('active', 'revoked', 'error')", name="status_valid"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    provider: Mapped[str] = mapped_column(String(16), nullable=False)
+    account_id: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    client_id: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    client_secret: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    host: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    last_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    updated_by: Mapped[uuid.UUID] = _user_fk()
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()

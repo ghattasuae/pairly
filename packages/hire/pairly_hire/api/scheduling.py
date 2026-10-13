@@ -24,6 +24,9 @@ Signed in. Reads need ``hire.interview.read``; changes ``hire.interview.schedule
 * ``POST /scheduling/integrations/google/disconnect``
 * ``POST /scheduling/integrations/microsoft/start|callback|disconnect``  the same for
   Microsoft 365 (``hire.scheduling.microsoft`` and the deployment's Entra app)
+* ``PUT  /settings/scheduling/integrations/zoom``     the organisation's Zoom app
+                                                      (``settings.manage``), checked first
+* ``POST /settings/scheduling/integrations/zoom/remove``
 
 Public, no sign-in, rate limited (the candidate's ``hs1`` token in the body, never in
 a URL):
@@ -65,7 +68,7 @@ from pairly_hire.models import HireJob
 from pairly_hire.permissions import CANDIDATE_READ, SETTINGS_MANAGE
 from pairly_hire.pipeline.records import AppRecord, load_record, organisation_name
 from pairly_hire.scheduling import api as scheduling
-from pairly_hire.scheduling import providers, rules, service
+from pairly_hire.scheduling import meetings, providers, rules, service
 from pairly_hire.scheduling.emails import SchedulingEnv
 from pairly_hire.scheduling.models import OPEN, HireInterview, HireInterviewPanelist
 from pairly_hire.scheduling.permissions import INTERVIEW_READ, INTERVIEW_SCHEDULE
@@ -790,6 +793,18 @@ MICROSOFT_STEPS: Final = [
     "Turn on the hire.scheduling.microsoft feature flag in Settings, Feature flags.",
     "Each interviewer then connects their own calendar here.",
 ]
+ZOOM_STEPS: Final = [
+    "An administrator of your Zoom account creates a Server-to-Server OAuth app in the "
+    "Zoom App Marketplace.",
+    "Give the app the scopes to create, update and delete meetings "
+    "(meeting:write:admin, or the granular meeting scopes).",
+    "Activate the app, then copy its account id, client id and client secret.",
+    "Save them in Settings, Scheduling, Zoom (an administrator; they are stored "
+    "encrypted and checked with Zoom first).",
+    "Turn on the hire.scheduling.zoom feature flag in Settings, Feature flags.",
+    "Organisers need a Zoom user in that account with their email, or set one host user "
+    "for every interview.",
+]
 _LABELS: Final = {
     "google": "Google Calendar and Google Meet",
     "microsoft": "Microsoft 365 and Teams",
@@ -829,17 +844,18 @@ async def integrations(actor: CurrentActor, session: OrgSession) -> HireCalendar
                 steps=_STEPS[name],
             )
         )
+    zoom = await meetings.zoom_status(session)
     found.append(
         HireCalendarProviderOut(
             provider="zoom",
             label="Zoom",
-            availability="planned",
-            flag_enabled=False,
-            configured=False,
-            connected=False,
-            status=None,
+            availability="available" if zoom.ready else "needs_setup",
+            flag_enabled=zoom.flag_enabled,
+            configured=zoom.configured,
+            connected=zoom.ready,
+            status=zoom.status,
             account_email=None,
-            steps=["Planned for a later version (M3)."],
+            steps=ZOOM_STEPS,
         )
     )
     return HireCalendarIntegrationsOut(using=using, providers=found)
@@ -955,6 +971,44 @@ async def microsoft_disconnect(
     actor: CurrentActor, session: OrgSession
 ) -> HireCalendarIntegrationsOut:
     return await _disconnect("microsoft", actor, session)
+
+
+class HireZoomIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    client_id: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    client_secret: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    host: Annotated[str, StringConstraints(max_length=254)] | None = None
+
+
+@router.put("/settings/scheduling/integrations/zoom", response_model=HireCalendarIntegrationsOut)
+async def save_zoom(
+    body: HireZoomIn, actor: CurrentActor, session: OrgSession
+) -> HireCalendarIntegrationsOut:
+    authorize(actor, SETTINGS_MANAGE)
+    _person(actor)
+    async with providers.google_client() as client:
+        await meetings.save_zoom(
+            session,
+            actor,
+            client,
+            account_id=body.account_id,
+            client_id=body.client_id,
+            client_secret=body.client_secret,
+            host=body.host,
+        )
+    return await integrations(actor, session)
+
+
+@router.post(
+    "/settings/scheduling/integrations/zoom/remove", response_model=HireCalendarIntegrationsOut
+)
+async def remove_zoom(actor: CurrentActor, session: OrgSession) -> HireCalendarIntegrationsOut:
+    authorize(actor, SETTINGS_MANAGE)
+    _person(actor)
+    await meetings.remove_zoom(session, actor)
+    return await integrations(actor, session)
 
 
 # ------------------------------------------------------------------ public (candidates)

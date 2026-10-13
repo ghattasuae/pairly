@@ -198,3 +198,100 @@ async def test_microsoft_connection_free_busy_and_teams_booking(
         "POST", "/v1/hire/scheduling/integrations/microsoft/disconnect", world, "recruiter"
     )
     assert off.json()["using"] == "fake"
+
+
+ZOOM_APP = {"account_id": "acct-1", "client_id": "zoom-client", "client_secret": "zoom-secret-1"}
+
+
+async def save_zoom(api: HireApi, world: HireWorld, who: str = "admin", **extra: Any) -> Any:
+    return await api.call(
+        "PUT",
+        "/v1/hire/settings/scheduling/integrations/zoom",
+        world,
+        who,
+        json=ZOOM_APP | extra,
+    )
+
+
+async def test_zoom_links_with_the_fake_calendar(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    api = hire_api
+    mock = MockServices()
+    providers.set_google_transport(httpx.MockTransport(mock))
+    # Only an administrator saves the app; a refused app is not kept.
+    assert (await save_zoom(api, world, "recruiter")).status_code == 403
+    mock.status[("POST", "/oauth/token")] = 401
+    refused = await save_zoom(api, world)
+    assert refused.status_code == 400, refused.text
+    del mock.status[("POST", "/oauth/token")]
+    saved = await save_zoom(api, world)
+    assert saved.status_code == 200, saved.text
+    zoom = {p["provider"]: p for p in saved.json()["providers"]}["zoom"]
+    assert zoom["configured"] is True
+    assert zoom["availability"] == "needs_setup"  # the flag is still off
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT client_secret, account_id FROM hire_meeting_integrations",
+    )
+    assert "zoom-secret-1" not in rows[0].client_secret  # encrypted
+    assert "acct-1" not in rows[0].account_id
+
+    job = await open_job(api, world)
+    ids = await applicants(api, world, job, ["Zoe Oom", "Flag Off"])
+    panel = [uid(world, "recruiter")]
+    # Flag off: the fake calendar's own link, no Zoom meeting.
+    found = await slots(api, world, ids["Flag Off"], panel)
+    plain = await book(api, world, ids["Flag Off"], panel, found["slots"][0]["start"])
+    assert plain.json()["meeting_url"].startswith("https://meet.pairly.example/")
+    assert not mock.meetings
+
+    flag = await api.call(
+        "PUT", "/v1/flags/hire.scheduling.zoom", world, "admin", json={"enabled": True}
+    )
+    assert flag.status_code == 200, flag.text
+    found = await slots(api, world, ids["Zoe Oom"], panel)
+    booked = await book(api, world, ids["Zoe Oom"], panel, found["slots"][0]["start"])
+    assert booked.status_code == 201, booked.text
+    interview = booked.json()
+    ((meeting_id, meeting),) = mock.meetings.items()
+    assert interview["meeting_url"] == f"https://zoom.example/j/{meeting_id}"
+    assert interview["calendar_provider"] == "fake"
+    assert meeting["body"]["duration"] == 45
+    create = next(c for c in mock.calls if c.url.path.endswith("/meetings"))
+    assert re.fullmatch(r"/v2/users/[^/]+@[^/]+/meetings", create.url.path)
+    first_start = meeting["body"]["start_time"]
+
+    moved = await api.call(
+        "PATCH",
+        f"/v1/hire/scheduling/interviews/{interview['id']}",
+        world,
+        "recruiter",
+        json={"starts_at": found["slots"][-1]["start"]},
+    )
+    assert moved.status_code == 200, moved.text
+    assert moved.json()["meeting_url"] == interview["meeting_url"]  # same meeting, moved
+    assert mock.meetings[meeting_id]["body"]["start_time"] != first_start
+    assert len(mock.meetings) == 1
+    cancelled = await api.client.post(
+        f"/v1/hire/scheduling/interviews/{interview['id']}/cancel",
+        headers=api.headers(world, "recruiter", extra={"Idempotency-Key": uuid.uuid4().hex}),
+    )
+    assert cancelled.status_code == 200, cancelled.text
+    assert mock.meetings[meeting_id]["deleted"] is True
+
+    status = await api.call("GET", "/v1/hire/scheduling/integrations", world, "interviewer")
+    zoom = {p["provider"]: p for p in status.json()["providers"]}["zoom"]
+    assert zoom["availability"] == "available"
+    removed = await api.call(
+        "POST", "/v1/hire/settings/scheduling/integrations/zoom/remove", world, "admin"
+    )
+    zoom = {p["provider"]: p for p in removed.json()["providers"]}["zoom"]
+    assert zoom["configured"] is False
+    actions = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT action FROM audit_events WHERE action LIKE 'hire.meetings.%' ORDER BY seq",
+    )
+    assert [r.action for r in actions] == ["hire.meetings.zoom_saved", "hire.meetings.zoom_removed"]

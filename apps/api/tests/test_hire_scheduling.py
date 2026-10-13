@@ -740,7 +740,7 @@ async def test_google_connection_with_a_mocked_google(
     assert {p["provider"]: p["availability"] for p in status.json()["providers"]} == {
         "google": "needs_setup",
         "microsoft": "needs_setup",
-        "zoom": "planned",
+        "zoom": "needs_setup",
     }
     # Flag off: no connect.
     start = await api.call(

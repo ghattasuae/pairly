@@ -49,7 +49,13 @@ tested without credentials, and development must work with no external account a
      `PAIRLY_MICROSOFT_CLIENT_ID`, `PAIRLY_MICROSOFT_CLIENT_SECRET`,
      `PAIRLY_MICROSOFT_REDIRECT_URL` (and `PAIRLY_MICROSOFT_TENANT`, by default
      `organizations`).
-   * Zoom: a stub that answers `not_available`, planned for M3.
+   * `ZoomMeetingProvider` (M3): Server-to-Server OAuth with the organisation's own
+     Zoom app (account id, client id, client secret, optional host user), meetings
+     created, moved and deleted with the interview. A meeting-link provider only: the
+     organiser's calendar provider writes the event with the Zoom link as its
+     location. The app is saved by an administrator, checked with Zoom first, and
+     stored encrypted in `hire_meeting_integrations` (migration `hire_0019`). Off by
+     default: `hire.scheduling.zoom`. Tested against a mocked transport only.
 
 3. **Email attachments** in the notification engine: `Extras.attachments` carries text
    attachments (calendar files) through the encrypted notification content to SMTP,
