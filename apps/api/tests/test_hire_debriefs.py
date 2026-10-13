@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 from typing import Any
@@ -273,7 +274,8 @@ async def test_the_demo_debrief_opens_with_its_recorded_summary(
 ) -> None:
     """``make demo``: the job and scorecard the demo seed makes, the committed
     recordings, and the debrief the hiring manager opens is the recorded one."""
-    from scripts.demo_seed import seed_jobs
+    # Loaded by name: mypy checks scripts/ as top-level modules (one module, one name).
+    seed_jobs = importlib.import_module("scripts.demo_seed").seed_jobs
     from synth.hire.interviews import DEMO_SCORECARD, demo_ratings, demo_rubric
     from synth.hire.interviews import recordings_text as demo_recordings
 
