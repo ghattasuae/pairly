@@ -369,23 +369,24 @@ async def build_debrief(
     )
     if existing is not None:
         stored = existing.content.get(locale)
-        try:
-            draft: DebriefDraft = (
-                DebriefDraft.model_validate(stored) if stored else template_draft(inputs)
-            )
-        except ValueError:
-            stored, draft = None, template_draft(inputs)
-        return replace(
-            empty,
-            rated=rated,
-            voices=voices,
-            draft=draft,
-            source=existing.source if stored else "template",
-            prompt_version=existing.prompt_version if stored else TEMPLATE_VERSION,
-            from_recording=existing.from_recording if stored else False,
-            row=existing,
-        )
-    draft = template_draft(inputs)
+        if stored:
+            try:
+                kept = DebriefDraft.model_validate(stored)
+            except ValueError:
+                kept = None
+            if kept is not None:
+                return replace(
+                    empty,
+                    rated=rated,
+                    voices=voices,
+                    draft=kept,
+                    source=existing.source,
+                    prompt_version=existing.prompt_version,
+                    from_recording=existing.from_recording,
+                    row=existing,
+                )
+        # Kept in another language only (or erased): ask for this one below.
+    draft: DebriefDraft = template_draft(inputs)
     source, version, call_id, recorded = "template", TEMPLATE_VERSION, None, False
     if router is not None:
         try:
@@ -422,7 +423,41 @@ async def build_debrief(
             source=source,
             prompt_version=version,
             from_recording=False,
-            row=None,
+            row=existing,
+        )
+    if existing is not None:
+        # The same scorecards, summarised now in this language too.
+        locked = await session.scalar(
+            select(HireDebrief).where(HireDebrief.id == existing.id).with_for_update()
+        )
+        if locked is not None and locked.source == source and not locked.content.get(locale):
+            locked.content = {**locked.content, locale: draft.model_dump(mode="json")}
+            await session.flush()
+            await append_audit(
+                session,
+                action="hire.debrief.translated",
+                actor_type=ActorType.USER if actor_id else ActorType.SYSTEM,
+                actor_id=str(actor_id) if actor_id else "pairly.hire.debrief",
+                entity_type=ENTITY,
+                entity_id=record.app.id,
+                workflow=WORKFLOW,
+                payload={
+                    "debrief_id": str(locked.id),
+                    "stage_key": stage_key,
+                    "locale": locale,
+                    "model_call_id": str(call_id) if call_id else None,
+                    "from_recording": recorded,
+                },
+            )
+        return replace(
+            empty,
+            rated=rated,
+            voices=voices,
+            draft=draft,
+            source=source,
+            prompt_version=version,
+            from_recording=recorded,
+            row=locked or existing,
         )
     row = HireDebrief(
         id=uuid.uuid4(),

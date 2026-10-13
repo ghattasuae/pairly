@@ -46,6 +46,10 @@ Erased in step 1:
   runs are deleted.
 * interviews: the candidate's time zone, meeting link and link nonce; the briefings and
   invitations sent to the panel and the candidate (notification content).
+* interview feedback: the notes of every scorecard about the candidate (cleared; the
+  ratings and recommendations stay), and the text of their debrief summaries (content
+  emptied) and the reason of the decision taken on them (``[erased]``; the decision,
+  who and when stay).
 * portal sign-in links and sessions (deleted), the candidate's notes on their data
   requests, the reasons of their review requests (appeals), their self-identification
   answers (deleted).
@@ -90,6 +94,7 @@ from pairly_core.rbac import Actor
 from pairly_core.retrieval.models import SearchChunk
 from pairly_core.workflow.checkpoint import CHECKPOINT_SCHEMA
 from pairly_core.workflow.models import WorkflowRun
+from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.models import HireCandidatePrefs, HireMessage
 from pairly_hire.models import HireApplication, HireCandidate
 from pairly_hire.pipeline.models import HireNote, HireStageMove
@@ -203,6 +208,7 @@ class ErasureCounts:
     messages: int = 0
     notes: int = 0
     interviews: int = 0
+    feedback: int = 0
     screenings: int = 0
     notifications: int = 0
     decisions: int = 0
@@ -415,6 +421,31 @@ async def _erase_interviews(session: AsyncSession, scope: _Scope, now: datetime)
         interview.link_nonce = None
         interview.link_expires_at = None
         interview.updated_at = now
+        count += 1
+    return count
+
+
+async def _erase_feedback(session: AsyncSession, scope: _Scope) -> int:
+    """Scorecard notes and debrief texts about the candidate's applications."""
+    if not scope.app_ids:
+        return 0
+    count = 0
+    for card in await session.scalars(
+        select(HireScorecard)
+        .where(HireScorecard.application_id.in_(scope.app_ids), HireScorecard.notes != "")
+        .with_for_update()
+    ):
+        # The freeze trigger lets a submitted scorecard's notes be cleared, nothing else.
+        card.notes = ""
+        count += 1
+    for debrief in await session.scalars(
+        select(HireDebrief).where(HireDebrief.application_id.in_(scope.app_ids)).with_for_update()
+    ):
+        if debrief.model_call_id is not None:
+            scope.model_call_ids.add(debrief.model_call_id)
+        debrief.content = {}
+        if debrief.decision_reason is not None:
+            debrief.decision_reason = ERASED_TEXT
         count += 1
     return count
 
@@ -691,6 +722,7 @@ async def erase_candidate(
     messages = await _erase_conversation(session, scope, now)
     notes = await _erase_pipeline(session, scope)
     interviews = await _erase_interviews(session, scope, now)
+    feedback = await _erase_feedback(session, scope)
     screenings = await _erase_screenings(session, scope, now)
     await _erase_portal(session, scope)
     documents = await _erase_documents(session, scope, now)
@@ -707,6 +739,7 @@ async def erase_candidate(
         messages=messages,
         notes=notes,
         interviews=interviews,
+        feedback=feedback,
         screenings=screenings,
         notifications=notifications,
         decisions=decisions,

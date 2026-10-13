@@ -215,7 +215,7 @@ def scripted_item(inputs: dict[str, Any]) -> KitItemDraft:
         extra = f"ما الذي تعلمته عن {name} من أصعب موقف واجهته؟"
         listen = f"إجابة قوية تتضمن: {criterion['evidence']}"
     else:
-        extra = f"What did the hardest situation you faced teach you about {name.lower()}?"
+        extra = f"What did the hardest situation you faced teach you about {name}?"
         listen = f"A strong answer shows: {criterion['evidence']}"
     questions = [q for q in (plan_question, extra) if q][:2]
     return KitItemDraft(

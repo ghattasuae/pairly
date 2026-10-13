@@ -266,3 +266,77 @@ async def test_debrief_from_a_recorded_model_response_is_kept(
         {"a": app_id},
     )
     assert [(r.source, r.from_recording) for r in rows] == [("model", True)]
+
+
+async def test_the_demo_debrief_opens_with_its_recorded_summary(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    """``make demo``: the job and scorecard the demo seed makes, the committed
+    recordings, and the debrief the hiring manager opens is the recorded one."""
+    from scripts.demo_seed import seed_jobs
+    from synth.hire.interviews import DEMO_SCORECARD, demo_ratings, demo_rubric
+    from synth.hire.interviews import recordings_text as demo_recordings
+
+    from .hire_support import cv_pdf
+    from .test_hire_scheduling import book, slots
+
+    api = hire_api
+    lines = await seed_jobs(create_sessionmaker(owner_engine), world.org_id)
+    assert any("recorded interview kits and debriefs" in line for line in lines)
+    jobs = (await api.call("GET", "/v1/hire/jobs?status=open", world, "recruiter")).json()
+    job = next(j for j in jobs["items"] if j["slug"] == "backend-engineer-payments")
+    reference = await api.apply(
+        world,
+        job["slug"],
+        cv_pdf("demo-debrief"),
+        email="demo.debrief@example.test",
+        full_name="Demo Candidate",
+        knockouts={k.id: "yes" for k in demo_rubric().knockout_questions},
+    )
+    listed = await api.call("GET", f"/v1/hire/applications?job_id={job['id']}", world, "recruiter")
+    app_id = next(a["id"] for a in listed.json()["items"] if a["reference"] == reference)
+    panel = [str(world.people["interviewer"][0])]
+    found = await slots(api, world, app_id, panel)
+    booked = await book(api, world, app_id, panel, found["slots"][0]["start"])
+    assert booked.status_code == 201, booked.text
+    interview_id = booked.json()["id"]
+    card = (
+        await api.call("GET", f"/v1/hire/interviews/{interview_id}/scorecard", world, "interviewer")
+    ).json()["scorecard"]
+    ratings = demo_ratings()
+    assert sorted(c["id"] for c in card["criteria"]) == sorted(ratings)
+    done = await api.call(
+        "POST",
+        f"/v1/hire/interviews/{interview_id}/scorecard/submit",
+        world,
+        "interviewer",
+        json={"ratings": ratings, **DEMO_SCORECARD},
+    )
+    assert done.status_code == 200, done.text
+
+    bundle = json.loads(demo_recordings())
+    recorded = {
+        e["response"]["summary"]
+        for e in bundle["entries"]
+        if e["task"] == debrief.TASK.name and isinstance(e.get("response"), dict)
+    }
+    assert recorded, "the demo bundle holds no debrief summary"
+    for locale in ("en", "ar"):
+        got = (
+            await api.call(
+                "GET", f"/v1/hire/applications/{app_id}/debrief?locale={locale}", world, "manager"
+            )
+        ).json()
+        assert got["status"] == "ready", got
+        assert got["source"] == "model"
+        assert got["from_recording"] is True
+        assert got["summary"] in recorded
+    # One debrief row, holding both languages' recorded summaries.
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT content, source, from_recording FROM hire_debriefs WHERE application_id = :a",
+        {"a": app_id},
+    )
+    assert sorted(row.content) == ["ar", "en"]
+    assert (row.source, row.from_recording) == ("model", True)

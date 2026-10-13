@@ -112,6 +112,21 @@ def test_scripted_items_pass_the_checks_in_both_languages() -> None:
             assert bool(item.probes) == (result != "not_screened")
 
 
+def test_scripted_items_keep_criterion_names_as_written() -> None:
+    criterion = BACKEND.rubric.must_haves[0].model_copy(update={"name": "PostgreSQL and AWS"})
+    for locale in ("en", "ar"):
+        inputs = kits.kit_inputs(
+            job_title="Senior Backend Engineer",
+            stage="Interview",
+            locale=locale,
+            criterion=criterion,
+            plan_question="",
+            result="met",
+        )
+        item = kits.scripted_item(inputs)
+        assert any("PostgreSQL and AWS" in q for q in item.questions), item.questions
+
+
 def test_interview_recordings_are_up_to_date() -> None:
     assert interview_recordings.main(["--check"]) == 0
 

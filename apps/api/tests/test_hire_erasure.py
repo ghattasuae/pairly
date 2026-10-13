@@ -44,6 +44,7 @@ from pairly_core.ingestion.storage import InMemoryObjectStore
 from pairly_core.jobs.registry import JobContext
 from pairly_core.notifications.models import Notification
 from pairly_hire.erasure import run_erasure_job
+from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.replies import record_reply
 from pairly_hire.models import HireApplication, HireCandidate
 from pairly_hire.pipeline.models import HireStageMove
@@ -254,10 +255,45 @@ async def _gather(
                 HireSelfIdentification, "answers", {"note": name}, org_id=org, row_id=selfid.id
             )
             later = now + timedelta(days=1)
+            interviewer = world.people["interviewer"][0]
+            scorecard = HireScorecard(
+                id=uuid.uuid4(),
+                org_id=org,
+                interview_id=interview.id,
+                application_id=app.id,
+                job_id=app.job_id,
+                stage_key="interview",
+                interviewer_id=interviewer,
+                criteria=["communication"],
+                ratings={"communication": 3},
+                notes=f"{name} explained the migration clearly.",
+                recommendation="yes",
+                status="submitted",
+                submitted_at=now,
+            )
+            debrief = HireDebrief(
+                id=uuid.uuid4(),
+                org_id=org,
+                application_id=app.id,
+                job_id=app.job_id,
+                stage_key="interview",
+                scorecards_hash="c" * 64,
+                scorecard_ids=[scorecard.id],
+                content={"en": {"summary": f"{name} was clear and calm."}},
+                source="model",
+                prompt_version="hire_debrief_summary/v1",
+                decision="advance",
+                decision_reason=f"{name} is ready for the final round.",
+                decided_by=manager,
+                decided_at=now,
+            )
+            session.add(interview)
+            await session.flush()
             session.add_all(
                 [
                     move,
-                    interview,
+                    scorecard,
+                    debrief,
                     briefing,
                     request,
                     selfid,
