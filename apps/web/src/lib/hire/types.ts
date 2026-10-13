@@ -73,3 +73,4 @@ export type HireCalibrationApplication = S["HireCalibrationApplicationOut"];
 export type HireCalibrationReport = S["HireCalibrationReportOut"];
 export type HireCalibrationAgreement = S["HireCalibrationAgreementOut"];
 export type HireCalibrationSuggestion = S["HireCalibrationSuggestionOut"];
+export type HireSurveyNamed = S["HireSurveyNamedOut"];
