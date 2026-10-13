@@ -32,6 +32,8 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting), ``hire_rediscovery_index`` and
                    ``hire_interview_reminders`` (24 hours and 1 hour before interviews);
+                   ``hire_calendar_reconcile``: orphan calendar events and meetings
+                   (``scheduling.reconcile``);
                    ``hire_scorecard_reminders``: feedback reminders 2 and 24 hours after
                    an interview, and "remind me later" (``interviewing.reminders``);
                    ``hire_checklist_retention``: checklist file retention after hire;
@@ -110,6 +112,8 @@ from pairly_hire.retention import RETENTION_RULES
 from pairly_hire.scheduling import models as scheduling_models  # noqa: F401  (tables)
 from pairly_hire.scheduling.permissions import SCHEDULING_PERMISSIONS
 from pairly_hire.scheduling.providers import FEATURE_FLAGS
+from pairly_hire.scheduling.reconcile import JOB_NAME as CALENDAR_RECONCILE_JOB
+from pairly_hire.scheduling.reconcile import run_reconcile_job
 from pairly_hire.scheduling.reminders import JOB_NAME as REMINDERS_JOB
 from pairly_hire.scheduling.reminders import run_reminders_job
 from pairly_hire.screening import models as screening_models  # noqa: F401  (its tables)
@@ -213,6 +217,14 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "Remind candidates and interviewers 24 hours and 1 hour before each interview",
         "every 5 minutes",
         run=run_reminders_job,
+        every_minutes=5,
+    ),
+    JobSpec(
+        CALENDAR_RECONCILE_JOB,
+        "Settle external calendar and meeting writes whose change never committed: "
+        "cancel orphan events and meetings, write lost changes again (audited)",
+        "every 5 minutes",
+        run=run_reconcile_job,
         every_minutes=5,
     ),
     JobSpec(

@@ -83,5 +83,13 @@ tested without credentials, and development must work with no external account a
 * Double booking is prevented in Hire, not in the provider: a booking takes a
   transaction-scoped advisory lock per panelist (in a stable order) and checks again
   under the lock, so two bookings that share a person are serialised.
+* External writes cannot roll back with the booking, so each one is journalled
+  (`hire_calendar_operations`, migration `hire_0020`, `pairly_hire.scheduling.operations`):
+  a `pending` row is committed on its own before the provider call (provider, our
+  idempotency key, the provider's id once known, the intended state), and the booking's
+  own transaction marks it `done`, so the mark commits exactly when the change does. The
+  `hire_calendar_reconcile` job (every 5 minutes) settles rows left pending: an orphan
+  event or Zoom meeting is cancelled, a lost move or cancel is written again from the
+  committed state, an unknown result is marked `failed` for a person to check. Audited.
 * Real Google use needs the Google Cloud project (an open ASK item), an OAuth consent
   screen and a callback URL; then each interviewer connects their own calendar.

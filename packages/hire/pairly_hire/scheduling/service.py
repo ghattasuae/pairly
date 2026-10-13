@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from contextlib import AsyncExitStack
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
@@ -67,6 +67,7 @@ from pairly_core.integrations.calendar.base import (
     EventAttendee,
     EventRef,
     EventSpec,
+    MeetingLink,
     MeetingProvider,
 )
 from pairly_core.rbac import RoleRegistry
@@ -85,7 +86,7 @@ from pairly_hire.messaging.compose import Author
 from pairly_hire.models import ApplicationStatus
 from pairly_hire.pipeline.moves import move_for_interview
 from pairly_hire.pipeline.records import AppRecord, load_record
-from pairly_hire.scheduling import emails, meetings
+from pairly_hire.scheduling import emails, meetings, operations
 from pairly_hire.scheduling import templates as tpl
 from pairly_hire.scheduling.emails import CandidateMail, PanelMail, SchedulingEnv
 from pairly_hire.scheduling.models import (
@@ -462,10 +463,70 @@ async def _write_event(
         )
 
 
+def _intended(interview: HireInterview, action: str) -> dict[str, Any]:
+    """What a journalled write asks for (``operations``), enough to undo it later."""
+    return {
+        "action": action,
+        "uid": interview.ics_uid,
+        "sequence": interview.ics_sequence,
+        "status": interview.status,
+        "starts_at": interview.starts_at.isoformat() if interview.starts_at else None,
+        "ends_at": interview.ends_at.isoformat() if interview.ends_at else None,
+    }
+
+
+def _made_id(result: object) -> str | None:
+    if isinstance(result, EventRef):
+        return result.event_id
+    if isinstance(result, MeetingLink):
+        return result.meeting_id
+    return None
+
+
+async def _external[T](
+    session: AsyncSession,
+    interview: HireInterview,
+    organizer_id: uuid.UUID,
+    *,
+    provider: str,
+    kind: str,
+    action: str,
+    external_id: str | None,
+    call: Callable[[str | None], Awaitable[T]],
+) -> T:
+    """One provider call, journalled when the provider is external (``operations``):
+    recorded before, its id stored after, settled in this transaction."""
+    if not operations.journalled(provider):
+        return await call(None)
+    op = await operations.begin(
+        session,
+        org_id=interview.org_id,
+        interview_id=interview.id,
+        organizer_id=organizer_id,
+        provider=provider,
+        kind=kind,
+        action=action,
+        external_id=external_id,
+        intended=_intended(interview, action),
+    )
+    try:
+        result = await call(op.client_request_id)
+    except CalendarError as exc:
+        await operations.failed(session, op, exc)
+        raise
+    made = _made_id(result)
+    if action == "create" and made and made != op.client_request_id:
+        await operations.written(session, op, made)
+    await operations.settle(session, op)
+    return result
+
+
 async def _write_meeting(
+    session: AsyncSession,
     meeting: MeetingProvider | None,
     interview: HireInterview,
     user: CalendarUser,
+    organizer_id: uuid.UUID,
     spec: EventSpec,
     *,
     cancel: bool,
@@ -481,17 +542,59 @@ async def _write_meeting(
     zoom_id = interview.meeting_external_id
     if zoom_id and (cancel or interview.meeting_provider != "zoom"):
         if meeting is not None:
-            await meeting.delete_meeting(user, zoom_id)
+            zoom = meeting
+
+            async def delete(_key: str | None) -> None:
+                await zoom.delete_meeting(user, zoom_id)
+
+            await _external(
+                session,
+                interview,
+                organizer_id,
+                provider=zoom.name,
+                kind="meeting",
+                action="cancel",
+                external_id=zoom_id,
+                call=delete,
+            )
             interview.meeting_external_id = None
         return spec
     if interview.meeting_provider == "zoom" and current:
         if zoom_id and meeting is not None:
-            await meeting.update_meeting(user, zoom_id, spec)
+            zoom = meeting
+
+            async def move(_key: str | None) -> None:
+                await zoom.update_meeting(user, zoom_id, spec)
+
+            await _external(
+                session,
+                interview,
+                organizer_id,
+                provider=zoom.name,
+                kind="meeting",
+                action="update",
+                external_id=zoom_id,
+                call=move,
+            )
         return replace(spec, meeting_url=current, want_meeting=False)
     if cancel or meeting is None or current:
         return spec
-    link = await meeting.create_meeting(user, spec)
-    _set_meeting(interview, link.url, meeting.name)
+    zoom = meeting
+
+    async def create(_key: str | None) -> MeetingLink:
+        return await zoom.create_meeting(user, spec)
+
+    link = await _external(
+        session,
+        interview,
+        organizer_id,
+        provider=zoom.name,
+        kind="meeting",
+        action="create",
+        external_id=None,
+        call=create,
+    )
+    _set_meeting(interview, link.url, zoom.name)
     interview.meeting_external_id = (link.meeting_id or "")[:64] or None
     return replace(spec, meeting_url=link.url, want_meeting=False)
 
@@ -507,6 +610,9 @@ async def _write_with(
     cancel: bool,
     meeting: MeetingProvider | None = None,
 ) -> None:
+    """Write the interview to the organiser's calendar (and meeting provider). Every
+    external call is journalled (``_external``), so a transaction that fails after the
+    provider wrote leaves a pending operation for the reconciliation job."""
     provider = calendars.provider_for(person.id)
     user = calendars.user(person)
     spec = await _event_spec(session, interview, record, panel)
@@ -521,15 +627,58 @@ async def _write_with(
         else None
     )
     try:
-        spec = await _write_meeting(meeting, interview, user, spec, cancel=cancel)
+        spec = await _write_meeting(
+            session, meeting, interview, user, person.id, spec, cancel=cancel
+        )
         if cancel:
             if ref is not None:
-                await provider.cancel_event(user, ref, spec)
+                existing = ref
+
+                async def cancel_call(_key: str | None) -> None:
+                    await provider.cancel_event(user, existing, spec)
+
+                await _external(
+                    session,
+                    interview,
+                    person.id,
+                    provider=provider.name,
+                    kind="event",
+                    action="cancel",
+                    external_id=existing.event_id,
+                    call=cancel_call,
+                )
             return
         if ref is None or interview.calendar_provider != provider.name:
-            ref = await provider.create_event(user, spec)
+
+            async def create_call(key: str | None) -> EventRef:
+                return await provider.create_event(user, replace(spec, client_request_id=key))
+
+            ref = await _external(
+                session,
+                interview,
+                person.id,
+                provider=provider.name,
+                kind="event",
+                action="create",
+                external_id=None,
+                call=create_call,
+            )
         else:
-            ref = await provider.update_event(user, ref, spec)
+            existing = ref
+
+            async def update_call(_key: str | None) -> EventRef:
+                return await provider.update_event(user, existing, spec)
+
+            ref = await _external(
+                session,
+                interview,
+                person.id,
+                provider=provider.name,
+                kind="event",
+                action="update",
+                external_id=existing.event_id,
+                call=update_call,
+            )
     except CalendarError as exc:
         log.warning("calendar_write_failed", code=exc.code, interview_id=str(interview.id))
         raise CalendarUnavailableError() from None

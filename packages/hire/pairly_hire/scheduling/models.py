@@ -26,6 +26,14 @@ the application role gets SELECT, INSERT and UPDATE, never DELETE.
   (Zoom Server-to-Server OAuth): account id, client id, client secret and host user,
   all encrypted, bound to the row. ``status`` ``active`` once a token was obtained with
   them, ``revoked`` when an administrator removed it (the secret is overwritten).
+* ``hire_calendar_operations`` (``hire_0020``): one row per write to an external
+  calendar or meeting provider, recorded in its own transaction before the call
+  (``operations``): the provider, what was asked, our idempotency key, the provider's id
+  once known, the intended state. ``pending`` until the interview's transaction commits
+  (it marks the row ``done`` itself, so both commit together); a row still pending later
+  is an orphan or a lost change, and the reconciliation job settles it (``reconciled``
+  or ``failed``). No foreign key to the interview on purpose: the row is written while
+  the interview is locked, or not even committed yet.
 """
 
 from __future__ import annotations
@@ -36,6 +44,7 @@ from enum import StrEnum
 from typing import Any, Final
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -62,6 +71,7 @@ PANELISTS = "hire_interview_panelists"
 BLOCKS = "hire_calendar_blocks"
 CONNECTIONS = "hire_calendar_connections"
 MEETING_INTEGRATIONS = "hire_meeting_integrations"
+OPERATIONS = "hire_calendar_operations"
 
 STAGE_KEY_PATTERN: Final = "^[a-z][a-z0-9_]{0,31}$"
 DEFAULT_TIMEZONE: Final = "Asia/Dubai"
@@ -362,3 +372,44 @@ class HireMeetingIntegration(Base, OrgScoped):
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
+
+
+class OperationStatus(StrEnum):
+    PENDING = "pending"
+    DONE = "done"
+    RECONCILED = "reconciled"
+    FAILED = "failed"
+
+
+class HireCalendarOperation(Base, OrgScoped):
+    __tablename__ = OPERATIONS
+    __table_args__ = (
+        UniqueConstraint("org_id", "client_request_id", name="uq_hire_calendar_operations_key"),
+        CheckConstraint("kind IN ('event', 'meeting')", name="kind_valid"),
+        CheckConstraint("action IN ('create', 'update', 'cancel')", name="action_valid"),
+        CheckConstraint(f"status IN ({_in(OperationStatus)})", name="status_valid"),
+        CheckConstraint("client_request_id ~ '^[0-9a-f]{32}$'", name="key_format"),
+        CheckConstraint("jsonb_typeof(intended) = 'object'", name="intended_object"),
+        Index("ix_hire_calendar_operations_pending", "org_id", "status", "updated_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    interview_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    organizer_id: Mapped[uuid.UUID] = _user_fk()
+    provider: Mapped[str] = mapped_column(String(16), nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    client_request_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    external_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    intended: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    # The provider refused the call (nothing was written); else unknown or written.
+    rejected: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    last_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    outcome: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

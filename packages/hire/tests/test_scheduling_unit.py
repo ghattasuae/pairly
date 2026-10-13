@@ -163,3 +163,4 @@ def test_plugin_declares_scheduling_permissions_flag_and_job() -> None:
     }
     jobs = {j.name: j.every_minutes for j in plugin.scheduled_jobs}  # type: ignore[attr-defined]
     assert jobs["hire_interview_reminders"] == 5
+    assert jobs["hire_calendar_reconcile"] == 5
