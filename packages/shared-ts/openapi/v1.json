@@ -4749,6 +4749,17 @@
             "title": "Needs Human Review",
             "type": "boolean"
           },
+          "offer_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Status"
+          },
           "open_message": {
             "anyOf": [
               {
@@ -4960,6 +4971,139 @@
           }
         },
         "title": "HireCheckTextIn",
+        "type": "object"
+      },
+      "HireCompensationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "base_monthly": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Base Monthly"
+          },
+          "bonus_target_pct": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Bonus Target Pct"
+          },
+          "currency": {
+            "default": "AED",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "housing_monthly": {
+            "anyOf": [
+              {
+                "maximum": 10000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Housing Monthly"
+          },
+          "other_monthly": {
+            "anyOf": [
+              {
+                "maximum": 10000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Other Monthly"
+          },
+          "transport_monthly": {
+            "anyOf": [
+              {
+                "maximum": 10000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Transport Monthly"
+          }
+        },
+        "required": [
+          "base_monthly"
+        ],
+        "title": "HireCompensationIn",
+        "type": "object"
+      },
+      "HireCompensationOut": {
+        "properties": {
+          "annual_total": {
+            "title": "Annual Total",
+            "type": "string"
+          },
+          "base_monthly": {
+            "title": "Base Monthly",
+            "type": "string"
+          },
+          "bonus_target_pct": {
+            "title": "Bonus Target Pct",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "housing_monthly": {
+            "title": "Housing Monthly",
+            "type": "string"
+          },
+          "other_monthly": {
+            "title": "Other Monthly",
+            "type": "string"
+          },
+          "transport_monthly": {
+            "title": "Transport Monthly",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "base_monthly",
+          "housing_monthly",
+          "transport_monthly",
+          "other_monthly",
+          "bonus_target_pct",
+          "annual_total"
+        ],
+        "title": "HireCompensationOut",
         "type": "object"
       },
       "HireConflictOut": {
@@ -7596,6 +7740,445 @@
         "title": "HireNoteOut",
         "type": "object"
       },
+      "HireOfferEditIn": {
+        "additionalProperties": false,
+        "properties": {
+          "compensation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireCompensationIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                "maxItems": 12,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "expected_version": {
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "job_title": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Title"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "HireOfferEditIn",
+        "type": "object"
+      },
+      "HireOfferIn": {
+        "additionalProperties": false,
+        "properties": {
+          "compensation": {
+            "$ref": "#/components/schemas/HireCompensationIn"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                "maxItems": 12,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "job_title": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Title"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "template": {
+            "default": "standard",
+            "enum": [
+              "standard",
+              "fixed_term"
+            ],
+            "title": "Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_date",
+          "compensation"
+        ],
+        "title": "HireOfferIn",
+        "type": "object"
+      },
+      "HireOfferListOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "can_write": {
+            "title": "Can Write",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireOfferOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "sees_compensation": {
+            "title": "Sees Compensation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "application_id",
+          "can_write",
+          "sees_compensation",
+          "items"
+        ],
+        "title": "HireOfferListOut",
+        "type": "object"
+      },
+      "HireOfferOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_send": {
+            "title": "Can Send",
+            "type": "boolean"
+          },
+          "can_withdraw": {
+            "title": "Can Withdraw",
+            "type": "boolean"
+          },
+          "chain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain"
+          },
+          "compensation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireCompensationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "format": "uuid",
+            "title": "Created By",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "responded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responded At"
+          },
+          "response_record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Record Id"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "boolean"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/HireOfferStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "submitted_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted By"
+          },
+          "template": {
+            "title": "Template",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "reference",
+          "template",
+          "locale",
+          "job_title",
+          "start_date",
+          "conditions",
+          "compensation",
+          "status",
+          "status_reason",
+          "sent",
+          "version",
+          "approval_id",
+          "chain",
+          "steps",
+          "message_id",
+          "created_by",
+          "submitted_by",
+          "approved_at",
+          "responded_at",
+          "response_record_id",
+          "created_at",
+          "can_edit",
+          "can_send",
+          "can_withdraw"
+        ],
+        "title": "HireOfferOut",
+        "type": "object"
+      },
+      "HireOfferStepOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "HireOfferStepOut",
+        "type": "object"
+      },
+      "HireOfferTemplateOut": {
+        "properties": {
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "conditions_ar": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions Ar",
+            "type": "array"
+          },
+          "employment_type": {
+            "title": "Employment Type",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "title": "Name Ar",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "name_ar",
+          "employment_type",
+          "conditions",
+          "conditions_ar"
+        ],
+        "title": "HireOfferTemplateOut",
+        "type": "object"
+      },
       "HireOtherScorecardOut": {
         "properties": {
           "interviewer_id": {
@@ -7875,6 +8458,11 @@
           },
           "final": {
             "title": "Final",
+            "type": "boolean"
+          },
+          "has_offer": {
+            "default": false,
+            "title": "Has Offer",
             "type": "boolean"
           },
           "history": {
@@ -8503,6 +9091,103 @@
           "at"
         ],
         "title": "HirePortalMessageOut",
+        "type": "object"
+      },
+      "HirePortalOfferAnswerIn": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "const": true,
+            "title": "Confirm",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "title": "HirePortalOfferAnswerIn",
+        "type": "object"
+      },
+      "HirePortalOfferOut": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "compensation": {
+            "$ref": "#/components/schemas/HireCompensationOut"
+          },
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "responded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responded At"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "template_name": {
+            "title": "Template Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "company",
+          "job_title",
+          "start_date",
+          "compensation",
+          "conditions",
+          "template_name",
+          "status",
+          "responded_at"
+        ],
+        "title": "HirePortalOfferOut",
         "type": "object"
       },
       "HirePortalPrivacyOut": {
@@ -18561,6 +19246,100 @@
         ]
       }
     },
+    "/v1/hire/applications/{application_id}/offers": {
+      "get": {
+        "operationId": "list_offers_v1_hire_applications__application_id__offers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Offers",
+        "tags": [
+          "hire"
+        ]
+      },
+      "post": {
+        "operationId": "create_offer_v1_hire_applications__application_id__offers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireOfferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/applications/{application_id}/references": {
       "get": {
         "operationId": "list_references_v1_hire_applications__application_id__references_get",
@@ -20830,6 +21609,269 @@
         ]
       }
     },
+    "/v1/hire/offer-templates": {
+      "get": {
+        "operationId": "offer_templates_v1_hire_offer_templates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireOfferTemplateOut"
+                  },
+                  "title": "Response Offer Templates V1 Hire Offer Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Offer Templates",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/offers/{offer_id}": {
+      "put": {
+        "operationId": "edit_offer_v1_hire_offers__offer_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireOfferEditIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/offers/{offer_id}/pdf": {
+      "get": {
+        "operationId": "offer_pdf_v1_hire_offers__offer_id__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "en",
+                    "ar"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Locale"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Offer Pdf",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/offers/{offer_id}/send": {
+      "post": {
+        "operationId": "send_offer_v1_hire_offers__offer_id__send_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/offers/{offer_id}/submit": {
+      "post": {
+        "operationId": "submit_offer_v1_hire_offers__offer_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/offers/{offer_id}/withdraw": {
+      "post": {
+        "operationId": "withdraw_offer_v1_hire_offers__offer_id__withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Withdraw Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/pipeline/applications/{application_id}": {
       "get": {
         "operationId": "get_profile_v1_hire_pipeline_applications__application_id__get",
@@ -21475,6 +22517,49 @@
         ]
       }
     },
+    "/v1/hire/portal/applications/{application_id}/offer": {
+      "get": {
+        "operationId": "portal_offer_v1_hire_portal_applications__application_id__offer_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePortalOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Offer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/portal/applications/{application_id}/withdraw": {
       "post": {
         "operationId": "withdraw_v1_hire_portal_applications__application_id__withdraw_post",
@@ -21656,6 +22741,148 @@
         "summary": "Me",
         "tags": [
           "hire-portal"
+        ]
+      }
+    },
+    "/v1/hire/portal/offers/{offer_id}/accept": {
+      "post": {
+        "operationId": "portal_accept_v1_hire_portal_offers__offer_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePortalOfferAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePortalOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Accept",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/portal/offers/{offer_id}/decline": {
+      "post": {
+        "operationId": "portal_decline_v1_hire_portal_offers__offer_id__decline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HirePortalOfferAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HirePortalOfferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Decline",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/portal/offers/{offer_id}/pdf": {
+      "get": {
+        "operationId": "portal_offer_pdf_v1_hire_portal_offers__offer_id__pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Offer Pdf",
+        "tags": [
+          "hire"
         ]
       }
     },

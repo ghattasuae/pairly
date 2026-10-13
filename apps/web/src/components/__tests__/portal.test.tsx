@@ -60,6 +60,7 @@ function app(patch: Partial<PortalApplication> = {}): PortalApplication {
 function detail(patch: Partial<PortalApplicationDetail> = {}): PortalApplicationDetail {
   return {
     ...app(),
+    has_offer: false,
     messages: [
       {
         id: "m1",

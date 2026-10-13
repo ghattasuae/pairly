@@ -141,3 +141,7 @@ export const cancelReference = unavailable;
 export const openReference = unavailable;
 export const loadReference = unavailable;
 export const saveReference = unavailable;
+// Offers (lib/actions/offers.ts, lib/actions/portal-offer.ts).
+export const createOffer = unavailable;
+export const offerAction = unavailable;
+export const answerOffer = unavailable;

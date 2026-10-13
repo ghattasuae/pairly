@@ -827,6 +827,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Offers */
+        get: operations["list_offers_v1_hire_applications__application_id__offers_get"];
+        put?: never;
+        /** Create Offer */
+        post: operations["create_offer_v1_hire_applications__application_id__offers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/references": {
         parameters: {
             query?: never;
@@ -1486,6 +1504,108 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/offer-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Offer Templates */
+        get: operations["offer_templates_v1_hire_offer_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/offers/{offer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Edit Offer */
+        put: operations["edit_offer_v1_hire_offers__offer_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/offers/{offer_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Offer Pdf */
+        get: operations["offer_pdf_v1_hire_offers__offer_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/offers/{offer_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Offer */
+        post: operations["send_offer_v1_hire_offers__offer_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/offers/{offer_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Offer */
+        post: operations["submit_offer_v1_hire_offers__offer_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/offers/{offer_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Offer */
+        post: operations["withdraw_offer_v1_hire_offers__offer_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/pipeline/applications/{application_id}": {
         parameters: {
             query?: never;
@@ -1708,6 +1828,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/portal/applications/{application_id}/offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Offer */
+        get: operations["portal_offer_v1_hire_portal_applications__application_id__offer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/portal/applications/{application_id}/withdraw": {
         parameters: {
             query?: never;
@@ -1790,6 +1927,57 @@ export type paths = {
         };
         /** Me */
         get: operations["me_v1_hire_portal_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/offers/{offer_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Portal Accept */
+        post: operations["portal_accept_v1_hire_portal_offers__offer_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/offers/{offer_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Portal Decline */
+        post: operations["portal_decline_v1_hire_portal_offers__offer_id__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/portal/offers/{offer_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Offer Pdf */
+        get: operations["portal_offer_pdf_v1_hire_portal_offers__offer_id__pdf_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5236,6 +5424,8 @@ export type components = {
             label: string;
             /** Needs Human Review */
             needs_human_review: boolean;
+            /** Offer Status */
+            offer_status?: string | null;
             /** Open Message */
             open_message: string | null;
             /** Open Message Id */
@@ -5311,6 +5501,53 @@ export type components = {
              * @default
              */
             title_ar: string;
+        };
+        /** HireCompensationIn */
+        HireCompensationIn: {
+            /** Base Monthly */
+            base_monthly: number | string;
+            /**
+             * Bonus Target Pct
+             * @default 0
+             */
+            bonus_target_pct: number | string;
+            /**
+             * Currency
+             * @default AED
+             */
+            currency: string;
+            /**
+             * Housing Monthly
+             * @default 0
+             */
+            housing_monthly: number | string;
+            /**
+             * Other Monthly
+             * @default 0
+             */
+            other_monthly: number | string;
+            /**
+             * Transport Monthly
+             * @default 0
+             */
+            transport_monthly: number | string;
+        };
+        /** HireCompensationOut */
+        HireCompensationOut: {
+            /** Annual Total */
+            annual_total: string;
+            /** Base Monthly */
+            base_monthly: string;
+            /** Bonus Target Pct */
+            bonus_target_pct: string;
+            /** Currency */
+            currency: string;
+            /** Housing Monthly */
+            housing_monthly: string;
+            /** Other Monthly */
+            other_monthly: string;
+            /** Transport Monthly */
+            transport_monthly: string;
         };
         /** HireConflictOut */
         HireConflictOut: {
@@ -6153,6 +6390,148 @@ export type components = {
              */
             note_id: string;
         };
+        /** HireOfferEditIn */
+        HireOfferEditIn: {
+            compensation?: components["schemas"]["HireCompensationIn"] | null;
+            /** Conditions */
+            conditions?: string[] | null;
+            /** Expected Version */
+            expected_version: number;
+            /** Job Title */
+            job_title?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+        };
+        /** HireOfferIn */
+        HireOfferIn: {
+            compensation: components["schemas"]["HireCompensationIn"];
+            /** Conditions */
+            conditions?: string[] | null;
+            /** Job Title */
+            job_title?: string | null;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * Template
+             * @default standard
+             * @enum {string}
+             */
+            template: "standard" | "fixed_term";
+        };
+        /** HireOfferListOut */
+        HireOfferListOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Can Write */
+            can_write: boolean;
+            /** Items */
+            items: components["schemas"]["HireOfferOut"][];
+            /** Sees Compensation */
+            sees_compensation: boolean;
+        };
+        /** HireOfferOut */
+        HireOfferOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Can Edit */
+            can_edit: boolean;
+            /** Can Send */
+            can_send: boolean;
+            /** Can Withdraw */
+            can_withdraw: boolean;
+            /** Chain */
+            chain: string | null;
+            compensation: components["schemas"]["HireCompensationOut"] | null;
+            /** Conditions */
+            conditions: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By
+             * Format: uuid
+             */
+            created_by: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string;
+            /** Locale */
+            locale: string;
+            /** Message Id */
+            message_id: string | null;
+            /** Reference */
+            reference: string;
+            /** Responded At */
+            responded_at: string | null;
+            /** Response Record Id */
+            response_record_id: string | null;
+            /** Sent */
+            sent: boolean;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Steps */
+            steps: components["schemas"]["HireOfferStepOut"][];
+            /** Submitted By */
+            submitted_by: string | null;
+            /** Template */
+            template: string;
+            /** Version */
+            version: number;
+        };
+        /** HireOfferStepOut */
+        HireOfferStepOut: {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+        };
+        /** HireOfferTemplateOut */
+        HireOfferTemplateOut: {
+            /** Conditions */
+            conditions: string[];
+            /** Conditions Ar */
+            conditions_ar: string[];
+            /** Employment Type */
+            employment_type: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Name Ar */
+            name_ar: string;
+        };
         /** HireOtherScorecardOut */
         HireOtherScorecardOut: {
             /**
@@ -6273,6 +6652,11 @@ export type components = {
             document_requests: components["schemas"]["HirePortalDocumentRequestOut"][];
             /** Final */
             final: boolean;
+            /**
+             * Has Offer
+             * @default false
+             */
+            has_offer: boolean;
             /** History */
             history: components["schemas"]["HirePortalStepOut"][];
             /**
@@ -6519,6 +6903,44 @@ export type components = {
             subject: string | null;
             /** Text */
             text: string;
+        };
+        /** HirePortalOfferAnswerIn */
+        HirePortalOfferAnswerIn: {
+            /**
+             * Confirm
+             * @constant
+             */
+            confirm: true;
+            /** Note */
+            note?: string | null;
+        };
+        /** HirePortalOfferOut */
+        HirePortalOfferOut: {
+            /** Company */
+            company: string;
+            compensation: components["schemas"]["HireCompensationOut"];
+            /** Conditions */
+            conditions: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string;
+            /** Reference */
+            reference: string;
+            /** Responded At */
+            responded_at: string | null;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Status */
+            status: string;
+            /** Template Name */
+            template_name: string;
         };
         /** HirePortalPrivacyOut */
         HirePortalPrivacyOut: {
@@ -10708,6 +11130,72 @@ export interface operations {
             };
         };
     };
+    list_offers_v1_hire_applications__application_id__offers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_offer_v1_hire_applications__application_id__offers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireOfferIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_references_v1_hire_applications__application_id__references_get: {
         parameters: {
             query?: {
@@ -12256,6 +12744,185 @@ export interface operations {
             };
         };
     };
+    offer_templates_v1_hire_offer_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferTemplateOut"][];
+                };
+            };
+        };
+    };
+    edit_offer_v1_hire_offers__offer_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireOfferEditIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    offer_pdf_v1_hire_offers__offer_id__pdf_get: {
+        parameters: {
+            query?: {
+                locale?: ("en" | "ar") | null;
+            };
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_offer_v1_hire_offers__offer_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_offer_v1_hire_offers__offer_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_offer_v1_hire_offers__offer_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_profile_v1_hire_pipeline_applications__application_id__get: {
         parameters: {
             query?: never;
@@ -12695,6 +13362,37 @@ export interface operations {
             };
         };
     };
+    portal_offer_v1_hire_portal_applications__application_id__offer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     withdraw_v1_hire_portal_applications__application_id__withdraw_post: {
         parameters: {
             query?: never;
@@ -12830,6 +13528,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HirePortalMeOut"];
+                };
+            };
+        };
+    };
+    portal_accept_v1_hire_portal_offers__offer_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalOfferAnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_decline_v1_hire_portal_offers__offer_id__decline_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HirePortalOfferAnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HirePortalOfferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_offer_pdf_v1_hire_portal_offers__offer_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

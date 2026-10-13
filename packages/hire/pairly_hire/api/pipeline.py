@@ -110,6 +110,7 @@ class HireCardOut(BaseModel):
     referred: bool
     open_message: str | None
     open_message_id: uuid.UUID | None
+    offer_status: str | None = None
 
 
 class HireBoardOut(BaseModel):

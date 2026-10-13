@@ -15,6 +15,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_requisition``: a requested role waits for its approval chain
                    (``requisitions/approval_rules.yaml``), then the
                    ``approve_requisition`` final action marks it approved.
+                   ``hire_offer``: an offer waits for its approval chain
+                   (``offers/approval_rules.yaml``), then ``approve_offer`` marks it
+                   approved; sending it is a sensitive message (``hire_message``).
 * ``api_router``   the ``/v1/hire`` routes, imported only when called.
 * ``demo_seeds``   ``hire-demo`` for ``pairly-admin seed``.
 * ``migrations_dir``  the ``hire`` Alembic branch (``migrations/``).
@@ -64,10 +67,15 @@ from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
 from pairly_hire.messaging.sla import JOB_NAME as SLA_JOB
 from pairly_hire.messaging.sla import run_sla_job
+from pairly_hire.offers import graph as offer_graph
+from pairly_hire.offers import models as offer_models  # noqa: F401  (tables)
 from pairly_hire.permissions import (
     CANDIDATE_READ,
     MESSAGE_APPROVE,
     MESSAGE_CREATE,
+    OFFER_APPROVE,
+    OFFER_READ,
+    OFFER_WRITE,
     PERMISSIONS,
     REQUISITION_APPROVE,
     REQUISITION_CREATE,
@@ -142,6 +150,25 @@ HIRE_REQUISITION: GraphSpec = GraphSpec(
     description="A requested role waits for HR (and finance above a budget), then opens.",
 )
 
+HIRE_OFFER: GraphSpec = GraphSpec(
+    workflow="hire",
+    name=offer_graph.GRAPH,
+    version=offer_graph.VERSION,
+    build=offer_graph.build_graph,
+    start_permission=OFFER_WRITE,
+    read_permission=OFFER_READ,
+    approval_types=(
+        ApprovalType(
+            offer_graph.APPROVAL_TYPE,
+            OFFER_APPROVE,
+            offer_graph.APPROVAL_RULES_V1,
+            "Offer to a candidate",
+        ),
+    ),
+    final_actions={offer_graph.FINAL_ACTION: offer_graph.approve_offer},
+    description="An offer waits for the hiring manager, HR and finance above a threshold.",
+)
+
 SCHEDULED_JOBS: tuple[JobSpec, ...] = (
     *SCREENING_JOBS,
     JobSpec(
@@ -196,7 +223,7 @@ class HirePlugin:
     permissions: tuple[PermissionSpec, ...] = field(
         default=(*PERMISSIONS, *SCREENING_PERMISSIONS, *SCHEDULING_PERMISSIONS)
     )
-    graphs: tuple[GraphSpec, ...] = (HIRE_SCREENING, HIRE_MESSAGE, HIRE_REQUISITION)
+    graphs: tuple[GraphSpec, ...] = (HIRE_SCREENING, HIRE_MESSAGE, HIRE_REQUISITION, HIRE_OFFER)
     demo_seeds: Mapping[str, DemoSeed] = field(
         default_factory=lambda: {"hire-demo": seed_hire_demo}
     )

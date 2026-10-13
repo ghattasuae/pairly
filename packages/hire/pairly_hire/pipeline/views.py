@@ -38,6 +38,7 @@ from pairly_hire.messaging import library
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.messaging.prefs import prefs_for
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate, HireJob
+from pairly_hire.offers.models import HireOffer
 from pairly_hire.pipeline.hooks import (
     ScreeningSummary,
     application_blind,
@@ -84,6 +85,8 @@ class Card:
     # The open draft or approval of the application, if any (``draft``, ``awaiting_approval``...).
     open_message: str | None
     open_message_id: uuid.UUID | None
+    # The status of the newest offer, if any (``pairly_hire.offers``).
+    offer_status: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +111,22 @@ async def _users(session: AsyncSession, ids: set[str]) -> dict[str, str]:
         select(User.id, User.display_name, User.email).where(User.id.in_(uuids))
     )
     return {str(r.id): (r.display_name or r.email.split("@", 1)[0]).strip() for r in rows}
+
+
+async def latest_offer_statuses(
+    session: AsyncSession, application_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, str]:
+    """The newest offer's status per application."""
+    if not application_ids:
+        return {}
+    out: dict[uuid.UUID, str] = {}
+    for app_id, status in await session.execute(
+        select(HireOffer.application_id, HireOffer.status)
+        .where(HireOffer.application_id.in_(application_ids))
+        .order_by(HireOffer.created_at.asc(), HireOffer.id)
+    ):
+        out[app_id] = status
+    return out
 
 
 async def board(
@@ -147,6 +166,7 @@ async def board(
         .order_by(HireMessage.created_at.asc())
     ):
         open_messages[m.application_id] = (m.status, m.id)
+    offer_statuses = await latest_offer_statuses(session, app_ids)
     cards: list[Card] = []
     for app, candidate, entry in rows:
         record = AppRecord(app, candidate, job, entry, stages)
@@ -173,6 +193,7 @@ async def board(
                 referred=app.id in referred,
                 open_message=opened[0] if opened else None,
                 open_message_id=opened[1] if opened else None,
+                offer_status=offer_statuses.get(app.id),
             )
         )
     return Board(job, stages, cards, blind, sla_days)

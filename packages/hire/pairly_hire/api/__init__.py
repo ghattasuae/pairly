@@ -25,6 +25,8 @@
 * ``requisitions``: role requests, their approval and opening a job from one (M3).
 * ``interviewing``: interview plans, kits, scorecards and debriefs (M3).
 * ``references``: reference checks, the referee's form and the summary (M3).
+* ``offers``: offers from templates, their approval chain, the PDF letter, sending, and
+  the candidate's answer in the portal (M3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -39,6 +41,7 @@ from pairly_hire.api import (
     interviewing,
     jobs,
     messaging,
+    offers,
     pipeline,
     portal,
     public,
@@ -63,3 +66,4 @@ router.include_router(scheduling.router)
 router.include_router(requisitions.router)
 router.include_router(interviewing.router)
 router.include_router(references.router)
+router.include_router(offers.router)

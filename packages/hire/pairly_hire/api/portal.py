@@ -75,6 +75,7 @@ from pairly_hire.api.scheduling import env as scheduling_env
 from pairly_hire.careers import CareersOrg, careers_org
 from pairly_hire.jobs import org_settings
 from pairly_hire.models import HireCandidate
+from pairly_hire.offers import service as offer_service
 from pairly_hire.portal import auth, service
 from pairly_hire.portal.models import HireDocumentRequest
 from pairly_hire.portal.templates import LOGIN_LINK
@@ -220,6 +221,8 @@ class HirePortalDocumentRequestOut(BaseModel):
 class HirePortalApplicationDetailOut(HirePortalApplicationOut):
     messages: list[HirePortalMessageOut]
     document_requests: list[HirePortalDocumentRequestOut]
+    # An offer the candidate can read (its email was sent), see ``api.offers``.
+    has_offer: bool = False
 
 
 class HirePortalWithdrawIn(BaseModel):
@@ -368,6 +371,7 @@ async def _detail(
         document_requests=[
             _request_out(r) for r in await service.document_requests(session, identity, item.id)
         ],
+        has_offer=await offer_service.candidate_has_offer(session, identity.candidate_id, item.id),
     )
 
 

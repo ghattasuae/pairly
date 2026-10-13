@@ -50,6 +50,9 @@ Erased in step 1:
   ratings and recommendations stay), and the text of their debrief summaries (content
   emptied) and the reason of the decision taken on them (``[erased]``; the decision,
   who and when stay).
+* offers: the compensation (emptied) and the candidate's note on their answer; the
+  status, dates and the answer stay. Their approvals and decision records are erased
+  like the others (by entity id).
 * references: the referee's name and address (replaced), their answers (removed), the
   kept reference summaries (content emptied); their links and sessions end. Status and
   times stay.
@@ -100,6 +103,7 @@ from pairly_core.workflow.models import WorkflowRun
 from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.models import HireCandidatePrefs, HireMessage
 from pairly_hire.models import HireApplication, HireCandidate
+from pairly_hire.offers.models import HireOffer
 from pairly_hire.pipeline.models import HireNote, HireStageMove
 from pairly_hire.pipeline.rediscovery import remove_candidate
 from pairly_hire.portal.models import (
@@ -188,6 +192,7 @@ class _Scope:
     document_request_ids: set[uuid.UUID] = field(default_factory=set)
     appeal_ids: set[uuid.UUID] = field(default_factory=set)
     reference_ids: set[uuid.UUID] = field(default_factory=set)
+    offer_ids: set[uuid.UUID] = field(default_factory=set)
     extraction_ids: set[uuid.UUID] = field(default_factory=set)
     decision_ids: set[str] = field(default_factory=set)
     model_call_ids: set[uuid.UUID] = field(default_factory=set)
@@ -207,6 +212,7 @@ class _Scope:
             *self.appeal_ids,
             *self.extraction_ids,
             *self.reference_ids,
+            *self.offer_ids,
         }
         return sorted(str(i) for i in ids)
 
@@ -221,6 +227,7 @@ class ErasureCounts:
     interviews: int = 0
     feedback: int = 0
     references: int = 0
+    offers: int = 0
     screenings: int = 0
     notifications: int = 0
     decisions: int = 0
@@ -332,6 +339,9 @@ async def _scope(session: AsyncSession, candidate: HireCandidate) -> _Scope:
         await session.scalars(
             select(HireReferenceRequest.id).where(HireReferenceRequest.candidate_id == cid)
         )
+    )
+    scope.offer_ids = set(
+        await session.scalars(select(HireOffer.id).where(HireOffer.candidate_id == cid))
     )
     return scope
 
@@ -520,6 +530,21 @@ async def _erase_references(session: AsyncSession, scope: _Scope, now: datetime)
                 org_id=summary.org_id,
                 row_id=summary.id,
             )
+    return count
+
+
+async def _erase_offers(session: AsyncSession, scope: _Scope, now: datetime) -> int:
+    count = 0
+    for offer in await session.scalars(
+        select(HireOffer).where(HireOffer.id.in_(scope.offer_ids)).with_for_update()
+    ):
+        offer.compensation = _sealed(
+            HireOffer, "compensation", dict(ERASED_MARK), org_id=offer.org_id, row_id=offer.id
+        )
+        offer.response_note = None
+        offer.erased_at = offer.erased_at or now
+        offer.updated_at = now
+        count += 1
     return count
 
 
@@ -797,6 +822,7 @@ async def erase_candidate(
     interviews = await _erase_interviews(session, scope, now)
     feedback = await _erase_feedback(session, scope)
     references = await _erase_references(session, scope, now)
+    offers = await _erase_offers(session, scope, now)
     screenings = await _erase_screenings(session, scope, now)
     await _erase_portal(session, scope)
     documents = await _erase_documents(session, scope, now)
@@ -815,6 +841,7 @@ async def erase_candidate(
         interviews=interviews,
         feedback=feedback,
         references=references,
+        offers=offers,
         screenings=screenings,
         notifications=notifications,
         decisions=decisions,

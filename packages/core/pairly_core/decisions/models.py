@@ -129,7 +129,9 @@ class DecisionRecord(Base, OrgScoped):
         CheckConstraint(f"id ~ '{DECISION_ID_PATTERN}'", name="id_format"),
         CheckConstraint(f"kind IN ({_in(DecisionKind)})", name="kind_valid"),
         CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
-        CheckConstraint("actor_type IN ('user', 'agent', 'system', 'api_key')", name="actor_valid"),
+        CheckConstraint(
+            "actor_type IN ('user', 'agent', 'system', 'api_key', 'candidate')", name="actor_valid"
+        ),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
         CheckConstraint("content_hash ~ '^[0-9a-f]{64}$'", name="content_hash_format"),
         CheckConstraint("supersedes IS NULL OR supersedes <> id", name="not_self"),

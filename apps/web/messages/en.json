@@ -1710,7 +1710,8 @@
       "withdrawn": "You withdrew this application. We sent you an email to confirm.",
       "back": "All applications",
       "updated": "Your status changed.",
-      "live": "This page updates by itself."
+      "live": "This page updates by itself.",
+      "offer": "You have an offer. Read it and answer here."
     },
     "jobs": {
       "title": "Other open jobs",
@@ -2182,7 +2183,8 @@
     "holdNote": "On hold: {reason}",
     "openKit": "Interview kit",
     "openDebrief": "Debrief",
-    "openReferences": "References"
+    "openReferences": "References",
+    "openOffer": "Offer"
   },
   "Requisitions": {
     "title": "Requisitions",
@@ -2411,5 +2413,78 @@
       "no": "No",
       "unsure": "Not sure"
     }
+  },
+  "Offers": {
+    "title": "Offer",
+    "intro": "Build the offer from a template. It needs the hiring manager's and HR's approval (and finance above the threshold) before it can be sent. The candidate accepts or declines in their portal.",
+    "none": "No offer yet.",
+    "new": "New offer",
+    "template": "Template",
+    "language": "Letter language",
+    "jobTitle": "Job title",
+    "startDate": "Start date",
+    "compensation": "Compensation",
+    "conditions": "Conditions",
+    "conditionsHint": "One condition per line.",
+    "annualTotal": "Annual total: {amount}",
+    "create": "Create the draft",
+    "submit": "Submit for approval",
+    "send": "Send to the candidate",
+    "withdraw": "Withdraw",
+    "pdfEn": "Letter (English)",
+    "pdfAr": "Letter (Arabic)",
+    "starts": "Starts {date}",
+    "chain": "Approval chain",
+    "compensationHidden": "Compensation is visible only to people allowed to see it.",
+    "sendingNote": "The offer email waits for its own approval, then the candidate can read it in the portal.",
+    "field": {
+      "currency": "Currency",
+      "base_monthly": "Basic salary (monthly)",
+      "housing_monthly": "Housing (monthly)",
+      "transport_monthly": "Transport (monthly)",
+      "other_monthly": "Other (monthly)",
+      "bonus_target_pct": "Bonus target (%)",
+      "annual_total": "Annual total"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_approval": "Waiting for approval",
+      "changes_requested": "Changes requested",
+      "approved": "Approved",
+      "rejected": "Not approved",
+      "failed": "Could not be approved",
+      "sending": "Email waiting for approval",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "withdrawn": "Withdrawn"
+    },
+    "step": {
+      "hiring_manager": "Hiring manager",
+      "hr": "HR",
+      "finance": "Finance"
+    },
+    "stepStatus": {
+      "active": "Now",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes",
+      "cancelled": "Cancelled",
+      "waiting": "Waiting"
+    }
+  },
+  "PortalOffer": {
+    "pageTitle": "Your offer",
+    "title": "Your offer: {job}",
+    "starts": "Start date {date}",
+    "download": "Download the letter (PDF)",
+    "answerTitle": "Your answer",
+    "answerHint": "You can accept or decline once. The hiring team is told straight away.",
+    "note": "A note to the hiring team (optional)",
+    "confirm": "I have read the offer and its conditions.",
+    "accept": "Accept the offer",
+    "decline": "Decline the offer",
+    "accepted": "You accepted this offer. The hiring team will be in touch about next steps.",
+    "declined": "You declined this offer. Thank you for letting us know."
   }
 }

@@ -50,3 +50,7 @@ export type HireDebrief = S["HireDebriefOut"];
 export type HireReferences = S["HireReferencesOut"];
 export type HireReference = S["HireReferenceOut"];
 export type HireRefereePage = S["HireRefereePageOut"];
+export type HireOffer = S["HireOfferOut"];
+export type HireOfferList = S["HireOfferListOut"];
+export type HireOfferTemplate = S["HireOfferTemplateOut"];
+export type HirePortalOffer = S["HirePortalOfferOut"];

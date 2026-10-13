@@ -420,6 +420,9 @@ function CandidateReview({
               >
                 {t("openReferences")}
               </Link>
+              <Link href={`/hire/applications/${card.application_id}/offer`} className="text-primary hover:underline" data-offer-link>
+                {t("openOffer")}
+              </Link>
             </p>
           )}
         </section>

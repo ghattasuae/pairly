@@ -47,6 +47,7 @@ from pairly_hire.erasure import run_erasure_job
 from pairly_hire.interviewing.models import HireDebrief, HireScorecard
 from pairly_hire.messaging.replies import record_reply
 from pairly_hire.models import HireApplication, HireCandidate
+from pairly_hire.offers.models import HireOffer
 from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.portal.auth import PortalIdentity
 from pairly_hire.portal.models import HireDataRequest, HirePortalSession, HirePortalToken
@@ -326,8 +327,29 @@ async def _gather(
                 org_id=org,
                 row_id=ref_summary.id,
             )
+            offer = HireOffer(
+                id=uuid.uuid4(),
+                org_id=org,
+                application_id=app.id,
+                candidate_id=cid,
+                job_id=app.job_id,
+                reference="OFR-ERASE1",
+                template_key="standard",
+                job_title="Backend Engineer",
+                start_date=(now + timedelta(days=30)).date(),
+                conditions=[],
+                status="draft",
+                created_by=recruiter,
+            )
+            offer.compensation = seal(
+                HireOffer, "compensation", {"note": f"for {name}"}, org_id=org, row_id=offer.id
+            )
+            offer.response_note = seal(
+                HireOffer, "response_note", f"{name} accepts.", org_id=org, row_id=offer.id
+            )
             session.add(interview)
             session.add(reference)
+            session.add(offer)
             await session.flush()
             session.add(ref_summary)
             session.add_all(

@@ -198,6 +198,12 @@ export function ApplicationDetail({
         )}
       </section>
 
+      {app.has_offer && (
+        <Link href={`/portal/applications/${app.id}/offer`} className="block rounded-xl border border-primary/40 bg-primary/5 p-4 font-medium text-primary" data-portal-offer-link>
+          {t("app.offer")}
+        </Link>
+      )}
+
       <section aria-labelledby={`${ids}-documents`} className="space-y-3">
         <h2 id={`${ids}-documents`} className="flex items-center gap-2 font-display text-xl">
           <FileUp className="size-5" aria-hidden />

@@ -42,6 +42,12 @@ Who does what by default:
   managers and admins read them (``hire.reference.read``) and ask referees
   (``hire.reference.write``). Interviewers and auditors never read referees' answers.
 
+* Offers (M3): the hiring team builds and sends them (``hire.offer.create``); the
+  approval chain is the hiring manager, then HR, and finance above a threshold
+  (``hire.offer.approve``, second factor; the submitter never approves). Compensation
+  is visible only with ``hire.offer.compensation`` (the hiring team, admins and finance
+  controllers); auditors read offers without it.
+
 Declaring ``hire.document.*`` makes the engine use them instead of ``core.document.*``
 for documents of the ``hire`` workflow (CVs), so a member limited to Hire can open them.
 """
@@ -79,6 +85,10 @@ PLAN_WRITE: Final = "hire.interview_plan.write"
 SCORECARD_READ: Final = "hire.scorecard.read"
 REFERENCE_READ: Final = "hire.reference.read"
 REFERENCE_WRITE: Final = "hire.reference.write"
+OFFER_READ: Final = "hire.offer.read"
+OFFER_WRITE: Final = "hire.offer.create"
+OFFER_APPROVE: Final = "hire.offer.approve"
+OFFER_COMPENSATION: Final = "hire.offer.compensation"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -192,6 +202,26 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         REFERENCE_READ,
         "View reference checks: referees, their answers and the summary",
         frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        OFFER_READ,
+        "View offers and their approval status (compensation needs its own permission)",
+        frozenset({R.ADMIN, *_HIRING, R.FINANCE_CONTROLLER, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        OFFER_WRITE,
+        "Build offers from templates, submit them for approval, send and withdraw them",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        OFFER_APPROVE,
+        "Approve an offer before it is sent (hiring manager, HR, finance above a threshold)",
+        frozenset({R.ADMIN, *_HIRING, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        OFFER_COMPENSATION,
+        "See and set the compensation in offers",
+        frozenset({R.ADMIN, *_HIRING, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(
         REFERENCE_WRITE,
