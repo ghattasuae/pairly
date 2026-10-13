@@ -189,6 +189,7 @@ lint: ## Lint Python, import contracts and JS
 	$(UV) run ruff format --check .
 	$(UV) run lint-imports
 	$(UV) run python scripts/check_no_em_dash.py
+	$(UV) run python scripts/check_translations.py
 	$(PNPM) lint
 
 format: ## Auto-format and auto-fix Python

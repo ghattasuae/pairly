@@ -480,7 +480,7 @@
         "metadata_instruction": "في {subject} تعليمات مخفية في خصائص الملف: \"{evidence}\".",
         "metadata_text": "في {subject} نص طويل في خصائص الملف حيث لا يراه القارئ: \"{evidence}\".",
         "filename_instruction": "اسم ملف {subject} يحتوي على تعليمات: \"{evidence}\".",
-        "email_instruction": "في عنوان البريد الإلكتروني المرسل مع هذا الملف أو في ترويساته تعليمات: \"{evidence}\"."
+        "email_instruction": "وصل {subject} في بريد إلكتروني يحتوي عنوانه أو ترويساته على تعليمات: \"{evidence}\"."
       },
       "unusual_unicode": {
         "bidi_override": "في {subject} رموز تعكس اتجاه القراءة لإخفاء النص الحقيقي: \"{evidence}\".",
