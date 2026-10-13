@@ -3,6 +3,7 @@
 import { UserRoundCog } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import { isolate } from "@/lib/bidi";
 
 /**
@@ -35,6 +36,15 @@ export function NotProvisioned({ email, code }: { email: string; code: string })
             </li>
           ))}
         </ol>
+      </div>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>
+          {t("candidate")}{" "}
+          <Link href="/portal" className="font-medium text-primary hover:underline" data-portal-link>
+            {t("candidateLink")}
+          </Link>
+        </p>
+        <p>{t("referee")}</p>
       </div>
       <p className="font-mono text-xs text-muted-foreground">{t("reference", { code })}</p>
     </section>

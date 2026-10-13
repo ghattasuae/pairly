@@ -6474,6 +6474,223 @@
         "title": "HireCriterionOut",
         "type": "object"
       },
+      "HireDashItemOut": {
+        "properties": {
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "detail": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Detail",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/HireDashStageOut"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label",
+          "job_id",
+          "application_id",
+          "at",
+          "detail",
+          "stages"
+        ],
+        "title": "HireDashItemOut",
+        "type": "object"
+      },
+      "HireDashSectionOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireDashItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count",
+          "items"
+        ],
+        "title": "HireDashSectionOut",
+        "type": "object"
+      },
+      "HireDashStageOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "label_ar": {
+            "title": "Label Ar",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "label_ar",
+          "count"
+        ],
+        "title": "HireDashStageOut",
+        "type": "object"
+      },
+      "HireDashboardOut": {
+        "properties": {
+          "action": {
+            "items": {
+              "$ref": "#/components/schemas/HireDashSectionOut"
+            },
+            "title": "Action",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/HireMetricOut"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/HireDashSectionOut"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "survey": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireSurveyResultsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "generated_at",
+          "timezone",
+          "scope",
+          "action",
+          "sections",
+          "metrics",
+          "links"
+        ],
+        "title": "HireDashboardOut",
+        "type": "object"
+      },
       "HireDataRequestEraseIn": {
         "additionalProperties": false,
         "properties": {
@@ -22513,6 +22730,111 @@
           }
         },
         "summary": "Review Item",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/dashboards/hiring-manager": {
+      "get": {
+        "operationId": "hiring_manager_v1_hire_dashboards_hiring_manager_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Hiring Manager",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/dashboards/interviewer": {
+      "get": {
+        "operationId": "interviewer_v1_hire_dashboards_interviewer_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Interviewer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/dashboards/recruiter": {
+      "get": {
+        "operationId": "recruiter_v1_hire_dashboards_recruiter_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Recruiter",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/dashboards/referrer": {
+      "get": {
+        "operationId": "referrer_v1_hire_dashboards_referrer_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Referrer",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/dashboards/talent": {
+      "get": {
+        "operationId": "talent_v1_hire_dashboards_talent_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Talent",
         "tags": [
           "hire"
         ]

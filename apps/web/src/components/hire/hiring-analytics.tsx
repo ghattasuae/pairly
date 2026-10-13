@@ -135,7 +135,7 @@ function detail(m: HireMetric, key: string): unknown {
   return (m.detail as Record<string, unknown>)[key];
 }
 
-function SurveySummary({ survey }: { survey: HireSurveyResults }) {
+export function SurveySummary({ survey }: { survey: HireSurveyResults }) {
   const t = useTranslations("HireAnalytics");
   const format = useFormatter();
   const overall = survey.overall.averages.overall;

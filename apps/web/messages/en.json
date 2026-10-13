@@ -140,7 +140,9 @@
     "actionNeeded": "Action needed",
     "emptyTitle": "Nothing needs you right now.",
     "emptyBody": "New approvals, flags and drafts will show up here first.",
-    "rolesLabel": "Your roles"
+    "rolesLabel": "Your roles",
+    "dashboardsUnavailable": "Part of your dashboard could not load. Try again in a moment.",
+    "noDashboards": "Your roles have no dashboard here yet. Use the menu to open your work."
   },
   "NotProvisioned": {
     "eyebrow": "Almost there",
@@ -149,7 +151,10 @@
     "next": "What to do next",
     "step1": "Ask your Pairly admin to send an invitation to this email address.",
     "step2": "Open the link in the invitation email and accept it. You will land here, ready to work.",
-    "reference": "Reference: {code}"
+    "reference": "Reference: {code}",
+    "candidate": "Applied for a job? Your applications are in the candidate portal.",
+    "candidateLink": "Open the candidate portal",
+    "referee": "Asked to give a reference? Use the link in the email you received; it needs no account."
   },
   "Unavailable": {
     "title": "We cannot reach Pairly right now",
@@ -2795,5 +2800,104 @@
     "noNamed": "No candidate attached their name.",
     "comment": "Comment",
     "answeredOn": "Answered on {date}"
+  },
+  "Dashboards": {
+    "title": {
+      "recruiter": "Recruiting",
+      "hiring_manager": "Your open roles",
+      "interviewer": "Your interviews",
+      "talent": "Hiring overview",
+      "referrer": "Your referrals"
+    },
+    "scope": {
+      "mine": "For the jobs and interviews you work on.",
+      "all": "For every job in your organisation."
+    },
+    "needsYou": "{count, plural, =0 {Nothing needs you right now} one {# thing needs you now} other {# things need you now}}",
+    "howItsGoing": "How things are going",
+    "pages": "More pages",
+    "pipeline": "Candidates per stage",
+    "section": {
+      "to_review": "Applications to review",
+      "flags": "Flags to check",
+      "approvals": "Waiting for your approval",
+      "waiting": "Waiting longest for an update",
+      "missing_scorecards": "Missing scorecards",
+      "sla": "Past the reply time",
+      "interviews_today": "Interviews today",
+      "interviews_week": "Interviews this week",
+      "jobs": "Jobs and their pipelines",
+      "shortlists": "Shortlists awaiting your decision",
+      "debriefs": "Debriefs ready",
+      "offers": "Offers awaiting approval",
+      "requisitions_open": "Your requisitions in approval",
+      "requisitions": "Your requisitions",
+      "scorecards_due": "Scorecards due",
+      "interviews_next": "Coming up next",
+      "interviews_upcoming": "Upcoming interviews",
+      "interviews_past": "Past interviews",
+      "load_week": "Your interviews this week",
+      "approvals_late": "Approvals past their due time",
+      "referrals_active": "Referrals in progress",
+      "referrals": "People you referred",
+      "open_jobs": "Open jobs you can refer people to"
+    },
+    "empty": {
+      "action": "Nothing here. You are up to date.",
+      "section": "Nothing to show yet."
+    },
+    "countLink": "{what}: {count}. Open the records",
+    "seeAll": "See all {count}",
+    "detail": {
+      "waiting": "{days, plural, =0 {waiting since today} one {waiting # day} other {waiting # days}}",
+      "candidates": "{count, plural, one {# candidate} other {# candidates}}",
+      "submitted": "Scorecard submitted",
+      "notSubmitted": "Scorecard not submitted",
+      "approval": "Approval request",
+      "overdue": "Overdue",
+      "join": "Join"
+    },
+    "requisitionStatus": {
+      "pending_approval": "In approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes requested",
+      "other": "Closed"
+    },
+    "approvalType": {
+      "offer": "Offer",
+      "requisition": "Requisition",
+      "message": "Message to a candidate",
+      "other": "Hire approval"
+    },
+    "flag": {
+      "injection": "Prompt injection or hidden text",
+      "claims": "Claim consistency",
+      "ai_signals": "AI-generated application signals",
+      "other": "Flag"
+    },
+    "metric": {
+      "firstResponse": "Time to first response (median)",
+      "timeInStage": "Time in stage {stage} (median)",
+      "timeToHire": "Time to hire (median)",
+      "conversion": "{from} to {to}",
+      "source": "Source {source} (hire rate)",
+      "ghosting": "Ghosting rate",
+      "interviewerLoad": "Interviewer load: {name}",
+      "someone": "a team member",
+      "agreement": "AI and human agreement",
+      "disagreement": "Decisions that differ from the AI score",
+      "overrides": "Override rate"
+    },
+    "sample": "{n, plural, one {from # record} other {from # records}}",
+    "link": {
+      "analytics": "Hiring analytics",
+      "bias": "Bias and adverse-impact report",
+      "surveys": "Candidate survey results",
+      "calibration": "Calibration",
+      "requisitions": "Requisitions",
+      "inbox": "Approval inbox",
+      "referrals": "Make a referral link"
+    }
   }
 }

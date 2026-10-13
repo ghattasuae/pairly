@@ -32,6 +32,7 @@
 * ``analytics``: hiring analytics, every number with its records (M3).
 * ``reports``: the bias and adverse-impact report, its audit pack and fairness runs (M3).
 * ``calibration``: calibration mode, people's labels against the AI per criterion (M3).
+* ``dashboards``: the role dashboards behind the web Home, one per role (M3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -46,6 +47,7 @@ from pairly_hire.api import (
     calibration,
     candidate_requests,
     checklist,
+    dashboards,
     interviewing,
     jobs,
     messaging,
@@ -82,3 +84,4 @@ router.include_router(survey.router)
 router.include_router(analytics.router)
 router.include_router(reports.router)
 router.include_router(calibration.router)
+router.include_router(dashboards.router)

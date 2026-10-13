@@ -1103,6 +1103,91 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/dashboards/hiring-manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hiring Manager */
+        get: operations["hiring_manager_v1_hire_dashboards_hiring_manager_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/dashboards/interviewer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Interviewer */
+        get: operations["interviewer_v1_hire_dashboards_interviewer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/dashboards/recruiter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recruiter */
+        get: operations["recruiter_v1_hire_dashboards_recruiter_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/dashboards/referrer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Referrer */
+        get: operations["referrer_v1_hire_dashboards_referrer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/dashboards/talent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Talent */
+        get: operations["talent_v1_hire_dashboards_talent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/data-requests": {
         parameters: {
             query?: never;
@@ -6410,6 +6495,70 @@ export type components = {
             quotes: string[];
             /** Result */
             result: string;
+        };
+        /** HireDashboardOut */
+        HireDashboardOut: {
+            /** Action */
+            action: components["schemas"]["HireDashSectionOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Links */
+            links: string[];
+            /** Metrics */
+            metrics: components["schemas"]["HireMetricOut"][];
+            /** Role */
+            role: string;
+            /** Scope */
+            scope: string;
+            /** Sections */
+            sections: components["schemas"]["HireDashSectionOut"][];
+            survey?: components["schemas"]["HireSurveyResultsOut"] | null;
+            /** Timezone */
+            timezone: string;
+        };
+        /** HireDashItemOut */
+        HireDashItemOut: {
+            /** Application Id */
+            application_id: string | null;
+            /** At */
+            at: string | null;
+            /** Detail */
+            detail: {
+                [key: string]: string | number | boolean | null;
+            };
+            /** Id */
+            id: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Stages */
+            stages: components["schemas"]["HireDashStageOut"][];
+        };
+        /** HireDashSectionOut */
+        HireDashSectionOut: {
+            /** Count */
+            count: number;
+            /** Items */
+            items: components["schemas"]["HireDashItemOut"][];
+            /** Key */
+            key: string;
+        };
+        /** HireDashStageOut */
+        HireDashStageOut: {
+            /** Count */
+            count: number;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
         };
         /** HireDataRequestEraseIn */
         HireDataRequestEraseIn: {
@@ -12921,6 +13070,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hiring_manager_v1_hire_dashboards_hiring_manager_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDashboardOut"];
+                };
+            };
+        };
+    };
+    interviewer_v1_hire_dashboards_interviewer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDashboardOut"];
+                };
+            };
+        };
+    };
+    recruiter_v1_hire_dashboards_recruiter_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDashboardOut"];
+                };
+            };
+        };
+    };
+    referrer_v1_hire_dashboards_referrer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDashboardOut"];
+                };
+            };
+        };
+    };
+    talent_v1_hire_dashboards_talent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDashboardOut"];
                 };
             };
         };
