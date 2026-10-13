@@ -374,21 +374,26 @@ async def score_pair(
     live: bool,
     org_id: uuid.UUID,
     context: CallContext | None = None,
+    control_score: float | None = None,
 ) -> PairScore:
-    """Re-score the control and the copy with the model (live only)."""
+    """Re-score the control and the copy with the model (live only). ``control_score``:
+    the control's overall score from an earlier copy of the same CV (the control is the
+    same text for every copy, so it is scored once)."""
     if not live or router is None:
         return PairScore(PENDING)
-    control = await pipeline.score_cv(
-        rubric, check.control_doc, check.control, router, org_id=org_id, context=context
-    )
-    if isinstance(control, str):
-        return PairScore(control[:48])
+    if control_score is None:
+        control = await pipeline.score_cv(
+            rubric, check.control_doc, check.control, router, org_id=org_id, context=context
+        )
+        if isinstance(control, str):
+            return PairScore(control[:48])
+        control_score = control.result.overall
     copy = await pipeline.score_cv(
         rubric, check.copy_doc, check.copy, router, org_id=org_id, context=context
     )
     if isinstance(copy, str):
         return PairScore(copy[:48])
-    return PairScore("scored", control.result.overall, copy.result.overall)
+    return PairScore("scored", control_score, copy.result.overall)
 
 
 def sources_for(contact: Mapping[str, Any] | None, profile: Any) -> BlindSources:

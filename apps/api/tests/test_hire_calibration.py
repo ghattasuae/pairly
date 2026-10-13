@@ -130,6 +130,17 @@ async def test_labels_overrides_and_the_agreement_report(
     )
     assert events[0].n == 7
 
+    # Hiring analytics on real screenings: cost from model_calls (recorded mode: 0, and
+    # it says so), the AI scores counted as screened.
+    analytics = await api.call("GET", f"/v1/hire/analytics?job_id={job['id']}", world, "admin")
+    assert analytics.status_code == 200, analytics.text
+    cost = analytics.json()["cost_per_screened_application"]
+    assert cost["n"] == 2
+    assert cost["detail"]["model_calls"] > 0
+    assert cost["detail"]["recorded_mode"] is True
+    assert cost["value"] == 0.0
+    assert analytics.json()["override_rate"]["value"] == 0.5
+
     other = await screening_world(owner_engine)
     elsewhere = await api.call(
         "GET", f"/v1/hire/calibration/report?job_id={job['id']}", other, "admin"

@@ -138,3 +138,23 @@ def test_mode_follows_the_router() -> None:
     live = SimpleNamespace(mode=ModelMode.LIVE)
     assert model_mode(GraphServices(router=recorded)) == "recorded"  # type: ignore[arg-type]
     assert model_mode(GraphServices(router=live)) == "live"  # type: ignore[arg-type]
+
+
+async def test_the_control_is_scored_once_per_cv(monkeypatch: pytest.MonkeyPatch) -> None:
+    check = check_copy(CV, cf.sources_for(CONTACT, None), BlindConfig(), swaps()["name"])
+    calls: list[Any] = []
+
+    async def fake_score(*args: Any, **kwargs: Any) -> Any:
+        calls.append(args)
+        return SimpleNamespace(result=SimpleNamespace(overall=70.0))
+
+    monkeypatch.setattr("pairly_hire.screening.pipeline.score_cv", fake_score)
+    scored = await cf.score_pair(
+        check,
+        object(),  # type: ignore[arg-type]
+        object(),  # type: ignore[arg-type]
+        live=True,
+        org_id=APP,
+        control_score=70.0,
+    )
+    assert (scored.delta, len(calls)) == (0.0, 1)

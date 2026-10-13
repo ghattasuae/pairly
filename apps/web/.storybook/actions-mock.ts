@@ -152,3 +152,8 @@ export const saveChecklistConfig = unavailable;
 // Candidate experience survey (lib/actions/survey.ts).
 export const viewSurvey = unavailable;
 export const answerSurvey = unavailable;
+// Fairness runs and calibration mode (lib/actions/fairness.ts, lib/actions/calibration.ts).
+export const startFairnessRun = unavailable;
+export const loadCalibrationItem = unavailable;
+export const saveCalibrationLabels = unavailable;
+export const suggestClarification = unavailable;

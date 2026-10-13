@@ -306,15 +306,24 @@ async def execute_run(
                 entity_type=ENTITY,
                 entity_id=str(run_id),
             )
+            control_score: float | None = None
             for swap in swaps:
                 check = cf.check_copy(text, sample.sources, sample.blind, swap)
                 score = (
                     await cf.score_pair(
-                        check, rubric, services.router, live=True, org_id=org_id, context=context
+                        check,
+                        rubric,
+                        services.router,
+                        live=True,
+                        org_id=org_id,
+                        context=context,
+                        control_score=control_score,
                     )
                     if live and rubric is not None
                     else cf.PairScore(cf.PENDING)
                 )
+                if score.control is not None:
+                    control_score = score.control
                 delta = score.delta
                 results.append(
                     HireFairnessResult(
