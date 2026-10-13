@@ -16,7 +16,10 @@ them, read through the pipeline's reveal state.
 Calendar files: one UID per interview (``iv-<id>@pairly``) and the interview's
 ``ics_sequence``. ``METHOD:REQUEST`` for a new or moved time, ``METHOD:CANCEL`` for a
 cancellation. The candidate's file lists only the candidate; a panelist's file lists the
-panel (never the candidate's address while their identity is hidden).
+panel (never the candidate's address while their identity is hidden). When the
+interview is on the organiser's Microsoft 365 calendar, Exchange already sends the panel
+its own meeting request, so panel emails carry no calendar file
+(``provider_invites_panel``): nobody gets two invitations.
 """
 
 from __future__ import annotations
@@ -378,6 +381,12 @@ class PanelMail:
     channels: tuple[str, ...] = ("email",)
 
 
+def provider_invites_panel(interview: HireInterview) -> bool:
+    """The organiser's calendar provider sends the panel its own invitation (Microsoft
+    365: Graph cannot turn Exchange's meeting requests off)."""
+    return interview.calendar_provider == "microsoft" and bool(interview.calendar_event_id)
+
+
 async def send_to_panel(
     session: AsyncSession,
     env: SchedulingEnv,
@@ -407,8 +416,10 @@ async def send_to_panel(
     if not hidden and mail.method == "REQUEST":
         attachees.append(IcsPerson(record.email, record.full_name or None))
 
+    no_file = provider_invites_panel(interview)
+
     def ics(description: str) -> Attachment | None:
-        if mail.method is None:
+        if mail.method is None or no_file:
             return None
         return calendar_file(
             interview,

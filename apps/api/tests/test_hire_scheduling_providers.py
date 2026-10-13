@@ -12,17 +12,21 @@ import re
 import uuid
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
 from sqlalchemy import event
+from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_core.audit import INFO_REQUEST_ID
 from pairly_core.db import TenantSession, create_sessionmaker, set_tenant
 from pairly_hire.scheduling import providers
+from pairly_hire.scheduling.models import HireCalendarConnection
 from pairly_hire.scheduling.reconcile import reconcile_pending
+from pairly_hire.sealing import read_sealed
 
 from .hire_support import (
     HireApi,
@@ -32,8 +36,9 @@ from .hire_support import (
     owner_rows,
     retire_documents,
     seed_hire_world,
+    set_blind_mode,
 )
-from .test_hire_scheduling import applicants, book, slots, uid
+from .test_hire_scheduling import applicants, book, deliver, ics_of, slots, uid
 
 __all__ = ["hire_api"]  # fixture
 
@@ -62,6 +67,9 @@ class MockServices:
         self.status: dict[tuple[str, str], int] = {}
         self.events: dict[str, dict[str, Any]] = {}
         self.meetings: dict[str, dict[str, Any]] = {}
+        # Rotate the refresh token on every refresh grant (Microsoft does by default).
+        self.rotate = False
+        self.refreshes = 0
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.calls.append(request)
@@ -76,11 +84,16 @@ class MockServices:
             if m == method and path.startswith(prefix):
                 return httpx.Response(code, json={"error": "x"})
         if host == "login.microsoftonline.com":
+            refresh = "M.R3_test-refresh"
+            if b"grant_type=refresh_token" in request.content:
+                self.refreshes += 1
+                if self.rotate:
+                    refresh = f"M.R3_rotated-{self.refreshes}"
             return httpx.Response(
                 200,
                 json={
                     "access_token": "eyJ.test",
-                    "refresh_token": "M.R3_test-refresh",
+                    "refresh_token": refresh,
                     "expires_in": 3600,
                     "scope": "Calendars.ReadWrite User.Read",
                 },
@@ -204,6 +217,100 @@ async def test_microsoft_connection_free_busy_and_teams_booking(
         "POST", "/v1/hire/scheduling/integrations/microsoft/disconnect", world, "recruiter"
     )
     assert off.json()["using"] == "fake"
+
+
+async def stored_token(api: HireApi, world: HireWorld) -> tuple[HireCalendarConnection, str]:
+    async with create_sessionmaker(api.engine)() as session:
+        set_tenant(session, world.org_id, None)
+        row = (
+            await session.scalars(
+                sa_select(HireCalendarConnection).where(
+                    HireCalendarConnection.provider == "microsoft"
+                )
+            )
+        ).one()
+        return row, str(read_sealed(row, "refresh_token"))
+
+
+async def test_outlook_invites_the_panel_only_and_a_rotated_token_is_kept(
+    hire_api: HireApi,
+    world: HireWorld,
+    monkeypatch: pytest.MonkeyPatch,
+    owner_engine: AsyncEngine,
+    tmp_path: Path,
+) -> None:
+    api = hire_api
+    mock = MockServices()
+    providers.set_google_transport(httpx.MockTransport(mock))
+    microsoft_env(monkeypatch)
+    await api.call(
+        "PUT", "/v1/flags/hire.scheduling.microsoft", world, "admin", json={"enabled": True}
+    )
+    await set_blind_mode(api, world, False)  # names shown: the candidate could be listed
+    await connect_microsoft(api, world, "recruiter")
+    _row, first = await stored_token(api, world)
+    assert first == "M.R3_test-refresh"
+
+    mock.rotate = True
+    job = await open_job(api, world)
+    ids = await applicants(api, world, job, ["Panel Only"])
+    panel = [uid(world, "recruiter"), uid(world, "interviewer")]
+    found = await slots(api, world, ids["Panel Only"], panel)
+    booked = await book(api, world, ids["Panel Only"], panel, found["slots"][0]["start"])
+    assert booked.status_code == 201, booked.text
+    assert mock.refreshes >= 1
+
+    # (b) The rotated token replaced the old one, encrypted, audited without it.
+    row, current = await stored_token(api, world)
+    assert current.startswith("M.R3_rotated-")
+    raw = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT refresh_token FROM hire_calendar_connections WHERE id = :i",
+        {"i": row.id},
+    )
+    assert "M.R3_rotated" not in raw[0].refresh_token
+    audits = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT actor_type, payload::text AS payload FROM audit_events "
+        "WHERE action = 'hire.calendar.token_rotated'",
+    )
+    assert audits
+    assert all("M.R3" not in a.payload for a in audits)
+    assert {a.actor_type for a in audits} == {"system"}
+
+    # (a) The Outlook event lists the panel only, never the candidate.
+    (event,) = mock.events.values()
+    listed = {a["emailAddress"]["address"] for a in event["body"]["attendees"]}
+    staff = {f"{who}-{ids_[0].hex[:6]}@example.test" for who, ids_ in world.people.items()}
+    assert listed == {a for a in staff if a.startswith(("recruiter-", "interviewer-"))}
+    assert not any(a.startswith("panel.only.") for a in listed)
+    mails = await deliver(api, world, tmp_path / "outbox")
+    (candidate,) = [
+        m
+        for m in mails
+        if any(t.startswith("panel.only.") for t in m["to"]) and "nterview" in m["subject"]
+    ]
+    assert ics_of(candidate).calendar["METHOD"] == ["REQUEST"]  # Pairly's own invitation
+    briefings = [
+        m
+        for m in mails
+        if any(t in staff for t in m["to"]) and m["subject"].startswith("Interview:")
+    ]
+    assert briefings
+    assert all(not m.get("attachments") for m in briefings)  # Exchange invites the panel
+
+    # A disconnect in between wins: a late rotation never revives the connection.
+    off = await api.call(
+        "POST", "/v1/hire/scheduling/integrations/microsoft/disconnect", world, "recruiter"
+    )
+    assert off.status_code == 200
+    async with create_sessionmaker(api.engine)() as session:
+        set_tenant(session, world.org_id, None)
+        assert not await providers.store_rotated_token(session, row, "M.R3_late")
+    _row, after = await stored_token(api, world)
+    assert after == "revoked"
 
 
 ZOOM_APP = {"account_id": "acct-1", "client_id": "zoom-client", "client_secret": "zoom-secret-1"}

@@ -202,13 +202,11 @@ async def test_microsoft_events_with_teams_link_and_transaction_id() -> None:
     assert body["subject"] == spec.summary
     assert body["start"] == {"dateTime": "2026-10-13T06:00:00", "timeZone": "UTC"}
     assert body["end"] == {"dateTime": "2026-10-13T06:45:00", "timeZone": "UTC"}
+    # The panel only: the candidate (no user key) gets Pairly's own invitation.
     assert body["attendees"] == [
-        {
-            "emailAddress": {"address": "layla@example.test", "name": "Layla Haddad"},
-            "type": "required",
-        },
         {"emailAddress": {"address": "sara@acme.example", "name": "Sara"}, "type": "required"},
     ]
+    assert "layla@example.test" not in create.content.decode()
     assert body["isOnlineMeeting"] is True
     assert body["onlineMeetingProvider"] == "teamsForBusiness"
     assert body["transactionId"] == "b" * 32

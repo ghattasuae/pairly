@@ -32,8 +32,13 @@ Calendar (``MicrosoftGraphCalendarProvider``):
   ``POST /me/events/{id}/cancel`` (404 and 410 count as done).
 
 Graph has no ``sendUpdates=none``: Exchange sends its own meeting request to attendees
-of the organiser's event. See ADR 0011 (an ASK item: keep attendees on the Outlook
-event, or keep the panel only and let Pairly's ICS invitation reach the candidate).
+of the organiser's event. So the Outlook event lists only the interview panel (the
+attendees with a ``user_key``, Pairly users); the candidate is never an attendee and
+gets Pairly's own invitation email with the ICS file only (ADR 0011). Pairly in turn
+sends the panel no ICS file for a Microsoft event, so nobody gets two invitations.
+
+``MicrosoftTokens.refresh_token`` on a refresh is the rotated token when Microsoft sends
+one; the caller stores it (``pairly_hire.scheduling.providers``).
 
 HTTP 401 and 403 are ``microsoft_unauthorized`` (not transient: the person reconnects);
 429 and 5xx and network errors are transient.
@@ -219,12 +224,15 @@ def event_body(event: EventSpec, *, create: bool) -> dict[str, Any]:
         "body": {"contentType": "text", "content": event.description[:8000]},
         "start": {"dateTime": utc_naive(event.start), "timeZone": "UTC"},
         "end": {"dateTime": utc_naive(event.end), "timeZone": "UTC"},
+        # The panel only (Pairly users): Exchange invites every attendee itself, and
+        # the candidate gets Pairly's own invitation instead.
         "attendees": [
             {
                 "emailAddress": {"address": a.email, **({"name": a.name} if a.name else {})},
                 "type": "required",
             }
             for a in event.attendees
+            if a.user_key is not None
         ],
         "allowNewTimeProposals": False,
         "isReminderOn": True,

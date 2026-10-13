@@ -43,8 +43,12 @@ tested without credentials, and development must work with no external account a
      `onlineMeetingProvider: teamsForBusiness`; OAuth per person like Google, refresh
      token encrypted. Graph assigns its own `iCalUId` (read only): it comes back on
      `EventRef.ical_uid`, and our ICS UID is kept as an extended property. Graph has no
-     `sendUpdates=none`, so Exchange also sends its own invitation for the organiser's
-     event (ASK: keep attendees on the Outlook event, or only the panel). Tested against
+     `sendUpdates=none` and Exchange sends its own invitation for the organiser's event,
+     so (decided 2026-10-14) the Outlook event lists only the interview panel, the
+     candidate gets Pairly's ICS email only, and Pairly's panel emails carry no ICS
+     file for a Microsoft event: nobody gets two invitations. A refresh token that
+     Microsoft (or Google) rotates is stored at once in its own short transaction,
+     audited without the token, so connections do not lapse after 90 days. Tested against
      a mocked transport only. Off by default: `hire.scheduling.microsoft` plus
      `PAIRLY_MICROSOFT_CLIENT_ID`, `PAIRLY_MICROSOFT_CLIENT_SECRET`,
      `PAIRLY_MICROSOFT_REDIRECT_URL` (and `PAIRLY_MICROSOFT_TENANT`, by default

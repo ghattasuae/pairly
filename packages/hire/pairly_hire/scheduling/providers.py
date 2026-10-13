@@ -33,10 +33,11 @@ from typing import Any, Final
 import httpx
 import structlog
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from pairly_core.audit import audit_actor_action
+from pairly_core.audit import ActorType, append_audit, audit_actor_action
 from pairly_core.crypto.types import seal
+from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.errors import ConflictError, ServiceUnavailableError
 from pairly_core.flags.registry import FlagError, FlagSpec
 from pairly_core.flags.service import is_enabled
@@ -165,19 +166,86 @@ class Person:
     timezone: str
 
 
+ROTATED_ACTION: Final = "hire.calendar.token_rotated"
+ROTATION_ACTOR: Final = "pairly.hire.calendar"
+
+
+def _side_session(session: AsyncSession, org_id: uuid.UUID) -> AsyncSession:
+    """A second session on the same database, outside the caller's transaction."""
+    bind = session.bind
+    if not isinstance(bind, AsyncEngine):  # pragma: no cover - sessions bind an engine
+        raise RuntimeError("storing a rotated token needs a session bound to an engine")
+    side = create_sessionmaker(bind)()
+    set_tenant(side, org_id, None)
+    return side
+
+
+async def store_rotated_token(
+    session: AsyncSession, connection: HireCalendarConnection, refresh_token: str
+) -> bool:
+    """Store the refresh token the provider rotated to, in its own short transaction (so
+    it survives whatever the caller's transaction does: the old token may already be
+    dead). Only an active connection is updated (a disconnect in between wins). Audited
+    without the token. Returns whether it was stored; a failure is logged, never raised
+    (the access token in hand still works)."""
+    try:
+        side = _side_session(session, connection.org_id)
+        async with side, side.begin():
+            row = await side.scalar(
+                select(HireCalendarConnection)
+                .where(
+                    HireCalendarConnection.id == connection.id,
+                    HireCalendarConnection.status == "active",
+                )
+                .with_for_update()
+            )
+            if row is None:
+                return False
+            row.refresh_token = _sealed(
+                HireCalendarConnection,
+                "refresh_token",
+                refresh_token,
+                org_id=row.org_id,
+                row_id=row.id,
+            )
+            row.updated_at = datetime.now(UTC)
+            await side.flush()
+            await append_audit(
+                side,
+                action=ROTATED_ACTION,
+                actor_type=ActorType.SYSTEM,
+                actor_id=ROTATION_ACTOR,
+                entity_type="hire.calendar_connection",
+                entity_id=row.id,
+                workflow=WORKFLOW,
+                payload={"provider": row.provider, "user_id": str(row.user_id)},
+                org_id=row.org_id,
+            )
+    except Exception:  # never break the calendar call over this
+        log.warning("calendar_token_rotation_not_stored", connection_id=str(connection.id))
+        return False
+    return True
+
+
 class ConnectionTokens:
     """``TokenSource`` for one Google or Microsoft connection: the refresh token,
     decrypted only when an access token is needed, exchanged once per instance.
 
-    Microsoft may return a new refresh token on refresh; it is not stored here (a read
-    must not write), so a Microsoft connection lives as long as its first refresh token
-    (90 days by default) and then asks the person to reconnect."""
+    Microsoft (and Google, when it does) may return a new refresh token on refresh. It
+    is stored at once through ``store_rotated_token`` (its own short transaction,
+    audited without the token), so a connection keeps working past the first token's
+    lifetime (90 days at Microsoft) and nobody has to reconnect."""
 
     def __init__(
-        self, oauth: GoogleOAuth | MicrosoftOAuth, connection: HireCalendarConnection
+        self,
+        oauth: GoogleOAuth | MicrosoftOAuth,
+        connection: HireCalendarConnection,
+        session: AsyncSession | None = None,
     ) -> None:
         self.oauth = oauth
         self.connection = connection
+        self.session = session
+        self._refresh: str | None = None
         self._token: str | None = None
         self._until: datetime | None = None
 
@@ -185,10 +253,16 @@ class ConnectionTokens:
         now = datetime.now(UTC)
         if self._token is not None and self._until is not None and now < self._until:
             return self._token
-        refresh = read_sealed(self.connection, "refresh_token")
+        refresh = self._refresh or read_sealed(self.connection, "refresh_token")
         if not isinstance(refresh, str) or not refresh:
             raise ServiceUnavailableError("the calendar connection is broken; reconnect it")
         tokens = await self.oauth.refresh(refresh)
+        rotated = tokens.refresh_token
+        if rotated and rotated != refresh and self.session is not None:
+            await store_rotated_token(self.session, self.connection, rotated)
+            # Later refreshes by this instance use the new token (kept in memory; the
+            # caller's row is not touched, a read must not write in its transaction).
+            self._refresh = rotated
         self._token = tokens.access_token
         self._until = now + timedelta(seconds=max(tokens.expires_in - 60, 30))
         return self._token
@@ -270,7 +344,7 @@ async def calendar_set(
                 str(person.id),
                 person.email,
                 person.timezone,
-                tokens=ConnectionTokens(oauth[connection.provider], connection),
+                tokens=ConnectionTokens(oauth[connection.provider], connection, session),
             )
             found.providers[person.id] = provider
         yield found
