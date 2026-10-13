@@ -12,12 +12,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+import pairly_hire.requisitions.service as requisition_service
 
 from .hire_support import HireApi, HireWorld, hire_api, owner_rows, seed_hire_world
 
@@ -217,6 +219,33 @@ async def test_rejected_and_withdrawn_open_no_job(hire_api: HireApi, world: Hire
     assert row["status"] == "cancelled"
 
 
+async def test_start_date_is_checked_in_the_organisation_time_zone(
+    hire_api: HireApi, world: HireWorld, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 00:03 on 2 March in Dubai (the default organisation zone) is still 1 March in UTC:
+    # 1 March is yesterday for the organisation, so it is refused; 2 March is today.
+    frozen = datetime(2026, 3, 1, 20, 3, tzinfo=UTC)
+
+    class _Clock(datetime):
+        @classmethod
+        def now(cls, tz: Any = None) -> datetime:  # type: ignore[override]
+            return frozen if tz is None else frozen.astimezone(tz)
+
+    monkeypatch.setattr(requisition_service, "datetime", _Clock)
+    yesterday = await hire_api.client.post(
+        "/v1/hire/requisitions",
+        json=_body(start_date="2026-03-01"),
+        headers=hire_api.headers(world, "manager", extra=_key()),
+    )
+    assert yesterday.status_code == 409, yesterday.text
+    today = await hire_api.client.post(
+        "/v1/hire/requisitions",
+        json=_body(start_date="2026-03-02"),
+        headers=hire_api.headers(world, "manager", extra=_key()),
+    )
+    assert today.status_code == 201, today.text
+
+
 async def test_permissions_validation_and_tenant_isolation(
     hire_api: HireApi, world: HireWorld, other: HireWorld
 ) -> None:
@@ -230,7 +259,8 @@ async def test_permissions_validation_and_tenant_isolation(
     assert (await api.call("GET", "/v1/hire/requisitions", world, "auditor")).status_code == 200
     past = await api.client.post(
         "/v1/hire/requisitions",
-        json=_body(start_date=(date.today() - timedelta(days=1)).isoformat()),
+        # Clearly in the past in every zone (the midnight boundary has its own test).
+        json=_body(start_date=(date.today() - timedelta(days=30)).isoformat()),
         headers=api.headers(world, "manager", extra=_key()),
     )
     assert past.status_code == 409

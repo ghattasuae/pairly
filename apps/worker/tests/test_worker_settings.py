@@ -113,7 +113,9 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.timezone is UTC
     assert settings.health_check_interval == 30
     jobs = {job.name: job for job in settings.cron_jobs}
-    assert set(jobs) == {
+    # The core jobs are listed here; each plugin's jobs come from its own declaration,
+    # which that plugin's tests pin to an explicit list (one edit per new plugin job).
+    core_jobs = {
         NIGHTLY_AUDIT_JOB,
         SWEEP_JOB,
         APPROVAL_SLA_JOB,
@@ -126,17 +128,16 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         DECISION_SWEEP_JOB,
         WEBHOOK_JOB,
         RETENTION_JOB,
-        "expense_stuck_note_sweep",
-        "hire_screening_start",
-        "hire_sla_drafts",
-        "hire_rediscovery_index",
-        "hire_interview_reminders",
-        "hire_scorecard_reminders",
-        "hire_checklist_retention",
-        "hire_survey_invites",
-        "hire_fairness_runs",
-        "hire_erasure_objects",
     }
+    plugin_jobs = {
+        job.name
+        for plugin in discover_plugins().values()
+        for job in getattr(plugin, "scheduled_jobs", ()) or ()
+    }
+    # Every plugin present in this build that declares jobs gets them scheduled.
+    assert {"expense_stuck_note_sweep", "hire_screening_start"} <= plugin_jobs
+    assert not core_jobs & plugin_jobs
+    assert set(jobs) == core_jobs | plugin_jobs
     assert jobs[NOTIFICATION_DIGEST_JOB].hour == 7
     assert jobs[NOTIFICATION_DELIVERY_JOB].unique
     assert (jobs[ANCHOR_JOB].hour, jobs[ANCHOR_JOB].minute) == (2, 10)

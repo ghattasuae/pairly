@@ -12,6 +12,10 @@
   requisition; its ``headcount`` is the number of people to hire for it). Any other
   status is refused: no job is opened before the chain approved.
 
+A start date is a calendar date in the organisation's time zone (its scheduling
+setting, Asia/Dubai by default): a date before today in that zone is refused, whatever
+the server's own zone or the UTC date.
+
 Every change is audited (``hire.requisition.*``) in the caller's transaction.
 """
 
@@ -22,6 +26,7 @@ import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any, Final
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,6 +37,7 @@ from pairly_core.rbac import Actor
 from pairly_hire.jobs import create_job
 from pairly_hire.models import HireJob
 from pairly_hire.requisitions.models import HireRequisition, RequisitionStatus
+from pairly_hire.scheduling.rules import org_scheduling
 
 WORKFLOW: Final = "hire"
 ENTITY: Final = "hire.requisition"
@@ -106,14 +112,28 @@ async def get_requisition(
     return row
 
 
+def local_today(now: datetime, timezone: str) -> date:
+    """The calendar date at ``now`` (timezone aware) in the organisation's zone."""
+    return now.astimezone(ZoneInfo(timezone)).date()
+
+
+async def org_today(session: AsyncSession, now: datetime) -> date:
+    """Today in the organisation's time zone (the session is tenant-bound)."""
+    return local_today(now, (await org_scheduling(session)).timezone)
+
+
 async def create_requisition(
-    session: AsyncSession, actor: Actor, values: dict[str, Any]
+    session: AsyncSession,
+    actor: Actor,
+    values: dict[str, Any],
+    *,
+    now: datetime | None = None,
 ) -> HireRequisition:
     if actor.id is None:
         raise ForbiddenError("only a person can request a role")
-    now = datetime.now(UTC)
+    now = now or datetime.now(UTC)
     start = values["start_date"]
-    if not isinstance(start, date) or start < now.date():
+    if not isinstance(start, date) or start < await org_today(session, now):
         raise ConflictError("the start date must be today or later")
     row = HireRequisition(
         id=uuid.uuid4(),
