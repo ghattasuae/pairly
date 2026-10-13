@@ -54,6 +54,7 @@ from pairly_core.workflow.spec import ApprovalType, GraphSpec
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
 from pairly_hire.erasure import JOB_NAME as ERASURE_JOB
 from pairly_hire.erasure import run_erasure_job
+from pairly_hire.interviewing import models as interviewing_models  # noqa: F401  (tables)
 from pairly_hire.messaging import approval_view as message_approval_view
 from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)

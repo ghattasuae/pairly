@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { InterviewPlanEditor } from "@/components/hire/interview-plan";
 import { JobEditor } from "@/components/hire/job-editor";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
@@ -52,10 +53,11 @@ export default async function EditJobPage({ params }: Props) {
   if (!permissions.includes("hire.job.write")) notFound();
   const canRubric = permissions.includes("hire.rubric.read") && permissions.includes("hire.rubric.write");
   const path = { params: { path: { job_id: jobId } } };
-  const [job, rubric, checks] = await Promise.all([
+  const [job, rubric, checks, plan] = await Promise.all([
     callApi((api) => api.GET("/v1/hire/jobs/{job_id}", path)),
     canRubric ? callApi((api) => api.GET("/v1/hire/jobs/{job_id}/rubric", path)) : null,
     callApi((api) => api.GET("/v1/hire/jobs/{job_id}/checks", path)),
+    callApi((api) => api.GET("/v1/hire/jobs/{job_id}/interview-plan", path)),
   ]);
   if (!job.ok) {
     if (job.code === "not_found") notFound();
@@ -84,6 +86,7 @@ export default async function EditJobPage({ params }: Props) {
         canPublish={permissions.includes("hire.job.publish")}
         totpEnabled={twoFactorEnabled(session)}
       />
+      {plan.ok && <InterviewPlanEditor key={`plan-${plan.data.version ?? 0}`} jobId={job.data.id} initial={plan.data} />}
     </div>
   );
 }

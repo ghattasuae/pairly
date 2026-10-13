@@ -983,6 +983,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/jobs/{job_id}/interview-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["get_plan_v1_hire_jobs__job_id__interview_plan_get"];
+        /** Save Plan */
+        put: operations["save_plan_v1_hire_jobs__job_id__interview_plan_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/jobs/{job_id}/messages/bulk/preview": {
         parameters: {
             query?: never;
@@ -5269,6 +5287,42 @@ export type components = {
             /** Status */
             status: string;
         };
+        /** HireInterviewPlanIn */
+        HireInterviewPlanIn: {
+            /** Expected Version */
+            expected_version?: number | null;
+            /** Plan */
+            plan: {
+                [key: string]: unknown;
+            };
+        };
+        /** HireInterviewPlanOut */
+        HireInterviewPlanOut: {
+            /** Can Edit */
+            can_edit: boolean;
+            /** Criteria */
+            criteria: components["schemas"]["HirePlanCriterionOut"][];
+            /** Default Anchors */
+            default_anchors: string[];
+            /** Default Anchors Ar */
+            default_anchors_ar: string[];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Pipeline Stages */
+            pipeline_stages: components["schemas"]["HirePlanStageOptionOut"][];
+            plan: components["schemas"]["InterviewPlan"] | null;
+            /** Rubric Locked */
+            rubric_locked: boolean;
+            /** Saved */
+            saved: boolean;
+            /** Team */
+            team: components["schemas"]["HirePlanPersonOut"][];
+            /** Version */
+            version: number | null;
+        };
         /** HireInterviewUpdateIn */
         HireInterviewUpdateIn: {
             /** Candidate Timezone */
@@ -5649,6 +5703,36 @@ export type components = {
             name: string;
             /** Timezone */
             timezone: string;
+        };
+        /** HirePlanCriterionOut */
+        HirePlanCriterionOut: {
+            /** Evidence */
+            evidence: string;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+        };
+        /** HirePlanPersonOut */
+        HirePlanPersonOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** HirePlanStageOptionOut */
+        HirePlanStageOptionOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Label Ar */
+            label_ar: string;
         };
         /** HirePortalAppealIn */
         HirePortalAppealIn: {
@@ -7070,6 +7154,16 @@ export type components = {
             /** Status */
             status: string;
         };
+        /** InterviewPlan */
+        InterviewPlan: {
+            /**
+             * Sla Hours
+             * @default 24
+             */
+            sla_hours: number;
+            /** Stages */
+            stages: components["schemas"]["PlanStage"][];
+        };
         /** InvitationCreatedOut */
         InvitationCreatedOut: {
             invitation: components["schemas"]["InvitationOut"];
@@ -7456,6 +7550,39 @@ export type components = {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** PlanQuestion */
+        PlanQuestion: {
+            /**
+             * Anchors
+             * @default []
+             */
+            anchors: string[];
+            /** Criterion Id */
+            criterion_id: string;
+            /** Question */
+            question: string;
+            /**
+             * Question Ar
+             * @default
+             */
+            question_ar: string;
+        };
+        /** PlanStage */
+        PlanStage: {
+            /** Interviewer Ids */
+            interviewer_ids?: string[];
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Name Ar
+             * @default
+             */
+            name_ar: string;
+            /** Questions */
+            questions: components["schemas"]["PlanQuestion"][];
         };
         /** PolicyDocumentOut */
         PolicyDocumentOut: {
@@ -10181,6 +10308,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireFormOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_plan_v1_hire_jobs__job_id__interview_plan_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_plan_v1_hire_jobs__job_id__interview_plan_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireInterviewPlanIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireInterviewPlanOut"];
                 };
             };
             /** @description Validation Error */

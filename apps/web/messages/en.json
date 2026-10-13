@@ -2235,5 +2235,34 @@
       "openJob": "Open the job",
       "viewJob": "View the job"
     }
+  },
+  "InterviewPlan": {
+    "title": "Interview plan",
+    "intro": "Stages, who interviews at each, and the scorecard: 3 to 5 questions mapped to the rubric, each rated 1 to 4.",
+    "defaultNote": "This is a suggested plan from the locked rubric. Save it to make it the job's plan.",
+    "lockFirst": "Lock the rubric first: the scorecard questions map to its criteria.",
+    "needCriteria": "The rubric needs at least 3 criteria for a scorecard.",
+    "anchorsTitle": "What ratings 1 to 4 mean by default",
+    "stage": "Stage {n}",
+    "pipelineStage": "Pipeline stage",
+    "name": "Name",
+    "nameAr": "Name in Arabic",
+    "interviewers": "Usual interviewers (the default panel when scheduling)",
+    "criterion": "Rubric criterion",
+    "kind": {
+      "must": "must have",
+      "nice": "nice to have"
+    },
+    "question": "Question",
+    "questionAr": "Question in Arabic",
+    "customAnchors": "Anchors for this question (optional)",
+    "anchorFor": "What rating {rating} means",
+    "removeQuestion": "Remove the question on {name}",
+    "addQuestion": "Add a question",
+    "removeStage": "Remove this stage",
+    "addStage": "Add a stage",
+    "sla": "Scorecards due within (hours)",
+    "save": "Save the plan",
+    "saved": "Saved. This is version {version} of the plan."
   }
 }

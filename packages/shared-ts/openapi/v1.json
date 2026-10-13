@@ -5708,6 +5708,124 @@
         "title": "HireInterviewOut",
         "type": "object"
       },
+      "HireInterviewPlanIn": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "plan": {
+            "additionalProperties": true,
+            "title": "Plan",
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "HireInterviewPlanIn",
+        "type": "object"
+      },
+      "HireInterviewPlanOut": {
+        "properties": {
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HirePlanCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "default_anchors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Default Anchors",
+            "type": "array"
+          },
+          "default_anchors_ar": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Default Anchors Ar",
+            "type": "array"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "pipeline_stages": {
+            "items": {
+              "$ref": "#/components/schemas/HirePlanStageOptionOut"
+            },
+            "title": "Pipeline Stages",
+            "type": "array"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InterviewPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rubric_locked": {
+            "title": "Rubric Locked",
+            "type": "boolean"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "boolean"
+          },
+          "team": {
+            "items": {
+              "$ref": "#/components/schemas/HirePlanPersonOut"
+            },
+            "title": "Team",
+            "type": "array"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "job_id",
+          "rubric_locked",
+          "saved",
+          "version",
+          "plan",
+          "criteria",
+          "pipeline_stages",
+          "team",
+          "default_anchors",
+          "default_anchors_ar",
+          "can_edit"
+        ],
+        "title": "HireInterviewPlanOut",
+        "type": "object"
+      },
       "HireInterviewUpdateIn": {
         "additionalProperties": false,
         "properties": {
@@ -7069,6 +7187,76 @@
           "timezone"
         ],
         "title": "HirePanelMemberOut",
+        "type": "object"
+      },
+      "HirePlanCriterionOut": {
+        "properties": {
+          "evidence": {
+            "title": "Evidence",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "evidence"
+        ],
+        "title": "HirePlanCriterionOut",
+        "type": "object"
+      },
+      "HirePlanPersonOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "HirePlanPersonOut",
+        "type": "object"
+      },
+      "HirePlanStageOptionOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "label_ar": {
+            "title": "Label Ar",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "label_ar"
+        ],
+        "title": "HirePlanStageOptionOut",
         "type": "object"
       },
       "HirePortalAppealIn": {
@@ -11025,6 +11213,32 @@
         "title": "IndexOut",
         "type": "object"
       },
+      "InterviewPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "sla_hours": {
+            "default": 24,
+            "maximum": 168,
+            "minimum": 4,
+            "title": "Sla Hours",
+            "type": "integer"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PlanStage"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stages"
+        ],
+        "title": "InterviewPlan",
+        "type": "object"
+      },
       "InvitationCreatedOut": {
         "properties": {
           "invitation": {
@@ -11722,6 +11936,91 @@
           "policy_document"
         ],
         "title": "OverrideOut",
+        "type": "object"
+      },
+      "PlanQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "anchors": {
+            "default": [],
+            "items": {
+              "maxLength": 200,
+              "minLength": 3,
+              "type": "string"
+            },
+            "title": "Anchors",
+            "type": "array"
+          },
+          "criterion_id": {
+            "pattern": "^[a-z][a-z0-9_]{0,47}$",
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "question": {
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Question",
+            "type": "string"
+          },
+          "question_ar": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Question Ar",
+            "type": "string"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "question"
+        ],
+        "title": "PlanQuestion",
+        "type": "object"
+      },
+      "PlanStage": {
+        "additionalProperties": false,
+        "properties": {
+          "interviewer_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Interviewer Ids",
+            "type": "array"
+          },
+          "key": {
+            "pattern": "^[a-z][a-z0-9_]{0,31}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Name Ar",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/PlanQuestion"
+            },
+            "maxItems": 5,
+            "minItems": 3,
+            "title": "Questions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "questions"
+        ],
+        "title": "PlanStage",
         "type": "object"
       },
       "PolicyDocumentOut": {
@@ -17560,6 +17859,100 @@
           }
         },
         "summary": "Put Form",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/jobs/{job_id}/interview-plan": {
+      "get": {
+        "operationId": "get_plan_v1_hire_jobs__job_id__interview_plan_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewPlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Plan",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "save_plan_v1_hire_jobs__job_id__interview_plan_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireInterviewPlanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireInterviewPlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Plan",
         "tags": [
           "hire"
         ]

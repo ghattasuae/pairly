@@ -48,7 +48,7 @@ from pairly_core.models.audit import AuditEvent
 from pairly_core.rbac import RoleRegistry
 from pairly_hire.models import HireJob
 from pairly_hire.pipeline.hooks import application_blind
-from pairly_hire.pipeline.records import load_record, organisation_name
+from pairly_hire.pipeline.records import AppRecord, load_record, organisation_name
 from pairly_hire.scheduling.emails import SchedulingEnv, meeting_url_of
 from pairly_hire.scheduling.models import (
     ACTIVE,
@@ -221,6 +221,21 @@ async def _default_panel(
     return [viewer_id] if viewer_id in allowed else sorted(allowed, key=str)[:1]
 
 
+async def _planned_or_default_panel(
+    session: AsyncSession, record: AppRecord, viewer_id: uuid.UUID, allowed: set[uuid.UUID]
+) -> list[uuid.UUID]:
+    """The interview plan's interviewers for the candidate's stage (people still on the
+    team), else ``_default_panel``."""
+    from pairly_hire.interviewing.plan import planned_interviewers
+
+    planned = [
+        u for u in await planned_interviewers(session, record.job, record.stage_key) if u in allowed
+    ]
+    if planned:
+        return planned
+    return await _default_panel(session, record.job.id, viewer_id, allowed)
+
+
 async def scheduling_panel(
     session: AsyncSession,
     registry: RoleRegistry,
@@ -252,7 +267,7 @@ async def scheduling_panel(
         team=[_member(p) for p in people],
         default_panel=await panel_of(session, open_one.id)
         if open_one
-        else await _default_panel(session, record.job.id, viewer_id, allowed),
+        else await _planned_or_default_panel(session, record, viewer_id, allowed),
         interviews=[await interview_view(session, i) for i in interviews],
         google_enabled=await google_enabled(session),
         google_configured=google_config() is not None,

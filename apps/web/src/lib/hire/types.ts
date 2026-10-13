@@ -37,3 +37,7 @@ export type HireRubricState = S["HireRubricOut"];
 export type HireRubricLock = S["HireRubricLockOut"];
 export type HireRequisition = S["HireRequisitionOut"];
 export type HireRequisitionInput = S["HireRequisitionIn"];
+export type HireInterviewPlanView = S["HireInterviewPlanOut"];
+export type HireInterviewPlan = S["InterviewPlan"];
+export type HirePlanStage = S["PlanStage"];
+export type HirePlanQuestion = S["PlanQuestion"];
