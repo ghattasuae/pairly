@@ -1,0 +1,261 @@
+{
+ "generator_version": "1",
+ "count": 320,
+ "seed": 2026,
+ "synthetic": "every vendor, bank, IBAN, TRN, address, person and invoice is generated",
+ "matching_tolerances": {
+  "price_pct": "2.0",
+  "quantity_pct": "5.0"
+ },
+ "approval_threshold_aed": "50000.00",
+ "banks": [
+  {
+   "key": "ae_sahil",
+   "name": "Sahil Commercial Bank (synthetic)",
+   "country": "AE",
+   "code": "917",
+   "bic": "XQSHAEAD"
+  },
+  {
+   "key": "ae_noora",
+   "name": "Noora National Bank (synthetic)",
+   "country": "AE",
+   "code": "926",
+   "bic": "XQNNAEAD"
+  },
+  {
+   "key": "ae_marjan",
+   "name": "Marjan Islamic Bank (synthetic)",
+   "country": "AE",
+   "code": "934",
+   "bic": "XQMIAEAD"
+  },
+  {
+   "key": "ae_qasr",
+   "name": "Qasr Investment Bank (synthetic)",
+   "country": "AE",
+   "code": "948",
+   "bic": "XQQIAEAA"
+  },
+  {
+   "key": "ae_rimal",
+   "name": "Rimal Bank of Commerce (synthetic)",
+   "country": "AE",
+   "code": "955",
+   "bic": "XQRBAEAS"
+  },
+  {
+   "key": "ae_layan",
+   "name": "Layan Digital Bank (synthetic)",
+   "country": "AE",
+   "code": "963",
+   "bic": "XQLDAEAD"
+  },
+  {
+   "key": "sa_dana",
+   "name": "Dana Saudi Bank (synthetic)",
+   "country": "SA",
+   "code": "97",
+   "bic": "XQDSSARI"
+  },
+  {
+   "key": "bh_lulu",
+   "name": "Lulu Gulf Bank (synthetic)",
+   "country": "BH",
+   "code": "XQLG",
+   "bic": "XQLGBHBM"
+  },
+  {
+   "key": "gb_thames",
+   "name": "Ashgrove Mutual Bank (synthetic)",
+   "country": "GB",
+   "code": "XQAM",
+   "bic": "XQAMGB2L"
+  },
+  {
+   "key": "gb_kestrel",
+   "name": "Kestrel Trade Bank (synthetic)",
+   "country": "GB",
+   "code": "XZKT",
+   "bic": "XZKTGB2L"
+  },
+  {
+   "key": "de_lindau",
+   "name": "Lindauer Handelsbank (synthetic)",
+   "country": "DE",
+   "code": "99070011",
+   "bic": "XQLHDEFF"
+  },
+  {
+   "key": "fr_vigne",
+   "name": "Banque des Vignes (synthetic)",
+   "country": "FR",
+   "code": "99021",
+   "bic": "XQBVFRPP"
+  },
+  {
+   "key": "nl_polder",
+   "name": "Polder Zakenbank (synthetic)",
+   "country": "NL",
+   "code": "XQPZ",
+   "bic": "XQPZNL2A"
+  }
+ ],
+ "stats": {
+  "vendors": 34,
+  "vendors_by_country": {
+   "AE": 26,
+   "BH": 1,
+   "DE": 2,
+   "FR": 1,
+   "GB": 2,
+   "NL": 1,
+   "SA": 1
+  },
+  "unknown_vendors": 4,
+  "invoices": 320,
+  "attacks": 69,
+  "invoices_by_format": {
+   "docx": 19,
+   "email_body": 6,
+   "jpg": 17,
+   "pdf": 188,
+   "png": 25,
+   "scan_pdf": 12,
+   "xml": 53
+  },
+  "invoices_by_language": {
+   "ar": 64,
+   "bilingual": 43,
+   "en": 213
+  },
+  "invoices_by_layout": {
+   "band": 57,
+   "bilingual": 42,
+   "classic": 29,
+   "compact": 37,
+   "grid": 53,
+   "plain": 6,
+   "rtl": 43,
+   "ubl": 53
+  },
+  "invoices_by_currency": {
+   "AED": 241,
+   "EUR": 19,
+   "GBP": 10,
+   "SAR": 8,
+   "USD": 42
+  },
+  "invoices_by_channel": {
+   "api": 37,
+   "email": 222,
+   "upload": 61
+  },
+  "invoices_by_text_layer": {
+   "image": 54,
+   "logical": 164,
+   "structured": 53,
+   "visual_shaped": 49
+  },
+  "invoices_with_po": 146,
+  "invoice_lines": 924,
+  "zero_rated_lines": 24,
+  "attacks_by_format": {
+   "docx": 2,
+   "pdf": 59,
+   "png": 4,
+   "xml": 4
+  },
+  "attack_types": {
+   "bank_change": 5,
+   "date_shifted": 2,
+   "duplicate_resubmitted": 2,
+   "editing_traces": 1,
+   "exact_duplicate": 3,
+   "fake_invoice": 6,
+   "first_time_sender": 3,
+   "generated": 1,
+   "inflated_amount": 3,
+   "line_total_error": 1,
+   "line_vat_error": 1,
+   "lookalike_domain": 5,
+   "metadata_inconsistency": 2,
+   "near_duplicate": 13,
+   "prefix_suffix": 3,
+   "prompt_injection": 12,
+   "round_amount": 2,
+   "same_amount_within_days": 2,
+   "same_line_items": 2,
+   "split_invoice": 6,
+   "subtotal_error": 1,
+   "template_mismatch": 1,
+   "total_error": 1,
+   "transposed_digits": 4,
+   "trn_mismatch": 1,
+   "urgency": 4,
+   "vat_miscomputed": 1,
+   "vat_missing": 1,
+   "vat_on_zero_rated": 1,
+   "vat_wrong_rate": 1
+  },
+  "attack_findings": {
+   "amount_anomaly": 3,
+   "arithmetic_error": 6,
+   "bank_mismatch": 5,
+   "duplicate_file_hash": 3,
+   "duplicate_invoice_number": 7,
+   "editing_traces": 1,
+   "first_time_sender": 4,
+   "hidden_text": 8,
+   "metadata_inconsistency": 4,
+   "metadata_injection": 2,
+   "near_duplicate": 13,
+   "prompt_injection": 12,
+   "round_amount": 3,
+   "sender_domain_mismatch": 5,
+   "sender_lookalike_domain": 5,
+   "split_under_threshold": 6,
+   "template_mismatch": 1,
+   "trn_invalid": 1,
+   "trn_mismatch": 1,
+   "unknown_vendor": 4,
+   "urgency_language": 6,
+   "vat_error": 5
+  },
+  "purchase_orders": 126,
+  "goods_receipts": 69,
+  "match_cases": 167,
+  "match_scenarios": {
+   "exact": 45,
+   "missing_receipt": 6,
+   "multi_invoice": 14,
+   "no_po": 35,
+   "partial_matched": 6,
+   "partial_overbilled": 6,
+   "price_inside": 19,
+   "price_outside": 17,
+   "qty_inside": 7,
+   "qty_outside": 6,
+   "unknown_po": 6
+  },
+  "match_expected": {
+   "exception": 76,
+   "match": 91
+  },
+  "emails": 263,
+  "emails_by_kind": {
+   "body": 6,
+   "demo": 3,
+   "forwarded": 26,
+   "marketing": 8,
+   "multi_attachment": 24,
+   "single": 153,
+   "with_extra": 43
+  },
+  "demo": {
+   "clean": "inv-0165",
+   "near_duplicate": "atk-001",
+   "bank_change": "atk-002"
+  }
+ }
+}
