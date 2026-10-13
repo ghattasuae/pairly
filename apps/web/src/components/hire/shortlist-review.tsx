@@ -401,6 +401,20 @@ function CandidateReview({
                 : tSchedule(`status.${interview.status}` as "status.booked")
               : t("noInterview")}
           </p>
+          {interview && (
+            <p className="flex flex-wrap gap-3">
+              <Link href={`/hire/applications/${card.application_id}/kit`} className="text-primary hover:underline">
+                {t("openKit")}
+              </Link>
+              <Link
+                href={`/hire/jobs/${jobId}/debrief/${card.application_id}`}
+                className="text-primary hover:underline"
+                data-debrief-link
+              >
+                {t("openDebrief")}
+              </Link>
+            </p>
+          )}
         </section>
 
         <section aria-labelledby={`${ids}-scores`} className="space-y-1.5 text-sm">

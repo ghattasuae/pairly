@@ -10,6 +10,16 @@
 * ``GET  /applications/{id}/interview-kit?stage=&locale=``  the candidate's interview kit
                                         for a stage (generated through the model router on
                                         first read, then kept); blind safe
+* ``GET|PUT /interviews/{id}/scorecard``, ``POST .../submit``  your own scorecard of an
+                                        interview you sit on (signed in)
+* ``GET  /applications/{id}/scorecards?stage=``  everyone's submitted scorecards, never
+                                        for a panelist who has not submitted their own
+* ``POST /public/scorecards/open|later``  the one-click links (no sign-in, rate limited)
+* ``GET|PUT /scorecard-session/me``, ``POST .../submit|later``  with a scorecard session
+* ``GET  /applications/{id}/debrief?stage=``  the debrief summary (``hire.scorecard.read``)
+* ``POST /applications/{id}/debrief/decision``  advance, hold or reject with a reason
+                                        (``hire.candidate.decide``, second factor), recorded
+                                        as a decision record
 """
 
 from __future__ import annotations
@@ -28,11 +38,13 @@ from pairly_core.identity import Context, CurrentActor, OrgSession, RequestSessi
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_hire.antispam import SlidingWindowLimiter, client_ip
 from pairly_hire.api.common import model_router
+from pairly_hire.interviewing import debrief as debriefs
 from pairly_hire.interviewing import kits, links, scorecards
 from pairly_hire.interviewing import plan as plans
 from pairly_hire.jobs import get_job
 from pairly_hire.models import HireJob
 from pairly_hire.permissions import (
+    CANDIDATE_DECIDE,
     CANDIDATE_READ,
     JOB_READ,
     PLAN_WRITE,
@@ -629,3 +641,194 @@ async def session_later(identity: ScorecardSession, session: RequestSession) -> 
     assert row.snoozed_until is not None  # noqa: S101 (just set)
     out = HireScorecardLaterOut(snoozed_until=row.snoozed_until)
     return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)
+
+
+# ------------------------------------------------------------------ debrief
+
+
+class HireDebriefRatingOut(BaseModel):
+    interviewer: str
+    label: str
+    rating: int
+
+
+class HireDebriefCriterionOut(BaseModel):
+    id: str
+    name: str
+    ratings: list[HireDebriefRatingOut]
+    mean: float | None
+    spread: int
+    disagreement: bool
+    summary: str | None
+
+
+class HireDebriefVoiceOut(BaseModel):
+    label: str
+    interviewer: str
+    recommendation: str
+    notes: str
+
+
+class HireDebriefDecisionOut(BaseModel):
+    decision: str
+    reason: str
+    decided_by: uuid.UUID
+    decided_at: datetime
+    decision_record_id: str | None
+
+
+class HireDebriefOut(BaseModel):
+    application_id: uuid.UUID
+    job_id: uuid.UUID
+    job_title: str
+    candidate_label: str
+    identity_hidden: bool
+    stage_key: str
+    stage_name: str
+    # ``waiting`` until every panelist has submitted, then ``ready``.
+    status: str
+    expected: int
+    submitted: int
+    waiting_for: list[str]
+    criteria: list[HireDebriefCriterionOut]
+    voices: list[HireDebriefVoiceOut]
+    summary: str | None
+    disagreements: list[str]
+    open_questions: list[str]
+    source: str
+    prompt_version: str
+    from_recording: bool
+    decision: HireDebriefDecisionOut | None
+    can_decide: bool
+
+
+class HireDebriefDecisionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    stage: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,31}$")] = "interview"
+    decision: Literal["advance", "hold", "reject"]
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=1000)]
+
+
+def debrief_out(d: debriefs.Debrief, actor: Actor) -> HireDebriefOut:
+    notes = {c.criterion_id: c.summary for c in (d.draft.criteria if d.draft else [])}
+    row = d.row
+    decided = (
+        HireDebriefDecisionOut(
+            decision=row.decision,
+            reason=row.decision_reason or "",
+            decided_by=row.decided_by,
+            decided_at=row.decided_at,
+            decision_record_id=row.decision_record_id,
+        )
+        if row is not None
+        and row.decision is not None
+        and row.decided_by is not None
+        and row.decided_at is not None
+        else None
+    )
+    title = d.record.job.title
+    if d.locale == "ar" and d.record.job.title_ar:
+        title = d.record.job.title_ar
+    return HireDebriefOut(
+        application_id=d.record.app.id,
+        job_id=d.record.job.id,
+        job_title=title,
+        candidate_label=d.candidate_label,
+        identity_hidden=d.identity_hidden,
+        stage_key=d.stage_key,
+        stage_name=d.stage_name,
+        status="ready" if d.ready else "waiting",
+        expected=d.expected,
+        submitted=d.submitted,
+        waiting_for=d.waiting_for,
+        criteria=[
+            HireDebriefCriterionOut(
+                id=r.criterion_id,
+                name=r.name,
+                ratings=[
+                    HireDebriefRatingOut(interviewer=name, label=label, rating=value)
+                    for label, name, value in r.ratings
+                ],
+                mean=r.mean,
+                spread=r.spread,
+                disagreement=r.disagreement,
+                summary=notes.get(r.criterion_id),
+            )
+            for r in d.rated
+        ],
+        voices=[
+            HireDebriefVoiceOut(
+                label=v.label, interviewer=v.name, recommendation=v.recommendation, notes=v.notes
+            )
+            for v in d.voices
+        ],
+        summary=d.draft.summary if d.draft else None,
+        disagreements=list(d.draft.disagreements) if d.draft else [],
+        open_questions=list(d.draft.open_questions) if d.draft else [],
+        source=d.source,
+        prompt_version=d.prompt_version,
+        from_recording=d.from_recording,
+        decision=decided,
+        can_decide=d.ready and decided is None and actor.has(CANDIDATE_DECIDE),
+    )
+
+
+async def _debrief_reader(
+    session: AsyncSession, actor: Actor, application_id: uuid.UUID, stage: str
+) -> None:
+    """The hiring team reads a debrief; a panelist only after submitting their own."""
+    authorize(actor, SCORECARD_READ)
+    visible = await scorecards.visible_scorecards(
+        session,
+        application_id,
+        stage,
+        actor.id if actor.kind is ActorKind.USER else None,
+        can_read_all=True,
+    )
+    if visible.hidden:
+        raise ForbiddenError("submit your own scorecard before reading the debrief")
+
+
+@router.get("/applications/{application_id}/debrief", response_model=HireDebriefOut)
+async def get_debrief(
+    application_id: uuid.UUID,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+    stage: _StageKey = "interview",
+    locale: Literal["en", "ar"] = "en",
+) -> HireDebriefOut:
+    await _debrief_reader(session, actor, application_id, stage)
+    d = await debriefs.build_debrief(
+        session,
+        application_id,
+        stage,
+        locale,
+        router=optional_router(request),
+        actor_id=actor.id if actor.kind is ActorKind.USER else None,
+    )
+    return debrief_out(d, actor)
+
+
+@router.post("/applications/{application_id}/debrief/decision", response_model=HireDebriefOut)
+async def decide_debrief(
+    application_id: uuid.UUID,
+    body: HireDebriefDecisionIn,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+) -> HireDebriefOut:
+    authorize(actor, CANDIDATE_DECIDE)
+    user = _user(actor)
+    await _debrief_reader(session, actor, application_id, body.stage)
+    d = await debriefs.decide(
+        session,
+        application_id,
+        body.stage,
+        decision=body.decision,
+        reason=body.reason,
+        actor_id=user,
+        router=optional_router(request),
+    )
+    return debrief_out(d, actor)

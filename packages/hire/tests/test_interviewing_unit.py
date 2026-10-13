@@ -5,6 +5,8 @@ recordings bundle and the interviewer templates."""
 
 from __future__ import annotations
 
+import json
+
 import pytest
 from pydantic import ValidationError
 
@@ -131,3 +133,43 @@ def test_interviewer_templates_lint(template: object) -> None:
     assert [i for i in lint_source(source) if i.severity == "error"] == []
     assert not has_em_dash(template.body)
     assert not has_em_dash(template.subject or "")
+
+
+def test_debrief_template_flags_disagreements_and_checks_criteria() -> None:
+    from pairly_hire.interviewing import debrief
+
+    rated = [
+        debrief.Rated("python", "Python", [("Interviewer 1", "A", 1), ("Interviewer 2", "B", 4)]),
+        debrief.Rated("sql", "SQL", [("Interviewer 1", "A", 3), ("Interviewer 2", "B", 3)]),
+    ]
+    voices = [
+        debrief.Voice("Interviewer 1", "A", "no", "Thin on Python."),
+        debrief.Voice("Interviewer 2", "B", "strong_yes", "Great Python."),
+    ]
+    inputs = debrief.debrief_inputs(
+        job_title="Backend Engineer", stage="Interview", locale="en", rated=rated, voices=voices
+    )
+    assert "A" not in json.dumps(inputs["interviewers"])  # labels, never names
+    assert rated[0].disagreement
+    assert not rated[1].disagreement
+    draft = debrief.template_draft(inputs)
+    assert debrief.check_draft(draft, inputs) == []
+    assert any("Python" in d for d in draft.disagreements)
+    assert any("split" in d for d in draft.disagreements)
+    assert any("Python" in q for q in draft.open_questions)
+    bad = draft.model_copy(
+        update={"criteria": [debrief.CriterionNote(criterion_id="ghost", summary="Made up one.")]}
+    )
+    assert debrief.check_draft(bad, inputs)
+    arabic = debrief.template_draft(
+        debrief.debrief_inputs(
+            job_title="Backend Engineer", stage="المقابلة", locale="ar", rated=rated, voices=voices
+        )
+    )
+    assert debrief.check_draft(arabic, inputs) == []
+
+
+def test_demo_interview_recordings_are_up_to_date() -> None:
+    from synth.hire import interviews
+
+    assert interviews.main(["--check"]) == 0

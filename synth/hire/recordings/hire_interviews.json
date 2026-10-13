@@ -1,0 +1,4626 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "02bbdd693e7104305b12f0f2f10ea39308d06acc115b7fc0f7406d29bec91c46",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "02c2f5965ba41ef54ae694192f7e73304c24386475fbc876413059cdd1cbd0b2",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "07707659d352bc8366f9be413cbb39866db20a3bc7efb0367c47afad3663d6fb",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "07888043593dbd7c0cea763d7177b05ac9be94c31435595c8b27aa4cbeec2791",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "08dbe5300cfdf7e02b348dd2a6b70ff156733f117136d1d4628386b59e41d16c",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0a63a67a315694f500b50b2199b7584443b074fad945ddf0ae73fe5aecfc2117",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0a826b4ce90fdca2f7cf78c410be3efa4694fb87963899189afee16b5f6441c3",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0f673457b995a0e73abaa99165705bc09480bf2f30ef80afa28c93991bc10ee6",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "141feea56945e466d785adfd7d2567a1a0a4e42f0d553d7ef2871f806a537386",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "17fd6d6b39c60c6fee98b4ca85f5752083a19141316ace9c4c1c83c453ba87d7",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "1840241e63a16bb2b41e172bff7a70a377b1aee716a17e87ecea3e1716660646",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "18fd24c4477e1eb312ed578a4ee72d75d25337f6f8c460a64096cb39d8ca9eb2",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "235a0dddf91a26850588eb77e3090e016b78a02cb5e911c10a92440caf86f33c",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "249a9d35643d3e82373d68ad8666fad25020b38187b412b7030536592513e815",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "269381cd105d79e136ca12ed115a58a795f384dee1ca190811b2f0f44078ae2e",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "26ac9bd7c2aea336945696ed3ec75a5b73e67edf91f564d8d72c4d5045b5ceeb",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "26ebcfe79e5f972978683f59797895b735be288377c77b40e0e1b21e1a75790b",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "27729d68d87864ceb87394444de92ff9b2c61d6dd5a40f2b781a785a8b1939f1",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "28b65f03d28aa1a52453314321e5d401f0e382b2c886d66c92b65875897ed8a4",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2a888b5c79843d068fe54f87a1fa9e0e68b3ad3c80a91226b5a1f567f2761625",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2cfbbf77693507abb62be8df1df02705f75220a1fc6b4feab0209b213435624a",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "326cee0c66371547842b5b35b8f01d876cda16f3773a694a58d9e2fa39a6b36e",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "38a5a256fbf283deeaa9c4fd2c8250019a91cd587148e8dd951b13242cd2a6d9",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "3b11e34375899b19690abde040067813275a5d5b8cffb691d0857bb0b9e906d3",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "3c725c9804a8c138e118d4ecb2f6c526f94c4864c76eabcf9761e84cc73bde6a",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "3f9e3f9a0f6c6e5c21c59e6e94721b6c9835c535073b367e7928a302aa25be8f",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "45527de657fa9167412baa559adf0f61ffef52d2a4e2f0717bd4d71e4482910b",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "489efa3fd6174b7da02421c0d7080663b24557af837ad92d90f14b6a16dfe5ff",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "499768f22c8132d0ca1f0cc64997869bbeeb33dedd2cd19c1c7bf6f5148595cf",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4a5de85e84010825885de67466920a272c7a93d7861077a8e0a84dc198ff7ed7",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4c7dd690c941ac83ae285536ca854710c06db2059f0e75d7919842fa56ef7b8e",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "506da664cc5538dc6ff956dbfd173f9b2c4cd3d823fb4d55e16c76d19a71b482",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "512e1aebe0e08f0cb17c562aadb616cb289089bcb59d40511fe804052e31280a",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "524ef1b77430158805f0e85583ee201d8054f5e4653f08ae1af28683e2b8f32c",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "52e222882456df066275669bf9ccfb3a5af6a548f88782ecec69582330d3ca88",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "53678559641c60cd44f82f44295b4376ea2a47d3e4c7d80ebbb3ea35df7ca764",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "559d7da463deb1d85960120c7597f94f6e2185bc8d856c6ce1d56aa9a48fd9f6",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "56a2c7b7ca431ccf35b97a6efd5e11d3f1db3ec91425010120712974c75f3b11",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a6dd44d5bb0a44fb5506810b3a9ee2e55e98ec9bc778ddb82bd03a116410fbda",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criteria": [
+            {
+              "id": "backend_experience",
+              "name": "Backend engineering experience",
+              "ratings": [
+                3
+              ]
+            },
+            {
+              "id": "python_or_go",
+              "name": "Python or Go in production",
+              "ratings": [
+                4
+              ]
+            },
+            {
+              "id": "databases_apis",
+              "name": "Databases and APIs",
+              "ratings": [
+                2
+              ]
+            },
+            {
+              "id": "cloud_containers",
+              "name": "Containers and cloud",
+              "ratings": [
+                3
+              ]
+            },
+            {
+              "id": "distributed_systems",
+              "name": "Distributed systems and design",
+              "ratings": [
+                3
+              ]
+            }
+          ],
+          "interviewers": [
+            {
+              "label": "المقابل 1",
+              "notes": "Walked through a payment retry design with clear trade offs and real numbers. Less depth on query tuning: worth a follow-up in the next round.",
+              "recommendation": "yes"
+            }
+          ],
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1500,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "590a48737486919f55d346336e2a8781169eab748e4acaf4910144fcf26446d3",
+      "response": {
+        "criteria": [
+          {
+            "criterion_id": "backend_experience",
+            "summary": "Backend engineering experience: متوسط 3 من 4، من 3 إلى 3."
+          },
+          {
+            "criterion_id": "python_or_go",
+            "summary": "Python or Go in production: متوسط 4 من 4، من 4 إلى 4."
+          },
+          {
+            "criterion_id": "databases_apis",
+            "summary": "Databases and APIs: متوسط 2 من 4، من 2 إلى 2."
+          },
+          {
+            "criterion_id": "cloud_containers",
+            "summary": "Containers and cloud: متوسط 3 من 4، من 3 إلى 3."
+          },
+          {
+            "criterion_id": "distributed_systems",
+            "summary": "Distributed systems and design: متوسط 3 من 4، من 3 إلى 3."
+          }
+        ],
+        "disagreements": [],
+        "open_questions": [
+          "Databases and APIs: قيمه مقابل واحد على الأقل بـ 2 أو أقل. ما الدليل الذي ينقص؟"
+        ],
+        "summary": "أرسل 1 من المقابلين تقييماتهم. التوصيات: المقابل 1: نعم."
+      },
+      "schema_hash": "2f933df8b22aa77081999ccbbbc8fc5f32ae5d2d853634586dc6de8ce3d053da",
+      "schema_name": "DebriefDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_debrief_summary",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "5bed21fd155d713fdb5bd226d8857fab8741364831c521af3004cacc392d1b67",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "5bf2b78ce2a7e6ae00c9c6c16ff5602c39cd545d6cf583db62c59a82ee757e51",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "5fcaf980df1e22af65a58d8eadb24111a22d3f9bbd6e1439fe38d2ef53c024d8",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "616d763cd826e0e9fb44bd792a0ed4967a5940c4eba17a7ad700fa13a9cfb7dd",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6461648d6fa25a137c0273fe541a1af2d1ff3ededd0b76ddd124566b0680da8a",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "66b48e3105d8d4858e8f49954904cb4c5da8528d3c54b3d6d8c63a368a74249f",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "66e17f9b1b57fe41dcc120d4f18b2efcdfc0436f68c09195318c6df3aaa2e7cd",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6c33396d05863233375d68a121a0897adee9193ef9b36e2dbf910256806f0d4d",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "70da09488362af6bd8bf9315e02de66880d5989059f995165bae12eeb978df78",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "743ca35ac36f6d2f3ecc76c83a199d75db23c42cbad13a6e7397a04db523c26b",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "761b7aa150386541def6839730b85a26b65f6041fda3f5f4138305fd6a148d9a",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "792ce7a54a480ea9c8fcfad8702dc6b7b9e29c8e12d8cc6565e0d46aa58d62d1",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "7dc6fcc550f8ccd17745a165084ffdb39eb31b8a9194d8941a05a8bef9df738a",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "7de7f372c729cd1d1c72c436d90b8da1931e734750a3391f16fbe5bbe82a912b",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "81b5b1d7948462c17f06cdd5fce02f600a686fbb2f6d1e0316665adacc633bc1",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "81d6b725629f7cd7f4b88d50f92e15f942a13da193f4336d0eafa0abf020f641",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "82794552ef2eb09040bc056ce34466f3b7cfcf6c32f4052edf1ee2849ee569cd",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8733d5558652113a8d278a8a4db79cd0e6b218ed20a3aa3f8ae5d8f5f3f6fc04",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8a0b8fe03c3a74100759da130043dccfb099aa273b2ee8a08f68b082f41bb84d",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8b4dd5a93b87b41c8817cfc054ff8f71dd41448e3658360092b540c34b2007b0",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8cafe529a67d8fe2a6a111643301bd81cb61467f9d6c1ac2a96d02e26c33011a",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8cfcfa93e8e1d486e649b0f49bc4a8c022385ab90d048d6737337d9409561d60",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8e4ca8b4f75fc473ae57ea1d09c27dd5c7022896e35c27972510c63ff3a85048",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8ff0820ae4f27444f7b05f6a36105011ed0a654e46bcf386b708ea5e04937053",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9281468c485b8423b893f4646461310e41326d4e0debdce20f832a39accb04b9",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "93e4f71d5607d7e4109852a14b8a0d3aabcc8f3d3a3034f99afc78370ff9a3f5",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "93fb5e8660cdfc06939761cba2a0b082c7a898c5651689cf84971fcf266d37fb",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "95f03369b584d69a08e343dc399ce5f48fefa63e645bc5d74558a2b375c269e0",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "987ec511977e69792ac67558d7873c7deab6cc5c4d731cc5e296a79401fa4b12",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "994383e4afcb4696cc41e248cdb5fbe6fe0ee48b4f5272548a7e37f88c4fa4a3",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Backend engineering experience: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Backend engineering experience من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9bdbe158b0bab723db8a6bbd429b60d14a09eeae8ca5f61c7e46e152a2a01c09",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9d1917aebe28dcdd0113f8bfe2453554257f382ad876bb8521784d73b16b1973",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a6dd44d5bb0a44fb5506810b3a9ee2e55e98ec9bc778ddb82bd03a116410fbda",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criteria": [
+            {
+              "id": "backend_experience",
+              "name": "Backend engineering experience",
+              "ratings": [
+                3
+              ]
+            },
+            {
+              "id": "python_or_go",
+              "name": "Python or Go in production",
+              "ratings": [
+                4
+              ]
+            },
+            {
+              "id": "databases_apis",
+              "name": "Databases and APIs",
+              "ratings": [
+                2
+              ]
+            },
+            {
+              "id": "cloud_containers",
+              "name": "Containers and cloud",
+              "ratings": [
+                3
+              ]
+            },
+            {
+              "id": "distributed_systems",
+              "name": "Distributed systems and design",
+              "ratings": [
+                3
+              ]
+            }
+          ],
+          "interviewers": [
+            {
+              "label": "Interviewer 1",
+              "notes": "Walked through a payment retry design with clear trade offs and real numbers. Less depth on query tuning: worth a follow-up in the next round.",
+              "recommendation": "yes"
+            }
+          ],
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1500,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a3f6709fc6258635919c36065f4668048f6043300366a2321c9fed521717d0ca",
+      "response": {
+        "criteria": [
+          {
+            "criterion_id": "backend_experience",
+            "summary": "Backend engineering experience: average 3 of 4, from 3 to 3."
+          },
+          {
+            "criterion_id": "python_or_go",
+            "summary": "Python or Go in production: average 4 of 4, from 4 to 4."
+          },
+          {
+            "criterion_id": "databases_apis",
+            "summary": "Databases and APIs: average 2 of 4, from 2 to 2."
+          },
+          {
+            "criterion_id": "cloud_containers",
+            "summary": "Containers and cloud: average 3 of 4, from 3 to 3."
+          },
+          {
+            "criterion_id": "distributed_systems",
+            "summary": "Distributed systems and design: average 3 of 4, from 3 to 3."
+          }
+        ],
+        "disagreements": [],
+        "open_questions": [
+          "Databases and APIs: at least one interviewer rated it 2 or lower. What evidence is missing?"
+        ],
+        "summary": "1 interviewers submitted scorecards. Recommendations: Interviewer 1: yes."
+      },
+      "schema_hash": "2f933df8b22aa77081999ccbbbc8fc5f32ae5d2d853634586dc6de8ce3d053da",
+      "schema_name": "DebriefDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_debrief_summary",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a606c4546c24dabbdd1ab20df0a9219f4f88e243355222f6f95d8e7aa26fc48c",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a6bd140f782cc6f535b589d6eeaf5ad2f79b414e8f61aed39bd4bc3c72e352d6",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ab59e91c5b402512221254710fcbef804f02f8618449c6d5aeb7052d3009a998",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b2e8d7e504304244334514fc25a0940442f2b33eb7b5e39155cae69dc40d3715",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b32c4e5115e808c121bf862c8017a8cce86f64a5760b7ab106379e909d1434f0",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "partly_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b3331b9a867a8daf72d7ed32748a946250534c0ca6b44a3b2438611a8c6754db",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "هل يمكنك إعطاء مثال ثان حديث؟ ما الجزء الذي قمت به بنفسك؟",
+          "ما حجم العمل: كم شخصا، وكم من الوقت، وما النتيجة؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "b80a6c60526f53869361b69eb1b508a2faa3a3bc2c5dfc25c3f48b34227454cb",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Containers and cloud: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about containers and cloud?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "bab1e0ea4a5bbaeeb359f0e4a52dfb8bd2ea9448e0a1227dc4beba3a1c8dfec9",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "bb924122395ae4b671110863dd9dc37b05493ab2e5a297d0ca47bdc1a1f477e8",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_screened",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c04cd1af80a3e1e5ec03edc286423348902b389799d7b6295296c235511ee0f3",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c3d3d1f6ff54816750df7e5e8a0524cfd59a96dacfbd9f17cbcf40a705671159",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c50b9a39c1da7dabb8abf222147fb3fbf492ee88a8e2a8e47ab42b528b653637",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c9d91f287448dade360e8b27b327c74bdf9433e4230a230b252b68dc5b2dd853",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [],
+        "questions": [
+          "Databases and APIs: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Databases and APIs من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "cd916f5f0447b58e851d04bdf54c9c4cf391ef7dd97230eb7fc5957f9ec02f8c",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ce5d246c2ad7d1d06fed2994c06a3109acd3c819087cbc199479eb03046a732c",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d0b8eb93a47a3f278eacc3a3b8830bb89e13a0ab0df3c4c9af205839553dd721",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d251821678c646f353d256be5a300767cc039e4faf7af790c30bf40b759925fb",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d2a7248a8f77ea5ae54ef6a54286d5ce6d63e9cca96fa3a0876ade16a335745b",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "de4d0925380b4e926a972e40931d0aea397b34bc61553a19b0f2df5b330449c4",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_screened",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "df6c7949b58ebcb3d2dfbd34d4b7424aaeafa8620fbd9be9998851e5e36b8220",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e099596592143e91069ad1c4ae54e8077a52f660f7cb8eb3020e6c9e81298f37",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "لو قمت به مرة أخرى، ماذا ستغير، ولماذا؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "not_met",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e4c52fb054cc11053ff614bfa1462318700269ff96a0598629c622d104aebe76",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "هل قمت بعمل من هذا النوع في سياق آخر، مثل مشروع جانبي أو دورة أو عمل تطوعي؟ حدثني عنه.",
+          "كيف ستكتسب هذه المهارة خلال أشهرك الثلاثة الأولى؟"
+        ],
+        "questions": [
+          "Python or Go in production: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Python or Go in production من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "eb8eae2e7d0891857948a3783cd29d20be27b2ac2e270897876e212cca695d1d",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Designs APIs and works with relational databases.",
+            "evidence": "Achievement lines about REST or gRPC APIs or PostgreSQL.",
+            "name": "Databases and APIs"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "partly_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ec922817aeb30904bc5d7dcd00b0d4e2b23ba694c9e648ecb93704cdd1a14272",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about REST or gRPC APIs or PostgreSQL.",
+        "probes": [
+          "Can you give a second, recent example? What part of it was yours alone?",
+          "How big was the work: how many people, how long, what result?"
+        ],
+        "questions": [
+          "Databases and APIs: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about databases and apis?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ecffdcb351accc16bfb625552d45596c789779cd6cabf50619e922063977a0e7",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Years spent building server-side software in a professional role.",
+            "evidence": "Job entries with a backend title and dates; frontend and data roles count at half weight.",
+            "name": "Backend engineering experience"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f042cb73992387ffdfcd122d28957db67cd0e76a2a202bd1c6a1ac8a5d87e5b0",
+      "response": {
+        "listen_for": "A strong answer shows: Job entries with a backend title and dates; frontend and data roles count at half weight.",
+        "probes": [
+          "If you did it again, what would you change, and why?"
+        ],
+        "questions": [
+          "Backend engineering experience: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about backend engineering experience?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "plan_question": "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f07e9ba1d58d44a82559a35bc8f93e956e5b1a9ba74558f1021477b48a2badaa",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Distributed systems and design: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Distributed systems and design من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Event pipelines, queues, design reviews of larger systems.",
+            "evidence": "Achievement lines about Kafka, event pipelines or system design reviews.",
+            "name": "Distributed systems and design"
+          },
+          "job_title": "Backend Engineer",
+          "language": "en",
+          "plan_question": "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "unknown",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f1964b2edc3def491893b099f86875485a7cd9bc1dd54bed4a58e2d78c9aa43b",
+      "response": {
+        "listen_for": "A strong answer shows: Achievement lines about Kafka, event pipelines or system design reviews.",
+        "probes": [
+          "Your application was not clear on this. Where did you do this work, and how often?",
+          "What is the hardest problem of this kind you solved? What did you do?"
+        ],
+        "questions": [
+          "Distributed systems and design: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about distributed systems and design?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Has shipped production code in Python or Go.",
+            "evidence": "An achievement line that shows Python or Go used in work, not only a skills list.",
+            "name": "Python or Go in production"
+          },
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "plan_question": "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "screening_result": "not_met",
+          "stage": "Interview"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f4f4f4b01cb391c2457d9e168830ee6c4538e2d31997eff84f400bdba87c2999",
+      "response": {
+        "listen_for": "A strong answer shows: An achievement line that shows Python or Go used in work, not only a skills list.",
+        "probes": [
+          "Have you done this kind of work in another setting, such as a side project, a course or volunteering? Walk me through it.",
+          "How would you get up to speed on this in your first three months?"
+        ],
+        "questions": [
+          "Python or Go in production: walk me through a recent example from your own work. What did you do, and what was the result?",
+          "What did the hardest situation you faced teach you about python or go in production?"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "3ccc1a1e26b9dedc9625efc3eca81eabad1673f0ee025eb089cbd5bb5d989a75",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "criterion": {
+            "description": "Runs services in containers on a public cloud.",
+            "evidence": "Achievement lines about Docker, Kubernetes or AWS.",
+            "name": "Containers and cloud"
+          },
+          "job_title": "Backend Engineer",
+          "language": "ar",
+          "plan_question": "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "screening_result": "unknown",
+          "stage": "المقابلة"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f7f9c37fa48283af92e86223ce8e064c4b6b47c7b963f6f9da13eb871ae593cb",
+      "response": {
+        "listen_for": "إجابة قوية تتضمن: Achievement lines about Docker, Kubernetes or AWS.",
+        "probes": [
+          "لم يكن طلبك واضحا في هذا. أين قمت بهذا العمل، وكم مرة؟",
+          "ما أصعب مشكلة من هذا النوع حللتها؟ ماذا فعلت؟"
+        ],
+        "questions": [
+          "Containers and cloud: حدثني عن مثال حديث من عملك. ماذا فعلت بنفسك، وما النتيجة؟",
+          "ما الذي تعلمته عن Containers and cloud من أصعب موقف واجهته؟"
+        ]
+      },
+      "schema_hash": "d81e693ebb826d5027ada389b6963da7a2db7e4f45daa243f2b068450f80faea",
+      "schema_name": "KitItemDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_interview_kit",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}

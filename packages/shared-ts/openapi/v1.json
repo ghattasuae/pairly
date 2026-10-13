@@ -5208,6 +5208,334 @@
         "title": "HireDataRequestResolveIn",
         "type": "object"
       },
+      "HireDebriefCriterionOut": {
+        "properties": {
+          "disagreement": {
+            "title": "Disagreement",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ratings": {
+            "items": {
+              "$ref": "#/components/schemas/HireDebriefRatingOut"
+            },
+            "title": "Ratings",
+            "type": "array"
+          },
+          "spread": {
+            "title": "Spread",
+            "type": "integer"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ratings",
+          "mean",
+          "spread",
+          "disagreement",
+          "summary"
+        ],
+        "title": "HireDebriefCriterionOut",
+        "type": "object"
+      },
+      "HireDebriefDecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "advance",
+              "hold",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "stage": {
+            "default": "interview",
+            "pattern": "^[a-z][a-z0-9_]{0,31}$",
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "title": "HireDebriefDecisionIn",
+        "type": "object"
+      },
+      "HireDebriefDecisionOut": {
+        "properties": {
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decided_by": {
+            "format": "uuid",
+            "title": "Decided By",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "decision_record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Record Id"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "reason",
+          "decided_by",
+          "decided_at",
+          "decision_record_id"
+        ],
+        "title": "HireDebriefDecisionOut",
+        "type": "object"
+      },
+      "HireDebriefOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "can_decide": {
+            "title": "Can Decide",
+            "type": "boolean"
+          },
+          "candidate_label": {
+            "title": "Candidate Label",
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireDebriefCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireDebriefDecisionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Disagreements",
+            "type": "array"
+          },
+          "expected": {
+            "title": "Expected",
+            "type": "integer"
+          },
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "open_questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Open Questions",
+            "type": "array"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_name": {
+            "title": "Stage Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted": {
+            "title": "Submitted",
+            "type": "integer"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "voices": {
+            "items": {
+              "$ref": "#/components/schemas/HireDebriefVoiceOut"
+            },
+            "title": "Voices",
+            "type": "array"
+          },
+          "waiting_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waiting For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_id",
+          "job_title",
+          "candidate_label",
+          "identity_hidden",
+          "stage_key",
+          "stage_name",
+          "status",
+          "expected",
+          "submitted",
+          "waiting_for",
+          "criteria",
+          "voices",
+          "summary",
+          "disagreements",
+          "open_questions",
+          "source",
+          "prompt_version",
+          "from_recording",
+          "decision",
+          "can_decide"
+        ],
+        "title": "HireDebriefOut",
+        "type": "object"
+      },
+      "HireDebriefRatingOut": {
+        "properties": {
+          "interviewer": {
+            "title": "Interviewer",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "interviewer",
+          "label",
+          "rating"
+        ],
+        "title": "HireDebriefRatingOut",
+        "type": "object"
+      },
+      "HireDebriefVoiceOut": {
+        "properties": {
+          "interviewer": {
+            "title": "Interviewer",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "recommendation": {
+            "title": "Recommendation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "interviewer",
+          "recommendation",
+          "notes"
+        ],
+        "title": "HireDebriefVoiceOut",
+        "type": "object"
+      },
       "HireDocumentRequestIn": {
         "additionalProperties": false,
         "properties": {
@@ -17604,6 +17932,127 @@
           }
         },
         "summary": "Get Application",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/applications/{application_id}/debrief": {
+      "get": {
+        "operationId": "get_debrief_v1_hire_applications__application_id__debrief_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "default": "interview",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "title": "Stage",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "enum": [
+                "en",
+                "ar"
+              ],
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDebriefOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Debrief",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/applications/{application_id}/debrief/decision": {
+      "post": {
+        "operationId": "decide_debrief_v1_hire_applications__application_id__debrief_decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireDebriefDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireDebriefOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide Debrief",
         "tags": [
           "hire"
         ]

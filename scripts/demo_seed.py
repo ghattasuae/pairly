@@ -76,6 +76,8 @@ from pairly_core.retrieval.embeddings import build_embedder
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
 from pairly_hire.forms import DEFAULT_FORM, form_validator
 from pairly_hire.forms import POLICY_KIND as FORM_KIND
+from pairly_hire.interviewing import scorecards
+from pairly_hire.interviewing.models import HireScorecard
 from pairly_hire.links import links_from_env
 from pairly_hire.messaging.compose import Author
 from pairly_hire.messaging.prefs import set_prefs
@@ -97,6 +99,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from synth.hire.dataset import DocSpec, build  # noqa: E402
+from synth.hire.interviews import (  # noqa: E402
+    DEBRIEF_APPLICANT,
+    DEMO_SCORECARD,
+    demo_ratings,
+)
+from synth.hire.interviews import recordings_text as interview_recordings_text  # noqa: E402
 from synth.hire.screening import (  # noqa: E402
     DEMO_APPLICATIONS,
     DEMO_JOB,
@@ -408,6 +416,13 @@ async def seed_jobs(sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid
                 f"recorded screening responses: {report.imported} imported, "
                 f"{report.skipped} already there"
             )
+            report = await import_recordings(
+                session, org_id, parse_bundle(interview_recordings_text())
+            )
+            lines.append(
+                f"recorded interview kits and debriefs: {report.imported} imported, "
+                f"{report.skipped} already there"
+            )
     return lines
 
 
@@ -631,6 +646,12 @@ async def arrange(
                             candidate_timezone="Asia/Dubai",
                         )
                         booked += 1
+                if applicant.key == DEBRIEF_APPLICANT:
+                    scored = await _demo_scorecard(session, app.id, interviewer_email)
+                    if scored:
+                        lines.append(
+                            f"{applicant.key}: interview scorecard submitted (debrief ready)"
+                        )
                 if applicant.waiting:
                     days = await sla_days(session)
                     stale = datetime.now(UTC) - timedelta(days=days + 5)
@@ -644,6 +665,41 @@ async def arrange(
         f"pipeline: {moved} stage moves, {booked} interviews booked, {withdrawn} withdrawn"
     )
     return lines
+
+
+async def _demo_scorecard(
+    session: AsyncSession, application_id: uuid.UUID, interviewer_email: str
+) -> bool:
+    """The interviewer's submitted scorecard for the demo debrief (synth.hire.interviews:
+    its recorded summary answers for exactly these ratings and notes)."""
+    interviewer = await _user_id(session, interviewer_email)
+    interview = await session.scalar(
+        select(HireInterview).where(
+            HireInterview.application_id == application_id,
+            HireInterview.status == InterviewStatus.BOOKED.value,
+        )
+    )
+    if interview is None:
+        return False
+    done = await session.scalar(
+        select(HireScorecard.id).where(
+            HireScorecard.interview_id == interview.id,
+            HireScorecard.interviewer_id == interviewer,
+            HireScorecard.status == "submitted",
+        )
+    )
+    if done is not None:
+        return False
+    await scorecards.save(
+        session,
+        interview.id,
+        interviewer,
+        ratings=demo_ratings(),
+        notes=str(DEMO_SCORECARD["notes"]),
+        recommendation=str(DEMO_SCORECARD["recommendation"]),
+        submit=True,
+    )
+    return True
 
 
 async def talent_pool(

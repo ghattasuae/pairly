@@ -2179,7 +2179,9 @@
     "draftNotSubmitted": "Moved to {stage}, but the rejection draft could not be submitted for approval. Finish it in the pipeline.",
     "openDraft": "Open the draft",
     "noRight": "Your role can view the shortlist but not record decisions.",
-    "holdNote": "On hold: {reason}"
+    "holdNote": "On hold: {reason}",
+    "openKit": "Interview kit",
+    "openDebrief": "Debrief"
   },
   "Requisitions": {
     "title": "Requisitions",
@@ -2305,5 +2307,31 @@
     "noOthers": "Nobody else has submitted yet. You will see their feedback here once they do.",
     "linkInvalid": "This scorecard link has been used or has expired.",
     "linkHelp": "Open the latest link from your email, or sign in to Pairly to find your interviews."
+  },
+  "Debrief": {
+    "title": "Debrief",
+    "back": "Back to the shortlist",
+    "waiting": "{submitted} of {expected} scorecards are in.",
+    "waitingFor": "Waiting for: {names}.",
+    "independent": "The debrief opens when everyone has submitted, so each scorecard stays independent.",
+    "summary": "Summary",
+    "aiNote": "Summarised by AI from the scorecards. You decide.",
+    "numbersNote": "Summarised from the ratings.",
+    "criteria": "Criteria and ratings",
+    "mean": "average {mean} of 4",
+    "disagreement": "Disagreement",
+    "disagreements": "Where the panel differs",
+    "openQuestions": "Open questions",
+    "recommendations": "Recommendations",
+    "decide": "Your decision",
+    "decideHint": "Record what happens next and why. Moving the candidate stays a separate step in the pipeline.",
+    "reason": "Reason",
+    "record": "Record the decision",
+    "decision": {
+      "advance": "Advance",
+      "hold": "Hold",
+      "reject": "Reject"
+    },
+    "submitFirst": "Submit your own scorecard first. The debrief stays hidden until you do."
   }
 }

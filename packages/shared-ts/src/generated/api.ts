@@ -776,6 +776,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/debrief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Debrief */
+        get: operations["get_debrief_v1_hire_applications__application_id__debrief_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/applications/{application_id}/debrief/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Debrief */
+        post: operations["decide_debrief_v1_hire_applications__application_id__debrief_decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/interview-kit": {
         parameters: {
             query?: never;
@@ -5262,6 +5296,127 @@ export type components = {
              * @enum {string}
              */
             status: "completed" | "declined";
+        };
+        /** HireDebriefCriterionOut */
+        HireDebriefCriterionOut: {
+            /** Disagreement */
+            disagreement: boolean;
+            /** Id */
+            id: string;
+            /** Mean */
+            mean: number | null;
+            /** Name */
+            name: string;
+            /** Ratings */
+            ratings: components["schemas"]["HireDebriefRatingOut"][];
+            /** Spread */
+            spread: number;
+            /** Summary */
+            summary: string | null;
+        };
+        /** HireDebriefDecisionIn */
+        HireDebriefDecisionIn: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "advance" | "hold" | "reject";
+            /** Reason */
+            reason: string;
+            /**
+             * Stage
+             * @default interview
+             */
+            stage: string;
+        };
+        /** HireDebriefDecisionOut */
+        HireDebriefDecisionOut: {
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /**
+             * Decided By
+             * Format: uuid
+             */
+            decided_by: string;
+            /** Decision */
+            decision: string;
+            /** Decision Record Id */
+            decision_record_id: string | null;
+            /** Reason */
+            reason: string;
+        };
+        /** HireDebriefOut */
+        HireDebriefOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Can Decide */
+            can_decide: boolean;
+            /** Candidate Label */
+            candidate_label: string;
+            /** Criteria */
+            criteria: components["schemas"]["HireDebriefCriterionOut"][];
+            decision: components["schemas"]["HireDebriefDecisionOut"] | null;
+            /** Disagreements */
+            disagreements: string[];
+            /** Expected */
+            expected: number;
+            /** From Recording */
+            from_recording: boolean;
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Open Questions */
+            open_questions: string[];
+            /** Prompt Version */
+            prompt_version: string;
+            /** Source */
+            source: string;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Status */
+            status: string;
+            /** Submitted */
+            submitted: number;
+            /** Summary */
+            summary: string | null;
+            /** Voices */
+            voices: components["schemas"]["HireDebriefVoiceOut"][];
+            /** Waiting For */
+            waiting_for: string[];
+        };
+        /** HireDebriefRatingOut */
+        HireDebriefRatingOut: {
+            /** Interviewer */
+            interviewer: string;
+            /** Label */
+            label: string;
+            /** Rating */
+            rating: number;
+        };
+        /** HireDebriefVoiceOut */
+        HireDebriefVoiceOut: {
+            /** Interviewer */
+            interviewer: string;
+            /** Label */
+            label: string;
+            /** Notes */
+            notes: string;
+            /** Recommendation */
+            recommendation: string;
         };
         /** HireDocumentRequestIn */
         HireDocumentRequestIn: {
@@ -10184,6 +10339,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireApplicationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_debrief_v1_hire_applications__application_id__debrief_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+                stage?: string;
+            };
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDebriefOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_debrief_v1_hire_applications__application_id__debrief_decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireDebriefDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireDebriefOut"];
                 };
             };
             /** @description Validation Error */

@@ -21,6 +21,9 @@ SELECT, INSERT and UPDATE, never DELETE.
   interviewer; only a hash of the secret is stored.
 * ``hire_scorecard_sessions``: what a used ``open`` link starts: a short session for
   that one interview and that interviewer (never a staff credential).
+* ``hire_debriefs`` (hire_0012): the debrief summary of an application at a stage, keyed
+  by the hash of the submitted scorecards it summarises, and the human decision taken on
+  it (with its reason and its decision record id).
 """
 
 from __future__ import annotations
@@ -53,6 +56,8 @@ KITS: Final = "hire_interview_kits"
 SCORECARDS: Final = "hire_scorecards"
 LINKS: Final = "hire_scorecard_links"
 SESSIONS: Final = "hire_scorecard_sessions"
+DEBRIEFS: Final = "hire_debriefs"
+DECISIONS: Final = ("advance", "hold", "reject")
 RECOMMENDATIONS: Final = ("strong_no", "no", "yes", "strong_yes")
 
 
@@ -220,4 +225,56 @@ class HireScorecardSession(Base, OrgScoped):
     secret_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = _ts()
+
+
+class HireDebrief(Base, OrgScoped):
+    __tablename__ = DEBRIEFS
+    __table_args__ = (
+        UniqueConstraint(
+            "org_id",
+            "application_id",
+            "stage_key",
+            "scorecards_hash",
+            name="uq_hire_debriefs_inputs",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "application_id"],
+            ["hire_applications.org_id", "hire_applications.id"],
+            ondelete="RESTRICT",
+            name="fk_hire_debriefs_application_org",
+        ),
+        CheckConstraint("jsonb_typeof(content) = 'object'", name="content_object"),
+        CheckConstraint("scorecards_hash ~ '^[0-9a-f]{64}$'", name="scorecards_hash_format"),
+        CheckConstraint("source IN ('model', 'template')", name="source_valid"),
+        CheckConstraint(
+            "decision IS NULL OR decision IN ('advance', 'hold', 'reject')", name="decision_valid"
+        ),
+        CheckConstraint(
+            "decision IS NULL OR (decided_by IS NOT NULL AND decided_at IS NOT NULL "
+            "AND char_length(decision_reason) >= 3)",
+            name="decision_complete",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    application_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    job_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    stage_key: Mapped[str] = mapped_column(String(32), nullable=False)
+    scorecards_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    scorecard_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(Uuid), nullable=False)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_call_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    from_recording: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    decision: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    decision_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decision_record_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = _ts()
