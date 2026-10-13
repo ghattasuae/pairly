@@ -6589,6 +6589,353 @@
         "title": "HireEventOut",
         "type": "object"
       },
+      "HireFairnessResultOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "blind": {
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "control_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control Score"
+          },
+          "copy_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copy Score"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "dimension": {
+            "title": "Dimension",
+            "type": "string"
+          },
+          "flagged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flagged"
+          },
+          "input_identical": {
+            "title": "Input Identical",
+            "type": "boolean"
+          },
+          "inserted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inserted",
+            "type": "array"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "leaked": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Leaked",
+            "type": "array"
+          },
+          "model_status": {
+            "title": "Model Status",
+            "type": "string"
+          },
+          "redaction_complete": {
+            "title": "Redaction Complete",
+            "type": "boolean"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_id",
+          "reference",
+          "dimension",
+          "inserted",
+          "leaked",
+          "redaction_complete",
+          "input_identical",
+          "blind",
+          "model_status",
+          "control_score",
+          "copy_score",
+          "delta",
+          "flagged"
+        ],
+        "title": "HireFairnessResultOut",
+        "type": "object"
+      },
+      "HireFairnessRunDetailOut": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "copies": {
+            "title": "Copies",
+            "type": "integer"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "flagged": {
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/HireFairnessResultOut"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "sample_size": {
+            "title": "Sample Size",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          },
+          "trigger": {
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "trigger",
+          "mode",
+          "threshold",
+          "sample_size",
+          "applications",
+          "copies",
+          "flagged",
+          "summary",
+          "started_at",
+          "finished_at",
+          "failure_reason",
+          "results"
+        ],
+        "title": "HireFairnessRunDetailOut",
+        "type": "object"
+      },
+      "HireFairnessRunIn": {
+        "additionalProperties": false,
+        "properties": {
+          "sample_size": {
+            "default": 10,
+            "maximum": 50,
+            "minimum": 1,
+            "title": "Sample Size",
+            "type": "integer"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "5.00",
+            "title": "Threshold"
+          }
+        },
+        "title": "HireFairnessRunIn",
+        "type": "object"
+      },
+      "HireFairnessRunOut": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "copies": {
+            "title": "Copies",
+            "type": "integer"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "flagged": {
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "sample_size": {
+            "title": "Sample Size",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          },
+          "trigger": {
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "trigger",
+          "mode",
+          "threshold",
+          "sample_size",
+          "applications",
+          "copies",
+          "flagged",
+          "summary",
+          "started_at",
+          "finished_at",
+          "failure_reason"
+        ],
+        "title": "HireFairnessRunOut",
+        "type": "object"
+      },
       "HireFileOut": {
         "properties": {
           "field": {
@@ -21463,6 +21810,113 @@
           }
         },
         "summary": "Resolve Data Request",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/fairness/runs": {
+      "get": {
+        "operationId": "fairness_runs_v1_hire_fairness_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HireFairnessRunOut"
+                  },
+                  "title": "Response Fairness Runs V1 Hire Fairness Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Fairness Runs",
+        "tags": [
+          "hire"
+        ]
+      },
+      "post": {
+        "operationId": "start_fairness_run_v1_hire_fairness_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireFairnessRunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireFairnessRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Fairness Run",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/fairness/runs/{run_id}": {
+      "get": {
+        "operationId": "fairness_run_v1_hire_fairness_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireFairnessRunDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fairness Run",
         "tags": [
           "hire"
         ]

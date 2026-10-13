@@ -137,6 +137,8 @@ def test_only_the_bias_report_reads_counts_per_group() -> None:
             "pairly_hire.analytics.facts",
             "pairly_hire.analytics.metrics",
             "pairly_hire.analytics.stats",
+            "pairly_hire.analytics.fairness",
+            "pairly_hire.screening.counterfactual",
         ]
     )
     assert not {m for m in reachable if m.startswith("pairly_hire.selfid")}

@@ -353,6 +353,11 @@ _NAME_STOP: Final = frozenset(
 )
 
 
+def is_language_line(line: str) -> bool:
+    """A line about languages ("Spanish (Native)"): a nationality word there is a skill."""
+    return bool(_LANGUAGE_LINE_RE.search(line))
+
+
 def _word_re(phrase: str) -> re.Pattern[str]:
     parts = [re.escape(p) for p in phrase.split()]
     return re.compile(r"(?<!\w)" + r"[\s\-]+".join(parts) + r"(?!\w)", re.IGNORECASE)

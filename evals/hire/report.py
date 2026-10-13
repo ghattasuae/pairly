@@ -64,6 +64,16 @@ ROWS: Final = (
         "fairness.aggregation_identical_for_identical_scores",
     ),
     ("Model score change across pairs", "fairness.model_score_delta"),
+    ("Fairness runner copies (swapped name, gender, nationality)", "counterfactual_runner.copies"),
+    (
+        "Fairness runner, inserted values hidden by the redaction",
+        "counterfactual_runner.redaction_complete_rate",
+    ),
+    (
+        "Fairness runner, scoring input identical to the control",
+        "counterfactual_runner.input_identical_rate",
+    ),
+    ("Fairness runner, model score change", "counterfactual_runner.model_score_delta"),
     (
         "Payloads reaching the scoring model (deterministic scope)",
         "injection.scoring_input_payload_leaks.deterministic_scope.leaks",

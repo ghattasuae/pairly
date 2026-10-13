@@ -22,6 +22,7 @@ import json
 import re
 import statistics
 import time
+import uuid
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -29,8 +30,8 @@ from pathlib import Path
 from typing import Any, Final
 
 from pairly_core.extraction.evidence import normalize
-from pairly_hire.screening import pipeline
-from pairly_hire.screening.blind import BlindConfig
+from pairly_hire.screening import counterfactual, pipeline
+from pairly_hire.screening.blind import BlindConfig, BlindSources
 from pairly_hire.screening.knockouts import check_knockouts
 from synth.hire.dataset import DEFAULT_COUNT, DEFAULT_SEED, DocSpec, build
 from synth.hire.models import Job
@@ -53,6 +54,8 @@ RESULTS_DIR: Final = Path(__file__).resolve().parents[1] / "results"
 RESULTS: Final = RESULTS_DIR / "hire.json"
 GUARDRAILS: Final = RESULTS_DIR / "guardrails_hire.json"
 REPORT: Final = Path(__file__).resolve().parents[1] / "report.md"
+# An organisation's fairness run summaries, exported from the bias report (optional).
+ORG_FAIRNESS_RUNS: Final = RESULTS_DIR / "fairness_runs.json"
 SCANS: Final = frozenset({"png", "jpg", "scan_pdf"})
 PENDING: Final = "pending_live_run"
 LANGUAGE_LEVEL: Final = re.compile(r"\((?:Native|Fluent|Professional|Conversational|Basic)\)")
@@ -600,6 +603,67 @@ def recordings_metrics(specs: dict[str, DocSpec]) -> dict[str, Any]:
     }
 
 
+def counterfactual_runner_metrics(
+    cases: list[Case], org_runs: Path = ORG_FAIRNESS_RUNS
+) -> dict[str, Any]:
+    """The fairness runner's own copies (``pairly_hire.screening.counterfactual``) over the
+    base CV of every synthetic fairness pair: swapped names, gender markers and
+    nationalities, then the same guardrails and blind redaction. Measured: whether the
+    redaction hid every inserted value and whether the scoring input stayed identical.
+    The model's score change needs a live model (``pending_live_run``). An organisation's
+    exported run summaries are included when ``evals/results/fairness_runs.json`` exists."""
+    copies = complete = identical = 0
+    per: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0])
+    leaks: list[str] = []
+    bases = [
+        c
+        for c in cases
+        if c.spec.record.fairness is not None
+        and c.spec.record.fairness.role == "base"
+        and c.guarded is not None
+    ]
+    for case in bases:
+        sources = BlindSources.build(contact_for(case.spec), case.profile)
+        app_id = uuid.uuid5(uuid.NAMESPACE_URL, f"pairly-evals:{case.spec.record.id}")
+        text = case.guarded.text
+        for swap in counterfactual.make_swaps(text, sources.names, sources.emails, app_id):
+            check = counterfactual.check_copy(text, sources, BlindConfig(), swap)
+            copies += 1
+            complete += int(check.redaction_complete)
+            identical += int(check.input_identical)
+            stats = per[swap.dimension]
+            stats[0] += 1
+            stats[1] += int(check.redaction_complete)
+            stats[2] += int(check.input_identical)
+            if check.leaked and len(leaks) < 30:
+                leaks.append(f"{case.spec.record.id}:{swap.dimension}")
+    out: dict[str, Any] = {
+        "what": (
+            "The runner's counterfactual copies of each fairness base CV, through the same "
+            "guardrails and blind redaction as production."
+        ),
+        "bases": len(bases),
+        "copies": copies,
+        "redaction_complete_rate": ratio(complete, copies),
+        "input_identical_rate": ratio(identical, copies),
+        "per_dimension": {
+            k: {"copies": n, "redaction_complete": c, "input_identical": i}
+            for k, (n, c, i) in sorted(per.items())
+        },
+        "leaks": leaks,
+        "model_score_delta": pending(
+            "the copies' score change needs a live model; recordings answer only inputs "
+            "they were recorded for"
+        ),
+    }
+    if org_runs.is_file():
+        try:
+            out["org_runs"] = json.loads(org_runs.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            out["org_runs"] = {"status": "unreadable", "path": str(org_runs)}
+    return out
+
+
 # ------------------------------------------------------------------ main
 
 
@@ -637,6 +701,7 @@ def run(count: int, seed: int, include_scans: bool, limit: int | None) -> dict[s
         ),
         "scripted_credit": credit_metrics(cases),
         "fairness": fairness_metrics(cases),
+        "counterfactual_runner": counterfactual_runner_metrics(cases),
         "injection": injection_metrics(cases),
         "claims": claim_metrics(cases),
         "knockouts": knockout_metrics(cases),

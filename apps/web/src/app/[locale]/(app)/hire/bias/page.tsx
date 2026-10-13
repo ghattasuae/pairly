@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { BiasReport } from "@/components/hire/bias-report";
+import { FairnessRunButton } from "@/components/hire/fairness-run-button";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
@@ -112,7 +113,12 @@ export default async function BiasPage({ params, searchParams }: Props) {
           {a("apply")}
         </button>
       </form>
-      <BiasReport report={result.data} exportHref={exportHref} stageLabels={stageLabels} />
+      <BiasReport
+        report={result.data}
+        exportHref={exportHref}
+        stageLabels={stageLabels}
+        fairnessAction={permissions.includes("hire.fairness.run") ? <FairnessRunButton /> : null}
+      />
     </div>
   );
 }

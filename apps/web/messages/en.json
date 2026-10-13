@@ -2632,7 +2632,13 @@
     },
     "fairness": {
       "title": "Counterfactual fairness test",
-      "summary": "{pairs} swapped copies scored, {flagged} with a score change above the threshold."
+      "summary": "{pairs} copies of screened applications with a swapped name, gender markers or nationality. The redaction hid every inserted value in {complete} of them, and the scoring input stayed identical in {identical}.",
+      "pending": "Score changes: pending a live model run. In recorded mode the model answers come from recordings, so no score change is reported.",
+      "measured": "{flagged} copies changed the overall score by more than {threshold} points.",
+      "none": "No fairness run yet.",
+      "run": "Run the fairness test now",
+      "started": "Started. Reload the page in a minute to see the result.",
+      "failed": "Could not start the run. Try again later."
     },
     "stages": {
       "applied": "Applied",

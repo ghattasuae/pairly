@@ -212,6 +212,7 @@ name = "Hire analytics never read self-identification, except the bias report's 
 type = "forbidden"
 source_modules = [
   "pairly_hire.analytics.facts", "pairly_hire.analytics.metrics", "pairly_hire.analytics.stats",
+  "pairly_hire.analytics.fairness", "pairly_hire.analytics.models",
 ]
 forbidden_modules = ["pairly_hire.selfid", "pairly_hire.api"]
 

@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
+import type * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { judgementTone } from "@/lib/hire/bias";
@@ -100,6 +101,45 @@ function Category({ category, stageLabel }: { category: HireBiasCategory; stageL
   );
 }
 
+interface FairnessRunSummary {
+  pairs?: number;
+  flagged?: number;
+  redaction_complete?: number;
+  input_identical?: number;
+  model_deltas?: string;
+  threshold?: number;
+}
+
+/** The latest counterfactual fairness run: measured redaction, honest model status. */
+function FairnessSummary({ summary, action }: { summary: Record<string, unknown> | null; action: React.ReactNode }) {
+  const t = useTranslations("HireBias.fairness");
+  const run = summary as FairnessRunSummary | null;
+  return (
+    <div className="space-y-2 rounded-lg border p-4 text-sm" data-fairness>
+      <p className="font-medium">{t("title")}</p>
+      {run ? (
+        <>
+          <p className="text-muted-foreground">
+            {t("summary", {
+              pairs: run.pairs ?? 0,
+              complete: run.redaction_complete ?? 0,
+              identical: run.input_identical ?? 0,
+            })}
+          </p>
+          <p className="text-muted-foreground" data-model-deltas={run.model_deltas}>
+            {run.model_deltas === "measured"
+              ? t("measured", { flagged: run.flagged ?? 0, threshold: run.threshold ?? 0 })
+              : t("pending")}
+          </p>
+        </>
+      ) : (
+        <p className="text-muted-foreground">{t("none")}</p>
+      )}
+      {action}
+    </div>
+  );
+}
+
 /**
  * The bias and adverse-impact report (brief 3.10): selection rates per voluntary
  * self-identified group at each pipeline step, impact ratios against the four-fifths rule
@@ -111,14 +151,15 @@ export function BiasReport({
   report,
   exportHref,
   stageLabels = {},
+  fairnessAction = null,
 }: {
   report: HireBiasReport;
   exportHref: string | null;
   stageLabels?: Record<string, string>;
+  fairnessAction?: React.ReactNode;
 }) {
   const t = useTranslations("HireBias");
   const stageLabel = (key: string) => stageLabels[key] ?? key;
-  const fairness = report.fairness as { flagged?: number; pairs?: number; status?: string } | null;
   return (
     <div className="space-y-8" data-bias-report>
       <div className="space-y-2 rounded-lg border p-4 text-sm">
@@ -134,14 +175,7 @@ export function BiasReport({
           </p>
         ) : null}
       </div>
-      {fairness && (
-        <div className="rounded-lg border p-4 text-sm" data-fairness>
-          <p className="font-medium">{t("fairness.title")}</p>
-          <p className="text-muted-foreground">
-            {t("fairness.summary", { pairs: fairness.pairs ?? 0, flagged: fairness.flagged ?? 0 })}
-          </p>
-        </div>
-      )}
+      <FairnessSummary summary={report.fairness ?? null} action={fairnessAction} />
       {report.categories.map((c) => (
         <Category key={c.category} category={c} stageLabel={stageLabel} />
       ))}

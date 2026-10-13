@@ -36,7 +36,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_checklist_retention``: checklist file retention after hire;
                    ``hire_survey_invites``: the candidate experience survey;
                    ``hire_erasure_objects``: removes the stored files of erasures a
-                   person started, then completes their requests (``erasure``).
+                   person started, then completes their requests (``erasure``);
+                   ``hire_fairness_runs``: a weekly counterfactual fairness run per
+                   organisation (``analytics.fairness``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
                    interviews, once the deployment has a Google OAuth client.
 
@@ -62,6 +64,9 @@ from pairly_core.retention.rules import RetentionRule
 from pairly_core.search.sources import SearchSource
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
 from pairly_hire import models  # noqa: F401  (registers the Hire tables)
+from pairly_hire.analytics import models as analytics_models  # noqa: F401  (tables)
+from pairly_hire.analytics.fairness import JOB_NAME as FAIRNESS_JOB
+from pairly_hire.analytics.fairness import run_fairness_job
 from pairly_hire.erasure import JOB_NAME as ERASURE_JOB
 from pairly_hire.erasure import run_erasure_job
 from pairly_hire.interviewing import models as interviewing_models  # noqa: F401  (tables)
@@ -229,6 +234,14 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "every 15 minutes",
         run=run_survey_invites_job,
         every_minutes=15,
+    ),
+    JobSpec(
+        FAIRNESS_JOB,
+        "Run the counterfactual fairness test on a sample of screened applications, "
+        "once a week per organisation (swapped names, gender markers and nationalities)",
+        "every hour (a run per organisation every 7 days)",
+        run=run_fairness_job,
+        every_minutes=60,
     ),
     JobSpec(
         ERASURE_JOB,

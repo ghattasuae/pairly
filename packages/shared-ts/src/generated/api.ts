@@ -1102,6 +1102,41 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/fairness/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fairness Runs */
+        get: operations["fairness_runs_v1_hire_fairness_runs_get"];
+        put?: never;
+        /** Start Fairness Run */
+        post: operations["start_fairness_run_v1_hire_fairness_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/fairness/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fairness Run */
+        get: operations["fairness_run_v1_hire_fairness_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/interviews/{interview_id}/scorecard": {
         parameters: {
             query?: never;
@@ -6247,6 +6282,129 @@ export type components = {
             kind: string;
             /** Title */
             title: string;
+        };
+        /** HireFairnessResultOut */
+        HireFairnessResultOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Blind */
+            blind: boolean;
+            /** Control Score */
+            control_score: number | null;
+            /** Copy Score */
+            copy_score: number | null;
+            /** Delta */
+            delta: number | null;
+            /** Dimension */
+            dimension: string;
+            /** Flagged */
+            flagged: boolean | null;
+            /** Input Identical */
+            input_identical: boolean;
+            /** Inserted */
+            inserted: string[];
+            /** Job Id */
+            job_id: string | null;
+            /** Leaked */
+            leaked: string[];
+            /** Model Status */
+            model_status: string;
+            /** Redaction Complete */
+            redaction_complete: boolean;
+            /** Reference */
+            reference: string | null;
+        };
+        /** HireFairnessRunDetailOut */
+        HireFairnessRunDetailOut: {
+            /** Applications */
+            applications: number;
+            /** Copies */
+            copies: number;
+            /** Failure Reason */
+            failure_reason: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Flagged */
+            flagged: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mode */
+            mode: string;
+            /** Results */
+            results: components["schemas"]["HireFairnessResultOut"][];
+            /** Sample Size */
+            sample_size: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Threshold */
+            threshold: number;
+            /** Trigger */
+            trigger: string;
+        };
+        /** HireFairnessRunIn */
+        HireFairnessRunIn: {
+            /**
+             * Sample Size
+             * @default 10
+             */
+            sample_size: number;
+            /**
+             * Threshold
+             * @default 5.00
+             */
+            threshold: number | string;
+        };
+        /** HireFairnessRunOut */
+        HireFairnessRunOut: {
+            /** Applications */
+            applications: number;
+            /** Copies */
+            copies: number;
+            /** Failure Reason */
+            failure_reason: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Flagged */
+            flagged: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mode */
+            mode: string;
+            /** Sample Size */
+            sample_size: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Threshold */
+            threshold: number;
+            /** Trigger */
+            trigger: string;
         };
         /** HireFileOut */
         HireFileOut: {
@@ -12306,6 +12464,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireDataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fairness_runs_v1_hire_fairness_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFairnessRunOut"][];
+                };
+            };
+        };
+    };
+    start_fairness_run_v1_hire_fairness_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireFairnessRunIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFairnessRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fairness_run_v1_hire_fairness_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireFairnessRunDetailOut"];
                 };
             };
             /** @description Validation Error */

@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
-import { screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 
 import type { HireBiasGroup, HireBiasReport } from "@/lib/hire/types";
 
 import { renderWithIntl } from "../../../test/intl";
 
+vi.mock("@/lib/actions/fairness", () => ({ startFairnessRun: vi.fn() }));
+
 const { BiasReport } = await import("../hire/bias-report");
+const { FairnessRunButton } = await import("../hire/fairness-run-button");
 
 function group(patch: Partial<HireBiasGroup>): HireBiasGroup {
   return {
@@ -88,5 +92,41 @@ describe("BiasReport", () => {
     renderWithIntl(<BiasReport report={REPORT} exportHref={null} />, "ar");
     expect(screen.getByText("الجنس")).toBeInTheDocument();
     expect(screen.getByText("أقل من الأربعة أخماس")).toBeInTheDocument();
+  });
+
+  it("reports the fairness run honestly: redaction measured, model deltas pending", () => {
+    const fairness = { pairs: 30, flagged: 0, redaction_complete: 29, input_identical: 28, model_deltas: "pending_live_run", threshold: 5 };
+    renderWithIntl(<BiasReport report={{ ...REPORT, fairness }} exportHref={null} />);
+    expect(screen.getByText(/30 copies of screened applications/)).toBeInTheDocument();
+    expect(screen.getByText(/hid every inserted value in 29 of them/)).toBeInTheDocument();
+    expect(screen.getByText(/Score changes: pending a live model run/)).toBeInTheDocument();
+  });
+
+  it("shows measured score changes from a live run, and no run yet", () => {
+    const fairness = { pairs: 30, flagged: 2, redaction_complete: 30, input_identical: 30, model_deltas: "measured", threshold: 5 };
+    const { unmount } = renderWithIntl(<BiasReport report={{ ...REPORT, fairness }} exportHref={null} />);
+    expect(screen.getByText("2 copies changed the overall score by more than 5 points.")).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<BiasReport report={REPORT} exportHref={null} />);
+    expect(screen.getByText("No fairness run yet.")).toBeInTheDocument();
+  });
+});
+
+describe("FairnessRunButton", () => {
+  it("starts a run once and says so", async () => {
+    const user = userEvent.setup();
+    const start = vi.fn().mockResolvedValue({ ok: true, id: "x" });
+    renderWithIntl(<FairnessRunButton start={start} />);
+    await user.click(screen.getByRole("button", { name: "Run the fairness test now" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Started."));
+    expect(screen.getByRole("button", { name: "Run the fairness test now" })).toBeDisabled();
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it("says when it could not start", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<FairnessRunButton start={vi.fn().mockResolvedValue({ ok: false, code: "conflict" })} />);
+    await user.click(screen.getByRole("button", { name: "Run the fairness test now" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Could not start the run."));
   });
 });
