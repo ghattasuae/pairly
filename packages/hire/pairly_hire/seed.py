@@ -15,7 +15,8 @@ Idempotent, in one transaction (the CLI's), as the owner database role:
 3. Invitations for a recruiter, a hiring manager and an interviewer, each limited to
    the Hire workflow.
 4. The recorded model responses of ``data/recordings.json`` (job and rubric drafts) and
-   ``data/messaging_recordings.json`` (personal paragraphs of messages), so drafting
+   ``data/messaging_recordings.json`` (personal paragraphs of messages) and
+   ``data/interview_recordings.json`` (interview kits and debrief summaries), so drafting
    works offline.
 """
 
@@ -189,6 +190,13 @@ async def seed_hire_demo(session: AsyncSession, ctx: SeedContext) -> SeedResult:
     report = await import_recordings(session, ctx.org_id, parse_bundle(messaging_recordings_text()))
     lines.append(
         f"recorded message drafts: {report.imported} imported, {report.skipped} already there"
+    )
+    from pairly_hire.interviewing.recordings import recordings_text as interview_recordings_text
+
+    report = await import_recordings(session, ctx.org_id, parse_bundle(interview_recordings_text()))
+    lines.append(
+        f"recorded interview kits and debriefs: {report.imported} imported, "
+        f"{report.skipped} already there"
     )
     lines.append(f"careers page: {ctx.web_url.rstrip('/')}/en/careers/{ctx.org_slug}")
     return SeedResult(lines=tuple(lines), invitations=tuple(invitations))

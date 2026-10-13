@@ -232,6 +232,18 @@ async def stage_plan(
     return stage, loaded
 
 
+async def interview_stage(
+    session: AsyncSession, job: HireJob, stage_key: str
+) -> tuple[PlanStage, LoadedPlan] | None:
+    """The plan stage an interview at pipeline stage ``stage_key`` uses: that stage's,
+    else the plan's first stage (an interview booked from another pipeline stage)."""
+    loaded = await plan_for(session, job)
+    if loaded is None:
+        return None
+    stage = loaded.plan.stage(stage_key) or loaded.plan.stages[0]
+    return stage, loaded
+
+
 def parse_plan(raw: Any) -> InterviewPlan:
     try:
         return InterviewPlan.model_validate(raw)

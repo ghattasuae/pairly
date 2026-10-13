@@ -32,6 +32,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType
 from pairly_core.crypto.types import seal
+from pairly_core.errors import NotFoundError
 from pairly_core.notifications.email import Attachment
 from pairly_core.notifications.models import Urgency
 from pairly_core.notifications.service import Extras, Recipient, notify
@@ -47,6 +48,7 @@ from pairly_hire.pipeline.hooks import application_blind, screening_summary
 from pairly_hire.pipeline.records import AppRecord, organisation_name
 from pairly_hire.scheduling.models import HireInterview
 from pairly_hire.scheduling.rules import Interviewer
+from pairly_hire.scheduling.templates import BRIEFING
 from pairly_hire.sealing import read_sealed
 
 
@@ -164,6 +166,23 @@ def interview_details(
     if meeting_url and not cancelled:
         text += f"\nJoin the call: {meeting_url}"
     return text
+
+
+async def briefing_kit(session: AsyncSession, record: AppRecord, stage_key: str) -> str | None:
+    """The interview kit for the briefing (brief 3.7.1): the stored AI kit for this
+    candidate and stage, else the template kit from the plan. Never a CV quote, never a
+    model call here (booking does not wait on a model). None without a plan."""
+    from pairly_hire.interviewing.kits import build_kit, kit_text
+    from pairly_hire.interviewing.plan import interview_stage
+
+    found = await interview_stage(session, record.job, stage_key)
+    if found is None:
+        return None
+    try:
+        kit = await build_kit(session, record, found[0].key, "en", router=None)
+    except NotFoundError:
+        return None
+    return kit_text(kit) or None
 
 
 def meeting_url_of(interview: HireInterview) -> str | None:
@@ -410,6 +429,10 @@ async def send_to_panel(
         values["meeting_url"] = meeting_url
     if interview_url:
         values["interview_url"] = interview_url
+    if mail.template_key == BRIEFING:
+        kit = await briefing_kit(session, record, interview.stage_key)
+        if kit:
+            values["kit"] = kit
     queued = 0
     for person in people:
         await notify(

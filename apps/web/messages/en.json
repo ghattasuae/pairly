@@ -2264,5 +2264,18 @@
     "sla": "Scorecards due within (hours)",
     "save": "Save the plan",
     "saved": "Saved. This is version {version} of the plan."
+  },
+  "InterviewKit": {
+    "title": "Interview kit",
+    "aiNote": "Drafted by AI from the rubric and screening. You decide what to ask.",
+    "templateNote": "From the interview plan.",
+    "probes": "If the evidence is weak or unclear",
+    "result": {
+      "met": "Screening: met",
+      "partly_met": "Screening: partly met",
+      "not_met": "Screening: not met",
+      "unknown": "Screening: unclear",
+      "not_screened": "Not screened"
+    }
   }
 }

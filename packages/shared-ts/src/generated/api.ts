@@ -776,6 +776,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/interview-kit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Kit */
+        get: operations["get_kit_v1_hire_applications__application_id__interview_kit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/screening": {
         parameters: {
             query?: never;
@@ -5506,6 +5523,64 @@ export type components = {
             /** Work Model */
             work_model?: ("onsite" | "hybrid" | "remote") | null;
         };
+        /** HireKitItemOut */
+        HireKitItemOut: {
+            /** Anchors */
+            anchors: string[];
+            /** Criterion Id */
+            criterion_id: string;
+            /** Criterion Name */
+            criterion_name: string;
+            /** Kind */
+            kind: string;
+            /** Listen For */
+            listen_for: string;
+            /** Plan Question */
+            plan_question: string;
+            /** Probes */
+            probes: string[];
+            /** Questions */
+            questions: string[];
+            /** Quotes */
+            quotes: string[];
+            /** Screening Result */
+            screening_result: string;
+            /** Source */
+            source: string;
+        };
+        /** HireKitOut */
+        HireKitOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Candidate Label */
+            candidate_label: string;
+            /** From Recording */
+            from_recording: boolean;
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /** Items */
+            items: components["schemas"]["HireKitItemOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Locale */
+            locale: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Source */
+            source: string;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Name */
+            stage_name: string;
+        };
         /** HireKnockoutOut */
         HireKnockoutOut: {
             /** Answer */
@@ -9818,6 +9893,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireApplicationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_kit_v1_hire_applications__application_id__interview_kit_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+                stage?: string;
+            };
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireKitOut"];
                 };
             };
             /** @description Validation Error */

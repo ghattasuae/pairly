@@ -41,3 +41,5 @@ export type HireInterviewPlanView = S["HireInterviewPlanOut"];
 export type HireInterviewPlan = S["InterviewPlan"];
 export type HirePlanStage = S["PlanStage"];
 export type HirePlanQuestion = S["PlanQuestion"];
+export type HireKit = S["HireKitOut"];
+export type HireKitItem = S["HireKitItemOut"];

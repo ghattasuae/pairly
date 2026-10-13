@@ -7,19 +7,24 @@
                                         and who may sit on a panel
 * ``PUT  /jobs/{id}/interview-plan``   save it (``hire.interview_plan.write``), naming
                                         the version edited (``expected_version``)
+* ``GET  /applications/{id}/interview-kit?stage=&locale=``  the candidate's interview kit
+                                        for a stage (generated through the model router on
+                                        first read, then kept); blind safe
 """
 
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from pairly_core.errors import ForbiddenError, NotFoundError
+from pairly_core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError
 from pairly_core.identity import Context, CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_hire.api.common import model_router
+from pairly_hire.interviewing import kits
 from pairly_hire.interviewing import plan as plans
 from pairly_hire.jobs import get_job
 from pairly_hire.models import HireJob
@@ -29,8 +34,11 @@ from pairly_hire.permissions import (
     PLAN_WRITE,
     SEES_DRAFTS,
 )
+from pairly_hire.pipeline.records import load_record
 from pairly_hire.pipeline.stages import stages_for
 from pairly_hire.scheduling import api as scheduling
+from pairly_hire.scheduling.emails import candidate_view
+from pairly_hire.scheduling.permissions import INTERVIEW_READ
 
 router = APIRouter(tags=["hire"])
 
@@ -150,3 +158,102 @@ async def save_plan(
         allowed_interviewers=allowed,
     )
     return await _plan_out(session, actor, ctx, job, loaded)
+
+
+# ------------------------------------------------------------------ kits
+
+_StageKey = Annotated[str, Query(pattern=r"^[a-z][a-z0-9_]{0,31}$")]
+
+
+class HireKitItemOut(BaseModel):
+    criterion_id: str
+    criterion_name: str
+    kind: str
+    screening_result: str
+    plan_question: str
+    questions: list[str]
+    probes: list[str]
+    listen_for: str
+    anchors: list[str]
+    source: str
+    quotes: list[str]
+
+
+class HireKitOut(BaseModel):
+    application_id: uuid.UUID
+    job_id: uuid.UUID
+    job_title: str
+    candidate_label: str
+    identity_hidden: bool
+    stage_key: str
+    stage_name: str
+    locale: str
+    source: str
+    prompt_version: str
+    from_recording: bool
+    items: list[HireKitItemOut]
+
+
+def kit_out(kit: kits.Kit, job_title: str, label: str) -> HireKitOut:
+    return HireKitOut(
+        application_id=kit.application_id,
+        job_id=kit.job_id,
+        job_title=job_title,
+        candidate_label=label,
+        identity_hidden=kit.blind,
+        stage_key=kit.stage_key,
+        stage_name=kit.stage_name,
+        locale=kit.locale,
+        source=kit.source,
+        prompt_version=kit.prompt_version,
+        from_recording=kit.from_recording,
+        items=[
+            HireKitItemOut(
+                criterion_id=i.criterion_id,
+                criterion_name=i.criterion_name,
+                kind=i.kind,
+                screening_result=i.screening_result,
+                plan_question=i.plan_question,
+                questions=i.questions,
+                probes=i.probes,
+                listen_for=i.listen_for,
+                anchors=i.anchors,
+                source=i.source,
+                quotes=i.quotes,
+            )
+            for i in kit.items
+        ],
+    )
+
+
+def optional_router(request: Request) -> Any:
+    """The model router, or None (the template kit): AI helps, never blocks."""
+    try:
+        return model_router(request)
+    except ServiceUnavailableError:
+        return None
+
+
+@router.get("/applications/{application_id}/interview-kit", response_model=HireKitOut)
+async def get_kit(
+    application_id: uuid.UUID,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+    stage: _StageKey = "interview",
+    locale: Literal["en", "ar"] = "en",
+) -> HireKitOut:
+    authorize(actor, INTERVIEW_READ)
+    authorize(actor, CANDIDATE_READ)
+    record = await load_record(session, application_id)
+    kit = await kits.build_kit(
+        session,
+        record,
+        stage,
+        locale,
+        router=optional_router(request),
+        actor_id=actor.id if actor.kind is ActorKind.USER else None,
+    )
+    label, _summary, _hidden = await candidate_view(session, record)
+    title = record.job.title_ar if locale == "ar" and record.job.title_ar else record.job.title
+    return kit_out(kit, title, label)
