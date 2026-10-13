@@ -31,7 +31,7 @@ transaction. Model failures answer 503 and nothing changes.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
@@ -59,6 +59,7 @@ from pairly_hire.jobs import (
     update_job,
 )
 from pairly_hire.models import HireJob, JobStatus
+from pairly_hire.org_time import org_today
 from pairly_hire.permissions import (
     JOB_PUBLISH,
     JOB_READ,
@@ -342,7 +343,7 @@ async def draft_description(
         title_ar=draft.title_ar,
         description_en=draft.description_en,
         description_ar=draft.description_ar,
-        today=date.today(),
+        today=await org_today(session, actor.org_id),
     )
     return HireJobDraftOut(
         **draft.model_dump(),
@@ -357,14 +358,16 @@ async def draft_description(
 
 
 @router.post("/check-text", response_model=HireTextChecks)
-async def check_text(body: HireCheckTextIn, actor: CurrentActor) -> HireTextChecks:
+async def check_text(
+    body: HireCheckTextIn, actor: CurrentActor, session: OrgSession
+) -> HireTextChecks:
     authorize(actor, JOB_READ)
     checks = check_texts(
         title=body.title,
         title_ar=body.title_ar,
         description_en=body.description_en,
         description_ar=body.description_ar,
-        today=date.today(),
+        today=await org_today(session, actor.org_id),
     )
     return _checks_out(checks.as_dict())
 
@@ -418,7 +421,7 @@ async def job_checks(job_id: uuid.UUID, actor: CurrentActor, session: OrgSession
         title_ar=job.title_ar,
         description_en=job.description_en,
         description_ar=job.description_ar,
-        today=date.today(),
+        today=await org_today(session, actor.org_id),
     )
     return _checks_out(checks.as_dict())
 

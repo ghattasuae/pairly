@@ -62,6 +62,7 @@ from pairly_hire.messaging.library import OFFER as OFFER_TEMPLATE
 from pairly_hire.messaging.models import HireMessage, MessageStatus
 from pairly_hire.offers.models import EDITABLE, LIVE, HireOffer, OfferStatus, as_list
 from pairly_hire.offers.templates import BY_KEY, OfferTemplate
+from pairly_hire.org_time import org_today
 from pairly_hire.pipeline.records import AppRecord, load_record, organisation_name
 from pairly_hire.sealing import read_sealed
 
@@ -280,10 +281,11 @@ async def offers_for(session: AsyncSession, application_id: uuid.UUID) -> list[H
     )
 
 
-def _start(value: date) -> date:
+async def _start(session: AsyncSession, org_id: uuid.UUID, value: date) -> date:
+    """A start date is a calendar date in the organisation's zone: today or later there."""
     if not isinstance(value, date):
         raise BadRequestError("start_date: a date")
-    if value < datetime.now(UTC).date():
+    if value < await org_today(session, org_id, datetime.now(UTC)):
         raise ConflictError("the start date must be today or later")
     return value
 
@@ -324,7 +326,7 @@ async def create_offer(
         template_key=template.key,
         locale=lang,
         job_title=title[:160],
-        start_date=_start(start_date),
+        start_date=await _start(session, record.app.org_id, start_date),
         conditions=clean_conditions(list(defaults) if conditions is None else conditions),
         status=OfferStatus.DRAFT.value,
         version=1,
@@ -362,7 +364,7 @@ async def update_offer(
     if row.version != expected_version:
         raise ConflictError("someone else changed this offer; reload it")
     if start_date is not None:
-        row.start_date = _start(start_date)
+        row.start_date = await _start(session, row.org_id, start_date)
     if compensation is not None:
         row.compensation = _seal(row, "compensation", clean_compensation(compensation))
     if conditions is not None:

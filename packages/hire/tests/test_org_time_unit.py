@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 
-from pairly_hire.requisitions.service import local_today
+from pairly_hire.org_time import local_today
 
 
 def test_local_today_follows_the_organisation_zone_across_midnight() -> None:

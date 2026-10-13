@@ -26,7 +26,6 @@ import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any, Final
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,8 +35,8 @@ from pairly_core.errors import ConflictError, ForbiddenError, NotFoundError
 from pairly_core.rbac import Actor
 from pairly_hire.jobs import create_job
 from pairly_hire.models import HireJob
+from pairly_hire.org_time import org_today
 from pairly_hire.requisitions.models import HireRequisition, RequisitionStatus
-from pairly_hire.scheduling.rules import org_scheduling
 
 WORKFLOW: Final = "hire"
 ENTITY: Final = "hire.requisition"
@@ -112,16 +111,6 @@ async def get_requisition(
     return row
 
 
-def local_today(now: datetime, timezone: str) -> date:
-    """The calendar date at ``now`` (timezone aware) in the organisation's zone."""
-    return now.astimezone(ZoneInfo(timezone)).date()
-
-
-async def org_today(session: AsyncSession, now: datetime) -> date:
-    """Today in the organisation's time zone (the session is tenant-bound)."""
-    return local_today(now, (await org_scheduling(session)).timezone)
-
-
 async def create_requisition(
     session: AsyncSession,
     actor: Actor,
@@ -133,7 +122,7 @@ async def create_requisition(
         raise ForbiddenError("only a person can request a role")
     now = now or datetime.now(UTC)
     start = values["start_date"]
-    if not isinstance(start, date) or start < await org_today(session, now):
+    if not isinstance(start, date) or start < await org_today(session, actor.org_id, now):
         raise ConflictError("the start date must be today or later")
     row = HireRequisition(
         id=uuid.uuid4(),

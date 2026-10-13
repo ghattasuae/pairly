@@ -47,7 +47,7 @@ import asyncio
 import json
 import os
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Final, TypedDict
 
@@ -77,6 +77,7 @@ from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.nodes import await_decision, request_approval, run_final_action
 from pairly_core.workflow.runtime import node_retry
 from pairly_hire.models import HireApplication
+from pairly_hire.org_time import org_day
 from pairly_hire.screening import pipeline
 from pairly_hire.screening.actions import SHORTLIST
 from pairly_hire.screening.blind import BlindConfig, BlindedInput
@@ -604,6 +605,8 @@ async def checks(state: ScreeningState, runtime: Ctx) -> Command[Any]:
     answers = _knockout_answers(app)
     async with ctx.transaction() as session:
         config = await screening_settings(session)
+        # CV dates are judged against the submission day where the organisation works.
+        as_of = await org_day(session, app.org_id, app.submitted_at or datetime.now(UTC))
         try:
             ref, rubric = await rubric_ref(session, app.rubric_policy_id)
         except PolicyError:
@@ -618,12 +621,11 @@ async def checks(state: ScreeningState, runtime: Ctx) -> Command[Any]:
         normalized, guarded, _, details = prepared
         raw = details.get("profile")
         profile = ParsedProfile.from_dict(raw) if isinstance(raw, dict) else None
-        as_of = (app.submitted_at or datetime.now(UTC)).date()
         found = pipeline.claim_flags(
             profile,
             normalized,
             guarded,
-            as_of=as_of if isinstance(as_of, date) else datetime.now(UTC).date(),
+            as_of=as_of,
             jobs_with_same_cv=await _jobs_with_same_cv(ctx, document_id),
             config=config.claims,
         )

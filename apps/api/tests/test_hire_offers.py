@@ -20,13 +20,16 @@ from __future__ import annotations
 import io
 import unicodedata
 import uuid
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import httpx
 import pdfplumber
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+import pairly_hire.offers.service as offer_service
 
 from .hire_support import HireApi, HireWorld, hire_api, open_job, owner_rows
 from .test_hire_pipeline import _key, other, world
@@ -319,6 +322,39 @@ async def test_changes_requested_then_withdrawn_and_declined(
     )
     assert fresh.status_code == 201, fresh.text
     assert uuid.UUID(fresh.json()["id"]) != uuid.UUID(offer["id"])
+
+
+async def test_start_date_is_checked_in_the_organisation_time_zone(
+    hire_api: HireApi, world: HireWorld, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = hire_api
+    job = await open_job(api, world)
+    app_id, _ = await _apply(api, world, job, "Omar Haddad")
+    # 00:03 on 2 March in Dubai (the default organisation zone) is still 1 March in UTC:
+    # 1 March is yesterday for the organisation, so it is refused; 2 March is today.
+    frozen = datetime(2026, 3, 1, 20, 3, tzinfo=UTC)
+
+    class _Clock(datetime):
+        @classmethod
+        def now(cls, tz: Any = None) -> datetime:  # type: ignore[override]
+            return frozen if tz is None else frozen.astimezone(tz)
+
+    monkeypatch.setattr(offer_service, "datetime", _Clock)
+    url = f"/v1/hire/applications/{app_id}/offers"
+    yesterday = await api.call("POST", url, world, "recruiter", json=body(start_date="2026-03-01"))
+    assert yesterday.status_code == 409, yesterday.text
+    today = await api.call("POST", url, world, "recruiter", json=body(start_date="2026-03-02"))
+    assert today.status_code == 201, today.text
+    offer = today.json()
+    # Editing applies the same rule.
+    edited = await api.call(
+        "PUT",
+        f"/v1/hire/offers/{offer['id']}",
+        world,
+        "recruiter",
+        json={"expected_version": offer["version"], "start_date": "2026-03-01"},
+    )
+    assert edited.status_code == 409, edited.text
 
 
 async def test_a_change_after_the_approval_blocks_the_send(
