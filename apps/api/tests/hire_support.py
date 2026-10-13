@@ -57,6 +57,7 @@ PEOPLE: dict[str, tuple[tuple[str, str | None], ...]] = {
     "employee": (("employee", None),),
     "admin": (("admin", None),),
     "auditor": (("auditor", None),),
+    "finance": (("finance_controller", None),),
 }
 
 

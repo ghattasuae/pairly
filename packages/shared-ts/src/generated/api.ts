@@ -2050,6 +2050,92 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/requisitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Requisitions */
+        get: operations["list_requisitions_v1_hire_requisitions_get"];
+        put?: never;
+        /** Create Requisition */
+        post: operations["create_requisition_v1_hire_requisitions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/requisitions/{requisition_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Requisition */
+        get: operations["get_requisition_v1_hire_requisitions__requisition_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/requisitions/{requisition_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Requisition */
+        post: operations["cancel_requisition_v1_hire_requisitions__requisition_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/requisitions/{requisition_id}/job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Job */
+        post: operations["open_job_v1_hire_requisitions__requisition_id__job_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/requisitions/{requisition_id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart Requisition */
+        post: operations["restart_requisition_v1_hire_requisitions__requisition_id__restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/scheduling/applications/{application_id}": {
         parameters: {
             query?: never;
@@ -5303,6 +5389,8 @@ export type components = {
             owner_id: string | null;
             /** Published At */
             published_at: string | null;
+            /** Requisition Id */
+            requisition_id?: string | null;
             /** Rubric Policy Id */
             rubric_policy_id: string | null;
             /** Salary Currency */
@@ -6277,6 +6365,125 @@ export type components = {
             stage: string;
             /** Stage Label */
             stage_label: string;
+        };
+        /** HireRequisitionIn */
+        HireRequisitionIn: {
+            /** Budget */
+            budget: number | string;
+            /**
+             * Currency
+             * @default AED
+             */
+            currency: string;
+            /** Headcount */
+            headcount: number;
+            /**
+             * Justification
+             * @default
+             */
+            justification: string;
+            /** Location */
+            location: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Team */
+            team: string;
+            /** Title */
+            title: string;
+            /**
+             * Title Ar
+             * @default
+             */
+            title_ar: string;
+            /**
+             * Work Model
+             * @enum {string}
+             */
+            work_model: "onsite" | "hybrid" | "remote";
+        };
+        /** HireRequisitionList */
+        HireRequisitionList: {
+            /** Items */
+            items: components["schemas"]["HireRequisitionOut"][];
+        };
+        /** HireRequisitionOut */
+        HireRequisitionOut: {
+            /** Approval Id */
+            approval_id: string | null;
+            /** Budget */
+            budget: string;
+            /**
+             * Can Cancel
+             * @default false
+             */
+            can_cancel: boolean;
+            /**
+             * Can Open Job
+             * @default false
+             */
+            can_open_job: boolean;
+            /** Chain */
+            chain?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Headcount */
+            headcount: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Id */
+            job_id?: string | null;
+            /** Justification */
+            justification: string;
+            /** Location */
+            location: string;
+            /** Mine */
+            mine: boolean;
+            /** Reference */
+            reference: string;
+            /**
+             * Requested By
+             * Format: uuid
+             */
+            requested_by: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Steps */
+            steps?: components["schemas"]["HireRequisitionStepOut"][];
+            /** Team */
+            team: string;
+            /** Title */
+            title: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Work Model */
+            work_model: string;
+        };
+        /** HireRequisitionStepOut */
+        HireRequisitionStepOut: {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
         };
         /** HireRubricLockOut */
         HireRubricLockOut: {
@@ -7534,6 +7741,11 @@ export type components = {
          * @enum {string}
          */
         RequesterType: "candidate" | "vendor" | "staff";
+        /**
+         * RequisitionStatus
+         * @enum {string}
+         */
+        RequisitionStatus: "pending_approval" | "approved" | "rejected" | "changes_requested" | "cancelled" | "failed";
         /** ResolveIn */
         ResolveIn: {
             outcome: components["schemas"]["AppealOutcome"];
@@ -12029,6 +12241,196 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireSelfIdReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requisitions_v1_hire_requisitions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                mine?: boolean;
+                status?: components["schemas"]["RequisitionStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRequisitionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_requisition_v1_hire_requisitions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireRequisitionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRequisitionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_requisition_v1_hire_requisitions__requisition_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRequisitionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_requisition_v1_hire_requisitions__requisition_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRequisitionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_job_v1_hire_requisitions__requisition_id__job_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_requisition_v1_hire_requisitions__requisition_id__restart_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisition_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRequisitionOut"];
                 };
             };
             /** @description Validation Error */

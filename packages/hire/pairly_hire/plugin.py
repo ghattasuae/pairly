@@ -12,6 +12,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    ``hire_message``: a sensitive message (rejection, offer) waits for a
                    person's approval and is sent by the ``send_candidate_message`` final
                    action (``pairly_hire.messaging.graph``).
+                   ``hire_requisition``: a requested role waits for its approval chain
+                   (``requisitions/approval_rules.yaml``), then the
+                   ``approve_requisition`` final action marks it approved.
 * ``api_router``   the ``/v1/hire`` routes, imported only when called.
 * ``demo_seeds``   ``hire-demo`` for ``pairly-admin seed``.
 * ``migrations_dir``  the ``hire`` Alembic branch (``migrations/``).
@@ -56,11 +59,21 @@ from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
 from pairly_hire.messaging.sla import JOB_NAME as SLA_JOB
 from pairly_hire.messaging.sla import run_sla_job
-from pairly_hire.permissions import CANDIDATE_READ, MESSAGE_APPROVE, MESSAGE_CREATE, PERMISSIONS
+from pairly_hire.permissions import (
+    CANDIDATE_READ,
+    MESSAGE_APPROVE,
+    MESSAGE_CREATE,
+    PERMISSIONS,
+    REQUISITION_APPROVE,
+    REQUISITION_CREATE,
+    REQUISITION_READ,
+)
 from pairly_hire.pipeline import models as pipeline_models  # noqa: F401  (tables)
 from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
 from pairly_hire.portal import models as portal_models  # noqa: F401  (tables)
+from pairly_hire.requisitions import graph as requisition_graph
+from pairly_hire.requisitions import models as requisition_models  # noqa: F401  (tables)
 from pairly_hire.retention import RETENTION_RULES
 from pairly_hire.scheduling import models as scheduling_models  # noqa: F401  (tables)
 from pairly_hire.scheduling.permissions import SCHEDULING_PERMISSIONS
@@ -102,6 +115,25 @@ HIRE_MESSAGE: GraphSpec = GraphSpec(
     ),
     final_actions={message_graph.FINAL_ACTION: message_graph.send_candidate_message},
     description="A rejection or an offer waits for a person's approval, then is sent.",
+)
+
+HIRE_REQUISITION: GraphSpec = GraphSpec(
+    workflow="hire",
+    name=requisition_graph.GRAPH,
+    version=requisition_graph.VERSION,
+    build=requisition_graph.build_graph,
+    start_permission=REQUISITION_CREATE,
+    read_permission=REQUISITION_READ,
+    approval_types=(
+        ApprovalType(
+            requisition_graph.APPROVAL_TYPE,
+            REQUISITION_APPROVE,
+            requisition_graph.APPROVAL_RULES_V1,
+            "Requisition (a new role)",
+        ),
+    ),
+    final_actions={requisition_graph.FINAL_ACTION: requisition_graph.approve_requisition},
+    description="A requested role waits for HR (and finance above a budget), then opens.",
 )
 
 SCHEDULED_JOBS: tuple[JobSpec, ...] = (
@@ -150,7 +182,7 @@ class HirePlugin:
     permissions: tuple[PermissionSpec, ...] = field(
         default=(*PERMISSIONS, *SCREENING_PERMISSIONS, *SCHEDULING_PERMISSIONS)
     )
-    graphs: tuple[GraphSpec, ...] = (HIRE_SCREENING, HIRE_MESSAGE)
+    graphs: tuple[GraphSpec, ...] = (HIRE_SCREENING, HIRE_MESSAGE, HIRE_REQUISITION)
     demo_seeds: Mapping[str, DemoSeed] = field(
         default_factory=lambda: {"hire-demo": seed_hire_demo}
     )

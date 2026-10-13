@@ -149,6 +149,7 @@ class HireJobOut(BaseModel):
     created_by: uuid.UUID | None
     owner_id: uuid.UUID | None
     co_recruiter_ids: list[uuid.UUID]
+    requisition_id: uuid.UUID | None = None
     published_at: datetime | None
     closed_at: datetime | None
     created_at: datetime

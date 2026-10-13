@@ -35,3 +35,5 @@ export type HireTextChecks = S["HireTextChecks"];
 export type HireFinding = S["HireFindingOut"];
 export type HireRubricState = S["HireRubricOut"];
 export type HireRubricLock = S["HireRubricLockOut"];
+export type HireRequisition = S["HireRequisitionOut"];
+export type HireRequisitionInput = S["HireRequisitionIn"];

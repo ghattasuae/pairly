@@ -1428,7 +1428,8 @@
       "jobs": "Jobs",
       "noJobs": "No jobs yet.",
       "newJob": "New job",
-      "edit": "Edit"
+      "edit": "Edit",
+      "requisitions": "Requisitions: request a role or approve one"
     },
     "jobStatus": {
       "draft": "Draft",
@@ -2179,5 +2180,60 @@
     "openDraft": "Open the draft",
     "noRight": "Your role can view the shortlist but not record decisions.",
     "holdNote": "On hold: {reason}"
+  },
+  "Requisitions": {
+    "title": "Requisitions",
+    "intro": "Request a new role. HR approves every request, and finance too above the budget threshold. A job opens only after approval.",
+    "form": {
+      "title": "Request a role",
+      "intro": "The people who approve see exactly what you enter here.",
+      "jobTitle": "Job title",
+      "jobTitleAr": "Job title in Arabic (optional)",
+      "team": "Team",
+      "location": "Location",
+      "budget": "Yearly budget for the role",
+      "currency": "Currency",
+      "budgetHint": "Above 500,000 the request also goes to finance.",
+      "headcount": "How many people",
+      "workModel": "Work model",
+      "startDate": "Start date",
+      "justification": "Why the team needs this role (optional)",
+      "submit": "Submit for approval"
+    },
+    "workModel": {
+      "onsite": "On site",
+      "hybrid": "Hybrid",
+      "remote": "Remote"
+    },
+    "status": {
+      "pending_approval": "Waiting for approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "changes_requested": "Changes requested",
+      "cancelled": "Withdrawn",
+      "failed": "Nobody can approve"
+    },
+    "step": {
+      "hr": "HR",
+      "finance": "Finance"
+    },
+    "stepStatus": {
+      "waiting": "waiting",
+      "active": "deciding now",
+      "approved": "approved",
+      "rejected": "rejected",
+      "changes_requested": "changes requested",
+      "cancelled": "cancelled",
+      "skipped": "skipped"
+    },
+    "list": {
+      "empty": "No requisitions yet.",
+      "headcount": "{count, plural, one {# person} other {# people}}",
+      "start": "starts {date}",
+      "review": "Review in inbox",
+      "withdraw": "Withdraw",
+      "openJob": "Open the job",
+      "viewJob": "View the job"
+    }
   }
 }

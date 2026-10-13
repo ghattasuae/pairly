@@ -6159,6 +6159,18 @@
             ],
             "title": "Published At"
           },
+          "requisition_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requisition Id"
+          },
           "rubric_policy_id": {
             "anyOf": [
               {
@@ -9019,6 +9031,297 @@
           "referred_at"
         ],
         "title": "HireReferralOut",
+        "type": "object"
+      },
+      "HireRequisitionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 999999999999,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Budget"
+          },
+          "currency": {
+            "default": "AED",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "headcount": {
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Headcount",
+            "type": "integer"
+          },
+          "justification": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Justification",
+            "type": "string"
+          },
+          "location": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Location",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "team": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Team",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Title Ar",
+            "type": "string"
+          },
+          "work_model": {
+            "enum": [
+              "onsite",
+              "hybrid",
+              "remote"
+            ],
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "team",
+          "budget",
+          "headcount",
+          "location",
+          "work_model",
+          "start_date"
+        ],
+        "title": "HireRequisitionIn",
+        "type": "object"
+      },
+      "HireRequisitionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireRequisitionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "HireRequisitionList",
+        "type": "object"
+      },
+      "HireRequisitionOut": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "budget": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Budget",
+            "type": "string"
+          },
+          "can_cancel": {
+            "default": false,
+            "title": "Can Cancel",
+            "type": "boolean"
+          },
+          "can_open_job": {
+            "default": false,
+            "title": "Can Open Job",
+            "type": "boolean"
+          },
+          "chain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "headcount": {
+            "title": "Headcount",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "justification": {
+            "title": "Justification",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "requested_by": {
+            "format": "uuid",
+            "title": "Requested By",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/HireRequisitionStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_ar": {
+            "title": "Title Ar",
+            "type": "string"
+          },
+          "work_model": {
+            "title": "Work Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "title_ar",
+          "team",
+          "budget",
+          "currency",
+          "headcount",
+          "location",
+          "work_model",
+          "start_date",
+          "justification",
+          "status",
+          "status_reason",
+          "requested_by",
+          "mine",
+          "approval_id",
+          "decided_at",
+          "created_at"
+        ],
+        "title": "HireRequisitionOut",
+        "type": "object"
+      },
+      "HireRequisitionStepOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "HireRequisitionStepOut",
         "type": "object"
       },
       "HireRubricLockOut": {
@@ -12285,6 +12588,18 @@
           "staff"
         ],
         "title": "RequesterType",
+        "type": "string"
+      },
+      "RequisitionStatus": {
+        "enum": [
+          "pending_approval",
+          "approved",
+          "rejected",
+          "changes_requested",
+          "cancelled",
+          "failed"
+        ],
+        "title": "RequisitionStatus",
         "type": "string"
       },
       "ResolveIn": {
@@ -20026,6 +20341,288 @@
           }
         },
         "summary": "Self Identification Report",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/requisitions": {
+      "get": {
+        "operationId": "list_requisitions_v1_hire_requisitions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RequisitionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRequisitionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Requisitions",
+        "tags": [
+          "hire"
+        ]
+      },
+      "post": {
+        "operationId": "create_requisition_v1_hire_requisitions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireRequisitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRequisitionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Requisition",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/requisitions/{requisition_id}": {
+      "get": {
+        "operationId": "get_requisition_v1_hire_requisitions__requisition_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requisition_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Requisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRequisitionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Requisition",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/requisitions/{requisition_id}/cancel": {
+      "post": {
+        "operationId": "cancel_requisition_v1_hire_requisitions__requisition_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requisition_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Requisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRequisitionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Requisition",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/requisitions/{requisition_id}/job": {
+      "post": {
+        "operationId": "open_job_v1_hire_requisitions__requisition_id__job_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requisition_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Requisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireJobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Job",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/requisitions/{requisition_id}/restart": {
+      "post": {
+        "operationId": "restart_requisition_v1_hire_requisitions__requisition_id__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requisition_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Requisition Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireRequisitionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart Requisition",
         "tags": [
           "hire"
         ]

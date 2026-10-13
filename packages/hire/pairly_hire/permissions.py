@@ -27,6 +27,16 @@ Who does what by default:
   admins and auditors, never the people who decide on candidates, and never the agent.
 * The agent role only reads and proposes.
 * Admins manage the Hire settings (careers page, retention, reply time).
+* Requisitions (M3): hiring managers, recruiters and admins request a role
+  (``hire.requisition.create``). Approving one is ``hire.requisition.approve`` (second
+  factor): recruiters (HR) and admins, and finance controllers for the finance step of a
+  large budget. The person who requested a role can never approve it (segregation of
+  duties in the approval engine). Finance controllers and auditors read requisitions.
+* Interview plans (stages, panels, scorecard templates) are written by the people who
+  write jobs (``hire.interview_plan.write``). Every member of the hiring team submits
+  their own scorecard for the interviews they sit on; reading everybody's scorecards and
+  the debrief summary is ``hire.scorecard.read`` (never for a panelist who has not
+  submitted their own yet, enforced by the API).
 
 Declaring ``hire.document.*`` makes the engine use them instead of ``core.document.*``
 for documents of the ``hire`` workflow (CVs), so a member limited to Hire can open them.
@@ -58,6 +68,11 @@ MESSAGE_CREATE: Final = "hire.message.create"
 MESSAGE_APPROVE: Final = "hire.message.approve"
 REFERRAL_CREATE: Final = "hire.referral.create"
 REFERRAL_READ: Final = "hire.referral.read"
+REQUISITION_READ: Final = "hire.requisition.read"
+REQUISITION_CREATE: Final = "hire.requisition.create"
+REQUISITION_APPROVE: Final = "hire.requisition.approve"
+PLAN_WRITE: Final = "hire.interview_plan.write"
+SCORECARD_READ: Final = "hire.scorecard.read"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -141,5 +156,30 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         REFERRAL_READ,
         "See the stage of the people you referred",
         frozenset({*_HIRING_TEAM, R.EMPLOYEE}),
+    ),
+    PermissionSpec(
+        REQUISITION_READ,
+        "View requisitions (role requests) and their approvals",
+        frozenset({R.ADMIN, *_HIRING, R.FINANCE_CONTROLLER, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        REQUISITION_CREATE,
+        "Request a new role (a requisition) for approval",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        REQUISITION_APPROVE,
+        "Approve a requisition before a job can be opened from it",
+        frozenset({R.ADMIN, R.RECRUITER, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        PLAN_WRITE,
+        "Edit a job's interview plan: stages, panels and scorecards",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        SCORECARD_READ,
+        "View everyone's interview scorecards and the debrief summary",
+        frozenset({R.ADMIN, *_HIRING, R.AUDITOR}),
     ),
 )

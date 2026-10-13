@@ -8,6 +8,7 @@ import { JobsList, RediscoverySearch, Referrals, WaitingCard } from "@/component
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
+import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { getSession } from "@/lib/auth/server";
@@ -73,6 +74,13 @@ export default async function HirePage({ params }: Props) {
         <p>{t("home.intro")}</p>
       </PageHeader>
       {team && waiting?.ok && <WaitingCard waiting={waiting.data} />}
+      {permissions.includes("hire.requisition.read") && (
+        <p className="text-sm">
+          <Link href="/hire/requisitions" className="text-primary hover:underline" data-requisitions-link>
+            {t("home.requisitions")}
+          </Link>
+        </p>
+      )}
       {team && <JobsList jobs={working} canEdit={permissions.includes("hire.job.write")} />}
       {team && <RediscoverySearch />}
       {refers && <Referrals jobs={open} referrals={referrals?.ok ? referrals.data : []} />}

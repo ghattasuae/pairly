@@ -161,6 +161,20 @@ class HireJob(Base, OrgScoped):
         ),
         CheckConstraint("cardinality(co_recruiter_ids) <= 10", name="co_recruiters_limit"),
         Index("ix_hire_jobs_status", "org_id", "status", "published_at"),
+        # At most one job per requisition, and only the organisation's own (hire_0008).
+        ForeignKeyConstraint(
+            ["org_id", "requisition_id"],
+            ["hire_requisitions.org_id", "hire_requisitions.id"],
+            ondelete="RESTRICT",
+            name="fk_hire_jobs_requisition_org",
+        ),
+        Index(
+            "uq_hire_jobs_requisition",
+            "org_id",
+            "requisition_id",
+            unique=True,
+            postgresql_where=text("requisition_id IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -202,6 +216,8 @@ class HireJob(Base, OrgScoped):
     co_recruiter_ids: Mapped[list[uuid.UUID]] = mapped_column(
         ARRAY(Uuid), nullable=False, default=list, server_default=text("'{}'::uuid[]")
     )
+    # The approved requisition the job was opened from (hire_0008), if any.
+    requisition_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = _created()
