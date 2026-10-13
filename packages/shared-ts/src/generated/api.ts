@@ -1000,6 +1000,75 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/calibration/items/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration Item */
+        get: operations["calibration_item_v1_hire_calibration_items__application_id__get"];
+        /** Calibration Label */
+        put: operations["calibration_label_v1_hire_calibration_items__application_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/calibration/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration Report */
+        get: operations["calibration_report_v1_hire_calibration_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/calibration/sample": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration Sample */
+        get: operations["calibration_sample_v1_hire_calibration_sample_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/calibration/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calibration Suggest */
+        post: operations["calibration_suggest_v1_hire_calibration_suggest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/checklist-items/{item_id}/file": {
         parameters: {
             query?: never;
@@ -5763,6 +5832,137 @@ export type components = {
             status: string | null;
             /** Steps */
             steps: string[];
+        };
+        /** HireCalibrationAgreementOut */
+        HireCalibrationAgreementOut: {
+            /** Criterion Id */
+            criterion_id: string;
+            /** Direction */
+            direction: string | null;
+            /** Exact */
+            exact: number | null;
+            /** Kappa */
+            kappa: number | null;
+            /** Kappa Note */
+            kappa_note: string | null;
+            /** Low Agreement */
+            low_agreement: boolean;
+            /** Mean Difference */
+            mean_difference: number | null;
+            /** N */
+            n: number;
+            /** Name */
+            name: string;
+            /** Sources */
+            sources: {
+                [key: string]: number;
+            };
+            /** Suggestion */
+            suggestion: string | null;
+            /** Top Disagreement */
+            top_disagreement: {
+                [key: string]: number;
+            } | null;
+            /** Within One */
+            within_one: number | null;
+        };
+        /** HireCalibrationApplicationOut */
+        HireCalibrationApplicationOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Blind */
+            blind: boolean;
+            /** Criteria */
+            criteria: components["schemas"]["HireCalibrationCriterionOut"][];
+            /** My Scores */
+            my_scores: {
+                [key: string]: number;
+            };
+            /** Reference */
+            reference: string;
+            /** Text */
+            text: string | null;
+        };
+        /** HireCalibrationCriterionOut */
+        HireCalibrationCriterionOut: {
+            /** Anchors */
+            anchors: string[];
+            /** Description */
+            description: string;
+            /** Evidence */
+            evidence: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** HireCalibrationItemOut */
+        HireCalibrationItemOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Labelled */
+            labelled: boolean;
+            /** Reference */
+            reference: string;
+        };
+        /** HireCalibrationLabelsIn */
+        HireCalibrationLabelsIn: {
+            /** Scores */
+            scores: {
+                [key: string]: number;
+            };
+        };
+        /** HireCalibrationReportOut */
+        HireCalibrationReportOut: {
+            /** Criteria */
+            criteria: components["schemas"]["HireCalibrationAgreementOut"][];
+            /** Job Id */
+            job_id: string;
+            /** Labels */
+            labels: number;
+            /** Overrides */
+            overrides: number;
+            /** Rubric Version */
+            rubric_version: number | null;
+        };
+        /** HireCalibrationSampleOut */
+        HireCalibrationSampleOut: {
+            /** Criteria */
+            criteria: components["schemas"]["HireCalibrationCriterionOut"][];
+            /** Items */
+            items: components["schemas"]["HireCalibrationItemOut"][];
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Rubric Version */
+            rubric_version: number | null;
+        };
+        /** HireCalibrationSuggestIn */
+        HireCalibrationSuggestIn: {
+            /** Criterion Id */
+            criterion_id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+        };
+        /** HireCalibrationSuggestionOut */
+        HireCalibrationSuggestionOut: {
+            /** Criterion Id */
+            criterion_id: string;
+            /** From Recording */
+            from_recording: boolean;
+            /** Suggestion */
+            suggestion: string;
         };
         /** HireCardOut */
         HireCardOut: {
@@ -12269,6 +12469,168 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_item_v1_hire_calibration_items__application_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalibrationApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_label_v1_hire_calibration_items__application_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireCalibrationLabelsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalibrationApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_report_v1_hire_calibration_report_get: {
+        parameters: {
+            query: {
+                job_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalibrationReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_sample_v1_hire_calibration_sample_get: {
+        parameters: {
+            query: {
+                job_id: string;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalibrationSampleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_suggest_v1_hire_calibration_suggest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireCalibrationSuggestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireCalibrationSuggestionOut"];
+                };
             };
             /** @description Validation Error */
             422: {

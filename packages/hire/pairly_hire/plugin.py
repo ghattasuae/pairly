@@ -22,8 +22,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``api_router``   the ``/v1/hire`` routes, imported only when called.
 * ``demo_seeds``   ``hire-demo`` for ``pairly-admin seed``.
 * ``migrations_dir``  the ``hire`` Alembic branch (``migrations/``).
-* ``prompt_roots``  the versioned prompts ``hire_jd_draft``, ``hire_rubric_draft`` and
-                   ``hire_cv_score`` and ``hire_message_draft``.
+* ``prompt_roots``  the versioned prompts ``hire_jd_draft``, ``hire_rubric_draft``,
+                   ``hire_cv_score``, ``hire_message_draft``, the interview and
+                   reference prompts and ``hire_rubric_clarify`` (calibration).
 * ``retention_rules``  ``hire.applications.rejected`` (dry run, per-organisation months)
                    and ``hire.checklist.documents`` (checklist files after hire).
 * ``search_sources``  ``hire_candidate`` (talent rediscovery, consent and retention).

@@ -84,6 +84,7 @@ export default async function HirePage({ params }: Props) {
       <HireReportLinks permissions={permissions} labels={{
         analytics: t("home.analytics"),
         bias: t("home.bias"),
+        calibration: t("home.calibration"),
       }} />
       {team && <JobsList jobs={working} canEdit={permissions.includes("hire.job.write")} />}
       {team && <RediscoverySearch />}

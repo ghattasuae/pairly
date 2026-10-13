@@ -2648,5 +2648,31 @@
       "offer": "Offer",
       "hired": "Hired"
     }
+  },
+  "HireCalibration": {
+    "title": "Rubric calibration",
+    "intro": "People score a sample of applications per criterion, without seeing the AI's scores. The report shows where people and the AI agree, and suggests how to make unclear criteria clearer. A suggestion never changes the rubric: a person edits it and locks a new version.",
+    "chooseJob": "Choose a job to calibrate.",
+    "job": "Job",
+    "open": "Open",
+    "labelTitle": "Label applications",
+    "labelIntro": "Read the CV and score each criterion from 0 to 4 against its anchors. You will not see the AI's scores here.",
+    "nothing": "No scored applications for this job yet.",
+    "labelled": "labelled",
+    "noText": "The CV text is not available.",
+    "save": "Save my scores",
+    "saved": "Saved.",
+    "failed": "Something went wrong. Try again.",
+    "reportTitle": "Agreement per criterion",
+    "reportScope": "From {labels} labels and {overrides} recorded overrides.",
+    "stats": "{n, plural, one {# pair} other {# pairs}}: exact {exact}, within one point {within}.",
+    "kappa": "Cohen's kappa {kappa}.",
+    "kappaNote": "Kappa: {note}.",
+    "none": "none",
+    "low": "Low agreement",
+    "askModel": "Ask the AI for a suggestion",
+    "modelSays": "AI suggestion:",
+    "modelUnavailable": "No AI suggestion is available for this criterion. Use the suggestion from the anchors.",
+    "never": "Suggestions are advice for a person. Nothing changes the rubric until someone edits and locks a new version."
   }
 }

@@ -15,6 +15,12 @@ Migration ``hire_0017``, the counterfactual fairness runner (``analytics.fairnes
   model would read exactly the same input, and (live runs only) the two overall scores,
   their difference and whether it is above the threshold. ``model_status`` says
   ``pending_live_run`` when the model step was not measured.
+
+Migration ``hire_0018``, calibration mode (``analytics.calibration``):
+
+* ``hire_calibration_labels``: a person's score (0 to 4) for one criterion of one
+  screened application, given without seeing the AI's score. One per person, screening
+  and criterion; labelling again replaces it.
 """
 
 from __future__ import annotations
@@ -28,10 +34,12 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    ForeignKey,
     ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
+    SmallInteger,
     String,
     UniqueConstraint,
     Uuid,
@@ -45,6 +53,7 @@ from pairly_core.db import Base, OrgScoped
 
 FAIRNESS_RUNS: Final = "hire_fairness_runs"
 FAIRNESS_RESULTS: Final = "hire_fairness_results"
+CALIBRATION_LABELS: Final = "hire_calibration_labels"
 
 
 def _uuid_pk() -> Mapped[uuid.UUID]:
@@ -121,5 +130,50 @@ class HireFairnessResult(Base, OrgScoped):
     delta: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
     flagged: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class HireCalibrationLabel(Base, OrgScoped):
+    __tablename__ = CALIBRATION_LABELS
+    __table_args__ = (
+        UniqueConstraint(
+            "org_id",
+            "screening_id",
+            "criterion_id",
+            "labelled_by",
+            name="uq_hire_calibration_labels_person",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "application_id"],
+            ["hire_applications.org_id", "hire_applications.id"],
+            ondelete="RESTRICT",
+            name="fk_hire_calibration_labels_application_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "job_id"],
+            ["hire_jobs.org_id", "hire_jobs.id"],
+            ondelete="RESTRICT",
+            name="fk_hire_calibration_labels_job_org",
+        ),
+        CheckConstraint("score BETWEEN 0 AND 4", name="score_range"),
+        CheckConstraint("criterion_id ~ '^[a-z][a-z0-9_]{0,47}$'", name="criterion_format"),
+        Index("ix_hire_calibration_labels_job", "org_id", "job_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    application_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    screening_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    job_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    rubric_policy_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    criterion_id: Mapped[str] = mapped_column(String(48), nullable=False)
+    score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    labelled_by: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -281,6 +281,7 @@ export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?:
 const REPORTS = [
   { key: "analytics", href: "/hire/analytics", permission: "hire.analytics.read" },
   { key: "bias", href: "/hire/bias", permission: "hire.bias.read" },
+  { key: "calibration", href: "/hire/calibration", permission: "hire.calibration.write" },
 ] as const;
 
 /** Links to the Hire reports the person may open (the API checks again on every call). */

@@ -213,6 +213,7 @@ type = "forbidden"
 source_modules = [
   "pairly_hire.analytics.facts", "pairly_hire.analytics.metrics", "pairly_hire.analytics.stats",
   "pairly_hire.analytics.fairness", "pairly_hire.analytics.models",
+  "pairly_hire.analytics.calibration", "pairly_hire.analytics.calibration_recordings",
 ]
 forbidden_modules = ["pairly_hire.selfid", "pairly_hire.api"]
 

@@ -5195,6 +5195,401 @@
         "title": "HireCalendarProviderOut",
         "type": "object"
       },
+      "HireCalibrationAgreementOut": {
+        "properties": {
+          "criterion_id": {
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "exact": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exact"
+          },
+          "kappa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kappa"
+          },
+          "kappa_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kappa Note"
+          },
+          "low_agreement": {
+            "title": "Low Agreement",
+            "type": "boolean"
+          },
+          "mean_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Difference"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Sources",
+            "type": "object"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion"
+          },
+          "top_disagreement": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Disagreement"
+          },
+          "within_one": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Within One"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "name",
+          "n",
+          "exact",
+          "within_one",
+          "kappa",
+          "kappa_note",
+          "mean_difference",
+          "sources",
+          "top_disagreement",
+          "low_agreement",
+          "direction",
+          "suggestion"
+        ],
+        "title": "HireCalibrationAgreementOut",
+        "type": "object"
+      },
+      "HireCalibrationApplicationOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "blind": {
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalibrationCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "my_scores": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "My Scores",
+            "type": "object"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "application_id",
+          "reference",
+          "blind",
+          "text",
+          "criteria",
+          "my_scores"
+        ],
+        "title": "HireCalibrationApplicationOut",
+        "type": "object"
+      },
+      "HireCalibrationCriterionOut": {
+        "properties": {
+          "anchors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Anchors",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence": {
+            "title": "Evidence",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "evidence",
+          "anchors"
+        ],
+        "title": "HireCalibrationCriterionOut",
+        "type": "object"
+      },
+      "HireCalibrationItemOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "labelled": {
+            "title": "Labelled",
+            "type": "boolean"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_id",
+          "reference",
+          "labelled"
+        ],
+        "title": "HireCalibrationItemOut",
+        "type": "object"
+      },
+      "HireCalibrationLabelsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "scores": {
+            "additionalProperties": {
+              "maximum": 4,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "title": "Scores",
+            "type": "object"
+          }
+        },
+        "required": [
+          "scores"
+        ],
+        "title": "HireCalibrationLabelsIn",
+        "type": "object"
+      },
+      "HireCalibrationReportOut": {
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalibrationAgreementOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "labels": {
+            "title": "Labels",
+            "type": "integer"
+          },
+          "overrides": {
+            "title": "Overrides",
+            "type": "integer"
+          },
+          "rubric_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rubric Version"
+          }
+        },
+        "required": [
+          "job_id",
+          "rubric_version",
+          "labels",
+          "overrides",
+          "criteria"
+        ],
+        "title": "HireCalibrationReportOut",
+        "type": "object"
+      },
+      "HireCalibrationSampleOut": {
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalibrationCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireCalibrationItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "rubric_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rubric Version"
+          }
+        },
+        "required": [
+          "job_id",
+          "rubric_version",
+          "criteria",
+          "items"
+        ],
+        "title": "HireCalibrationSampleOut",
+        "type": "object"
+      },
+      "HireCalibrationSuggestIn": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "pattern": "^[a-z][a-z0-9_]{0,47}$",
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "criterion_id"
+        ],
+        "title": "HireCalibrationSuggestIn",
+        "type": "object"
+      },
+      "HireCalibrationSuggestionOut": {
+        "properties": {
+          "criterion_id": {
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "suggestion": {
+            "title": "Suggestion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "suggestion",
+          "from_recording"
+        ],
+        "title": "HireCalibrationSuggestionOut",
+        "type": "object"
+      },
       "HireCardOut": {
         "properties": {
           "application_id": {
@@ -21514,6 +21909,239 @@
           }
         },
         "summary": "Bias Export",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/calibration/items/{application_id}": {
+      "get": {
+        "operationId": "calibration_item_v1_hire_calibration_items__application_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalibrationApplicationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Item",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "calibration_label_v1_hire_calibration_items__application_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireCalibrationLabelsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalibrationApplicationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Label",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/calibration/report": {
+      "get": {
+        "operationId": "calibration_report_v1_hire_calibration_report_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalibrationReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Report",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/calibration/sample": {
+      "get": {
+        "operationId": "calibration_sample_v1_hire_calibration_sample_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalibrationSampleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Sample",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/calibration/suggest": {
+      "post": {
+        "operationId": "calibration_suggest_v1_hire_calibration_suggest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireCalibrationSuggestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireCalibrationSuggestionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Suggest",
         "tags": [
           "hire"
         ]

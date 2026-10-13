@@ -72,6 +72,7 @@ demo: local-up ## Native stack up plus a complete Hire and expense demo (org "de
 	$(UV) run python -m pairly_hire.recordings --check
 	$(UV) run python -m pairly_hire.messaging.recordings --check
 	$(UV) run python -m pairly_hire.interviewing.recordings --check
+	$(UV) run python -m pairly_hire.analytics.calibration_recordings --check
 	$(UV) run python -m synth.hire.interviews --check
 	$(UV) run python -m synth.hire.references --check
 	$(UV) run python -m synth.expense --check
@@ -138,6 +139,7 @@ demo-hire: ## Seed Pairly Hire in an org (SLUG=acme): jobs, rubrics, people, rec
 	$(UV) run python -m pairly_hire.recordings --check
 	$(UV) run python -m pairly_hire.messaging.recordings --check
 	$(UV) run python -m pairly_hire.interviewing.recordings --check
+	$(UV) run python -m pairly_hire.analytics.calibration_recordings --check
 	$(RUN_OWNER) pairly-admin seed hire-demo --org "$(SLUG)"
 	@echo ""
 	@echo "Careers page: /en/careers/$(SLUG) and /ar/careers/$(SLUG) on the web app."
