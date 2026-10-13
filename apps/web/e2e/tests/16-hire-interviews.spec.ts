@@ -23,6 +23,9 @@ import { logCheck, SCRATCH_ROOT } from "../utils/report";
 // sign-in, check-email, two-factor or invitation page. Clicks and typed characters are
 // reported too. Results: <scratch>/hire-interviews.json.
 //
+// The worker sends the briefings on its once-a-minute delivery round, so the spec polls
+// the outbox for them (up to two and a half minutes) before it starts.
+//
 // The links are single use: run once per `make demo`, with one worker.
 
 test.describe.configure({ mode: "serial" });
@@ -33,6 +36,8 @@ const PHONE = { width: 375, height: 812 };
 const THREE_MINUTES = 3 * 60_000;
 const OUT = path.join(SCRATCH_ROOT, "hire-interviews.json");
 const LINK_RE = /https?:\/\/[^\s"<>]+\/scorecard#sk1\.[A-Za-z0-9._-]+/g;
+// Two delivery rounds of the worker (once a minute) plus slack.
+const BRIEFING_WAIT_MS = 150_000;
 const AUTH_PATH_RE = /\/(sign-in|check-email|two-factor|invite)(\/|$|\?)/;
 
 mkdirSync(SCRATCH_ROOT, { recursive: true });
@@ -60,6 +65,16 @@ function briefingLinks(): string[] {
   return [...new Set(links)];
 }
 
+/** The worker delivers briefings once a minute: poll the outbox until they arrive. */
+async function waitForBriefingLinks(timeoutMs = BRIEFING_WAIT_MS): Promise<string[]> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const links = briefingLinks();
+    if (links.length > 0 || Date.now() >= deadline) return links;
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+}
+
 function watchLoginSteps(page: Page): { count: () => number } {
   let steps = 0;
   page.on("framenavigated", (frame) => {
@@ -72,8 +87,8 @@ function watchLoginSteps(page: Page): { count: () => number } {
 test("interviewer opens the scorecard from the invite and submits: under 3 minutes, at most 1 login step", async ({
   browser,
 }) => {
-  test.setTimeout(6 * 60_000);
-  const links = briefingLinks();
+  test.setTimeout(6 * 60_000 + BRIEFING_WAIT_MS);
+  const links = await waitForBriefingLinks();
   expect(links.length, "the demo briefings carry scorecard links").toBeGreaterThan(0);
 
   for (const link of links) {
