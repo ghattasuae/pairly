@@ -77,6 +77,7 @@ from pairly_hire.pipeline import models as pipeline_models  # noqa: F401  (table
 from pairly_hire.pipeline.rediscovery import JOB_NAME as REDISCOVERY_JOB
 from pairly_hire.pipeline.rediscovery import SEARCH_SOURCES, run_index_job
 from pairly_hire.portal import models as portal_models  # noqa: F401  (tables)
+from pairly_hire.references import models as reference_models  # noqa: F401  (tables)
 from pairly_hire.requisitions import graph as requisition_graph
 from pairly_hire.requisitions import models as requisition_models  # noqa: F401  (tables)
 from pairly_hire.retention import RETENTION_RULES

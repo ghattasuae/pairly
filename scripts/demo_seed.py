@@ -86,6 +86,7 @@ from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate
 from pairly_hire.pipeline import moves
 from pairly_hire.pipeline.records import load_record
 from pairly_hire.pipeline.rediscovery import index_candidate
+from pairly_hire.references import service as reference_service
 from pairly_hire.rubric import POLICY_KIND as RUBRIC_KIND
 from pairly_hire.rubric import policy_name, rubric_validator
 from pairly_hire.scheduling import service as scheduling
@@ -105,6 +106,8 @@ from synth.hire.interviews import (  # noqa: E402
     demo_ratings,
 )
 from synth.hire.interviews import recordings_text as interview_recordings_text  # noqa: E402
+from synth.hire.references import DEMO_REFERENCES  # noqa: E402
+from synth.hire.references import recordings_text as reference_recordings_text  # noqa: E402
 from synth.hire.screening import (  # noqa: E402
     DEMO_APPLICATIONS,
     DEMO_JOB,
@@ -423,6 +426,13 @@ async def seed_jobs(sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid
                 f"recorded interview kits and debriefs: {report.imported} imported, "
                 f"{report.skipped} already there"
             )
+            report = await import_recordings(
+                session, org_id, parse_bundle(reference_recordings_text())
+            )
+            lines.append(
+                f"recorded reference summaries: {report.imported} imported, "
+                f"{report.skipped} already there"
+            )
     return lines
 
 
@@ -652,6 +662,9 @@ async def arrange(
                         lines.append(
                             f"{applicant.key}: interview scorecard submitted (debrief ready)"
                         )
+                    added = await _demo_references(session, app.id, recruiter.id)
+                    if added:
+                        lines.append(f"{applicant.key}: {added} answered references")
                 if applicant.waiting:
                     days = await sla_days(session)
                     stale = datetime.now(UTC) - timedelta(days=days + 5)
@@ -700,6 +713,26 @@ async def _demo_scorecard(
         submit=True,
     )
     return True
+
+
+async def _demo_references(
+    session: AsyncSession, application_id: uuid.UUID, recruiter_id: uuid.UUID
+) -> int:
+    """Two answered references (synth.hire.references: the recorded summary answers for
+    exactly these answers)."""
+    if await reference_service.for_application(session, application_id):
+        return 0
+    for ref in DEMO_REFERENCES:
+        await reference_service.seed_submitted(
+            session,
+            recruiter_id,
+            application_id,
+            name=str(ref["name"]),
+            email=str(ref["email"]),
+            relationship=str(ref["relationship"]),
+            answers=dict(ref["answers"]),
+        )
+    return len(DEMO_REFERENCES)
 
 
 async def talent_pool(

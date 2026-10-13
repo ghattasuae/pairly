@@ -47,3 +47,6 @@ export type HireScorecardPage = S["HireScorecardPageOut"];
 export type HireScorecard = S["HireScorecardOut"];
 export type HireOtherScorecard = S["HireOtherScorecardOut"];
 export type HireDebrief = S["HireDebriefOut"];
+export type HireReferences = S["HireReferencesOut"];
+export type HireReference = S["HireReferenceOut"];
+export type HireRefereePage = S["HireRefereePageOut"];

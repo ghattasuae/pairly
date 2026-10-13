@@ -827,6 +827,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List References */
+        get: operations["list_references_v1_hire_applications__application_id__references_get"];
+        put?: never;
+        /** Ask Referee */
+        post: operations["ask_referee_v1_hire_applications__application_id__references_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/scorecards": {
         parameters: {
             query?: never;
@@ -2052,6 +2070,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/public/references/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Reference */
+        post: operations["open_reference_v1_hire_public_references_open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/public/scheduling/book": {
         parameters: {
             query?: never;
@@ -2151,6 +2186,75 @@ export type paths = {
         put?: never;
         /** Rediscover */
         post: operations["rediscover_v1_hire_rediscovery_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/reference-session/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Referee Form */
+        get: operations["referee_form_v1_hire_reference_session_me_get"];
+        /** Referee Save */
+        put: operations["referee_save_v1_hire_reference_session_me_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/reference-session/me/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Referee Submit */
+        post: operations["referee_submit_v1_hire_reference_session_me_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/references/{reference_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_v1_hire_references__reference_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/references/{reference_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend */
+        post: operations["resend_v1_hire_references__reference_id__send_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6795,6 +6899,155 @@ export type components = {
             /** Query */
             query: string;
         };
+        /** HireRefereeAnswersIn */
+        HireRefereeAnswersIn: {
+            /** Answers */
+            answers: {
+                [key: string]: string | number | null;
+            };
+        };
+        /** HireRefereePageOut */
+        HireRefereePageOut: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            };
+            /** Candidate Name */
+            candidate_name: string;
+            /** Company */
+            company: string;
+            /** Job Title */
+            job_title: string;
+            /** Questions */
+            questions: components["schemas"]["HireRefereeQuestionOut"][];
+            /** Referee Name */
+            referee_name: string;
+            /** Status */
+            status: string;
+        };
+        /** HireRefereeQuestionOut */
+        HireRefereeQuestionOut: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Options */
+            options: string[];
+            /** Required */
+            required: boolean;
+        };
+        /** HireRefereeSessionOut */
+        HireRefereeSessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Session Token */
+            session_token: string;
+        };
+        /** HireRefereeTokenIn */
+        HireRefereeTokenIn: {
+            /** Token */
+            token: string;
+        };
+        /** HireReferenceFlagOut */
+        HireReferenceFlagOut: {
+            /** Detail */
+            detail: string;
+            /** Kind */
+            kind: string;
+            /** Referee */
+            referee: string;
+        };
+        /** HireReferenceIn */
+        HireReferenceIn: {
+            /** Email */
+            email: string;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Name */
+            name: string;
+            /**
+             * Relationship
+             * @enum {string}
+             */
+            relationship: "manager" | "peer" | "direct_report" | "client" | "other";
+        };
+        /** HireReferenceOut */
+        HireReferenceOut: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Locale */
+            locale: string;
+            /** Opened At */
+            opened_at: string | null;
+            /** Referee Email */
+            referee_email: string | null;
+            /** Referee Name */
+            referee_name: string | null;
+            /** Relationship */
+            relationship: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** HireReferencesOut */
+        HireReferencesOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Can Write */
+            can_write: boolean;
+            /** Candidate Label */
+            candidate_label: string;
+            /** Flags */
+            flags: components["schemas"]["HireReferenceFlagOut"][];
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /** Items */
+            items: components["schemas"]["HireReferenceOut"][];
+            /** Submitted */
+            submitted: number;
+            summary: components["schemas"]["HireReferenceSummaryOut"] | null;
+        };
+        /** HireReferenceSummaryOut */
+        HireReferenceSummaryOut: {
+            /** Development */
+            development: string[];
+            /** From Recording */
+            from_recording: boolean;
+            /** Inconsistencies */
+            inconsistencies: string[];
+            /** Prompt Version */
+            prompt_version: string;
+            /** Source */
+            source: string;
+            /** Strengths */
+            strengths: string[];
+            /** Summary */
+            summary: string;
+        };
         /** HireReferralLinkIn */
         HireReferralLinkIn: {
             /**
@@ -10455,6 +10708,74 @@ export interface operations {
             };
         };
     };
+    list_references_v1_hire_applications__application_id__references_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireReferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_referee_v1_hire_applications__application_id__references_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireReferenceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireReferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     application_scorecards_v1_hire_applications__application_id__scorecards_get: {
         parameters: {
             query?: {
@@ -12991,6 +13312,39 @@ export interface operations {
             };
         };
     };
+    open_reference_v1_hire_public_references_open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireRefereeTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRefereeSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     public_book_v1_hire_public_scheduling_book_post: {
         parameters: {
             query?: never;
@@ -13176,6 +13530,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireRediscoveryHit"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    referee_form_v1_hire_reference_session_me_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRefereePageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    referee_save_v1_hire_reference_session_me_put: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireRefereeAnswersIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRefereePageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    referee_submit_v1_hire_reference_session_me_submit_post: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireRefereeAnswersIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireRefereePageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_v1_hire_references__reference_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireReferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_v1_hire_references__reference_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireReferencesOut"];
                 };
             };
             /** @description Validation Error */

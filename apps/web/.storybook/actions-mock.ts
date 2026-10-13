@@ -134,3 +134,10 @@ export const snoozeFromLink = unavailable;
 export const loadScorecard = unavailable;
 export const saveScorecard = unavailable;
 export const snoozeScorecard = unavailable;
+// Reference checks (lib/actions/references.ts, lib/actions/referee.ts).
+export const askReferee = unavailable;
+export const resendReference = unavailable;
+export const cancelReference = unavailable;
+export const openReference = unavailable;
+export const loadReference = unavailable;
+export const saveReference = unavailable;

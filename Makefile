@@ -73,6 +73,7 @@ demo: local-up ## Native stack up plus a complete Hire and expense demo (org "de
 	$(UV) run python -m pairly_hire.messaging.recordings --check
 	$(UV) run python -m pairly_hire.interviewing.recordings --check
 	$(UV) run python -m synth.hire.interviews --check
+	$(UV) run python -m synth.hire.references --check
 	$(UV) run python -m synth.expense --check
 	nice -n 10 $(LOCAL) exec demo -- python scripts/demo_seed.py
 

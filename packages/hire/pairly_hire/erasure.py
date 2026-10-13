@@ -50,6 +50,9 @@ Erased in step 1:
   ratings and recommendations stay), and the text of their debrief summaries (content
   emptied) and the reason of the decision taken on them (``[erased]``; the decision,
   who and when stay).
+* references: the referee's name and address (replaced), their answers (removed), the
+  kept reference summaries (content emptied); their links and sessions end. Status and
+  times stay.
 * portal sign-in links and sessions (deleted), the candidate's notes on their data
   requests, the reasons of their review requests (appeals), their self-identification
   answers (deleted).
@@ -106,6 +109,12 @@ from pairly_hire.portal.models import (
     HireDocumentRequest,
     HirePortalSession,
     HirePortalToken,
+)
+from pairly_hire.references.models import (
+    HireReferenceLink,
+    HireReferenceRequest,
+    HireReferenceSession,
+    HireReferenceSummary,
 )
 from pairly_hire.scheduling.models import HireInterview
 from pairly_hire.screening.models import HireScreening
@@ -178,6 +187,7 @@ class _Scope:
     data_request_ids: set[uuid.UUID] = field(default_factory=set)
     document_request_ids: set[uuid.UUID] = field(default_factory=set)
     appeal_ids: set[uuid.UUID] = field(default_factory=set)
+    reference_ids: set[uuid.UUID] = field(default_factory=set)
     extraction_ids: set[uuid.UUID] = field(default_factory=set)
     decision_ids: set[str] = field(default_factory=set)
     model_call_ids: set[uuid.UUID] = field(default_factory=set)
@@ -196,6 +206,7 @@ class _Scope:
             *self.document_request_ids,
             *self.appeal_ids,
             *self.extraction_ids,
+            *self.reference_ids,
         }
         return sorted(str(i) for i in ids)
 
@@ -209,6 +220,7 @@ class ErasureCounts:
     notes: int = 0
     interviews: int = 0
     feedback: int = 0
+    references: int = 0
     screenings: int = 0
     notifications: int = 0
     decisions: int = 0
@@ -314,6 +326,11 @@ async def _scope(session: AsyncSession, candidate: HireCandidate) -> _Scope:
     scope.appeal_ids = set(
         await session.scalars(
             select(Appeal.id).where(Appeal.requester_id == f"hire_candidate:{cid}")
+        )
+    )
+    scope.reference_ids = set(
+        await session.scalars(
+            select(HireReferenceRequest.id).where(HireReferenceRequest.candidate_id == cid)
         )
     )
     return scope
@@ -447,6 +464,62 @@ async def _erase_feedback(session: AsyncSession, scope: _Scope) -> int:
         if debrief.decision_reason is not None:
             debrief.decision_reason = ERASED_TEXT
         count += 1
+    return count
+
+
+async def _erase_references(session: AsyncSession, scope: _Scope, now: datetime) -> int:
+    """Referees' names, addresses and answers, and the kept summaries."""
+    count = 0
+    for ref in await session.scalars(
+        select(HireReferenceRequest)
+        .where(HireReferenceRequest.id.in_(scope.reference_ids))
+        .with_for_update()
+    ):
+        org, rid = ref.org_id, ref.id
+        ref.referee_name = _sealed(
+            HireReferenceRequest, "referee_name", ERASED_TEXT, org_id=org, row_id=rid
+        )
+        ref.referee_email = _sealed(
+            HireReferenceRequest, "referee_email", erased_email(rid), org_id=org, row_id=rid
+        )
+        ref.answers = None
+        ref.erased_at = ref.erased_at or now
+        ref.updated_at = now
+        count += 1
+    if scope.reference_ids:
+        for link in await session.scalars(
+            select(HireReferenceLink)
+            .where(
+                HireReferenceLink.request_id.in_(scope.reference_ids),
+                HireReferenceLink.used_at.is_(None),
+            )
+            .with_for_update()
+        ):
+            link.used_at = now
+        for ref_session in await session.scalars(
+            select(HireReferenceSession)
+            .where(
+                HireReferenceSession.request_id.in_(scope.reference_ids),
+                HireReferenceSession.revoked_at.is_(None),
+            )
+            .with_for_update()
+        ):
+            ref_session.revoked_at = now
+    if scope.app_ids:
+        for summary in await session.scalars(
+            select(HireReferenceSummary)
+            .where(HireReferenceSummary.application_id.in_(scope.app_ids))
+            .with_for_update()
+        ):
+            if summary.model_call_id is not None:
+                scope.model_call_ids.add(summary.model_call_id)
+            summary.content = _sealed(
+                HireReferenceSummary,
+                "content",
+                dict(ERASED_MARK),
+                org_id=summary.org_id,
+                row_id=summary.id,
+            )
     return count
 
 
@@ -723,6 +796,7 @@ async def erase_candidate(
     notes = await _erase_pipeline(session, scope)
     interviews = await _erase_interviews(session, scope, now)
     feedback = await _erase_feedback(session, scope)
+    references = await _erase_references(session, scope, now)
     screenings = await _erase_screenings(session, scope, now)
     await _erase_portal(session, scope)
     documents = await _erase_documents(session, scope, now)
@@ -740,6 +814,7 @@ async def erase_candidate(
         notes=notes,
         interviews=interviews,
         feedback=feedback,
+        references=references,
         screenings=screenings,
         notifications=notifications,
         decisions=decisions,

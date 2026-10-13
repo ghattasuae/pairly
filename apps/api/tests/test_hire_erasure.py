@@ -51,6 +51,7 @@ from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.portal.auth import PortalIdentity
 from pairly_hire.portal.models import HireDataRequest, HirePortalSession, HirePortalToken
 from pairly_hire.portal.service import export_data
+from pairly_hire.references.models import HireReferenceRequest, HireReferenceSummary
 from pairly_hire.scheduling.models import HireInterview
 from pairly_hire.screening.models import HireScreening
 from pairly_hire.selfid.models import HireSelfIdentification
@@ -287,8 +288,48 @@ async def _gather(
                 decided_by=manager,
                 decided_at=now,
             )
+            reference = HireReferenceRequest(
+                id=uuid.uuid4(),
+                org_id=org,
+                application_id=app.id,
+                candidate_id=cid,
+                job_id=app.job_id,
+                relationship="manager",
+                status="submitted",
+                submitted_at=now,
+                requested_by=recruiter,
+            )
+            for column, value in (
+                ("referee_name", f"Referee of {name}"),
+                ("referee_email", f"ref.{email}"),
+                ("answers", {"strengths": f"{name} led the migration."}),
+            ):
+                setattr(
+                    reference,
+                    column,
+                    seal(HireReferenceRequest, column, value, org_id=org, row_id=reference.id),
+                )
+            ref_summary = HireReferenceSummary(
+                id=uuid.uuid4(),
+                org_id=org,
+                application_id=app.id,
+                locale="en",
+                answers_hash="d" * 64,
+                request_ids=[reference.id],
+                source="model",
+                prompt_version="hire_reference_summary/v1",
+            )
+            ref_summary.content = seal(
+                HireReferenceSummary,
+                "content",
+                {"summary": f"{name} is calm under pressure."},
+                org_id=org,
+                row_id=ref_summary.id,
+            )
             session.add(interview)
+            session.add(reference)
             await session.flush()
+            session.add(ref_summary)
             session.add_all(
                 [
                     move,

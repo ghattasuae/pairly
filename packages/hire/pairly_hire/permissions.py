@@ -38,6 +38,10 @@ Who does what by default:
   the debrief summary is ``hire.scorecard.read`` (never for a panelist who has not
   submitted their own yet, enforced by the API).
 
+* Reference checks (M3) are for the people who decide on candidates: recruiters, hiring
+  managers and admins read them (``hire.reference.read``) and ask referees
+  (``hire.reference.write``). Interviewers and auditors never read referees' answers.
+
 Declaring ``hire.document.*`` makes the engine use them instead of ``core.document.*``
 for documents of the ``hire`` workflow (CVs), so a member limited to Hire can open them.
 """
@@ -73,6 +77,8 @@ REQUISITION_CREATE: Final = "hire.requisition.create"
 REQUISITION_APPROVE: Final = "hire.requisition.approve"
 PLAN_WRITE: Final = "hire.interview_plan.write"
 SCORECARD_READ: Final = "hire.scorecard.read"
+REFERENCE_READ: Final = "hire.reference.read"
+REFERENCE_WRITE: Final = "hire.reference.write"
 
 # Who sees draft, paused and closed jobs; everyone else with ``hire.job.read`` sees
 # open jobs only (an unannounced role stays confidential).
@@ -181,5 +187,15 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         SCORECARD_READ,
         "View everyone's interview scorecards and the debrief summary",
         frozenset({R.ADMIN, *_HIRING, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        REFERENCE_READ,
+        "View reference checks: referees, their answers and the summary",
+        frozenset({R.ADMIN, *_HIRING}),
+    ),
+    PermissionSpec(
+        REFERENCE_WRITE,
+        "Ask referees for a reference, send their link again or cancel it",
+        frozenset({R.ADMIN, *_HIRING}),
     ),
 )

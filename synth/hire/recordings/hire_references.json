@@ -1,0 +1,142 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "561fb5c36b6a53f968d68cadde1a2970d07e16446df7e502ae373d2c11bb3f32",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "job_title": "Backend Engineer, Payments",
+          "language": "en",
+          "references": [
+            {
+              "answers": {
+                "candidate_title": "Backend Engineer",
+                "company": "Falcon Payments",
+                "development": "Could push back earlier when deadlines were unrealistic.",
+                "known_as": "manager",
+                "reliability": 5,
+                "strengths": "Owned the payment retry service end to end and explained trade offs clearly to the product team.",
+                "worked_from": "2021-02",
+                "worked_to": "2024-01",
+                "would_rehire": "yes"
+              },
+              "label": "Referee 1"
+            },
+            {
+              "answers": {
+                "candidate_title": "Backend Engineer",
+                "company": "Falcon Payments",
+                "development": "Query tuning on large tables was newer ground.",
+                "known_as": "peer",
+                "reliability": 4,
+                "strengths": "Patient reviewer who left the codebase cleaner than they found it.",
+                "worked_from": "2022-05",
+                "worked_to": "2024-01",
+                "would_rehire": "yes"
+              },
+              "label": "Referee 2"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1200,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2c52bc26b755d37b02daf3093b8d5c3c5f91ea53fb7143465be96c23bac52193",
+      "response": {
+        "development": [
+          "Referee 1: Could push back earlier when deadlines were unrealistic.",
+          "Referee 2: Query tuning on large tables was newer ground."
+        ],
+        "inconsistencies": [],
+        "strengths": [
+          "Referee 1: Owned the payment retry service end to end and explained trade offs clearly to the product team.",
+          "Referee 2: Patient reviewer who left the codebase cleaner than they found it."
+        ],
+        "summary": "2 referees answered. Would work with them again: Referee 1: yes, Referee 2: yes. Average reliability 4.5 of 5."
+      },
+      "schema_hash": "65a33353719b62a1a795030328a48a7785d8322def2221db1c4681145b4a8cf5",
+      "schema_name": "ReferenceDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_reference_summary",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "561fb5c36b6a53f968d68cadde1a2970d07e16446df7e502ae373d2c11bb3f32",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "job_title": "Backend Engineer, Payments",
+          "language": "ar",
+          "references": [
+            {
+              "answers": {
+                "candidate_title": "Backend Engineer",
+                "company": "Falcon Payments",
+                "development": "Could push back earlier when deadlines were unrealistic.",
+                "known_as": "manager",
+                "reliability": 5,
+                "strengths": "Owned the payment retry service end to end and explained trade offs clearly to the product team.",
+                "worked_from": "2021-02",
+                "worked_to": "2024-01",
+                "would_rehire": "yes"
+              },
+              "label": "المرجع 1"
+            },
+            {
+              "answers": {
+                "candidate_title": "Backend Engineer",
+                "company": "Falcon Payments",
+                "development": "Query tuning on large tables was newer ground.",
+                "known_as": "peer",
+                "reliability": 4,
+                "strengths": "Patient reviewer who left the codebase cleaner than they found it.",
+                "worked_from": "2022-05",
+                "worked_to": "2024-01",
+                "would_rehire": "yes"
+              },
+              "label": "المرجع 2"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1200,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ad4d2a5ee2f99fee34f6b8ce2c71475a24e94df3a6b482f27091e1cf2c541750",
+      "response": {
+        "development": [
+          "المرجع 1: Could push back earlier when deadlines were unrealistic.",
+          "المرجع 2: Query tuning on large tables was newer ground."
+        ],
+        "inconsistencies": [],
+        "strengths": [
+          "المرجع 1: Owned the payment retry service end to end and explained trade offs clearly to the product team.",
+          "المرجع 2: Patient reviewer who left the codebase cleaner than they found it."
+        ],
+        "summary": "أرسل 2 من المراجع إجاباتهم. العمل معه مرة أخرى: المرجع 1: نعم, المرجع 2: نعم. متوسط الالتزام 4.5 من 5."
+      },
+      "schema_hash": "65a33353719b62a1a795030328a48a7785d8322def2221db1c4681145b4a8cf5",
+      "schema_name": "ReferenceDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_reference_summary",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}

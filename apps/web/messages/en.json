@@ -2181,7 +2181,8 @@
     "noRight": "Your role can view the shortlist but not record decisions.",
     "holdNote": "On hold: {reason}",
     "openKit": "Interview kit",
-    "openDebrief": "Debrief"
+    "openDebrief": "Debrief",
+    "openReferences": "References"
   },
   "Requisitions": {
     "title": "Requisitions",
@@ -2333,5 +2334,82 @@
       "reject": "Reject"
     },
     "submitFirst": "Submit your own scorecard first. The debrief stays hidden until you do."
+  },
+  "References": {
+    "pageTitle": "References",
+    "title": "References for {candidate}",
+    "intro": "Ask referees for a short structured reference. They answer through a secure link, no account needed.",
+    "blindNote": "The candidate is anonymous for now, so referees show without names or addresses.",
+    "summary": "Summary",
+    "aiNote": "Summarised by AI from the answers. You decide.",
+    "answersNote": "Summarised from the answers.",
+    "strengths": "Strengths",
+    "development": "To develop",
+    "inconsistencies": "Where referees differ",
+    "flags": "Checks against the CV",
+    "flagsNote": "Compared in code with the work history read from the CV. For you to look into, not a verdict.",
+    "referees": "Referees ({submitted} of {total} answered)",
+    "none": "No referee asked yet.",
+    "sentAt": "Link sent {when}",
+    "resend": "Send a new link",
+    "cancel": "Cancel request",
+    "ask": "Ask a referee",
+    "askHint": "The referee gets an email with a single use link that works for 72 hours.",
+    "name": "Referee's name",
+    "email": "Referee's email",
+    "relationshipLabel": "How they know the candidate",
+    "language": "Email language",
+    "send": "Send the request",
+    "status": {
+      "requested": "Sent",
+      "in_progress": "In progress",
+      "submitted": "Answered",
+      "cancelled": "Cancelled"
+    },
+    "relationship": {
+      "manager": "Manager",
+      "peer": "Peer",
+      "direct_report": "Direct report",
+      "client": "Client",
+      "other": "Other"
+    },
+    "answer": {
+      "known_as": "Relationship",
+      "company": "Worked together at",
+      "candidate_title": "Candidate's title",
+      "worked_from": "From",
+      "worked_to": "Until",
+      "strengths": "Strengths",
+      "development": "To develop",
+      "reliability": "Reliability (1 to 5)",
+      "would_rehire": "Would work with them again",
+      "anything_else": "Anything else"
+    }
+  },
+  "Referee": {
+    "title": "Reference form",
+    "opening": "Opening the form...",
+    "linkInvalid": "This link has already been used or has expired.",
+    "linkHelp": "Ask the hiring team to send you a new link. Your saved answers are kept.",
+    "heading": "A reference for {candidate}",
+    "context": "Hello {name}. {candidate} applied for {job} at {company} and named you as a reference. It takes about 5 minutes.",
+    "privacy": "Only the hiring team reads your answers. They are stored securely and deleted with the candidate's data.",
+    "progress": "{done} of {total} required answers",
+    "save": "Save and finish later",
+    "saved": "Saved. You can come back with this link while it is valid.",
+    "submit": "Submit the reference",
+    "checkAnswers": "Check your answers: every question marked * is needed, months as shown, and the end after the start.",
+    "thanks": "Thank you, {name}. Your reference is submitted.",
+    "thanksBody": "{company} has received it. You can close this page.",
+    "option": {
+      "manager": "I was their manager",
+      "peer": "We were peers",
+      "direct_report": "I reported to them",
+      "client": "I was their client",
+      "other": "Other",
+      "yes": "Yes",
+      "no": "No",
+      "unsure": "Not sure"
+    }
   }
 }

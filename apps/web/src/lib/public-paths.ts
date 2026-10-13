@@ -9,6 +9,8 @@
 // `/schedule` a candidate's interview scheduling page (signed link in the fragment).
 // `/scorecard` is an interviewer's scorecard opened from its one-click link (its own
 // HTTP-only session cookie for one interview; the API decides every access).
+// `/reference` is a referee's form opened from its signed link (its own HTTP-only session
+// cookie for one reference request; the API decides every access).
 // `/portal` is the candidate portal: candidates never have a staff session; the portal
 // checks its own session (an HTTP-only cookie) and the API decides every access.
 const PUBLIC_PATHS = [
@@ -23,6 +25,7 @@ const PUBLIC_PATHS = [
   "/portal",
   "/schedule",
   "/scorecard",
+  "/reference",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
