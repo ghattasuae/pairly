@@ -4,8 +4,9 @@
 
 One row per application that answered at least one self-identification question. The
 answers are encrypted (``EncryptedJSON``); the application role may insert and read
-rows but never change them. Staff reading needs ``hire.selfid.read`` and only ever produces
-aggregates with small counts suppressed (``pairly_hire.api.reports``); the candidate's own
+rows but never change them. Staff only ever see counts per group, small groups
+suppressed (``pairly_hire.selfid.reporting``, read by ``pairly_hire.analytics.bias``
+behind ``hire.bias.read``); the candidate's own
 data export reads their rows through ``pairly_hire.selfid.export`` (portal session, Row
 Level Security by portal subject).
 

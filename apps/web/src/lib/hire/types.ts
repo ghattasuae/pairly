@@ -63,3 +63,7 @@ export type HireSurveyGroup = S["HireSurveyGroupOut"];
 export type HireAnalytics = S["HireAnalyticsOut"];
 export type HireMetric = S["HireMetricOut"];
 export type HireRecordLink = S["HireRecordLinkOut"];
+export type HireBiasReport = S["HireBiasReportOut"];
+export type HireBiasCategory = S["HireBiasCategoryOut"];
+export type HireBiasStep = S["HireBiasStepOut"];
+export type HireBiasGroup = S["HireBiasGroupOut"];

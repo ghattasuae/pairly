@@ -28,7 +28,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from typing import Any, Final
@@ -448,3 +448,19 @@ async def load_facts(
         people=await _people(session, panel_people),
         jobs={k: str(v) for k, v in titles.items()},
     )
+
+
+async def load_pipeline(
+    session: AsyncSession,
+    *,
+    job_id: uuid.UUID | None = None,
+    since: date | None = None,
+    until: date | None = None,
+) -> tuple[list[AppFact], dict[uuid.UUID, StageSet]]:
+    """Applications with their effective moves, and their jobs' stages (no more)."""
+    apps = await _applications(session, job_id, since, until)
+    moves = await _moves(session, [a.id for a in apps])
+    with_moves = [replace(a, moves=tuple(moves.get(a.id, []))) for a in apps]
+    job_ids = sorted({a.job_id for a in apps})
+    stages = dict(await stages_for_jobs(session, job_ids)) if job_ids else {}
+    return with_moves, stages

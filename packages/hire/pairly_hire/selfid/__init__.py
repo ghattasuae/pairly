@@ -5,9 +5,11 @@
 * ``schema``: the categories an organisation may ask, with fixed options (always
   optional, always with "prefer not to say").
 * ``models``: the ``hire_self_identification`` table, its own row per application,
-  encrypted. Two readers only: bias reporting, with ``hire.selfid.read`` and only as
-  aggregates (``pairly_hire.api.reports``), and the candidate's own data export from the
-  portal (``export.subject_answers``, their own answers back to them, never to staff).
+  encrypted. Two readers only: bias reporting, only as counts per group
+  (``reporting.stage_counts``, used by ``pairly_hire.analytics.bias``), and the
+  candidate's own data export from the portal (``export.subject_answers``, their own
+  answers back to them, never to staff).
+* ``reporting``: that counts-only reader for the bias report.
 * ``export``: that narrow subject-export reader; the portal service is its only importer.
 
 The separation is enforced, not promised: ``pairly_hire.scoring`` may not import this

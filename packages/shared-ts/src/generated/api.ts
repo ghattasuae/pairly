@@ -966,6 +966,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/bias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bias Report */
+        get: operations["bias_report_v1_hire_bias_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/bias/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bias Export */
+        get: operations["bias_export_v1_hire_bias_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/checklist-items/{item_id}/file": {
         parameters: {
             query?: never;
@@ -5474,6 +5508,84 @@ export type components = {
             working_hours: {
                 [key: string]: string[][];
             };
+        };
+        /** HireBiasCategoryOut */
+        HireBiasCategoryOut: {
+            /** Category */
+            category: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Label En */
+            label_en: string;
+            /** Steps */
+            steps: components["schemas"]["HireBiasStepOut"][];
+        };
+        /** HireBiasGroupOut */
+        HireBiasGroupOut: {
+            /** Base */
+            base: number | null;
+            /** Fisher P */
+            fisher_p: number | null;
+            /** Group */
+            group: string;
+            /** Impact Ratio */
+            impact_ratio: number | null;
+            /** Judgement */
+            judgement: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Label En */
+            label_en: string;
+            /** Rate */
+            rate: number | null;
+            /** Selected */
+            selected: number | null;
+            /** Small Sample */
+            small_sample: boolean;
+            /** Suppressed */
+            suppressed: boolean;
+        };
+        /** HireBiasReportOut */
+        HireBiasReportOut: {
+            /** Applications */
+            applications: number;
+            /** Categories */
+            categories: components["schemas"]["HireBiasCategoryOut"][];
+            /** Fairness */
+            fairness: {
+                [key: string]: unknown;
+            } | null;
+            /** Generated At */
+            generated_at: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Notes */
+            notes: string[];
+            settings: components["schemas"]["HireBiasSettingsOut"];
+            /** Since */
+            since: string | null;
+            /** Stages */
+            stages: string[];
+            /** Until */
+            until: string | null;
+        };
+        /** HireBiasSettingsOut */
+        HireBiasSettingsOut: {
+            /** Min Group */
+            min_group: number;
+            /** Min Sample */
+            min_sample: number;
+        };
+        /** HireBiasStepOut */
+        HireBiasStepOut: {
+            /** From Stage */
+            from_stage: string;
+            /** Groups */
+            groups: components["schemas"]["HireBiasGroupOut"][];
+            /** Reference Group */
+            reference_group: string | null;
+            /** To Stage */
+            to_stage: string;
         };
         /** HireBoardOut */
         HireBoardOut: {
@@ -11933,6 +12045,72 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HireRunOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bias_report_v1_hire_bias_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                min_sample?: number;
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireBiasReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bias_export_v1_hire_bias_export_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                min_sample?: number;
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

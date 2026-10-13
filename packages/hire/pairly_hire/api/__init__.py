@@ -30,6 +30,7 @@
 * ``checklist``: the pre-employment checklist, its documents and their retention (M3).
 * ``survey``: the candidate experience survey and its results (M3).
 * ``analytics``: hiring analytics, every number with its records (M3).
+* ``reports``: the bias and adverse-impact report and its audit pack (M3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -51,6 +52,7 @@ from pairly_hire.api import (
     portal,
     public,
     references,
+    reports,
     requisitions,
     scheduling,
     screening,
@@ -76,3 +78,4 @@ router.include_router(offers.router)
 router.include_router(checklist.router)
 router.include_router(survey.router)
 router.include_router(analytics.router)
+router.include_router(reports.router)

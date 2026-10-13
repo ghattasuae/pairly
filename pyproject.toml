@@ -204,6 +204,24 @@ source_modules = ["pairly_hire.portal"]
 forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
 ignore_imports = ["pairly_hire.selfid.export -> pairly_hire.selfid.models"]
 
+# Hiring analytics compute from the pipeline and screening rows; only the bias report
+# (``pairly_hire.analytics.bias``) reaches self-identification, and only as counts per
+# group through ``pairly_hire.selfid.reporting`` (M3, brief 3.10).
+[[tool.importlinter.contracts]]
+name = "Hire analytics never read self-identification, except the bias report's counts"
+type = "forbidden"
+source_modules = [
+  "pairly_hire.analytics.facts", "pairly_hire.analytics.metrics", "pairly_hire.analytics.stats",
+]
+forbidden_modules = ["pairly_hire.selfid", "pairly_hire.api"]
+
+[[tool.importlinter.contracts]]
+name = "The bias report reads self-identification only as counts per group"
+type = "forbidden"
+source_modules = ["pairly_hire.analytics.bias"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]
+ignore_imports = ["pairly_hire.selfid.reporting -> pairly_hire.selfid.models"]
+
 # Scheduling shows candidates to interviewers (blind-safe); it never reads the
 # self-identification answers, and the service layer never imports routes (WP2.8).
 [[tool.importlinter.contracts]]

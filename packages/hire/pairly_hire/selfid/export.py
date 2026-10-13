@@ -3,7 +3,7 @@
 """A candidate's own self-identification answers, for their data export (WP2.9).
 
 The one reader of ``hire_self_identification`` besides bias reporting
-(``pairly_hire.api.reports``, aggregates only): the candidate portal's data export
+(``pairly_hire.selfid.reporting``, counts per group only): the candidate portal's export
 (``pairly_hire.portal.service.export_data``) gives a candidate back the answers they
 gave, as data protection law requires. Nothing else may import this module: the
 import contracts in the root ``pyproject.toml`` keep it away from scoring, screening,

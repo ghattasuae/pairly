@@ -2600,5 +2600,47 @@
       "counts": "{responses} answers from {invited} invitations",
       "open": "Open the survey results"
     }
+  },
+  "HireBias": {
+    "title": "Bias and adverse-impact report",
+    "intro": "Selection rates per voluntary self-identified group at each step of the pipeline, compared with the four-fifths rule of thumb. Counts only: no candidate is named, and self-identification is never used in scoring.",
+    "minSample": "Small sample under",
+    "scope": "{count, plural, =0 {No applications in this scope.} one {Based on # application.} other {Based on # applications.}}",
+    "method": "A group under {group} applications at a step is hidden. Where a group or the reference has fewer than {min}, a Fisher exact test decides whether a difference can be judged.",
+    "notLegal": "This report supports an independent bias audit, such as one under New York City Local Law 144. It does not by itself show compliance with any law.",
+    "export": "Download the bias audit pack",
+    "exportNote": "Needs a two-factor sign-in. Every export is recorded in the audit log.",
+    "noAnswers": "No self-identification answers in this scope yet.",
+    "step": "{from} to {to}",
+    "counts": "{selected} of {base}",
+    "suppressed": "Hidden: fewer than 5 applications",
+    "col": {
+      "group": "Group",
+      "counts": "Moved on",
+      "rate": "Selection rate",
+      "ratio": "Impact ratio",
+      "p": "Fisher p",
+      "result": "Result"
+    },
+    "judgement": {
+      "reference": "Reference (highest rate)",
+      "meets_four_fifths": "At or above four-fifths",
+      "below_four_fifths": "Below four-fifths",
+      "too_small_to_judge": "Too small to judge",
+      "suppressed": "Hidden",
+      "not_compared": "Not compared"
+    },
+    "fairness": {
+      "title": "Counterfactual fairness test",
+      "summary": "{pairs} swapped copies scored, {flagged} with a score change above the threshold."
+    },
+    "stages": {
+      "applied": "Applied",
+      "screening": "Screening",
+      "shortlist": "Shortlist",
+      "interview": "Interview",
+      "offer": "Offer",
+      "hired": "Hired"
+    }
   }
 }

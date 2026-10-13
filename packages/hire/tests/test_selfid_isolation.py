@@ -116,3 +116,27 @@ def test_only_the_portal_export_reads_a_candidates_own_answers() -> None:
         ):
             importers.add(".".join(path.relative_to(package.parent).with_suffix("").parts))
     assert importers == {"pairly_hire.portal.service"}
+
+
+def test_only_the_bias_report_reads_counts_per_group() -> None:
+    """``pairly_hire.selfid.reporting`` (counts per group, never a row) has exactly one
+    importer: the bias report. Analytics, fairness and calibration never import it."""
+    package = Path(__file__).resolve().parents[1] / "pairly_hire"
+    importers = set()
+    for path in package.rglob("*.py"):
+        if "migrations" in path.parts:
+            continue
+        if any(
+            i == "pairly_hire.selfid.reporting" or i.startswith("pairly_hire.selfid.reporting.")
+            for i in _imports(path)
+        ):
+            importers.add(".".join(path.relative_to(package.parent).with_suffix("").parts))
+    assert importers == {"pairly_hire.analytics.bias"}
+    reachable = _closure(
+        [
+            "pairly_hire.analytics.facts",
+            "pairly_hire.analytics.metrics",
+            "pairly_hire.analytics.stats",
+        ]
+    )
+    assert not {m for m in reachable if m.startswith("pairly_hire.selfid")}
