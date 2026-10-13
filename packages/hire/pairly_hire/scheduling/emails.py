@@ -403,20 +403,24 @@ async def send_to_panel(
     interview_url = (
         f"{base}/en/hire/jobs/{record.job.id}/pipeline?candidate={record.app.id}" if base else None
     )
-    attachment = None
-    if mail.method is not None:
-        attachees = [IcsPerson(p.email, p.name) for p in listed]
-        if not hidden and mail.method == "REQUEST":
-            attachees.append(IcsPerson(record.email, record.full_name or None))
-        attachment = calendar_file(
+    attachees = [IcsPerson(p.email, p.name) for p in listed]
+    if not hidden and mail.method == "REQUEST":
+        attachees.append(IcsPerson(record.email, record.full_name or None))
+
+    def ics(description: str) -> Attachment | None:
+        if mail.method is None:
+            return None
+        return calendar_file(
             interview,
             method=mail.method,
             summary=f"Interview: {label}, {job_title}",
-            description=summary,
+            description=description,
             attendees=attachees,
             organizer=IcsPerson(env.sender_email, company or None),
             meeting_url=None if mail.method == "CANCEL" else meeting_url,
         )
+
+    attachment = ics(summary)
     values: dict[str, Any] = {
         "candidate_label": label,
         "job_title": job_title,
@@ -429,23 +433,35 @@ async def send_to_panel(
         values["meeting_url"] = meeting_url
     if interview_url:
         values["interview_url"] = interview_url
-    if mail.template_key == BRIEFING:
+    briefing = mail.template_key == BRIEFING
+    if briefing:
         kit = await briefing_kit(session, record, interview.stage_key)
         if kit:
             values["kit"] = kit
     queued = 0
     for person in people:
+        own = values
+        own_attachment = attachment
+        if briefing and base:
+            # The one-click link to this person's own scorecard, in the email and in
+            # the calendar invitation (brief 5.3). Single use, bound to them.
+            from pairly_hire.interviewing.links import issue_link
+
+            token = await issue_link(session, interview, person.id)
+            scorecard = f"{base}/en/scorecard#{token}"
+            own = values | {"scorecard_url": scorecard}
+            own_attachment = ics(f"{summary}\n\nYour scorecard (one click): {scorecard}")
         await notify(
             session,
             recipient=Recipient.user(person.id),
             template_key=mail.template_key,
-            variables=values,
+            variables=own,
             dedupe_key=f"{mail.dedupe}:{person.id}",
             channels=list(mail.channels),
             urgency=Urgency.URGENT if mail.urgent else Urgency.NORMAL,
             extras=Extras(
                 link=interview_url,
-                attachments=(attachment,) if attachment is not None else (),
+                attachments=(own_attachment,) if own_attachment is not None else (),
             ),
             workflow=WORKFLOW,
             actor_type=author.type if author.type is not ActorType.API_KEY else ActorType.SYSTEM,

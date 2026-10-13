@@ -793,6 +793,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/applications/{application_id}/scorecards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Application Scorecards */
+        get: operations["application_scorecards_v1_hire_applications__application_id__scorecards_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/applications/{application_id}/screening": {
         parameters: {
             query?: never;
@@ -906,6 +923,41 @@ export type paths = {
         put?: never;
         /** Resolve Data Request */
         post: operations["resolve_data_request_v1_hire_data_requests__request_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/interviews/{interview_id}/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Scorecard */
+        get: operations["my_scorecard_v1_hire_interviews__interview_id__scorecard_get"];
+        /** Save My Scorecard */
+        put: operations["save_my_scorecard_v1_hire_interviews__interview_id__scorecard_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/interviews/{interview_id}/scorecard/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit My Scorecard */
+        post: operations["submit_my_scorecard_v1_hire_interviews__interview_id__scorecard_submit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2017,6 +2069,43 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/hire/public/scorecards/later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Later From Link
+         * @description The "remind me later" link of a reminder: one click, single use.
+         */
+        post: operations["later_from_link_v1_hire_public_scorecards_later_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/public/scorecards/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Scorecard */
+        post: operations["open_scorecard_v1_hire_public_scorecards_open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/hire/rediscovery/search": {
         parameters: {
             query?: never;
@@ -2423,6 +2512,58 @@ export type paths = {
         put?: never;
         /** Outcome */
         post: operations["outcome_v1_hire_scheduling_interviews__interview_id__outcome_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scorecard-session/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session Scorecard */
+        get: operations["session_scorecard_v1_hire_scorecard_session_me_get"];
+        /** Session Save */
+        put: operations["session_save_v1_hire_scorecard_session_me_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scorecard-session/me/later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Session Later */
+        post: operations["session_later_v1_hire_scorecard_session_me_later_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hire/scorecard-session/me/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Session Submit */
+        post: operations["session_submit_v1_hire_scorecard_session_me_submit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5753,6 +5894,29 @@ export type components = {
              */
             note_id: string;
         };
+        /** HireOtherScorecardOut */
+        HireOtherScorecardOut: {
+            /**
+             * Interviewer Id
+             * Format: uuid
+             */
+            interviewer_id: string;
+            /** Interviewer Name */
+            interviewer_name: string;
+            /** Notes */
+            notes: string;
+            /** Ratings */
+            ratings: {
+                [key: string]: number;
+            };
+            /** Recommendation */
+            recommendation: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+        };
         /** HireOutcomeIn */
         HireOutcomeIn: {
             /** Outcome */
@@ -6781,6 +6945,133 @@ export type components = {
             step_min: number;
             /** Timezone */
             timezone: string;
+        };
+        /** HireScorecardCriterionOut */
+        HireScorecardCriterionOut: {
+            /** Anchors */
+            anchors: string[];
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Question */
+            question: string;
+        };
+        /** HireScorecardIn */
+        HireScorecardIn: {
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /** Ratings */
+            ratings?: {
+                [key: string]: number;
+            };
+            /** Recommendation */
+            recommendation?: ("strong_no" | "no" | "yes" | "strong_yes") | null;
+        };
+        /** HireScorecardLaterOut */
+        HireScorecardLaterOut: {
+            /**
+             * Snoozed Until
+             * Format: date-time
+             */
+            snoozed_until: string;
+        };
+        /** HireScorecardListOut */
+        HireScorecardListOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Expected */
+            expected: number;
+            /** Hidden */
+            hidden: boolean;
+            /** Items */
+            items: components["schemas"]["HireOtherScorecardOut"][];
+            /** Stage Key */
+            stage_key: string;
+        };
+        /** HireScorecardOut */
+        HireScorecardOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Candidate Label */
+            candidate_label: string;
+            /** Criteria */
+            criteria: components["schemas"]["HireScorecardCriterionOut"][];
+            /** Due At */
+            due_at: string | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Identity Hidden */
+            identity_hidden: boolean;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Title */
+            job_title: string;
+            /** Notes */
+            notes: string;
+            /** Others */
+            others: components["schemas"]["HireOtherScorecardOut"][] | null;
+            /** Others Submitted */
+            others_submitted: number;
+            /** Panel Size */
+            panel_size: number;
+            /** Ratings */
+            ratings: {
+                [key: string]: number;
+            };
+            /** Recommendation */
+            recommendation: string | null;
+            /** Sla State */
+            sla_state: string;
+            /** Snoozed Until */
+            snoozed_until: string | null;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Starts At */
+            starts_at: string | null;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** HireScorecardPageOut */
+        HireScorecardPageOut: {
+            kit: components["schemas"]["HireKitOut"] | null;
+            scorecard: components["schemas"]["HireScorecardOut"];
+        };
+        /** HireScorecardSessionOut */
+        HireScorecardSessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Session Token */
+            session_token: string;
+        };
+        /** HireScorecardTokenIn */
+        HireScorecardTokenIn: {
+            /** Token */
+            token: string;
         };
         /** HireScreeningCriterion */
         HireScreeningCriterion: {
@@ -9940,6 +10231,39 @@ export interface operations {
             };
         };
     };
+    application_scorecards_v1_hire_applications__application_id__scorecards_get: {
+        parameters: {
+            query?: {
+                stage?: string;
+            };
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_screening_v1_hire_applications__application_id__screening_get: {
         parameters: {
             query?: never;
@@ -10156,6 +10480,109 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireDataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_scorecard_v1_hire_interviews__interview_id__scorecard_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_my_scorecard_v1_hire_interviews__interview_id__scorecard_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_my_scorecard_v1_hire_interviews__interview_id__scorecard_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
                 };
             };
             /** @description Validation Error */
@@ -12439,6 +12866,72 @@ export interface operations {
             };
         };
     };
+    later_from_link_v1_hire_public_scorecards_later_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardLaterOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_scorecard_v1_hire_public_scorecards_open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rediscover_v1_hire_rediscovery_search_post: {
         parameters: {
             query?: never;
@@ -13279,6 +13772,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HireInterviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_scorecard_v1_hire_scorecard_session_me_get: {
+        parameters: {
+            query?: {
+                locale?: "en" | "ar";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_save_v1_hire_scorecard_session_me_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_later_v1_hire_scorecard_session_me_later_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardLaterOut"];
+                };
+            };
+        };
+    };
+    session_submit_v1_hire_scorecard_session_me_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HireScorecardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HireScorecardPageOut"];
                 };
             };
             /** @description Validation Error */

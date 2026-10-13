@@ -43,3 +43,6 @@ export type HirePlanStage = S["PlanStage"];
 export type HirePlanQuestion = S["PlanQuestion"];
 export type HireKit = S["HireKitOut"];
 export type HireKitItem = S["HireKitItemOut"];
+export type HireScorecardPage = S["HireScorecardPageOut"];
+export type HireScorecard = S["HireScorecardOut"];
+export type HireOtherScorecard = S["HireOtherScorecardOut"];

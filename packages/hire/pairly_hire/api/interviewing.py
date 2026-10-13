@@ -15,16 +15,20 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, ConfigDict
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError
-from pairly_core.identity import Context, CurrentActor, OrgSession
+from pairly_core.identity import Context, CurrentActor, OrgSession, RequestSession
 from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_hire.antispam import SlidingWindowLimiter, client_ip
 from pairly_hire.api.common import model_router
-from pairly_hire.interviewing import kits
+from pairly_hire.interviewing import kits, links, scorecards
 from pairly_hire.interviewing import plan as plans
 from pairly_hire.jobs import get_job
 from pairly_hire.models import HireJob
@@ -32,6 +36,7 @@ from pairly_hire.permissions import (
     CANDIDATE_READ,
     JOB_READ,
     PLAN_WRITE,
+    SCORECARD_READ,
     SEES_DRAFTS,
 )
 from pairly_hire.pipeline.records import load_record
@@ -257,3 +262,370 @@ async def get_kit(
     label, _summary, _hidden = await candidate_view(session, record)
     title = record.job.title_ar if locale == "ar" and record.job.title_ar else record.job.title
     return kit_out(kit, title, label)
+
+
+# ------------------------------------------------------------------ scorecards
+
+
+class HireScorecardCriterionOut(BaseModel):
+    id: str
+    name: str
+    question: str
+    anchors: list[str]
+
+
+class HireOtherScorecardOut(BaseModel):
+    interviewer_id: uuid.UUID
+    interviewer_name: str
+    ratings: dict[str, int]
+    notes: str
+    recommendation: str
+    submitted_at: datetime
+
+
+class HireScorecardOut(BaseModel):
+    interview_id: uuid.UUID
+    application_id: uuid.UUID
+    job_id: uuid.UUID
+    job_title: str
+    candidate_label: str
+    identity_hidden: bool
+    stage_key: str
+    stage_name: str
+    starts_at: datetime | None
+    ends_at: datetime | None
+    criteria: list[HireScorecardCriterionOut]
+    ratings: dict[str, int]
+    notes: str
+    recommendation: str | None
+    status: str
+    submitted_at: datetime | None
+    due_at: datetime | None
+    sla_state: str
+    snoozed_until: datetime | None
+    # None until your own scorecard is submitted (hidden until you submit).
+    others: list[HireOtherScorecardOut] | None
+    others_submitted: int
+    panel_size: int
+
+
+class HireScorecardIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ratings: dict[Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,47}$")], int] = (
+        Field(default_factory=dict, max_length=5)
+    )
+    notes: Annotated[str, StringConstraints(max_length=scorecards.MAX_NOTES)] = ""
+    recommendation: Literal["strong_no", "no", "yes", "strong_yes"] | None = None
+
+
+class HireScorecardPageOut(BaseModel):
+    scorecard: HireScorecardOut
+    kit: HireKitOut | None
+
+
+def scorecard_out(view: scorecards.ScorecardView) -> HireScorecardOut:
+    own = view.scorecard
+    title = view.record.job.title
+    if view.locale == "ar" and view.record.job.title_ar:
+        title = view.record.job.title_ar
+    return HireScorecardOut(
+        interview_id=view.interview.id,
+        application_id=view.record.app.id,
+        job_id=view.record.job.id,
+        job_title=title,
+        candidate_label=view.candidate_label,
+        identity_hidden=view.identity_hidden,
+        stage_key=own.stage_key if own else view.stage.key,
+        stage_name=kits.stage_name(view.stage, view.locale),
+        starts_at=view.interview.starts_at,
+        ends_at=view.interview.ends_at,
+        criteria=[
+            HireScorecardCriterionOut(id=c.id, name=c.name, question=c.question, anchors=c.anchors)
+            for c in view.criteria
+        ],
+        ratings={str(k): int(v) for k, v in (own.ratings if own else {}).items()},
+        notes=own.notes if own else "",
+        recommendation=own.recommendation if own else None,
+        status=own.status if own else "draft",
+        submitted_at=own.submitted_at if own else None,
+        due_at=view.due_at,
+        sla_state=view.sla_state,
+        snoozed_until=own.snoozed_until if own else None,
+        others=(
+            [
+                HireOtherScorecardOut(
+                    interviewer_id=o.interviewer_id,
+                    interviewer_name=o.interviewer_name,
+                    ratings=o.ratings,
+                    notes=o.notes,
+                    recommendation=o.recommendation,
+                    submitted_at=o.submitted_at,
+                )
+                for o in view.others
+            ]
+            if view.others is not None
+            else None
+        ),
+        others_submitted=view.others_submitted,
+        panel_size=view.panel_size,
+    )
+
+
+async def _page(
+    request: Request,
+    session: AsyncSession,
+    interview_id: uuid.UUID,
+    user_id: uuid.UUID,
+    locale: str,
+    *,
+    with_kit: bool,
+) -> HireScorecardPageOut:
+    view = await scorecards.scorecard_view(session, interview_id, user_id, locale=locale)
+    kit_view: HireKitOut | None = None
+    if with_kit:
+        try:
+            kit = await kits.build_kit(
+                session,
+                view.record,
+                view.stage.key,
+                locale,
+                router=optional_router(request),
+                actor_id=user_id,
+            )
+            kit_view = kit_out(kit, scorecard_out(view).job_title, view.candidate_label)
+        except NotFoundError:
+            kit_view = None
+    return HireScorecardPageOut(scorecard=scorecard_out(view), kit=kit_view)
+
+
+def _user(actor: Actor) -> uuid.UUID:
+    if actor.kind is not ActorKind.USER or actor.id is None:
+        raise ForbiddenError("only a person can do this")
+    return actor.id
+
+
+# Signed in: your own scorecard of an interview you sit on.
+
+
+@router.get("/interviews/{interview_id}/scorecard", response_model=HireScorecardPageOut)
+async def my_scorecard(
+    interview_id: uuid.UUID,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+    locale: Literal["en", "ar"] = "en",
+) -> HireScorecardPageOut:
+    authorize(actor, INTERVIEW_READ)
+    return await _page(request, session, interview_id, _user(actor), locale, with_kit=True)
+
+
+@router.put("/interviews/{interview_id}/scorecard", response_model=HireScorecardPageOut)
+async def save_my_scorecard(
+    interview_id: uuid.UUID,
+    body: HireScorecardIn,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+) -> HireScorecardPageOut:
+    authorize(actor, INTERVIEW_READ)
+    user = _user(actor)
+    await scorecards.save(
+        session,
+        interview_id,
+        user,
+        ratings=body.ratings,
+        notes=body.notes,
+        recommendation=body.recommendation,
+        submit=False,
+    )
+    return await _page(request, session, interview_id, user, "en", with_kit=False)
+
+
+@router.post("/interviews/{interview_id}/scorecard/submit", response_model=HireScorecardPageOut)
+async def submit_my_scorecard(
+    interview_id: uuid.UUID,
+    body: HireScorecardIn,
+    request: Request,
+    actor: CurrentActor,
+    session: OrgSession,
+) -> HireScorecardPageOut:
+    authorize(actor, INTERVIEW_READ)
+    user = _user(actor)
+    await scorecards.save(
+        session,
+        interview_id,
+        user,
+        ratings=body.ratings,
+        notes=body.notes,
+        recommendation=body.recommendation,
+        submit=True,
+    )
+    return await _page(request, session, interview_id, user, "en", with_kit=False)
+
+
+class HireScorecardListOut(BaseModel):
+    application_id: uuid.UUID
+    stage_key: str
+    # True: you sit on this panel and have not submitted yours: nothing is shown.
+    hidden: bool
+    expected: int
+    items: list[HireOtherScorecardOut]
+
+
+@router.get("/applications/{application_id}/scorecards", response_model=HireScorecardListOut)
+async def application_scorecards(
+    application_id: uuid.UUID,
+    actor: CurrentActor,
+    session: OrgSession,
+    stage: _StageKey = "interview",
+) -> HireScorecardListOut:
+    authorize(actor, INTERVIEW_READ)
+    visible = await scorecards.visible_scorecards(
+        session,
+        application_id,
+        stage,
+        actor.id if actor.kind is ActorKind.USER else None,
+        can_read_all=actor.has(SCORECARD_READ),
+    )
+    return HireScorecardListOut(
+        application_id=application_id,
+        stage_key=stage,
+        hidden=visible.hidden,
+        expected=visible.expected,
+        items=[
+            HireOtherScorecardOut(
+                interviewer_id=o.interviewer_id,
+                interviewer_name=o.interviewer_name,
+                ratings=o.ratings,
+                notes=o.notes,
+                recommendation=o.recommendation,
+                submitted_at=o.submitted_at,
+            )
+            for o in visible.items
+        ],
+    )
+
+
+# Public: the one-click link from the briefing, the calendar invitation or a reminder.
+# No staff sign-in; rate limited; the token in the body, never in a URL.
+
+SESSION_HEADER = "X-Pairly-Scorecard-Session"
+_LIMITS = {"link": (30, 3600.0), "session": (600, 3600.0)}
+_NO_STORE = {"Cache-Control": "no-store"}
+
+
+def _hit(request: Request, kind: str, key: str) -> None:
+    store: dict[str, SlidingWindowLimiter] | None = getattr(
+        request.app.state, "hire_scorecard_limiters", None
+    )
+    if store is None:
+        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in _LIMITS.items()}
+        request.app.state.hire_scorecard_limiters = store
+    store[kind].hit(key)
+
+
+class HireScorecardTokenIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: Annotated[str, StringConstraints(min_length=10, max_length=links.MAX_TOKEN)]
+
+
+class HireScorecardSessionOut(BaseModel):
+    session_token: str
+    expires_at: datetime
+
+
+class HireScorecardLaterOut(BaseModel):
+    snoozed_until: datetime
+
+
+async def scorecard_identity(request: Request, session: RequestSession) -> links.ScorecardIdentity:
+    identity = await links.authenticate(session, request.headers.get(SESSION_HEADER))
+    _hit(request, "session", str(identity.session_id))
+    return identity
+
+
+ScorecardSession = Annotated[links.ScorecardIdentity, Depends(scorecard_identity)]
+
+
+@router.post("/public/scorecards/open", response_model=HireScorecardSessionOut)
+async def open_scorecard(
+    body: HireScorecardTokenIn, request: Request, session: RequestSession
+) -> JSONResponse:
+    _hit(request, "link", client_ip(request))
+    opened = await links.open_session(session, body.token)
+    out = HireScorecardSessionOut(session_token=opened.token, expires_at=opened.expires_at)
+    return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)
+
+
+@router.post("/public/scorecards/later", response_model=HireScorecardLaterOut)
+async def later_from_link(
+    body: HireScorecardTokenIn, request: Request, session: RequestSession
+) -> JSONResponse:
+    """The "remind me later" link of a reminder: one click, single use."""
+    _hit(request, "link", client_ip(request))
+    link = await links.use_link(session, links.LATER_PREFIX, body.token)
+    row = await scorecards.snooze(session, link.interview_id, link.user_id)
+    assert row.snoozed_until is not None  # noqa: S101 (just set)
+    out = HireScorecardLaterOut(snoozed_until=row.snoozed_until)
+    return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)
+
+
+@router.get("/scorecard-session/me", response_model=HireScorecardPageOut)
+async def session_scorecard(
+    identity: ScorecardSession,
+    request: Request,
+    session: RequestSession,
+    locale: Literal["en", "ar"] = "en",
+) -> JSONResponse:
+    page = await _page(
+        request, session, identity.interview_id, identity.user_id, locale, with_kit=True
+    )
+    return JSONResponse(page.model_dump(mode="json"), headers=_NO_STORE)
+
+
+@router.put("/scorecard-session/me", response_model=HireScorecardPageOut)
+async def session_save(
+    body: HireScorecardIn, identity: ScorecardSession, request: Request, session: RequestSession
+) -> JSONResponse:
+    await scorecards.save(
+        session,
+        identity.interview_id,
+        identity.user_id,
+        ratings=body.ratings,
+        notes=body.notes,
+        recommendation=body.recommendation,
+        submit=False,
+    )
+    page = await _page(
+        request, session, identity.interview_id, identity.user_id, "en", with_kit=False
+    )
+    return JSONResponse(page.model_dump(mode="json"), headers=_NO_STORE)
+
+
+@router.post("/scorecard-session/me/submit", response_model=HireScorecardPageOut)
+async def session_submit(
+    body: HireScorecardIn, identity: ScorecardSession, request: Request, session: RequestSession
+) -> JSONResponse:
+    await scorecards.save(
+        session,
+        identity.interview_id,
+        identity.user_id,
+        ratings=body.ratings,
+        notes=body.notes,
+        recommendation=body.recommendation,
+        submit=True,
+    )
+    page = await _page(
+        request, session, identity.interview_id, identity.user_id, "en", with_kit=False
+    )
+    return JSONResponse(page.model_dump(mode="json"), headers=_NO_STORE)
+
+
+@router.post("/scorecard-session/me/later", response_model=HireScorecardLaterOut)
+async def session_later(identity: ScorecardSession, session: RequestSession) -> JSONResponse:
+    row = await scorecards.snooze(session, identity.interview_id, identity.user_id)
+    assert row.snoozed_until is not None  # noqa: S101 (just set)
+    out = HireScorecardLaterOut(snoozed_until=row.snoozed_until)
+    return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)

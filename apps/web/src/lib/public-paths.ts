@@ -7,6 +7,8 @@
 // the organisations' public careers pages and the apply flow (Pairly Hire), and
 // `/candidate/preferences` a candidate's email preferences (signed link in the fragment),
 // `/schedule` a candidate's interview scheduling page (signed link in the fragment).
+// `/scorecard` is an interviewer's scorecard opened from its one-click link (its own
+// HTTP-only session cookie for one interview; the API decides every access).
 // `/portal` is the candidate portal: candidates never have a staff session; the portal
 // checks its own session (an HTTP-only cookie) and the API decides every access.
 const PUBLIC_PATHS = [
@@ -20,6 +22,7 @@ const PUBLIC_PATHS = [
   "/candidate",
   "/portal",
   "/schedule",
+  "/scorecard",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {

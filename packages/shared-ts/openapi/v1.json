@@ -7268,6 +7268,49 @@
         "title": "HireNoteOut",
         "type": "object"
       },
+      "HireOtherScorecardOut": {
+        "properties": {
+          "interviewer_id": {
+            "format": "uuid",
+            "title": "Interviewer Id",
+            "type": "string"
+          },
+          "interviewer_name": {
+            "title": "Interviewer Name",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "ratings": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Ratings",
+            "type": "object"
+          },
+          "recommendation": {
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interviewer_id",
+          "interviewer_name",
+          "ratings",
+          "notes",
+          "recommendation",
+          "submitted_at"
+        ],
+        "title": "HireOtherScorecardOut",
+        "type": "object"
+      },
       "HireOutcomeIn": {
         "additionalProperties": false,
         "properties": {
@@ -10050,6 +10093,370 @@
           "link_days"
         ],
         "title": "HireSchedulingSettingsOut",
+        "type": "object"
+      },
+      "HireScorecardCriterionOut": {
+        "properties": {
+          "anchors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Anchors",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "question",
+          "anchors"
+        ],
+        "title": "HireScorecardCriterionOut",
+        "type": "object"
+      },
+      "HireScorecardIn": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "ratings": {
+            "maxProperties": 5,
+            "patternProperties": {
+              "^[a-z][a-z0-9_]{0,47}$": {
+                "type": "integer"
+              }
+            },
+            "title": "Ratings",
+            "type": "object"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_no",
+                  "no",
+                  "yes",
+                  "strong_yes"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          }
+        },
+        "title": "HireScorecardIn",
+        "type": "object"
+      },
+      "HireScorecardLaterOut": {
+        "properties": {
+          "snoozed_until": {
+            "format": "date-time",
+            "title": "Snoozed Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snoozed_until"
+        ],
+        "title": "HireScorecardLaterOut",
+        "type": "object"
+      },
+      "HireScorecardListOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected",
+            "type": "integer"
+          },
+          "hidden": {
+            "title": "Hidden",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HireOtherScorecardOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_id",
+          "stage_key",
+          "hidden",
+          "expected",
+          "items"
+        ],
+        "title": "HireScorecardListOut",
+        "type": "object"
+      },
+      "HireScorecardOut": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "candidate_label": {
+            "title": "Candidate Label",
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireScorecardCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "identity_hidden": {
+            "title": "Identity Hidden",
+            "type": "boolean"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "others": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HireOtherScorecardOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Others"
+          },
+          "others_submitted": {
+            "title": "Others Submitted",
+            "type": "integer"
+          },
+          "panel_size": {
+            "title": "Panel Size",
+            "type": "integer"
+          },
+          "ratings": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Ratings",
+            "type": "object"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "sla_state": {
+            "title": "Sla State",
+            "type": "string"
+          },
+          "snoozed_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snoozed Until"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_name": {
+            "title": "Stage Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "interview_id",
+          "application_id",
+          "job_id",
+          "job_title",
+          "candidate_label",
+          "identity_hidden",
+          "stage_key",
+          "stage_name",
+          "starts_at",
+          "ends_at",
+          "criteria",
+          "ratings",
+          "notes",
+          "recommendation",
+          "status",
+          "submitted_at",
+          "due_at",
+          "sla_state",
+          "snoozed_until",
+          "others",
+          "others_submitted",
+          "panel_size"
+        ],
+        "title": "HireScorecardOut",
+        "type": "object"
+      },
+      "HireScorecardPageOut": {
+        "properties": {
+          "kit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HireKitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scorecard": {
+            "$ref": "#/components/schemas/HireScorecardOut"
+          }
+        },
+        "required": [
+          "scorecard",
+          "kit"
+        ],
+        "title": "HireScorecardPageOut",
+        "type": "object"
+      },
+      "HireScorecardSessionOut": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "session_token": {
+            "title": "Session Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_token",
+          "expires_at"
+        ],
+        "title": "HireScorecardSessionOut",
+        "type": "object"
+      },
+      "HireScorecardTokenIn": {
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "HireScorecardTokenIn",
         "type": "object"
       },
       "HireScreeningCriterion": {
@@ -17270,6 +17677,60 @@
         ]
       }
     },
+    "/v1/hire/applications/{application_id}/scorecards": {
+      "get": {
+        "operationId": "application_scorecards_v1_hire_applications__application_id__scorecards_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "default": "interview",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "title": "Stage",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Application Scorecards",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/applications/{application_id}/screening": {
       "get": {
         "operationId": "get_screening_v1_hire_applications__application_id__screening_get",
@@ -17611,6 +18072,167 @@
           }
         },
         "summary": "Resolve Data Request",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/interviews/{interview_id}/scorecard": {
+      "get": {
+        "operationId": "my_scorecard_v1_hire_interviews__interview_id__scorecard_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "enum": [
+                "en",
+                "ar"
+              ],
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My Scorecard",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "save_my_scorecard_v1_hire_interviews__interview_id__scorecard_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save My Scorecard",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/interviews/{interview_id}/scorecard/submit": {
+      "post": {
+        "operationId": "submit_my_scorecard_v1_hire_interviews__interview_id__scorecard_submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit My Scorecard",
         "tags": [
           "hire"
         ]
@@ -20801,6 +21423,89 @@
         ]
       }
     },
+    "/v1/hire/public/scorecards/later": {
+      "post": {
+        "description": "The \"remind me later\" link of a reminder: one click, single use.",
+        "operationId": "later_from_link_v1_hire_public_scorecards_later_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardLaterOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Later From Link",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/public/scorecards/open": {
+      "post": {
+        "operationId": "open_scorecard_v1_hire_public_scorecards_open_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Scorecard",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
     "/v1/hire/rediscovery/search": {
       "post": {
         "operationId": "rediscover_v1_hire_rediscovery_search_post",
@@ -22028,6 +22733,154 @@
           }
         },
         "summary": "Outcome",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scorecard-session/me": {
+      "get": {
+        "operationId": "session_scorecard_v1_hire_scorecard_session_me_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "enum": [
+                "en",
+                "ar"
+              ],
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Session Scorecard",
+        "tags": [
+          "hire"
+        ]
+      },
+      "put": {
+        "operationId": "session_save_v1_hire_scorecard_session_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Session Save",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scorecard-session/me/later": {
+      "post": {
+        "operationId": "session_later_v1_hire_scorecard_session_me_later_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardLaterOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Session Later",
+        "tags": [
+          "hire"
+        ]
+      }
+    },
+    "/v1/hire/scorecard-session/me/submit": {
+      "post": {
+        "operationId": "session_submit_v1_hire_scorecard_session_me_submit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireScorecardIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireScorecardPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Session Submit",
         "tags": [
           "hire"
         ]

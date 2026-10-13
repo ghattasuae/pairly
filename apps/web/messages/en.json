@@ -2277,5 +2277,33 @@
       "unknown": "Screening: unclear",
       "not_screened": "Not screened"
     }
+  },
+  "Scorecard": {
+    "title": "Your scorecard",
+    "opening": "Opening your scorecard...",
+    "kit": "Interview kit",
+    "due": "Due by {when}",
+    "overdue": "Overdue: the team is waiting for your feedback.",
+    "hiddenNote": "{count, plural, =0 {Rate on your own first. Others' feedback stays hidden until you submit.} one {1 other interviewer has submitted. Their feedback stays hidden until you submit yours.} other {# other interviewers have submitted. Their feedback stays hidden until you submit yours.}}",
+    "notes": "Short notes",
+    "notesHint": "What did you hear? Facts and examples, not impressions.",
+    "dictate": "Dictate",
+    "stopDictation": "Stop",
+    "overall": "Overall recommendation",
+    "recommendation": {
+      "strong_no": "Strong no",
+      "no": "No",
+      "yes": "Yes",
+      "strong_yes": "Strong yes"
+    },
+    "submit": "Submit scorecard",
+    "saveDraft": "Save draft",
+    "later": "Remind me later",
+    "snoozed": "We will remind you again at {when}.",
+    "submitted": "Submitted. Thank you.",
+    "othersTitle": "Other interviewers' feedback",
+    "noOthers": "Nobody else has submitted yet. You will see their feedback here once they do.",
+    "linkInvalid": "This scorecard link has been used or has expired.",
+    "linkHelp": "Open the latest link from your email, or sign in to Pairly to find your interviews."
   }
 }

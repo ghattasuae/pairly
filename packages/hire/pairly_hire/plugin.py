@@ -26,6 +26,8 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting), ``hire_rediscovery_index`` and
                    ``hire_interview_reminders`` (24 hours and 1 hour before interviews);
+                   ``hire_scorecard_reminders``: feedback reminders 2 and 24 hours after
+                   an interview, and "remind me later" (``interviewing.reminders``);
                    ``hire_erasure_objects``: removes the stored files of erasures a
                    person started, then completes their requests (``erasure``).
 * ``feature_flags``  ``hire.scheduling.google`` (off): Google Calendar and Meet for
@@ -55,6 +57,8 @@ from pairly_hire import models  # noqa: F401  (registers the Hire tables)
 from pairly_hire.erasure import JOB_NAME as ERASURE_JOB
 from pairly_hire.erasure import run_erasure_job
 from pairly_hire.interviewing import models as interviewing_models  # noqa: F401  (tables)
+from pairly_hire.interviewing.reminders import JOB_NAME as SCORECARD_REMINDERS_JOB
+from pairly_hire.interviewing.reminders import run_scorecard_reminders_job
 from pairly_hire.messaging import approval_view as message_approval_view
 from pairly_hire.messaging import graph as message_graph
 from pairly_hire.messaging import models as messaging_models  # noqa: F401  (tables)
@@ -158,6 +162,14 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         "Remind candidates and interviewers 24 hours and 1 hour before each interview",
         "every 5 minutes",
         run=run_reminders_job,
+        every_minutes=5,
+    ),
+    JobSpec(
+        SCORECARD_REMINDERS_JOB,
+        "Remind interviewers 2 and 24 hours after an interview to submit their scorecard "
+        "(SLA: the interview plan's hours after the interview, 24 by default)",
+        "every 5 minutes",
+        run=run_scorecard_reminders_job,
         every_minutes=5,
     ),
     JobSpec(

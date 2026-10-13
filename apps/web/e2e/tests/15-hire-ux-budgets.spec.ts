@@ -25,7 +25,7 @@ import { totpFresh } from "../utils/totp";
 // Results: <scratch>/hire-ux-budgets.json.
 //
 // M3: "Interviewer opens scorecard from invite and submits: under 3 minutes, no more than
-// 1 login step" waits for interviewer scorecards (milestone 3) and is not measured here.
+// 1 login step" is measured in 16-hire-interviews.spec.ts.
 //
 // The spec changes the seeded data (five new shortlisted applications, their decisions
 // and an approval), so run it once per `make demo`, with one worker.
