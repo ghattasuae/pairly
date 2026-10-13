@@ -479,3 +479,43 @@ async def test_a_refused_write_and_a_lost_zoom_meeting(
     assert mock.meetings[meeting_id]["deleted"] is True
     outcomes = sorted(o.outcome for o in await operations_of(owner_engine, world))
     assert outcomes == ["nothing_written", "orphan_meeting_deleted"]
+
+
+# ------------------------------------------------------------------ organisation status
+
+
+async def test_organisation_integration_status_for_microsoft_and_zoom(
+    hire_api: HireApi, world: HireWorld, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = hire_api
+    path = "/v1/hire/settings/scheduling/integrations"
+    assert (await api.call("GET", path, world, "recruiter")).status_code == 403
+    first = await api.call("GET", path, world, "admin")
+    assert first.status_code == 200, first.text
+    by = {p["provider"]: p for p in first.json()["providers"]}
+    assert set(by) == {"google", "microsoft", "zoom"}
+    assert by["microsoft"]["state"] == "needs_setup"
+    assert by["microsoft"]["missing"] == ["server_client", "feature_flag", "people_connect"]
+    assert by["microsoft"]["flag_key"] == "hire.scheduling.microsoft"
+    assert any("Entra" in step for step in by["microsoft"]["steps"])
+    assert by["zoom"]["missing"] == ["zoom_app", "feature_flag"]
+    assert by["zoom"]["connected_people"] is None
+    assert first.json()["operations_needing_review"] == 0
+
+    mock = MockServices()
+    providers.set_google_transport(httpx.MockTransport(mock))
+    microsoft_env(monkeypatch)
+    for flag in ("hire.scheduling.microsoft", "hire.scheduling.zoom"):
+        await api.call("PUT", f"/v1/flags/{flag}", world, "admin", json={"enabled": True})
+    await connect_microsoft(api, world, "interviewer")
+    assert (await save_zoom(api, world, host="interviews@acme.example")).status_code == 200
+    after = await api.call("GET", path, world, "admin")
+    by = {p["provider"]: p for p in after.json()["providers"]}
+    assert by["microsoft"]["state"] == "connected"
+    assert by["microsoft"]["connected_people"] == 1
+    assert by["microsoft"]["missing"] == []
+    assert by["zoom"]["state"] == "connected"
+    assert by["zoom"]["status"] == "active"
+    assert by["zoom"]["verified_at"]
+    assert by["google"]["state"] == "needs_setup"
+    assert "zoom-secret-1" not in after.text

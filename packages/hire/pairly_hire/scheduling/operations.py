@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final
 
-from sqlalchemy import update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from pairly_core.db import create_sessionmaker, set_tenant
@@ -138,3 +138,13 @@ async def settle(session: AsyncSession, op: Operation) -> None:
         # Not visible or already settled: fail closed, the change rolls back and the
         # reconciliation job sees the pending row.
         raise RuntimeError("the calendar operation could not be settled")
+
+
+async def needing_review(session: AsyncSession) -> int:
+    """Operations the reconciliation job marked ``failed`` (a person checks them)."""
+    found = await session.scalar(
+        select(func.count())
+        .select_from(HireCalendarOperation)
+        .where(HireCalendarOperation.status == OperationStatus.FAILED.value)
+    )
+    return int(found or 0)

@@ -32,7 +32,7 @@ from typing import Any, Final
 
 import httpx
 import structlog
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import audit_actor_action
@@ -285,6 +285,16 @@ class ConnectionView:
     status: str
     connected_at: datetime | None
     account_email: str | None
+
+
+async def connection_counts(session: AsyncSession) -> dict[str, int]:
+    """Active calendar connections per provider across the organisation."""
+    rows = await session.execute(
+        select(HireCalendarConnection.provider, func.count())
+        .where(HireCalendarConnection.status == "active")
+        .group_by(HireCalendarConnection.provider)
+    )
+    return {provider: int(count) for provider, count in rows.all()}
 
 
 async def my_connections(session: AsyncSession, user_id: uuid.UUID) -> list[ConnectionView]:

@@ -24,9 +24,16 @@ Signed in. Reads need ``hire.interview.read``; changes ``hire.interview.schedule
 * ``POST /scheduling/integrations/google/disconnect``
 * ``POST /scheduling/integrations/microsoft/start|callback|disconnect``  the same for
   Microsoft 365 (``hire.scheduling.microsoft`` and the deployment's Entra app)
+* ``GET  /settings/scheduling/integrations``          the organisation's view of Google,
+                                                      Microsoft and Zoom: in use or not,
+                                                      what is missing (``settings.manage``)
 * ``PUT  /settings/scheduling/integrations/zoom``     the organisation's Zoom app
                                                       (``settings.manage``), checked first
 * ``POST /settings/scheduling/integrations/zoom/remove``
+
+TODO(web): the calendar settings page in ``apps/web`` still shows Microsoft and Zoom as
+planned; it should read ``/settings/scheduling/integrations``, offer the Microsoft
+connect button and the Zoom app form to administrators.
 
 Public, no sign-in, rate limited (the candidate's ``hs1`` token in the body, never in
 a URL):
@@ -68,7 +75,7 @@ from pairly_hire.models import HireJob
 from pairly_hire.permissions import CANDIDATE_READ, SETTINGS_MANAGE
 from pairly_hire.pipeline.records import AppRecord, load_record, organisation_name
 from pairly_hire.scheduling import api as scheduling
-from pairly_hire.scheduling import meetings, providers, rules, service
+from pairly_hire.scheduling import meetings, operations, providers, rules, service
 from pairly_hire.scheduling.emails import SchedulingEnv
 from pairly_hire.scheduling.models import OPEN, HireInterview, HireInterviewPanelist
 from pairly_hire.scheduling.permissions import INTERVIEW_READ, INTERVIEW_SCHEDULE
@@ -973,6 +980,33 @@ async def microsoft_disconnect(
     return await _disconnect("microsoft", actor, session)
 
 
+class HireOrgIntegrationOut(BaseModel):
+    provider: str
+    label: str
+    # ``connected``: in use; ``needs_setup``: a step is missing (see ``missing``).
+    state: str
+    flag_key: str
+    flag_enabled: bool
+    # The deployment's OAuth client (Google, Microsoft) or the organisation's saved app
+    # (Zoom).
+    configured: bool
+    # People with an active calendar connection (Google, Microsoft); None for Zoom.
+    connected_people: int | None
+    status: str | None
+    verified_at: datetime | None
+    last_error: str | None
+    # What is still needed, in order: ``server_client``, ``zoom_app``, ``feature_flag``,
+    # ``people_connect``.
+    missing: list[str]
+    steps: list[str]
+
+
+class HireOrgIntegrationsOut(BaseModel):
+    providers: list[HireOrgIntegrationOut]
+    # External writes the reconciliation job could not settle (a person checks them).
+    operations_needing_review: int
+
+
 class HireZoomIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -980,6 +1014,72 @@ class HireZoomIn(BaseModel):
     client_id: Annotated[str, StringConstraints(min_length=1, max_length=128)]
     client_secret: Annotated[str, StringConstraints(min_length=1, max_length=128)]
     host: Annotated[str, StringConstraints(max_length=254)] | None = None
+
+
+@router.get("/settings/scheduling/integrations", response_model=HireOrgIntegrationsOut)
+async def org_integrations(actor: CurrentActor, session: OrgSession) -> HireOrgIntegrationsOut:
+    """The organisation's view (``settings.manage``): for Google, Microsoft and Zoom,
+    whether it is in use and what is still missing."""
+    authorize(actor, SETTINGS_MANAGE)
+    counts = await providers.connection_counts(session)
+    found: list[HireOrgIntegrationOut] = []
+    for name in providers.CALENDAR_PROVIDERS:
+        flag, config = await _flag_and_config(session, name)
+        people = counts.get(name, 0)
+        missing = [
+            step
+            for step, needed in (
+                ("server_client", config is None),
+                ("feature_flag", not flag),
+                ("people_connect", people == 0),
+            )
+            if needed
+        ]
+        found.append(
+            HireOrgIntegrationOut(
+                provider=name,
+                label=_LABELS[name],
+                state="connected" if not missing else "needs_setup",
+                flag_key=f"hire.scheduling.{name}",
+                flag_enabled=flag,
+                configured=config is not None,
+                connected_people=people,
+                status=None,
+                verified_at=None,
+                last_error=None,
+                missing=missing,
+                steps=_STEPS[name],
+            )
+        )
+    zoom = await meetings.zoom_status(session)
+    missing = [
+        step
+        for step, needed in (
+            ("zoom_app", not zoom.configured),
+            ("feature_flag", not zoom.flag_enabled),
+        )
+        if needed
+    ]
+    found.append(
+        HireOrgIntegrationOut(
+            provider="zoom",
+            label="Zoom",
+            state="connected" if not missing else "needs_setup",
+            flag_key=providers.ZOOM_FLAG,
+            flag_enabled=zoom.flag_enabled,
+            configured=zoom.configured,
+            connected_people=None,
+            status=zoom.status,
+            verified_at=zoom.verified_at,
+            last_error=zoom.last_error,
+            missing=missing,
+            steps=ZOOM_STEPS,
+        )
+    )
+    return HireOrgIntegrationsOut(
+        providers=found,
+        operations_needing_review=await operations.needing_review(session),
+    )
 
 
 @router.put("/settings/scheduling/integrations/zoom", response_model=HireCalendarIntegrationsOut)
