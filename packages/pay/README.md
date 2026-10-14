@@ -31,8 +31,20 @@ Built so far (M4):
   the model (`Extracted[T]` fields with quotes and spans, Decimal money, per-field
   thresholds) or, for UBL 2.1 / PINT AE XML, exactly without a model; it links the
   vendor (`matching.py`: TRN, IBAN blind index, sender domain, name) and stops at
-  `ready` or `needs_review`. `CHECKS` in `invoice_graph.py` is where the validation and
-  fraud checks of the next step plug in. Approvals and payments start from `ready`.
+  `ready` or `needs_review`. Approvals and payments start from `ready`.
+* **Validation and fraud checks** (`checks/`, run from `CHECKS` in `invoice_graph.py`):
+  arithmetic and VAT per tax code (5% default, zero-rated, reverse charge; Decimal, one
+  minor unit tolerance), duplicates and near duplicates naming the suspected original,
+  bank details against the vendor master (a mismatch opens a change ticket by itself, so
+  the vendor's payments are held), sender domain and lookalike domains, first-time
+  senders and urgency language (English and Arabic), unusual, round and split amounts,
+  template, metadata and editing-trace signals, the guardrail findings, the `pay.invoice`
+  rule set and the tenant's spend policy (engine policy search; "no policy found" is
+  information, not a pass), and the risk score (engine combiner, `policy/
+  invoice_risk_policy.yaml`). Each check returns pass, fail or error; an error sends the
+  invoice to a person. Every finding has one sentence in English and Arabic. Settings per
+  organisation in `pay_settings.check_settings` (`checks/settings.py`). Measured by
+  `uv run python -m evals.pay`.
 * **Learning** (`learning.py`): corrections are filed per vendor and the vendor's
   recent ones go into the next extraction prompt as hints (never bank details).
 * **Recordings** (`data/recordings.json`, `recordings.py`): scripted responses (from the
