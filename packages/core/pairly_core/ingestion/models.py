@@ -193,6 +193,12 @@ class Document(Base, OrgScoped, Timestamped):
     parse_warnings: Mapped[list[str]] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
     )
+    # The portal person (``kind:<uuid>``) who uploaded the file, or for whom it was
+    # received; NULL for staff files. Set by the database from ``app.portal_subject`` on
+    # a portal upload (migration 0022); a portal session only ever sees its own.
+    portal_subject: Mapped[str | None] = mapped_column(
+        String(80), nullable=True, server_default=text("app_portal_subject()")
+    )
     # Erasure of the person's data (migration 0019).
     erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     objects_erased_at: Mapped[datetime | None] = mapped_column(

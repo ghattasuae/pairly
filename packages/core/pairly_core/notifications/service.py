@@ -53,7 +53,7 @@ from pairly_core.approvals.service import db_now
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.types import seal
-from pairly_core.db import current_org
+from pairly_core.db import current_org, outside_portal
 from pairly_core.errors import BadRequestError, ForbiddenError
 from pairly_core.integrations.slack.blocks import SlackButton, message_blocks
 from pairly_core.integrations.slack.links import active_slack, slack_link_for_user
@@ -407,6 +407,50 @@ async def notify(
     if recipient.user_id is None:
         wanted = [c for c in wanted if c == "email"]
     now = await db_now(session)
+    # A portal action (a candidate's reply, a vendor's request) can queue a message;
+    # queueing is the engine's work, not the portal person's: it reads the recipient's
+    # preferences and address and the dedupe rows, which the portal guard hides
+    # (migration 0022). Nothing of it goes back to the portal caller but the result.
+    async with outside_portal(session):
+        return await _notify_all(
+            session,
+            org_id=org_id,
+            recipient=recipient,
+            wanted=wanted,
+            template_key=template_key,
+            variables=variables,
+            dedupe_key=dedupe_key,
+            urgency=urgency,
+            approval_id=approval_id,
+            registry=registry,
+            extras=extras,
+            workflow=workflow,
+            now=now,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            not_before=not_before,
+        )
+
+
+async def _notify_all(
+    session: AsyncSession,
+    *,
+    org_id: uuid.UUID,
+    recipient: Recipient,
+    wanted: list[str],
+    template_key: str,
+    variables: Mapping[str, Any],
+    dedupe_key: str,
+    urgency: Urgency,
+    approval_id: uuid.UUID | None,
+    registry: RoleRegistry | None,
+    extras: Extras,
+    workflow: str | None,
+    now: datetime,
+    actor_type: ActorType,
+    actor_id: str,
+    not_before: datetime | None,
+) -> list[NotifyResult]:
     prefs = await _preferences(session, recipient.user_id) if recipient.user_id else None
     results: list[NotifyResult] = []
     for channel in wanted:

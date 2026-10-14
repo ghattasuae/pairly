@@ -26,6 +26,7 @@ from pairly_core.jobs.models import JobRunRow
 from pairly_core.models.audit import AuditEvent
 from pairly_core.models.llm import LLMBudgetAlert, LLMBudgetReservation, ModelCall, OrgLLMBudget
 from pairly_core.models.policy import PolicyVersion
+from pairly_core.models.portal import PortalGuardRule
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
 from pairly_core.notifications.models import Notification, NotificationPreference, Template
 from pairly_core.policy.models import PolicyDocument, RuleResult
@@ -76,6 +77,7 @@ __all__ = [
     "Organisation",
     "PolicyDocument",
     "PolicyVersion",
+    "PortalGuardRule",
     "RetentionReport",
     "RiskAssessment",
     "RiskSignalRow",

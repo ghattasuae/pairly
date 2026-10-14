@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import re
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from typing import Any
 
@@ -37,6 +39,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.engine import Connection
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -57,9 +60,10 @@ from pairly_core.config import Settings
 
 ORG_SETTING = "app.org_id"
 SUBJECT_SETTING = "app.auth_subject"
-# An external person signed in to a portal (a candidate, later a vendor), for example
-# ``hire_candidate:<uuid>``. Empty for staff, agents and jobs. A workflow may add
-# restrictive Row Level Security policies keyed on it (``set_portal_subject``).
+# An external person signed in to a portal (a candidate or a vendor's contact), for
+# example ``hire_candidate:<uuid>``. Empty for staff, agents and jobs. Workflows add
+# restrictive Row Level Security policies keyed on it (``set_portal_subject``), and core
+# tables are closed to it except narrow rules (migration 0022, ``outside_portal``).
 PORTAL_SETTING = "app.portal_subject"
 
 _INFO_ORG = "pairly.org_id"
@@ -158,6 +162,30 @@ def set_portal_subject(session: AsyncSession, subject: str | None) -> None:
 def current_portal_subject(session: AsyncSession | Session) -> str | None:
     value = session.info.get(_INFO_PORTAL)
     return value if isinstance(value, str) else None
+
+
+@asynccontextmanager
+async def outside_portal(session: AsyncSession) -> AsyncIterator[None]:
+    """Run a system step of a portal request past the portal guard (migration 0022).
+
+    Only for engine work a portal action causes but whose rows are not the portal
+    person's and never go back to them: queueing a notification for staff (recipients,
+    preferences, dedupe), finding the head of a decision chain. Inside the block
+    ``app.portal_subject`` is empty for this transaction; the tenant boundary (org) is
+    unchanged. Pending writes are flushed first, so they are still checked against the
+    portal policies. Outside a portal session this does nothing."""
+    subject = current_portal_subject(session)
+    if subject is None:
+        yield
+        return
+    await session.flush()
+    await session.execute(select(func.set_config(PORTAL_SETTING, "", True)))
+    try:
+        yield
+    finally:
+        # If the transaction failed, it rolls back and the setting with it.
+        with suppress(DBAPIError):
+            await session.execute(select(func.set_config(PORTAL_SETTING, subject, True)))
 
 
 def current_org(session: AsyncSession | Session) -> uuid.UUID | None:

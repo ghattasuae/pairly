@@ -37,7 +37,7 @@ from sqlalchemy.orm import aliased
 
 from pairly_core.audit import ActorType, append_audit, format_timestamp
 from pairly_core.crypto.types import seal, unseal
-from pairly_core.db import TenantError, current_org
+from pairly_core.db import TenantError, current_org, outside_portal
 from pairly_core.decisions.ids import is_decision_id, new_decision_id
 from pairly_core.decisions.models import HUMAN_KINDS, DecisionKind, DecisionRecord
 from pairly_core.decisions.serialize import EncodingError, canonical, plain_json, sha256_hex
@@ -335,22 +335,25 @@ async def record_decision(session: AsyncSession, draft: DecisionDraft) -> Stored
 
     await _lock_entity(session, org, draft.entity_type, draft.entity_id)
     supersedes: str | None
-    if isinstance(draft.supersedes, _Auto):
-        supersedes = (
-            await chain_head(session, draft.entity_type, draft.entity_id)
-            if kind in HUMAN_KINDS
-            else None
-        )
-    else:
-        supersedes = draft.supersedes
-        if supersedes is not None:
-            if not is_decision_id(supersedes):
-                raise DecisionError("invalid supersedes id")
-            found = await session.scalar(
-                select(DecisionRecord.id).where(DecisionRecord.id == supersedes)
+    # The chain head of the entity, past the portal guard when a portal person records
+    # a step (migration 0022): only the id, so the chain never forks.
+    async with outside_portal(session):
+        if isinstance(draft.supersedes, _Auto):
+            supersedes = (
+                await chain_head(session, draft.entity_type, draft.entity_id)
+                if kind in HUMAN_KINDS
+                else None
             )
-            if found is None:
-                raise DecisionError("the superseded record does not exist")
+        else:
+            supersedes = draft.supersedes
+            if supersedes is not None:
+                if not is_decision_id(supersedes):
+                    raise DecisionError("invalid supersedes id")
+                found = await session.scalar(
+                    select(DecisionRecord.id).where(DecisionRecord.id == supersedes)
+                )
+                if found is None:
+                    raise DecisionError("the superseded record does not exist")
 
     record_id = new_decision_id()
     decided_at = draft.decided_at or datetime.now(UTC)

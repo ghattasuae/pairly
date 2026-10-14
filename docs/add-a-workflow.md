@@ -149,6 +149,8 @@ Tables live in your package (`models.py`) on `pairly_core.db.Base` with `OrgScop
 
 Always call `org_rls_statements`, which forces Row Level Security and grants the application role only what you list. Point at other tenant rows by `(org_id, id)` where the parent has that key, so a row can never reference another organisation's.
 
+Then close the table to portal sessions: call `portal_guard_statements(table)` in the same migration, or add your own restrictive `<table>_portal_subject` policy if a portal of yours needs its rows. `apps/api/tests/test_portal_guard.py` fails for any org-scoped table without one. See [security notes](security.md#portal-sessions).
+
 ## 7. The graph
 
 A graph is a LangGraph `StateGraph` that the runtime compiles with a tenant-bound checkpointer. Declare it with a `GraphSpec`:

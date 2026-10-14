@@ -27,6 +27,7 @@ from typing import Any, Final
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pairly_core.db import outside_portal
 from pairly_core.models import Membership, Role
 from pairly_core.notifications.defaults import DefaultTemplate
 from pairly_core.notifications.models import Urgency
@@ -171,7 +172,11 @@ async def notify_data_request(
     link = DATA_REQUESTS_PAGE
     if kind == "deletion":
         link = f"{DATA_REQUESTS_PAGE}?request={request_id}"
-    for admin in await hire_admins(session):
+    # Finding the admins is the engine's work, not the candidate's: memberships are
+    # closed to a portal session (portal guard, migration 0022).
+    async with outside_portal(session):
+        admins = await hire_admins(session)
+    for admin in admins:
         await notify(
             session,
             recipient=Recipient.user(admin),

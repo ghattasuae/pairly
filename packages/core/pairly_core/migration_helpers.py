@@ -54,3 +54,64 @@ def org_rls_statements(
         f"REVOKE ALL ON {t} FROM {role}",
         f"GRANT {privileges} ON {t} TO {role}",
     ]
+
+
+PORTAL_ACTIVE_FN = "app_portal_active()"
+PORTAL_ANY = "*"
+
+
+def portal_guard_statements(table: str) -> list[str]:
+    """Close an org-scoped table to portal sessions (core migration 0022).
+
+    While a portal subject is set (``app.portal_subject``: a candidate or a vendor
+    contact signed in to a portal) the table shows no rows and accepts no writes, except
+    what the rules of ``portal_rule_statements`` allow. Staff, agents and jobs never set
+    a portal subject, so the guard changes nothing for them. Call it in the migration
+    that creates any org-scoped table that has no portal policy of its own.
+    """
+    return [f"SELECT portal_guard_apply('{ident(table)}')"]
+
+
+def portal_rule_statements(
+    table: str,
+    subject_kind: str,
+    *,
+    using: str | None = None,
+    check: str | None = None,
+) -> list[str]:
+    """A narrow exception to a table's portal guard, for one kind of portal person
+    (``hire_candidate``, ``pay_vendor``; ``PORTAL_ANY`` for every kind). ``using`` (rows
+    shown) and ``check`` (rows written) are SQL conditions tied to the subject
+    (``app_portal_id()``, a plugin's own subject function); ``None`` allows nothing.
+    The rules live in ``portal_guard_rules`` and the table's ``<table>_portal_guard``
+    policy is rebuilt from all of them, so plugins add their own without touching
+    each other's."""
+    t = ident(table)
+    if subject_kind != PORTAL_ANY:
+        ident(subject_kind)
+    for part in (using, check):
+        if part is not None and "$rule$" in part:
+            raise ValueError("a portal rule cannot contain the $rule$ quote")
+
+    def quoted(part: str | None) -> str:
+        return "NULL" if part is None else f"$rule${part}$rule$"
+
+    return [
+        "INSERT INTO portal_guard_rules (table_name, subject_kind, using_sql, check_sql) "  # noqa: S608 (constant SQL, never user input)
+        f"VALUES ('{t}', '{subject_kind}', {quoted(using)}, {quoted(check)}) "
+        "ON CONFLICT (table_name, subject_kind) DO UPDATE "
+        "SET using_sql = EXCLUDED.using_sql, check_sql = EXCLUDED.check_sql",
+        f"SELECT portal_guard_apply('{t}')",
+    ]
+
+
+def drop_portal_rule_statements(table: str, subject_kind: str) -> list[str]:
+    """Undo ``portal_rule_statements`` (downgrades)."""
+    t = ident(table)
+    if subject_kind != PORTAL_ANY:
+        ident(subject_kind)
+    return [
+        f"DELETE FROM portal_guard_rules WHERE table_name = '{t}' "  # noqa: S608 (constant SQL, never user input)
+        f"AND subject_kind = '{subject_kind}'",
+        f"SELECT portal_guard_apply('{t}')",
+    ]

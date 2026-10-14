@@ -33,7 +33,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, actor_ref, append_audit
-from pairly_core.db import TenantError, current_org
+from pairly_core.db import TenantError, current_org, current_portal_subject
+from pairly_core.errors import ConflictError
 from pairly_core.ingestion.models import Document, DocumentSource, DocumentStatus
 from pairly_core.ingestion.settings import IntakePolicy
 from pairly_core.ingestion.sniff import SNIFF_BYTES, sniff
@@ -291,6 +292,10 @@ async def ingest_spooled(
     if inserted is None:
         # Lost a race with a concurrent upload of the same bytes to this workflow.
         existing = await _existing(session, workflow, spooled.sha256)
+        if existing is None and current_portal_subject(session) is not None:
+            # The same bytes are someone else's file, which a portal session never sees
+            # (portal guard, migration 0022): answer as a duplicate, naming nothing.
+            raise ConflictError("this file was already received")
         if existing is None:  # pragma: no cover - the conflicting row must be visible
             raise RuntimeError("duplicate document vanished")
         await _audit(session, by, DocumentAction.DUPLICATE, existing, {"source": source.value})

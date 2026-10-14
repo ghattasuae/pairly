@@ -399,14 +399,11 @@ async def append_audit(
     await session.execute(
         text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"), {"key": _lock_key(org)}
     )
-    last = (
-        await session.execute(
-            select(AuditEvent.seq, AuditEvent.hash)
-            .where(AuditEvent.org_id == org)
-            .order_by(AuditEvent.seq.desc())
-            .limit(1)
-        )
-    ).first()
+    # The chain head through ``audit_chain_head()`` (migration 0022): it reads past the
+    # portal guard, so an event a portal person causes continues the chain too.
+    last = (await session.execute(text("SELECT seq, hash FROM audit_chain_head()"))).first()
+    if last is not None and last.seq is None:
+        last = None
     seq = 1 if last is None else int(last.seq) + 1
     prev_hash = GENESIS_HASH if last is None else str(last.hash)
 
