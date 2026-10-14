@@ -174,3 +174,6 @@ export const revokeInvite = unavailable;
 export const openVendorLink = unavailable;
 export const loadVendorForm = unavailable;
 export const submitVendorForm = unavailable;
+// Pay invoices (lib/actions/pay.ts).
+export const correctInvoiceField = unavailable;
+export const invoiceAction = unavailable;

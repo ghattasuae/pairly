@@ -54,7 +54,7 @@ export function PayUnavailable({ retry }: { retry: string }) {
   );
 }
 
-/** The Pay section's own tabs: vendors, bank-detail changes, onboarding invites. */
+/** The Pay section's own tabs: vendors, invoices, bank-detail changes, onboarding invites. */
 export async function PayHeader({
   title,
   intro,
@@ -63,12 +63,13 @@ export async function PayHeader({
 }: {
   title: string;
   intro?: string;
-  current: "vendors" | "changes" | "invites" | null;
+  current: "vendors" | "invoices" | "changes" | "invites" | null;
   permissions: string[];
 }) {
   const t = await getTranslations("Pay.tabs");
   const tabs = [
     { key: "vendors" as const, href: "/pay", show: permissions.includes("pay.vendor.read") },
+    { key: "invoices" as const, href: "/pay/invoices", show: permissions.includes("pay.invoice.read") },
     { key: "changes" as const, href: "/pay/bank-changes", show: permissions.includes("pay.bank_change.read") },
     { key: "invites" as const, href: "/pay/invites", show: permissions.includes("pay.vendor.write") },
   ].filter((tab) => tab.show);

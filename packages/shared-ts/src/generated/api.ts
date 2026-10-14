@@ -3956,6 +3956,109 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Invoices */
+        get: operations["list_invoices_v1_pay_invoices_get"];
+        put?: never;
+        /** Submit Invoice */
+        post: operations["submit_invoice_v1_pay_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Invoice Detail */
+        get: operations["get_invoice_detail_v1_pay_invoices__invoice_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Correct Invoice Field */
+        post: operations["correct_invoice_field_v1_pay_invoices__invoice_id__corrections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject */
+        post: operations["reject_v1_pay_invoices__invoice_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Invoice */
+        post: operations["review_invoice_v1_pay_invoices__invoice_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/vendor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link Invoice Vendor */
+        post: operations["link_invoice_vendor_v1_pay_invoices__invoice_id__vendor_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/public/vendor-onboarding/open": {
         parameters: {
             query?: never;
@@ -10649,6 +10752,368 @@ export type components = {
             used_at: string | null;
             /** Vendor Id */
             vendor_id: string | null;
+        };
+        /** PayInvoiceCorrectionIn */
+        PayInvoiceCorrectionIn: {
+            /** Field Path */
+            field_path: string;
+            /** New Value */
+            new_value?: string | null;
+            /** Reason */
+            reason: string;
+        };
+        /** PayInvoiceCorrectionOut */
+        PayInvoiceCorrectionOut: {
+            /**
+             * Corrected By
+             * Format: uuid
+             */
+            corrected_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Field Path */
+            field_path: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** New Value */
+            new_value: unknown;
+            /** Old Value */
+            old_value: unknown;
+            /** Reason */
+            reason: string;
+        };
+        /** PayInvoiceCreated */
+        PayInvoiceCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Duplicate */
+            duplicate: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Intake Reference */
+            intake_reference: string | null;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            vendor: components["schemas"]["PayInvoiceVendorOut"] | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayInvoiceDetail */
+        PayInvoiceDetail: {
+            /** Can Process */
+            can_process: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /** Decision Ids */
+            decision_ids: string[];
+            document: components["schemas"]["PayInvoiceDocumentOut"];
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Due Date */
+            due_date: string | null;
+            email: components["schemas"]["PayInvoiceEmailOut"] | null;
+            extraction: components["schemas"]["PayInvoiceExtractionOut"] | null;
+            /** Findings */
+            findings: components["schemas"]["PayInvoiceFindingOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Intake Reference */
+            intake_reference: string | null;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Po Number */
+            po_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Rejected At */
+            rejected_at: string | null;
+            /** Removed Spans */
+            removed_spans: {
+                [key: string]: unknown;
+            }[];
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Sender Domains */
+            sender_domains: string[];
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string | null;
+            /** Total */
+            total: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Vat Amount */
+            vat_amount: string | null;
+            vendor: components["schemas"]["PayInvoiceVendorOut"] | null;
+            /** Vendor Match */
+            vendor_match: {
+                [key: string]: unknown;
+            };
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Vendor Trn */
+            vendor_trn: string | null;
+        };
+        /** PayInvoiceDocumentOut */
+        PayInvoiceDocumentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Media Type */
+            media_type: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Sha256 */
+            sha256: string;
+            /** Status */
+            status: string;
+            /** Text */
+            text?: string | null;
+        };
+        /** PayInvoiceEmailOut */
+        PayInvoiceEmailOut: {
+            /** Classification */
+            classification: string;
+            /** Forwarded Domain */
+            forwarded_domain: string | null;
+            /** Reasons */
+            reasons: string[];
+            /** Receipt Sent */
+            receipt_sent: boolean;
+            /** Reference */
+            reference: string;
+            /** Sender Domain */
+            sender_domain: string | null;
+        };
+        /** PayInvoiceExtractionOut */
+        PayInvoiceExtractionOut: {
+            /** Corrections */
+            corrections: components["schemas"]["PayInvoiceCorrectionOut"][];
+            /** Extra Values */
+            extra_values: {
+                [key: string]: unknown;
+            };
+            /** Fields */
+            fields: components["schemas"]["PayInvoiceFieldOut"][];
+            /** From Recording */
+            from_recording: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model Name */
+            model_name: string | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Reasons */
+            reasons: string[];
+            /** Source */
+            source: string | null;
+            /** Status */
+            status: string;
+        };
+        /** PayInvoiceFieldOut */
+        PayInvoiceFieldOut: {
+            /** Confidence */
+            confidence: number;
+            /** Corrected */
+            corrected: boolean;
+            /** Current Value */
+            current_value: unknown;
+            /** Flags */
+            flags: string[];
+            /** Kind */
+            kind: string;
+            /** Needs Correction */
+            needs_correction: boolean;
+            /** Path */
+            path: string;
+            /** Pattern */
+            pattern: string;
+            /** Raw Value */
+            raw_value: string | null;
+            /** Required */
+            required: boolean;
+            /** Spans */
+            spans: {
+                [key: string]: unknown;
+            }[];
+            /** Threshold */
+            threshold: number;
+            /** Value */
+            value: unknown;
+        };
+        /** PayInvoiceFindingOut */
+        PayInvoiceFindingOut: {
+            /** Bbox */
+            bbox: {
+                [key: string]: number;
+            } | null;
+            /** Code */
+            code: string;
+            /** Evidence */
+            evidence: string | null;
+            /** Id */
+            id: string;
+            /** Location */
+            location: string;
+            /** Page */
+            page: number | null;
+            /** Remove */
+            remove: boolean;
+            /** Severity */
+            severity: string;
+            /** Type */
+            type: string;
+        };
+        /** PayInvoiceList */
+        PayInvoiceList: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["PayInvoiceSummary"][];
+        };
+        /** PayInvoiceRejectIn */
+        PayInvoiceRejectIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** PayInvoiceReviewIn */
+        PayInvoiceReviewIn: {
+            /** Note */
+            note?: string | null;
+        };
+        /** PayInvoiceSummary */
+        PayInvoiceSummary: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Intake Reference */
+            intake_reference: string | null;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            vendor: components["schemas"]["PayInvoiceVendorOut"] | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayInvoiceVendorIn */
+        PayInvoiceVendorIn: {
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+        };
+        /** PayInvoiceVendorOut */
+        PayInvoiceVendorOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Legal Name */
+            legal_name: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
         };
         /** PayOnboardingDocumentOut */
         PayOnboardingDocumentOut: {
@@ -19823,6 +20288,251 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices_v1_pay_invoices_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                q?: string | null;
+                status?: ("received" | "extracting" | "needs_review" | "ready" | "approved" | "scheduled" | "paid" | "rejected") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_invoice_v1_pay_invoices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceCreated"];
+                };
+            };
+            /** @description Malformed body or an empty file */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File larger than Pay allows */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File type not allowed, or the body is not multipart */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_invoice_detail_v1_pay_invoices__invoice_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    correct_invoice_field_v1_pay_invoices__invoice_id__corrections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceCorrectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_v1_pay_invoices__invoice_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceRejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_invoice_v1_pay_invoices__invoice_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_invoice_vendor_v1_pay_invoices__invoice_id__vendor_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceVendorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
                 };
             };
             /** @description Validation Error */

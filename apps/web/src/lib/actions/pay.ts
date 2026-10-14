@@ -13,7 +13,14 @@ import { z } from "zod";
 
 import type { ActionResult } from "../action-result";
 import { callApi, toAction } from "../api/call";
-import type { PayInviteCreated, PayInvite, PayTicketDetail, PayVendorCheck, PayVendorDetail } from "../pay/types";
+import type {
+  PayInviteCreated,
+  PayInvite,
+  PayInvoiceDetail,
+  PayTicketDetail,
+  PayVendorCheck,
+  PayVendorDetail,
+} from "../pay/types";
 
 const uuid = z.uuid();
 const bad = { ok: false as const, code: "invalid_input" };
@@ -229,4 +236,61 @@ export async function revokeInvite(id: string): Promise<ActionResult<{ invite: P
     api.POST("/v1/pay/vendor-invites/{invite_id}/revoke", { params: { path: { invite_id: id } } }),
   );
   return toAction(result, (invite) => ({ invite }));
+}
+
+// ------------------------------------------------------------------ invoices (WP4.5)
+
+const fieldPath = z.string().regex(/^[a-z_]+(\[\d{1,3}\])?(\.[a-z_]+)?$/).max(200);
+
+/** Correct one field of an invoice, with a reason. The API files it under the vendor. */
+export async function correctInvoiceField(
+  invoiceId: string,
+  input: { field_path: string; new_value: string | null; reason: string },
+): Promise<ActionResult<{ invoice: PayInvoiceDetail }>> {
+  const parsed = z
+    .object({ field_path: fieldPath, new_value: z.string().trim().max(2000).nullable(), reason })
+    .strict()
+    .safeParse(input);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const body = {
+    field_path: parsed.data.field_path,
+    new_value: parsed.data.new_value === "" ? null : parsed.data.new_value,
+    reason: parsed.data.reason,
+  };
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/invoices/{invoice_id}/corrections", { params: { path: { invoice_id: invoiceId } }, body }),
+  );
+  return toAction(result, (invoice) => ({ invoice }));
+}
+
+/** Mark reviewed (to ready), reject (with a reason) or link the vendor. */
+export async function invoiceAction(
+  invoiceId: string,
+  action: "review" | "reject" | "vendor",
+  text: string,
+): Promise<ActionResult<{ invoice: PayInvoiceDetail }>> {
+  if (!uuid.safeParse(invoiceId).success) return bad;
+  const path = { params: { path: { invoice_id: invoiceId } } };
+  if (action === "review") {
+    if (text.length > 1000) return bad;
+    const result = await callApi((api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/review", { ...path, body: text.trim() ? { note: text.trim() } : {} }),
+    );
+    return toAction(result, (invoice) => ({ invoice }));
+  }
+  if (action === "reject") {
+    if (!reason.safeParse(text).success || text.trim().length > 1000) return bad;
+    const result = await callApi((api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/reject", { ...path, body: { reason: text.trim() } }),
+    );
+    return toAction(result, (invoice) => ({ invoice }));
+  }
+  if (action === "vendor") {
+    if (!uuid.safeParse(text).success) return bad;
+    const result = await callApi((api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/vendor", { ...path, body: { vendor_id: text } }),
+    );
+    return toAction(result, (invoice) => ({ invoice }));
+  }
+  return bad;
 }

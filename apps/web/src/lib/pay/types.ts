@@ -18,3 +18,6 @@ export type PayInvite = S["PayInviteOut"];
 export type PayInviteCreated = S["PayInviteCreatedOut"];
 export type PayOnboardingPage = S["PayOnboardingPageOut"];
 export type PaySettings = S["PaySettingsOut"];
+export type PayInvoiceSummary = S["PayInvoiceSummary"];
+export type PayInvoiceDetail = S["PayInvoiceDetail"];
+export type PayInvoiceField = S["PayInvoiceFieldOut"];
