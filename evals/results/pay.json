@@ -1,0 +1,184 @@
+{
+ "duplicates": {
+  "positives": 18,
+  "detected": 18,
+  "recall": 1.0,
+  "missed": [],
+  "flagged": 18,
+  "precision": 1.0,
+  "false_positives": [],
+  "original_identified_rate": 1.0
+ },
+ "bank_mismatch": {
+  "positives": 5,
+  "detected": 5,
+  "recall": 1.0,
+  "missed": [],
+  "clean_false_positives": []
+ },
+ "lookalike_domain": {
+  "positives": 5,
+  "detected": 5,
+  "recall": 1.0,
+  "missed": [],
+  "false_positives": [
+   "atk-069"
+  ]
+ },
+ "arithmetic_vat": {
+  "positives": 9,
+  "detected": 9,
+  "recall": 1.0,
+  "missed": [],
+  "type_level_recall": 1.0,
+  "clean_false_positives": []
+ },
+ "injection": {
+  "positives": 12,
+  "caught": 12,
+  "catch_rate": 1.0,
+  "missed": [],
+  "clean_flagged": []
+ },
+ "false_positives": {
+  "clean_invoices": 320,
+  "routed_to_review": 1,
+  "review_rate": 0.0031,
+  "flagged_medium_or_worse": 7,
+  "flag_rate": 0.0219,
+  "by_code": {
+   "amount_anomaly": 7
+  },
+  "examples": [
+   "inv-0263"
+  ]
+ },
+ "attacks_routed_to_review": 0.8986,
+ "per_expected_finding": {
+  "amount_anomaly": {
+   "expected": 3,
+   "found": 2,
+   "recall": 0.6667
+  },
+  "arithmetic_error": {
+   "expected": 6,
+   "found": 6,
+   "recall": 1.0
+  },
+  "bank_mismatch": {
+   "expected": 5,
+   "found": 5,
+   "recall": 1.0
+  },
+  "duplicate_file_hash": {
+   "expected": 3,
+   "found": 3,
+   "recall": 1.0
+  },
+  "duplicate_invoice_number": {
+   "expected": 7,
+   "found": 7,
+   "recall": 1.0
+  },
+  "editing_traces": {
+   "expected": 1,
+   "found": 1,
+   "recall": 1.0
+  },
+  "first_time_sender": {
+   "expected": 4,
+   "found": 4,
+   "recall": 1.0
+  },
+  "hidden_text": {
+   "expected": 8,
+   "found": 8,
+   "recall": 1.0
+  },
+  "metadata_inconsistency": {
+   "expected": 4,
+   "found": 4,
+   "recall": 1.0
+  },
+  "metadata_injection": {
+   "expected": 2,
+   "found": 2,
+   "recall": 1.0
+  },
+  "near_duplicate": {
+   "expected": 13,
+   "found": 10,
+   "recall": 0.7692
+  },
+  "prompt_injection": {
+   "expected": 12,
+   "found": 9,
+   "recall": 0.75
+  },
+  "round_amount": {
+   "expected": 3,
+   "found": 3,
+   "recall": 1.0
+  },
+  "sender_domain_mismatch": {
+   "expected": 5,
+   "found": 5,
+   "recall": 1.0
+  },
+  "sender_lookalike_domain": {
+   "expected": 5,
+   "found": 5,
+   "recall": 1.0
+  },
+  "split_under_threshold": {
+   "expected": 6,
+   "found": 6,
+   "recall": 1.0
+  },
+  "template_mismatch": {
+   "expected": 1,
+   "found": 1,
+   "recall": 1.0
+  },
+  "trn_invalid": {
+   "expected": 1,
+   "found": 1,
+   "recall": 1.0
+  },
+  "trn_mismatch": {
+   "expected": 1,
+   "found": 1,
+   "recall": 1.0
+  },
+  "unknown_vendor": {
+   "expected": 4,
+   "found": 4,
+   "recall": 1.0
+  },
+  "urgency_language": {
+   "expected": 6,
+   "found": 5,
+   "recall": 0.8333
+  },
+  "vat_error": {
+   "expected": 5,
+   "found": 5,
+   "recall": 1.0
+  }
+ },
+ "check_errors": 0,
+ "check_errors_by_check": {},
+ "check_error_cases": [],
+ "dataset": {
+  "count": 320,
+  "seed": 2026,
+  "documents": 389,
+  "regular": 320,
+  "attacks": 69,
+  "parsed": 331,
+  "scans_included": false,
+  "parse_errors": [],
+  "values": "ground truth (what a perfect extractor reads)"
+ },
+ "seconds": 20.1
+}

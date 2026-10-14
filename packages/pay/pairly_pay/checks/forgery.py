@@ -9,7 +9,8 @@ opened here; strong signals send the invoice to a person through the risk score.
   consistent about it (two thirds of at least ``MIN_TEMPLATES`` earlier documents agree)
   and this one differs. Two features: medium; three or more: high.
 * ``metadata_inconsistency``: created after it was modified, made with a generic editor
-  or invoice generator, created long after the invoice date, a title naming another
+  or invoice generator, a PDF created long after the invoice date (word processor dates
+  are template dates, so DOCX files are not compared), a title naming another
   invoice number, a generic author account.
 * ``editing_traces``: text printed over other text, figures under a white box, or a
   guardrail "covered" finding on a figure.
@@ -148,8 +149,9 @@ def _metadata(facts: InvoiceFacts, settings: CheckSettings) -> list[Finding]:
         if tool and GENERIC_TOOLS.search(tool):
             add("metadata_generic_tool", {"field": key, "tool": tool[:80]}, tool=tool[:80])
             break
-    if created and facts.invoice_date:
-        late = (created.date() - facts.invoice_date).days
+    pdf_created = _date(meta.get("pdf:CreationDate"))
+    if pdf_created and facts.invoice_date:
+        late = (pdf_created.date() - facts.invoice_date).days
         if late > settings.metadata_late_days:
             add("metadata_created_late", {"days": late}, days=late)
     title = meta.get("pdf:Title") or meta.get("docx:title") or ""

@@ -179,9 +179,10 @@ test: ## Run Python and JS tests
 	$(UV) run --frozen pytest --cov --cov-report=term-missing
 	$(PNPM) test
 
-evals: ## Run the eval suites (guardrails, Hire screening) and the threshold gate
+evals: ## Run the eval suites (guardrails, Hire screening, Pay checks) and the threshold gate
 	nice -n 10 $(UV) run python -m evals.guardrails_hire
 	nice -n 10 $(UV) run python -m evals.hire
+	nice -n 10 $(UV) run python -m evals.pay
 	$(UV) run python -m evals.gate
 
 lint: ## Lint Python, import contracts and JS

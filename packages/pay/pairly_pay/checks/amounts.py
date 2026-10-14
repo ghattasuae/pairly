@@ -4,8 +4,10 @@
 
 * ``amount_outlier``: the total against this vendor's earlier totals in the same
   currency, with the engine's robust statistics (``pairly_core.risk.stats.amount_outlier``:
-  median and MAD modified z-score). Medium above the threshold, high above twice it.
-  Fewer than ``outlier_min_history`` earlier invoices: not compared.
+  median and MAD modified z-score) above ``outlier_threshold`` and at least
+  ``outlier_min_ratio`` times the median: medium; at twice that ratio: high. A lower
+  amount than usual is not a risk. Fewer than ``outlier_min_history`` earlier invoices:
+  not compared.
 * ``round_amount`` (low): the subtotal or the total is a multiple of ``round_unit`` and
   at least ``round_minimum``.
 * ``split_under_threshold`` (high): this invoice is under the approval threshold by at
@@ -59,7 +61,15 @@ def _outlier(facts: InvoiceFacts, history: History, settings: CheckSettings) -> 
     if not found.enough_history or not found.is_outlier or found.median is None:
         return None
     z = found.z_score if found.z_score is not None else Decimal(0)
-    extreme = abs(z) > 2 * settings.outlier_threshold
+    # Only more than usual is a risk, and only clearly more: the robust z-score finds
+    # the unusual, the ratio to the median keeps a vendor with steady amounts from
+    # being flagged for an ordinary larger order.
+    if z <= 0 or found.median <= 0:
+        return None
+    ratio = facts.total / found.median
+    if ratio < settings.outlier_min_ratio:
+        return None
+    extreme = ratio >= settings.outlier_min_ratio * 2
     return finding(
         CHECK,
         "amount_anomaly",
@@ -69,6 +79,7 @@ def _outlier(facts: InvoiceFacts, history: History, settings: CheckSettings) -> 
             "median": str(found.median),
             "z_score": str(z.quantize(Decimal("0.01"))) if z.is_finite() else str(z),
             "history_size": found.history_size,
+            "ratio": str(ratio.quantize(Decimal("0.01"))),
         },
         amount=_money(facts.total),
         currency=facts.currency,

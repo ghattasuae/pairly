@@ -153,3 +153,53 @@ metrics:
     path: latency_cost.model_latency
     threshold: after_first_live_baseline
     why: Latency per document (BRIEF 7.2), needs live model calls.
+
+  # ---------------------------------------------------------------- Pay checks (WP4.6)
+  # Measured with the synthetic ground truth as the read values (evals/pay). Bank-mismatch
+  # recall gates at 1.0 (BRIEF 7.2). The others are set at the first measured baseline
+  # (2026-10-14) and are TO BE CONFIRMED with the founder.
+  - id: pay.bank_mismatch.recall
+    file: pay.json
+    path: bank_mismatch.recall
+    min: 1.0
+    why: Every synthetic bank-detail change is caught (BRIEF 7.2, target 100%).
+  - id: pay.duplicates.recall
+    file: pay.json
+    path: duplicates.recall
+    min: 1.0
+    why: Duplicate and near-duplicate detection recall (baseline, to be confirmed).
+  - id: pay.duplicates.precision
+    file: pay.json
+    path: duplicates.precision
+    min: 1.0
+    why: Duplicate detection precision (baseline, to be confirmed).
+  - id: pay.lookalike.recall
+    file: pay.json
+    path: lookalike_domain.recall
+    min: 1.0
+    why: Lookalike sender domain recall (baseline, to be confirmed).
+  - id: pay.arithmetic_vat.recall
+    file: pay.json
+    path: arithmetic_vat.recall
+    min: 1.0
+    why: Arithmetic and VAT error recall (baseline, to be confirmed).
+  - id: pay.injection.catch_rate
+    file: pay.json
+    path: injection.catch_rate
+    min: 1.0
+    why: Injection catch rate on the synthetic injection invoices (baseline, to be confirmed).
+  - id: pay.false_positives.review_rate
+    file: pay.json
+    path: false_positives.review_rate
+    max: 0.0031
+    why: Clean invoices the checks send to review (baseline, to be confirmed).
+  - id: pay.false_positives.flag_rate
+    file: pay.json
+    path: false_positives.flag_rate
+    max: 0.0219
+    why: Clean invoices with a medium or worse finding (baseline, to be confirmed).
+  - id: pay.check_errors
+    file: pay.json
+    path: check_errors
+    max: 0
+    why: Every check runs on every synthetic invoice.

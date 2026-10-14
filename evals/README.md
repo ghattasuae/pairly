@@ -7,6 +7,7 @@ from `synth/`, offline, with no model API key.
 make evals                         # the runners below, then the gate
 uv run python -m evals.guardrails_hire
 uv run python -m evals.hire
+uv run python -m evals.pay
 uv run python -m evals.gate        # exit 1 when a measured metric misses its threshold
 ```
 
@@ -62,3 +63,16 @@ model latency and cost per CV.
 
 Options: `--count`, `--seed`, `--limit N` (first N documents), `--include-scans`,
 `--out`, `--report`.
+
+## `python -m evals.pay`
+
+The Pay validation and fraud checks (`pairly_pay.checks`, exactly what the `pay_invoice`
+graph runs) on every invoice of `synth.pay` in arrival order: regular invoices and the
+attack invoices. Documents are rendered, parsed in process and scanned by the
+guardrails (scans need OCR and are not parsed unless `--include-scans`). The read values
+are the synthetic ground truth, so the numbers measure the checks with a perfect reader,
+not extraction; the spend policy search needs a live model and is not run (the
+deterministic rule set is). Writes `results/pay.json` and the Pay section of
+`report.md`: duplicate recall and precision, bank-mismatch recall (gate 1.0),
+lookalike-domain recall, arithmetic and VAT error recall, injection catch rate, false
+positives on clean invoices, recall per expected finding and check errors.

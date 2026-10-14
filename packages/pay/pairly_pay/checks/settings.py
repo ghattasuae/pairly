@@ -81,6 +81,7 @@ class CheckSettings:
     round_minimum: Decimal = Decimal("5000")
     outlier_threshold: Decimal = Decimal("3.5")
     outlier_min_history: int = 5
+    outlier_min_ratio: Decimal = Decimal("2")
     # Created more than this many days after the invoice date: a metadata flag.
     metadata_late_days: int = 30
     home_country: str = "AE"
@@ -105,6 +106,7 @@ class CheckSettings:
             "round_minimum": str(self.round_minimum),
             "outlier_threshold": str(self.outlier_threshold),
             "outlier_min_history": self.outlier_min_history,
+            "outlier_min_ratio": str(self.outlier_min_ratio),
             "metadata_late_days": self.metadata_late_days,
         }
 
@@ -116,6 +118,7 @@ _DECIMALS: Final = {
     "round_unit": (Decimal("0.01"), Decimal("1000000000")),
     "round_minimum": (Decimal(0), Decimal("1000000000")),
     "outlier_threshold": (Decimal("0.5"), Decimal(100)),
+    "outlier_min_ratio": (Decimal("1"), Decimal(1000)),
 }
 _INTS: Final = {
     "rounding_units": (0, 100),
