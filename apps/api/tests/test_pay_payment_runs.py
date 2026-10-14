@@ -442,7 +442,11 @@ async def test_early_payment_discounts_are_highlighted_and_taken_only_when_asked
     assert late_out["saving"] is None
 
     # Taken when asked: the discounted amount, the saving recorded on the item.
-    early = {**base, "execution_date": pay_by.isoformat(), "include_early_payment": True}
+    early: dict[str, Any] = {
+        **base,
+        "execution_date": pay_by.isoformat(),
+        "include_early_payment": True,
+    }
     taken = await flow.ok("POST", "/v1/pay/payment-runs/preview", fworld, "finance", json=early)
     (item,) = taken["items"]
     assert Decimal(item["discount"]) == saving
