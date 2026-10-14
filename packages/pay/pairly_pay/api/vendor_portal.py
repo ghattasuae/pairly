@@ -38,7 +38,8 @@ minute per contact; writes have their own limits):
   changed directly and audited. 10 per hour.
 * ``POST /vendor-portal/bank-change``              new bank details: always a locked
   change request (payments held, call back on the number on file, two approvals), never
-  applied here. 5 per day.
+  applied here; the approvers and finance controllers get the same urgent alert as for
+  a ticket an invoice check opens (``pairly_pay.alerts``). 5 per day.
 """
 
 from __future__ import annotations

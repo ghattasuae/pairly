@@ -9,6 +9,10 @@ payments. Category ``urgent``: always sent at once, never held for a digest, and
 something a person can switch off. Migration ``pay_0008`` stores these as version 1
 shared rows (``org_id`` NULL); an organisation customises them by saving its own version.
 
+``pay.bank_change.portal_alert`` is the same urgent alert, to the same people, when a
+vendor's contact asks for new bank details in the vendor portal (no invoice involved).
+Migration ``pay_0014`` stores it.
+
 Only the last four characters of the account number ever appear in the message.
 
 Copy style: short plain sentences, never an em dash.
@@ -21,6 +25,7 @@ from typing import Any, Final
 from pairly_core.notifications.defaults import DefaultTemplate
 
 BANK_CHANGE_ALERT: Final = "pay.bank_change.alert"
+PORTAL_BANK_CHANGE_ALERT: Final = "pay.bank_change.portal_alert"
 CATEGORY: Final = "urgent"
 
 
@@ -119,5 +124,94 @@ ALERT_TEMPLATES: Final = (
             "اتصال تحقق وموافقتين."
         ),
         variables=_SHORT,
+    ),
+)
+
+PORTAL_VARIABLES: Final = {
+    "vendor": VARIABLES["vendor"],
+    "ticket_reference": VARIABLES["ticket_reference"],
+    "iban_last4": VARIABLES["iban_last4"],
+    "ticket_url": VARIABLES["ticket_url"],
+}
+_PORTAL_SHORT: Final = {
+    k: PORTAL_VARIABLES[k] for k in ("vendor", "ticket_reference", "iban_last4")
+}
+
+_PORTAL_EN_BODY = (
+    "{{ vendor }} asked in the vendor portal to change its bank details (new account "
+    "ending {{ iban_last4 }}).\n\n"
+    "Pairly opened bank-detail change {{ ticket_reference }}. The vendor's payments are "
+    "on hold. Nothing is paid to new details until someone calls the vendor on the "
+    "number on file and two people approve the change."
+)
+_PORTAL_AR_BODY = (
+    "طلب {{ vendor }} عبر بوابة الموردين تغيير بياناته البنكية (حساب جديد ينتهي بـ "
+    "{{ iban_last4 }}).\n\n"
+    "فتح Pairly طلب تغيير البيانات البنكية {{ ticket_reference }}. مدفوعات المورد معلقة. "
+    "لن يُدفع أي مبلغ إلى بيانات جديدة حتى يتصل أحد بالمورد على الرقم المسجل ويوافق "
+    "شخصان على التغيير."
+)
+
+PORTAL_ALERT_TEMPLATES: Final = (
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="email",
+        locale="en",
+        category=CATEGORY,
+        subject="Urgent: payments to {{ vendor }} are on hold after a bank detail change",
+        body=_PORTAL_EN_BODY
+        + "{% if ticket_url %}\n\nOpen the change: {{ ticket_url }}{% endif %}",
+        variables=PORTAL_VARIABLES,
+    ),
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="email",
+        locale="ar",
+        category=CATEGORY,
+        subject="عاجل: مدفوعات {{ vendor }} معلقة بعد تغيير في البيانات البنكية",
+        body=_PORTAL_AR_BODY + "{% if ticket_url %}\n\nافتح الطلب: {{ ticket_url }}{% endif %}",
+        variables=PORTAL_VARIABLES,
+    ),
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="slack",
+        locale="en",
+        category=CATEGORY,
+        body="*Urgent: bank detail change for {{ vendor }}.* " + _PORTAL_EN_BODY,
+        variables=_PORTAL_SHORT,
+    ),
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="slack",
+        locale="ar",
+        category=CATEGORY,
+        body="*عاجل: تغيير البيانات البنكية لـ {{ vendor }}.* " + _PORTAL_AR_BODY,
+        variables=_PORTAL_SHORT,
+    ),
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="in_app",
+        locale="en",
+        category=CATEGORY,
+        subject="Payments to {{ vendor }} are on hold",
+        body=(
+            "{{ vendor }} asked in the vendor portal for new bank details (account ending "
+            "{{ iban_last4 }}). Bank-detail change {{ ticket_reference }} needs a call back "
+            "and two approvals."
+        ),
+        variables=_PORTAL_SHORT,
+    ),
+    DefaultTemplate(
+        key=PORTAL_BANK_CHANGE_ALERT,
+        channel="in_app",
+        locale="ar",
+        category=CATEGORY,
+        subject="مدفوعات {{ vendor }} معلقة",
+        body=(
+            "طلب {{ vendor }} عبر بوابة الموردين بيانات بنكية جديدة (حساب ينتهي بـ "
+            "{{ iban_last4 }}). طلب تغيير البيانات البنكية {{ ticket_reference }} يحتاج إلى "
+            "اتصال تحقق وموافقتين."
+        ),
+        variables=_PORTAL_SHORT,
     ),
 )

@@ -40,6 +40,7 @@ from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.types import seal
 from pairly_core.errors import BadRequestError, ConflictError, NotFoundError
 from pairly_core.models import Organisation
+from pairly_pay.alerts import alert_portal_bank_change
 from pairly_pay.bank_changes import open_ticket, open_ticket_of
 from pairly_pay.common import VENDOR_ENTITY, audit, clean_text, new_reference, opened
 from pairly_pay.models import (
@@ -650,6 +651,8 @@ async def request_bank_change(
         note=clean_text(note, 1000) or None,
     )
     ticket = opened.ticket
+    vendor = await vendor_row(session, identity)
+    await alert_portal_bank_change(session, ticket=ticket, vendor=vendor, iban_last4=bank.last4)
     return OpenRequest(
         reference=ticket.reference,
         status=ticket.status,

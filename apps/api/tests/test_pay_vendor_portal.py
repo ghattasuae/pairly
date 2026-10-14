@@ -44,7 +44,7 @@ from pairly_core.notifications.outbox import OutboxTransport
 from pairly_pay.portal.auth import REQUEST_TTL, issue_login_token, portal_subject
 from pairly_pay.portal.models import PayPortalContact
 
-from .notify_support import notify_settings
+from .notify_support import WEB_URL, notifications, notify_settings, text_of
 from .pay_flow_support import (
     Flow,
     approve_all,
@@ -359,6 +359,54 @@ async def test_row_level_security_limits_a_portal_session_to_its_vendor(
         )
     held = await rows(None, "SELECT payment_hold FROM pay_vendors WHERE id = :v", {"v": vendor_b})
     assert held[0].payment_hold is False
+
+
+async def test_a_portal_bank_change_alerts_the_approvers_and_finance(
+    flow: Flow, fworld: PayWorld, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same urgent alert as a ticket an invoice check opens: the approvers and the
+    finance controller, every channel, the ticket's page, never more than four digits."""
+    monkeypatch.setenv("PAIRLY_PUBLIC_WEB_URL", WEB_URL)
+    vendor_id = await make_vendor(flow, fworld, "inv-0001")
+    email = await _grant(flow, fworld, vendor_id)
+    session = await _signed_in(flow, fworld, email)
+    new_bank = other_bank()
+    asked = await flow.client.post(f"{PORTAL}/bank-change", json=new_bank, headers=session)
+    assert asked.status_code == 201, asked.text
+    request = asked.json()["request"]
+    last4 = request["iban_last4"]
+    tickets = await flow.ok("GET", "/v1/pay/bank-changes", fworld, "clerk")
+    items = tickets["items"] if isinstance(tickets, dict) else tickets
+    (ticket,) = [t for t in items if t["reference"] == request["reference"]]
+    page = f"/pay/bank-changes/{ticket['id']}"
+
+    rows = await notifications(
+        create_sessionmaker(flow.engine),
+        fworld.org_id,
+        template_key="pay.bank_change.portal_alert",
+    )
+    by_person: dict[uuid.UUID | None, dict[str, tuple[Any, dict[str, Any]]]] = {}
+    for row, content in rows:
+        by_person.setdefault(row.recipient_user_id, {})[row.channel] = (row, content)
+    told = {"approver", "approver2", "finance", "finance2"}
+    assert set(by_person) == {fworld.id(n) for n in told}
+    for name in told:
+        channels = by_person[fworld.id(name)]
+        assert set(channels) == {"email", "slack", "in_app"}
+        for row, _ in channels.values():
+            assert (row.category, row.urgency) == ("urgent", "urgent")
+        email_row, mail = channels["email"]
+        assert email_row.status == "queued"
+        assert f"{WEB_URL}{page}" in mail["text"]
+        assert "vendor portal" in mail["text"]
+        assert last4 in mail["text"]
+        assert new_bank["iban"].replace(" ", "")[:-4] not in text_of(mail).replace(" ", "")
+    feed = await flow.ok("GET", "/v1/notifications", fworld, "finance")
+    (item,) = [i for i in feed["items"] if i["category"] == "urgent"]
+    assert item["link"] == page
+    assert last4 in item["body"]
+    clerk_feed = await flow.ok("GET", "/v1/notifications", fworld, "clerk")
+    assert not [i for i in clerk_feed["items"] if i["category"] == "urgent"]
 
 
 # ------------------------------------------------------------------ details
