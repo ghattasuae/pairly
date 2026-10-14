@@ -12,6 +12,11 @@
         Rebuild the manifests in memory and fail when a committed one differs from what
         the generators produce now. Nothing is rendered.
 
+    python -m synth.pay recordings [--check] [--report]
+        Write the recorded (scripted) extraction responses for the eval subset and the
+        demo trio to packages/pay/pairly_pay/data/recordings.json; --check compares
+        instead, --report prints the scripted accuracy (synth/pay/recordings.py).
+
 The committed manifests are for the defaults (320 regular invoices, seed 2026).
 """
 
@@ -201,6 +206,28 @@ def generate(out: Path, count: int, seed: int) -> int:
     return 0
 
 
+RECORDINGS: Final = ROOT / "packages" / "pay" / "pairly_pay" / "data" / "recordings.json"
+
+
+def recordings(*, check: bool, report: bool) -> int:
+    from synth.pay.recordings import accuracy, build_bundle, items
+
+    recorded = list(items())
+    if report:
+        print(json.dumps(accuracy(recorded).as_json(), indent=1))
+    text = build_bundle(recorded)
+    current = RECORDINGS.read_text(encoding="utf-8") if RECORDINGS.exists() else None
+    if current == text:
+        return 0
+    if check:
+        print("out of date (run: uv run python -m synth.pay recordings)", file=sys.stderr)
+        return 1
+    RECORDINGS.parent.mkdir(parents=True, exist_ok=True)
+    RECORDINGS.write_text(text, encoding="utf-8")
+    print(f"wrote {RECORDINGS.relative_to(ROOT)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m synth.pay")
     parser.add_argument("--check", action="store_true", help="compare the committed manifests")
@@ -211,6 +238,9 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--out", type=Path, required=True)
     gen.add_argument("--count", type=int, default=None)
     gen.add_argument("--seed", type=int, default=None)
+    rec = sub.add_parser("recordings", help="write the scripted extraction recordings")
+    rec.add_argument("--check", action="store_true", dest="rec_check")
+    rec.add_argument("--report", action="store_true")
     man = sub.add_parser("manifests", help="rewrite the committed manifests")
     man.add_argument("--count", type=int, default=None)
     man.add_argument("--seed", type=int, default=None)
@@ -223,6 +253,8 @@ def main(argv: list[str] | None = None) -> int:
         return check(count, seed)
     if args.command == "generate":
         return generate(args.out, count, seed)
+    if args.command == "recordings":
+        return recordings(check=args.rec_check, report=args.report)
     if args.command == "manifests":
         return write_manifests(count, seed)
     parser.print_help()
