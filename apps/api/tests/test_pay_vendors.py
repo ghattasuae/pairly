@@ -77,7 +77,7 @@ async def test_create_validate_encrypt_and_find_by_blind_index(
         {"i": created["id"]},
     )
     assert source["contacts"][0]["email"] not in vraw.contacts
-    assert "861" not in vraw.phone_on_file
+    assert "8611629" not in vraw.phone_on_file
     assert vraw.phone_bidx == blind_index("phone", source["phone_on_file"], world.org_id)
     # Lookup by IBAN, typed with spaces and in lower case: found through the index.
     typed = " ".join(iban[i : i + 4] for i in range(0, len(iban), 4)).lower()

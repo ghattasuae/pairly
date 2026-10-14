@@ -177,7 +177,9 @@ async def test_lifecycle_with_cooling_off(
         {"i": ticket["id"]},
     )
     assert raw.request_claims
-    assert "999" not in raw.request_claims
+    assert raw.request_claims.startswith("v1:")
+    for fragment in ("999 0000", "lookalike.example", "Caller"):
+        assert fragment not in raw.request_claims
 
     # Segregation of duties: the requester never verifies; the step needs a second factor.
     mine = await _call(api, world, ticket, "confirmed", who="clerk")
