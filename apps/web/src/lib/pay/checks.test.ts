@@ -2,7 +2,15 @@
 // Copyright (c) 2026 Proofly Technology
 import { describe, expect, it } from "vitest";
 
-import { compareLines, compareRows, failedChecks, findingMessage, severityRank, sortedFindings } from "./checks";
+import {
+  compareLines,
+  compareRows,
+  failedChecks,
+  findingMessage,
+  reasonParts,
+  severityRank,
+  sortedFindings,
+} from "./checks";
 import type { PayCheck, PayCompareSide } from "./types";
 
 function finding(code: string, severity: string, extra: Record<string, unknown> = {}) {
@@ -75,5 +83,39 @@ describe("pay checks helpers", () => {
     expect(lines).toHaveLength(1);
     expect(lines[0]?.same).toBe(false);
     expect(compareLines(pair)[0]?.same).toBe(true);
+  });
+});
+
+describe("review reasons", () => {
+  it("reuses the explanation of the finding behind a check reason", () => {
+    expect(reasonParts("check:bank_mismatch", checks, "en")).toEqual({
+      kind: "check",
+      code: "bank_mismatch",
+      explanation: "bank_mismatch in English",
+    });
+    expect(reasonParts("check:bank_mismatch", checks, "ar").explanation).toBe("bank_mismatch بالعربية");
+  });
+
+  it("has no explanation when the finding is not in the detail", () => {
+    expect(reasonParts("check:near_duplicate", checks, "en")).toEqual({
+      kind: "check",
+      code: "near_duplicate",
+      explanation: null,
+    });
+    expect(reasonParts("check:bank_mismatch", [], "en").explanation).toBeNull();
+  });
+
+  it("keeps the code of the other reasons as secondary text", () => {
+    expect(reasonParts("check_error:forgery:document_unavailable", checks, "en")).toEqual({
+      kind: "check_error",
+      code: "forgery",
+      explanation: null,
+    });
+    expect(reasonParts("risk:critical", checks, "en")).toEqual({ kind: "risk", code: "critical", explanation: null });
+    expect(reasonParts("vendor_not_found", checks, "en")).toEqual({
+      kind: "vendor_not_found",
+      code: null,
+      explanation: null,
+    });
   });
 });

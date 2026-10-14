@@ -3,7 +3,7 @@
 "use client";
 
 import { AlertTriangle, Check, Loader2, Pencil, ScanSearch, X } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 
@@ -26,12 +26,12 @@ import {
   moveIndex,
   needsLook,
   percent,
-  reasonKey,
   reviewOrder,
   textPieces,
   type ReviewField,
 } from "@/lib/pay/invoices";
-import type { PayInvoiceDetail } from "@/lib/pay/types";
+import { reasonParts } from "@/lib/pay/checks";
+import type { PayCheck, PayInvoiceDetail } from "@/lib/pay/types";
 import { cn } from "@/lib/utils";
 
 import { ErrorText, VendorStatusBadge } from "./common";
@@ -79,24 +79,47 @@ export function InvoiceStatusBadge({ status }: { status: string }) {
   );
 }
 
-/** Why a person must look, in plain words (the detail after the code stays as is). */
-export function ReviewReasons({ reasons }: { reasons: readonly string[] }) {
+/**
+ * Why a person must look, in plain words. A check reason reuses the explanation of the
+ * finding behind it (or a plain sentence per code when the finding is not in the
+ * detail); the code itself stays as secondary text with the raw reason as a tooltip.
+ */
+export function ReviewReasons({
+  reasons,
+  checks = [],
+}: {
+  reasons: readonly string[];
+  checks?: readonly PayCheck[];
+}) {
   const t = useTranslations("Pay.reasons");
+  const codes = useTranslations("Pay.reasonCodes");
+  const locale = useLocale();
   if (reasons.length === 0) return null;
   return (
     <ul className="space-y-1 text-sm" data-review-reasons>
       {reasons.map((reason) => {
-        const key = reasonKey(reason);
-        const detail = reason.slice(reason.indexOf(":") + 1);
-        const known = KNOWN_REASONS.has(key);
+        const { kind, code, explanation } = reasonParts(reason, checks, locale);
+        const known = KNOWN_REASONS.has(kind);
+        const text =
+          explanation ??
+          (kind === "check" && code && codes.has(code as "bank_mismatch")
+            ? codes(code as "bank_mismatch")
+            : known
+              ? t(kind as "not_read")
+              : reason);
         return (
-          <li key={reason} className="flex items-start gap-2">
+          <li key={reason} className="flex items-start gap-2" data-reason={reason}>
             <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
             <span>
-              {known ? t(key as "not_read") : reason}
-              {known && reason.includes(":") && (
-                <span className="ms-1 font-mono text-xs text-muted-foreground" dir="ltr">
-                  ({detail})
+              {text}
+              {(known || explanation) && code && (
+                <span
+                  className="ms-1 font-mono text-xs text-muted-foreground"
+                  dir="ltr"
+                  title={reason}
+                  data-reason-code
+                >
+                  ({code})
                 </span>
               )}
             </span>
@@ -411,7 +434,7 @@ export function InvoiceReview({
           <p className="text-xs text-muted-foreground">
             {format.dateTime(new Date(invoice.created_at), { dateStyle: "medium", timeStyle: "short" })}
           </p>
-          <ReviewReasons reasons={invoice.review_reasons} />
+          <ReviewReasons reasons={invoice.review_reasons} checks={invoice.checks ?? []} />
         </section>
 
         <InvoiceChecks checks={invoice.checks ?? []} risk={invoice.risk} />

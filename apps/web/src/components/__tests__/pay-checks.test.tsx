@@ -11,6 +11,7 @@ import { navigationMock } from "../../../test/navigation-mock";
 vi.mock("@/i18n/navigation", () => navigationMock);
 
 const { ComparePanel, InvoiceChecks } = await import("../pay/invoice-checks");
+const { ReviewReasons } = await import("../pay/invoice-review");
 
 const ORIGINAL = "11111111-1111-4111-8111-111111111111";
 
@@ -151,5 +152,27 @@ describe("ComparePanel", () => {
   it("renders nothing without a suspected original", () => {
     const { container } = renderWithIntl(<ComparePanel compare={[]} />);
     expect(container.querySelector("[data-compare-panel]")).toBeNull();
+  });
+});
+
+describe("ReviewReasons", () => {
+  it("says what a check found in plain words and keeps the code as secondary text", () => {
+    renderWithIntl(
+      <ReviewReasons reasons={["check:near_duplicate", "check:bank_mismatch", "risk:critical"]} checks={checks} />,
+    );
+    const items = screen.getAllByRole("listitem");
+    // The finding's own explanation, from the checks of the detail.
+    expect(items[0]).toHaveTextContent("Invoice number INV-2026-01239 looks like INV-2026-01293");
+    // No finding in the detail: the plain sentence of the code.
+    expect(items[1]).toHaveTextContent("bank details on the invoice differ from the vendor master");
+    expect(items[2]).toHaveTextContent("The risk score needs a person");
+    for (const item of items) expect(item).not.toHaveTextContent("A check found something to look at");
+    const code = within(items[1]).getByText("(bank_mismatch)");
+    expect(code).toHaveAttribute("title", "check:bank_mismatch");
+  });
+
+  it("reads in Arabic", () => {
+    renderWithIntl(<ReviewReasons reasons={["check:bank_mismatch"]} />, "ar");
+    expect(screen.getByRole("listitem")).toHaveTextContent("البيانات المصرفية في الفاتورة تختلف عن سجل المورد");
   });
 });

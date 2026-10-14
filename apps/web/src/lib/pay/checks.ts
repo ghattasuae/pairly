@@ -88,3 +88,35 @@ export function compareLines(pair: Pick<PayCompare, "invoice" | "original">) {
     return { index: i, invoice: a, original: b, same };
   });
 }
+
+/** A review reason (`check:bank_mismatch`, `risk:critical`, `extraction:...`) split for display. */
+export interface ReasonParts {
+  /** The kind of reason: the key of `Pay.reasons` (`check`, `risk`, `extraction`, ...). */
+  kind: string;
+  /** The code after the kind (`bank_mismatch`, `critical`), shown as secondary text. */
+  code: string | null;
+  /** The explanation of the finding behind a `check:` reason, in the reader's language. */
+  explanation: string | null;
+}
+
+/**
+ * Split a review reason and, for a check reason, reuse the explanation of the finding
+ * that raised it (the same sentence the checks panel shows). Pure.
+ */
+export function reasonParts(reason: string, checks: readonly PayCheck[], locale: string): ReasonParts {
+  const colon = reason.indexOf(":");
+  const kind = (colon === -1 ? reason : reason.slice(0, colon)).replace(/[^a-z_]/g, "");
+  const rest = colon === -1 ? "" : reason.slice(colon + 1);
+  const code = (kind === "check" || kind === "check_error" ? rest.split(":", 1)[0] : rest) || null;
+  let explanation: string | null = null;
+  if (kind === "check" && code) {
+    for (const check of checks) {
+      const found = check.findings.find((f) => f.code === code);
+      if (found) {
+        explanation = findingMessage(found, locale) || null;
+        break;
+      }
+    }
+  }
+  return { kind, code, explanation };
+}
