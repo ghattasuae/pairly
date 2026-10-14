@@ -43,6 +43,16 @@ Purchase orders (``pay_0007``, same rules, ``pairly_pay.purchase_orders``):
 * ``pay_goods_receipts`` and ``pay_goods_receipt_lines``: what arrived, per PO line.
 * ``pay_invoices`` gains the PO it was matched with (``po_id``) and how its lines were
   allocated to the PO lines (``po_match``), for the remaining quantity of later invoices.
+
+GL coding (``pay_0009``, same rules, ``pairly_pay.coding``):
+
+* ``pay_coding_lists`` and ``pay_coding_entries``: versions of the chart of accounts and
+  of the cost centres (insert only; the newest version of each is in force).
+* ``pay_invoice_line_codings``: the GL account and cost centre of each invoice line,
+  with the list versions and the suggestion of the time (what later suggestions learn
+  from).
+* ``pay_coding_corrections``: a person chose another code than the suggestion (insert
+  only).
 """
 
 from __future__ import annotations
@@ -1116,4 +1126,161 @@ class PayGoodsReceiptLine(Base, OrgScoped):
     po_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     po_line_no: Mapped[int] = mapped_column(Integer, nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    created_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ GL coding (pay_0009)
+
+CODING_LISTS: Final = "pay_coding_lists"
+CODING_ENTRIES: Final = "pay_coding_entries"
+LINE_CODINGS: Final = "pay_invoice_line_codings"
+CODING_CORRECTIONS: Final = "pay_coding_corrections"
+
+
+class CodingKind(StrEnum):
+    GL_ACCOUNT = "gl_account"
+    COST_CENTRE = "cost_centre"
+
+
+class CodingSource(StrEnum):
+    # A person chose it (a suggestion they confirmed, or their own choice).
+    PERSON = "person"
+    # Applied by the system: a high confidence suggestion, only when the organisation
+    # turned auto-coding on (``auto_code_high_confidence``, off by default).
+    AUTO = "auto"
+
+
+class PayCodingList(Base, OrgScoped):
+    """One version of the chart of accounts or of the cost centres (never edited: a
+    change is a new version, the newest is in force)."""
+
+    __tablename__ = CODING_LISTS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_coding_lists_org_id_id"),
+        UniqueConstraint("org_id", "kind", "version", name="uq_pay_coding_lists_version"),
+        CheckConstraint(f"kind IN ({_in(CodingKind)})", name="kind_valid"),
+        CheckConstraint(f"source IN ({_in(RecordSource)})", name="source_valid"),
+        CheckConstraint("version > 0", name="version_positive"),
+        CheckConstraint("entry_count >= 0", name="entry_count_not_negative"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    entry_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[str] = mapped_column(String(8), nullable=False)
+    created_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayCodingEntry(Base, OrgScoped):
+    """One GL account or cost centre of a list version."""
+
+    __tablename__ = CODING_ENTRIES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_coding_entries_org_id_id"),
+        UniqueConstraint("org_id", "list_id", "code", name="uq_pay_coding_entries_code"),
+        ForeignKeyConstraint(
+            ["org_id", "list_id"],
+            ["pay_coding_lists.org_id", "pay_coding_lists.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_coding_entries_list_org",
+        ),
+        CheckConstraint(f"kind IN ({_in(CodingKind)})", name="kind_valid"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    list_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    code: Mapped[str] = mapped_column(String(32), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    name_ar: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayInvoiceLineCoding(Base, OrgScoped):
+    """The GL account and cost centre of one invoice line, with the list versions they
+    came from and what was suggested at the time. Later suggestions learn from these
+    rows (``pairly_pay.coding``)."""
+
+    __tablename__ = LINE_CODINGS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_invoice_line_codings_org_id_id"),
+        UniqueConstraint(
+            "org_id", "invoice_id", "line_index", name="uq_pay_invoice_line_codings_line"
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoice_line_codings_invoice_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "gl_list_id"],
+            ["pay_coding_lists.org_id", "pay_coding_lists.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoice_line_codings_gl_list_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "cc_list_id"],
+            ["pay_coding_lists.org_id", "pay_coding_lists.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoice_line_codings_cc_list_org",
+        ),
+        CheckConstraint(f"source IN ({_in(CodingSource)})", name="source_valid"),
+        CheckConstraint("line_index >= 0 AND line_index < 1000", name="line_index_range"),
+        Index("ix_pay_invoice_line_codings_vendor", "org_id", "vendor_id", "coded_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    invoice_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    line_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    # The line as it was coded (what later lines are compared with).
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    gl_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    cost_centre: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    gl_list_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    cc_list_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    source: Mapped[str] = mapped_column(String(8), nullable=False)
+    # What the suggestion said when it was coded ({gl_code, cost_centre, confidence,
+    # level, method}); empty when there was none.
+    suggestion: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    # A person chose something else than the suggestion: it weighs more later.
+    corrected: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    coded_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    coded_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    coded_at: Mapped[datetime] = _created()
+    created_at: Mapped[datetime] = _created()
+
+
+class PayCodingCorrection(Base, OrgScoped):
+    """A person chose another GL account or cost centre than the suggestion (insert
+    only): the trail of what the suggestions got wrong."""
+
+    __tablename__ = CODING_CORRECTIONS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_coding_corrections_org_id_id"),
+        ForeignKeyConstraint(
+            ["org_id", "invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_coding_corrections_invoice_org",
+        ),
+        Index("ix_pay_coding_corrections_invoice", "org_id", "invoice_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    invoice_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    line_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    suggested: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    chosen_gl: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    chosen_cost_centre: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    corrected_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
     created_at: Mapped[datetime] = _created()

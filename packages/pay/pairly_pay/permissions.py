@@ -56,6 +56,9 @@ Who does what (brief 4.1, 6.2):
   ``read`` for the readers and the agent (matching reads them); ``write`` (create or
   import from CSV) for AP clerks, finance controllers and admins.
 
+* **Chart of accounts and cost centres** (``pay.coding.manage``, brief 4.5.3): create a
+  new version of a list or import one from CSV (admins, finance controllers). A
+  ``manage`` action, so a second factor. Coding invoice lines is ``process``.
 * **Documents** (``pay.document.read``): Pay documents (invoices, onboarding files) are
   read with Pay's own permission, so a member limited to Pay can open the invoice
   viewer. Uploads to ``/v1/documents`` stay on ``core.document.upload`` (no
@@ -98,6 +101,7 @@ DOCUMENT_READ: Final = "pay.document.read"
 EXTRACTION_READ: Final = "pay.extraction.read"
 EXTRACTION_CORRECT: Final = "pay.extraction.correct"
 ANALYTICS_READ: Final = "pay.analytics.read"
+CODING_MANAGE: Final = "pay.coding.manage"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -188,6 +192,11 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         PURCHASE_ORDER_WRITE,
         "Create or import purchase orders and goods receipts",
         frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        CODING_MANAGE,
+        "Change the chart of accounts and the cost centres (new versions, CSV import)",
+        frozenset({R.ADMIN, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(DOCUMENT_READ, "View Pay documents and their content", _READERS | {R.AGENT}),
     PermissionSpec(

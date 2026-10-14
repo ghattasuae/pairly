@@ -4,7 +4,8 @@
 
 The checks (``pairly_pay.checks``) ran on some inputs: the values read from the invoice
 with every correction, the linked vendor and that vendor's bank details on file, and
-the coding (department, category), and the purchase order the invoice cites when one
+the coding (department, category, and the GL account and cost centre of each line),
+and the purchase order the invoice cites when one
 with that number is on file (its id, status, vendor, currency and matching type: a PO
 created, cancelled or closed later changes the match). When any of them changes
 afterwards, the stored results describe another invoice. ``check_inputs_digest`` is a
@@ -30,10 +31,11 @@ import json
 from collections.abc import Mapping
 from typing import Any, Final
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.extraction.service import load_extraction
-from pairly_pay.models import PayInvoice
+from pairly_pay.models import PayInvoice, PayInvoiceLineCoding
 from pairly_pay.purchase_orders import find_purchase_order
 from pairly_pay.vendors import active_account
 
@@ -67,6 +69,19 @@ async def check_inputs_digest(session: AsyncSession, invoice: PayInvoice) -> str
         "department": invoice.department,
         "category": invoice.category,
     }
+    coded = await session.execute(
+        select(
+            PayInvoiceLineCoding.line_index,
+            PayInvoiceLineCoding.gl_code,
+            PayInvoiceLineCoding.cost_centre,
+        )
+        .where(PayInvoiceLineCoding.invoice_id == invoice.id)
+        .order_by(PayInvoiceLineCoding.line_index)
+    )
+    lines = [[i, gl, cc] for i, gl, cc in coded.all() if gl or cc]
+    if lines:
+        # Only when a line is coded, so invoices without line coding keep their digest.
+        material["line_coding"] = lines
     cited = values.get("po_number")
     po = await find_purchase_order(session, cited) if isinstance(cited, str) else None
     if po is not None:

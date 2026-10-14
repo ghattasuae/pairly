@@ -22,6 +22,9 @@
   percent and ``match_total_amount`` above the PO value of the invoiced lines.
   ``require_po``: every invoice must cite a PO (otherwise only the invoices of vendors
   with POs on file must).
+* Coding (``pairly_pay.coding``): ``auto_code_high_confidence`` lets the system code an
+  invoice line by itself when the suggestion from history is of high confidence. Off by
+  default: a person confirms every code.
 
 Unknown keys in the stored JSON are ignored; a malformed value falls back to its default
 (and the setting is validated when it is saved).
@@ -96,6 +99,7 @@ class CheckSettings:
     match_total_pct: Decimal = Decimal("2")
     match_total_amount: Decimal = Decimal("1.00")
     require_po: bool = False
+    auto_code_high_confidence: bool = False
     home_country: str = "AE"
     zero_rated_words: tuple[str, ...] = field(default=ZERO_RATED_WORDS)
     exempt_words: tuple[str, ...] = field(default=EXEMPT_WORDS)
@@ -125,6 +129,7 @@ class CheckSettings:
             "match_total_pct": str(self.match_total_pct),
             "match_total_amount": str(self.match_total_amount),
             "require_po": self.require_po,
+            "auto_code_high_confidence": self.auto_code_high_confidence,
         }
 
 
@@ -175,8 +180,9 @@ def parse_settings(data: Mapping[str, Any] | None) -> CheckSettings:
     if isinstance(rates, list):
         parsed = [_decimal(r, Decimal(0), Decimal(100)) for r in rates[:10]]
         changes["extra_vat_rates"] = tuple(r for r in parsed if r is not None)
-    if isinstance(data.get("require_po"), bool):
-        changes["require_po"] = data["require_po"]
+    for flag in ("require_po", "auto_code_high_confidence"):
+        if isinstance(data.get(flag), bool):
+            changes[flag] = data[flag]
     currency = data.get("approval_currency")
     if isinstance(currency, str) and len(currency) == 3 and currency.isalpha():
         changes["approval_currency"] = currency.upper()

@@ -77,6 +77,7 @@ demo: local-up ## Native stack up plus a complete Hire, Pay and expense demo (or
 	$(UV) run python -m synth.hire.references --check
 	$(UV) run python -m synth.expense --check
 	$(UV) run python -m synth.pay --check
+	$(UV) run python -m pairly_pay.ai_recordings --check
 	nice -n 10 $(LOCAL) exec demo -- python scripts/demo_seed.py
 
 local-up: env ## Start Postgres, Valkey, migrations, api, worker and web as local processes

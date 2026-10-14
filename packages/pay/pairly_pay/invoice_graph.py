@@ -70,7 +70,8 @@ from pairly_core.llm.router import ModelRouter
 from pairly_core.llm.types import CallContext
 from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.runtime import node_retry
-from pairly_pay.checks.service import CheckServices, run_invoice_checks
+from pairly_pay.checks.service import CheckServices, load_settings, run_invoice_checks
+from pairly_pay.coding import auto_code
 from pairly_pay.common import WORKFLOW, By, audit
 from pairly_pay.einvoice import is_einvoice, read_einvoice
 from pairly_pay.invoice_schema import PayInvoice
@@ -106,8 +107,16 @@ async def validation_checks(
     session: AsyncSession, invoice: PayInvoiceRow, ctx: WorkflowContext
 ) -> list[str]:
     """Arithmetic, VAT, duplicates, bank mismatch, impersonation, amounts, fake
-    signals, injection, policy and the risk score (``pairly_pay.checks``)."""
+    signals, injection, policy and the risk score (``pairly_pay.checks``). When the
+    organisation turned auto-coding on, high confidence GL codes are applied first
+    (``pairly_pay.coding``), so the checks read them."""
     services = ctx.services
+    if (await load_settings(session)).auto_code_high_confidence:
+        try:
+            async with session.begin_nested():
+                await auto_code(session, invoice)
+        except Exception as exc:  # coding is a convenience: a person codes it instead
+            log.error("pay.invoice.auto_code_failed", error=type(exc).__name__)
     return await run_invoice_checks(
         session,
         invoice,

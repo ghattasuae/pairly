@@ -3990,6 +3990,74 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/coding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lists */
+        get: operations["get_lists_v1_pay_coding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/coding/{list_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Version */
+        post: operations["create_version_v1_pay_coding__list_path__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/coding/{list_path}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Version */
+        post: operations["import_version_v1_pay_coding__list_path__import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/coding/{list_path}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Versions */
+        get: operations["get_versions_v1_pay_coding__list_path__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/goods-receipts": {
         parameters: {
             query?: never;
@@ -4087,7 +4155,8 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get Invoice Coding */
+        get: operations["get_invoice_coding_v1_pay_invoices__invoice_id__coding_get"];
         put?: never;
         /**
          * Code Invoice
@@ -4095,6 +4164,47 @@ export type paths = {
          *     again (the spend policy reads the coding).
          */
         post: operations["code_invoice_v1_pay_invoices__invoice_id__coding_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/coding/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Invoice Coding
+         * @description A person codes lines; the checks run again when anything changed.
+         */
+        put: operations["put_invoice_coding_v1_pay_invoices__invoice_id__coding_lines_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/coding/model-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask Model
+         * @description Model suggestions for lines the history cannot code. Nothing is stored or applied:
+         *     the person sees them and codes the lines themselves.
+         */
+        post: operations["ask_model_v1_pay_invoices__invoice_id__coding_model_suggestions_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5363,6 +5473,89 @@ export type components = {
             items: components["schemas"]["AuditEventOut"][];
             /** Next Cursor */
             next_cursor: string | null;
+        };
+        /** CodingCsvIn */
+        CodingCsvIn: {
+            /** Csv */
+            csv: string;
+        };
+        /** CodingEntryIn */
+        CodingEntryIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Name Ar */
+            name_ar?: string | null;
+        };
+        /** CodingEntryOut */
+        CodingEntryOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Name Ar */
+            name_ar: string | null;
+        };
+        /** CodingListDetail */
+        CodingListDetail: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Type */
+            created_by_type: string;
+            /** Entries */
+            entries: components["schemas"]["CodingEntryOut"][];
+            /** Entry Count */
+            entry_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Version */
+            version: number;
+        };
+        /** CodingListIn */
+        CodingListIn: {
+            /** Entries */
+            entries: components["schemas"]["CodingEntryIn"][];
+        };
+        /** CodingListOut */
+        CodingListOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Type */
+            created_by_type: string;
+            /** Entry Count */
+            entry_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Version */
+            version: number;
+        };
+        /** CodingListsOut */
+        CodingListsOut: {
+            /** Can Manage */
+            can_manage: boolean;
+            cost_centres: components["schemas"]["CodingListDetail"] | null;
+            gl_accounts: components["schemas"]["CodingListDetail"] | null;
         };
         /** ConnectIn */
         ConnectIn: {
@@ -10489,6 +10682,40 @@ export type components = {
             /** Workflow */
             workflow: string | null;
         };
+        /** InvoiceCodingIn */
+        InvoiceCodingIn: {
+            /** Lines */
+            lines: components["schemas"]["LineCodingIn"][];
+        };
+        /** InvoiceCodingOut */
+        InvoiceCodingOut: {
+            /** Auto Coding */
+            auto_coding: boolean;
+            /** Can Code */
+            can_code: boolean;
+            /** Cc List Version */
+            cc_list_version: number | null;
+            /**
+             * Checks State
+             * @enum {string}
+             */
+            checks_state: "current" | "stale" | "failed" | "missing";
+            /** Cost Centres */
+            cost_centres: components["schemas"]["CodingEntryOut"][];
+            /** Gl Accounts */
+            gl_accounts: components["schemas"]["CodingEntryOut"][];
+            /** Gl List Version */
+            gl_list_version: number | null;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Lines */
+            lines: components["schemas"]["LineCodingOut"][];
+            /** Status */
+            status: string;
+        };
         /** IssueOut */
         IssueOut: {
             /** Code */
@@ -10512,6 +10739,33 @@ export type components = {
          * @enum {string}
          */
         Lang: "en" | "ar";
+        /** LineCodingIn */
+        LineCodingIn: {
+            /** Cost Centre */
+            cost_centre?: string | null;
+            /** Gl Code */
+            gl_code?: string | null;
+            /** Line Index */
+            line_index: number;
+        };
+        /** LineCodingOut */
+        LineCodingOut: {
+            /** Coded At */
+            coded_at: string | null;
+            /** Corrected */
+            corrected: boolean;
+            /** Cost Centre */
+            cost_centre: string | null;
+            /** Description */
+            description: string | null;
+            /** Gl Code */
+            gl_code: string | null;
+            /** Line Index */
+            line_index: number;
+            /** Source */
+            source: string | null;
+            suggestion: components["schemas"]["SuggestionOut"] | null;
+        };
         /** LinkConfirmIn */
         LinkConfirmIn: {
             /** Reason */
@@ -10609,6 +10863,32 @@ export type components = {
             second_factor: boolean;
             /** Second Factor Permissions */
             second_factor_permissions: string[];
+        };
+        /** ModelLineOut */
+        ModelLineOut: {
+            /**
+             * From Recording
+             * @default false
+             */
+            from_recording: boolean;
+            /** Line Index */
+            line_index: number;
+            /** Problem */
+            problem: string | null;
+            suggestion: components["schemas"]["SuggestionOut"] | null;
+        };
+        /** ModelSuggestionsIn */
+        ModelSuggestionsIn: {
+            /**
+             * Line Indexes
+             * @default []
+             */
+            line_indexes: number[];
+        };
+        /** ModelSuggestionsOut */
+        ModelSuggestionsOut: {
+            /** Lines */
+            lines: components["schemas"]["ModelLineOut"][];
         };
         /** MyOrgsOut */
         MyOrgsOut: {
@@ -11014,6 +11294,8 @@ export type components = {
             approval_currency?: string | null;
             /** Approval Threshold */
             approval_threshold?: number | string | null;
+            /** Auto Code High Confidence */
+            auto_code_high_confidence?: boolean | null;
             /** Duplicate Window Days */
             duplicate_window_days?: number | null;
             /** Extra Vat Rates */
@@ -13304,6 +13586,31 @@ export type components = {
             subject_id: string | null;
             /** Subject Type */
             subject_type: string | null;
+        };
+        /** SuggestionOut */
+        SuggestionOut: {
+            /** Confidence */
+            confidence: number;
+            /** Cost Centre */
+            cost_centre: string | null;
+            /** Examples */
+            examples: string[];
+            /** Gl Code */
+            gl_code: string | null;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low";
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "history" | "model";
+            /** Reason */
+            reason?: string | null;
+            /** Support */
+            support: number;
         };
         /** TemplateIn */
         TemplateIn: {
@@ -21492,6 +21799,127 @@ export interface operations {
             };
         };
     };
+    get_lists_v1_pay_coding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodingListsOut"];
+                };
+            };
+        };
+    };
+    create_version_v1_pay_coding__list_path__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_path: "gl-accounts" | "cost-centres";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodingListIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodingListDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_version_v1_pay_coding__list_path__import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_path: "gl-accounts" | "cost-centres";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodingCsvIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodingListDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_versions_v1_pay_coding__list_path__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_path: "gl-accounts" | "cost-centres";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodingListOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_receipts_v1_pay_goods_receipts_get: {
         parameters: {
             query?: {
@@ -21726,6 +22154,37 @@ export interface operations {
             };
         };
     };
+    get_invoice_coding_v1_pay_invoices__invoice_id__coding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceCodingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     code_invoice_v1_pay_invoices__invoice_id__coding_post: {
         parameters: {
             query?: never;
@@ -21748,6 +22207,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_invoice_coding_v1_pay_invoices__invoice_id__coding_lines_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoiceCodingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceCodingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_model_v1_pay_invoices__invoice_id__coding_model_suggestions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelSuggestionsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelSuggestionsOut"];
                 };
             };
             /** @description Validation Error */

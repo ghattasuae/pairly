@@ -171,6 +171,8 @@ class PayCheckSettingsIn(_In):
     match_total_pct: Annotated[Decimal, Field(ge=0, le=100)] | None = None
     match_total_amount: Annotated[Decimal, Field(ge=0, le=1_000_000)] | None = None
     require_po: bool | None = None
+    # GL coding (``pairly_pay.coding``): code high confidence lines without a person.
+    auto_code_high_confidence: bool | None = None
 
 
 class PayPaymentSettingsIn(_In):

@@ -25,6 +25,8 @@ attributes):
 * ``api_router``      the ``/v1/pay`` routes (imported only when called, so the worker
                       never loads them).
 * ``migrations_dir``  the ``pay`` Alembic branch (``migrations/``).
+* ``prompt_roots``    the versioned prompt ``pay_coding_suggest`` (an optional GL coding
+                      suggestion, ``pairly_pay.coding``).
 * ``scheduled_jobs``  ``pay_bank_change_activation``, every 5 minutes: new details go
                       live once their cooling-off period is over.
                       ``pay_invoice_intake_start``, every minute: start reading received
@@ -175,6 +177,7 @@ class PayPlugin:
         PAY_PAYMENT_RUN,
     )
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
+    prompt_roots: tuple[Path, ...] = (Path(__file__).resolve().parent / "prompts",)
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
 
     def api_router(self) -> APIRouter:

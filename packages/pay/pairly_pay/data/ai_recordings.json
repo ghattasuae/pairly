@@ -1,0 +1,1374 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Router rental",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "1aa6b74de66ac59f932b57681517af9325553df446d1b49d42c370eabb7151c1",
+      "response": {
+        "cost_centre": "CC-IT",
+        "gl_code": "6200",
+        "reason": "Router rental is part of the telecom service."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "A4 copy paper, box of 5 reams",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2611f6ee26868f2bef928e89dd65dd22153756ae6e061ca3acb1325ea575c34e",
+      "response": {
+        "cost_centre": "CC-ADM",
+        "gl_code": "6100",
+        "reason": "Copy paper is office stationery."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Interior emulsion paint, 18 L",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "301038c50a7239995e663faa837fa62df6f9c748dc0c650c5287f9ea4685f8d4",
+      "response": {
+        "cost_centre": "CC-FAC",
+        "gl_code": "6310",
+        "reason": "Paint is a building material."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Toner cartridge, black",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "35081dcd567e287c719ce78e8147cc3db26aad4f76fecfe5a584ff8f1d8f9e4d",
+      "response": {
+        "cost_centre": "CC-ADM",
+        "gl_code": "6100",
+        "reason": "Printer toner is an office supply."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Ceramic floor tiles",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4a65cc1a55aef19d3b62e47344278f665256abb9789d271b33dcb0657eab18c6",
+      "response": {
+        "cost_centre": "CC-FAC",
+        "gl_code": "6310",
+        "reason": "Floor tiles are building materials."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Business fibre line 500 Mbps",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4dee34c95db535afcf10a6951e64a6e26821f3a6de722c05709a0351b573c731",
+      "response": {
+        "cost_centre": "CC-IT",
+        "gl_code": "6200",
+        "reason": "A fibre line is a telecom service."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Whiteboard 120 x 90 cm",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6f1ac440e6ffe54d7c285c7c0b77afcba086b2b31379bed9e21f62dc7a36c254",
+      "response": {
+        "cost_centre": "CC-ADM",
+        "gl_code": "6100",
+        "reason": "A whiteboard is office equipment of low value."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "SIP trunk channels",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "7eaaeb631bb9e53928b542afd0272a964cd79c9bfbe60993b99b6b68a1cec52d",
+      "response": {
+        "cost_centre": "CC-IT",
+        "gl_code": "6200",
+        "reason": "SIP trunks are telephone lines."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Gypsum board 12.5 mm",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8834d116e28ee44796d3aef9f5a273b01cb216c4788d45be05a5db4ac007f959",
+      "response": {
+        "cost_centre": "CC-FAC",
+        "gl_code": "6310",
+        "reason": "Gypsum board is a building material."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "LED panel light 60 x 60",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9357a68d178aae4ad4ca97969d1fa3d56534b689076a9a78aab3efd006c036de",
+      "response": {
+        "cost_centre": "CC-FAC",
+        "gl_code": "6310",
+        "reason": "Light panels are fitted in the building."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Steel door frame",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a916d26873f195310ea06beb5ab3ceefaa54cd357c729764d6570e368cb8b09f",
+      "response": {
+        "cost_centre": "CC-FAC",
+        "gl_code": "6310",
+        "reason": "A door frame is a building material."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "a388591ab4189b03748e21a81cbce670b03d34f74e9a79391894a3a9392494d4",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "cost_centres": [
+            {
+              "code": "CC-ADM",
+              "name": "Administration"
+            },
+            {
+              "code": "CC-FAC",
+              "name": "Facilities"
+            },
+            {
+              "code": "CC-FIN",
+              "name": "Finance"
+            },
+            {
+              "code": "CC-HR",
+              "name": "People"
+            },
+            {
+              "code": "CC-IT",
+              "name": "Information technology"
+            },
+            {
+              "code": "CC-LOG",
+              "name": "Logistics"
+            },
+            {
+              "code": "CC-MKT",
+              "name": "Marketing"
+            },
+            {
+              "code": "CC-OPS",
+              "name": "Operations"
+            }
+          ],
+          "description": "Ballpoint pens, pack of 50",
+          "gl_accounts": [
+            {
+              "code": "1500",
+              "name": "IT equipment (capital)"
+            },
+            {
+              "code": "6100",
+              "name": "Office supplies and stationery"
+            },
+            {
+              "code": "6110",
+              "name": "Printing"
+            },
+            {
+              "code": "6200",
+              "name": "Telecommunications"
+            },
+            {
+              "code": "6210",
+              "name": "Software subscriptions"
+            },
+            {
+              "code": "6300",
+              "name": "Repairs and maintenance"
+            },
+            {
+              "code": "6310",
+              "name": "Building materials"
+            },
+            {
+              "code": "6400",
+              "name": "Professional services"
+            },
+            {
+              "code": "6500",
+              "name": "Freight and logistics"
+            },
+            {
+              "code": "6600",
+              "name": "Staff welfare and catering"
+            },
+            {
+              "code": "6700",
+              "name": "Marketing and events"
+            },
+            {
+              "code": "6800",
+              "name": "Security services"
+            }
+          ]
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 512,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ba2d7e884728bdc87d4d47947b7e7ff07ee0817f7bb209338033876f049b3ca4",
+      "response": {
+        "cost_centre": "CC-ADM",
+        "gl_code": "6100",
+        "reason": "Pens are office stationery."
+      },
+      "schema_hash": "fa6e376e3703bd5d695a98aef83799cbca9d9feb32c5ebce032264b63c2807ec",
+      "schema_name": "ModelCoding",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "pay_coding_suggest",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}

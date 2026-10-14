@@ -15,6 +15,8 @@
 * ``payment_runs``: propose, approve (in the inbox), export the bank file, mark paid.
 * ``purchase_orders``: purchase orders and goods receipts, created or imported from CSV.
 * ``analytics``: the Pay analytics (brief 4.9), every number with its records.
+* ``coding``: the chart of accounts and cost centres, and GL coding of invoice lines
+  with suggestions from history (brief 4.5.3).
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -27,6 +29,7 @@ from pairly_pay.api import (
     analytics,
     approval_rules,
     bank_changes,
+    coding,
     invoices,
     onboarding,
     payment_runs,
@@ -43,3 +46,4 @@ router.include_router(approval_rules.router)
 router.include_router(payment_runs.router)
 router.include_router(purchase_orders.router)
 router.include_router(analytics.router)
+router.include_router(coding.router)

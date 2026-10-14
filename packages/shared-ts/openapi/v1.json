@@ -1043,6 +1043,238 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "CodingCsvIn": {
+        "additionalProperties": false,
+        "properties": {
+          "csv": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Csv",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv"
+        ],
+        "title": "CodingCsvIn",
+        "type": "object"
+      },
+      "CodingEntryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "CodingEntryIn",
+        "type": "object"
+      },
+      "CodingEntryOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "name_ar"
+        ],
+        "title": "CodingEntryOut",
+        "type": "object"
+      },
+      "CodingListDetail": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/CodingEntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "entry_count": {
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "entry_count",
+          "source",
+          "created_by_type",
+          "created_at",
+          "entries"
+        ],
+        "title": "CodingListDetail",
+        "type": "object"
+      },
+      "CodingListIn": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/CodingEntryIn"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "CodingListIn",
+        "type": "object"
+      },
+      "CodingListOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "entry_count": {
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "entry_count",
+          "source",
+          "created_by_type",
+          "created_at"
+        ],
+        "title": "CodingListOut",
+        "type": "object"
+      },
+      "CodingListsOut": {
+        "properties": {
+          "can_manage": {
+            "title": "Can Manage",
+            "type": "boolean"
+          },
+          "cost_centres": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodingListDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gl_accounts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodingListDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gl_accounts",
+          "cost_centres",
+          "can_manage"
+        ],
+        "title": "CodingListsOut",
+        "type": "object"
+      },
       "ConnectIn": {
         "properties": {
           "token": {
@@ -15896,6 +16128,113 @@
         "title": "InvitationPreviewOut",
         "type": "object"
       },
+      "InvoiceCodingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineCodingIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "InvoiceCodingIn",
+        "type": "object"
+      },
+      "InvoiceCodingOut": {
+        "properties": {
+          "auto_coding": {
+            "title": "Auto Coding",
+            "type": "boolean"
+          },
+          "can_code": {
+            "title": "Can Code",
+            "type": "boolean"
+          },
+          "cc_list_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cc List Version"
+          },
+          "checks_state": {
+            "enum": [
+              "current",
+              "stale",
+              "failed",
+              "missing"
+            ],
+            "title": "Checks State",
+            "type": "string"
+          },
+          "cost_centres": {
+            "items": {
+              "$ref": "#/components/schemas/CodingEntryOut"
+            },
+            "title": "Cost Centres",
+            "type": "array"
+          },
+          "gl_accounts": {
+            "items": {
+              "$ref": "#/components/schemas/CodingEntryOut"
+            },
+            "title": "Gl Accounts",
+            "type": "array"
+          },
+          "gl_list_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl List Version"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineCodingOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "status",
+          "gl_list_version",
+          "cc_list_version",
+          "gl_accounts",
+          "cost_centres",
+          "lines",
+          "can_code",
+          "auto_coding",
+          "checks_state"
+        ],
+        "title": "InvoiceCodingOut",
+        "type": "object"
+      },
       "IssueOut": {
         "properties": {
           "code": {
@@ -15956,6 +16295,136 @@
         ],
         "title": "Lang",
         "type": "string"
+      },
+      "LineCodingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_centre": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "line_index": {
+            "maximum": 999,
+            "minimum": 0,
+            "title": "Line Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "line_index"
+        ],
+        "title": "LineCodingIn",
+        "type": "object"
+      },
+      "LineCodingOut": {
+        "properties": {
+          "coded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coded At"
+          },
+          "corrected": {
+            "title": "Corrected",
+            "type": "boolean"
+          },
+          "cost_centre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "line_index": {
+            "title": "Line Index",
+            "type": "integer"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "line_index",
+          "description",
+          "gl_code",
+          "cost_centre",
+          "source",
+          "corrected",
+          "coded_at",
+          "suggestion"
+        ],
+        "title": "LineCodingOut",
+        "type": "object"
       },
       "LinkConfirmIn": {
         "properties": {
@@ -16215,6 +16684,81 @@
           "granted_at"
         ],
         "title": "MemberRoleOut",
+        "type": "object"
+      },
+      "ModelLineOut": {
+        "properties": {
+          "from_recording": {
+            "default": false,
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "line_index": {
+            "title": "Line Index",
+            "type": "integer"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "line_index",
+          "suggestion",
+          "problem"
+        ],
+        "title": "ModelLineOut",
+        "type": "object"
+      },
+      "ModelSuggestionsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "line_indexes": {
+            "default": [],
+            "items": {
+              "maximum": 999,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 50,
+            "title": "Line Indexes",
+            "type": "array"
+          }
+        },
+        "title": "ModelSuggestionsIn",
+        "type": "object"
+      },
+      "ModelSuggestionsOut": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ModelLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "ModelSuggestionsOut",
         "type": "object"
       },
       "MyOrgsOut": {
@@ -17078,6 +17622,17 @@
               }
             ],
             "title": "Approval Threshold"
+          },
+          "auto_code_high_confidence": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Code High Confidence"
           },
           "duplicate_window_days": {
             "anyOf": [
@@ -24585,6 +25140,86 @@
           "created_at"
         ],
         "title": "StoredResultOut",
+        "type": "object"
+      },
+      "SuggestionOut": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "cost_centre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Examples",
+            "type": "array"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "level": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "history",
+              "model"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "support": {
+            "title": "Support",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gl_code",
+          "cost_centre",
+          "confidence",
+          "level",
+          "method",
+          "support",
+          "examples"
+        ],
+        "title": "SuggestionOut",
         "type": "object"
       },
       "TemplateIn": {
@@ -37233,6 +37868,189 @@
         ]
       }
     },
+    "/v1/pay/coding": {
+      "get": {
+        "operationId": "get_lists_v1_pay_coding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingListsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Lists",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/coding/{list_path}": {
+      "post": {
+        "operationId": "create_version_v1_pay_coding__list_path__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "gl-accounts",
+                "cost-centres"
+              ],
+              "title": "List Path",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodingListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingListDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Version",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/coding/{list_path}/import": {
+      "post": {
+        "operationId": "import_version_v1_pay_coding__list_path__import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "gl-accounts",
+                "cost-centres"
+              ],
+              "title": "List Path",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodingCsvIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingListDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Version",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/coding/{list_path}/versions": {
+      "get": {
+        "operationId": "get_versions_v1_pay_coding__list_path__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "gl-accounts",
+                "cost-centres"
+              ],
+              "title": "List Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CodingListOut"
+                  },
+                  "title": "Response Get Versions V1 Pay Coding  List Path  Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Versions",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
     "/v1/pay/goods-receipts": {
       "get": {
         "operationId": "list_receipts_v1_pay_goods_receipts_get",
@@ -37584,6 +38402,47 @@
       }
     },
     "/v1/pay/invoices/{invoice_id}/coding": {
+      "get": {
+        "operationId": "get_invoice_coding_v1_pay_invoices__invoice_id__coding_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceCodingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Invoice Coding",
+        "tags": [
+          "pay"
+        ]
+      },
       "post": {
         "description": "Set the department and category the approval rules route on. The checks run\nagain (the spend policy reads the coding).",
         "operationId": "code_invoice_v1_pay_invoices__invoice_id__coding_post",
@@ -37632,6 +38491,114 @@
           }
         },
         "summary": "Code Invoice",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/coding/lines": {
+      "put": {
+        "description": "A person codes lines; the checks run again when anything changed.",
+        "operationId": "put_invoice_coding_v1_pay_invoices__invoice_id__coding_lines_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceCodingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceCodingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Invoice Coding",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/coding/model-suggestions": {
+      "post": {
+        "description": "Model suggestions for lines the history cannot code. Nothing is stored or applied:\nthe person sees them and codes the lines themselves.",
+        "operationId": "ask_model_v1_pay_invoices__invoice_id__coding_model_suggestions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSuggestionsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelSuggestionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask Model",
         "tags": [
           "pay"
         ]

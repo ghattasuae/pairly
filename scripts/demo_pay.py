@@ -85,9 +85,11 @@ from pairly_core.ingestion.settings import IngestionSettings, load_ingestion_set
 from pairly_core.ingestion.storage import object_store_from_settings
 from pairly_core.invitations import invite_as_system
 from pairly_core.rbac import RoleRegistry
+from pairly_pay.ai_recordings import import_ai_recordings
 from pairly_pay.checks.document import document_facts
 from pairly_pay.checks.run import keys_of
 from pairly_pay.checks.types import InvoiceFacts, Line
+from pairly_pay.coding_demo import cc_csv, gl_csv
 from pairly_pay.common import By, audit
 from pairly_pay.intake import pay_policy
 from pairly_pay.invoices import INVOICE_ENTITY, create_invoice
@@ -396,6 +398,32 @@ async def seed_vendors(
     if len(by_synth) != len(ds.vendors):
         raise SeedError("not every synthetic vendor is on file")
     return by_synth, [f"pay vendors: {len(created)} created, {len(by_synth)} on file"]
+
+
+# ------------------------------------------------------------------ GL coding
+
+
+async def seed_coding(
+    api: PayApi, sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid.UUID
+) -> list[str]:
+    """The demo chart of accounts and cost centres (``pairly_pay.coding_demo``), imported
+    from CSV through the API once."""
+    lines: list[str] = []
+    for kind, path, content in (
+        ("gl_account", "gl-accounts", gl_csv()),
+        ("cost_centre", "cost-centres", cc_csv()),
+    ):
+        found = await _rows(
+            sessionmaker, org_id, "SELECT id FROM pay_coding_lists WHERE kind = :k", {"k": kind}
+        )
+        if found:
+            lines.append(f"pay {path}: already on file")
+            continue
+        await api.ok(
+            "POST", f"/v1/pay/coding/{path}/import", ADMIN, status=201, json={"csv": content}
+        )
+        lines.append(f"pay {path}: imported")
+    return lines
 
 
 # ------------------------------------------------------------------ purchase orders
@@ -1100,7 +1128,11 @@ async def seed_pay(
         set_tenant(session, org_id, None)
         async with session.begin():
             report = await import_pay_recordings(session, org_id)
+            ai_report = await import_ai_recordings(session, org_id)
     seed.lines.append(f"pay recordings: {report.imported} imported, {report.skipped} already there")
+    seed.lines.append(
+        f"pay coding recordings: {ai_report.imported} imported, {ai_report.skipped} already there"
+    )
     people = await _people(sessionmaker, org_id, admin_email)
     async with pay_api(org_id, people) as api:
         payer = random.Random("demo-payer")  # noqa: S311 (synthetic data)
@@ -1121,6 +1153,7 @@ async def seed_pay(
                 },
             },
         )
+        seed.lines += await seed_coding(api, sessionmaker, org_id)
         vendors, lines = await seed_vendors(api, sessionmaker, ds)
         seed.lines += lines
         seed.lines += await seed_purchase_orders(api, sessionmaker, ds, vendors)
