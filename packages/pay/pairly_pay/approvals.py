@@ -69,7 +69,7 @@ from pairly_pay.invoices import (
     get_invoice,
     refresh_decisions,
 )
-from pairly_pay.models import InvoiceStatus, PayInvoice, PayVendor
+from pairly_pay.models import DocumentType, InvoiceStatus, PayInvoice, PayVendor
 from pairly_pay.payability import BankOnFile, bank_on_file, blockers, same_details
 from pairly_pay.payment_settings import PaymentSettings, load_payment_settings
 from pairly_pay.vendors import masked_account, risk_profile
@@ -402,6 +402,8 @@ async def submit_for_approval(
     """A person sends a ``ready`` invoice for approval (see the module docstring). The
     caller commits, then starts the approval run unless a rule approved it."""
     invoice = await get_invoice(session, invoice_id, lock=True)
+    if invoice.document_type != DocumentType.INVOICE.value:
+        raise InvoiceStateError("a credit note is applied to an invoice, never paid")
     if invoice.status != InvoiceStatus.READY.value:
         raise InvoiceStateError(f"the invoice is {invoice.status}")
     prepared = await prepare(session, invoice)

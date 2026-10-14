@@ -85,7 +85,7 @@ from pairly_pay.invoices import (
 )
 from pairly_pay.learning import vendor_hints
 from pairly_pay.matching import match_vendor, prematch
-from pairly_pay.models import ExtractionSource, InvoiceStatus
+from pairly_pay.models import DocumentType, ExtractionSource, InvoiceSource, InvoiceStatus
 from pairly_pay.models import PayInvoice as PayInvoiceRow
 
 log = structlog.get_logger("pairly_pay.invoice_graph")
@@ -477,9 +477,21 @@ async def match(state: InvoiceState, runtime: Ctx) -> dict[str, Any]:
             name=invoice.vendor_name,
             domains=invoice.sender_domains,
         )
-        invoice.vendor_id = found.vendor_id
-        invoice.vendor_match = found.as_json()
-        add_reasons(invoice, found.reasons)
+        if invoice.source == InvoiceSource.VENDOR_PORTAL.value and invoice.vendor_id is not None:
+            # Sent by a signed-in contact of this vendor: the vendor is known. What the
+            # document says is kept for the reviewer; a different vendor is a reason.
+            portal_vendor = invoice.vendor_id
+            invoice.vendor_match = found.as_json() | {
+                "vendor_id": str(portal_vendor),
+                "method": "vendor_portal",
+                "read_vendor_id": str(found.vendor_id) if found.vendor_id else None,
+            }
+            if found.vendor_id is not None and found.vendor_id != portal_vendor:
+                add_reasons(invoice, ["portal_vendor_mismatch"])
+        else:
+            invoice.vendor_id = found.vendor_id
+            invoice.vendor_match = found.as_json()
+            add_reasons(invoice, found.reasons)
         invoice.updated_at = datetime.now(UTC)
         await _audit(
             ctx,
@@ -505,6 +517,9 @@ async def finish(state: InvoiceState, runtime: Ctx) -> dict[str, Any]:
             return {}  # a person acted meanwhile (rejected it): leave it as it is
         if invoice.extraction_id is None:
             add_reasons(invoice, ["not_read"])
+        if invoice.document_type == DocumentType.CREDIT_NOTE.value:
+            # A person always reads a credit note and applies it to its invoice.
+            add_reasons(invoice, ["credit_note"])
         for check in CHECKS:
             try:
                 # A savepoint: a check that fails leaves the transaction usable.

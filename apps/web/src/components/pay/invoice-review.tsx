@@ -62,6 +62,8 @@ const KNOWN_REASONS = new Set([
   "approval_not_possible",
   "approval_not_started",
   "changes_requested_by_approver",
+  "credit_note",
+  "portal_vendor_mismatch",
 ]);
 
 export function InvoiceStatusBadge({ status }: { status: string }) {

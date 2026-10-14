@@ -69,6 +69,7 @@ class By:
             ActorKind.AGENT: ActorType.AGENT,
             ActorKind.API_KEY: ActorType.API_KEY,
             ActorKind.CANDIDATE: ActorType.CANDIDATE,
+            ActorKind.VENDOR: ActorType.VENDOR,
         }[actor.kind]
         return cls(kind, str(actor.id))
 

@@ -82,6 +82,11 @@ Category = Literal[
 Locale = Literal["en", "ar"]
 
 
+def _recipient(kind: MessageRecipient) -> Literal["vendor", "requester"]:
+    """Exception message templates only ever write to a vendor or a requester."""
+    return "vendor" if kind is MessageRecipient.VENDOR else "requester"
+
+
 class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -275,7 +280,7 @@ async def list_exceptions(
                         explanations=[PayTextOut(en=e.en, ar=e.ar) for e in c.explanations],
                         resolution=PayTextOut(en=c.resolution[0], ar=c.resolution[1]),
                         templates=[
-                            PayTemplateOut(id=t.id, recipient=t.recipient.value)
+                            PayTemplateOut(id=t.id, recipient=_recipient(t.recipient))
                             for t in c.templates
                         ],
                     )
@@ -349,7 +354,7 @@ async def draft_message(
     return PayDraftOut(
         category=body.category,
         template_id=template.id,
-        recipient=template.recipient.value,
+        recipient=_recipient(template.recipient),
         locale=body.locale,
         message=compose(base, note),
         template_text=base,

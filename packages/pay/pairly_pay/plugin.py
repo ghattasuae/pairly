@@ -95,6 +95,7 @@ from pairly_pay.permissions import (
     PAYMENT_RUN_READ,
     PERMISSIONS,
 )
+from pairly_pay.portal import models as portal_models  # noqa: F401  (the portal tables)
 
 if TYPE_CHECKING:
     from fastapi import APIRouter

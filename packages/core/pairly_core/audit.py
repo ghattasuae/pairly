@@ -96,6 +96,8 @@ class ActorType(StrEnum):
     API_KEY = "api_key"
     # An external person through a workflow portal (``ActorKind.CANDIDATE``).
     CANDIDATE = "candidate"
+    # A vendor's contact through a workflow's vendor portal (``ActorKind.VENDOR``).
+    VENDOR = "vendor"
 
 
 class AuditAction:
@@ -337,6 +339,7 @@ _ACTOR_TYPES = {
     ActorKind.AGENT: ActorType.AGENT,
     ActorKind.API_KEY: ActorType.API_KEY,
     ActorKind.CANDIDATE: ActorType.CANDIDATE,
+    ActorKind.VENDOR: ActorType.VENDOR,
 }
 
 

@@ -104,6 +104,10 @@ from pairly_pay.models import (
     RunItemStatus,
 )
 from pairly_pay.payability import account_digest
+from pairly_pay.portal.auth import INVITE_TTL as PORTAL_INVITE_TTL
+from pairly_pay.portal.auth import issue_login_token
+from pairly_pay.portal.contacts import contact_email
+from pairly_pay.portal.models import PayPortalContact
 from pairly_pay.recordings import import_pay_recordings
 from pairly_pay.vendors import active_account
 from synth.pay.banking import BANK_BY_KEY, make_iban
@@ -188,6 +192,9 @@ class PaySeed:
     address: str = ""
     emails: list[Path] = dataclasses.field(default_factory=list)
     counts: dict[str, Any] = dataclasses.field(default_factory=dict)
+    # A fresh vendor portal sign-in link for the person running the demo (fragment only).
+    portal_token: str = ""
+    portal_email: str = ""
 
 
 # ------------------------------------------------------------------ people
@@ -1084,6 +1091,115 @@ async def demo_emails(
     return address, written
 
 
+# ------------------------------------------------------------------ vendor portal
+
+PORTAL_DOC: Final = PAID[0]
+PORTAL_HEADER: Final = "X-Pairly-Vendor-Portal"
+PORTAL_QUESTION: Final = (
+    "Could you confirm the date this invoice was paid? Our bank shows two transfers."
+)
+PORTAL_ANSWER: Final = (
+    "It was paid in one transfer with the reference shown in the portal. The second "
+    "transfer is not ours: please check it with your bank."
+)
+
+
+async def _portal_contact(
+    sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid.UUID, vendor_id: uuid.UUID
+) -> PayPortalContact | None:
+    async with sessionmaker() as session:
+        set_tenant(session, org_id, None)
+        async with session.begin():
+            row = await session.scalar(
+                select(PayPortalContact).where(
+                    PayPortalContact.vendor_id == vendor_id,
+                    PayPortalContact.status == "active",
+                )
+            )
+            if row is not None:
+                session.expunge(row)
+            return row
+
+
+async def _portal_link(
+    sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid.UUID, contact: PayPortalContact
+) -> str:
+    async with sessionmaker() as session:
+        set_tenant(session, org_id, None)
+        async with session.begin():
+            token, _ = await issue_login_token(
+                session, contact, purpose="request", ttl=PORTAL_INVITE_TTL, locale="en"
+            )
+    return token
+
+
+async def seed_portal(
+    api: PayApi,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    ds: Dataset,
+    vendors: dict[str, uuid.UUID],
+    invoice_id: str,
+    seed: PaySeed,
+) -> list[str]:
+    """Vendor portal access for one contact of the vendor of a paid invoice, a question
+    the vendor asked in the portal about that invoice and accounts payable's answer, and
+    a fresh sign-in link for the person running the demo."""
+    synth = ds.doc(PORTAL_DOC).record.truth.vendor_id
+    if synth is None:
+        raise SeedError("the portal demo invoice has no vendor")
+    vendor_id = vendors[synth]
+    contact = await _portal_contact(sessionmaker, api.org_id, vendor_id)
+    if contact is None:
+        vendor = await api.ok("GET", f"/v1/pay/vendors/{vendor_id}", CLERK)
+        email = next(str(c["email"]) for c in vendor["contacts"] if c.get("email"))
+        await api.ok(
+            "POST",
+            f"/v1/pay/vendors/{vendor_id}/portal-contacts",
+            CLERK,
+            status=201,
+            json={"email": email, "locale": "en"},
+        )
+        contact = await _portal_contact(sessionmaker, api.org_id, vendor_id)
+    if contact is None:
+        raise SeedError("the vendor portal contact was not created")
+    existing = await _rows(
+        sessionmaker,
+        api.org_id,
+        "SELECT count(*) AS n FROM pay_messages WHERE invoice_id = :i AND channel = 'portal'",
+        {"i": invoice_id},
+    )
+    if int(existing[0].n) == 0:
+        token = await _portal_link(sessionmaker, api.org_id, contact)
+        opened = await api.client.post("/v1/pay/vendor-portal/session", json={"token": token})
+        if opened.status_code != 200:
+            raise SeedError(f"vendor portal sign-in: {opened.status_code} {opened.text}")
+        portal = {PORTAL_HEADER: opened.json()["session_token"]}
+        wrote = await api.client.post(
+            f"/v1/pay/vendor-portal/invoices/{invoice_id}/messages",
+            json={"text": PORTAL_QUESTION},
+            headers=portal,
+        )
+        if wrote.status_code != 201:
+            raise SeedError(f"vendor portal message: {wrote.status_code} {wrote.text}")
+        await api.client.post("/v1/pay/vendor-portal/sign-out", headers=portal)
+        await api.ok(
+            "POST",
+            f"/v1/pay/invoices/{invoice_id}/portal-replies",
+            CLERK,
+            status=201,
+            json={"text": PORTAL_ANSWER},
+        )
+    seed.portal_token = await _portal_link(sessionmaker, api.org_id, contact)
+    seed.portal_email = contact_email(contact)
+    messages = await _rows(
+        sessionmaker,
+        api.org_id,
+        "SELECT count(*) AS n FROM pay_messages WHERE invoice_id = :i AND channel = 'portal'",
+        {"i": invoice_id},
+    )
+    return [f"pay vendor portal: one contact with access, {int(messages[0].n)} portal messages"]
+
+
 # ------------------------------------------------------------------ counts
 
 
@@ -1179,6 +1295,7 @@ async def seed_pay(
             api, sessionmaker, by_synth[TICKET_COOLING], vendors[TICKET_COOLING], cooling=True
         )
         seed.lines.append(f"pay bank-change tickets: one {waiting}, one {cooling}")
+        seed.lines += await seed_portal(api, sessionmaker, ds, vendors, ids[PORTAL_DOC], seed)
 
     created = await received_invoice(
         sessionmaker, org_id, ds.doc(RECEIVED), ingestion, people[CLERK]
@@ -1222,4 +1339,8 @@ def next_steps(seed: PaySeed, web_url: str) -> list[str]:
         "  - Payment runs: one awaits the finance controller (demo-pay-finance@example.test);",
         "    one was approved, exported and marked paid.",
         "  - Approvals: the approver (demo-pay-approver@example.test) has an invoice waiting.",
+        f"  - Vendor portal: {seed.portal_email} has access. Sign in as that vendor contact",
+        f"    with {web_url.rstrip('/')}/en/vendor-portal/login#{seed.portal_token}",
+        "    (works once, for 3 days): invoice statuses, a question and its answer, details,",
+        "    contacts and a bank change request (held, never applied).",
     ]

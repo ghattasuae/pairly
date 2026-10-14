@@ -137,6 +137,7 @@ Runtime = Annotated[WorkflowRuntime, Depends(get_runtime)]
 
 MAX_LIST: Final = 200
 STATUS_VALUES = Literal[
+    "applied",
     "received",
     "extracting",
     "needs_review",
@@ -208,6 +209,10 @@ class PayInvoiceSummary(BaseModel):
     category: str | None = None
     created_at: datetime
     updated_at: datetime
+    # Vendor portal and credit notes (``pay_0012``).
+    document_type: str = "invoice"
+    credit_for_invoice_id: uuid.UUID | None = None
+    credit_total: Decimal = Decimal(0)
 
 
 class PayInvoiceList(BaseModel):
@@ -575,6 +580,9 @@ def _summary_fields(invoice: PayInvoice, vendor: PayVendor | None) -> dict[str, 
         "category": invoice.category,
         "created_at": invoice.created_at,
         "updated_at": invoice.updated_at,
+        "document_type": invoice.document_type,
+        "credit_for_invoice_id": invoice.credit_for_invoice_id,
+        "credit_total": money(invoice.credit_total) or Decimal(0),
     }
 
 

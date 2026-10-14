@@ -3275,7 +3275,8 @@
       "scheduled": "Scheduled",
       "paid": "Paid",
       "rejected": "Rejected",
-      "awaiting_approval": "Awaiting approval"
+      "awaiting_approval": "Awaiting approval",
+      "applied": "Applied"
     },
     "reasons": {
       "extraction": "A value needs checking",
@@ -3300,7 +3301,9 @@
       "approval_refused": "The approval was refused at the last check",
       "approval_not_possible": "No approval chain or approver could be found",
       "approval_not_started": "The approval did not start",
-      "changes_requested_by_approver": "An approver asked for changes"
+      "changes_requested_by_approver": "An approver asked for changes",
+      "credit_note": "A credit note: check it and apply it to its invoice",
+      "portal_vendor_mismatch": "The document names another vendor than the one who sent it"
     },
     "reasonCodes": {
       "arithmetic_error": "The amounts on the invoice do not add up.",
@@ -3411,7 +3414,8 @@
         "iban": "Matched by IBAN",
         "domain": "Matched by email domain",
         "name": "Matched by name",
-        "person": "Linked by a person"
+        "person": "Linked by a person",
+        "vendor_portal": "Sent through the vendor portal"
       },
       "noVendor": "No vendor linked",
       "receivedByEmail": "Received by email, reference {reference}",
@@ -3500,7 +3504,8 @@
       "run_full": "The run is full",
       "nothing_left_to_pay": "Nothing is left to pay in this run",
       "payer_details_missing": "Add the paying account in the Pay settings first",
-      "not_ready": "The invoice is not ready"
+      "not_ready": "The invoice is not ready",
+      "fully_credited": "Credit notes cover the whole invoice"
     },
     "approval": {
       "title": "Approval and payment",
@@ -3902,6 +3907,42 @@
         "vendor": "to the vendor",
         "requester": "to the requester"
       }
+    },
+    "portal": {
+      "title": "Vendor portal access",
+      "intro": "People listed here sign in with a link sent to their email address. Vendors open the portal at",
+      "none": "Nobody at this vendor has portal access yet.",
+      "lastSignIn": "Last signed in on {date}",
+      "neverSignedIn": "Has not signed in yet",
+      "revoke": "End access",
+      "revokedBadge": "Access ended",
+      "contact": "Contact on file",
+      "choose": "Choose a contact",
+      "language": "Email language",
+      "give": "Give access",
+      "sent": "Access given. A sign-in link went to {email}.",
+      "revoked": "Access ended for {email}.",
+      "threadTitle": "Messages in the vendor portal",
+      "noMessages": "No messages from the vendor yet.",
+      "vendor": "Vendor",
+      "ap": "Accounts payable",
+      "replyLabel": "Reply to the vendor",
+      "reply": "Send reply",
+      "replied": "Sent. The vendor sees it in the portal and gets an email.",
+      "waitsForApproval": "Saved. Your organisation's reply template needs an approval, so it waits in the inbox.",
+      "replyStatus": {
+        "submitted": "waiting for approval",
+        "awaiting_approval": "waiting for approval",
+        "declined": "declined",
+        "changes_requested": "changes requested",
+        "failed": "not sent"
+      },
+      "creditNote": "Credit note for invoice {invoice}. Applying it reduces what is paid on that invoice.",
+      "noInvoice": "(none chosen)",
+      "creditApplied": "This credit note is applied to its invoice.",
+      "applyNote": "Note (optional)",
+      "apply": "Apply the credit note",
+      "applied": "Applied. The invoice will be paid that much less."
     }
   },
   "VendorOnboarding": {
@@ -3945,5 +3986,168 @@
     "submit": "Send my details",
     "doneTitle": "Thank you",
     "doneBody": "{company} received your details (reference {reference}). The team will contact you on your main phone number if they have questions."
+  },
+  "VendorPortal": {
+    "eyebrow": "Vendor portal",
+    "title": "Your invoices",
+    "nav": {
+      "label": "Vendor portal",
+      "invoices": "Invoices",
+      "details": "Your details",
+      "signOut": "Sign out"
+    },
+    "signIn": {
+      "title": "Sign in to the vendor portal",
+      "expiredTitle": "This link has expired",
+      "expired": "Sign-in links work once and expire. Ask for a new one below.",
+      "intro": "Enter the email address accounts payable has on file for you. We will send you a link to sign in. There is no password.",
+      "needOrg": "Open the vendor portal from the link accounts payable sent you, so we know which company you work with.",
+      "sent": "If this address has access, a sign-in link is on its way. It works once and expires in 30 minutes.",
+      "email": "Email address",
+      "sending": "Sending",
+      "send": "Send me a link",
+      "opening": "Signing you in"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "rate_limited": "Too many attempts. Please wait a little and try again.",
+      "invalid_input": "Please check what you entered.",
+      "not_signed_in": "Your session ended. Please sign in again.",
+      "conflict": "This could not be done right now.",
+      "too_large": "The file is too large.",
+      "unsupported_media_type": "This file type is not accepted. Send a PDF, an image, a Word file or an e-invoice XML."
+    },
+    "state": {
+      "done": "done",
+      "current": "current step",
+      "ahead": "not yet"
+    },
+    "status": {
+      "received": "Received",
+      "in_review": "In review",
+      "approved": "Approved",
+      "scheduled": "Scheduled for payment",
+      "paid": "Paid",
+      "rejected": "Not accepted",
+      "applied": "Applied"
+    },
+    "kind": {
+      "invoice": "Invoice",
+      "credit_note": "Credit note"
+    },
+    "home": {
+      "signedInAs": "Signed in as {name}",
+      "now": "What needs you now",
+      "inReview": "Invoices received or in review",
+      "nextPayment": "Next expected payment",
+      "expectedOn": "expected on {date}",
+      "noPayment": "No payment is scheduled yet.",
+      "details": "Your verified details, contacts and bank details",
+      "invoices": "Invoices and credit notes",
+      "noInvoices": "Nothing here yet. Send your first invoice above.",
+      "creditFor": "for {reference}",
+      "dueDate": "Due date",
+      "paidOn": "Paid on",
+      "expected": "Expected payment",
+      "toPay": "To be paid after credits",
+      "messages": "{count, plural, one {# message} other {# messages}}",
+      "open": "Open"
+    },
+    "submit": {
+      "title": "Send an invoice or a credit note",
+      "intro": "Accounts payable reads every document and checks it like an invoice sent by email. You can follow it here.",
+      "kind": "What are you sending?",
+      "creditFor": "Which invoice does this credit note reduce?",
+      "chooseInvoice": "Choose an invoice",
+      "noCreditable": "You have no unpaid invoice a credit note could reduce.",
+      "file": "File (PDF, image, Word or e-invoice XML)",
+      "send": "Send",
+      "sending": "Sending",
+      "sent": "Received. Reference {reference}.",
+      "duplicate": "We already have this file. Reference {reference}."
+    },
+    "detail": {
+      "title": "Invoice",
+      "back": "Back to your invoices",
+      "receivedOn": "Received on {date}",
+      "status": "Where it stands",
+      "facts": "Details",
+      "invoiceNumber": "Invoice number",
+      "invoiceDate": "Invoice date",
+      "total": "Total",
+      "paymentReference": "Payment reference",
+      "creditFor": "Reduces invoice",
+      "messages": "Messages with accounts payable",
+      "noMessages": "No messages yet.",
+      "fromYou": "You",
+      "fromAp": "Accounts payable",
+      "writeLabel": "Write to accounts payable about this invoice",
+      "send": "Send",
+      "sent": "Sent. Accounts payable will answer here."
+    },
+    "help": {
+      "received": "We have your document and are reading it.",
+      "in_review": "Accounts payable is checking the invoice and sending it for approval.",
+      "approved": "The invoice is approved and waits for the next payment run.",
+      "scheduled": "The invoice is in a payment run. The expected date is the run's date.",
+      "paid": "The invoice was paid.",
+      "rejected": "Accounts payable did not accept this document. Write to them if you have a question.",
+      "applied": "The credit note was applied to its invoice and reduced what is paid."
+    },
+    "details": {
+      "title": "Your details",
+      "eyebrow": "Verified details",
+      "intro": "This is what accounts payable has on file for your company.",
+      "verified": "Company",
+      "legalName": "Legal name",
+      "legalNameAr": "Legal name in Arabic",
+      "tradeName": "Trade name",
+      "trn": "TRN",
+      "address": "Address",
+      "phoneOnFile": "Phone number on file",
+      "hold": "Payments to your company are on hold while a change is checked. Accounts payable will call the number on file.",
+      "contacts": "Contacts",
+      "contactsIntro": "Change your contacts here. Every change is recorded.",
+      "name": "Name",
+      "role": "Role",
+      "email": "Email",
+      "phone": "Phone",
+      "remove": "Remove",
+      "add": "Add a contact",
+      "newPhone": "New phone number on file (optional)",
+      "phoneNote": "Accounts payable calls this number to confirm any change of bank details. A new number is recorded and makes the next bank detail change get a closer check.",
+      "save": "Save contacts",
+      "saved": "Saved.",
+      "phoneLocked": "The phone number on file cannot change while a bank detail change is being checked."
+    },
+    "trn": {
+      "none": "None",
+      "not_verified": "Not verified yet",
+      "verified": "Verified",
+      "invalid": "Not valid"
+    },
+    "bank": {
+      "title": "Bank details",
+      "iban": "IBAN",
+      "accountName": "Name on the account",
+      "bankName": "Bank",
+      "swift": "SWIFT or BIC",
+      "since": "In use since",
+      "none": "No bank details on file.",
+      "openRequests": "Open change requests",
+      "noRequests": "No open change requests.",
+      "endingIn": "account ending {last4}",
+      "change": "Ask for a change of bank details",
+      "explanation": "Bank details never change here directly. Your request opens a check: payments to your company are held, accounts payable calls you on the phone number already on file (never a number from the request), and two people approve before the new details are used.",
+      "note": "Anything accounts payable should know (optional)",
+      "submit": "Send the request",
+      "requested": "Request {reference} is open. Accounts payable will call the number on file.",
+      "alreadyOpen": "A bank detail change is already being checked. Wait for it to finish."
+    },
+    "requestStatus": {
+      "awaiting_verification": "Waiting for the call back",
+      "awaiting_approval": "Waiting for approval",
+      "cooling_off": "Approved, waiting period"
+    }
   }
 }

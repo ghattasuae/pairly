@@ -362,6 +362,10 @@ class ActorKind(StrEnum):
     # link). Never produced by the staff authentication; may only hold a workflow's
     # ``portal`` and ``appeal.create`` permissions (``CANDIDATE_ALLOWED``).
     CANDIDATE = "candidate"
+    # A vendor's contact signed in to a workflow's vendor portal (Pairly Pay, a magic
+    # link). Never produced by the staff authentication; may only hold a workflow's
+    # ``vendor_portal`` permissions (``VENDOR_ALLOWED_RESOURCES``).
+    VENDOR = "vendor"
 
 
 # What a portal actor may ever be allowed to do, whatever it holds: read its own portal
@@ -376,6 +380,18 @@ def candidate_may_hold(permission: str) -> bool:
         return False
     resource, action = parts[1], parts[2]
     return resource in CANDIDATE_ALLOWED_RESOURCES or (resource, action) in CANDIDATE_ALLOWED_EXACT
+
+
+# What a vendor portal actor may ever be allowed to do: its own vendor portal
+# (``<workflow>.vendor_portal.*``), nothing of a candidate's portal or of staff.
+VENDOR_ALLOWED_RESOURCES = frozenset({"vendor_portal"})
+
+
+def vendor_may_hold(permission: str) -> bool:
+    parts = permission.split(".")
+    if len(parts) != 3 or parts[0] == CORE_NAMESPACE:
+        return False
+    return parts[1] in VENDOR_ALLOWED_RESOURCES
 
 
 def api_key_may_hold(permission: str) -> bool:
@@ -443,6 +459,8 @@ def authorize(actor: Actor, permission: str, resource: object | None = None) -> 
         reason = "api_key_action_not_allowed"
     elif actor.kind is ActorKind.CANDIDATE and not candidate_may_hold(permission):
         reason = "candidate_action_not_allowed"
+    elif actor.kind is ActorKind.VENDOR and not vendor_may_hold(permission):
+        reason = "vendor_action_not_allowed"
     elif (
         actor.kind is ActorKind.USER
         and requires_second_factor(permission)

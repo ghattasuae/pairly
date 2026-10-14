@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { InvoiceCoding } from "@/components/pay/invoice-coding";
 import { InvoiceReview } from "@/components/pay/invoice-review";
+import { PortalThread } from "@/components/pay/portal-thread";
 import { PageHeader } from "@/components/states/page-header";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -48,6 +49,19 @@ export default async function InvoicePage({ params }: Props) {
   const coding = await callApi((api) =>
     api.GET("/v1/pay/invoices/{invoice_id}/coding", { params: { path: { invoice_id: invoiceId } } }),
   );
+  const thread = invoice.data.vendor
+    ? await callApi((api) =>
+        api.GET("/v1/pay/invoices/{invoice_id}/portal-thread", { params: { path: { invoice_id: invoiceId } } }),
+      )
+    : null;
+  const creditFor = invoice.data.credit_for_invoice_id
+    ? await callApi((api) =>
+        api.GET("/v1/pay/invoices/{invoice_id}", {
+          params: { path: { invoice_id: String(invoice.data.credit_for_invoice_id) } },
+        }),
+      )
+    : null;
+  const isCredit = invoice.data.document_type === "credit_note";
   const t = await getTranslations("Pay.invoice");
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-8 sm:px-8">
@@ -65,6 +79,22 @@ export default async function InvoicePage({ params }: Props) {
             : []
         }
       />
+      {(isCredit || (thread?.ok && (thread.data.length > 0 || invoice.data.source === "vendor_portal"))) && (
+        <PortalThread
+          invoiceId={invoiceId}
+          initial={thread?.ok ? thread.data : []}
+          canReply={gate.permissions.includes("pay.message.create") && Boolean(invoice.data.vendor)}
+          creditNote={
+            isCredit
+              ? {
+                  canApply: invoice.data.can_process,
+                  forInvoice: creditFor?.ok ? (creditFor.data.invoice_number ?? creditFor.data.reference) : null,
+                  applied: invoice.data.status === "applied",
+                }
+              : null
+          }
+        />
+      )}
       {coding.ok && <InvoiceCoding initial={coding.data} locale={locale} />}
     </div>
   );

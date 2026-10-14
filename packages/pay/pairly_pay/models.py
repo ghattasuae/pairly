@@ -59,6 +59,14 @@ Purchase orders gain who closed or cancelled them, when and why (``pay_0011``).
 Messages (``pay_0010``, same rules, ``pairly_pay.messages``): ``pay_messages``, a drafted
 message about an invoice exception to the vendor or the requester, sent only after a
 person approved its exact text. Recipient and text are encrypted.
+
+Vendor portal and credit notes (``pay_0012``, ``pairly_pay.portal``): ``pay_invoices``
+gains the document type (invoice or credit note), the invoice a credit note reduces and
+the credit applied to an invoice; ``pay_messages`` gains the channel (email or portal),
+the direction (from AP or from the vendor) and the vendor, so the portal thread of an
+invoice lives with the other messages; ``pay_payment_run_items`` keeps the run's date.
+The portal tables are in ``pairly_pay.portal.models``. A restrictive Row Level Security
+layer keyed on the portal subject limits a vendor portal session to its own vendor.
 """
 
 from __future__ import annotations
@@ -551,12 +559,23 @@ class InvoiceStatus(StrEnum):
     PAID = "paid"
     # Closed by a person (not an invoice, a duplicate, a fake). Never by an agent.
     REJECTED = "rejected"
+    # A credit note a person applied against its invoice (``pay_0012``): it reduced
+    # what is paid on that invoice. Never paid itself.
+    APPLIED = "applied"
 
 
 class InvoiceSource(StrEnum):
     EMAIL = "email"
     UPLOAD = "upload"
     API = "api"
+    # Submitted by a vendor's contact in the vendor portal (``pay_0012``).
+    VENDOR_PORTAL = "vendor_portal"
+
+
+class DocumentType(StrEnum):
+    INVOICE = "invoice"
+    # Reduces what is owed on one invoice of the same vendor once a person applies it.
+    CREDIT_NOTE = "credit_note"
 
 
 class ExtractionSource(StrEnum):
@@ -638,6 +657,29 @@ class PayInvoice(Base, OrgScoped):
         Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
         Index("ix_pay_invoices_number_key", "org_id", "vendor_id", "number_key"),
         Index("ix_pay_invoices_po", "org_id", "po_id", "created_at"),
+        ForeignKeyConstraint(
+            ["org_id", "credit_for_invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_credit_for_org",
+        ),
+        CheckConstraint(f"document_type IN ({_in(DocumentType)})", name="document_type_valid"),
+        CheckConstraint(
+            "document_type = 'credit_note' OR credit_for_invoice_id IS NULL",
+            name="credit_link_only_on_credit_notes",
+        ),
+        CheckConstraint(
+            "status <> 'applied' OR (document_type = 'credit_note' "
+            "AND credit_for_invoice_id IS NOT NULL AND credit_applied_at IS NOT NULL)",
+            name="applied_is_credit_note",
+        ),
+        CheckConstraint(
+            "document_type = 'invoice' OR status NOT IN "
+            "('awaiting_approval', 'approved', 'scheduled', 'paid')",
+            name="credit_note_never_paid",
+        ),
+        CheckConstraint("credit_total >= 0", name="credit_total_not_negative"),
+        Index("ix_pay_invoices_credit_for", "org_id", "credit_for_invoice_id"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -743,6 +785,20 @@ class PayInvoice(Base, OrgScoped):
     )
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
+    # Vendor portal and credit notes (``pay_0012``): what kind of document it is, the
+    # invoice a credit note reduces (the vendor's choice, confirmed when a person applies
+    # it), the credit notes applied to this invoice so far (what is paid is
+    # ``approved_amount - credit_total``), and the portal contact who sent it.
+    document_type: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=DocumentType.INVOICE.value, server_default="invoice"
+    )
+    credit_for_invoice_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    credit_total: Mapped[Decimal] = mapped_column(
+        Numeric(20, 4), nullable=False, default=Decimal(0), server_default="0"
+    )
+    credit_applied_at: Mapped[datetime | None] = _ts()
+    credit_applied_by: Mapped[uuid.UUID | None] = _user_fk()
+    portal_contact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
 
 
 class PayIntakeEmail(Base, OrgScoped):
@@ -961,6 +1017,9 @@ class PayPaymentRunItem(Base, OrgScoped):
     amount: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # The run's execution date, kept per item (``pay_0012``) so a vendor's portal shows
+    # when it will be paid without reading the run (other vendors' payments).
+    execution_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     # Placeholder for the early-payment discount optimiser (brief 4.6.4): not computed.
     discount: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     bank_account_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
@@ -1317,11 +1376,31 @@ class MessageStatus(StrEnum):
     CHANGES_REQUESTED = "changes_requested"
     # Not sent: the run could not start, nobody may approve, or the send was refused.
     FAILED = "failed"
+    # Vendor portal (``pay_0012``): an AP reply shown in the portal at once (its
+    # template in force needs no approval), and a message a vendor wrote in the portal.
+    POSTED = "posted"
+    RECEIVED = "received"
+
+
+# What a vendor's portal shows of the messages AP sent: sent or posted, never drafts.
+VISIBLE_TO_VENDOR: Final = frozenset({MessageStatus.QUEUED.value, MessageStatus.POSTED.value})
 
 
 class MessageRecipient(StrEnum):
     VENDOR = "vendor"
     REQUESTER = "requester"
+    # The organisation's accounts payable team (a vendor's message from the portal).
+    AP = "ap"
+
+
+class MessageChannel(StrEnum):
+    EMAIL = "email"
+    PORTAL = "portal"
+
+
+class MessageDirection(StrEnum):
+    OUTBOUND = "outbound"
+    INBOUND = "inbound"
 
 
 class PayMessage(Base, OrgScoped):
@@ -1353,7 +1432,28 @@ class PayMessage(Base, OrgScoped):
             "status <> 'queued' OR (approval_id IS NOT NULL AND notification_id IS NOT NULL)",
             name="queued_has_approval",
         ),
+        ForeignKeyConstraint(
+            ["org_id", "vendor_id"],
+            ["pay_vendors.org_id", "pay_vendors.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_messages_vendor_org",
+        ),
+        CheckConstraint(f"channel IN ({_in(MessageChannel)})", name="channel_valid"),
+        CheckConstraint(f"direction IN ({_in(MessageDirection)})", name="direction_valid"),
+        CheckConstraint(
+            "direction = 'inbound' OR submitted_by IS NOT NULL", name="outbound_has_author"
+        ),
+        CheckConstraint(
+            "direction = 'outbound' OR (portal_contact_id IS NOT NULL AND channel = 'portal' "
+            "AND recipient_kind = 'ap' AND status = 'received')",
+            name="inbound_from_portal",
+        ),
+        CheckConstraint(
+            "status NOT IN ('posted', 'received') OR channel = 'portal'",
+            name="portal_statuses",
+        ),
         Index("ix_pay_messages_invoice", "org_id", "invoice_id", "created_at"),
+        Index("ix_pay_messages_vendor", "org_id", "vendor_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -1382,7 +1482,22 @@ class PayMessage(Base, OrgScoped):
     )
     notification_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    submitted_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    # The person who wrote it (outbound); NULL for a vendor's portal message.
+    submitted_by: Mapped[uuid.UUID | None] = _user_fk()
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
     sent_at: Mapped[datetime | None] = _ts()
+    # Vendor portal (``pay_0012``): by email (exception messages) or in the portal, sent
+    # by AP or written by the vendor, the invoice's vendor (a portal session only sees
+    # its own vendor's thread) and the portal contact who wrote or is written to.
+    channel: Mapped[str] = mapped_column(
+        String(8), nullable=False, default=MessageChannel.EMAIL.value, server_default="email"
+    )
+    direction: Mapped[str] = mapped_column(
+        String(8),
+        nullable=False,
+        default=MessageDirection.OUTBOUND.value,
+        server_default="outbound",
+    )
+    vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    portal_contact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)

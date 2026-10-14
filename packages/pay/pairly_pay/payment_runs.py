@@ -52,7 +52,7 @@ from pairly_pay.bank_files import Batch, Payment, to_csv, to_pain001
 from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import By, audit, decision_ids_of, new_reference, record_step
 from pairly_pay.freshness import check_inputs_digest, checks_failed
-from pairly_pay.invoices import INVOICE_ENTITY, refresh_decisions
+from pairly_pay.invoices import INVOICE_ENTITY, payable_amount, refresh_decisions
 from pairly_pay.models import (
     InvoiceStatus,
     PayInvoice,
@@ -203,7 +203,7 @@ async def item_problems(
         out.append("bank_details_changed")
     if invoice.approved_checks_digest != item.checks_digest:
         out.append("checks_changed_since_approval")
-    if invoice.approved_amount != item.amount:
+    if payable_amount(invoice) != item.amount:
         out.append("amount_changed")
     return list(dict.fromkeys(out))
 
@@ -293,7 +293,9 @@ async def plan_run(
         ):
             reasons.append("not_due_yet")
         reasons += await invoice_problems(session, invoice)
-        amount = invoice.approved_amount
+        amount = payable_amount(invoice)
+        if not reasons and amount is not None and amount <= 0:
+            reasons.append("fully_credited")
         if not reasons and amount is not None and running + amount > cash_limit:
             reasons.append("over_cash_limit")
         if not reasons and len(plan.items) >= MAX_ITEMS:
@@ -375,6 +377,7 @@ async def propose_run(
                 amount=planned.amount,
                 currency=currency,
                 due_date=invoice.due_date,
+                execution_date=execution_date,
                 discount=None,
                 bank_account_id=invoice.approved_account_id,
                 bank_details_digest=str(invoice.approved_bank_digest),

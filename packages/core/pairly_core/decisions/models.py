@@ -130,7 +130,8 @@ class DecisionRecord(Base, OrgScoped):
         CheckConstraint(f"kind IN ({_in(DecisionKind)})", name="kind_valid"),
         CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
         CheckConstraint(
-            "actor_type IN ('user', 'agent', 'system', 'api_key', 'candidate')", name="actor_valid"
+            "actor_type IN ('user', 'agent', 'system', 'api_key', 'candidate', 'vendor')",
+            name="actor_valid",
         ),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
         CheckConstraint("content_hash ~ '^[0-9a-f]{64}$'", name="content_hash_format"),

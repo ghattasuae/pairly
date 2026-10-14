@@ -369,3 +369,31 @@ def test_employee_is_grantable_without_core_power(
     # Confers no core permission, so a user manager with nothing else may grant it.
     conferred = check_grantable(registry, _manager(registry), "employee", workflow)
     assert not {p for p in conferred if p.startswith("core.")}
+
+
+def _portal_actor(kind: ActorKind, *permissions: str) -> Actor:
+    return Actor(
+        kind=kind,
+        id=uuid.uuid4(),
+        org_id=ORG,
+        grants=(),
+        permissions=frozenset(permissions),
+    )
+
+
+def test_a_vendor_portal_actor_only_ever_acts_in_its_vendor_portal() -> None:
+    held = ("pay.vendor_portal.read", "pay.invoice.read", "hire.portal.read", "core.audit.read")
+    vendor = _portal_actor(ActorKind.VENDOR, *held)
+    authorize(vendor, "pay.vendor_portal.read")
+    for permission in held[1:]:
+        with pytest.raises(PermissionDeniedError) as denied:
+            authorize(vendor, permission)
+        assert denied.value.denial.reason == "vendor_action_not_allowed"
+
+
+def test_a_candidate_never_acts_in_a_vendor_portal() -> None:
+    candidate = _portal_actor(ActorKind.CANDIDATE, "pay.vendor_portal.read", "hire.portal.read")
+    authorize(candidate, "hire.portal.read")
+    with pytest.raises(PermissionDeniedError) as denied:
+        authorize(candidate, "pay.vendor_portal.read")
+    assert denied.value.denial.reason == "candidate_action_not_allowed"

@@ -4145,6 +4145,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/invoices/{invoice_id}/apply-credit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Credit */
+        post: operations["apply_credit_v1_pay_invoices__invoice_id__apply_credit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/invoices/{invoice_id}/checks": {
         parameters: {
             query?: never;
@@ -4282,6 +4299,40 @@ export type paths = {
          *     checked; without the model the template alone is the draft.
          */
         post: operations["draft_message_v1_pay_invoices__invoice_id__messages_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/portal-replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Portal Reply */
+        post: operations["portal_reply_v1_pay_invoices__invoice_id__portal_replies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/portal-thread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Thread */
+        get: operations["portal_thread_v1_pay_invoices__invoice_id__portal_thread_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4679,6 +4730,186 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/vendor-portal/bank-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bank Change
+         * @description New bank details are a request, never a change: a locked change ticket opens and
+         *     the vendor's payments are held until AP verifies it by phone and two people approve.
+         */
+        post: operations["bank_change_v1_pay_vendor_portal_bank_change_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Details */
+        get: operations["get_details_v1_pay_vendor_portal_details_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/details/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Contacts */
+        put: operations["update_contacts_v1_pay_vendor_portal_details_contacts_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Invoices */
+        get: operations["list_invoices_v1_pay_vendor_portal_invoices_get"];
+        put?: never;
+        /** Submit */
+        post: operations["submit_v1_pay_vendor_portal_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/invoices/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Invoice */
+        get: operations["get_invoice_v1_pay_vendor_portal_invoices__invoice_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/invoices/{invoice_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write Message */
+        post: operations["write_message_v1_pay_vendor_portal_invoices__invoice_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/login-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login Link
+         * @description The same answer, after the same work, whether or not the address has access: the
+         *     request only checks the shape and schedules the sender, which looks the contact up
+         *     after the answer is sent (``send_login_link``).
+         */
+        post: operations["login_link_v1_pay_vendor_portal_login_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_v1_pay_vendor_portal_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Session */
+        post: operations["open_session_v1_pay_vendor_portal_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-portal/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign Out */
+        post: operations["sign_out_v1_pay_vendor_portal_sign_out_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/vendors": {
         parameters: {
             query?: never;
@@ -4781,6 +5012,41 @@ export type paths = {
         put?: never;
         /** Release */
         post: operations["release_v1_pay_vendors__vendor_id__hold_release_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/portal-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Access */
+        get: operations["list_access_v1_pay_vendors__vendor_id__portal_contacts_get"];
+        put?: never;
+        /** Give Access */
+        post: operations["give_access_v1_pay_vendors__vendor_id__portal_contacts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/portal-contacts/{contact_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Access */
+        post: operations["revoke_access_v1_pay_vendors__vendor_id__portal_contacts__contact_id__revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5215,7 +5481,7 @@ export type components = {
          * ActorType
          * @enum {string}
          */
-        ActorType: "user" | "agent" | "system" | "api_key" | "candidate";
+        ActorType: "user" | "agent" | "system" | "api_key" | "candidate" | "vendor";
         /** AnchorKeyOut */
         AnchorKeyOut: {
             /** Algorithm */
@@ -11011,6 +11277,13 @@ export type components = {
             /** Until */
             until: string | null;
         };
+        /** PayApplyCreditIn */
+        PayApplyCreditIn: {
+            /** Invoice Id */
+            invoice_id?: string | null;
+            /** Note */
+            note?: string | null;
+        };
         /** PayApprovalStepOut */
         PayApprovalStepOut: {
             /** Decided By */
@@ -11379,6 +11652,25 @@ export type components = {
             phone?: string | null;
             /** Role */
             role?: string | null;
+        };
+        /** PayCreditAppliedOut */
+        PayCreditAppliedOut: {
+            /** Amount */
+            amount: string | null;
+            /**
+             * Credit Note Id
+             * Format: uuid
+             */
+            credit_note_id: string;
+            /** Invoice Credit Total */
+            invoice_credit_total: string;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Status */
+            status: string;
         };
         /** PayCsvIn */
         PayCsvIn: {
@@ -11754,6 +12046,13 @@ export type components = {
              * Format: date-time
              */
             created_at: string;
+            /** Credit For Invoice Id */
+            credit_for_invoice_id?: string | null;
+            /**
+             * Credit Total
+             * @default 0
+             */
+            credit_total: string;
             /** Currency */
             currency: string | null;
             /** Department */
@@ -11763,6 +12062,11 @@ export type components = {
              * Format: uuid
              */
             document_id: string;
+            /**
+             * Document Type
+             * @default invoice
+             */
+            document_type: string;
             /** Due Date */
             due_date: string | null;
             /** Duplicate */
@@ -11821,6 +12125,13 @@ export type components = {
              * Format: date-time
              */
             created_at: string;
+            /** Credit For Invoice Id */
+            credit_for_invoice_id?: string | null;
+            /**
+             * Credit Total
+             * @default 0
+             */
+            credit_total: string;
             /** Currency */
             currency: string | null;
             /** Decision Ids */
@@ -11833,6 +12144,11 @@ export type components = {
              * Format: uuid
              */
             document_id: string;
+            /**
+             * Document Type
+             * @default invoice
+             */
+            document_type: string;
             /** Due Date */
             due_date: string | null;
             email: components["schemas"]["PayInvoiceEmailOut"] | null;
@@ -12057,6 +12373,13 @@ export type components = {
              * Format: date-time
              */
             created_at: string;
+            /** Credit For Invoice Id */
+            credit_for_invoice_id?: string | null;
+            /**
+             * Credit Total
+             * @default 0
+             */
+            credit_total: string;
             /** Currency */
             currency: string | null;
             /** Department */
@@ -12066,6 +12389,11 @@ export type components = {
              * Format: uuid
              */
             document_id: string;
+            /**
+             * Document Type
+             * @default invoice
+             */
+            document_type: string;
             /** Due Date */
             due_date: string | null;
             /**
@@ -12476,6 +12804,333 @@ export type components = {
             };
             /** Items */
             items: components["schemas"]["PayPoSummary"][];
+        };
+        /** PayPortalAccessIn */
+        PayPortalAccessIn: {
+            /** Email */
+            email: string;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+        };
+        /** PayPortalAccessList */
+        PayPortalAccessList: {
+            /** Items */
+            items: components["schemas"]["PayPortalAccessOut"][];
+            /** Portal Path */
+            portal_path: string;
+        };
+        /** PayPortalAccessOut */
+        PayPortalAccessOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Sign In At */
+            last_sign_in_at: string | null;
+            /** Locale */
+            locale: string;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Status */
+            status: string;
+        };
+        /** PayPortalAccountOut */
+        PayPortalAccountOut: {
+            /** Account Name */
+            account_name: string;
+            /** Bank Name */
+            bank_name: string | null;
+            /** Country */
+            country: string;
+            /** Iban Masked */
+            iban_masked: string;
+            /** Since */
+            since: string | null;
+            /** Swift */
+            swift: string | null;
+        };
+        /** PayPortalBankChangeIn */
+        PayPortalBankChangeIn: {
+            /** Account Name */
+            account_name: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Iban */
+            iban: string;
+            /** Note */
+            note?: string | null;
+            /** Swift */
+            swift?: string | null;
+        };
+        /** PayPortalBankChangeOut */
+        PayPortalBankChangeOut: {
+            request: components["schemas"]["PayPortalRequestOut"];
+        };
+        /** PayPortalContactOut */
+        PayPortalContactOut: {
+            /** Email */
+            email: string | null;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string | null;
+            /** Role */
+            role: string | null;
+        };
+        /** PayPortalContactsIn */
+        PayPortalContactsIn: {
+            /** Contacts */
+            contacts?: components["schemas"]["PayContactIn"][] | null;
+            /** Phone On File */
+            phone_on_file?: string | null;
+        };
+        /** PayPortalDetailsOut */
+        PayPortalDetailsOut: {
+            account: components["schemas"]["PayPortalAccountOut"] | null;
+            /** Address */
+            address: {
+                [key: string]: unknown;
+            };
+            /** Contacts */
+            contacts: components["schemas"]["PayPortalContactOut"][];
+            /** Country */
+            country: string;
+            /** Legal Name */
+            legal_name: string;
+            /** Legal Name Ar */
+            legal_name_ar: string | null;
+            /** Open Requests */
+            open_requests: components["schemas"]["PayPortalRequestOut"][];
+            /** Payment Hold */
+            payment_hold: boolean;
+            /** Phone Changed At */
+            phone_changed_at: string | null;
+            /** Phone Masked */
+            phone_masked: string | null;
+            /** Reference */
+            reference: string;
+            /** Trade Name */
+            trade_name: string | null;
+            /** Trn */
+            trn: string | null;
+            /** Trn Status */
+            trn_status: string;
+        };
+        /** PayPortalInvoiceDetailOut */
+        PayPortalInvoiceDetailOut: {
+            /** Amount To Pay */
+            amount_to_pay: string | null;
+            /** Can Message */
+            can_message: boolean;
+            /** Credit For */
+            credit_for: string | null;
+            /** Credit Total */
+            credit_total: string;
+            /** Currency */
+            currency: string | null;
+            /** Document Type */
+            document_type: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Expected Payment Date */
+            expected_payment_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Messages */
+            messages: number;
+            /** Payment Reference */
+            payment_reference: string | null;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Steps */
+            steps: components["schemas"]["PayPortalStepOut"][];
+            /** Thread */
+            thread: components["schemas"]["PayPortalMessageOut"][];
+            /** Total */
+            total: string | null;
+        };
+        /** PayPortalInvoiceOut */
+        PayPortalInvoiceOut: {
+            /** Amount To Pay */
+            amount_to_pay: string | null;
+            /** Can Message */
+            can_message: boolean;
+            /** Credit For */
+            credit_for: string | null;
+            /** Credit Total */
+            credit_total: string;
+            /** Currency */
+            currency: string | null;
+            /** Document Type */
+            document_type: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Expected Payment Date */
+            expected_payment_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Messages */
+            messages: number;
+            /** Payment Reference */
+            payment_reference: string | null;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Steps */
+            steps: components["schemas"]["PayPortalStepOut"][];
+            /** Total */
+            total: string | null;
+        };
+        /** PayPortalLinkIn */
+        PayPortalLinkIn: {
+            /** Email */
+            email: string;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Org */
+            org: string;
+        };
+        /** PayPortalLinkOut */
+        PayPortalLinkOut: {
+            /** Sent */
+            sent: boolean;
+        };
+        /** PayPortalMeOut */
+        PayPortalMeOut: {
+            /** Contact Name */
+            contact_name: string;
+            /** Email */
+            email: string;
+            /** Locale */
+            locale: string;
+            /** Org Id */
+            org_id: string;
+            /** Organisation */
+            organisation: string;
+            /** Vendor Name */
+            vendor_name: string;
+            /** Vendor Reference */
+            vendor_reference: string;
+        };
+        /** PayPortalMessageIn */
+        PayPortalMessageIn: {
+            /** Text */
+            text: string;
+        };
+        /** PayPortalMessageOut */
+        PayPortalMessageOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Author */
+            author: string;
+            /** From Vendor */
+            from_vendor: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Text */
+            text: string;
+        };
+        /** PayPortalReplyIn */
+        PayPortalReplyIn: {
+            /** Text */
+            text: string;
+        };
+        /** PayPortalRequestOut */
+        PayPortalRequestOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Iban Last4 */
+            iban_last4: string | null;
+            /** Reference */
+            reference: string;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+        };
+        /** PayPortalSessionOut */
+        PayPortalSessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Locale */
+            locale: string;
+            /** Session Token */
+            session_token: string;
+        };
+        /** PayPortalStepOut */
+        PayPortalStepOut: {
+            /** At */
+            at: string | null;
+            /** Step */
+            step: string;
+        };
+        /** PayPortalSubmittedOut */
+        PayPortalSubmittedOut: {
+            /** Duplicate */
+            duplicate: boolean;
+            invoice: components["schemas"]["PayPortalInvoiceOut"];
+        };
+        /** PayPortalTokenIn */
+        PayPortalTokenIn: {
+            /** Token */
+            token: string;
         };
         /** PayPoSummary */
         PayPoSummary: {
@@ -12976,6 +13631,27 @@ export type components = {
             ar: string;
             /** En */
             en: string;
+        };
+        /** PayThreadMessageOut */
+        PayThreadMessageOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Author */
+            author: string;
+            /** From Vendor */
+            from_vendor: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Text */
+            text: string;
         };
         /** PayTicketDetail */
         PayTicketDetail: {
@@ -22391,7 +23067,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 q?: string | null;
-                status?: ("received" | "extracting" | "needs_review" | "ready" | "awaiting_approval" | "approved" | "scheduled" | "paid" | "rejected") | null;
+                status?: ("applied" | "received" | "extracting" | "needs_review" | "ready" | "awaiting_approval" | "approved" | "scheduled" | "paid" | "rejected") | null;
             };
             header?: never;
             path?: never;
@@ -22478,6 +23154,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_credit_v1_pay_invoices__invoice_id__apply_credit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayApplyCreditIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayCreditAppliedOut"];
                 };
             };
             /** @description Validation Error */
@@ -22781,6 +23492,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayDraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_reply_v1_pay_invoices__invoice_id__portal_replies_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalReplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayThreadMessageOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portal_thread_v1_pay_invoices__invoice_id__portal_thread_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayThreadMessageOut"][];
                 };
             };
             /** @description Validation Error */
@@ -23621,6 +24398,330 @@ export interface operations {
             };
         };
     };
+    bank_change_v1_pay_vendor_portal_bank_change_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalBankChangeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalBankChangeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_details_v1_pay_vendor_portal_details_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalDetailsOut"];
+                };
+            };
+        };
+    };
+    update_contacts_v1_pay_vendor_portal_details_contacts_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalContactsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalDetailsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices_v1_pay_vendor_portal_invoices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalInvoiceOut"][];
+                };
+            };
+        };
+    };
+    submit_v1_pay_vendor_portal_invoices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalSubmittedOut"];
+                };
+            };
+            /** @description Malformed body, an empty file or a wrong credit note link */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This file was already received */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File larger than Pay allows */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File type not allowed, or the body is not multipart */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_invoice_v1_pay_vendor_portal_invoices__invoice_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalInvoiceDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_message_v1_pay_vendor_portal_invoices__invoice_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalMessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalInvoiceDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_link_v1_pay_vendor_portal_login_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalLinkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_v1_pay_vendor_portal_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalMeOut"];
+                };
+            };
+        };
+    };
+    open_session_v1_pay_vendor_portal_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_out_v1_pay_vendor_portal_sign_out_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_vendors_v1_pay_vendors_get: {
         parameters: {
             query?: {
@@ -23881,6 +24982,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_access_v1_pay_vendors__vendor_id__portal_contacts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalAccessList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    give_access_v1_pay_vendors__vendor_id__portal_contacts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalAccessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalAccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_access_v1_pay_vendors__vendor_id__portal_contacts__contact_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalAccessOut"];
                 };
             };
             /** @description Validation Error */

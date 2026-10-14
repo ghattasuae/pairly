@@ -14,6 +14,7 @@ import { z } from "zod";
 import type { ActionResult } from "../action-result";
 import { callApi, toAction } from "../api/call";
 import type {
+  PayCreditApplied,
   PayInviteCreated,
   PayInvite,
   PayInvoiceCoding,
@@ -22,9 +23,11 @@ import type {
   PayMessageDraft,
   PayModelLine,
   PayPoDetail,
+  PayPortalAccess,
   PayRunDetail,
   PayRunPreview,
   PaySettings,
+  PayThreadMessage,
   PayTicketDetail,
   PayVendorCheck,
   PayVendorDetail,
@@ -622,4 +625,65 @@ export async function savePaySettings(input: PaySettingsInput): Promise<ActionRe
   if (!parsed.success) return bad;
   const result = await callApi((api) => api.PUT("/v1/pay/settings", { body: parsed.data as never }));
   return toAction(result, (settings) => ({ settings }));
+}
+
+// ------------------------------------------------------------------ vendor portal (brief 4.7)
+
+/** Give a contact on file access to the vendor portal; the API emails them a sign-in link. */
+export async function givePortalAccess(
+  vendorId: string,
+  input: { email: string; locale: "en" | "ar" },
+): Promise<ActionResult<{ access: PayPortalAccess }>> {
+  const parsed = z.object({ email: z.email().max(254), locale: z.enum(["en", "ar"]) }).safeParse(input);
+  if (!uuid.safeParse(vendorId).success || !parsed.success) return bad;
+  const result = await callApi(
+    (api) =>
+      api.POST("/v1/pay/vendors/{vendor_id}/portal-contacts", {
+        params: { path: { vendor_id: vendorId } },
+        body: parsed.data,
+      }),
+    { okStatuses: [201] },
+  );
+  return toAction(result, (access) => ({ access }));
+}
+
+export async function revokePortalAccess(vendorId: string, contactId: string): Promise<ActionResult<{ access: PayPortalAccess }>> {
+  if (!uuid.safeParse(vendorId).success || !uuid.safeParse(contactId).success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/vendors/{vendor_id}/portal-contacts/{contact_id}/revoke", {
+      params: { path: { vendor_id: vendorId, contact_id: contactId } },
+    }),
+  );
+  return toAction(result, (access) => ({ access }));
+}
+
+/** Answer the vendor in the portal thread of an invoice. */
+export async function replyInPortal(invoiceId: string, text: string): Promise<ActionResult<{ thread: PayThreadMessage[] }>> {
+  const parsed = z.string().trim().min(1).max(4000).safeParse(text);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi(
+    (api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/portal-replies", {
+        params: { path: { invoice_id: invoiceId } },
+        body: { text: parsed.data },
+      }),
+    { okStatuses: [201] },
+  );
+  return toAction(result, (thread) => ({ thread }));
+}
+
+/** Apply a credit note to an invoice of the same vendor (the vendor's choice by default). */
+export async function applyCreditNote(
+  creditId: string,
+  input: { invoice_id: string | null; note: string },
+): Promise<ActionResult<{ applied: PayCreditApplied }>> {
+  const parsed = z.object({ invoice_id: uuid.nullable(), note: z.string().trim().max(1000) }).safeParse(input);
+  if (!uuid.safeParse(creditId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/invoices/{invoice_id}/apply-credit", {
+      params: { path: { invoice_id: creditId } },
+      body: { invoice_id: parsed.data.invoice_id, note: parsed.data.note || null },
+    }),
+  );
+  return toAction(result, (applied) => ({ applied }));
 }

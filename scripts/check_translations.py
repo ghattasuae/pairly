@@ -50,6 +50,8 @@ TEMPLATE_MODULES = (
     "pairly_hire.interviewing.templates",
     "pairly_hire.references.templates",
     "pairly_hire.survey.templates",
+    "pairly_pay.templates",
+    "pairly_pay.portal.templates",
 )
 # ``{{ name }}`` and ``{% if name %}`` style variables in templates.
 _TEMPLATE_VAR = re.compile(

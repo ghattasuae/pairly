@@ -53,6 +53,7 @@ from pairly_core.audit import ActorType
 from pairly_core.crypto.types import seal
 from pairly_core.errors import BadRequestError, NotFoundError
 from pairly_core.models import Membership, Organisation, User
+from pairly_core.notifications.links import absolute_url, public_web_url
 from pairly_core.notifications.service import (
     Recipient,
     SensitiveTemplateError,
@@ -60,6 +61,7 @@ from pairly_core.notifications.service import (
     notify,
     sensitive_message_payload,
 )
+from pairly_core.notifications.templates import resolve_template
 from pairly_core.plugins import discover_plugins
 from pairly_core.policy_versions import PolicyError
 from pairly_core.rbac import Actor, RoleRegistry, build_registry
@@ -72,12 +74,15 @@ from pairly_pay.exceptions import categorise, check_message, template_for
 from pairly_pay.invoices import InvoiceStateError, get_invoice
 from pairly_pay.models import (
     InvoiceStatus,
+    MessageChannel,
+    MessageDirection,
     MessageRecipient,
     MessageStatus,
     PayInvoice,
     PayMessage,
     PayVendor,
 )
+from pairly_pay.portal.models import ContactStatus, PayPortalContact
 from pairly_pay.vendors import contacts_of
 
 log = structlog.get_logger("pairly_pay.messages")
@@ -88,6 +93,9 @@ STEP_KEY: Final = "send"
 APPROVAL_TYPE: Final = "pay.message"
 FINAL_ACTION: Final = "send_pay_message"
 TEMPLATE_KEY: Final = "pay.vendor.message"
+# An AP reply in the vendor portal (``pairly_pay.portal.templates``).
+PORTAL_REPLY: Final = "pay.vendor_portal.reply"
+PORTAL_PATH: Final = "/vendor-portal"
 CHANNEL: Final = "email"
 ENTITY: Final = "pay.message"
 ACTOR_ID: Final = "pairly.pay.message_graph"
@@ -235,7 +243,10 @@ async def create_message(
 async def messages_of(session: AsyncSession, invoice_id: uuid.UUID) -> list[PayMessage]:
     rows = await session.scalars(
         select(PayMessage)
-        .where(PayMessage.invoice_id == invoice_id)
+        .where(
+            PayMessage.invoice_id == invoice_id,
+            PayMessage.channel == MessageChannel.EMAIL.value,
+        )
         .order_by(PayMessage.created_at.desc(), PayMessage.id)
         .limit(100)
     )
@@ -251,6 +262,141 @@ async def fail_message(session: AsyncSession, message_id: uuid.UUID, reason: str
     message.status_reason = reason[:64]
     message.updated_at = datetime.now(UTC)
     await _audit(session, "pay.message.failed", message, {"reason": message.status_reason})
+
+
+# ------------------------------------------------------------------ vendor portal
+
+
+async def thread_of(session: AsyncSession, invoice_id: uuid.UUID) -> list[PayMessage]:
+    """The vendor portal thread of an invoice for AP: the vendor's messages and every
+    portal reply (oldest first)."""
+    rows = await session.scalars(
+        select(PayMessage)
+        .where(
+            PayMessage.invoice_id == invoice_id,
+            PayMessage.channel == MessageChannel.PORTAL.value,
+        )
+        .order_by(PayMessage.created_at, PayMessage.id)
+        .limit(200)
+    )
+    return list(rows)
+
+
+async def _portal_recipient(session: AsyncSession, invoice: PayInvoice) -> PayPortalContact | None:
+    """Who an AP reply goes to: the contact who wrote last about this invoice while
+    still active, else the vendor's first active portal contact."""
+    if invoice.vendor_id is None:
+        return None
+    last = await session.scalar(
+        select(PayMessage.portal_contact_id)
+        .where(
+            PayMessage.invoice_id == invoice.id,
+            PayMessage.direction == MessageDirection.INBOUND.value,
+        )
+        .order_by(PayMessage.created_at.desc())
+        .limit(1)
+    )
+    active = select(PayPortalContact).where(
+        PayPortalContact.vendor_id == invoice.vendor_id,
+        PayPortalContact.status == ContactStatus.ACTIVE.value,
+    )
+    if last is not None:
+        found = await session.scalar(active.where(PayPortalContact.id == last))
+        if found is not None:
+            return found
+    return await session.scalar(active.order_by(PayPortalContact.created_at).limit(1))
+
+
+@dataclass(frozen=True, slots=True)
+class PortalReply:
+    message: PayMessage
+    # The template in force needs an approval first: the caller starts the run.
+    needs_approval: bool
+
+
+async def post_portal_reply(
+    session: AsyncSession, actor: Actor, invoice_id: uuid.UUID, text: str
+) -> PortalReply:
+    """AP answers in the vendor portal thread of an invoice. Not sensitive by default:
+    shown in the portal at once and emailed to the contact. When the organisation's
+    version of ``pay.vendor_portal.reply`` requires an approval, it waits for one in the
+    ``pay_message`` graph like an exception message (the writer never approves it)."""
+    invoice = await get_invoice(session, invoice_id, lock=True)
+    problems = check_message(text)
+    if problems:
+        raise BadRequestError("the message cannot be sent: " + ", ".join(problems))
+    contact = await _portal_recipient(session, invoice)
+    if contact is None:
+        raise RecipientNotAllowedError("the vendor has no active portal contact")
+    template = await resolve_template(
+        session, key=PORTAL_REPLY, channel=CHANNEL, locale=contact.locale
+    )
+    if template is None:
+        raise BadRequestError("no template for portal replies")
+    now = datetime.now(UTC)
+    message = PayMessage(
+        id=uuid.uuid4(),
+        org_id=invoice.org_id,
+        reference=new_reference(REFERENCE_PREFIX),
+        invoice_id=invoice.id,
+        category="portal",
+        template_id="portal_reply",
+        recipient_kind=MessageRecipient.VENDOR.value,
+        recipient_user_id=None,
+        locale=contact.locale,
+        ai_note=False,
+        status=MessageStatus.SUBMITTED.value,
+        submitted_by=actor.id,
+        channel=MessageChannel.PORTAL.value,
+        direction=MessageDirection.OUTBOUND.value,
+        vendor_id=invoice.vendor_id,
+        portal_contact_id=contact.id,
+        created_at=now,
+        updated_at=now,
+    )
+    message.recipient_name = _seal(message, "recipient_name", str(opened(contact, "name")))
+    message.recipient_email = _seal(message, "recipient_email", str(opened(contact, "email")))
+    message.message = _seal(message, "message", text.strip())
+    session.add(message)
+    await session.flush()
+    await audit(
+        session,
+        actor,
+        "pay.message.submitted",
+        entity_type=ENTITY,
+        entity_id=message.id,
+        payload={
+            "invoice_id": str(invoice.id),
+            "channel": message.channel,
+            "recipient_kind": message.recipient_kind,
+            "portal_contact_id": str(contact.id),
+            "needs_approval": template.requires_approval,
+        },
+    )
+    if template.requires_approval:
+        return PortalReply(message, needs_approval=True)
+    results = await notify(
+        session,
+        recipient=await _recipient(session, message),
+        template_key=PORTAL_REPLY,
+        variables=await _variables(session, message),
+        dedupe_key=f"pay.msg:{message.id}",
+        channels=[CHANNEL],
+        workflow=WORKFLOW,
+        actor_type=ActorType.USER,
+        actor_id=str(actor.id),
+    )
+    sent = next((r for r in results if r.channel == CHANNEL), None)
+    message.status = MessageStatus.POSTED.value
+    message.notification_id = sent.notification_id if sent is not None else None
+    message.sent_at = message.updated_at = datetime.now(UTC)
+    await _audit(
+        session,
+        "pay.message.posted",
+        message,
+        {"notification_id": str(message.notification_id) if message.notification_id else None},
+    )
+    return PortalReply(message, needs_approval=False)
 
 
 # ------------------------------------------------------------------ the graph
@@ -308,10 +454,28 @@ async def _recipient(session: AsyncSession, message: PayMessage) -> Recipient:
     return Recipient.external(email, locale=message.locale)
 
 
+def template_key(message: PayMessage) -> str:
+    """The engine template a message is sent with: an exception message by email, or an
+    AP reply in the vendor portal (``pay.vendor_portal.reply``)."""
+    return PORTAL_REPLY if message.channel == MessageChannel.PORTAL.value else TEMPLATE_KEY
+
+
 async def _variables(session: AsyncSession, message: PayMessage) -> dict[str, Any]:
     company = await session.scalar(
         select(Organisation.name).where(Organisation.id == message.org_id)
     )
+    if message.channel == MessageChannel.PORTAL.value:
+        invoice = await session.scalar(
+            select(PayInvoice).where(PayInvoice.id == message.invoice_id)
+        )
+        return {
+            "org_name": str(company or ""),
+            "vendor_name": str(opened(message, "recipient_name") or ""),
+            "invoice_reference": invoice.reference if invoice is not None else "",
+            "invoice_number": invoice.invoice_number if invoice is not None else None,
+            "message": str(opened(message, "message") or ""),
+            "portal_url": absolute_url(public_web_url(), PORTAL_PATH),
+        }
     return {
         "vendor_name": str(opened(message, "recipient_name") or ""),
         "company": str(company or ""),
@@ -332,13 +496,15 @@ async def propose(state: MessageState, runtime: Ctx) -> Command[Any]:
         payload = await sensitive_message_payload(
             session,
             recipient=await _recipient(session, message),
-            template_key=TEMPLATE_KEY,
+            template_key=template_key(message),
             variables=await _variables(session, message),
             channel=CHANNEL,
         )
         reference = invoice.reference if invoice is not None else ""
         who = "vendor" if message.recipient_kind == MessageRecipient.VENDOR.value else "requester"
         title = f"Message to the {who} about invoice {reference}"
+        if message.channel == MessageChannel.PORTAL.value:
+            title = f"Reply to the vendor in the portal about invoice {reference}"
         context = {
             "kind": "pay.message",
             "invoice_reference": reference,
@@ -406,7 +572,7 @@ async def send_pay_message(session: AsyncSession, call: FinalActionCall) -> Mapp
         results = await notify(
             session,
             recipient=await _recipient(session, message),
-            template_key=TEMPLATE_KEY,
+            template_key=template_key(message),
             variables=await _variables(session, message),
             dedupe_key=f"pay.msg:{message.id}",
             channels=[CHANNEL],

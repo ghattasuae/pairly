@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { PortalAccessPanel } from "@/components/pay/portal-access";
 import { VendorDetailView } from "@/components/pay/vendor-detail";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -36,10 +37,21 @@ export default async function VendorPage({ params }: Props) {
     if (vendor.status === 404) notFound();
     return <PayUnavailable retry={`/${locale}${path}`} />;
   }
+  const access = await callApi((api) =>
+    api.GET("/v1/pay/vendors/{vendor_id}/portal-contacts", { params: { path: { vendor_id: vendorId } } }),
+  );
   return (
     <PayFrame>
       <PayHeader title={vendor.data.legal_name} current={null} permissions={gate.permissions} />
       <VendorDetailView initial={vendor.data} totpEnabled={gate.totpEnabled} returnPath={`/${locale}${path}`} />
+      {access.ok && (
+        <PortalAccessPanel
+          vendorId={vendorId}
+          contacts={vendor.data.contacts}
+          initial={access.data}
+          canWrite={vendor.data.can_write && vendor.data.status === "active"}
+        />
+      )}
     </PayFrame>
   );
 }

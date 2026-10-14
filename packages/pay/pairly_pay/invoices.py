@@ -38,6 +38,7 @@ from pairly_core.rbac import Actor
 from pairly_pay.common import By, audit, clean_text, decision_ids_of, new_reference, record_step
 from pairly_pay.freshness import MISSING, STALE, checks_problem
 from pairly_pay.models import (
+    DocumentType,
     InvoiceSource,
     InvoiceStatus,
     PayIntakeEmail,
@@ -83,6 +84,14 @@ async def get_invoice(
     return invoice
 
 
+def payable_amount(invoice: PayInvoice) -> Decimal | None:
+    """What is paid on an approved invoice: the approved amount less the credit notes a
+    person applied to it (``pay_0012``). ``None`` before the approval."""
+    if invoice.approved_amount is None:
+        return None
+    return invoice.approved_amount - (invoice.credit_total or Decimal(0))
+
+
 def add_reasons(invoice: PayInvoice, reasons: Iterable[str]) -> None:
     current = list(invoice.review_reasons)
     for reason in reasons:
@@ -108,9 +117,18 @@ async def create_invoice(
     intake_email: PayIntakeEmail | None = None,
     sender_domains: Iterable[str] = (),
     review_reasons: Iterable[str] = (),
+    vendor_id: uuid.UUID | None = None,
+    document_type: DocumentType = DocumentType.INVOICE,
+    credit_for_invoice_id: uuid.UUID | None = None,
+    portal_contact_id: uuid.UUID | None = None,
 ) -> tuple[PayInvoice, bool]:
     """The invoice of ``document``, created now (``True``) or found (file hash dedupe:
-    the same bytes are the same document, so they are the same invoice)."""
+    the same bytes are the same document, so they are the same invoice).
+
+    ``vendor_id`` (vendor portal): the vendor is known from the signed-in contact, and
+    the intake run keeps it (a different vendor read from the document only adds a
+    review reason). ``document_type`` and ``credit_for_invoice_id``: a credit note and
+    the invoice it is for (the vendor's word, checked when a person applies it)."""
     if document.workflow != "pay":
         raise BadRequestError("the document belongs to another workflow")
     existing = await session.scalar(select(PayInvoice).where(PayInvoice.document_id == document.id))
@@ -137,6 +155,11 @@ async def create_invoice(
         submitted_by_type=by.actor_type.value,
         submitted_by_id=by.actor_id,
         submitted_by=by.user_id,
+        vendor_id=vendor_id,
+        document_type=document_type.value,
+        credit_for_invoice_id=credit_for_invoice_id,
+        credit_total=Decimal(0),
+        portal_contact_id=portal_contact_id,
         review_reasons=[],
         removed_spans=[],
         decision_ids=[],
@@ -157,6 +180,8 @@ async def create_invoice(
             "document_id": str(document.id),
             "intake_email_id": str(intake_email.id) if intake_email else None,
             "review_reasons": list(invoice.review_reasons),
+            "document_type": invoice.document_type,
+            "credit_for_invoice_id": str(credit_for_invoice_id) if credit_for_invoice_id else None,
         },
     )
     return invoice, True
@@ -435,3 +460,97 @@ async def reject_invoice(
     )
     await refresh_decisions(session, invoice)
     return invoice
+
+
+# ------------------------------------------------------------------ credit notes
+
+# A credit note is applied after a person read it; the invoice it reduces must still be
+# open for payment (not yet in a payment run, not paid, not rejected).
+CREDIT_FROM: Final = (InvoiceStatus.NEEDS_REVIEW, InvoiceStatus.READY)
+CREDITABLE: Final = frozenset(
+    {
+        InvoiceStatus.NEEDS_REVIEW.value,
+        InvoiceStatus.READY.value,
+        InvoiceStatus.AWAITING_APPROVAL.value,
+        InvoiceStatus.APPROVED.value,
+    }
+)
+
+
+async def apply_credit_note(
+    session: AsyncSession,
+    actor: Actor,
+    credit_id: uuid.UUID,
+    invoice_id: uuid.UUID | None,
+    note: str | None,
+) -> PayInvoice:
+    """A person applies a credit note to one invoice of the same vendor, in the same
+    currency, for at most what is left to pay on it. The credit note becomes ``applied``
+    and the invoice's ``credit_total`` grows: its payment is that much smaller
+    (``payable_amount``). The invoice is the vendor's choice unless the person picks
+    another one."""
+    credit = await get_invoice(session, credit_id, lock=True)
+    if credit.document_type != DocumentType.CREDIT_NOTE.value:
+        raise InvoiceStateError("this document is not a credit note")
+    _open(credit, *CREDIT_FROM)
+    target_id = invoice_id or credit.credit_for_invoice_id
+    if target_id is None:
+        raise InvoiceStateError("choose the invoice this credit note is for")
+    if target_id == credit.id:
+        raise InvoiceStateError("a credit note cannot reduce itself")
+    target = await get_invoice(session, target_id, lock=True)
+    if target.document_type != DocumentType.INVOICE.value:
+        raise InvoiceStateError("a credit note can only reduce an invoice")
+    if target.status not in CREDITABLE:
+        raise InvoiceStateError(f"the invoice is {target.status}")
+    if credit.vendor_id is None or credit.vendor_id != target.vendor_id:
+        raise InvoiceStateError("the credit note and the invoice must be of the same vendor")
+    if credit.total is None or credit.total <= 0:
+        raise InvoiceStateError("correct the credit note's total first")
+    if credit.currency is None or credit.currency != target.currency:
+        raise InvoiceStateError("the credit note and the invoice must be in the same currency")
+    if target.total is None:
+        raise InvoiceStateError("the invoice has no total yet")
+    remaining = target.total - target.credit_total
+    if credit.total > remaining:
+        raise InvoiceStateError("the credit note is more than what is left to pay on the invoice")
+    text = _reason(note, required=False)
+    now = datetime.now(UTC)
+    previous_for = credit.credit_for_invoice_id
+    credit.status = InvoiceStatus.APPLIED.value
+    credit.credit_for_invoice_id = target.id
+    credit.credit_applied_at = now
+    credit.credit_applied_by = actor.id
+    credit.updated_at = now
+    target.credit_total = target.credit_total + credit.total
+    target.updated_at = now
+    by = By.of(actor)
+    payload = {
+        "credit_note_id": str(credit.id),
+        "invoice_id": str(target.id),
+        "amount": str(credit.total),
+        "currency": credit.currency,
+        "vendor_choice": str(previous_for) if previous_for else None,
+        "credit_total": str(target.credit_total),
+    }
+    await record_step(
+        session,
+        by,
+        entity_type=INVOICE_ENTITY,
+        entity_id=credit.id,
+        action="pay.credit_note.applied",
+        inputs={"invoice_id": str(target.id), "vendor_choice": payload["vendor_choice"]},
+        output={"status": credit.status, "credit_total": payload["credit_total"]},
+        reason=text,
+    )
+    for entity_id in (credit.id, target.id):
+        await audit(
+            session,
+            actor,
+            "pay.credit_note.applied",
+            entity_type=INVOICE_ENTITY,
+            entity_id=entity_id,
+            payload=payload,
+        )
+    await refresh_decisions(session, credit)
+    return credit

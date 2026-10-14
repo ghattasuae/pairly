@@ -48,7 +48,8 @@
           "agent",
           "system",
           "api_key",
-          "candidate"
+          "candidate",
+          "vendor"
         ],
         "title": "ActorType",
         "type": "string"
@@ -16835,6 +16836,37 @@
         "title": "PayAnalyticsOut",
         "type": "object"
       },
+      "PayApplyCreditIn": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "PayApplyCreditIn",
+        "type": "object"
+      },
       "PayApprovalStepOut": {
         "properties": {
           "decided_by": {
@@ -18185,6 +18217,50 @@
         "title": "PayContactOut",
         "type": "object"
       },
+      "PayCreditAppliedOut": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "credit_note_id": {
+            "format": "uuid",
+            "title": "Credit Note Id",
+            "type": "string"
+          },
+          "invoice_credit_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoice Credit Total",
+            "type": "string"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "credit_note_id",
+          "invoice_id",
+          "status",
+          "amount",
+          "invoice_credit_total"
+        ],
+        "title": "PayCreditAppliedOut",
+        "type": "object"
+      },
       "PayCsvIn": {
         "additionalProperties": false,
         "properties": {
@@ -19323,6 +19399,24 @@
             "title": "Created At",
             "type": "string"
           },
+          "credit_for_invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit For Invoice Id"
+          },
+          "credit_total": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Total",
+            "type": "string"
+          },
           "currency": {
             "anyOf": [
               {
@@ -19348,6 +19442,11 @@
           "document_id": {
             "format": "uuid",
             "title": "Document Id",
+            "type": "string"
+          },
+          "document_type": {
+            "default": "invoice",
+            "title": "Document Type",
             "type": "string"
           },
           "due_date": {
@@ -19549,6 +19648,24 @@
             "title": "Created At",
             "type": "string"
           },
+          "credit_for_invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit For Invoice Id"
+          },
+          "credit_total": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Total",
+            "type": "string"
+          },
           "currency": {
             "anyOf": [
               {
@@ -19584,6 +19701,11 @@
           "document_id": {
             "format": "uuid",
             "title": "Document Id",
+            "type": "string"
+          },
+          "document_type": {
+            "default": "invoice",
+            "title": "Document Type",
             "type": "string"
           },
           "due_date": {
@@ -20377,6 +20499,24 @@
             "title": "Created At",
             "type": "string"
           },
+          "credit_for_invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit For Invoice Id"
+          },
+          "credit_total": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Total",
+            "type": "string"
+          },
           "currency": {
             "anyOf": [
               {
@@ -20402,6 +20542,11 @@
           "document_id": {
             "format": "uuid",
             "title": "Document Id",
+            "type": "string"
+          },
+          "document_type": {
+            "default": "invoice",
+            "title": "Document Type",
             "type": "string"
           },
           "due_date": {
@@ -21862,6 +22007,1087 @@
         "title": "PayPoSummary",
         "type": "object"
       },
+      "PayPortalAccessIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "PayPortalAccessIn",
+        "type": "object"
+      },
+      "PayPortalAccessList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalAccessOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "portal_path": {
+            "title": "Portal Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "portal_path"
+        ],
+        "title": "PayPortalAccessList",
+        "type": "object"
+      },
+      "PayPortalAccessOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_sign_in_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sign In At"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "locale",
+          "status",
+          "created_at",
+          "last_sign_in_at",
+          "revoked_at"
+        ],
+        "title": "PayPortalAccessOut",
+        "type": "object"
+      },
+      "PayPortalAccountOut": {
+        "properties": {
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "iban_masked": {
+            "title": "Iban Masked",
+            "type": "string"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "swift": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Swift"
+          }
+        },
+        "required": [
+          "iban_masked",
+          "account_name",
+          "bank_name",
+          "swift",
+          "country",
+          "since"
+        ],
+        "title": "PayPortalAccountOut",
+        "type": "object"
+      },
+      "PayPortalBankChangeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "account_name": {
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Account Name",
+            "type": "string"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "iban": {
+            "maxLength": 64,
+            "minLength": 5,
+            "title": "Iban",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "swift": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Swift"
+          }
+        },
+        "required": [
+          "iban",
+          "account_name"
+        ],
+        "title": "PayPortalBankChangeIn",
+        "type": "object"
+      },
+      "PayPortalBankChangeOut": {
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/PayPortalRequestOut"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "PayPortalBankChangeOut",
+        "type": "object"
+      },
+      "PayPortalContactOut": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "email",
+          "phone"
+        ],
+        "title": "PayPortalContactOut",
+        "type": "object"
+      },
+      "PayPortalContactsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "contacts": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PayContactIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contacts"
+          },
+          "phone_on_file": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone On File"
+          }
+        },
+        "title": "PayPortalContactsIn",
+        "type": "object"
+      },
+      "PayPortalDetailsOut": {
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayPortalAccountOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "address": {
+            "additionalProperties": true,
+            "title": "Address",
+            "type": "object"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalContactOut"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "legal_name": {
+            "title": "Legal Name",
+            "type": "string"
+          },
+          "legal_name_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name Ar"
+          },
+          "open_requests": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalRequestOut"
+            },
+            "title": "Open Requests",
+            "type": "array"
+          },
+          "payment_hold": {
+            "title": "Payment Hold",
+            "type": "boolean"
+          },
+          "phone_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Changed At"
+          },
+          "phone_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Masked"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "trade_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Name"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn"
+          },
+          "trn_status": {
+            "title": "Trn Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "legal_name",
+          "legal_name_ar",
+          "trade_name",
+          "reference",
+          "country",
+          "trn",
+          "trn_status",
+          "address",
+          "contacts",
+          "phone_masked",
+          "phone_changed_at",
+          "payment_hold",
+          "account",
+          "open_requests"
+        ],
+        "title": "PayPortalDetailsOut",
+        "type": "object"
+      },
+      "PayPortalInvoiceDetailOut": {
+        "properties": {
+          "amount_to_pay": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount To Pay"
+          },
+          "can_message": {
+            "title": "Can Message",
+            "type": "boolean"
+          },
+          "credit_for": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit For"
+          },
+          "credit_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Total",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "expected_payment_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Payment Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "messages": {
+            "title": "Messages",
+            "type": "integer"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "thread": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalMessageOut"
+            },
+            "title": "Thread",
+            "type": "array"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "document_type",
+          "invoice_number",
+          "status",
+          "invoice_date",
+          "due_date",
+          "expected_payment_date",
+          "currency",
+          "total",
+          "credit_total",
+          "amount_to_pay",
+          "received_at",
+          "steps",
+          "credit_for",
+          "payment_reference",
+          "can_message",
+          "messages",
+          "thread"
+        ],
+        "title": "PayPortalInvoiceDetailOut",
+        "type": "object"
+      },
+      "PayPortalInvoiceOut": {
+        "properties": {
+          "amount_to_pay": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount To Pay"
+          },
+          "can_message": {
+            "title": "Can Message",
+            "type": "boolean"
+          },
+          "credit_for": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit For"
+          },
+          "credit_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credit Total",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "expected_payment_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Payment Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "messages": {
+            "title": "Messages",
+            "type": "integer"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "document_type",
+          "invoice_number",
+          "status",
+          "invoice_date",
+          "due_date",
+          "expected_payment_date",
+          "currency",
+          "total",
+          "credit_total",
+          "amount_to_pay",
+          "received_at",
+          "steps",
+          "credit_for",
+          "payment_reference",
+          "can_message",
+          "messages"
+        ],
+        "title": "PayPortalInvoiceOut",
+        "type": "object"
+      },
+      "PayPortalLinkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "title": "Email",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "org": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Org",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "email"
+        ],
+        "title": "PayPortalLinkIn",
+        "type": "object"
+      },
+      "PayPortalLinkOut": {
+        "properties": {
+          "sent": {
+            "title": "Sent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sent"
+        ],
+        "title": "PayPortalLinkOut",
+        "type": "object"
+      },
+      "PayPortalMeOut": {
+        "properties": {
+          "contact_name": {
+            "title": "Contact Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "org_id": {
+            "title": "Org Id",
+            "type": "string"
+          },
+          "organisation": {
+            "title": "Organisation",
+            "type": "string"
+          },
+          "vendor_name": {
+            "title": "Vendor Name",
+            "type": "string"
+          },
+          "vendor_reference": {
+            "title": "Vendor Reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "organisation",
+          "org_id",
+          "vendor_name",
+          "vendor_reference",
+          "contact_name",
+          "email",
+          "locale"
+        ],
+        "title": "PayPortalMeOut",
+        "type": "object"
+      },
+      "PayPortalMessageIn": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "PayPortalMessageIn",
+        "type": "object"
+      },
+      "PayPortalMessageOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "from_vendor": {
+            "title": "From Vendor",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "from_vendor",
+          "author",
+          "text",
+          "at"
+        ],
+        "title": "PayPortalMessageOut",
+        "type": "object"
+      },
+      "PayPortalReplyIn": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "PayPortalReplyIn",
+        "type": "object"
+      },
+      "PayPortalRequestOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "iban_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iban Last4"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "status",
+          "source",
+          "iban_last4",
+          "created_at"
+        ],
+        "title": "PayPortalRequestOut",
+        "type": "object"
+      },
+      "PayPortalSessionOut": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "session_token": {
+            "title": "Session Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_token",
+          "expires_at",
+          "locale"
+        ],
+        "title": "PayPortalSessionOut",
+        "type": "object"
+      },
+      "PayPortalStepOut": {
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "at"
+        ],
+        "title": "PayPortalStepOut",
+        "type": "object"
+      },
+      "PayPortalSubmittedOut": {
+        "properties": {
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/PayPortalInvoiceOut"
+          }
+        },
+        "required": [
+          "invoice",
+          "duplicate"
+        ],
+        "title": "PayPortalSubmittedOut",
+        "type": "object"
+      },
+      "PayPortalTokenIn": {
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "maxLength": 240,
+            "minLength": 20,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "PayPortalTokenIn",
+        "type": "object"
+      },
       "PayPurchaseOrderIn": {
         "additionalProperties": false,
         "properties": {
@@ -23202,6 +24428,46 @@
           "ar"
         ],
         "title": "PayTextOut",
+        "type": "object"
+      },
+      "PayThreadMessageOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "from_vendor": {
+            "title": "From Vendor",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "from_vendor",
+          "author",
+          "text",
+          "status",
+          "at"
+        ],
+        "title": "PayThreadMessageOut",
         "type": "object"
       },
       "PayTicketDetail": {
@@ -39006,6 +40272,7 @@
               "anyOf": [
                 {
                   "enum": [
+                    "applied",
                     "received",
                     "extracting",
                     "needs_review",
@@ -39149,6 +40416,59 @@
           }
         },
         "summary": "Get Invoice Detail",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/apply-credit": {
+      "post": {
+        "operationId": "apply_credit_v1_pay_invoices__invoice_id__apply_credit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayApplyCreditIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayCreditAppliedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Credit",
         "tags": [
           "pay"
         ]
@@ -39602,6 +40922,110 @@
           }
         },
         "summary": "Draft Message",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/portal-replies": {
+      "post": {
+        "operationId": "portal_reply_v1_pay_invoices__invoice_id__portal_replies_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalReplyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PayThreadMessageOut"
+                  },
+                  "title": "Response Portal Reply V1 Pay Invoices  Invoice Id  Portal Replies Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Reply",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/portal-thread": {
+      "get": {
+        "operationId": "portal_thread_v1_pay_invoices__invoice_id__portal_thread_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PayThreadMessageOut"
+                  },
+                  "title": "Response Portal Thread V1 Pay Invoices  Invoice Id  Portal Thread Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Thread",
         "tags": [
           "pay"
         ]
@@ -40795,6 +42219,380 @@
         ]
       }
     },
+    "/v1/pay/vendor-portal/bank-change": {
+      "post": {
+        "description": "New bank details are a request, never a change: a locked change ticket opens and\nthe vendor's payments are held until AP verifies it by phone and two people approve.",
+        "operationId": "bank_change_v1_pay_vendor_portal_bank_change_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalBankChangeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalBankChangeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bank Change",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/details": {
+      "get": {
+        "operationId": "get_details_v1_pay_vendor_portal_details_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalDetailsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Details",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/details/contacts": {
+      "put": {
+        "operationId": "update_contacts_v1_pay_vendor_portal_details_contacts_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalContactsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalDetailsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Contacts",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/invoices": {
+      "get": {
+        "operationId": "list_invoices_v1_pay_vendor_portal_invoices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PayPortalInvoiceOut"
+                  },
+                  "title": "Response List Invoices V1 Pay Vendor Portal Invoices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Invoices",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      },
+      "post": {
+        "operationId": "submit_v1_pay_vendor_portal_invoices_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalSubmittedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Malformed body, an empty file or a wrong credit note link"
+          },
+          "409": {
+            "description": "This file was already received"
+          },
+          "413": {
+            "description": "File larger than Pay allows"
+          },
+          "415": {
+            "description": "File type not allowed, or the body is not multipart"
+          }
+        },
+        "summary": "Submit",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/invoices/{invoice_id}": {
+      "get": {
+        "operationId": "get_invoice_v1_pay_vendor_portal_invoices__invoice_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalInvoiceDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Invoice",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/invoices/{invoice_id}/messages": {
+      "post": {
+        "operationId": "write_message_v1_pay_vendor_portal_invoices__invoice_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalMessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalInvoiceDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Message",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/login-link": {
+      "post": {
+        "description": "The same answer, after the same work, whether or not the address has access: the\nrequest only checks the shape and schedules the sender, which looks the contact up\nafter the answer is sent (``send_login_link``).",
+        "operationId": "login_link_v1_pay_vendor_portal_login_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login Link",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/me": {
+      "get": {
+        "operationId": "me_v1_pay_vendor_portal_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalMeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/session": {
+      "post": {
+        "operationId": "open_session_v1_pay_vendor_portal_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Session",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/sign-out": {
+      "post": {
+        "operationId": "sign_out_v1_pay_vendor_portal_sign_out_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign Out",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
     "/v1/pay/vendors": {
       "get": {
         "operationId": "list_vendors_v1_pay_vendors_get",
@@ -41277,6 +43075,153 @@
           }
         },
         "summary": "Release",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/vendors/{vendor_id}/portal-contacts": {
+      "get": {
+        "operationId": "list_access_v1_pay_vendors__vendor_id__portal_contacts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalAccessList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Access",
+        "tags": [
+          "pay"
+        ]
+      },
+      "post": {
+        "operationId": "give_access_v1_pay_vendors__vendor_id__portal_contacts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalAccessIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalAccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Give Access",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/vendors/{vendor_id}/portal-contacts/{contact_id}/revoke": {
+      "post": {
+        "operationId": "revoke_access_v1_pay_vendors__vendor_id__portal_contacts__contact_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contact_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Contact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalAccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Access",
         "tags": [
           "pay"
         ]

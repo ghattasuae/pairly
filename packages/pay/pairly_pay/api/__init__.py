@@ -19,6 +19,11 @@
   sent only after approval (brief 4.5.4).
 * ``coding``: the chart of accounts and cost centres, and GL coding of invoice lines
   with suggestions from history (brief 4.5.3).
+* ``vendor_portal``: the vendor portal (brief 4.7): magic-link sign-in for a vendor's
+  contacts, invoice statuses, submissions, messages, contact details and bank change
+  requests, each limited to the contact's own vendor.
+* ``portal_admin``: the AP team's side: portal access for contacts on file, the portal
+  thread and replies, and applying credit notes.
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -36,7 +41,9 @@ from pairly_pay.api import (
     invoices,
     onboarding,
     payment_runs,
+    portal_admin,
     purchase_orders,
+    vendor_portal,
     vendors,
 )
 
@@ -51,3 +58,5 @@ router.include_router(purchase_orders.router)
 router.include_router(analytics.router)
 router.include_router(coding.router)
 router.include_router(exceptions.router)
+router.include_router(vendor_portal.router)
+router.include_router(portal_admin.router)
