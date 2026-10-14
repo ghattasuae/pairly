@@ -160,3 +160,17 @@ export const startFairnessRun = unavailable;
 export const loadCalibrationItem = unavailable;
 export const saveCalibrationLabels = unavailable;
 export const suggestClarification = unavailable;
+// Pay vendors, bank-detail changes and onboarding (lib/actions/pay.ts,
+// lib/actions/vendor-onboarding.ts).
+export const checkVendor = unavailable;
+export const createVendor = unavailable;
+export const requestBankChange = unavailable;
+export const recordCall = unavailable;
+export const startApproval = unavailable;
+export const cancelBankChange = unavailable;
+export const vendorAction = unavailable;
+export const createInvite = unavailable;
+export const revokeInvite = unavailable;
+export const openVendorLink = unavailable;
+export const loadVendorForm = unavailable;
+export const submitVendorForm = unavailable;
