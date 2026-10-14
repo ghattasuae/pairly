@@ -1401,11 +1401,15 @@ name = "pairly-pay"
 version = "0.0.0"
 source = { editable = "packages/pay" }
 dependencies = [
+    { name = "pairly-api" },
     { name = "pairly-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pairly-core", editable = "packages/core" }]
+requires-dist = [
+    { name = "pairly-api", editable = "apps/api" },
+    { name = "pairly-core", editable = "packages/core" },
+]
 
 [[package]]
 name = "pairly-worker"

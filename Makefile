@@ -196,9 +196,9 @@ format: ## Auto-format and auto-fix Python
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
 
-typecheck: ## mypy (strict on packages/core, packages/expense and packages/hire) and tsc
-	$(UV) run mypy packages/core packages/expense packages/hire
-	$(UV) run mypy packages/pay apps sdks/python scripts synth evals
+typecheck: ## mypy (strict on packages/core, packages/expense, packages/hire and packages/pay) and tsc
+	$(UV) run mypy packages/core packages/expense packages/hire packages/pay
+	$(UV) run mypy apps sdks/python scripts synth evals
 	$(PNPM) typecheck
 
 # ---------------------------------------------------------------- CI checks, run locally

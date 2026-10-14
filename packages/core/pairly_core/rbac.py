@@ -27,7 +27,8 @@ Rules enforced in code:
 * Every check fails closed: unknown roles grant nothing, unknown permissions are held
   by nobody.
 * Step-up (second factor) rule, brief 6.1: a person may use a permission whose action is
-  ``approve``, ``decide``, ``manage``, ``export``, ``lock`` or ``publish`` only when the
+  ``approve``, ``decide``, ``manage``, ``export``, ``lock``, ``publish`` or ``verify``
+  only when the
   sign-in that minted the token included a TOTP code (``amr`` contains ``otp``). The rule
   is keyed on the action,
   not on role names, so custom roles and future workflows inherit it, and the people it
@@ -66,7 +67,9 @@ API_KEY_ALLOWED_ACTIONS = frozenset({"read", "propose", "upload"})
 # ``lock`` (freeze a versioned artefact, such as a hiring rubric, that later decisions are
 # measured against) and ``publish`` (make something visible outside the organisation,
 # such as a job ad) are human commitments of the same weight as a decision (ADR 0010).
-STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export", "lock", "publish"})
+# ``verify`` (record an out-of-band check, such as the call back to a vendor before its
+# bank details change) is the evidence an approval then relies on (ADR 0012).
+STEP_UP_ACTIONS = frozenset({"approve", "decide", "manage", "export", "lock", "publish", "verify"})
 # The ``amr`` value (RFC 8176 "one-time password") the web app puts in the token after a
 # successful TOTP verification.
 SECOND_FACTOR_AMR = "otp"

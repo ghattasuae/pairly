@@ -189,6 +189,8 @@ STEP_UP = [
     ("finance_controller", "pay.invoice.approve"),
     ("recruiter", "hire.candidate.decide"),
     ("auditor", "core.audit.export"),
+    ("ap_clerk", "pay.bank_change.verify"),
+    ("finance_controller", "pay.bank_change.approve"),
 ]
 
 
@@ -303,8 +305,12 @@ def test_workflow_scope_limits_what_must_be_held(registry: RoleRegistry) -> None
     # approver scoped to pay confers only pay.* permissions: nothing core to escalate.
     manager = _manager(registry)
     assert check_grantable(registry, manager, "approver", "pay") == {
+        "pay.vendor.read",
+        "pay.bank_change.read",
+        "pay.bank_change.approve",
         "pay.invoice.read",
         "pay.invoice.approve",
+        "pay.document.read",
     }
 
 
@@ -332,7 +338,9 @@ def test_plugins_may_grant_employee_submit_type_permissions(action: str) -> None
     assert f"claims.claim.{action}" in build_registry([plugin]).permissions_for_role("employee")
 
 
-@pytest.mark.parametrize("action", ["approve", "decide", "manage", "export", "propose", "correct"])
+@pytest.mark.parametrize(
+    "action", ["approve", "decide", "manage", "export", "verify", "propose", "correct"]
+)
 def test_plugins_cannot_grant_employee_other_actions(action: str) -> None:
     plugin = _Plugin(
         id="claims",

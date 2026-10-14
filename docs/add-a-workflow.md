@@ -108,7 +108,7 @@ Permissions are `<workflow>.<resource>.<action>` with the built-in roles that ho
 | `expense.extraction.read`, `.correct` | reviewers; admin and AP clerk | same rule for extractions |
 | `expense.appeal.create` | staff | contest a decision of this workflow |
 
-Rules the engine enforces, whatever you declare: the agent role only gets `read` and `propose`; API keys only `read`, `propose` and `upload`; a membership limited to one workflow grants only that workflow's permissions; `approve`, `decide`, `manage`, `export`, `lock` and `publish` need a TOTP sign-in ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md)).
+Rules the engine enforces, whatever you declare: the agent role only gets `read` and `propose`; API keys only `read`, `propose` and `upload`; a membership limited to one workflow grants only that workflow's permissions; `approve`, `decide`, `manage`, `export`, `lock`, `publish` and `verify` need a TOTP sign-in ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md), [ADR 0012](adr/0012-verify-step-up.md)).
 
 ## 4. What to read from the document
 

@@ -102,11 +102,12 @@ warn_redundant_casts = true
 check_untyped_defs = true
 
 # "strict = true" is global-only in mypy, so the strict flag set is spelled out for core
-# (and for the expense example workflow, the model for new workflows, and Pairly Hire).
+# (and for the expense example workflow, the model for new workflows, Pairly Hire and
+# Pairly Pay).
 [[tool.mypy.overrides]]
 module = [
   "pairly_core", "pairly_core.*", "pairly_expense", "pairly_expense.*",
-  "pairly_hire", "pairly_hire.*",
+  "pairly_hire", "pairly_hire.*", "pairly_pay", "pairly_pay.*",
 ]
 disallow_any_generics = true
 disallow_subclassing_any = true
