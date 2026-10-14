@@ -45,6 +45,28 @@ Built so far (M4):
   invoice to a person. Every finding has one sentence in English and Arabic. Settings per
   organisation in `pay_settings.check_settings` (`checks/settings.py`). Measured by
   `uv run python -m evals.pay`.
+* **Checks stay current** (`freshness.py`, `checks/service.py` `recheck_invoice`): the
+  checks store a digest of what they read (values with corrections, vendor, the
+  vendor's bank account on file, coding). A correction, a vendor link or a coding change
+  runs every check and the risk again in the same transaction, so a bank-detail
+  correction that differs from the master opens or joins the change ticket and holds the
+  vendor. An invoice whose checks are stale or failed can never be approved or paid.
+* **Approvals** (`approvals.py`, `approval_graph.py`, `policy/invoice_approval_rules.yaml`):
+  a person sends a `ready` invoice for approval; the engine picks the chain from the
+  versioned rules (amount, department, category, vendor risk, risk level), with SLA,
+  escalation, delegation, out-of-office, the inbox, signed email links and Slack (which
+  opens the web confirmation page). Everyone who processed or corrected the invoice is a
+  preparer and never approves; nobody approves two steps. The `approve_invoice` final
+  action checks holds, open bank-detail changes, check freshness and the bank details
+  again. Approval by a rule is off by default (`payment_settings.py`) and never applies
+  to medium, high or critical risk; it is recorded as a decision record of its own.
+* **Payment runs** (`payment_runs.py`, `payment_run_graph.py`, `bank_files.py`): propose
+  from approved invoices (one currency, due by a date, oldest first, up to a cash limit;
+  what is left out says why), a finance controller approves (never the proposer), then
+  the bank file: CSV or ISO 20022 pain.001.001.09 built with the standard library. At
+  export every item is checked again against the vendor master and the digests it was
+  approved with; any change refuses the file (409, audited). A person marks invoices
+  paid. No bank connection, no money moves. Early-payment discounts are a placeholder.
 * **Learning** (`learning.py`): corrections are filed per vendor and the vendor's
   recent ones go into the next extraction prompt as hints (never bank details).
 * **Recordings** (`data/recordings.json`, `recordings.py`): scripted responses (from the
