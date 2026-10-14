@@ -16511,6 +16511,107 @@
         "title": "PayAddressIn",
         "type": "object"
       },
+      "PayAnalyticsOut": {
+        "properties": {
+          "approval_sla_breaches": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "bank_changes_blocked": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "cost_per_invoice": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "cycle_time": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Cycle Time",
+            "type": "array"
+          },
+          "days_payable_outstanding": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "duplicates_prevented": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Duplicates Prevented",
+            "type": "array"
+          },
+          "exception_rate": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Exception Rate",
+            "type": "array"
+          },
+          "fraud_flags": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Fraud Flags",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "invoices": {
+            "title": "Invoices",
+            "type": "integer"
+          },
+          "on_time_payment_rate": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "touchless_rate": {
+            "$ref": "#/components/schemas/PayMetricOut"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "generated_at",
+          "since",
+          "until",
+          "invoices",
+          "touchless_rate",
+          "cycle_time",
+          "cost_per_invoice",
+          "exception_rate",
+          "duplicates_prevented",
+          "bank_changes_blocked",
+          "fraud_flags",
+          "approval_sla_breaches",
+          "on_time_payment_rate",
+          "days_payable_outstanding"
+        ],
+        "title": "PayAnalyticsOut",
+        "type": "object"
+      },
       "PayApprovalStepOut": {
         "properties": {
           "decided_by": {
@@ -19415,6 +19516,60 @@
         "title": "PayInvoiceVendorOut",
         "type": "object"
       },
+      "PayMetricOut": {
+        "properties": {
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/PayRecordLinkOut"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "records_total": {
+            "title": "Records Total",
+            "type": "integer"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "unit",
+          "n",
+          "records",
+          "records_total",
+          "detail"
+        ],
+        "title": "PayMetricOut",
+        "type": "object"
+      },
       "PayOnboardingDocumentOut": {
         "properties": {
           "filename": {
@@ -19746,6 +19901,29 @@
           "reason"
         ],
         "title": "PayReasonIn",
+        "type": "object"
+      },
+      "PayRecordLinkOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label"
+        ],
+        "title": "PayRecordLinkOut",
         "type": "object"
       },
       "PayRequestContactIn": {
@@ -36675,6 +36853,73 @@
         "summary": "Mark Read",
         "tags": [
           "notifications"
+        ]
+      }
+    },
+    "/v1/pay/analytics": {
+      "get": {
+        "operationId": "pay_analytics_v1_pay_analytics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayAnalyticsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pay Analytics",
+        "tags": [
+          "pay"
         ]
       }
     },

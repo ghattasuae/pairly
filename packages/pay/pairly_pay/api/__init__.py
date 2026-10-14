@@ -14,6 +14,7 @@
 * ``approval_rules``: the approval rules in force and their versions, read only.
 * ``payment_runs``: propose, approve (in the inbox), export the bank file, mark paid.
 * ``purchase_orders``: purchase orders and goods receipts, created or imported from CSV.
+* ``analytics``: the Pay analytics (brief 4.9), every number with its records.
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -23,6 +24,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from pairly_pay.api import (
+    analytics,
     approval_rules,
     bank_changes,
     invoices,
@@ -40,3 +42,4 @@ router.include_router(invoices.router)
 router.include_router(approval_rules.router)
 router.include_router(payment_runs.router)
 router.include_router(purchase_orders.router)
+router.include_router(analytics.router)

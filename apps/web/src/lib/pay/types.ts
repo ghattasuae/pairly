@@ -37,3 +37,6 @@ export type PayRules = S["PayRulesOut"];
 export type PayPoSummary = S["PoSummary"];
 export type PayPoList = S["PoList"];
 export type PayPoImport = S["ImportOut"];
+export type PayAnalytics = S["PayAnalyticsOut"];
+export type PayMetric = S["PayMetricOut"];
+export type PayRecordLink = S["PayRecordLinkOut"];

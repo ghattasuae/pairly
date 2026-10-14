@@ -60,6 +60,8 @@ Who does what (brief 4.1, 6.2):
   read with Pay's own permission, so a member limited to Pay can open the invoice
   viewer. Uploads to ``/v1/documents`` stay on ``core.document.upload`` (no
   ``pay.document.upload`` is declared), so existing API keys keep working.
+* **Analytics** (``pay.analytics.read``): the Pay analytics page (brief 4.9), for
+  finance controllers and admins.
 * **Extractions** (``pay.extraction.read`` / ``correct``): what was read from a Pay
   document and the corrections of it. ``correct`` is never an agent's.
 """
@@ -95,6 +97,7 @@ PURCHASE_ORDER_WRITE: Final = "pay.purchase_order.write"
 DOCUMENT_READ: Final = "pay.document.read"
 EXTRACTION_READ: Final = "pay.extraction.read"
 EXTRACTION_CORRECT: Final = "pay.extraction.correct"
+ANALYTICS_READ: Final = "pay.analytics.read"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -196,5 +199,10 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         EXTRACTION_CORRECT,
         "Correct what was read from an invoice",
         frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        ANALYTICS_READ,
+        "View Pay analytics (touchless rate, cycle time, exceptions, fraud flags)",
+        frozenset({R.ADMIN, R.FINANCE_CONTROLLER}),
     ),
 )

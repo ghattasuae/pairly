@@ -3871,6 +3871,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pay Analytics */
+        get: operations["pay_analytics_v1_pay_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/approval-rules": {
         parameters: {
             query?: never;
@@ -10812,6 +10829,34 @@ export type components = {
             /** Region */
             region?: string | null;
         };
+        /** PayAnalyticsOut */
+        PayAnalyticsOut: {
+            approval_sla_breaches: components["schemas"]["PayMetricOut"];
+            bank_changes_blocked: components["schemas"]["PayMetricOut"];
+            cost_per_invoice: components["schemas"]["PayMetricOut"];
+            /** Cycle Time */
+            cycle_time: components["schemas"]["PayMetricOut"][];
+            days_payable_outstanding: components["schemas"]["PayMetricOut"];
+            /** Duplicates Prevented */
+            duplicates_prevented: components["schemas"]["PayMetricOut"][];
+            /** Exception Rate */
+            exception_rate: components["schemas"]["PayMetricOut"][];
+            /** Fraud Flags */
+            fraud_flags: components["schemas"]["PayMetricOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Invoices */
+            invoices: number;
+            on_time_payment_rate: components["schemas"]["PayMetricOut"];
+            /** Since */
+            since: string | null;
+            touchless_rate: components["schemas"]["PayMetricOut"];
+            /** Until */
+            until: string | null;
+        };
         /** PayApprovalStepOut */
         PayApprovalStepOut: {
             /** Decided By */
@@ -11640,6 +11685,25 @@ export type components = {
             /** Status */
             status: string;
         };
+        /** PayMetricOut */
+        PayMetricOut: {
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Key */
+            key: string;
+            /** N */
+            n: number;
+            /** Records */
+            records: components["schemas"]["PayRecordLinkOut"][];
+            /** Records Total */
+            records_total: number;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number | null;
+        };
         /** PayOnboardingDocumentOut */
         PayOnboardingDocumentOut: {
             /** Filename */
@@ -11733,6 +11797,15 @@ export type components = {
         PayReasonIn: {
             /** Reason */
             reason: string;
+        };
+        /** PayRecordLinkOut */
+        PayRecordLinkOut: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
         };
         /**
          * PayRequestContactIn
@@ -21189,6 +21262,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pay_analytics_v1_pay_analytics_get: {
+        parameters: {
+            query?: {
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayAnalyticsOut"];
+                };
             };
             /** @description Validation Error */
             422: {

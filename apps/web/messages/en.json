@@ -2924,7 +2924,8 @@
       "runs": "Payment runs",
       "rules": "Approval rules",
       "orders": "Purchase orders",
-      "settings": "Settings"
+      "settings": "Settings",
+      "analytics": "Analytics"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -3714,6 +3715,83 @@
       "ruleCurrencyHint": "Three letters, for example AED. Invoices in another currency go to a person.",
       "save": "Save settings",
       "saved": "Saved"
+    },
+    "analytics": {
+      "title": "Pay analytics",
+      "intro": "How invoices move from receipt to payment, where they stop, and what the controls caught. Every number comes from your own records and links to them.",
+      "filters": "Period",
+      "since": "Received from",
+      "until": "Received until",
+      "apply": "Apply",
+      "noData": "No data",
+      "invoices": "{count, plural, =0 {No invoices received in this period} one {# invoice received in this period} other {# invoices received in this period}}",
+      "sample": "Based on {n, plural, =0 {no records} one {# record} other {# records}}",
+      "records": "{count, plural, one {Show the record} other {Show the # records}}",
+      "recordsCapped": "Showing {shown} of {total}.",
+      "unit": {
+        "hours": "{value} h",
+        "days": "{value} days"
+      },
+      "flowTitle": "Flow",
+      "touchless": "Touchless rate",
+      "touchlessNote": "Approved invoices approved by the rule with no review reason and no person reviewing them.",
+      "cycle": {
+        "receipt_to_approval": "Receipt to approval",
+        "approval_to_payment": "Approval to payment",
+        "receipt_to_payment": "Receipt to payment"
+      },
+      "medianNote": "Median.",
+      "cost": "Model cost per invoice",
+      "costNote": "Model calls made to read and check the invoices, over the invoices that had calls.",
+      "recordedMode": "Recorded mode: the calls replayed recordings and cost nothing, so this reads 0.",
+      "exceptionsTitle": "Exceptions",
+      "exceptionsIntro": "Invoices that needed a person, by why.",
+      "exceptionRate": "Exception rate",
+      "categoryCheck": "Check: {check}",
+      "category": {
+        "reading": "Reading the document",
+        "vendor": "Vendor",
+        "document_safety": "Hidden text or instructions",
+        "intake": "Email intake",
+        "check_errors": "A check could not run",
+        "risk": "Risk",
+        "approval": "Approval",
+        "other": "Other"
+      },
+      "checks": {
+        "bank": "bank details",
+        "duplicates": "duplicates",
+        "impersonation": "sender",
+        "forgery": "document",
+        "injection": "hidden instructions",
+        "arithmetic": "arithmetic",
+        "amounts": "amounts",
+        "policy": "policy",
+        "matching": "purchase order matching",
+        "other": "other"
+      },
+      "controlsTitle": "Controls",
+      "duplicates": "Duplicates prevented",
+      "duplicatesNote": "Flagged as duplicates and never approved or paid.",
+      "duplicatesValue": "Value of duplicates prevented",
+      "bankBlocked": "Bank-change attempts blocked",
+      "bankBlockedNote": "Bank-detail changes that ended without the new details being used.",
+      "fraudFlags": "Fraud flags",
+      "fraudNote": "Invoices with a high or critical bank, sender, document or hidden instruction finding, or a split under the approval limit.",
+      "fraudOutcomes": "What happened to the flagged invoices",
+      "outcome": {
+        "rejected": "Rejected",
+        "open": "Still open",
+        "approved": "Approved",
+        "paid": "Paid"
+      },
+      "paymentTitle": "Approval and payment",
+      "slaBreaches": "Approval SLA breaches",
+      "slaNote": "Approval steps decided after their due time, or still open past it.",
+      "onTime": "On-time payment rate",
+      "onTimeNote": "Paid invoices with a due date, paid on or before it.",
+      "dpo": "Days payable outstanding",
+      "dpoNote": "Average days from the invoice date to payment, over paid invoices."
     }
   },
   "VendorOnboarding": {
