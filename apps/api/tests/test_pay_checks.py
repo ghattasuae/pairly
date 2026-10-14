@@ -222,7 +222,7 @@ async def test_bank_change_alerts_the_approvers_and_finance(
         create_sessionmaker(api.engine), world.org_id, template_key="pay.bank_change.alert"
     )
     told = {"approver", "approver2", "finance"}
-    by_person: dict[uuid.UUID, dict[str, tuple[Any, dict[str, Any]]]] = {}
+    by_person: dict[uuid.UUID | None, dict[str, tuple[Any, dict[str, Any]]]] = {}
     for row, content in rows:
         by_person.setdefault(row.recipient_user_id, {})[row.channel] = (row, content)
     # The approvers and the finance controller, nobody else (not the clerks, the admin,
