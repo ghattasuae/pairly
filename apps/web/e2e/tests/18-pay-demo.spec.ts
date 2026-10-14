@@ -84,9 +84,9 @@ async function approveInInbox(page: Page, approvalId: string): Promise<void> {
 test("set up: the AP clerk, the approver, the finance controller and the admin sign in", async ({ browser }) => {
   test.setTimeout(300_000);
   // Cooling-off: the demo keeps the organisation's default (24 hours, set by
-  // scripts/demo_pay.py). There is no settings page for it in the web app (only the
-  // admin settings API), and with 0 hours the change would activate inside the final
-  // approval and skip the state step 5 shows; so the spec leaves it as seeded.
+  // scripts/demo_pay.py; /pay/settings shows it). With 0 hours the change would
+  // activate inside the final approval and skip the state step 5 shows; so the spec
+  // leaves it as seeded.
   for (const who of ["clerk", "approver", "finance", "admin"] as const) await signInPay(browser, who);
 });
 
@@ -238,8 +238,28 @@ test("4. invoice 3: blocked, bank-change ticket opened, vendor on hold, lookalik
   await context.close();
 });
 
-test("4. the approver is alerted when invoice 3 is blocked", () => {
-  test.fixme(true, "no alert goes out when an invoice check opens a ticket; the approver is alerted once the verified change waits for approval (step 5)");
+test("4. the approver is alerted when invoice 3 is blocked", async ({ browser }) => {
+  test.setTimeout(150_000);
+  const ticketPath = shared("ticket");
+  // The urgent alert the invoice check sent when it opened the ticket: in the bell, and
+  // its link opens the ticket (Slack is the fake transport in dev; email goes to the
+  // dev outbox).
+  const { context, page } = await asPay(browser, "approver");
+  const bell = page.getByRole("button", { name: /^Notifications/ });
+  const alert = page.getByRole("menuitem").filter({ hasText: "are on hold" });
+  await expect(async () => {
+    await page.goto("/en/inbox");
+    await bell.click();
+    await expect(alert.first()).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 120_000, intervals: [5_000] });
+  await expect(alert.first()).toContainText(/Bank-detail change BCT-/);
+  await expect(alert.first()).not.toContainText(/[A-Z]{2}\d{2}[A-Z0-9]{8,}/); // never a full IBAN
+  await shot(page, "4-approver-alert.png");
+  await alert.first().click();
+  await page.waitForURL((url) => url.pathname === ticketPath, { timeout: 30_000 });
+  await expect(page.locator("[data-change-progress]")).toHaveAttribute("data-change-progress", "awaiting_verification");
+  logCheck({ name: "pay demo 4: approver alerted, the alert opens the ticket", status: "pass" });
+  await context.close();
 });
 
 test("5. out-of-band call by the verifier, two approvers, then cooling-off", async ({ browser }) => {
@@ -303,8 +323,30 @@ test("5. out-of-band call by the verifier, two approvers, then cooling-off", asy
   await check.context.close();
 });
 
-test("6. Pay analytics", () => {
-  test.fixme(true, "Pay has no analytics page yet; step 6 below shows the invoice list counts instead");
+test("6. Pay analytics: every number has a value or says no data", async ({ browser }) => {
+  test.setTimeout(150_000);
+  const { context, page } = await asPay(browser, "finance");
+  await page.goto("/en/pay/analytics");
+  const view = page.locator("[data-pay-analytics]");
+  await expect(view).toBeVisible({ timeout: 30_000 });
+  const tiles = view.locator("[data-metric]");
+  expect(await tiles.count()).toBeGreaterThan(8);
+  for (const tile of await tiles.all()) {
+    const key = (await tile.getAttribute("data-metric")) ?? "";
+    const shown = (await tile.locator("[data-value]").count()) + (await tile.locator("[data-no-data]").count());
+    expect(shown, `${key} shows a value or no data`).toBeGreaterThan(0);
+  }
+  // The demo's blocked invoice is a fraud flag, and its records open the invoices.
+  const flags = view.locator('[data-metric="fraud_flags"]');
+  await expect(flags.locator("[data-value]")).toBeVisible();
+  await flags.locator("summary").click();
+  const record = flags.locator('a[href*="/pay/invoices/"]').first();
+  await expect(record).toBeVisible();
+  await shot(page, "6-analytics.png");
+  await record.click();
+  await page.waitForURL(/\/pay\/invoices\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+  logCheck({ name: "pay demo 6: Pay analytics", status: "pass", detail: `${await tiles.count()} numbers` });
+  await context.close();
 });
 
 test("6. invoice counts, the eval report and the audit chain", async ({ browser }) => {
