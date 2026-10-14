@@ -165,6 +165,12 @@ class PayCheckSettingsIn(_In):
     outlier_min_history: Annotated[int, Field(ge=1, le=1000)] | None = None
     outlier_min_ratio: Annotated[Decimal, Field(ge=1, le=1000)] | None = None
     metadata_late_days: Annotated[int, Field(ge=1, le=3650)] | None = None
+    # Matching tolerances (``pairly_pay.checks.matching``).
+    match_price_pct: Annotated[Decimal, Field(ge=0, le=100)] | None = None
+    match_quantity_pct: Annotated[Decimal, Field(ge=0, le=100)] | None = None
+    match_total_pct: Annotated[Decimal, Field(ge=0, le=100)] | None = None
+    match_total_amount: Annotated[Decimal, Field(ge=0, le=1_000_000)] | None = None
+    require_po: bool | None = None
 
 
 class PayPaymentSettingsIn(_In):

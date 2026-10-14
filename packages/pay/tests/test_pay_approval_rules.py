@@ -5,11 +5,13 @@
 * The bundled rules YAML is valid and routes by risk, vendor risk, amount, category and
   department, first match wins, with a default chain.
 * A rule never approves high, critical or medium risk, an amount at or over the limit,
-  another currency, a risky vendor, or anything while the setting is off (the default).
+  another currency, a risky vendor, an invoice not matched to its purchase order, or
+  anything while the setting is off (the default).
 """
 
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 from typing import Any
 
@@ -81,7 +83,14 @@ def _invoice(level: str | None = "low", requires_human: bool = False, **kw: Any)
     risk: dict[str, Any] = {"assessment_id": "x", "requires_human": requires_human}
     if level is not None:
         risk["level"] = level
-    values: dict[str, Any] = {"risk": risk, "total": Decimal("900.00"), "currency": "AED"}
+    values: dict[str, Any] = {
+        "risk": risk,
+        "total": Decimal("900.00"),
+        "currency": "AED",
+        "checks": [{"check": "matching", "status": "pass", "findings": []}],
+        "po_id": uuid.UUID(int=7),
+        "po_match": {"status": "matched"},
+    }
     values.update(kw)
     return PayInvoice(**values)
 
@@ -100,6 +109,11 @@ def test_rule_approves_only_low_risk_under_the_limit_when_on() -> None:
     assert "over_limit" in rule_refusals(_invoice(total=None), ON, "low")
     assert "other_currency" in rule_refusals(_invoice(currency="USD"), ON, "low")
     assert "vendor_risk_medium" in rule_refusals(_invoice(), ON, "medium")
+    # Only an invoice matched to its purchase order.
+    assert "not_matched" in rule_refusals(_invoice(po_id=None), ON, "low")
+    unmatched = [{"check": "matching", "status": "fail", "findings": []}]
+    assert "not_matched" in rule_refusals(_invoice(checks=unmatched), ON, "low")
+    assert "not_matched" in rule_refusals(_invoice(checks=[]), ON, "low")
 
 
 def test_high_risk_is_never_approved_by_a_rule_whatever_the_limit() -> None:

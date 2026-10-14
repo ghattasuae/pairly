@@ -21,6 +21,9 @@ graph.
 * ``forgery``        template fingerprint, metadata, editing traces, TRN. Flags only.
 * ``injection``      the guardrail findings, as Pay findings.
 * ``policy``         the tenant's rule set and spend policy (``pairly_pay.checks.policy``).
+* ``matching``       2-way and 3-way matching with the cited purchase order: price,
+                     quantity and total tolerances, receipts, partial deliveries and
+                     what earlier invoices of the PO took.
 
 Every finding carries a one-sentence explanation in English and Arabic.
 """

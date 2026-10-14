@@ -17,10 +17,13 @@ read and its vendor matched:
    on file, a closed vendor) the vendor is held anyway (``manual``, a person releases
    it) and a finding says why. Audited (``pay.invoice.bank_mismatch``);
 4. split invoices: the related invoices that are ``ready`` go back to ``needs_review``;
-5. the policy check (rules and spend policy, recorded by the engine);
-6. the risk assessment (``pairly_core.risk.service.assess`` under the ``pay.invoice``
+5. purchase order matching (``pairly_pay.checks.matching``): the cited PO is locked for
+   the transaction; the PO it resolves to and the allocation of the invoice lines to its
+   lines are stored on the invoice (``po_id``, ``po_match``);
+6. the policy check (rules and spend policy, recorded by the engine);
+7. the risk assessment (``pairly_core.risk.service.assess`` under the ``pay.invoice``
    risk policy; it records its own decision record);
-7. stores every result and the risk on the invoice, a decision record of the checks
+8. stores every result and the risk on the invoice, a decision record of the checks
    (``fraud_flag``) and an audit event, and returns the review reasons:
    ``check:<code>`` for findings that need a person, ``check_error:<check>`` for a
    check that could not run, ``risk:<level>`` when the risk needs a person.
@@ -66,7 +69,7 @@ from pairly_pay.bank_changes import (
     VendorNotOpenError,
     open_ticket,
 )
-from pairly_pay.checks import bank, policy, risk
+from pairly_pay.checks import bank, matching, policy, risk
 from pairly_pay.checks.document import document_facts
 from pairly_pay.checks.duplicates import number_key
 from pairly_pay.checks.run import Keys, keys_of, run_pure_checks
@@ -79,6 +82,8 @@ from pairly_pay.checks.types import (
     InvoiceFacts,
     Line,
     PastInvoice,
+    PoFacts,
+    PoLineFacts,
     VendorFacts,
     error,
     finding,
@@ -91,10 +96,18 @@ from pairly_pay.models import (
     HoldReason,
     InvoiceStatus,
     PayInvoice,
+    PayPurchaseOrder,
     PaySettings,
     PayVendor,
     TicketSource,
     VendorStatus,
+)
+from pairly_pay.purchase_orders import (
+    find_purchase_order,
+    invoiced_quantities,
+    po_lines,
+    receipts_of,
+    received_quantities,
 )
 from pairly_pay.vendors import (
     BankInput,
@@ -322,12 +335,53 @@ async def build_history(
         .limit(MAX_DOMAINS)
     )
     seen = frozenset(str(d[0]).lower() for d in seen_rows if d)
+    uses_pos = (
+        invoice.vendor_id is not None
+        and (
+            await session.scalar(
+                select(PayPurchaseOrder.id)
+                .where(PayPurchaseOrder.vendor_id == invoice.vendor_id)
+                .limit(1)
+            )
+        )
+        is not None
+    )
     return History(
         vendor_invoices=tuple(_past(r) for r in vendor_rows),
         same_file=tuple(same_file),
         same_file_documents=tuple(other_docs),
         vendor_domains=tuple(vendor_domains),
         seen_domains=seen,
+        purchase_order=await purchase_order_facts(session, invoice, facts.po_number),
+        vendor_uses_pos=uses_pos,
+        org_uses_pos=uses_pos
+        or (await session.scalar(select(PayPurchaseOrder.id).limit(1))) is not None,
+    )
+
+
+async def purchase_order_facts(
+    session: AsyncSession, invoice: PayInvoice, po_number: str | None
+) -> PoFacts | None:
+    """The PO the invoice cites, locked for this transaction (two invoices of one PO are
+    matched one after the other, never both against the same remaining quantity), with
+    what was received and what earlier invoices citing it took."""
+    po = await find_purchase_order(session, po_number, lock=True)
+    if po is None:
+        return None
+    return PoFacts(
+        id=str(po.id),
+        number=po.po_number,
+        vendor_id=str(po.vendor_id),
+        currency=po.currency,
+        status=po.status,
+        match_type=po.match_type,
+        lines=tuple(
+            PoLineFacts(line.line_no, line.description, line.quantity, line.unit_price)
+            for line in await po_lines(session, po.id)
+        ),
+        received=await received_quantities(session, po.id),
+        receipt_count=len(await receipts_of(session, po.id)),
+        invoiced_before=await invoiced_quantities(session, po.id, before=invoice),
     )
 
 
@@ -479,6 +533,18 @@ async def run_invoice_checks(
     invoice.lines_key = keys.lines_key
     invoice.fingerprint = dict(keys.fingerprint) if keys.fingerprint else None
     results = run_pure_checks(facts, history, settings, keys=keys)
+    try:
+        matched = matching.match_invoice(facts, history, settings)
+        results["matching"] = matched.result
+        invoice.po_id = uuid.UUID(matched.po_id) if matched.po_id else None
+        invoice.po_match = matched.as_json()
+    except Exception as exc:  # fail closed: never matched
+        log.error("pay.checks.matching_failed", error=type(exc).__name__)
+        results["matching"] = error(
+            matching.CHECK, matching.VERSION, f"check_failed:{type(exc).__name__}"
+        )
+        invoice.po_id = None
+        invoice.po_match = {"status": "error"}
 
     try:
         results["bank"] = await _open_bank_ticket(session, invoice, facts, results["bank"])
@@ -567,6 +633,12 @@ async def run_invoice_checks(
                     "known_domains": len(history.vendor_domains),
                 },
                 "rule_evaluations": evaluations,
+                "purchase_order": {
+                    "po_id": str(invoice.po_id) if invoice.po_id else None,
+                    "po_number": history.purchase_order.number if history.purchase_order else None,
+                    "match": invoice.po_match.get("status"),
+                    "lines": invoice.po_match.get("lines"),
+                },
                 "checks_digest": inputs_digest,
                 "risk_assessment_id": risk_json.get("assessment_id"),
             },

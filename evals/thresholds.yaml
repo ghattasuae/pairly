@@ -203,3 +203,28 @@ metrics:
     path: check_errors
     max: 0
     why: Every check runs on every synthetic invoice.
+
+  # ---------------------------------------------------------------- Pay matching (brief 4.5.2)
+  # Measured on the synthetic matching cases (synth/pay matching.jsonl, 167 cases) with
+  # the ground truth as the read values. Set at the first measured baseline
+  # (2026-10-14): TO BE CONFIRMED with the founder.
+  - id: pay.matching.exception_recall
+    file: pay.json
+    path: matching.exception_recall
+    min: 1.0
+    why: Price, quantity, missing receipt and no PO exceptions are raised (baseline, to be confirmed).
+  - id: pay.matching.exception_precision
+    file: pay.json
+    path: matching.exception_precision
+    min: 1.0
+    why: Invoices flagged with a matching exception expect one (baseline, to be confirmed).
+  - id: pay.matching.match_rate
+    file: pay.json
+    path: matching.match_rate
+    min: 1.0
+    why: Invoices within tolerance, partial deliveries and multi-invoice POs match (baseline, to be confirmed).
+  - id: pay.matching.errors
+    file: pay.json
+    path: matching.error_count
+    max: 0
+    why: Matching runs on every synthetic invoice.

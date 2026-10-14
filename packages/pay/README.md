@@ -49,9 +49,19 @@ Built so far (M4):
   invoice to a person. Every finding has one sentence in English and Arabic. Settings per
   organisation in `pay_settings.check_settings` (`checks/settings.py`). Measured by
   `uv run python -m evals.pay`.
+* **Purchase orders and matching** (`purchase_orders.py`, `checks/matching.py`): POs
+  and goods receipts, created through the API or imported from CSV (strict, all or
+  nothing, every problem with its row), on the read-only `/pay/purchase-orders` page.
+  The `matching` check pairs the invoice lines with the cited PO's and checks price,
+  quantity (against what was received for 3-way, ordered for 2-way, minus what earlier
+  invoices of the PO took) and total within the organisation's tolerances (2%, 5%, 2%
+  by default), the receipt, the vendor and the currency. Exceptions (no PO, price or
+  quantity variance, missing receipt, ...) send the invoice to a person; a matched
+  invoice records its PO (`po_id`, `po_match`). Approval by a rule needs a matched
+  invoice.
 * **Checks stay current** (`freshness.py`, `checks/service.py` `recheck_invoice`): the
   checks store a digest of what they read (values with corrections, vendor, the
-  vendor's bank account on file, coding). A correction, a vendor link or a coding change
+  vendor's bank account on file, coding, the cited PO when it is on file). A correction, a vendor link or a coding change
   runs every check and the risk again in the same transaction, so a bank-detail
   correction that differs from the master opens or joins the change ticket and holds the
   vendor. An invoice whose checks are stale or failed can never be approved or paid.
@@ -62,8 +72,8 @@ Built so far (M4):
   opens the web confirmation page). Everyone who processed or corrected the invoice is a
   preparer and never approves; nobody approves two steps. The `approve_invoice` final
   action checks holds, open bank-detail changes, check freshness and the bank details
-  again. Approval by a rule is off by default (`payment_settings.py`) and never applies
-  to medium, high or critical risk; it is recorded as a decision record of its own.
+  again. Approval by a rule is off by default (`payment_settings.py`), needs a matched
+  invoice and never applies to medium, high or critical risk; it is recorded as a decision record of its own.
 * **Payment runs** (`payment_runs.py`, `payment_run_graph.py`, `bank_files.py`): propose
   from approved invoices (one currency, due by a date, oldest first, up to a cash limit;
   what is left out says why), a finance controller approves (never the proposer), then

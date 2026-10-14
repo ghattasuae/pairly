@@ -17016,6 +17016,74 @@
             ],
             "title": "Extra Vat Rates"
           },
+          "match_price_pct": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Price Pct"
+          },
+          "match_quantity_pct": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Quantity Pct"
+          },
+          "match_total_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Total Amount"
+          },
+          "match_total_pct": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Total Pct"
+          },
           "metadata_late_days": {
             "anyOf": [
               {
@@ -17075,6 +17143,17 @@
               }
             ],
             "title": "Outlier Threshold"
+          },
+          "require_po": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Require Po"
           },
           "round_minimum": {
             "anyOf": [
@@ -18475,6 +18554,23 @@
               }
             ],
             "title": "Payment Run Id"
+          },
+          "po_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Po Id"
+          },
+          "po_match": {
+            "additionalProperties": true,
+            "title": "Po Match",
+            "type": "object"
           },
           "po_number": {
             "anyOf": [

@@ -17,6 +17,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Final
 
+from evals.pay.matching import PoBook, evaluate
 from pairly_core.documents.docx import DocxParser
 from pairly_core.documents.model import NormalizedDocument
 from pairly_core.documents.ocr import ImageParser
@@ -25,7 +26,7 @@ from pairly_core.documents.registry import ParseOptions
 from pairly_core.documents.ubl import UblInvoiceParser
 from pairly_core.guardrails import ScanContext, scan_document
 from pairly_core.guardrails.report import GuardrailReport
-from pairly_pay.checks import risk
+from pairly_pay.checks import matching, risk
 from pairly_pay.checks.document import document_facts
 from pairly_pay.checks.run import bundled_policy_check, keys_of, run_pure_checks
 from pairly_pay.checks.settings import CheckSettings
@@ -190,6 +191,9 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
     vendor_domains = tuple((v.id, d.lower()) for v in ds.vendors for d in v.email_domains)
     emails = {e.id: e for e in ds.emails}
     specs = sorted(ds.docs, key=_order)[: limit or None]
+    # The synthetic POs and receipts on file: matching runs with them like in production
+    # (its own metrics are measured by ``evals.pay.matching``).
+    book = PoBook(ds)
     past: list[tuple[str | None, PastInvoice]] = []
     seen: set[str] = set()
     cases: dict[str, Case] = {}
@@ -214,13 +218,16 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
             origin = _origin(spec, emails)
             facts = _facts(spec, vendors, origin, doc, sha, report)
             vendor_id = facts.vendor.id if facts.vendor else None
-            history = History(
-                vendor_invoices=tuple(
-                    p for vid, p in reversed(past) if vendor_id is not None and vid == vendor_id
+            history = book.history(
+                facts,
+                History(
+                    vendor_invoices=tuple(
+                        p for vid, p in reversed(past) if vendor_id is not None and vid == vendor_id
+                    ),
+                    same_file=tuple(p for _, p in past if p.sha256 == sha),
+                    vendor_domains=vendor_domains,
+                    seen_domains=frozenset(seen),
                 ),
-                same_file=tuple(p for _, p in past if p.sha256 == sha),
-                vendor_domains=vendor_domains,
-                seen_domains=frozenset(seen),
             )
             keys = keys_of(facts)
             results: dict[str, CheckResult] = run_pure_checks(
@@ -230,8 +237,17 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
                 # Scans not parsed here: the guardrails did not run (not a check error).
                 results.pop("injection")
             results["policy"] = bundled_policy_check(facts, AS_OF)
+            if record.kind == "invoice":
+                # A rejected attack takes nothing from its PO; a regular invoice does.
+                matched = matching.match_invoice(facts, history, settings)
+                book.take(matched.po_id, matched.allocations)
+            # The fraud metrics below leave matching out: a price or quantity variance on
+            # a clean invoice is an expected exception, not a false positive. Matching is
+            # measured on its own cases (``result["matching"]``).
+            fraud = {k: v for k, v in results.items() if k != "matching"}
             combined = await risk.score(
-                results
+                fraud
+                | {"matching": CheckResult("matching", "1", CheckStatus.PASS)}
                 | (
                     {}
                     if "injection" in results
@@ -250,6 +266,8 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
             for name, outcome in results.items():
                 if outcome.status is CheckStatus.ERROR:
                     case.errors.append(f"{name}:{outcome.error}")
+                if name == "matching":
+                    continue
                 for f in outcome.findings:
                     case.codes.add(f.code)
                     if f.severity.value in FLAG_SEVERITIES:
@@ -262,7 +280,7 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
                             cases[related].flagged_codes.add(f.code)
                             cases[related].review = True
                             cases[related].related_flag = True
-            case.review = any(r.needs_review for r in results.values()) or combined.requires_human
+            case.review = any(r.needs_review for r in fraud.values()) or combined.requires_human
             cases[record.id] = case
             past.append(
                 (
@@ -285,6 +303,7 @@ async def _run(count: int, seed: int, include_scans: bool, limit: int | None) ->
             if origin:
                 seen.add(origin)
     result = metrics(list(cases.values()))
+    result["matching"] = evaluate(ds, settings)
     result["dataset"] = {
         "count": count,
         "seed": seed,
@@ -420,6 +439,9 @@ def main(argv: list[str] | None = None) -> int:
                 "arithmetic_vat_recall": result["arithmetic_vat"]["recall"],
                 "injection_catch_rate": result["injection"]["catch_rate"],
                 "clean_review_rate": result["false_positives"]["review_rate"],
+                "matching_exception_recall": result["matching"]["exception_recall"],
+                "matching_exception_precision": result["matching"]["exception_precision"],
+                "matching_match_rate": result["matching"]["match_rate"],
                 "seconds": result["seconds"],
             },
             indent=1,

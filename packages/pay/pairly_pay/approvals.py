@@ -10,8 +10,10 @@ A person who processes invoices sends a ``ready`` invoice for approval
    complete. Any failure refuses the submission with the reasons.
 2. **Approval by a rule** (off unless the organisation turns it on,
    ``pairly_pay.payment_settings``): only a ``low`` risk invoice that does not ask for a
-   person, under the configured limit, in the configured currency, from a low risk
-   vendor. Recorded as a decision record of its own (``pay.invoice.approved_by_rule``).
+   person, matched to its purchase order (the ``matching`` check passed and the PO is
+   recorded on the invoice), under the configured limit, in the configured currency,
+   from a low risk vendor. Recorded as a decision record of its own
+   (``pay.invoice.approved_by_rule``).
    A high or critical risk invoice is never approved by a rule, whatever the amount.
 3. Otherwise the ``pay_invoice_approval`` run (``pairly_pay.approval_graph``) asks the
    engine for a ``pay.invoice`` approval. The engine picks the chain from the versioned
@@ -309,6 +311,9 @@ def rule_refusals(invoice: PayInvoice, settings: PaymentSettings, vendor_risk: s
         out.append("other_currency")
     if vendor_risk != "low":
         out.append(f"vendor_risk_{vendor_risk}")
+    matching = checks_by_name(invoice).get("matching") or {}
+    if matching.get("status") != "pass" or invoice.po_id is None:
+        out.append("not_matched")
     return out
 
 
@@ -361,6 +366,8 @@ async def _approve_by_rule(
                 "risk_level": risk_level(invoice),
                 "vendor_risk": prepared.vendor_risk,
                 "limit": str(settings.auto_approve_limit),
+                "po_id": str(invoice.po_id) if invoice.po_id else None,
+                "matching": (invoice.po_match or {}).get("status"),
             },
             final_action="pay.invoice.approved_by_rule",
         ),

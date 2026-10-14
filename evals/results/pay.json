@@ -169,6 +169,78 @@
  "check_errors": 0,
  "check_errors_by_check": {},
  "check_error_cases": [],
+ "matching": {
+  "cases": 167,
+  "invoices": 320,
+  "exception_cases": 76,
+  "match_cases": 91,
+  "exception_recall": 1.0,
+  "exception_precision": 1.0,
+  "match_rate": 1.0,
+  "exact_code_rate": 0.9737,
+  "extra_codes": {
+   "total_variance": 2
+  },
+  "flagged_units": 76,
+  "invoices_without_case": 139,
+  "invoices_without_case_flagged": [],
+  "missed": [],
+  "wrongly_flagged_matches": [],
+  "by_scenario": {
+   "exact": {
+    "cases": 45,
+    "as_expected": 45
+   },
+   "missing_receipt": {
+    "cases": 6,
+    "as_expected": 6
+   },
+   "multi_invoice": {
+    "cases": 14,
+    "as_expected": 14
+   },
+   "no_po": {
+    "cases": 35,
+    "as_expected": 35
+   },
+   "partial_matched": {
+    "cases": 6,
+    "as_expected": 6
+   },
+   "partial_overbilled": {
+    "cases": 6,
+    "as_expected": 6
+   },
+   "price_inside": {
+    "cases": 19,
+    "as_expected": 19
+   },
+   "price_outside": {
+    "cases": 17,
+    "as_expected": 17
+   },
+   "qty_inside": {
+    "cases": 7,
+    "as_expected": 7
+   },
+   "qty_outside": {
+    "cases": 6,
+    "as_expected": 6
+   },
+   "unknown_po": {
+    "cases": 6,
+    "as_expected": 6
+   }
+  },
+  "errors": [],
+  "error_count": 0,
+  "tolerances": {
+   "price_pct": "2",
+   "quantity_pct": "5",
+   "total_pct": "2",
+   "total_amount": "1.00"
+  }
+ },
  "dataset": {
   "count": 320,
   "seed": 2026,
@@ -180,5 +252,5 @@
   "parse_errors": [],
   "values": "ground truth (what a perfect extractor reads)"
  },
- "seconds": 20.1
+ "seconds": 15.9
 }

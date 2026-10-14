@@ -249,6 +249,87 @@ MESSAGES: Final[dict[str, tuple[str, str]]] = {
         "Risk is low: no check found anything.",
         "مستوى الخطر منخفض: لم يجد أي فحص شيئاً.",
     ),
+    # ---------------------------------------------------------------- matching
+    "po_matched": (
+        "Matched to purchase order {po}, {kind}: {lines} lines within the tolerances.",
+        "طوبقت مع أمر الشراء {po}، مطابقة {kind}: {lines} بنود ضمن الحدود المسموح بها.",
+    ),
+    "po_not_cited": (
+        "The invoice cites no purchase order, so it is not matched and a person approves it.",
+        "لا تذكر الفاتورة أي أمر شراء، لذا لم تُطابق ويعتمدها شخص.",
+    ),
+    "po_required": (
+        "The invoice cites no purchase order, but {reason}.",
+        "لا تذكر الفاتورة أي أمر شراء، لكن {reason}.",
+    ),
+    "po_not_on_file": (
+        "The invoice cites purchase order {po}, but no purchase orders are kept in Pairly "
+        "yet, so it is not matched and a person approves it.",
+        "تذكر الفاتورة أمر الشراء {po}، لكن لا تُحفظ أوامر الشراء في Pairly بعد، لذا لم "
+        "تُطابق ويعتمدها شخص.",
+    ),
+    "po_unknown": (
+        "The invoice cites purchase order {po}, which is not on file.",
+        "تذكر الفاتورة أمر الشراء {po}، وهو غير مسجل.",
+    ),
+    "po_closed": (
+        "Purchase order {po} is {state}: it takes no more invoices.",
+        "أمر الشراء {po} {state}: لا يقبل فواتير أخرى.",
+    ),
+    "po_vendor": (
+        "Purchase order {po} belongs to another vendor.",
+        "أمر الشراء {po} يخص موردًا آخر.",
+    ),
+    "po_vendor_unverified": (
+        "No vendor is linked, so purchase order {po} cannot be confirmed as this vendor's.",
+        "لم يُربط أي مورد، لذا لا يمكن التأكد أن أمر الشراء {po} يخص هذا المورد.",
+    ),
+    "po_currency": (
+        "The invoice is in {currency} but purchase order {po} is in {po_currency}.",
+        "الفاتورة بعملة {currency} لكن أمر الشراء {po} بعملة {po_currency}.",
+    ),
+    "lines_missing": (
+        "No line items were read, so the invoice cannot be matched to purchase order {po}.",
+        "لم تُقرأ أي بنود، لذا لا يمكن مطابقة الفاتورة مع أمر الشراء {po}.",
+    ),
+    "line_unreadable": (
+        "Line {line} has no quantity or unit price, so it cannot be matched.",
+        "البند {line} بلا كمية أو سعر وحدة، لذا لا يمكن مطابقته.",
+    ),
+    "line_not_on_po": (
+        "Line {line} is not on purchase order {po}.",
+        "البند {line} غير موجود في أمر الشراء {po}.",
+    ),
+    "price_over_po": (
+        "Line {line}: unit price {price} is {over}% above the PO price {po_price} "
+        "(tolerance {tolerance}%).",
+        "البند {line}: سعر الوحدة {price} أعلى من سعر أمر الشراء {po_price} بنسبة {over}% "
+        "(الحد المسموح {tolerance}%).",
+    ),
+    "receipt_missing": (
+        "Purchase order {po} needs goods received (3-way), and no goods receipt is on file.",
+        "أمر الشراء {po} يتطلب استلام البضائع (مطابقة ثلاثية)، ولا يوجد إيصال استلام مسجل.",
+    ),
+    "line_not_received": (
+        "Line {line}: nothing of PO line {po_line} has been received.",
+        "البند {line}: لم يُستلم شيء من بند أمر الشراء {po_line}.",
+    ),
+    "qty_over_received": (
+        "Line {line}: {quantity} invoiced, but only {left} of the {received} received is left "
+        "to invoice (tolerance {tolerance}%).",
+        "البند {line}: فُوتر {quantity}، لكن المتبقي للفوترة {left} فقط من {received} مستلمة "
+        "(الحد المسموح {tolerance}%).",
+    ),
+    "qty_over_ordered": (
+        "Line {line}: {quantity} invoiced, but only {left} of the {ordered} ordered is left "
+        "to invoice (tolerance {tolerance}%).",
+        "البند {line}: فُوتر {quantity}، لكن المتبقي للفوترة {left} فقط من {ordered} مطلوبة "
+        "(الحد المسموح {tolerance}%).",
+    ),
+    "total_over_po": (
+        "The subtotal {subtotal} is more than the purchase order value of these lines, {po_value}.",
+        "المجموع الفرعي {subtotal} أكبر من قيمة هذه البنود في أمر الشراء، وهي {po_value}.",
+    ),
 }
 
 # Words inside messages, per language (check names, levels, features, phrases).
@@ -261,6 +342,7 @@ TERMS: Final[dict[str, tuple[str, str]]] = {
     "forgery": ("document", "المستند"),
     "injection": ("hidden instructions", "التعليمات المخفية"),
     "policy": ("policy", "السياسة"),
+    "matching": ("purchase order matching", "المطابقة مع أمر الشراء"),
     "low": ("low", "منخفض"),
     "medium": ("medium", "متوسط"),
     "high": ("high", "مرتفع"),

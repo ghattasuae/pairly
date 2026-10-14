@@ -11,6 +11,7 @@
 * ``ready_invoice``: a recorded synthetic invoice read to ``ready`` (a person reviews
   it when the checks asked for one), with its vendor created first.
 * ``approve_all``: decide every step of an approval with the first eligible person.
+* ``seed_po``: the synthetic purchase order an invoice cites, with its goods receipts.
 """
 
 from __future__ import annotations
@@ -240,9 +241,13 @@ async def ready_invoice(
     owner: AsyncEngine | None = None,
     age_days: int = 0,
     reviewer: str = "clerk2",
+    with_po: bool = False,
 ) -> tuple[str, str]:
-    """(invoice id, vendor id) of ``doc_id`` read to ``ready``."""
+    """(invoice id, vendor id) of ``doc_id`` read to ``ready``; with ``with_po`` its
+    purchase order and goods receipts are on file first, so it can be matched."""
     vendor_id = await make_vendor(flow, world, doc_id, age_days=age_days, owner=owner)
+    if with_po:
+        await seed_po(flow, world, doc_id, vendor_id)
     invoice_id = await upload(flow, world, doc_id)
     detail = await flow.invoice(world, invoice_id)
     if detail["status"] == "needs_review":
@@ -305,3 +310,56 @@ async def approve_all(
         assert response.status_code == 200, response.text
         used.append(who)
     return used
+
+
+async def seed_po(
+    flow: Flow, world: PayWorld, doc_id: str, vendor_id: str, *, receipts: bool = True
+) -> str:
+    """The synthetic PO ``doc_id`` cites (``synth/pay``), with its goods receipts, created
+    through the API by the AP clerk. Returns the PO id."""
+    ds = dataset()
+    number = ds.doc(doc_id).record.truth.po_number
+    (po,) = [p for p in ds.purchase_orders if p.po_number == number]
+    created = await flow.ok(
+        "POST",
+        "/v1/pay/purchase-orders",
+        world,
+        "clerk",
+        status=201,
+        json={
+            "po_number": po.po_number,
+            "vendor_id": vendor_id,
+            "currency": po.currency,
+            "order_date": po.date,
+            "match_type": po.match_type,
+            "department": po.department,
+            "requester": po.requester,
+            "lines": [
+                {
+                    "line_no": x.line_no,
+                    "description": x.description,
+                    "quantity": x.quantity,
+                    "unit_price": x.unit_price,
+                }
+                for x in po.lines
+            ],
+        },
+    )
+    for grn in (r for r in ds.receipts if r.po_number == number and receipts):
+        await flow.ok(
+            "POST",
+            "/v1/pay/goods-receipts",
+            world,
+            "clerk",
+            status=201,
+            json={
+                "grn_number": grn.grn_number,
+                "po_id": created["id"],
+                "received_date": grn.date,
+                "received_by": grn.received_by,
+                "lines": [
+                    {"po_line_no": x.po_line_no, "quantity": x.quantity_received} for x in grn.lines
+                ],
+            },
+        )
+    return str(created["id"])

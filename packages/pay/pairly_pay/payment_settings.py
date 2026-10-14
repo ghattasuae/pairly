@@ -4,7 +4,8 @@
 
 * ``auto_approve_low_risk`` (default **off**): when an organisation turns it on, an
   invoice may be approved by a rule instead of a person, only if every one of these
-  holds: the risk level is ``low`` and does not ask for a person, the amount is under
+  holds: the risk level is ``low`` and does not ask for a person, the invoice is matched
+  to its purchase order (``pairly_pay.checks.matching``), the amount is under
   ``auto_approve_limit`` in ``auto_approve_currency``, the vendor's risk is low, and
   the invoice could be submitted at all (current checks, no hold, no open bank-detail
   change). High and critical risk invoices are never approved by a rule, whatever the

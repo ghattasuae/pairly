@@ -4,9 +4,12 @@
 
 The checks (``pairly_pay.checks``) ran on some inputs: the values read from the invoice
 with every correction, the linked vendor and that vendor's bank details on file, and
-the coding (department, category). When any of them changes afterwards, the stored
-results describe another invoice. ``check_inputs_digest`` is a SHA-256 over exactly
-those inputs; the checks store it (``pay_invoices.checks_digest``) when they run.
+the coding (department, category), and the purchase order the invoice cites when one
+with that number is on file (its id, status, vendor, currency and matching type: a PO
+created, cancelled or closed later changes the match). When any of them changes
+afterwards, the stored results describe another invoice. ``check_inputs_digest`` is a
+SHA-256 over exactly those inputs; the checks store it (``pay_invoices.checks_digest``)
+when they run.
 
 * **stale**: the digest of the invoice now differs from the stored one (or the checks
   never finished). A person corrected a field, linked another vendor, changed the
@@ -31,6 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.extraction.service import load_extraction
 from pairly_pay.models import PayInvoice
+from pairly_pay.purchase_orders import find_purchase_order
 from pairly_pay.vendors import active_account
 
 DIGEST_VERSION: Final = 1
@@ -53,15 +57,29 @@ async def check_inputs_digest(session: AsyncSession, invoice: PayInvoice) -> str
     account = (
         await active_account(session, invoice.vendor_id) if invoice.vendor_id is not None else None
     )
-    material = {
+    values = stored.current_values() if stored is not None else {}
+    material: dict[str, Any] = {
         "v": DIGEST_VERSION,
         "extraction_id": str(invoice.extraction_id) if invoice.extraction_id else None,
-        "values": stored.current_values() if stored is not None else {},
+        "values": values,
         "vendor_id": str(invoice.vendor_id) if invoice.vendor_id else None,
         "vendor_account_id": str(account.id) if account is not None else None,
         "department": invoice.department,
         "category": invoice.category,
     }
+    cited = values.get("po_number")
+    po = await find_purchase_order(session, cited) if isinstance(cited, str) else None
+    if po is not None:
+        # Only when a PO is on file, so invoices without one keep their digest. Receipts
+        # are left out on purpose: a later delivery for another invoice of the same PO
+        # must not make an approved invoice stale.
+        material["po"] = {
+            "id": str(po.id),
+            "status": po.status,
+            "vendor_id": str(po.vendor_id),
+            "currency": po.currency,
+            "match_type": po.match_type,
+        }
     return hashlib.sha256(_canonical(material)).hexdigest()
 
 

@@ -15,6 +15,13 @@
 * Split invoices: invoices of one vendor within ``split_window_days``, each at least
   ``split_margin_pct`` percent under the approval threshold, that add up to it or more.
 * Round amounts: a multiple of ``round_unit`` of at least ``round_minimum``.
+* Matching (``pairly_pay.checks.matching``): an invoice unit price may be at most
+  ``match_price_pct`` percent above the PO's, an invoiced quantity at most
+  ``match_quantity_pct`` percent above what is left to invoice (received for 3-way,
+  ordered for 2-way), and the subtotal at most the larger of ``match_total_pct``
+  percent and ``match_total_amount`` above the PO value of the invoiced lines.
+  ``require_po``: every invoice must cite a PO (otherwise only the invoices of vendors
+  with POs on file must).
 
 Unknown keys in the stored JSON are ignored; a malformed value falls back to its default
 (and the setting is validated when it is saved).
@@ -84,6 +91,11 @@ class CheckSettings:
     outlier_min_ratio: Decimal = Decimal("2")
     # Created more than this many days after the invoice date: a metadata flag.
     metadata_late_days: int = 30
+    match_price_pct: Decimal = Decimal("2")
+    match_quantity_pct: Decimal = Decimal("5")
+    match_total_pct: Decimal = Decimal("2")
+    match_total_amount: Decimal = Decimal("1.00")
+    require_po: bool = False
     home_country: str = "AE"
     zero_rated_words: tuple[str, ...] = field(default=ZERO_RATED_WORDS)
     exempt_words: tuple[str, ...] = field(default=EXEMPT_WORDS)
@@ -108,6 +120,11 @@ class CheckSettings:
             "outlier_min_history": self.outlier_min_history,
             "outlier_min_ratio": str(self.outlier_min_ratio),
             "metadata_late_days": self.metadata_late_days,
+            "match_price_pct": str(self.match_price_pct),
+            "match_quantity_pct": str(self.match_quantity_pct),
+            "match_total_pct": str(self.match_total_pct),
+            "match_total_amount": str(self.match_total_amount),
+            "require_po": self.require_po,
         }
 
 
@@ -119,6 +136,10 @@ _DECIMALS: Final = {
     "round_minimum": (Decimal(0), Decimal("1000000000")),
     "outlier_threshold": (Decimal("0.5"), Decimal(100)),
     "outlier_min_ratio": (Decimal("1"), Decimal(1000)),
+    "match_price_pct": (Decimal(0), Decimal(100)),
+    "match_quantity_pct": (Decimal(0), Decimal(100)),
+    "match_total_pct": (Decimal(0), Decimal(100)),
+    "match_total_amount": (Decimal(0), Decimal("1000000")),
 }
 _INTS: Final = {
     "rounding_units": (0, 100),
@@ -154,6 +175,8 @@ def parse_settings(data: Mapping[str, Any] | None) -> CheckSettings:
     if isinstance(rates, list):
         parsed = [_decimal(r, Decimal(0), Decimal(100)) for r in rates[:10]]
         changes["extra_vat_rates"] = tuple(r for r in parsed if r is not None)
+    if isinstance(data.get("require_po"), bool):
+        changes["require_po"] = data["require_po"]
     currency = data.get("approval_currency")
     if isinstance(currency, str) and len(currency) == 3 and currency.isalpha():
         changes["approval_currency"] = currency.upper()

@@ -21,6 +21,7 @@ from pairly_pay.checks import (
     forgery,
     impersonation,
     injection,
+    matching,
     policy,
 )
 from pairly_pay.checks.document import document_facts
@@ -45,6 +46,7 @@ PURE_CHECKS: Final = (
     "amounts",
     "forgery",
     "injection",
+    "matching",
 )
 
 
@@ -101,6 +103,11 @@ def run_pure_checks(
         ),
         "injection": run_safely(
             injection.CHECK, injection.VERSION, lambda: injection.check_injection(facts)
+        ),
+        "matching": run_safely(
+            matching.CHECK,
+            matching.VERSION,
+            lambda: matching.check_matching(facts, history, settings),
         ),
     }
     if facts.document is None and document_required:

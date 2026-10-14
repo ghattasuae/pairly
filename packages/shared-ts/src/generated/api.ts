@@ -10973,6 +10973,14 @@ export type components = {
             duplicate_window_days?: number | null;
             /** Extra Vat Rates */
             extra_vat_rates?: (number | string)[] | null;
+            /** Match Price Pct */
+            match_price_pct?: number | string | null;
+            /** Match Quantity Pct */
+            match_quantity_pct?: number | string | null;
+            /** Match Total Amount */
+            match_total_amount?: number | string | null;
+            /** Match Total Pct */
+            match_total_pct?: number | string | null;
             /** Metadata Late Days */
             metadata_late_days?: number | null;
             /** Outlier Min History */
@@ -10981,6 +10989,8 @@ export type components = {
             outlier_min_ratio?: number | string | null;
             /** Outlier Threshold */
             outlier_threshold?: number | string | null;
+            /** Require Po */
+            require_po?: boolean | null;
             /** Round Minimum */
             round_minimum?: number | string | null;
             /** Round Unit */
@@ -11371,6 +11381,12 @@ export type components = {
             payment_reference?: string | null;
             /** Payment Run Id */
             payment_run_id?: string | null;
+            /** Po Id */
+            po_id?: string | null;
+            /** Po Match */
+            po_match?: {
+                [key: string]: unknown;
+            };
             /** Po Number */
             po_number: string | null;
             /** Reference */

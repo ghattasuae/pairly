@@ -77,6 +77,10 @@ Dataset: `synth.pay`, seed 2026: 320 regular and 69 attack invoices; 331 documen
 | Clean invoices with a medium or worse finding | 0.0219 |
 | Attack invoices routed to review | 0.8986 |
 | Check errors | 0 |
+| PO matching exception recall | 1.0 |
+| PO matching exception precision | 1.0 |
+| PO matching: cases that should match and do | 1.0 |
+| PO matching: exceptions with exactly the expected codes | 0.9737 |
 
 Recall per expected finding, misses and false positives by code are in `evals/results/pay.json`.
 <!-- END pay -->

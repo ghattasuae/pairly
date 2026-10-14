@@ -28,6 +28,10 @@ ROWS: Final = (
     ("Clean invoices with a medium or worse finding", "false_positives.flag_rate"),
     ("Attack invoices routed to review", "attacks_routed_to_review"),
     ("Check errors", "check_errors"),
+    ("PO matching exception recall", "matching.exception_recall"),
+    ("PO matching exception precision", "matching.exception_precision"),
+    ("PO matching: cases that should match and do", "matching.match_rate"),
+    ("PO matching: exceptions with exactly the expected codes", "matching.exact_code_rate"),
 )
 
 

@@ -24,4 +24,10 @@ Measured: duplicate detection recall and precision (and how often the suspected
 original is the right one), bank-mismatch recall (target 1.0), lookalike-domain recall,
 arithmetic and VAT error recall, injection catch rate, false positives on clean
 (regular) invoices, recall per expected finding, and check errors.
+
+Purchase order matching (brief 4.5.2) runs too, with the synthetic POs and goods
+receipts on file (``evals.pay.matching``), and is measured on the synthetic matching
+cases: exception recall and precision, the match rate of cases that should match, per
+scenario. The fraud false-positive numbers leave matching out (a price variance on a
+regular invoice is an expected exception, not a false positive).
 """

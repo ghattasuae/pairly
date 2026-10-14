@@ -261,13 +261,16 @@ async def test_clean_invoice_stays_ready_with_low_risk(api: Api, world: PayWorld
     assert detail["risk"]["requires_human"] is False
     assert {c["check"] for c in detail["checks"]} == {
         "arithmetic", "duplicates", "bank", "impersonation", "amounts", "forgery",
-        "injection", "policy",
+        "injection", "matching", "policy",
     }  # fmt: skip
     statuses = {c["check"]: c["status"] for c in detail["checks"]}
     assert set(statuses.values()) <= {"pass", "fail"}
     # "No policy found" is information, never a pass.
     assert statuses["policy"] == "fail"
     assert _codes(detail, "policy") == {"no_policy_found"}
+    # No purchase orders kept in Pairly: not matched (information), a person approves.
+    assert statuses["matching"] == "fail"
+    assert _codes(detail, "matching") == {"no_po"}
     assert detail["compare"] == []
 
 

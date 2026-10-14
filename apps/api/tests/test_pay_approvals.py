@@ -260,8 +260,13 @@ async def test_approval_by_rule_only_when_enabled_and_never_for_high_risk(
         flow, fworld, auto_approve_low_risk=True, auto_approve_limit="100000",
         auto_approve_currency="AED",
     )  # fmt: skip
-    low, _ = await ready_invoice(flow, fworld, CLEAN, owner=owner_engine, age_days=400)
-    assert (await flow.invoice(fworld, low))["risk"]["level"] == "low"
+    low, _ = await ready_invoice(
+        flow, fworld, CLEAN, owner=owner_engine, age_days=400, with_po=True
+    )
+    detail = await flow.invoice(fworld, low)
+    assert detail["risk"]["level"] == "low"
+    assert detail["po_match"]["status"] == "matched"
+    assert detail["po_id"] is not None
     by_rule = await submit(flow, fworld, low)
     assert by_rule["status"] == "approved"
     assert by_rule["approval"]["approved_by_rule"] is True
@@ -276,6 +281,15 @@ async def test_approval_by_rule_only_when_enabled_and_never_for_high_risk(
     )
     assert [(r.kind, r.actor_type) for r in records] == [("policy_check", "system")]
     assert "pay.invoice.approved_by_rule" in await audit_actions(owner_engine, fworld.org_id, low)
+    (evidence,) = await owner_rows(
+        owner_engine,
+        fworld.org_id,
+        "SELECT evidence FROM decision_records WHERE entity_id = :e "
+        "AND final_action = 'pay.invoice.approved_by_rule'",
+        {"e": low},
+    )
+    assert evidence.evidence["po_id"] == detail["po_id"]
+    assert evidence.evidence["matching"] == "matched"
 
     # High risk: never approved by a rule, whatever the limit.
     high, _ = await ready_invoice(flow, fworld, "inv-0037", owner=owner_engine, age_days=400)

@@ -47,6 +47,7 @@ CHECK_NAMES: Final = (
     "amounts",
     "forgery",
     "injection",
+    "matching",
     "policy",
 )
 RISK_POLICY_V1: Final = (

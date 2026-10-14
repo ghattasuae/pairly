@@ -615,7 +615,7 @@ def test_policy_rules_and_no_policy_found() -> None:
 
 async def test_risk_combines_checks_and_fails_closed() -> None:
     spec = next(iter(dataset().regular()))
-    facts = facts_of(spec, guardrail_report=_report())
+    facts = facts_of(spec, po_number=None, guardrail_report=_report())
     clean = run_pure_checks(facts, History(), SETTINGS, document_required=False)
     clean["policy"] = bundled_policy_check(facts, dt.date(2026, 10, 14))
     combined = await risk.score(clean)

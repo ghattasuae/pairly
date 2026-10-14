@@ -3419,7 +3419,8 @@
         "amounts": "المبالغ",
         "forgery": "المستند",
         "injection": "التعليمات المخفية",
-        "policy": "السياسة"
+        "policy": "السياسة",
+        "matching": "أمر الشراء"
       }
     },
     "compare": {

@@ -235,6 +235,33 @@ class PastInvoice:
 
 
 @dataclass(frozen=True, slots=True)
+class PoLineFacts:
+    line_no: int
+    description: str
+    quantity: Decimal
+    unit_price: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class PoFacts:
+    """The purchase order an invoice cites (``pairly_pay.checks.matching``)."""
+
+    id: str
+    number: str
+    vendor_id: str
+    currency: str
+    status: str
+    # "2-way" (against the PO) or "3-way" (against the PO and the goods received).
+    match_type: str
+    lines: tuple[PoLineFacts, ...]
+    # Quantity received so far per PO line number, every receipt.
+    received: Mapping[int, Decimal] = field(default_factory=dict)
+    receipt_count: int = 0
+    # Quantity per PO line that earlier invoices citing the PO took (rejected ones left out).
+    invoiced_before: Mapping[int, Decimal] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
 class History:
     """What the organisation already has, looked up by the caller before the checks."""
 
@@ -249,3 +276,9 @@ class History:
     vendor_domains: tuple[tuple[str, str], ...] = ()
     # Origin domains of earlier invoices.
     seen_domains: frozenset[str] = frozenset()
+    # The purchase order the invoice cites, when one with that number is on file.
+    purchase_order: PoFacts | None = None
+    # The invoice's vendor has purchase orders on file (its invoices should cite one).
+    vendor_uses_pos: bool = False
+    # The organisation has any purchase order on file (it uses PO matching at all).
+    org_uses_pos: bool = False

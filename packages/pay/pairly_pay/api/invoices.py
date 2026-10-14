@@ -374,6 +374,10 @@ class PayInvoiceSubmitIn(_In):
 
 class PayInvoiceDetail(PayInvoiceSummary):
     po_number: str | None
+    # Purchase order matching (``pairly_pay.checks.matching``): the PO the invoice cites
+    # when it is on file, and how its lines were allocated ({status, po_id, lines}).
+    po_id: uuid.UUID | None = None
+    po_match: dict[str, Any] = Field(default_factory=dict)
     subtotal: Decimal | None
     vat_amount: Decimal | None
     vendor_trn: str | None
@@ -682,6 +686,8 @@ async def _detail(
     return PayInvoiceDetail(
         **_summary_fields(invoice, vendors.get(invoice.vendor_id) if invoice.vendor_id else None),
         po_number=invoice.po_number,
+        po_id=invoice.po_id,
+        po_match=dict(invoice.po_match or {}),
         subtotal=money(invoice.subtotal),
         vat_amount=money(invoice.vat_amount),
         vendor_trn=invoice.vendor_trn,
