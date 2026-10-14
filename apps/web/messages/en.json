@@ -2927,7 +2927,8 @@
       "settings": "Settings",
       "analytics": "Analytics",
       "exceptions": "Exceptions",
-      "forecast": "Cash forecast"
+      "forecast": "Cash forecast",
+      "reconciliation": "Reconciliation"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -2947,7 +2948,9 @@
       "invalid_purchase_data": "The file has problems. Nothing was imported.",
       "number_taken": "That number is already on file.",
       "purchase_order_state": "This purchase order cannot change now. It may be closed already, or an invoice of it is approved or paid.",
-      "recipient_not_allowed": "This message can only go to a contact on file of the vendor, or to a member of the organisation."
+      "recipient_not_allowed": "This message can only go to a contact on file of the vendor, or to a member of the organisation.",
+      "invalid_statement": "The statement has problems. Nothing was imported.",
+      "statement_already_imported": "This statement file was already imported."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -4000,6 +4003,71 @@
       "expected": "expected {when}",
       "unpriced": "{count, plural, one {# invoice has no amount or currency yet} other {# invoices have no amount or currency yet}}",
       "method": "Expected payment date: the payment run's date for a scheduled invoice, else the due date, else the invoice date. A date already past counts as this week."
+    },
+    "reconciliation": {
+      "title": "Reconciliation",
+      "intro": "Bank statement lines matched with paid invoices and payment runs. A line matches when the amount agrees and so does the reference or the vendor's IBAN, never on the amount alone.",
+      "days": "Flag paid invoices with no statement line after (days)",
+      "apply": "Apply",
+      "importTitle": "Import a bank statement",
+      "format": "A CSV with the columns date, amount, currency, reference, counterparty_iban (a payment out is negative), or a camt.053 XML file. Nothing is imported when a line has a problem, and the same file is never imported twice.",
+      "file": "Statement file",
+      "import": "Import",
+      "matchNow": "Match again now",
+      "imported": "Statement {reference} imported: {lines, plural, one {# line} other {# lines}}, {matched} matched.",
+      "matchedNow": "{count, plural, one {# line matched.} other {# lines matched.}}",
+      "problemRow": "Row {row}:",
+      "problemFile": "The file:",
+      "problem": {
+        "invalid_date": "is not a date (YYYY-MM-DD).",
+        "invalid_amount": "is not a plain amount at the currency's precision (a payment out is negative, never zero).",
+        "invalid_currency": "is not a three-letter currency code.",
+        "invalid_iban": "is not a valid IBAN.",
+        "invalid_indicator": "is neither a debit nor a credit.",
+        "too_long": "is too long (at most 140 characters).",
+        "required": "is required.",
+        "missing_column": "is a missing column.",
+        "unknown_column": "is not a known column.",
+        "formula_not_allowed": "looks like a spreadsheet formula.",
+        "malformed_csv": "is not a readable CSV.",
+        "malformed_xml": "is not readable XML.",
+        "not_camt053": "is not a camt.053 statement.",
+        "no_rows": "has no lines.",
+        "too_large": "is too large (at most 1 MB)."
+      },
+      "count": {
+        "matched": "Lines matched",
+        "unmatched": "Debits not matched",
+        "unexplained": "Paid invoices with no line after {days} days",
+        "ignored": "Credits (not Pay's)"
+      },
+      "unmatchedTitle": "Debits nothing explains yet",
+      "noUnmatched": "Every debit is matched.",
+      "unexplainedTitle": "Paid invoices with no statement line after {days} days",
+      "unexplainedIntro": "Marked paid {days} or more days ago, and no statement line shows the money leaving. Check with the bank.",
+      "noUnexplained": "None.",
+      "matchedTitle": "Latest matches",
+      "noMatched": "No line is matched yet.",
+      "statementsTitle": "Imported statements",
+      "noStatements": "No statement imported yet.",
+      "lines": "{count, plural, one {# line} other {# lines}}",
+      "wholeRun": "whole run",
+      "ambiguous": "Several payments fit equally well: a person decides.",
+      "noCandidate": "No paid invoice or run fits.",
+      "paidAgo": "{days, plural, one {paid # day ago} other {paid # days ago}}",
+      "reason": {
+        "amount": "amount",
+        "reference": "reference",
+        "iban": "IBAN"
+      },
+      "col": {
+        "date": "Booked",
+        "amount": "Amount",
+        "reference": "Reference",
+        "statement": "Statement",
+        "matchedWith": "Matched with",
+        "why": "Why not matched"
+      }
     }
   },
   "VendorOnboarding": {

@@ -16,6 +16,8 @@
 * ``purchase_orders``: purchase orders and goods receipts, created or imported from CSV.
 * ``analytics``: the Pay analytics (brief 4.9), every number with its records.
 * ``forecast``: the cash forecast, by week and currency, every number with its invoices.
+* ``reconciliation``: bank statements (CSV, camt.053) matched with payments marked
+  paid; unmatched lines and paid invoices no statement explains.
 * ``exceptions``: the exceptions queue and drafted messages to vendors and requesters,
   sent only after approval (brief 4.5.4).
 * ``coding``: the chart of accounts and cost centres, and GL coding of invoice lines
@@ -45,6 +47,7 @@ from pairly_pay.api import (
     payment_runs,
     portal_admin,
     purchase_orders,
+    reconciliation,
     vendor_portal,
     vendors,
 )
@@ -59,6 +62,7 @@ router.include_router(payment_runs.router)
 router.include_router(purchase_orders.router)
 router.include_router(analytics.router)
 router.include_router(forecast.router)
+router.include_router(reconciliation.router)
 router.include_router(coding.router)
 router.include_router(exceptions.router)
 router.include_router(vendor_portal.router)

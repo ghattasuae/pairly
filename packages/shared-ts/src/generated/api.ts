@@ -4643,6 +4643,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconciliation */
+        get: operations["reconciliation_v1_pay_reconciliation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/reconciliation/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Now */
+        post: operations["match_now_v1_pay_reconciliation_match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/reconciliation/statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Statement */
+        post: operations["upload_statement_v1_pay_reconciliation_statements_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/settings": {
         parameters: {
             query?: never;
@@ -12620,6 +12671,13 @@ export type components = {
             source: string | null;
             suggestion: components["schemas"]["PaySuggestionOut"] | null;
         };
+        /** PayMatchNowOut */
+        PayMatchNowOut: {
+            /** Matched */
+            matched: number;
+            /** Unmatched */
+            unmatched: number;
+        };
         /** PayMessageContactOut */
         PayMessageContactOut: {
             /** Email */
@@ -13398,6 +13456,34 @@ export type components = {
             /** Source */
             source: string;
         };
+        /** PayReconciliationOut */
+        PayReconciliationOut: {
+            /** Can Upload */
+            can_upload: boolean;
+            /** Days */
+            days: number;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Ignored Count */
+            ignored_count: number;
+            /** Matched */
+            matched: components["schemas"]["PayStatementLineOut"][];
+            /** Matched Count */
+            matched_count: number;
+            /** Statements */
+            statements: components["schemas"]["PayStatementOut"][];
+            /** Unexplained */
+            unexplained: components["schemas"]["PayUnexplainedOut"][];
+            /** Unexplained Count */
+            unexplained_count: number;
+            /** Unmatched */
+            unmatched: components["schemas"]["PayStatementLineOut"][];
+            /** Unmatched Count */
+            unmatched_count: number;
+        };
         /** PayRecordLinkOut */
         PayRecordLinkOut: {
             /** Id */
@@ -13770,6 +13856,105 @@ export type components = {
             /** Phone Change Window Days */
             phone_change_window_days: number;
         };
+        /** PayStatementImportOut */
+        PayStatementImportOut: {
+            /** Matched */
+            matched: number;
+            statement: components["schemas"]["PayStatementOut"];
+            /** Unmatched */
+            unmatched: number;
+        };
+        /** PayStatementIn */
+        PayStatementIn: {
+            /** Content */
+            content: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "csv" | "camt053";
+        };
+        /** PayStatementLineOut */
+        PayStatementLineOut: {
+            /** Amount */
+            amount: string;
+            /**
+             * Booking Date
+             * Format: date
+             */
+            booking_date: string;
+            /** Counterparty Iban Masked */
+            counterparty_iban_masked: string | null;
+            /** Currency */
+            currency: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Id */
+            invoice_id: string | null;
+            /** Invoice Reference */
+            invoice_reference: string | null;
+            /** Line No */
+            line_no: number;
+            /** Match Kind */
+            match_kind: string | null;
+            /** Match Reasons */
+            match_reasons: string[];
+            /** Payment Run Id */
+            payment_run_id: string | null;
+            /** Payment Run Reference */
+            payment_run_reference: string | null;
+            /** Reference */
+            reference: string | null;
+            /**
+             * Statement Id
+             * Format: uuid
+             */
+            statement_id: string;
+            /** Statement Reference */
+            statement_reference: string;
+            /** Status */
+            status: string;
+            /** Unmatched Reason */
+            unmatched_reason: string | null;
+        };
+        /** PayStatementOut */
+        PayStatementOut: {
+            /** Account Masked */
+            account_masked: string | null;
+            /** Bank Statement Id */
+            bank_statement_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Sha256 */
+            file_sha256: string;
+            /** Format */
+            format: string;
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line Count */
+            line_count: number;
+            /** Reference */
+            reference: string;
+            /**
+             * To Date
+             * Format: date
+             */
+            to_date: string;
+        };
         /** PaySuggestionOut */
         PaySuggestionOut: {
             /** Confidence */
@@ -13965,6 +14150,40 @@ export type components = {
         PayTokenIn: {
             /** Token */
             token: string;
+        };
+        /** PayUnexplainedOut */
+        PayUnexplainedOut: {
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Days Since Paid */
+            days_since_paid: number;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Invoice Reference */
+            invoice_reference: string;
+            /**
+             * Paid At
+             * Format: date-time
+             */
+            paid_at: string;
+            /** Payment Reference */
+            payment_reference: string | null;
+            /**
+             * Payment Run Id
+             * Format: uuid
+             */
+            payment_run_id: string;
+            /** Payment Run Reference */
+            payment_run_reference: string;
+            /** Vendor Name */
+            vendor_name: string | null;
         };
         /** PayVendorCheckIn */
         PayVendorCheckIn: {
@@ -24390,6 +24609,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reconciliation_v1_pay_reconciliation_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayReconciliationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_now_v1_pay_reconciliation_match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayMatchNowOut"];
+                };
+            };
+        };
+    };
+    upload_statement_v1_pay_reconciliation_statements_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayStatementIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayStatementImportOut"];
                 };
             };
             /** @description Validation Error */

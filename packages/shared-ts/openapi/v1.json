@@ -21211,6 +21211,24 @@
         "title": "PayLineCodingOut",
         "type": "object"
       },
+      "PayMatchNowOut": {
+        "properties": {
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          },
+          "unmatched": {
+            "title": "Unmatched",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "matched",
+          "unmatched"
+        ],
+        "title": "PayMatchNowOut",
+        "type": "object"
+      },
       "PayMessageContactOut": {
         "properties": {
           "email": {
@@ -23636,6 +23654,82 @@
         "title": "PayReceiptOut",
         "type": "object"
       },
+      "PayReconciliationOut": {
+        "properties": {
+          "can_upload": {
+            "title": "Can Upload",
+            "type": "boolean"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "ignored_count": {
+            "title": "Ignored Count",
+            "type": "integer"
+          },
+          "matched": {
+            "items": {
+              "$ref": "#/components/schemas/PayStatementLineOut"
+            },
+            "title": "Matched",
+            "type": "array"
+          },
+          "matched_count": {
+            "title": "Matched Count",
+            "type": "integer"
+          },
+          "statements": {
+            "items": {
+              "$ref": "#/components/schemas/PayStatementOut"
+            },
+            "title": "Statements",
+            "type": "array"
+          },
+          "unexplained": {
+            "items": {
+              "$ref": "#/components/schemas/PayUnexplainedOut"
+            },
+            "title": "Unexplained",
+            "type": "array"
+          },
+          "unexplained_count": {
+            "title": "Unexplained Count",
+            "type": "integer"
+          },
+          "unmatched": {
+            "items": {
+              "$ref": "#/components/schemas/PayStatementLineOut"
+            },
+            "title": "Unmatched",
+            "type": "array"
+          },
+          "unmatched_count": {
+            "title": "Unmatched Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generated_at",
+          "days",
+          "statements",
+          "unmatched",
+          "unmatched_count",
+          "matched",
+          "matched_count",
+          "ignored_count",
+          "unexplained",
+          "unexplained_count",
+          "can_upload"
+        ],
+        "title": "PayReconciliationOut",
+        "type": "object"
+      },
       "PayRecordLinkOut": {
         "properties": {
           "id": {
@@ -24802,6 +24896,286 @@
         "title": "PaySettingsOut",
         "type": "object"
       },
+      "PayStatementImportOut": {
+        "properties": {
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          },
+          "statement": {
+            "$ref": "#/components/schemas/PayStatementOut"
+          },
+          "unmatched": {
+            "title": "Unmatched",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "statement",
+          "matched",
+          "unmatched"
+        ],
+        "title": "PayStatementImportOut",
+        "type": "object"
+      },
+      "PayStatementIn": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "camt053"
+            ],
+            "title": "Format",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "content"
+        ],
+        "title": "PayStatementIn",
+        "type": "object"
+      },
+      "PayStatementLineOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "booking_date": {
+            "format": "date",
+            "title": "Booking Date",
+            "type": "string"
+          },
+          "counterparty_iban_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty Iban Masked"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "invoice_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Reference"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          },
+          "match_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Kind"
+          },
+          "match_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Match Reasons",
+            "type": "array"
+          },
+          "payment_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Run Id"
+          },
+          "payment_run_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Run Reference"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "statement_id": {
+            "format": "uuid",
+            "title": "Statement Id",
+            "type": "string"
+          },
+          "statement_reference": {
+            "title": "Statement Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unmatched_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unmatched Reason"
+          }
+        },
+        "required": [
+          "id",
+          "statement_id",
+          "statement_reference",
+          "line_no",
+          "booking_date",
+          "amount",
+          "currency",
+          "reference",
+          "counterparty_iban_masked",
+          "status",
+          "match_kind",
+          "unmatched_reason",
+          "match_reasons",
+          "payment_run_id",
+          "payment_run_reference",
+          "invoice_id",
+          "invoice_reference"
+        ],
+        "title": "PayStatementLineOut",
+        "type": "object"
+      },
+      "PayStatementOut": {
+        "properties": {
+          "account_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Masked"
+          },
+          "bank_statement_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Statement Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_sha256": {
+            "title": "File Sha256",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "from_date": {
+            "format": "date",
+            "title": "From Date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "to_date": {
+            "format": "date",
+            "title": "To Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "format",
+          "file_sha256",
+          "bank_statement_id",
+          "account_masked",
+          "from_date",
+          "to_date",
+          "line_count",
+          "created_at"
+        ],
+        "title": "PayStatementOut",
+        "type": "object"
+      },
       "PaySuggestionOut": {
         "properties": {
           "confidence": {
@@ -25375,6 +25749,93 @@
           "token"
         ],
         "title": "PayTokenIn",
+        "type": "object"
+      },
+      "PayUnexplainedOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "days_since_paid": {
+            "title": "Days Since Paid",
+            "type": "integer"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "invoice_reference": {
+            "title": "Invoice Reference",
+            "type": "string"
+          },
+          "paid_at": {
+            "format": "date-time",
+            "title": "Paid At",
+            "type": "string"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "payment_run_id": {
+            "format": "uuid",
+            "title": "Payment Run Id",
+            "type": "string"
+          },
+          "payment_run_reference": {
+            "title": "Payment Run Reference",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "invoice_reference",
+          "invoice_number",
+          "vendor_name",
+          "payment_run_id",
+          "payment_run_reference",
+          "amount",
+          "currency",
+          "paid_at",
+          "payment_reference",
+          "days_since_paid"
+        ],
+        "title": "PayUnexplainedOut",
         "type": "object"
       },
       "PayVendorCheckIn": {
@@ -42528,6 +42989,113 @@
           }
         },
         "summary": "Close",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/reconciliation": {
+      "get": {
+        "operationId": "reconciliation_v1_pay_reconciliation_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayReconciliationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reconciliation",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/reconciliation/match": {
+      "post": {
+        "operationId": "match_now_v1_pay_reconciliation_match_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayMatchNowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Match Now",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/reconciliation/statements": {
+      "post": {
+        "operationId": "upload_statement_v1_pay_reconciliation_statements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayStatementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayStatementImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Statement",
         "tags": [
           "pay"
         ]

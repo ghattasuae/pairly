@@ -1508,3 +1508,154 @@ class PayMessage(Base, OrgScoped):
     )
     vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     portal_contact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+
+
+# ------------------------------------------------------------------ reconciliation (pay_0016)
+
+STATEMENTS: Final = "pay_bank_statements"
+STATEMENT_LINES: Final = "pay_bank_statement_lines"
+
+
+class StatementFormat(StrEnum):
+    CSV = "csv"
+    CAMT053 = "camt053"
+
+
+class StatementLineStatus(StrEnum):
+    # A debit no paid item or run explains yet (the job tries again as payments land).
+    UNMATCHED = "unmatched"
+    MATCHED = "matched"
+    # Money in: a bank statement also lists credits, which are not Pay's to explain.
+    IGNORED = "ignored"
+
+
+class StatementMatchKind(StrEnum):
+    # One paid payment run item (one invoice).
+    ITEM = "item"
+    # A whole payment run paid as one batch debit (the run's reference and total).
+    RUN = "run"
+
+
+class PayBankStatement(Base, OrgScoped):
+    """An imported bank statement (CSV or camt.053): who imported it, the file's digest
+    (the same file is refused twice) and its counts. The file itself is not kept."""
+
+    __tablename__ = STATEMENTS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_bank_statements_org_id_id"),
+        UniqueConstraint("org_id", "reference", name="uq_pay_bank_statements_org_id_reference"),
+        UniqueConstraint("org_id", "file_sha256", name="uq_pay_bank_statements_org_id_file_sha256"),
+        CheckConstraint(f"format IN ({_in(StatementFormat)})", name="format_valid"),
+        CheckConstraint("file_sha256 ~ '^[0-9a-f]{64}$'", name="file_sha256_format"),
+        CheckConstraint("line_count > 0", name="line_count_positive"),
+        Index("ix_pay_bank_statements_created", "org_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    reference: Mapped[str] = mapped_column(String(16), nullable=False)
+    format: Mapped[str] = mapped_column(String(8), nullable=False)
+    file_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    # camt.053 only: the statement's own id and the account, masked.
+    bank_statement_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    account_masked: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    from_date: Mapped[date] = mapped_column(Date, nullable=False)
+    to_date: Mapped[date] = mapped_column(Date, nullable=False)
+    line_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    imported_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayBankStatementLine(Base, OrgScoped):
+    """One booked line of a statement and what it was matched with. ``amount`` is
+    signed: a payment out is negative. The counterparty IBAN is encrypted, with a blind
+    index compared with the vendor bank account the run paid."""
+
+    __tablename__ = STATEMENT_LINES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_bank_statement_lines_org_id_id"),
+        UniqueConstraint(
+            "org_id", "statement_id", "line_no", name="uq_pay_bank_statement_lines_line"
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "statement_id"],
+            ["pay_bank_statements.org_id", "pay_bank_statements.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_bank_statement_lines_statement_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "payment_run_item_id"],
+            ["pay_payment_run_items.org_id", "pay_payment_run_items.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_bank_statement_lines_item_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "payment_run_id"],
+            ["pay_payment_runs.org_id", "pay_payment_runs.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_bank_statement_lines_run_org",
+        ),
+        CheckConstraint(f"status IN ({_in(StatementLineStatus)})", name="status_valid"),
+        CheckConstraint(
+            f"match_kind IS NULL OR match_kind IN ({_in(StatementMatchKind)})",
+            name="match_kind_valid",
+        ),
+        CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency_format"),
+        CheckConstraint("amount <> 0", name="amount_not_zero"),
+        CheckConstraint(
+            "counterparty_iban_bidx IS NULL OR counterparty_iban_bidx ~ '^[0-9a-f]{64}$'",
+            name="iban_bidx_format",
+        ),
+        CheckConstraint(
+            "status <> 'matched' OR (match_kind = 'item' AND payment_run_item_id IS NOT NULL "
+            "AND invoice_id IS NOT NULL AND payment_run_id IS NOT NULL) "
+            "OR (match_kind = 'run' AND payment_run_id IS NOT NULL "
+            "AND payment_run_item_id IS NULL)",
+            name="matched_has_target",
+        ),
+        CheckConstraint(
+            "status = 'matched' OR (match_kind IS NULL AND payment_run_id IS NULL "
+            "AND payment_run_item_id IS NULL AND invoice_id IS NULL)",
+            name="unmatched_has_no_target",
+        ),
+        Index("ix_pay_bank_statement_lines_status", "org_id", "status", "booking_date"),
+        # A paid item, or a run paid as one batch, is explained by at most one line.
+        Index(
+            "uq_pay_bank_statement_lines_item",
+            "org_id",
+            "payment_run_item_id",
+            unique=True,
+            postgresql_where=text("payment_run_item_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_pay_bank_statement_lines_run",
+            "org_id",
+            "payment_run_id",
+            unique=True,
+            postgresql_where=text("match_kind = 'run'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    statement_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    line_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    booking_date: Mapped[date] = mapped_column(Date, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    reference: Mapped[str | None] = mapped_column(String(140), nullable=True)
+    counterparty_iban: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    counterparty_iban_bidx: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, info=blind_index_info("iban", "counterparty_iban")
+    )
+    counterparty_iban_masked: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    match_kind: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    payment_run_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    payment_run_item_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    invoice_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    # What agreed: "amount" always, plus "reference" and/or "iban".
+    match_reasons: Mapped[list[Any]] = _jsonb_list()
+    # Why it is still unmatched: "no_candidate" or "ambiguous" (several fit).
+    unmatched_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    matched_at: Mapped[datetime | None] = _ts()
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()

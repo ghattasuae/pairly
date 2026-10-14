@@ -72,6 +72,9 @@ Who does what (brief 4.1, 6.2):
   ``pay.document.upload`` is declared), so existing API keys keep working.
 * **Analytics** (``pay.analytics.read``): the Pay analytics page (brief 4.9) and the
   cash forecast, for finance controllers and admins.
+* **Reconciliation** (``pay.reconciliation.*``): ``read`` the bank statements and how
+  their lines matched payments (the readers); ``upload`` a bank statement (CSV or
+  camt.053) and match it now (AP clerks, finance controllers).
 * **Extractions** (``pay.extraction.read`` / ``correct``): what was read from a Pay
   document and the corrections of it. ``correct`` is never an agent's.
 """
@@ -112,6 +115,8 @@ ANALYTICS_READ: Final = "pay.analytics.read"
 CODING_MANAGE: Final = "pay.coding.manage"
 MESSAGE_CREATE: Final = "pay.message.create"
 MESSAGE_APPROVE: Final = "pay.message.approve"
+RECONCILIATION_READ: Final = "pay.reconciliation.read"
+RECONCILIATION_UPLOAD: Final = "pay.reconciliation.upload"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -233,6 +238,14 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         EXTRACTION_CORRECT,
         "Correct what was read from an invoice",
         frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        RECONCILIATION_READ, "View bank statements and how they match payments", _READERS
+    ),
+    PermissionSpec(
+        RECONCILIATION_UPLOAD,
+        "Import a bank statement and match it with payments",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(
         ANALYTICS_READ,

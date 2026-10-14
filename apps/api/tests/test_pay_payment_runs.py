@@ -398,8 +398,7 @@ async def test_early_payment_discounts_are_highlighted_and_taken_only_when_asked
     updated = await owner_rows(
         owner_engine,
         fworld.org_id,
-        "SELECT payload FROM audit_events WHERE entity_id = :v "
-        "AND action = 'pay.vendor.updated'",
+        "SELECT payload FROM audit_events WHERE entity_id = :v AND action = 'pay.vendor.updated'",
         {"v": vendor_id},
     )
     assert updated[-1].payload["fields"] == ["payment_terms"]  # the web vendor page edits it

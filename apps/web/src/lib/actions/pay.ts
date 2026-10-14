@@ -585,6 +585,42 @@ export async function importPurchaseCsv(kind: "orders" | "receipts", csv: string
   return { ok: false, code: result.code, problems: importProblems(error) };
 }
 
+export type PayStatementResult =
+  | { ok: true; reference: string; lines: number; matched: number; unmatched: number }
+  | { ok: false; code: string; problems: PayImportProblem[] };
+
+/**
+ * Import a bank statement (CSV or camt.053) and match it with payments. The API checks
+ * every line and imports nothing when one has a problem; the problems come back with
+ * their rows. The same file twice is refused.
+ */
+export async function importStatement(format: "csv" | "camt053", content: string): Promise<PayStatementResult> {
+  if ((format !== "csv" && format !== "camt053") || typeof content !== "string") return { ...bad, problems: [] };
+  if (content.trim().length === 0 || content.length > 1_000_000) return { ...bad, problems: [] };
+  let error: unknown = null;
+  const result = await callApi(async (api) => {
+    const answer = await api.POST("/v1/pay/reconciliation/statements", { body: { format, content } });
+    error = answer.error;
+    return answer;
+  });
+  if (result.ok) {
+    return {
+      ok: true,
+      reference: result.data.statement.reference,
+      lines: result.data.statement.line_count,
+      matched: result.data.matched,
+      unmatched: result.data.unmatched,
+    };
+  }
+  return { ok: false, code: result.code, problems: importProblems(error) };
+}
+
+/** Match the unmatched statement lines again now (the hourly job does the same). */
+export async function matchStatementsNow(): Promise<ActionResult<{ matched: number; unmatched: number }>> {
+  const result = await callApi((api) => api.POST("/v1/pay/reconciliation/match"));
+  return toAction(result, (data) => ({ matched: data.matched, unmatched: data.unmatched }));
+}
+
 /**
  * Close a purchase order (it takes no more invoices) or cancel it (a second factor;
  * refused while an invoice of it is approved or paid). Both need a reason.

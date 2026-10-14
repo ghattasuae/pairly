@@ -57,6 +57,9 @@ export type PayExceptionItem = S["PayExceptionItemOut"];
 export type PayExceptionCategory = S["PayExceptionCategoryOut"];
 export type PayMessageDraft = S["PayDraftOut"];
 export type PayMessage = S["PayMessageOut"];
+export type PayReconciliation = S["PayReconciliationOut"];
+export type PayStatementLine = S["PayStatementLineOut"];
+export type PayUnexplained = S["PayUnexplainedOut"];
 
 // Vendor portal, the AP team's side (brief 4.7).
 export type PayPortalAccess = S["PayPortalAccessOut"];

@@ -39,6 +39,9 @@ attributes):
                       ``pay_inbound_drop``, every minute, development and test only:
                       deliver the ``.eml`` files dropped in ``PAIRLY_INBOUND_DROP_DIR``
                       (``pairly_pay.inbound_drop``).
+                      ``pay_reconciliation``, every hour: match unmatched bank
+                      statement lines with payments marked paid since the import
+                      (``pairly_pay.reconciliation``).
 
 Importing this module also registers the Pay tables on ``Base.metadata``.
 """
@@ -96,6 +99,7 @@ from pairly_pay.permissions import (
     PERMISSIONS,
 )
 from pairly_pay.portal import models as portal_models  # noqa: F401  (the portal tables)
+from pairly_pay.reconciliation import RECONCILIATION_JOB
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -186,6 +190,7 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
     ),
     INTAKE_JOB,
     DROP_JOB,
+    RECONCILIATION_JOB,
 )
 
 
