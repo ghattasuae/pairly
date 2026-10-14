@@ -25,8 +25,9 @@ Who does what (brief 4.1, 6.2):
   controllers). A ``manage`` action.
 * **Invoices** (``pay.invoice.*``): declared now, used by the invoice work packages.
   ``process`` is the AP clerk's work on an invoice (coding, matching).
-* ``pay.document.*``: onboarding documents and, later, invoices go through the engine's
-  documents with these permissions instead of the ``core.*`` defaults.
+* Documents: Pay declares no ``pay.document.*`` permissions yet, so its documents
+  (onboarding files) use the engine's ``core.document.*`` defaults; the invoice work
+  packages decide whether Pay needs its own.
 """
 
 from __future__ import annotations
@@ -48,8 +49,6 @@ INVOICE_READ: Final = "pay.invoice.read"
 INVOICE_PROPOSE: Final = "pay.invoice.propose"
 INVOICE_PROCESS: Final = "pay.invoice.process"
 INVOICE_APPROVE: Final = "pay.invoice.approve"
-DOCUMENT_READ: Final = "pay.document.read"
-DOCUMENT_UPLOAD: Final = "pay.document.upload"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -101,11 +100,5 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         INVOICE_APPROVE,
         "Approve an invoice for payment",
         frozenset({R.APPROVER, R.FINANCE_CONTROLLER}),
-    ),
-    PermissionSpec(DOCUMENT_READ, "View Pay documents", _READERS | {R.AGENT}),
-    PermissionSpec(
-        DOCUMENT_UPLOAD,
-        "Upload Pay documents",
-        frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
     ),
 )
