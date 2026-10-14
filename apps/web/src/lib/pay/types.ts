@@ -34,3 +34,6 @@ export type PayRunExcluded = S["PayRunExcludedOut"];
 export type PayRunPreview = S["PayRunPreview"];
 export type PayRulesList = S["PayRulesList"];
 export type PayRules = S["PayRulesOut"];
+export type PayPoSummary = S["PoSummary"];
+export type PayPoList = S["PoList"];
+export type PayPoImport = S["ImportOut"];

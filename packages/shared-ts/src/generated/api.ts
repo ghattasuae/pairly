@@ -3973,6 +3973,41 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/goods-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Receipts */
+        get: operations["list_receipts_v1_pay_goods_receipts_get"];
+        put?: never;
+        /** Create Receipt */
+        post: operations["create_receipt_v1_pay_goods_receipts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/goods-receipts/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Receipts */
+        post: operations["import_receipts_v1_pay_goods_receipts_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/invoices": {
         parameters: {
             query?: never;
@@ -4254,6 +4289,58 @@ export type paths = {
         put?: never;
         /** Open Link */
         post: operations["open_link_v1_pay_public_vendor_onboarding_open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Purchase Orders */
+        get: operations["list_purchase_orders_v1_pay_purchase_orders_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_v1_pay_purchase_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/purchase-orders/{po_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Purchase Order Detail */
+        get: operations["get_purchase_order_detail_v1_pay_purchase_orders__po_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/purchase-orders/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Pos */
+        post: operations["import_pos_v1_pay_purchase_orders_import_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5314,6 +5401,11 @@ export type components = {
             /** Reason */
             reason: string;
         };
+        /** CsvIn */
+        CsvIn: {
+            /** Csv */
+            csv: string;
+        };
         /**
          * Decision
          * @enum {string}
@@ -6201,6 +6293,25 @@ export type components = {
             key: string;
             /** Overridden */
             overridden: boolean;
+        };
+        /** GoodsReceiptIn */
+        GoodsReceiptIn: {
+            /** Grn Number */
+            grn_number: string;
+            /** Lines */
+            lines: components["schemas"]["ReceiptLineIn"][];
+            /**
+             * Po Id
+             * Format: uuid
+             */
+            po_id: string;
+            /** Received By */
+            received_by?: string | null;
+            /**
+             * Received Date
+             * Format: date
+             */
+            received_date: string;
         };
         /** HireAiDraftIn */
         HireAiDraftIn: {
@@ -10258,6 +10369,15 @@ export type components = {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ImportOut */
+        ImportOut: {
+            /** Created */
+            created: number;
+            /** Ids */
+            ids: string[];
+            /** Numbers */
+            numbers: string[];
+        };
         /** InboxOut */
         InboxOut: {
             /** Items */
@@ -12324,6 +12444,79 @@ export type components = {
             /** Questions */
             questions: components["schemas"]["PlanQuestion"][];
         };
+        /** PoDetail */
+        PoDetail: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Department */
+            department: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Invoices */
+            invoices: components["schemas"]["PoInvoiceOut"][];
+            /** Line Count */
+            line_count: number;
+            /** Lines */
+            lines: components["schemas"]["PoLineOut"][];
+            /** Match Type */
+            match_type: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Receipt Count */
+            receipt_count: number;
+            /** Receipts */
+            receipts: components["schemas"]["ReceiptOut"][];
+            /** Requester */
+            requester: string | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Vendor Reference */
+            vendor_reference: string | null;
+        };
+        /** PoInvoiceOut */
+        PoInvoiceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Matching */
+            matching: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+        };
         /** PolicyDocumentOut */
         PolicyDocumentOut: {
             /** Archived At */
@@ -12434,6 +12627,90 @@ export type components = {
             /** Type */
             type: string;
         };
+        /** PoLineIn */
+        PoLineIn: {
+            /** Description */
+            description: string;
+            /** Line No */
+            line_no: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit Price */
+            unit_price: number | string;
+        };
+        /** PoLineOut */
+        PoLineOut: {
+            /** Description */
+            description: string;
+            /** Invoiced */
+            invoiced: string;
+            /** Line No */
+            line_no: number;
+            /** Line Total */
+            line_total: string;
+            /** Quantity */
+            quantity: string;
+            /** Received */
+            received: string;
+            /** Unit Price */
+            unit_price: string;
+        };
+        /** PoList */
+        PoList: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["PoSummary"][];
+        };
+        /** PoSummary */
+        PoSummary: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Department */
+            department: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Line Count */
+            line_count: number;
+            /** Match Type */
+            match_type: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Receipt Count */
+            receipt_count: number;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Vendor Reference */
+            vendor_reference: string | null;
+        };
         /** PreferencesIn */
         PreferencesIn: {
             /** Channels */
@@ -12543,6 +12820,73 @@ export type components = {
             /** Created */
             created: boolean;
             version: components["schemas"]["PolicyVersionOut"];
+        };
+        /** PurchaseOrderIn */
+        PurchaseOrderIn: {
+            /** Currency */
+            currency: string;
+            /** Department */
+            department?: string | null;
+            /** Lines */
+            lines: components["schemas"]["PoLineIn"][];
+            /**
+             * Match Type
+             * @default 3-way
+             * @enum {string}
+             */
+            match_type: "2-way" | "3-way";
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Requester */
+            requester?: string | null;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+        };
+        /** ReceiptLineIn */
+        ReceiptLineIn: {
+            /** Po Line No */
+            po_line_no: number;
+            /** Quantity */
+            quantity: number | string;
+        };
+        /** ReceiptOut */
+        ReceiptOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Grn Number */
+            grn_number: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line Count */
+            line_count: number;
+            /**
+             * Po Id
+             * Format: uuid
+             */
+            po_id: string;
+            /** Received By */
+            received_by: string | null;
+            /**
+             * Received Date
+             * Format: date
+             */
+            received_date: string;
+            /** Source */
+            source: string;
         };
         /** ReplayIn */
         ReplayIn: {
@@ -21027,6 +21371,104 @@ export interface operations {
             };
         };
     };
+    list_receipts_v1_pay_goods_receipts_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                po_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_receipt_v1_pay_goods_receipts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoodsReceiptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_receipts_v1_pay_goods_receipts_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CsvIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_invoices_v1_pay_invoices_get: {
         parameters: {
             query?: {
@@ -21636,6 +22078,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayVendorSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_purchase_orders_v1_pay_purchase_orders_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                q?: string | null;
+                status?: ("open" | "closed" | "cancelled") | null;
+                vendor_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_v1_pay_purchase_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseOrderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_purchase_order_detail_v1_pay_purchase_orders__po_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                po_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_pos_v1_pay_purchase_orders_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CsvIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
                 };
             };
             /** @description Validation Error */

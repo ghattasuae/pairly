@@ -13,6 +13,7 @@
   invoice for approval (WP4.7).
 * ``approval_rules``: the approval rules in force and their versions, read only.
 * ``payment_runs``: propose, approve (in the inbox), export the bank file, mark paid.
+* ``purchase_orders``: purchase orders and goods receipts, created or imported from CSV.
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -27,6 +28,7 @@ from pairly_pay.api import (
     invoices,
     onboarding,
     payment_runs,
+    purchase_orders,
     vendors,
 )
 
@@ -37,3 +39,4 @@ router.include_router(onboarding.router)
 router.include_router(invoices.router)
 router.include_router(approval_rules.router)
 router.include_router(payment_runs.router)
+router.include_router(purchase_orders.router)

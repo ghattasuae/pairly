@@ -2922,7 +2922,8 @@
       "invites": "دعوات التسجيل",
       "invoices": "الفواتير",
       "runs": "دفعات السداد",
-      "rules": "قواعد الاعتماد"
+      "rules": "قواعد الاعتماد",
+      "orders": "أوامر الشراء"
     },
     "errors": {
       "bank_change_already_open": "لدى هذا المورد تغيير مفتوح في البيانات المصرفية. أكمله أو ألغه أولاً.",
@@ -2938,7 +2939,9 @@
       "not_approvable": "لا يمكن إرسال هذه الفاتورة للاعتماد بعد. راجع الأسباب الظاهرة.",
       "export_refused": "لم يُنشأ ملف البنك لأن شيئًا تغيّر منذ الاعتماد.",
       "nothing_to_pay": "لا توجد فاتورة معتمدة يمكن إدراجها في هذه الدفعة.",
-      "cash_limit_required": "حدّد سقفًا نقديًا للدفعة."
+      "cash_limit_required": "حدّد سقفًا نقديًا للدفعة.",
+      "invalid_purchase_data": "في الملف مشكلات. لم يُستورد شيء.",
+      "number_taken": "هذا الرقم مسجل من قبل."
     },
     "vendorStatus": {
       "pending": "بانتظار المراجعة",
@@ -3551,6 +3554,69 @@
       "cancel": "ألغِ هذه الدفعة",
       "cancelReason": "السبب",
       "confirmCancel": "ألغِ الدفعة"
+    },
+    "purchaseOrders": {
+      "title": "أوامر الشراء",
+      "intro": "أوامر الشراء وإيصالات استلام البضائع. تُطابق الفواتير معها: السعر والكمية والإجمالي، وما استُلم للبضائع.",
+      "importTitle": "الاستيراد من ملف CSV",
+      "importKind": "ما الذي تستورده",
+      "kindOrders": "أوامر الشراء",
+      "kindReceipts": "إيصالات استلام البضائع",
+      "file": "ملف CSV",
+      "import": "استيراد",
+      "ordersFormat": "صف لكل بند: po_number و vendor_reference و currency و order_date و match_type (2-way أو 3-way) و department و requester و line_no و description و quantity و unit_price. لا يُستورد شيء إذا كان في أي صف مشكلة.",
+      "receiptsFormat": "صف لكل بند مستلم: grn_number و po_number و received_date و received_by و po_line_no و quantity. لا يُستورد شيء إذا كان في أي صف مشكلة.",
+      "importedOrders": "{count, plural, zero {لم يُستورد أي أمر شراء.} one {استُورد أمر شراء واحد.} two {استُورد أمرا شراء.} few {استُوردت # أوامر شراء.} many {استُورد # أمر شراء.} other {استُورد # أمر شراء.}}",
+      "importedReceipts": "{count, plural, zero {لم يُستورد أي إيصال استلام.} one {استُورد إيصال استلام واحد.} two {استُورد إيصالا استلام.} few {استُوردت # إيصالات استلام.} many {استُورد # إيصال استلام.} other {استُورد # إيصال استلام.}}",
+      "problemRow": "الصف {row}:",
+      "problemFile": "الملف:",
+      "emptyTitle": "لا توجد أوامر شراء بعد",
+      "emptyBody": "استوردها من ملف CSV، أو أنشئها عبر واجهة البرمجة.",
+      "twoWay": "ثنائية",
+      "threeWay": "ثلاثية",
+      "status": {
+        "open": "مفتوح",
+        "closed": "مغلق",
+        "cancelled": "ملغى"
+      },
+      "col": {
+        "number": "رقم أمر الشراء",
+        "vendor": "المورد",
+        "status": "الحالة",
+        "match": "المطابقة",
+        "ordered": "تاريخ الطلب",
+        "amount": "المبلغ",
+        "receipts": "الإيصالات",
+        "invoices": "الفواتير"
+      },
+      "problem": {
+        "required": "مطلوب.",
+        "invalid_number": "ليس رقمًا صالحًا (حروف وأرقام و . / # _ - فقط).",
+        "invalid_currency": "ليس رمز عملة من ثلاثة أحرف.",
+        "invalid_date": "ليس تاريخًا (YYYY-MM-DD).",
+        "invalid_quantity": "ليس كمية أكبر من صفر (أرقام، وأربع خانات عشرية على الأكثر).",
+        "invalid_unit_price": "ليس سعرًا (أرقام، وأربع خانات عشرية على الأكثر، دون إشارة).",
+        "invalid_line_no": "ليس رقم بند.",
+        "invalid_match_type": "يجب أن يكون 2-way أو 3-way.",
+        "duplicate_line_no": "يكرر رقم بند.",
+        "formula_not_allowed": "يبدأ مثل صيغة جدول بيانات.",
+        "too_long": "طويل جدًا.",
+        "unknown_column": "ليس عمودًا معروفًا.",
+        "missing_column": "عمود ناقص.",
+        "duplicate_column": "عمود مكرر.",
+        "wrong_column_count": "عدد أعمدته يختلف عن صف العناوين.",
+        "differs_within_po": "يختلف عن الصف الأول من أمر الشراء نفسه.",
+        "differs_within_receipt": "يختلف عن الصف الأول من الإيصال نفسه.",
+        "vendor_not_found": "لا يطابق أي مورد مسجل.",
+        "po_not_found": "لا يطابق أي أمر شراء مسجل.",
+        "po_line_not_found": "لا يطابق أي بند في أمر الشراء هذا.",
+        "more_than_ordered": "سيستلم أكثر مما طُلب.",
+        "number_taken": "مسجل من قبل.",
+        "too_large": "أكبر من 1 ميغابايت.",
+        "too_many_rows": "فيه أكثر من 5,000 صف.",
+        "no_rows": "لا صفوف فيه.",
+        "malformed_csv": "ليس ملف CSV صالحًا."
+      }
     },
     "rules": {
       "title": "قواعد الاعتماد",

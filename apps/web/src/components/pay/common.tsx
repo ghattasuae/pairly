@@ -26,6 +26,8 @@ const PAY_CODES = new Set([
   "export_refused",
   "nothing_to_pay",
   "cash_limit_required",
+  "invalid_purchase_data",
+  "number_taken",
 ]);
 
 export function ErrorText({ code, className }: { code: string | null; className?: string }) {

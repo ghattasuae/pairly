@@ -55,7 +55,7 @@ export function PayUnavailable({ retry }: { retry: string }) {
 }
 
 /**
- * The Pay section's own tabs: vendors, invoices, payment runs, bank-detail changes,
+ * The Pay section's own tabs: vendors, invoices, purchase orders, payment runs, bank-detail changes,
  * onboarding invites, approval rules.
  */
 export async function PayHeader({
@@ -66,13 +66,14 @@ export async function PayHeader({
 }: {
   title: string;
   intro?: string;
-  current: "vendors" | "invoices" | "runs" | "changes" | "invites" | "rules" | null;
+  current: "vendors" | "invoices" | "orders" | "runs" | "changes" | "invites" | "rules" | null;
   permissions: string[];
 }) {
   const t = await getTranslations("Pay.tabs");
   const tabs = [
     { key: "vendors" as const, href: "/pay", show: permissions.includes("pay.vendor.read") },
     { key: "invoices" as const, href: "/pay/invoices", show: permissions.includes("pay.invoice.read") },
+    { key: "orders" as const, href: "/pay/purchase-orders", show: permissions.includes("pay.purchase_order.read") },
     { key: "runs" as const, href: "/pay/payment-runs", show: permissions.includes("pay.payment_run.read") },
     { key: "changes" as const, href: "/pay/bank-changes", show: permissions.includes("pay.bank_change.read") },
     { key: "invites" as const, href: "/pay/invites", show: permissions.includes("pay.vendor.write") },

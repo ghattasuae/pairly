@@ -396,3 +396,50 @@ export async function runAction(
   );
   return toAction(result, (run) => ({ run }));
 }
+
+// ------------------------------------------------------------------ purchase orders
+
+/** One problem of a CSV import: its row (1 is the header, 0 the whole file). */
+export interface PayImportProblem {
+  row: number;
+  field: string | null;
+  code: string;
+}
+
+export type PayImportResult =
+  | { ok: true; created: number; numbers: string[] }
+  | { ok: false; code: string; problems: PayImportProblem[] };
+
+function importProblems(error: unknown): PayImportProblem[] {
+  const list = (error as { errors?: unknown } | null)?.errors;
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((e): e is Record<string, unknown> => !!e && typeof e === "object")
+    .map((e) => ({
+      row: typeof e.row === "number" ? e.row : 0,
+      field: typeof e.field === "string" ? e.field : null,
+      code: typeof e.code === "string" ? e.code : "invalid",
+    }))
+    .slice(0, 50);
+}
+
+/**
+ * Import purchase orders or goods receipts from a CSV (one row per line). The API
+ * validates everything and creates nothing when any row has a problem; the problems
+ * come back with their rows.
+ */
+export async function importPurchaseCsv(kind: "orders" | "receipts", csv: string): Promise<PayImportResult> {
+  if ((kind !== "orders" && kind !== "receipts") || typeof csv !== "string") return { ...bad, problems: [] };
+  if (csv.trim().length === 0 || csv.length > 1_000_000) return { ...bad, problems: [] };
+  let error: unknown = null;
+  const result = await callApi(async (api) => {
+    const answer =
+      kind === "orders"
+        ? await api.POST("/v1/pay/purchase-orders/import", { body: { csv } })
+        : await api.POST("/v1/pay/goods-receipts/import", { body: { csv } });
+    error = answer.error;
+    return answer;
+  });
+  if (result.ok) return { ok: true, created: result.data.created, numbers: result.data.numbers };
+  return { ok: false, code: result.code, problems: importProblems(error) };
+}

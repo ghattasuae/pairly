@@ -2922,7 +2922,8 @@
       "invites": "Onboarding invites",
       "invoices": "Invoices",
       "runs": "Payment runs",
-      "rules": "Approval rules"
+      "rules": "Approval rules",
+      "orders": "Purchase orders"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -2938,7 +2939,9 @@
       "not_approvable": "This invoice cannot be sent for approval yet. Check the reasons shown.",
       "export_refused": "The bank file was not made because something changed since the approval.",
       "nothing_to_pay": "No approved invoice can go in this run.",
-      "cash_limit_required": "Set a cash limit for the run."
+      "cash_limit_required": "Set a cash limit for the run.",
+      "invalid_purchase_data": "The file has problems. Nothing was imported.",
+      "number_taken": "That number is already on file."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -3551,6 +3554,69 @@
       "cancel": "Cancel this run",
       "cancelReason": "Why",
       "confirmCancel": "Cancel the run"
+    },
+    "purchaseOrders": {
+      "title": "Purchase orders",
+      "intro": "Purchase orders and goods receipts. Invoices are matched against them: price, quantity and total, and for goods what was received.",
+      "importTitle": "Import from CSV",
+      "importKind": "What to import",
+      "kindOrders": "Purchase orders",
+      "kindReceipts": "Goods receipts",
+      "file": "CSV file",
+      "import": "Import",
+      "ordersFormat": "One row per line: po_number, vendor_reference, currency, order_date, match_type (2-way or 3-way), department, requester, line_no, description, quantity, unit_price. Nothing is imported when a row has a problem.",
+      "receiptsFormat": "One row per line received: grn_number, po_number, received_date, received_by, po_line_no, quantity. Nothing is imported when a row has a problem.",
+      "importedOrders": "{count, plural, one {# purchase order imported.} other {# purchase orders imported.}}",
+      "importedReceipts": "{count, plural, one {# goods receipt imported.} other {# goods receipts imported.}}",
+      "problemRow": "Row {row}:",
+      "problemFile": "The file:",
+      "emptyTitle": "No purchase orders yet",
+      "emptyBody": "Import them from CSV, or create them through the API.",
+      "twoWay": "2-way",
+      "threeWay": "3-way",
+      "status": {
+        "open": "Open",
+        "closed": "Closed",
+        "cancelled": "Cancelled"
+      },
+      "col": {
+        "number": "PO number",
+        "vendor": "Vendor",
+        "status": "Status",
+        "match": "Matching",
+        "ordered": "Ordered",
+        "amount": "Amount",
+        "receipts": "Receipts",
+        "invoices": "Invoices"
+      },
+      "problem": {
+        "required": "is required.",
+        "invalid_number": "is not a valid number (letters, digits and . / # _ - only).",
+        "invalid_currency": "is not a three letter currency code.",
+        "invalid_date": "is not a date (YYYY-MM-DD).",
+        "invalid_quantity": "is not a quantity above zero (digits, at most 4 decimals).",
+        "invalid_unit_price": "is not a price (digits, at most 4 decimals, no sign).",
+        "invalid_line_no": "is not a line number.",
+        "invalid_match_type": "must be 2-way or 3-way.",
+        "duplicate_line_no": "repeats a line number.",
+        "formula_not_allowed": "starts like a spreadsheet formula.",
+        "too_long": "is too long.",
+        "unknown_column": "is not a known column.",
+        "missing_column": "is a missing column.",
+        "duplicate_column": "a column appears twice.",
+        "wrong_column_count": "has a different number of columns than the header.",
+        "differs_within_po": "differs from the first row of the same PO.",
+        "differs_within_receipt": "differs from the first row of the same receipt.",
+        "vendor_not_found": "names no vendor on file.",
+        "po_not_found": "names no purchase order on file.",
+        "po_line_not_found": "names no line of that purchase order.",
+        "more_than_ordered": "would receive more than was ordered.",
+        "number_taken": "is already on file.",
+        "too_large": "is larger than 1 MB.",
+        "too_many_rows": "has more than 5,000 rows.",
+        "no_rows": "has no rows.",
+        "malformed_csv": "is not a valid CSV file."
+      }
     },
     "rules": {
       "title": "Approval rules",

@@ -34,6 +34,15 @@ Invoices (``pay_0002``, same rules):
 
 Checks (``pay_0003``): ``pay_invoices`` gains the comparison keys, the check results and
 the risk score of ``pairly_pay.checks``; ``pay_settings`` gains ``check_settings``.
+
+Purchase orders (``pay_0007``, same rules, ``pairly_pay.purchase_orders``):
+
+* ``pay_purchase_orders`` and ``pay_purchase_order_lines``: what was ordered from a
+  vendor (description, quantity, unit price, in the PO's currency), its status and
+  whether invoices match it 2-way (PO) or 3-way (PO and goods received).
+* ``pay_goods_receipts`` and ``pay_goods_receipt_lines``: what arrived, per PO line.
+* ``pay_invoices`` gains the PO it was matched with (``po_id``) and how its lines were
+  allocated to the PO lines (``po_match``), for the remaining quantity of later invoices.
 """
 
 from __future__ import annotations
@@ -589,6 +598,12 @@ class PayInvoice(Base, OrgScoped):
             ondelete="RESTRICT",
             name="fk_pay_invoices_payment_run_org",
         ),
+        ForeignKeyConstraint(
+            ["org_id", "po_id"],
+            ["pay_purchase_orders.org_id", "pay_purchase_orders.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_po_org",
+        ),
         CheckConstraint(
             "status NOT IN ('scheduled', 'paid') OR payment_run_id IS NOT NULL",
             name="scheduled_has_run",
@@ -606,6 +621,7 @@ class PayInvoice(Base, OrgScoped):
         Index("ix_pay_invoices_status", "org_id", "status", "created_at"),
         Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
         Index("ix_pay_invoices_number_key", "org_id", "vendor_id", "number_key"),
+        Index("ix_pay_invoices_po", "org_id", "po_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -702,6 +718,13 @@ class PayInvoice(Base, OrgScoped):
     paid_at: Mapped[datetime | None] = _ts()
     paid_by: Mapped[uuid.UUID | None] = _user_fk()
     payment_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Matching (``pay_0007``, ``pairly_pay.checks.matching``): the PO the invoice cites
+    # when it is on file, and the allocation of the invoice lines to its lines
+    # ({po_id, status, lines: [{invoice_line, po_line_no, quantity}]}).
+    po_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    po_match: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
 
@@ -933,3 +956,164 @@ class PayPaymentRunItem(Base, OrgScoped):
     payment_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ purchase orders (pay_0007)
+
+PURCHASE_ORDERS: Final = "pay_purchase_orders"
+PURCHASE_ORDER_LINES: Final = "pay_purchase_order_lines"
+GOODS_RECEIPTS: Final = "pay_goods_receipts"
+GOODS_RECEIPT_LINES: Final = "pay_goods_receipt_lines"
+
+
+class PoStatus(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+    CANCELLED = "cancelled"
+
+
+class MatchType(StrEnum):
+    # Invoice against the PO only (services).
+    TWO_WAY = "2-way"
+    # Invoice against the PO and the goods received (goods).
+    THREE_WAY = "3-way"
+
+
+class RecordSource(StrEnum):
+    API = "api"
+    CSV = "csv"
+
+
+class PayPurchaseOrder(Base, OrgScoped):
+    """A purchase order (brief 4.5.1): what was ordered from a vendor, at what price."""
+
+    __tablename__ = PURCHASE_ORDERS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_purchase_orders_org_id_id"),
+        # One PO per number (compared without case, spaces or separators).
+        UniqueConstraint("org_id", "number_key", name="uq_pay_purchase_orders_org_id_number_key"),
+        ForeignKeyConstraint(
+            ["org_id", "vendor_id"],
+            ["pay_vendors.org_id", "pay_vendors.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_purchase_orders_vendor_org",
+        ),
+        CheckConstraint(f"status IN ({_in(PoStatus)})", name="status_valid"),
+        CheckConstraint(f"match_type IN ({_in(MatchType)})", name="match_type_valid"),
+        CheckConstraint(f"source IN ({_in(RecordSource)})", name="source_valid"),
+        CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency_format"),
+        CheckConstraint("subtotal >= 0", name="subtotal_not_negative"),
+        CheckConstraint("line_count > 0", name="has_lines"),
+        Index("ix_pay_purchase_orders_vendor", "org_id", "vendor_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    po_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    number_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    vendor_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    match_type: Mapped[str] = mapped_column(String(8), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    order_date: Mapped[date] = mapped_column(Date, nullable=False)
+    department: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    requester: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    line_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[str] = mapped_column(String(8), nullable=False)
+    created_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+
+
+class PayPurchaseOrderLine(Base, OrgScoped):
+    """One line of a purchase order (in the PO's currency)."""
+
+    __tablename__ = PURCHASE_ORDER_LINES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_purchase_order_lines_org_id_id"),
+        UniqueConstraint("org_id", "po_id", "line_no", name="uq_pay_purchase_order_lines_line"),
+        ForeignKeyConstraint(
+            ["org_id", "po_id"],
+            ["pay_purchase_orders.org_id", "pay_purchase_orders.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_purchase_order_lines_po_org",
+        ),
+        CheckConstraint("line_no > 0", name="line_no_positive"),
+        CheckConstraint("quantity > 0", name="quantity_positive"),
+        CheckConstraint("unit_price >= 0", name="unit_price_not_negative"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    po_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    line_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    line_total: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayGoodsReceipt(Base, OrgScoped):
+    """A goods receipt (GRN): what arrived against a purchase order."""
+
+    __tablename__ = GOODS_RECEIPTS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_goods_receipts_org_id_id"),
+        UniqueConstraint("org_id", "number_key", name="uq_pay_goods_receipts_org_id_number_key"),
+        ForeignKeyConstraint(
+            ["org_id", "po_id"],
+            ["pay_purchase_orders.org_id", "pay_purchase_orders.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_goods_receipts_po_org",
+        ),
+        CheckConstraint(f"source IN ({_in(RecordSource)})", name="source_valid"),
+        CheckConstraint("line_count > 0", name="has_lines"),
+        Index("ix_pay_goods_receipts_po", "org_id", "po_id", "received_date"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    grn_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    number_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    po_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    received_date: Mapped[date] = mapped_column(Date, nullable=False)
+    received_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    line_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[str] = mapped_column(String(8), nullable=False)
+    created_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayGoodsReceiptLine(Base, OrgScoped):
+    """The quantity received of one PO line."""
+
+    __tablename__ = GOODS_RECEIPT_LINES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_goods_receipt_lines_org_id_id"),
+        UniqueConstraint(
+            "org_id", "receipt_id", "po_line_no", name="uq_pay_goods_receipt_lines_line"
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "receipt_id"],
+            ["pay_goods_receipts.org_id", "pay_goods_receipts.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_goods_receipt_lines_receipt_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "po_id"],
+            ["pay_purchase_orders.org_id", "pay_purchase_orders.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_goods_receipt_lines_po_org",
+        ),
+        CheckConstraint("po_line_no > 0", name="po_line_no_positive"),
+        CheckConstraint("quantity > 0", name="quantity_positive"),
+        Index("ix_pay_goods_receipt_lines_po", "org_id", "po_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    receipt_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    po_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    po_line_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    created_at: Mapped[datetime] = _created()

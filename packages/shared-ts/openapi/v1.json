@@ -1174,6 +1174,22 @@
         "title": "CorrectionOut",
         "type": "object"
       },
+      "CsvIn": {
+        "additionalProperties": false,
+        "properties": {
+          "csv": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Csv",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv"
+        ],
+        "title": "CsvIn",
+        "type": "object"
+      },
       "Decision": {
         "enum": [
           "approve",
@@ -3772,6 +3788,55 @@
           "overridden"
         ],
         "title": "FlagOut",
+        "type": "object"
+      },
+      "GoodsReceiptIn": {
+        "additionalProperties": false,
+        "properties": {
+          "grn_number": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
+            "title": "Grn Number",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptLineIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "po_id": {
+            "format": "uuid",
+            "title": "Po Id",
+            "type": "string"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "received_date": {
+            "format": "date",
+            "title": "Received Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grn_number",
+          "po_id",
+          "received_date",
+          "lines"
+        ],
+        "title": "GoodsReceiptIn",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -15531,6 +15596,36 @@
         "title": "HitOut",
         "type": "object"
       },
+      "ImportOut": {
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "integer"
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Ids",
+            "type": "array"
+          },
+          "numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Numbers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "created",
+          "ids",
+          "numbers"
+        ],
+        "title": "ImportOut",
+        "type": "object"
+      },
       "InboxOut": {
         "properties": {
           "items": {
@@ -21959,6 +22054,448 @@
         "title": "PlanStage",
         "type": "object"
       },
+      "PoDetail": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_count": {
+            "title": "Invoice Count",
+            "type": "integer"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PoInvoiceOut"
+            },
+            "title": "Invoices",
+            "type": "array"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PoLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "match_type": {
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "title": "Po Number",
+            "type": "string"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "receipts": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptOut"
+            },
+            "title": "Receipts",
+            "type": "array"
+          },
+          "requester": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "title": "Subtotal",
+            "type": "string"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "vendor_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Reference"
+          }
+        },
+        "required": [
+          "id",
+          "po_number",
+          "vendor_id",
+          "vendor_name",
+          "vendor_reference",
+          "status",
+          "match_type",
+          "currency",
+          "order_date",
+          "department",
+          "subtotal",
+          "line_count",
+          "receipt_count",
+          "invoice_count",
+          "source",
+          "created_at",
+          "requester",
+          "lines",
+          "receipts",
+          "invoices"
+        ],
+        "title": "PoDetail",
+        "type": "object"
+      },
+      "PoInvoiceOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "matching": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matching"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_number",
+          "status",
+          "total",
+          "matching"
+        ],
+        "title": "PoInvoiceOut",
+        "type": "object"
+      },
+      "PoLineIn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "line_no": {
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Line No",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Unit Price"
+          }
+        },
+        "required": [
+          "line_no",
+          "description",
+          "quantity",
+          "unit_price"
+        ],
+        "title": "PoLineIn",
+        "type": "object"
+      },
+      "PoLineOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "invoiced": {
+            "title": "Invoiced",
+            "type": "string"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          },
+          "line_total": {
+            "title": "Line Total",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "received": {
+            "title": "Received",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_no",
+          "description",
+          "quantity",
+          "unit_price",
+          "line_total",
+          "received",
+          "invoiced"
+        ],
+        "title": "PoLineOut",
+        "type": "object"
+      },
+      "PoList": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PoSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "counts"
+        ],
+        "title": "PoList",
+        "type": "object"
+      },
+      "PoSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_count": {
+            "title": "Invoice Count",
+            "type": "integer"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "match_type": {
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "title": "Po Number",
+            "type": "string"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "title": "Subtotal",
+            "type": "string"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "vendor_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Reference"
+          }
+        },
+        "required": [
+          "id",
+          "po_number",
+          "vendor_id",
+          "vendor_name",
+          "vendor_reference",
+          "status",
+          "match_type",
+          "currency",
+          "order_date",
+          "department",
+          "subtotal",
+          "line_count",
+          "receipt_count",
+          "invoice_count",
+          "source",
+          "created_at"
+        ],
+        "title": "PoSummary",
+        "type": "object"
+      },
       "PolicyDocumentOut": {
         "properties": {
           "archived_at": {
@@ -22657,6 +23194,172 @@
           "version"
         ],
         "title": "PublishOut",
+        "type": "object"
+      },
+      "PurchaseOrderIn": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PoLineIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "match_type": {
+            "default": "3-way",
+            "enum": [
+              "2-way",
+              "3-way"
+            ],
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
+            "title": "Po Number",
+            "type": "string"
+          },
+          "requester": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "po_number",
+          "vendor_id",
+          "currency",
+          "order_date",
+          "lines"
+        ],
+        "title": "PurchaseOrderIn",
+        "type": "object"
+      },
+      "ReceiptLineIn": {
+        "additionalProperties": false,
+        "properties": {
+          "po_line_no": {
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Po Line No",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "po_line_no",
+          "quantity"
+        ],
+        "title": "ReceiptLineIn",
+        "type": "object"
+      },
+      "ReceiptOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "grn_number": {
+            "title": "Grn Number",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "po_id": {
+            "format": "uuid",
+            "title": "Po Id",
+            "type": "string"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "received_date": {
+            "format": "date",
+            "title": "Received Date",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "grn_number",
+          "po_id",
+          "received_date",
+          "received_by",
+          "line_count",
+          "source",
+          "created_at"
+        ],
+        "title": "ReceiptOut",
         "type": "object"
       },
       "ReplayIn": {
@@ -36189,6 +36892,152 @@
         ]
       }
     },
+    "/v1/pay/goods-receipts": {
+      "get": {
+        "operationId": "list_receipts_v1_pay_goods_receipts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "po_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Po Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReceiptOut"
+                  },
+                  "title": "Response List Receipts V1 Pay Goods Receipts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Receipts",
+        "tags": [
+          "pay"
+        ]
+      },
+      "post": {
+        "operationId": "create_receipt_v1_pay_goods_receipts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoodsReceiptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Receipt",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/goods-receipts/import": {
+      "post": {
+        "operationId": "import_receipts_v1_pay_goods_receipts_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Receipts",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
     "/v1/pay/invoices": {
       "get": {
         "operationId": "list_invoices_v1_pay_invoices_get",
@@ -37106,6 +37955,229 @@
           }
         },
         "summary": "Open Link",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/purchase-orders": {
+      "get": {
+        "operationId": "list_purchase_orders_v1_pay_purchase_orders_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vendor_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vendor Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "closed",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Purchase Orders",
+        "tags": [
+          "pay"
+        ]
+      },
+      "post": {
+        "operationId": "create_v1_pay_purchase_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseOrderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/purchase-orders/import": {
+      "post": {
+        "operationId": "import_pos_v1_pay_purchase_orders_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Pos",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/purchase-orders/{po_id}": {
+      "get": {
+        "operationId": "get_purchase_order_detail_v1_pay_purchase_orders__po_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "po_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Po Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Purchase Order Detail",
         "tags": [
           "pay"
         ]
