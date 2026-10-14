@@ -15,6 +15,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from collections import Counter
+from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 
@@ -87,3 +88,25 @@ def test_next_steps_name_the_drop_command() -> None:
     assert "make inbound-drop FILE=/x/1-clean.eml" in text
     assert "pay+demo.x@inbound.test" in text
     assert "—" not in text
+
+
+def test_the_clean_demo_invoice_has_its_po_and_is_under_the_rule_limit() -> None:
+    ds = build()
+    clean = next(s for s in ds.docs if s.record.demo == "clean")
+    assert clean.record.id == demo_pay.CLEAN_DOC
+    numbers = demo_pay.po_numbers(ds)
+    assert len(set(numbers)) == len(numbers)
+    on_file = {p.po_number: p for p in ds.purchase_orders}
+    assert set(numbers) <= set(on_file)
+    clean_po = on_file[clean.record.truth.po_number or ""]
+    assert clean_po.match_type == "3-way"
+    assert any(r.po_number == clean_po.po_number for r in ds.receipts)
+    assert clean.record.truth.currency == "AED"
+    assert Decimal(clean.record.truth.total) < Decimal(demo_pay.RULE_LIMIT)
+    # The invoice that waits for the approver stays over the limit (a person decides).
+    waiting = [t.doc_id for t in demo_pay.TARGETS if t.status == "awaiting_approval"]
+    assert all(
+        Decimal(ds.doc(d).record.truth.total) >= Decimal(demo_pay.RULE_LIMIT) for d in waiting
+    )
+    seeded = {t.doc_id for t in demo_pay.TARGETS}
+    assert set(demo_pay.PO_DOCS) - {demo_pay.CLEAN_DOC} <= seeded

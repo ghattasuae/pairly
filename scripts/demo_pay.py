@@ -36,8 +36,13 @@ Idempotent: what exists is found and moved on from where it is, never made twice
 inbound address is the exception: each run rotates it (the token is shown only once)
 and writes the demo emails again for the new address.
 
-Purchase orders and goods receipts are not seeded: Pay stores neither yet (PO and
-receipt matching is M5). The clean demo invoice carries its PO number.
+Purchase orders and goods receipts (``PO_DOCS``): the synthetic POs, with their goods
+receipts, that the clean demo invoice and a few recorded invoices cite, created by the AP
+clerk through the API before any invoice is read, so they are matched. Approval by a
+rule is on in the organisation's Pay settings for matched, low-risk AED invoices under
+``RULE_LIMIT``: after ``make inbound-drop``, the clean demo invoice reads to ready,
+matched to PO-2026-0079 with its goods receipt; sent for approval, the rule approves it;
+then it can be scheduled in a new payment run proposal.
 """
 
 from __future__ import annotations
@@ -128,6 +133,14 @@ DEMO_FILES: Final = {
     "bank_change": "3-bank-change.eml",
 }
 PARSE: Final = ParseOptions(ocr_languages="eng")
+# Approval by a rule (``pairly_pay.payment_settings``): matched, low-risk AED invoices
+# under this amount. The clean demo invoice is AED 6,507.27.
+RULE_LIMIT: Final = "10000"
+# Invoices whose synthetic PO (and goods receipts) are seeded: the clean demo invoice,
+# and recorded invoices of TARGETS (exact 3-way, price within and over the tolerance,
+# 2-way services, the first invoice of a PO with two).
+CLEAN_DOC: Final = "inv-0165"
+PO_DOCS: Final = (CLEAN_DOC, "inv-0001", "inv-0030", "inv-0037", "inv-0047", "inv-0073")
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -383,6 +396,91 @@ async def seed_vendors(
     if len(by_synth) != len(ds.vendors):
         raise SeedError("not every synthetic vendor is on file")
     return by_synth, [f"pay vendors: {len(created)} created, {len(by_synth)} on file"]
+
+
+# ------------------------------------------------------------------ purchase orders
+
+
+def po_numbers(ds: Dataset) -> list[str]:
+    """The PO numbers of ``PO_DOCS``, in order."""
+    out: list[str] = []
+    for doc_id in PO_DOCS:
+        number = ds.doc(doc_id).record.truth.po_number
+        if number is None:
+            raise SeedError(f"{doc_id} cites no purchase order")
+        out.append(number)
+    return out
+
+
+async def seed_purchase_orders(
+    api: PayApi,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    ds: Dataset,
+    vendors: dict[str, uuid.UUID],
+) -> list[str]:
+    """The POs and goods receipts of ``PO_DOCS``, created by the AP clerk where missing."""
+    numbers = po_numbers(ds)
+    rows = await _rows(sessionmaker, api.org_id, "SELECT id, po_number FROM pay_purchase_orders")
+    known = {str(r.po_number): str(r.id) for r in rows}
+    grns = {
+        str(r.grn_number)
+        for r in await _rows(sessionmaker, api.org_id, "SELECT grn_number FROM pay_goods_receipts")
+    }
+    created = received = 0
+    for number in numbers:
+        (po,) = [p for p in ds.purchase_orders if p.po_number == number]
+        if number not in known:
+            body = await api.ok(
+                "POST",
+                "/v1/pay/purchase-orders",
+                CLERK,
+                status=201,
+                json={
+                    "po_number": po.po_number,
+                    "vendor_id": str(vendors[po.vendor_id]),
+                    "currency": po.currency,
+                    "order_date": po.date,
+                    "match_type": po.match_type,
+                    "department": po.department,
+                    "requester": po.requester,
+                    "lines": [
+                        {
+                            "line_no": x.line_no,
+                            "description": x.description,
+                            "quantity": x.quantity,
+                            "unit_price": x.unit_price,
+                        }
+                        for x in po.lines
+                    ],
+                },
+            )
+            known[number] = str(body["id"])
+            created += 1
+        for grn in (r for r in ds.receipts if r.po_number == number):
+            if grn.grn_number in grns:
+                continue
+            await api.ok(
+                "POST",
+                "/v1/pay/goods-receipts",
+                CLERK,
+                status=201,
+                json={
+                    "grn_number": grn.grn_number,
+                    "po_id": known[number],
+                    "received_date": grn.date,
+                    "received_by": grn.received_by,
+                    "lines": [
+                        {"po_line_no": x.po_line_no, "quantity": x.quantity_received}
+                        for x in grn.lines
+                    ],
+                },
+            )
+            grns.add(grn.grn_number)
+            received += 1
+    return [
+        f"pay purchase orders: {created} created, {len(numbers)} on file for the demo "
+        f"({received} goods receipts recorded)"
+    ]
 
 
 # ------------------------------------------------------------------ history
@@ -976,8 +1074,10 @@ async def counts(
         sessionmaker, org_id, "SELECT status, count(*) AS n FROM pay_payment_runs GROUP BY status"
     )
     vendors = await _rows(sessionmaker, org_id, "SELECT count(*) AS n FROM pay_vendors")
+    pos = await _rows(sessionmaker, org_id, "SELECT count(*) AS n FROM pay_purchase_orders")
     return {
         "vendors": int(vendors[0].n),
+        "purchase_orders": int(pos[0].n),
         "invoices": {str(r.status): int(r.n) for r in statuses},
         "tickets": {str(r.status): int(r.n) for r in tickets},
         "payment_runs": {str(r.status): int(r.n) for r in runs},
@@ -1014,11 +1114,16 @@ async def seed_pay(
                     "payer_name": "Pairly Demo Trading LLC",
                     "payer_iban": make_iban(BANK_BY_KEY["ae_sahil"], payer),
                     "payer_bic": BANK_BY_KEY["ae_sahil"].bic,
+                    # Approval by a rule: matched, low-risk AED invoices under the limit.
+                    "auto_approve_low_risk": True,
+                    "auto_approve_limit": RULE_LIMIT,
+                    "auto_approve_currency": "AED",
                 },
             },
         )
         vendors, lines = await seed_vendors(api, sessionmaker, ds)
         seed.lines += lines
+        seed.lines += await seed_purchase_orders(api, sessionmaker, ds, vendors)
         history_people = HistoryPeople(clerk=people[CLERK][0], finance=people[FINANCE][0])
         seed.lines += await seed_history(
             sessionmaker, org_id, ds, vendors, ingestion, history_people
@@ -1069,10 +1174,15 @@ def next_steps(seed: PaySeed, web_url: str) -> list[str]:
         f"    two), or copy them into {drop}/ for the worker to pick up within a",
         "    minute. Then sign in as the AP clerk (demo-pay-clerk@example.test) and open",
         f"    {web_url.rstrip('/')}/en/pay/invoices.",
-        "  - Invoice 1 (clean, PO number on it) reads to ready; invoice 2 is flagged as a",
-        "    near duplicate with the original side by side; invoice 3 is blocked: new",
-        "    bank details open a change ticket and hold the vendor, with the lookalike",
-        "    sender domain and the hidden text found.",
+        "  - Invoice 1 (clean) reads to ready, matched to purchase order PO-2026-0079 and",
+        "    its goods receipt (3-way). Send it for approval as the AP clerk: the rule",
+        f"    approves it (matched, low risk, under AED {RULE_LIMIT}). Then schedule it:",
+        "    Payment runs, propose a run (AED) that includes it.",
+        "  - Invoice 2 is flagged as a near duplicate with the original side by side;",
+        "    invoice 3 is blocked: new bank details open a change ticket and hold the",
+        "    vendor, with the lookalike sender domain and the hidden text found.",
+        "  - Purchase orders: the demo POs and goods receipts are on the Purchase orders",
+        "    page (import more from CSV there).",
         "  - Bank-detail changes: one waits for its call-back (verify it as the AP clerk",
         "    on the number on file, then approve as the approver and the finance",
         "    controller); one is cooling off after two approvals.",

@@ -25,9 +25,11 @@ Idempotent: a second run finds everything in place and changes nothing.
    fake calendar, one candidate withdrawn by themselves, and one candidate left waiting
    longer than the response SLA (the anti-ghosting card).
 6. Pay (``scripts/demo_pay.py``): the AP clerk, approver and finance controller, the 34
-   synthetic vendors, a history of paid invoices, invoices in every status, a payment
-   run awaiting approval, two bank-detail change tickets, and the three demo emails for
-   the rotated inbound address, ready for ``make inbound-drop`` (not delivered here).
+   synthetic vendors, the purchase orders and goods receipts the demo invoices cite,
+   approval by a rule for matched low-risk invoices, a history of paid invoices,
+   invoices in every status, a payment run awaiting approval, two bank-detail change
+   tickets, and the three demo emails for the rotated inbound address, ready for
+   ``make inbound-drop`` (not delivered here).
 
 Refuses to run unless ``PAIRLY_DEVSEED=1`` and ``PAIRLY_ENV`` is development or test.
 """
