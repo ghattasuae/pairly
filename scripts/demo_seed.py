@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""``make demo``: a complete Pairly Hire demo on the native stack. Development only.
+"""``make demo``: a complete Pairly Hire and Pay demo on the native stack. Development only.
 
     scripts/local_stack.sh exec demo -- python scripts/demo_seed.py
 
@@ -24,6 +24,10 @@ Idempotent: a second run finds everything in place and changes nothing.
 5. As the recruiter: candidates moved into every stage, two interviews booked on the
    fake calendar, one candidate withdrawn by themselves, and one candidate left waiting
    longer than the response SLA (the anti-ghosting card).
+6. Pay (``scripts/demo_pay.py``): the AP clerk, approver and finance controller, the 34
+   synthetic vendors, a history of paid invoices, invoices in every status, a payment
+   run awaiting approval, two bank-detail change tickets, and the three demo emails for
+   the rotated inbound address, ready for ``make inbound-drop`` (not delivered here).
 
 Refuses to run unless ``PAIRLY_DEVSEED=1`` and ``PAIRLY_ENV`` is development or test.
 """
@@ -98,6 +102,10 @@ ROOT: Final = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     # The synthetic data package lives at the repository root (run as a plain script).
     sys.path.insert(0, str(ROOT))
+
+from demo_pay import PEOPLE as PAY_PEOPLE  # noqa: E402
+from demo_pay import next_steps as pay_next_steps  # noqa: E402
+from demo_pay import seed_pay, seed_people  # noqa: E402
 
 from synth.hire.dataset import DocSpec, build  # noqa: E402
 from synth.hire.interviews import (  # noqa: E402
@@ -264,6 +272,9 @@ async def seed_org(
             )
             if created is not None:
                 tokens[REFERRER_EMAIL] = created.token
+            pay_tokens = await seed_people(session, registry)
+            tokens.update(pay_tokens)
+            lines.append(f"pay people: {len(pay_tokens)} invited, {len(PAY_PEOPLE)} in all")
     return Seeded(org_id, tokens, lines)
 
 
@@ -822,11 +833,15 @@ async def run(owner_url: str, auth_url: str, api_url: str, web_url: str) -> None
         seeded.lines.extend(await arrange(sessionmaker, registry, seeded.org_id, people))
         seeded.lines.extend(await talent_pool(sessionmaker, seeded.org_id, people))
         result = await summary(sessionmaker, seeded.org_id)
+        local_dir = Path(os.environ.get("PAIRLY_LOCAL_DIR") or ROOT / ".local")
+        pay = await seed_pay(sessionmaker, seeded.org_id, ADMIN_EMAIL, local_dir)
+        seeded.lines.extend(pay.lines)
     finally:
         await engine.dispose()
     for line in seeded.lines:
         print(f"  {line}")
     print(f"  summary: {json.dumps(result, sort_keys=True)}")
+    print(f"  pay: {json.dumps(pay.counts, sort_keys=True)}")
     outbox = os.environ.get("PAIRLY_OUTBOX_DIR", ".local/mail")
     print("")
     print(f"Pairly demo is ready: {web_url.rstrip('/')}/en/sign-in")
@@ -843,6 +858,8 @@ async def run(owner_url: str, auth_url: str, api_url: str, web_url: str) -> None
     print(f"  - Careers page: {web_url.rstrip('/')}/en/careers/{ORG_SLUG}")
     print("  - Expense example: sign in as the expense submitter and upload a receipt from")
     print("    synth/expense/receipts, then decide it as the expense approver.")
+    for line in pay_next_steps(pay, web_url):
+        print(f"  {line}" if not line.startswith("Pay") else f"  - {line}")
     print("  - Stop everything with make local-down.")
 
 

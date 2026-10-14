@@ -214,6 +214,8 @@ local_demo_env() {
     "PAIRLY_DATABASE_URL_OWNER=$(local_db_url pairly_owner "$PAIRLY_OWNER_DB_PASSWORD" "$POSTGRES_DB" postgresql+asyncpg)"
     "PAIRLY_AUTH_DATABASE_URL=$(local_db_url pairly_auth "$PAIRLY_AUTH_DB_PASSWORD" "$POSTGRES_DB")"
     "PAIRLY_DEVSEED=1"
+    # Where the Pay demo emails go (<dir>/inbound-demo/), next to .local/inbound/.
+    "PAIRLY_LOCAL_DIR=$LOCAL_DIR"
   )
 }
 
