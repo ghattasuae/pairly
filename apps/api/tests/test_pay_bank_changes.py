@@ -566,3 +566,33 @@ async def test_tenant_isolation_of_tickets(
     # Auditors read tickets, never act on them.
     assert (await api.call("GET", path, world, "auditor")).status_code == 200
     assert (await _call(api, world, ticket, "confirmed", who="auditor")).status_code == 403
+
+
+async def test_activation_rechecks_and_fails_closed(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """A tampered ticket (the verifier listed as an approver) never activates: it
+    fails, the old details stay and the hold becomes sticky."""
+    api = pay_api
+    vendor = await _vendor(api, world, 7)
+    ticket = await _open(api, world, vendor, bank_index=11)
+    verified = await _verified(api, world, ticket)
+    for who in ("approver", "approver2"):
+        assert (await api.decide(world, who, verified["approval_id"])).status_code == 200
+    assert (await _ticket(api, world, ticket["id"]))["status"] == "cooling_off"
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_bank_change_tickets SET activates_at = now() - interval '1 minute', "
+        "approver_ids = CAST(:a AS jsonb) WHERE id = :i",
+        {"i": ticket["id"], "a": json.dumps([str(world.id("clerk2")), str(world.id("approver"))])},
+    )
+    async with await api.in_org(world) as session, session.begin():
+        assert await activate_due(session) == {"activated": 0, "failed": 1}
+    failed = await _ticket(api, world, ticket["id"])
+    assert failed["status"] == "failed"
+    assert failed["outcome"] == "activation_refused:requester_or_verifier_approved"
+    assert failed["vendor_payment_hold"] is True
+    assert failed["vendor_hold_reason"] == "approval_not_possible"
+    after = await api.ok("GET", f"/v1/pay/vendors/{vendor['id']}", world, "clerk")
+    assert after["iban_masked"] == vendor["iban_masked"]

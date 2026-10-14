@@ -632,8 +632,10 @@ async def activate(session: AsyncSession, ticket: PayBankChangeTicket, *, now: d
     missing or the locked details changed; the ticket then fails and the hold stays."""
     if ticket.status not in {TicketStatus.AWAITING_APPROVAL.value, TicketStatus.COOLING_OFF.value}:
         raise ActivationRefusedError("ticket_not_approved")
-    if ticket.approved_at is None or len(ticket.approver_ids) < 2:
+    if ticket.approved_at is None or len(set(ticket.approver_ids)) < 2:
         raise ActivationRefusedError("dual_approval_missing")
+    if {str(p) for p in preparers(ticket)} & set(ticket.approver_ids):
+        raise ActivationRefusedError("requester_or_verifier_approved")
     vendor = await get_vendor(session, ticket.vendor_id, lock=True)
     proposed = await _account(session, ticket.proposed_account_id)
     if (
