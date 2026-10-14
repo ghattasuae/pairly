@@ -4149,5 +4149,24 @@
       "awaiting_approval": "Waiting for approval",
       "cooling_off": "Approved, waiting period"
     }
+  },
+  "SlackConnect": {
+    "title": "Connect Slack to Pairly",
+    "loading": "Opening the link",
+    "signInTitle": "Sign in to connect Slack",
+    "signInBody": "Sign in with the Pairly account you want to use from Slack. You come back here afterwards.",
+    "body": "You asked to connect your Slack account with /pairly connect. Then you can act on approvals from Slack.",
+    "as": "You are signed in to Pairly as {email}.",
+    "notYou": "Only confirm if you ran /pairly connect yourself just now.",
+    "confirm": "Connect my Slack account",
+    "invalidTitle": "This link does not work any more",
+    "invalid": "Connect links work once and expire after 10 minutes.",
+    "again": "Run /pairly connect in Slack again for a new link.",
+    "unavailableTitle": "Pairly could not connect Slack",
+    "unavailable": "Please try again in a moment.",
+    "tryAgain": "Try again",
+    "doneTitle": "Slack is connected",
+    "done": "Your Slack account is now linked to Pairly. Approval messages in Slack open in Pairly for you.",
+    "openInbox": "Open the approval inbox"
   }
 }

@@ -4149,5 +4149,24 @@
       "awaiting_approval": "بانتظار الموافقة",
       "cooling_off": "تمت الموافقة، فترة الانتظار"
     }
+  },
+  "SlackConnect": {
+    "title": "ربط Slack مع Pairly",
+    "loading": "جار فتح الرابط",
+    "signInTitle": "سجل الدخول لربط Slack",
+    "signInBody": "سجل الدخول بحساب Pairly الذي تريد استخدامه من Slack. ستعود إلى هنا بعد ذلك.",
+    "body": "طلبت ربط حسابك في Slack عبر الأمر /pairly connect. بعد ذلك يمكنك التعامل مع الموافقات من Slack.",
+    "as": "أنت مسجل الدخول إلى Pairly باسم {email}.",
+    "notYou": "لا تؤكد إلا إذا نفذت الأمر /pairly connect بنفسك قبل قليل.",
+    "confirm": "ربط حسابي في Slack",
+    "invalidTitle": "هذا الرابط لم يعد يعمل",
+    "invalid": "روابط الربط تعمل مرة واحدة وتنتهي صلاحيتها بعد 10 دقائق.",
+    "again": "نفذ الأمر /pairly connect في Slack مرة أخرى للحصول على رابط جديد.",
+    "unavailableTitle": "تعذر على Pairly ربط Slack",
+    "unavailable": "يرجى المحاولة مرة أخرى بعد قليل.",
+    "tryAgain": "حاول مرة أخرى",
+    "doneTitle": "تم ربط Slack",
+    "done": "حسابك في Slack مرتبط الآن بـ Pairly. رسائل الموافقة في Slack تفتح في Pairly لك.",
+    "openInbox": "افتح صندوق الموافقات"
   }
 }

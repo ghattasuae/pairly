@@ -16,6 +16,8 @@
 // invite link (its own HTTP-only session cookie for one invite; the API decides access).
 // `/portal` is the candidate portal: candidates never have a staff session; the portal
 // checks its own session (an HTTP-only cookie) and the API decides every access.
+// `/integrations/slack/connect` is public so a signed-out person sees what the Slack link
+// is for and can sign in from there (the token stays in the fragment, see the page).
 // `/vendor-portal` is the vendor portal (Pairly Pay): a vendor's contacts never have a staff
 // session either; its own HTTP-only cookie, and the API decides every access.
 const PUBLIC_PATHS = [
@@ -34,6 +36,7 @@ const PUBLIC_PATHS = [
   "/survey",
   "/vendor-onboarding",
   "/vendor-portal",
+  "/integrations/slack/connect",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
