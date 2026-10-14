@@ -19,7 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: t("title") };
 }
 
-/** Purchase orders (brief 4.5.1): read only, plus a CSV import of POs and goods receipts. */
+/**
+ * Purchase orders (brief 4.5.1): the list, a CSV import of POs and goods receipts, and
+ * closing or cancelling an open PO (cancel needs a second factor).
+ */
 export default async function PurchaseOrdersPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   setRequestLocale(locale);
@@ -31,7 +34,13 @@ export default async function PurchaseOrdersPage({ params }: Props) {
   return (
     <PayFrame>
       <PayHeader title={t("title")} intro={t("intro")} current="orders" permissions={gate.permissions} />
-      <PurchaseOrderList items={list.data.items} canImport={gate.permissions.includes("pay.purchase_order.write")} />
+      <PurchaseOrderList
+        items={list.data.items}
+        canImport={gate.permissions.includes("pay.purchase_order.write")}
+        canClose={gate.permissions.includes("pay.purchase_order.write")}
+        canCancel={gate.permissions.includes("pay.purchase_order.manage")}
+        totpEnabled={gate.totpEnabled}
+      />
     </PayFrame>
   );
 }

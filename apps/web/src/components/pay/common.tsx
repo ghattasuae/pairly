@@ -28,6 +28,8 @@ const PAY_CODES = new Set([
   "cash_limit_required",
   "invalid_purchase_data",
   "number_taken",
+  "purchase_order_state",
+  "recipient_not_allowed",
 ]);
 
 export function ErrorText({ code, className }: { code: string | null; className?: string }) {

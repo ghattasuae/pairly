@@ -16,7 +16,12 @@ import { callApi, toAction } from "../api/call";
 import type {
   PayInviteCreated,
   PayInvite,
+  PayInvoiceCoding,
   PayInvoiceDetail,
+  PayMessage,
+  PayMessageDraft,
+  PayModelLine,
+  PayPoDetail,
   PayRunDetail,
   PayRunPreview,
   PaySettings,
@@ -330,6 +335,117 @@ export async function codeInvoice(
   return toAction(result, (invoice) => ({ invoice }));
 }
 
+// ------------------------------------------------------------------ GL coding (brief 4.5.3)
+
+const glCode = z.union([z.null(), z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/)]);
+const lineCoding = z
+  .object({ line_index: z.number().int().min(0).max(999), gl_code: glCode, cost_centre: glCode })
+  .strict();
+
+/** Code invoice lines (GL account and cost centre). The checks run again. */
+export async function codeInvoiceLines(
+  invoiceId: string,
+  lines: { line_index: number; gl_code: string | null; cost_centre: string | null }[],
+): Promise<ActionResult<{ coding: PayInvoiceCoding }>> {
+  const parsed = z.array(lineCoding).min(1).max(500).safeParse(lines);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.PUT("/v1/pay/invoices/{invoice_id}/coding/lines", {
+      params: { path: { invoice_id: invoiceId } },
+      body: { lines: parsed.data },
+    }),
+  );
+  return toAction(result, (coding) => ({ coding }));
+}
+
+/** Ask the model for lines the history cannot code. Shown only; nothing is applied. */
+export async function askModelCoding(
+  invoiceId: string,
+  lineIndexes: number[],
+): Promise<ActionResult<{ lines: PayModelLine[] }>> {
+  const parsed = z.array(z.number().int().min(0).max(999)).max(50).safeParse(lineIndexes);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/invoices/{invoice_id}/coding/model-suggestions", {
+      params: { path: { invoice_id: invoiceId } },
+      body: { line_indexes: parsed.data },
+    }),
+  );
+  return toAction(result, (data) => ({ lines: data.lines }));
+}
+
+// ------------------------------------------------------------------ exception messages (brief 4.5.4)
+
+const category = z.enum([
+  "no_po",
+  "price_variance",
+  "quantity_variance",
+  "missing_receipt",
+  "duplicate_suspect",
+  "bank_mismatch",
+  "policy_breach",
+  "low_confidence",
+  "other",
+]);
+const templateId = z.string().regex(/^[a-z_]{1,32}$/);
+const locale = z.enum(["en", "ar"]);
+
+/** A drafted message from a template, with an optional personal paragraph (nothing saved). */
+export async function draftExceptionMessage(
+  invoiceId: string,
+  input: { category: string; template_id: string; locale: "en" | "ar"; personalise: boolean },
+): Promise<ActionResult<{ draft: PayMessageDraft }>> {
+  const parsed = z
+    .object({ category, template_id: templateId, locale, personalise: z.boolean() })
+    .strict()
+    .safeParse(input);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/invoices/{invoice_id}/messages/draft", {
+      params: { path: { invoice_id: invoiceId } },
+      body: parsed.data,
+    }),
+  );
+  return toAction(result, (draft) => ({ draft }));
+}
+
+/** Save a message for approval. It is sent only after another person approves the exact text. */
+export async function sendExceptionMessage(
+  invoiceId: string,
+  input: {
+    category: string;
+    template_id: string;
+    locale: "en" | "ar";
+    message: string;
+    recipient_email: string;
+    ai_note: boolean;
+    model_call_id: string | null;
+  },
+): Promise<ActionResult<{ message: PayMessage }>> {
+  const parsed = z
+    .object({
+      category,
+      template_id: templateId,
+      locale,
+      message: z.string().trim().min(1).max(3000),
+      recipient_email: z.string().trim().min(3).max(254),
+      ai_note: z.boolean(),
+      model_call_id: z.union([z.null(), uuid]),
+    })
+    .strict()
+    .safeParse(input);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi(
+    (api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/messages", {
+        params: { path: { invoice_id: invoiceId } },
+        body: parsed.data,
+      }),
+    { okStatuses: [201] },
+  );
+  return toAction(result, (message) => ({ message }));
+}
+
 // ------------------------------------------------------------------ payment runs (WP4.7)
 
 const decimal = z.string().trim().regex(/^\d{1,13}(\.\d{1,4})?$/);
@@ -445,6 +561,27 @@ export async function importPurchaseCsv(kind: "orders" | "receipts", csv: string
   return { ok: false, code: result.code, problems: importProblems(error) };
 }
 
+/**
+ * Close a purchase order (it takes no more invoices) or cancel it (a second factor;
+ * refused while an invoice of it is approved or paid). Both need a reason.
+ */
+export async function endPurchaseOrder(
+  poId: string,
+  action: "close" | "cancel",
+  why: string,
+): Promise<ActionResult<{ order: PayPoDetail }>> {
+  if (!uuid.safeParse(poId).success || (action !== "close" && action !== "cancel")) return bad;
+  if (!reason.safeParse(why).success || why.trim().length > 500) return bad;
+  const path = { params: { path: { po_id: poId } } };
+  const body = { reason: why.trim() };
+  const result = await callApi((api) =>
+    action === "close"
+      ? api.POST("/v1/pay/purchase-orders/{po_id}/close", { ...path, body })
+      : api.POST("/v1/pay/purchase-orders/{po_id}/cancel", { ...path, body }),
+  );
+  return toAction(result, (order) => ({ order }));
+}
+
 // ------------------------------------------------------------------ settings
 
 const decimalText = (max: number) =>
@@ -464,6 +601,8 @@ const settingsInput = z.object({
     match_total_pct: decimalText(100),
     match_total_amount: decimalText(1_000_000),
     require_po: z.boolean(),
+    auto_code_high_confidence: z.boolean(),
+    exception_sla_hours: z.number().int().min(1).max(720),
   }),
   payments: z.object({
     auto_approve_low_risk: z.boolean(),

@@ -8,11 +8,12 @@ import { useId, useState } from "react";
 import type * as React from "react";
 
 import { EmptyState } from "@/components/states/empty-state";
+import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "@/i18n/navigation";
-import { importPurchaseCsv, type PayImportProblem } from "@/lib/actions/pay";
+import { endPurchaseOrder, importPurchaseCsv, type PayImportProblem } from "@/lib/actions/pay";
 import type { PayPoSummary } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
@@ -149,11 +150,102 @@ function ImportPanel() {
   );
 }
 
+/** Close or cancel an open PO, with a reason. Cancelling needs a second factor. */
+function PoActions({
+  po,
+  canClose,
+  canCancel,
+  totpEnabled,
+}: {
+  po: PayPoSummary;
+  canClose: boolean;
+  canCancel: boolean;
+  totpEnabled: boolean;
+}) {
+  const t = useTranslations("Pay.purchaseOrders");
+  const router = useRouter();
+  const id = useId();
+  const [action, setAction] = useState<"close" | "cancel" | null>(null);
+  const [why, setWhy] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (po.status !== "open" || (!canClose && !canCancel)) return null;
+
+  async function confirm() {
+    if (!action || !why.trim()) return;
+    setBusy(true);
+    setError(null);
+    const result = await endPurchaseOrder(po.id, action, why);
+    setBusy(false);
+    if (!result.ok) return setError(result.code);
+    setAction(null);
+    setWhy("");
+    router.refresh();
+  }
+
+  if (!action) {
+    return (
+      <div className="flex justify-end gap-2">
+        {canClose && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setAction("close")}>
+            {t("close")}
+          </Button>
+        )}
+        {canCancel && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setAction("cancel")}>
+            {t("cancel")}
+          </Button>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2" data-po-action={action}>
+      <p className="text-xs text-muted-foreground">{t(action === "close" ? "closeHint" : "cancelHint")}</p>
+      <Label htmlFor={`${id}-why`}>{t("reason")}</Label>
+      <input
+        id={`${id}-why`}
+        className="h-8 w-full rounded-md border bg-background px-2 text-sm"
+        value={why}
+        maxLength={500}
+        onChange={(e) => setWhy(e.target.value)}
+      />
+      <div className="flex gap-2">
+        <Button type="button" size="sm" disabled={busy || !why.trim()} onClick={confirm}>
+          {busy && <Loader2 aria-hidden className="animate-spin" />}
+          {t(action === "close" ? "confirmClose" : "confirmCancel")}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setAction(null)}>
+          {t("back")}
+        </Button>
+      </div>
+      {error === "second_factor_required" ? (
+        <StepUpPrompt totpEnabled={totpEnabled} returnPath="/pay/purchase-orders" compact />
+      ) : (
+        <ErrorText code={error} />
+      )}
+    </div>
+  );
+}
+
 /**
- * Purchase orders (brief 4.5.1): read only, with what was received and invoiced, and a
- * CSV import for people who may create them. Invoices are matched against these.
+ * Purchase orders (brief 4.5.1): with what was received and invoiced, a CSV import for
+ * people who may create them, and close or cancel for an open PO. Invoices are matched
+ * against these.
  */
-export function PurchaseOrderList({ items, canImport }: { items: PayPoSummary[]; canImport: boolean }) {
+export function PurchaseOrderList({
+  items,
+  canImport,
+  canClose = false,
+  canCancel = false,
+  totpEnabled = false,
+}: {
+  items: PayPoSummary[];
+  canImport: boolean;
+  canClose?: boolean;
+  canCancel?: boolean;
+  totpEnabled?: boolean;
+}) {
   const t = useTranslations("Pay.purchaseOrders");
   return (
     <div className="space-y-6">
@@ -173,6 +265,11 @@ export function PurchaseOrderList({ items, canImport }: { items: PayPoSummary[];
                 <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.amount")}</th>
                 <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.receipts")}</th>
                 <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.invoices")}</th>
+                {(canClose || canCancel) && (
+                  <th scope="col" className="px-3 py-2 text-end font-medium">
+                    {t("col.actions")}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -196,6 +293,11 @@ export function PurchaseOrderList({ items, canImport }: { items: PayPoSummary[];
                   </td>
                   <td className="px-3 py-2 text-end tabular-nums">{po.receipt_count}</td>
                   <td className="px-3 py-2 text-end tabular-nums">{po.invoice_count}</td>
+                  {(canClose || canCancel) && (
+                    <td className="px-3 py-2 text-end">
+                      <PoActions po={po} canClose={canClose} canCancel={canCancel} totpEnabled={totpEnabled} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

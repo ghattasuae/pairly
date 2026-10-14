@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { InvoiceCoding } from "@/components/pay/invoice-coding";
 import { InvoiceReview } from "@/components/pay/invoice-review";
 import { PageHeader } from "@/components/states/page-header";
 import { toLocale } from "@/i18n/routing";
@@ -21,7 +22,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: t("title") };
 }
 
-/** One invoice side by side: the document and where each value was read (brief 4.3.3). */
+/**
+ * One invoice side by side: the document and where each value was read (brief 4.3.3),
+ * then the GL coding of its lines with suggestions (brief 4.5.3).
+ */
 export default async function InvoicePage({ params }: Props) {
   const { locale: raw, invoiceId } = await params;
   const locale = toLocale(raw);
@@ -41,6 +45,9 @@ export default async function InvoicePage({ params }: Props) {
   const vendors = canLink
     ? await callApi((api) => api.GET("/v1/pay/vendors", { params: { query: { limit: 200, status: "active" } } }))
     : null;
+  const coding = await callApi((api) =>
+    api.GET("/v1/pay/invoices/{invoice_id}/coding", { params: { path: { invoice_id: invoiceId } } }),
+  );
   const t = await getTranslations("Pay.invoice");
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-8 sm:px-8">
@@ -58,6 +65,7 @@ export default async function InvoicePage({ params }: Props) {
             : []
         }
       />
+      {coding.ok && <InvoiceCoding initial={coding.data} locale={locale} />}
     </div>
   );
 }

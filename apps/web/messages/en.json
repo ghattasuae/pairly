@@ -2925,7 +2925,8 @@
       "rules": "Approval rules",
       "orders": "Purchase orders",
       "settings": "Settings",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "exceptions": "Exceptions"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -2943,7 +2944,9 @@
       "nothing_to_pay": "No approved invoice can go in this run.",
       "cash_limit_required": "Set a cash limit for the run.",
       "invalid_purchase_data": "The file has problems. Nothing was imported.",
-      "number_taken": "That number is already on file."
+      "number_taken": "That number is already on file.",
+      "purchase_order_state": "This purchase order cannot change now. It may be closed already, or an invoice of it is approved or paid.",
+      "recipient_not_allowed": "This message can only go to a contact on file of the vendor, or to a member of the organisation."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -3627,7 +3630,8 @@
         "ordered": "Ordered",
         "amount": "Amount",
         "receipts": "Receipts",
-        "invoices": "Invoices"
+        "invoices": "Invoices",
+        "actions": "Actions"
       },
       "problem": {
         "required": "is required.",
@@ -3656,7 +3660,15 @@
         "too_many_rows": "has more than 5,000 rows.",
         "no_rows": "has no rows.",
         "malformed_csv": "is not a valid CSV file."
-      }
+      },
+      "close": "Close",
+      "cancel": "Cancel order",
+      "closeHint": "A closed purchase order takes no more invoices. Invoices received before keep their match.",
+      "cancelHint": "A cancelled order did not happen: its invoices still with a person fail matching, and one awaiting approval can no longer be approved. This needs a second factor.",
+      "reason": "Reason",
+      "confirmClose": "Close the purchase order",
+      "confirmCancel": "Cancel the order",
+      "back": "Back"
     },
     "rules": {
       "title": "Approval rules",
@@ -3714,7 +3726,12 @@
       "ruleCurrency": "Currency of the limit",
       "ruleCurrencyHint": "Three letters, for example AED. Invoices in another currency go to a person.",
       "save": "Save settings",
-      "saved": "Saved"
+      "saved": "Saved",
+      "codingTitle": "Coding and exceptions",
+      "autoCode": "Code invoice lines with high confidence suggestions by themselves",
+      "autoCodeHint": "Off by default: a person confirms every GL account and cost centre. Model suggestions are never applied by themselves.",
+      "slaHours": "Exceptions SLA (hours)",
+      "slaHoursHint": "An invoice waiting for a person longer than this is overdue in the exceptions queue. 1 to 720."
     },
     "analytics": {
       "title": "Pay analytics",
@@ -3792,6 +3809,99 @@
       "onTimeNote": "Paid invoices with a due date, paid on or before it.",
       "dpo": "Days payable outstanding",
       "dpoNote": "Average days from the invoice date to payment, over paid invoices."
+    },
+    "coding": {
+      "title": "GL coding",
+      "intro": "The GL account and cost centre of each line. Suggestions come from how earlier lines were coded and corrected; nothing is applied until you choose it. Saving runs the checks again.",
+      "noList": "No chart of accounts yet. An admin or finance controller imports one first.",
+      "noLines": "No line items were read from this invoice.",
+      "col": {
+        "line": "Line",
+        "gl": "GL account",
+        "costCentre": "Cost centre",
+        "suggestion": "Suggestion"
+      },
+      "noDescription": "No description",
+      "auto": "Coded by rule",
+      "glFor": "GL account of line {line}",
+      "ccFor": "Cost centre of line {line}",
+      "uncoded": "Not coded",
+      "level": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "percent": "{value}%",
+      "fromModel": "Model suggestion. Check it before you use it.",
+      "fromHistory": "{count, plural, one {Backed by # earlier line} other {Backed by # earlier lines}}",
+      "use": "Use",
+      "noSuggestion": "No suggestion",
+      "modelUnavailable": "The model is not available now.",
+      "modelNothing": "The model found no account that fits.",
+      "autoOn": "This organisation codes high confidence lines by rule when invoices arrive.",
+      "useHigh": "Use high confidence suggestions",
+      "askModel": "Ask the model",
+      "save": "{count, plural, =0 {Save coding} one {Save # line} other {Save # lines}}",
+      "saved": "Saved. The checks ran again."
+    },
+    "exceptions": {
+      "title": "Exceptions",
+      "intro": "Invoices waiting for a person, by what needs attention, oldest first. Each shows why, in the checks' own words, and what usually resolves it.",
+      "ageDays": "{days} d {hours} h",
+      "ageHours": "{hours} h",
+      "overdue": "Overdue",
+      "template": "Message",
+      "language": "Language",
+      "personalise": "Add a personal paragraph (AI)",
+      "draft": "Draft",
+      "close": "Close",
+      "noPersonalNote": "No personal paragraph was added. The template alone is the draft.",
+      "personalNoteFromModel": "The last paragraph was written by AI. Read it before you send.",
+      "message": "Text",
+      "to": "To",
+      "noContacts": "The vendor has no contact with an email address on file. Add one to the vendor first.",
+      "requesterHint": "The purchase order names {name} as the requester. Enter their email address in Pairly.",
+      "memberOnly": "Enter the email address of a member of your organisation.",
+      "approvalNote": "Nothing is sent until another person approves this exact text in the inbox.",
+      "sendForApproval": "Send for approval",
+      "awaitingApproval": "Message {reference} is waiting for approval.",
+      "messageFailed": "The message could not be sent for approval. Try again later.",
+      "total": "{count, plural, one {# invoice waiting} other {# invoices waiting}}",
+      "overdueCount": "{count, plural, one {# overdue} other {# overdue}} (over {hours} h)",
+      "keys": "J and K move, Enter opens the invoice.",
+      "filter": "Filter by category",
+      "all": "All",
+      "category": {
+        "no_po": "No PO",
+        "price_variance": "Price variance",
+        "quantity_variance": "Quantity variance",
+        "missing_receipt": "Missing receipt",
+        "duplicate_suspect": "Duplicate suspect",
+        "bank_mismatch": "Bank mismatch",
+        "policy_breach": "Policy breach",
+        "low_confidence": "Low confidence",
+        "other": "Other"
+      },
+      "emptyTitle": "Nothing waiting",
+      "emptyBody": "No invoice in this category needs a person right now.",
+      "list": "Invoices waiting for a person",
+      "resolution": "Suggested:",
+      "writeMessage": "Write a message",
+      "templates": {
+        "po_missing": "PO number missing",
+        "delivery_note": "Please send the delivery note",
+        "record_receipt": "Please record the goods receipt",
+        "price_query": "Please confirm the prices",
+        "quantity_query": "Please correct the quantities",
+        "confirm_delivery": "Please check the delivery",
+        "duplicate_query": "Is this a duplicate?",
+        "policy_query": "Please give the business reason",
+        "clear_copy": "Please send a clear copy"
+      },
+      "recipient": {
+        "vendor": "to the vendor",
+        "requester": "to the requester"
+      }
     }
   },
   "VendorOnboarding": {

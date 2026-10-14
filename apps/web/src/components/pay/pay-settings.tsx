@@ -37,6 +37,8 @@ export interface SettingsForm {
   match_total_pct: string;
   match_total_amount: string;
   require_po: boolean;
+  auto_code_high_confidence: boolean;
+  exception_sla_hours: string;
   auto_approve_low_risk: boolean;
   auto_approve_limit: string;
   auto_approve_currency: string;
@@ -55,6 +57,8 @@ export function formOf(settings: PaySettings): SettingsForm {
     match_total_pct: text(checks, "match_total_pct", "0"),
     match_total_amount: text(checks, "match_total_amount", "0"),
     require_po: checks.require_po === true,
+    auto_code_high_confidence: checks.auto_code_high_confidence === true,
+    exception_sla_hours: text(checks, "exception_sla_hours", "48"),
     auto_approve_low_risk: payments.auto_approve_low_risk === true,
     auto_approve_limit: text(payments, "auto_approve_limit", "0"),
     auto_approve_currency: text(payments, "auto_approve_currency", "AED"),
@@ -73,6 +77,8 @@ export function inputOf(form: SettingsForm): PaySettingsInput {
       match_total_pct: form.match_total_pct.trim(),
       match_total_amount: form.match_total_amount.trim(),
       require_po: form.require_po,
+      auto_code_high_confidence: form.auto_code_high_confidence,
+      exception_sla_hours: int(form.exception_sla_hours),
     },
     payments: {
       auto_approve_low_risk: form.auto_approve_low_risk,
@@ -85,7 +91,8 @@ export function inputOf(form: SettingsForm): PaySettingsInput {
 /**
  * Pay settings for admins and finance controllers (`pay.settings.manage`): the
  * cooling-off period of bank-detail changes, the invoice checks (duplicate window,
- * matching tolerances, require a PO) and rule approval of low-risk invoices (off by
+ * matching tolerances, require a PO), GL auto-coding and the exceptions SLA (auto-coding
+ * off by default), and rule approval of low-risk invoices (off by
  * default, with its limit and currency). Saving needs a second factor; the API checks
  * every value again.
  */
@@ -170,6 +177,26 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
             <span className="block text-xs text-muted-foreground">{t("requirePoHint")}</span>
           </span>
         </label>
+      </section>
+
+      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-coding`}>
+        <h2 id={`${id}-coding`} className="font-display text-lg">
+          {t("codingTitle")}
+        </h2>
+        <label className="flex items-start gap-2 text-sm">
+          <Checkbox
+            name="auto_code_high_confidence"
+            checked={form.auto_code_high_confidence}
+            onChange={(e) => set("auto_code_high_confidence", e.target.checked)}
+            disabled={!canManage || busy}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="block font-medium">{t("autoCode")}</span>
+            <span className="block text-xs text-muted-foreground">{t("autoCodeHint")}</span>
+          </span>
+        </label>
+        {number("exception_sla_hours", t("slaHours"), t("slaHoursHint"))}
       </section>
 
       <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-rule`}>

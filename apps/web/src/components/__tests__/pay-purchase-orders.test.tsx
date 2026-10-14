@@ -11,7 +11,7 @@ import { navigationMock, routerSpies } from "../../../test/navigation-mock";
 
 vi.mock("@/i18n/navigation", () => navigationMock);
 vi.mock("next/navigation", () => ({ useRouter: () => routerSpies }));
-vi.mock("@/lib/actions/pay", () => ({ importPurchaseCsv: vi.fn() }));
+vi.mock("@/lib/actions/pay", () => ({ importPurchaseCsv: vi.fn(), endPurchaseOrder: vi.fn() }));
 
 const pay = await import("@/lib/actions/pay");
 const { PurchaseOrderList } = await import("../pay/purchase-orders");
@@ -39,7 +39,10 @@ function po(patch: Partial<PayPoSummary> = {}): PayPoSummary {
 }
 
 describe("PurchaseOrderList", () => {
-  beforeEach(() => vi.mocked(pay.importPurchaseCsv).mockReset());
+  beforeEach(() => {
+    vi.mocked(pay.importPurchaseCsv).mockReset();
+    vi.mocked(pay.endPurchaseOrder).mockReset();
+  });
 
   it("lists purchase orders read only, in English and Arabic", () => {
     const { unmount } = renderWithIntl(<PurchaseOrderList items={[po()]} canImport={false} />);
@@ -79,5 +82,29 @@ describe("PurchaseOrderList", () => {
     await userEvent.click(screen.getByRole("button", { name: "Import" }));
     await waitFor(() => expect(screen.getByText("2 purchase orders imported.")).toBeTruthy());
     expect(routerSpies.refresh).toHaveBeenCalled();
+  });
+
+  it("closes an open purchase order with a reason", async () => {
+    vi.mocked(pay.endPurchaseOrder).mockResolvedValue({ ok: true, order: {} as never });
+    renderWithIntl(<PurchaseOrderList items={[po(), po({ id: "77777777-7777-4777-8777-777777777777", po_number: "PO-2", status: "closed" })]} canImport={false} canClose />);
+    // Only the open one can be closed, and cancelling needs the manage permission.
+    expect(screen.getAllByRole("button", { name: "Close" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Cancel order" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("button", { name: "Close the purchase order" })).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Reason"), "All delivered.");
+    await userEvent.click(screen.getByRole("button", { name: "Close the purchase order" }));
+    await waitFor(() => expect(routerSpies.refresh).toHaveBeenCalled());
+    expect(vi.mocked(pay.endPurchaseOrder)).toHaveBeenCalledWith(po().id, "close", "All delivered.");
+  });
+
+  it("explains a refused cancel, in Arabic too", async () => {
+    vi.mocked(pay.endPurchaseOrder).mockResolvedValue({ ok: false, code: "purchase_order_state" });
+    renderWithIntl(<PurchaseOrderList items={[po()]} canImport={false} canCancel />, "ar");
+    await userEvent.click(screen.getByRole("button", { name: "إلغاء الطلب" }));
+    await userEvent.type(screen.getByLabelText("السبب"), "Withdrawn");
+    await userEvent.click(screen.getAllByRole("button", { name: "إلغاء الطلب" })[0]!);
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("لا يمكن تغيير أمر الشراء"));
+    expect(vi.mocked(pay.endPurchaseOrder)).toHaveBeenCalledWith(po().id, "cancel", "Withdrawn");
   });
 });

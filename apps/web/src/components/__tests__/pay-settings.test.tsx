@@ -54,6 +54,8 @@ describe("pay settings form", () => {
         match_total_pct: "1.00",
         match_total_amount: "10.00",
         require_po: false,
+        auto_code_high_confidence: false,
+        exception_sla_hours: 48,
       },
       payments: { auto_approve_low_risk: true, auto_approve_limit: "0", auto_approve_currency: "AED" },
     });
