@@ -18487,6 +18487,100 @@
         "title": "PayDuplicateOut",
         "type": "object"
       },
+      "PayEarlyPaymentOut": {
+        "description": "An early-payment discount (``pairly_pay.discounts``): amounts at the currency's\nminor unit.",
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "annual_rate": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Rate"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "days_left": {
+            "title": "Days Left",
+            "type": "integer"
+          },
+          "net_due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Due"
+          },
+          "pay_by": {
+            "format": "date",
+            "title": "Pay By",
+            "type": "string"
+          },
+          "pay_early": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Pay Early",
+            "type": "string"
+          },
+          "percent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Percent",
+            "type": "string"
+          },
+          "saving": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saving",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "invoice",
+              "vendor"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "terms": {
+            "title": "Terms",
+            "type": "string"
+          }
+        },
+        "required": [
+          "terms",
+          "source",
+          "percent",
+          "currency",
+          "amount",
+          "saving",
+          "pay_early",
+          "pay_by",
+          "net_due",
+          "annual_rate",
+          "available",
+          "days_left"
+        ],
+        "title": "PayEarlyPaymentOut",
+        "type": "object"
+      },
       "PayExceptionCategoryOut": {
         "properties": {
           "category": {
@@ -19728,6 +19822,16 @@
             ],
             "title": "Due Date"
           },
+          "early_payment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayEarlyPaymentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "email": {
             "anyOf": [
               {
@@ -19828,6 +19932,17 @@
               }
             ],
             "title": "Payment Run Id"
+          },
+          "payment_terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Terms"
           },
           "po_id": {
             "anyOf": [
@@ -23752,6 +23867,17 @@
             "title": "Invoice Id",
             "type": "string"
           },
+          "pay_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pay By"
+          },
           "reasons": {
             "items": {
               "type": "string"
@@ -23769,6 +23895,17 @@
               }
             ],
             "title": "Reference"
+          },
+          "saving": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saving"
           }
         },
         "required": [
@@ -24036,13 +24173,26 @@
             "title": "Excluded",
             "type": "array"
           },
+          "include_early_payment": {
+            "title": "Include Early Payment",
+            "type": "boolean"
+          },
           "items": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/PayRunPreviewItemOut"
             },
             "title": "Items",
             "type": "array"
+          },
+          "savings": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Savings",
+            "type": "string"
+          },
+          "savings_available": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Savings Available",
+            "type": "string"
           },
           "total": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -24054,10 +24204,104 @@
           "currency",
           "cash_limit",
           "total",
+          "include_early_payment",
+          "savings",
+          "savings_available",
           "items",
           "excluded"
         ],
         "title": "PayRunPreview",
+        "type": "object"
+      },
+      "PayRunPreviewItemOut": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "discount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "pay_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pay By"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "saving": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saving"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "reference",
+          "vendor_name",
+          "amount",
+          "due_date",
+          "discount",
+          "saving",
+          "pay_by"
+        ],
+        "title": "PayRunPreviewItemOut",
         "type": "object"
       },
       "PayRunProposalIn": {
@@ -24101,6 +24345,11 @@
             "format": "date",
             "title": "Execution Date",
             "type": "string"
+          },
+          "include_early_payment": {
+            "default": false,
+            "title": "Include Early Payment",
+            "type": "boolean"
           },
           "invoice_ids": {
             "anyOf": [
@@ -25171,6 +25420,17 @@
             "title": "Payment Hold",
             "type": "boolean"
           },
+          "payment_terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Terms"
+          },
           "phone_changed_at": {
             "anyOf": [
               {
@@ -25531,6 +25791,18 @@
               }
             ],
             "title": "Legal Name Ar"
+          },
+          "payment_terms": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Terms"
           },
           "phone_on_file": {
             "anyOf": [

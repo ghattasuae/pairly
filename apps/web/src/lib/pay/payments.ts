@@ -54,6 +54,8 @@ export const BLOCKER_CODES = [
   "run_full",
   "nothing_left_to_pay",
   "payer_details_missing",
+  "fully_credited",
+  "discount_changed",
 ] as const;
 export type BlockerCode = (typeof BLOCKER_CODES)[number];
 

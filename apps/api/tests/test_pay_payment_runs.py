@@ -17,9 +17,11 @@
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import hashlib
 import io
 import xml.etree.ElementTree as ET
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -133,7 +135,7 @@ async def test_run_proposal_filters_by_due_date_holds_checks_and_cash_limit(
         json={"currency": "AED", "execution_date": "2026-10-20", **body},
     )
     assert [i["invoice_id"] for i in preview["items"]] == [early]
-    assert preview["items"][0]["discount"] is None  # placeholder
+    assert preview["items"][0]["discount"] is None  # no discount terms
     reasons = {e["invoice_id"]: e["reasons"] for e in preview["excluded"]}
     assert reasons[big] == ["over_cash_limit"]
     assert "vendor_held:manual" in reasons[held]
@@ -374,3 +376,101 @@ async def test_tenant_isolation(
         json={"currency": "AED", "cash_limit": "1000000", "execution_date": "2026-10-20"},
     )
     assert nothing.status_code == 409
+
+
+# ------------------------------------------------------------------ early-payment discounts
+
+
+async def test_early_payment_discounts_are_highlighted_and_taken_only_when_asked(
+    flow: Flow, fworld: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    await _settings(flow, fworld, **PAYER)
+    invoice_id, vendor_id = await _approved(flow, owner_engine, fworld, CLEAN)
+    detail = await flow.invoice(fworld, invoice_id)
+    assert detail["early_payment"] is None  # "Net 30": no discount
+    await flow.ok(
+        "PATCH",
+        f"/v1/pay/vendors/{vendor_id}",
+        fworld,
+        "clerk",
+        json={"payment_terms": "2/10 net 30"},
+    )
+    detail = await flow.invoice(fworld, invoice_id)
+    offer = detail["early_payment"]
+    total = Decimal(detail["total"])
+    saving = (total * Decimal("0.02")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    invoice_date = dt.date.fromisoformat(detail["invoice_date"])
+    pay_by = invoice_date + dt.timedelta(days=10)
+    assert offer["terms"] == "2/10 net 30"
+    assert offer["source"] == "vendor"
+    assert Decimal(offer["saving"]) == saving
+    assert Decimal(offer["pay_early"]) == total - saving
+    assert offer["pay_by"] == pay_by.isoformat()
+    assert offer["net_due"] == (invoice_date + dt.timedelta(days=30)).isoformat()
+    assert Decimal(offer["annual_rate"]) == Decimal("0.3724")
+
+    not_due = (invoice_date - dt.timedelta(days=1)).isoformat()
+    base = {"currency": "AED", "cash_limit": "1000000", "due_on_or_before": not_due}
+    # Highlighted, not taken: not due yet, with what paying it early would save.
+    plain = await flow.ok(
+        "POST",
+        "/v1/pay/payment-runs/preview",
+        fworld,
+        "finance",
+        json={**base, "execution_date": pay_by.isoformat()},
+    )
+    (left_out,) = [e for e in plain["excluded"] if e["invoice_id"] == invoice_id]
+    assert left_out["reasons"] == ["not_due_yet"]
+    assert Decimal(left_out["saving"]) == saving
+    assert left_out["pay_by"] == pay_by.isoformat()
+    assert Decimal(plain["savings"]) == 0
+    assert Decimal(plain["savings_available"]) == saving
+    # Too late for the discount: nothing to highlight or take.
+    late = await flow.ok(
+        "POST",
+        "/v1/pay/payment-runs/preview",
+        fworld,
+        "finance",
+        json={
+            **base,
+            "execution_date": (pay_by + dt.timedelta(days=1)).isoformat(),
+            "include_early_payment": True,
+        },
+    )
+    (late_out,) = [e for e in late["excluded"] if e["invoice_id"] == invoice_id]
+    assert late_out["reasons"] == ["not_due_yet"]
+    assert late_out["saving"] is None
+
+    # Taken when asked: the discounted amount, the saving recorded on the item.
+    early = {**base, "execution_date": pay_by.isoformat(), "include_early_payment": True}
+    taken = await flow.ok("POST", "/v1/pay/payment-runs/preview", fworld, "finance", json=early)
+    (item,) = taken["items"]
+    assert Decimal(item["discount"]) == saving
+    assert Decimal(item["amount"]) == total - saving
+    assert Decimal(taken["savings"]) == saving
+    run = await _propose(flow, fworld, **early)
+    (run_item,) = run["items"]
+    assert Decimal(run_item["discount"]) == saving
+    assert Decimal(run_item["amount"]) == total - saving
+    assert Decimal(run["total"]) == total - saving
+    approved = await _approve_run(flow, fworld, run)
+    assert approved["status"] == "approved"
+
+    # The discount is checked again at export: changed terms refuse the file.
+    await flow.ok(
+        "PATCH", f"/v1/pay/vendors/{vendor_id}", fworld, "clerk", json={"payment_terms": "Net 30"}
+    )
+    refused = await _export(flow, fworld, run["id"])
+    assert refused.status_code == 409, refused.text
+    assert "discount_changed" in refused.text
+    await flow.ok(
+        "PATCH",
+        f"/v1/pay/vendors/{vendor_id}",
+        fworld,
+        "clerk",
+        json={"payment_terms": "2/10 net 30"},
+    )
+    response = await _export(flow, fworld, run["id"])
+    assert response.status_code == 200, response.text
+    (row,) = list(csv.DictReader(io.StringIO(response.content.decode("utf-8"))))
+    assert Decimal(row["amount"]) == total - saving

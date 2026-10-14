@@ -222,7 +222,21 @@ describe("PaymentRunList", () => {
       currency: "AED",
       cash_limit: "5000.00",
       total: "1050.00",
-      items: [{ invoice_id: INVOICE_ID, reference: "AP-7K2QX9", vendor_name: "Synthetic Supplies LLC", amount: "1050.00", due_date: "2026-10-30", discount: null }],
+      include_early_payment: false,
+      savings: "0.00",
+      savings_available: "0.00",
+      items: [
+        {
+          invoice_id: INVOICE_ID,
+          reference: "AP-7K2QX9",
+          vendor_name: "Synthetic Supplies LLC",
+          amount: "1050.00",
+          due_date: "2026-10-30",
+          discount: null,
+          saving: null,
+          pay_by: null,
+        },
+      ],
       excluded: [{ invoice_id: "66666666-6666-4666-8666-666666666666", reference: "AP-BIG", amount: "9000.00", due_date: null, reasons: ["over_cash_limit"] }],
     };
     vi.mocked(pay.previewRun).mockResolvedValue({ ok: true, preview });
@@ -233,6 +247,50 @@ describe("PaymentRunList", () => {
     expect(await screen.findByText("Over the cash limit of the run")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Propose this run" }));
     await waitFor(() => expect(routerSpies.push).toHaveBeenCalledWith(`/pay/payment-runs/${RUN_ID}`));
+  });
+
+  it("highlights early-payment savings and takes them only when asked", async () => {
+    const preview: PayRunPreview = {
+      currency: "AED",
+      cash_limit: "5000.00",
+      total: "1029.00",
+      include_early_payment: true,
+      savings: "21.00",
+      savings_available: "41.00",
+      items: [
+        {
+          invoice_id: INVOICE_ID,
+          reference: "AP-7K2QX9",
+          vendor_name: "Synthetic Supplies LLC",
+          amount: "1029.00",
+          due_date: "2026-11-30",
+          discount: "21.00",
+          saving: "21.00",
+          pay_by: "2026-10-25",
+        },
+      ],
+      excluded: [
+        {
+          invoice_id: "66666666-6666-4666-8666-666666666666",
+          reference: "AP-HELD",
+          amount: "1000.00",
+          due_date: "2026-11-30",
+          reasons: ["vendor_held:manual"],
+          saving: "20.00",
+          pay_by: "2026-10-25",
+        },
+      ],
+    };
+    vi.mocked(pay.previewRun).mockResolvedValue({ ok: true, preview });
+    renderWithIntl(<PaymentRunList items={[]} counts={{}} status={null} canCreate defaultCashLimit="5000" />);
+    await userEvent.click(screen.getByLabelText("Take early-payment discounts"));
+    await userEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(pay.previewRun).toHaveBeenCalledWith(expect.objectContaining({ include_early_payment: true }));
+    expect(await screen.findByText("Discounts taken: AED 21.00")).toBeTruthy();
+    expect(screen.getByText(/discount 21.00/)).toBeTruthy();
+    // Still subject to holds: left out, with what it would have saved.
+    expect(screen.getByText("Payments to this vendor are on hold")).toBeTruthy();
+    expect(screen.getByText("Save 20.00 if paid by 2026-10-25")).toBeTruthy();
   });
 
   it("hides the proposal without the permission", () => {

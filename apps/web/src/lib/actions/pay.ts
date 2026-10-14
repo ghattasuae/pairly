@@ -460,6 +460,7 @@ const proposalInput = z
     cash_limit: decimal,
     execution_date: isoDate,
     due_on_or_before: z.union([z.literal(""), isoDate]),
+    include_early_payment: z.boolean().optional(),
   })
   .strict();
 
@@ -471,6 +472,7 @@ function proposalBody(input: z.output<typeof proposalInput>) {
     cash_limit: input.cash_limit,
     execution_date: input.execution_date,
     ...(input.due_on_or_before ? { due_on_or_before: input.due_on_or_before } : {}),
+    ...(input.include_early_payment ? { include_early_payment: true } : {}),
   };
 }
 

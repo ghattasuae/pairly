@@ -53,6 +53,11 @@ function ExcludedList({ items }: { items: PayRunExcluded[] }) {
               {item.reference ?? item.invoice_id}
             </Link>
             {item.amount && <span className="ms-2 text-muted-foreground">{item.amount}</span>}
+            {item.saving && item.pay_by && (
+              <p className="text-primary" data-saving={item.saving}>
+                {t("saving", { amount: item.saving, when: item.pay_by })}
+              </p>
+            )}
             <ul className="space-y-0.5 text-muted-foreground">
               {item.reasons.map((reason) => (
                 <li key={reason}>
@@ -99,6 +104,7 @@ export function PaymentRunList({
     cash_limit: defaultCashLimit ?? "",
     execution_date: today(),
     due_on_or_before: "",
+    include_early_payment: false,
   });
   const [preview, setPreview] = useState<PayRunPreview | null>(null);
   const [busy, setBusy] = useState<"preview" | "propose" | null>(null);
@@ -177,6 +183,22 @@ export function PaymentRunList({
               <Label htmlFor={`${ids}-due`}>{t("dueBy")}</Label>
               <Input id={`${ids}-due`} type="date" value={form.due_on_or_before} onChange={(e) => set({ due_on_or_before: e.target.value })} />
             </div>
+            <div className="flex items-start gap-2 sm:col-span-4">
+              <input
+                id={`${ids}-early`}
+                type="checkbox"
+                className="mt-1"
+                checked={form.include_early_payment}
+                onChange={(e) => set({ include_early_payment: e.target.checked })}
+                aria-describedby={`${ids}-early-help`}
+              />
+              <div className="space-y-0.5">
+                <Label htmlFor={`${ids}-early`}>{t("includeEarly")}</Label>
+                <p id={`${ids}-early-help`} className="text-xs text-muted-foreground">
+                  {t("includeEarlyHelp")}
+                </p>
+              </div>
+            </div>
             <div className="sm:col-span-4">
               <Button type="submit" size="sm" variant="outline" disabled={busy !== null}>
                 {busy === "preview" ? <Loader2 aria-hidden className="animate-spin" /> : <Eye aria-hidden />}
@@ -199,10 +221,28 @@ export function PaymentRunList({
                       <span className="text-muted-foreground">
                         {item.due_date ? t("due", { when: String(item.due_date) }) : t("noDue")} ·{" "}
                         <Money currency={preview.currency} amount={String(item.amount)} />
+                        {item.discount && <> · {t("discountTaken", { amount: item.discount })}</>}
                       </span>
+                      {!item.discount && item.saving && item.pay_by && (
+                        <span className="w-full text-xs text-primary" data-saving={item.saving}>
+                          {t("saving", { amount: item.saving, when: item.pay_by })}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
+              )}
+              {Number(preview.savings) > 0 && (
+                <p className="text-sm text-primary" data-savings={String(preview.savings)}>
+                  {t("savingsTaken", { amount: `${preview.currency} ${String(preview.savings)}` })}
+                </p>
+              )}
+              {!preview.include_early_payment && Number(preview.savings_available) > 0 && (
+                <p className="text-sm" data-savings-available={String(preview.savings_available)}>
+                  {t("savingsAvailable", {
+                    amount: `${preview.currency} ${String(preview.savings_available)}`,
+                  })}
+                </p>
               )}
               <ExcludedList items={preview.excluded} />
               <p className="text-xs text-muted-foreground">{t("discountNote")}</p>
@@ -418,6 +458,11 @@ export function PaymentRunView({
                   </td>
                   <td className="py-2 pe-3 text-end">
                     <Money currency={item.currency} amount={item.amount} />
+                    {item.discount !== null && item.discount !== undefined && (
+                      <span className="block text-xs text-primary" data-discount={String(item.discount)}>
+                        {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
+                      </span>
+                    )}
                   </td>
                   <td className="py-2">
                     {t(`itemStatus.${item.status}` as "itemStatus.paid")}

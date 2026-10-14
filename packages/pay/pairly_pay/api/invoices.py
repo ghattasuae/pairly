@@ -42,7 +42,7 @@ from __future__ import annotations
 
 import tempfile
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal
@@ -90,6 +90,7 @@ from pairly_pay.checks.service import (
     suspected_originals,
 )
 from pairly_pay.common import WORKFLOW, By, audit, record_step
+from pairly_pay.discounts import invoice_offer, offer_json
 from pairly_pay.freshness import FAILED, MISSING, STALE, checks_problem
 from pairly_pay.intake import pay_policy
 from pairly_pay.invoice_start import start_after_intake
@@ -377,8 +378,30 @@ class PayInvoiceSubmitIn(_In):
     note: str | None = Field(default=None, max_length=1000)
 
 
+class PayEarlyPaymentOut(BaseModel):
+    """An early-payment discount (``pairly_pay.discounts``): amounts at the currency's
+    minor unit."""
+
+    terms: str
+    source: Literal["invoice", "vendor"]
+    percent: Decimal
+    currency: str
+    amount: Decimal
+    saving: Decimal
+    pay_early: Decimal
+    pay_by: date
+    net_due: date | None
+    annual_rate: Decimal | None
+    available: bool
+    days_left: int
+
+
 class PayInvoiceDetail(PayInvoiceSummary):
     po_number: str | None
+    # The payment terms printed on the invoice, as read.
+    payment_terms: str | None = None
+    # Paying early saves money (open invoices only): the saving and the pay-by date.
+    early_payment: PayEarlyPaymentOut | None = None
     # Purchase order matching (``pairly_pay.checks.matching``): the PO the invoice cites
     # when it is on file, and how its lines were allocated ({status, po_id, lines}).
     po_id: uuid.UUID | None = None
@@ -560,6 +583,28 @@ def money(value: Decimal | None) -> Decimal | None:
     return cents if cents == value else value.normalize()
 
 
+UNPAID: Final = frozenset(
+    {
+        InvoiceStatus.RECEIVED.value,
+        InvoiceStatus.EXTRACTING.value,
+        InvoiceStatus.NEEDS_REVIEW.value,
+        InvoiceStatus.READY.value,
+        InvoiceStatus.AWAITING_APPROVAL.value,
+        InvoiceStatus.APPROVED.value,
+        InvoiceStatus.SCHEDULED.value,
+    }
+)
+
+
+def _early_payment(invoice: PayInvoice, vendor: PayVendor | None) -> PayEarlyPaymentOut | None:
+    if invoice.status not in UNPAID:
+        return None
+    offer = invoice_offer(invoice, vendor.payment_terms if vendor else None)
+    if offer is None:
+        return None
+    return PayEarlyPaymentOut.model_validate(offer_json(offer, datetime.now(UTC).date()))
+
+
 def _summary_fields(invoice: PayInvoice, vendor: PayVendor | None) -> dict[str, Any]:
     return {
         "id": invoice.id,
@@ -694,6 +739,10 @@ async def _detail(
     return PayInvoiceDetail(
         **_summary_fields(invoice, vendors.get(invoice.vendor_id) if invoice.vendor_id else None),
         po_number=invoice.po_number,
+        payment_terms=invoice.payment_terms,
+        early_payment=_early_payment(
+            invoice, vendors.get(invoice.vendor_id) if invoice.vendor_id else None
+        ),
         po_id=invoice.po_id,
         po_match=dict(invoice.po_match or {}),
         subtotal=money(invoice.subtotal),

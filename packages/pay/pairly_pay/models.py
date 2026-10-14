@@ -264,6 +264,9 @@ class PayVendor(Base, OrgScoped):
     # Domains invoices and emails from this vendor normally come from.
     email_domains: Mapped[list[str]] = _jsonb_list()
     category: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # The vendor's agreed payment terms as AP records them, for example "2/10 net 30"
+    # (``pay_0015``): the early-payment discount when an invoice prints none.
+    payment_terms: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, default=VendorStatus.ACTIVE.value
     )
@@ -718,6 +721,8 @@ class PayInvoice(Base, OrgScoped):
     invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
     invoice_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # The payment terms printed on the invoice, as read (``pay_0015``).
+    payment_terms: Mapped[str | None] = mapped_column(String(120), nullable=True)
     currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
     po_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
     subtotal: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
@@ -993,6 +998,7 @@ class PayPaymentRunItem(Base, OrgScoped):
         ),
         CheckConstraint(f"status IN ({_in(RunItemStatus)})", name="status_valid"),
         CheckConstraint("amount > 0", name="amount_positive"),
+        CheckConstraint("discount IS NULL OR discount >= 0", name="discount_not_negative"),
         CheckConstraint(
             "status <> 'paid' OR (paid_at IS NOT NULL AND paid_by IS NOT NULL)",
             name="paid_has_evidence",
@@ -1020,7 +1026,8 @@ class PayPaymentRunItem(Base, OrgScoped):
     # The run's execution date, kept per item (``pay_0012``) so a vendor's portal shows
     # when it will be paid without reading the run (other vendors' payments).
     execution_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    # Placeholder for the early-payment discount optimiser (brief 4.6.4): not computed.
+    # The early-payment discount taken (``pairly_pay.discounts``): ``amount`` is what is
+    # due less this. Empty when the run does not capture discounts or none applies.
     discount: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     bank_account_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     bank_details_digest: Mapped[str] = mapped_column(String(64), nullable=False)

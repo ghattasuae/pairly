@@ -11754,6 +11754,43 @@ export type components = {
              */
             vendor_id: string;
         };
+        /**
+         * PayEarlyPaymentOut
+         * @description An early-payment discount (``pairly_pay.discounts``): amounts at the currency's
+         *     minor unit.
+         */
+        PayEarlyPaymentOut: {
+            /** Amount */
+            amount: string;
+            /** Annual Rate */
+            annual_rate: string | null;
+            /** Available */
+            available: boolean;
+            /** Currency */
+            currency: string;
+            /** Days Left */
+            days_left: number;
+            /** Net Due */
+            net_due: string | null;
+            /**
+             * Pay By
+             * Format: date
+             */
+            pay_by: string;
+            /** Pay Early */
+            pay_early: string;
+            /** Percent */
+            percent: string;
+            /** Saving */
+            saving: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "invoice" | "vendor";
+            /** Terms */
+            terms: string;
+        };
         /** PayExceptionCategoryOut */
         PayExceptionCategoryOut: {
             /**
@@ -12153,6 +12190,7 @@ export type components = {
             document_type: string;
             /** Due Date */
             due_date: string | null;
+            early_payment?: components["schemas"]["PayEarlyPaymentOut"] | null;
             email: components["schemas"]["PayInvoiceEmailOut"] | null;
             extraction: components["schemas"]["PayInvoiceExtractionOut"] | null;
             /** Findings */
@@ -12174,6 +12212,8 @@ export type components = {
             payment_reference?: string | null;
             /** Payment Run Id */
             payment_run_id?: string | null;
+            /** Payment Terms */
+            payment_terms?: string | null;
             /** Po Id */
             po_id?: string | null;
             /** Po Match */
@@ -13413,10 +13453,14 @@ export type components = {
              * Format: uuid
              */
             invoice_id: string;
+            /** Pay By */
+            pay_by?: string | null;
             /** Reasons */
             reasons: string[];
             /** Reference */
             reference: string | null;
+            /** Saving */
+            saving?: string | null;
         };
         /** PayRunExportIn */
         PayRunExportIn: {
@@ -13497,12 +13541,38 @@ export type components = {
             currency: string;
             /** Excluded */
             excluded: components["schemas"]["PayRunExcludedOut"][];
+            /** Include Early Payment */
+            include_early_payment: boolean;
             /** Items */
-            items: {
-                [key: string]: unknown;
-            }[];
+            items: components["schemas"]["PayRunPreviewItemOut"][];
+            /** Savings */
+            savings: string;
+            /** Savings Available */
+            savings_available: string;
             /** Total */
             total: string;
+        };
+        /** PayRunPreviewItemOut */
+        PayRunPreviewItemOut: {
+            /** Amount */
+            amount: string | null;
+            /** Discount */
+            discount: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Pay By */
+            pay_by: string | null;
+            /** Reference */
+            reference: string;
+            /** Saving */
+            saving: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
         };
         /** PayRunProposalIn */
         PayRunProposalIn: {
@@ -13517,6 +13587,11 @@ export type components = {
              * Format: date
              */
             execution_date: string;
+            /**
+             * Include Early Payment
+             * @default false
+             */
+            include_early_payment: boolean;
             /** Invoice Ids */
             invoice_ids?: string[] | null;
         };
@@ -13868,6 +13943,8 @@ export type components = {
             open_ticket_id: string | null;
             /** Payment Hold */
             payment_hold: boolean;
+            /** Payment Terms */
+            payment_terms?: string | null;
             /** Phone Changed At */
             phone_changed_at: string | null;
             /** Phone On File */
@@ -13949,6 +14026,8 @@ export type components = {
             legal_name?: string | null;
             /** Legal Name Ar */
             legal_name_ar?: string | null;
+            /** Payment Terms */
+            payment_terms?: string | null;
             /** Phone On File */
             phone_on_file?: string | null;
             /** Trade Licence */

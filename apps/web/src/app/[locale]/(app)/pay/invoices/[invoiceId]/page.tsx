@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { EarlyPaymentNote } from "@/components/pay/early-payment";
 import { InvoiceCoding } from "@/components/pay/invoice-coding";
 import { InvoiceReview } from "@/components/pay/invoice-review";
 import { PortalThread } from "@/components/pay/portal-thread";
@@ -71,6 +72,7 @@ export default async function InvoicePage({ params }: Props) {
       >
         <p className="text-sm text-muted-foreground">{invoice.data.reference}</p>
       </PageHeader>
+      <EarlyPaymentNote offer={invoice.data.early_payment} />
       <InvoiceReview
         initial={invoice.data}
         vendors={

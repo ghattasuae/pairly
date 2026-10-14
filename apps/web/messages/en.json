@@ -3435,7 +3435,19 @@
       "markReviewed": "Mark as reviewed",
       "reject": "Reject",
       "rejectReason": "Why reject it (required)",
-      "confirmReject": "Reject the invoice"
+      "confirmReject": "Reject the invoice",
+      "early": {
+        "title": "Paying early saves money",
+        "body": "{terms}: pay {pay} by {when} instead of {amount}, a saving of {saving}.",
+        "source": {
+          "invoice": "Terms printed on the invoice",
+          "vendor": "The vendor's agreed terms"
+        },
+        "daysLeft": "{count, plural, =0 {Last day to take it} one {# day left} other {# days left}}",
+        "expired": "The discount period ended on {when}.",
+        "rate": "Worth {rate} a year.",
+        "inRun": "Include it in a payment run with early-payment discounts on."
+      }
     },
     "checks": {
       "title": "Checks",
@@ -3505,7 +3517,8 @@
       "nothing_left_to_pay": "Nothing is left to pay in this run",
       "payer_details_missing": "Add the paying account in the Pay settings first",
       "not_ready": "The invoice is not ready",
-      "fully_credited": "Credit notes cover the whole invoice"
+      "fully_credited": "Credit notes cover the whole invoice",
+      "discount_changed": "The early-payment discount changed since the proposal"
     },
     "approval": {
       "title": "Approval and payment",
@@ -3560,7 +3573,7 @@
       "previewSummary": "{count, plural, one {# invoice for} other {# invoices for}}",
       "due": "due {when}",
       "noDue": "no due date",
-      "discountNote": "Early payment discounts are not calculated yet.",
+      "discountNote": "Invoices marked with a saving have an early-payment discount still open on the payment date.",
       "propose": "Propose this run",
       "filter": "Filter by status",
       "all": "All",
@@ -3583,7 +3596,8 @@
         "due": "Due",
         "account": "Account",
         "amount": "Amount",
-        "status": "Status"
+        "status": "Status",
+        "discount": "Discount"
       },
       "accountChanged": "changed",
       "itemStatus": {
@@ -3601,7 +3615,13 @@
       "markPaid": "Mark the rest paid",
       "cancel": "Cancel this run",
       "cancelReason": "Why",
-      "confirmCancel": "Cancel the run"
+      "confirmCancel": "Cancel the run",
+      "includeEarly": "Take early-payment discounts",
+      "includeEarlyHelp": "Also pays approved invoices that are not due yet when paying on this date saves money, and pays the discounted amount. Approvals and holds still apply.",
+      "savingsTaken": "Discounts taken: {amount}",
+      "savingsAvailable": "Paying early on this date could save {amount}.",
+      "saving": "Save {amount} if paid by {when}",
+      "discountTaken": "discount {amount}"
     },
     "purchaseOrders": {
       "title": "Purchase orders",

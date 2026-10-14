@@ -8,7 +8,13 @@
    failed checks, bank details or checks or amount that changed since the approval,
    anything over the cash limit. Each item binds the bank account, the keyed digest of
    its details and the check digest the invoice was approved with. The invoices become
-   ``scheduled``. The early-payment discount is a placeholder (``discount`` is empty).
+   ``scheduled``. Early-payment discounts (``pairly_pay.discounts``) are highlighted on
+   the invoices they apply to; with ``include_early_payment`` the run also takes
+   approved invoices not due yet whose discount is still open on the execution date,
+   and pays every invoice with an open discount its discounted amount (the item's
+   ``discount`` is the saving). Approvals, holds and every other reason to leave an
+   invoice out apply all the same; the discount is checked again at approval and
+   export (``discount_changed``).
 2. **Approve**: the ``pay_payment_run`` run (``pairly_pay.payment_run_graph``) asks a
    finance controller (``pay.payment_run``). The proposer is a preparer and never
    approves. The final action ``approve_payment_run`` checks every item again.
@@ -51,6 +57,7 @@ from pairly_core.workflow.spec import FinalActionCall
 from pairly_pay.bank_files import Batch, Payment, to_csv, to_pain001
 from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import By, audit, decision_ids_of, new_reference, record_step
+from pairly_pay.discounts import EarlyPayment, invoice_offer
 from pairly_pay.freshness import check_inputs_digest, checks_failed
 from pairly_pay.invoices import INVOICE_ENTITY, payable_amount, refresh_decisions
 from pairly_pay.models import (
@@ -203,7 +210,20 @@ async def item_problems(
         out.append("bank_details_changed")
     if invoice.approved_checks_digest != item.checks_digest:
         out.append("checks_changed_since_approval")
-    if payable_amount(invoice) != item.amount:
+    due = payable_amount(invoice)
+    if item.discount is not None:
+        vendor_terms = await session.scalar(
+            select(PayVendor.payment_terms).where(PayVendor.id == item.vendor_id)
+        )
+        offer = invoice_offer(invoice, vendor_terms)
+        if (
+            offer is None
+            or not offer.available(run.execution_date)
+            or offer.saving != item.discount
+        ):
+            out.append("discount_changed")
+        due = None if due is None else due - item.discount
+    if due != item.amount:
         out.append("amount_changed")
     return list(dict.fromkeys(out))
 
@@ -233,7 +253,12 @@ def items_digest(items: Sequence[PayPaymentRunItem]) -> str:
 @dataclass(frozen=True, slots=True)
 class PlannedItem:
     invoice: PayInvoice
+    # What is paid: the amount due, less the discount when the run takes it.
     amount: Decimal
+    # The early-payment offer still open on the execution date (highlighted), and the
+    # saving the run takes (``include_early_payment``).
+    offer: EarlyPayment | None = None
+    discount: Decimal | None = None
 
 
 @dataclass(slots=True)
@@ -242,12 +267,17 @@ class Plan:
     cash_limit: Decimal
     execution_date: dt.date
     due_on_or_before: dt.date | None
+    include_early_payment: bool = False
     items: list[PlannedItem] = field(default_factory=list)
     excluded: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def total(self) -> Decimal:
         return sum((i.amount for i in self.items), Decimal(0))
+
+    @property
+    def savings(self) -> Decimal:
+        return sum((i.discount or Decimal(0) for i in self.items), Decimal(0))
 
 
 async def plan_run(
@@ -259,11 +289,12 @@ async def plan_run(
     due_on_or_before: dt.date | None,
     invoice_ids: Sequence[uuid.UUID] | None = None,
     lock: bool = False,
+    include_early_payment: bool = False,
 ) -> Plan:
     """Which approved invoices would go in a run, and why the others would not."""
     if cash_limit <= 0:
         raise BadRequestError("the cash limit must be more than zero")
-    plan = Plan(currency, cash_limit, execution_date, due_on_or_before)
+    plan = Plan(currency, cash_limit, execution_date, due_on_or_before, include_early_payment)
     query = select(PayInvoice).where(
         PayInvoice.status == InvoiceStatus.APPROVED.value,
         PayInvoice.payment_run_id.is_(None),
@@ -281,38 +312,57 @@ async def plan_run(
             .execution_options(populate_existing=True)
         )
     )
+    vendor_ids = {i.vendor_id for i in rows if i.vendor_id is not None}
+    terms: dict[uuid.UUID, str | None] = {}
+    if vendor_ids:
+        found = await session.execute(
+            select(PayVendor.id, PayVendor.payment_terms).where(PayVendor.id.in_(vendor_ids))
+        )
+        terms = {row[0]: row[1] for row in found.all()}
     running = Decimal(0)
     for invoice in rows:
         reasons: list[str] = []
         if invoice.currency != currency:
             continue  # another run's currency: not a reason, just not this run
+        offer = invoice_offer(invoice, terms.get(invoice.vendor_id) if invoice.vendor_id else None)
+        if offer is not None and not offer.available(execution_date):
+            offer = None
+        early = include_early_payment and offer is not None
         if (
             due_on_or_before is not None
             and invoice.due_date is not None
             and invoice.due_date > due_on_or_before
+            and not early
         ):
             reasons.append("not_due_yet")
         reasons += await invoice_problems(session, invoice)
         amount = payable_amount(invoice)
         if not reasons and amount is not None and amount <= 0:
             reasons.append("fully_credited")
+        discount: Decimal | None = None
+        if early and offer is not None and amount is not None and offer.amount == amount:
+            discount = offer.saving
+            amount = amount - discount
         if not reasons and amount is not None and running + amount > cash_limit:
             reasons.append("over_cash_limit")
         if not reasons and len(plan.items) >= MAX_ITEMS:
             reasons.append("run_full")
         if reasons or amount is None:
-            plan.excluded.append(
-                {
-                    "invoice_id": str(invoice.id),
-                    "reference": invoice.reference,
-                    "amount": money(invoice.total, invoice.currency),
-                    "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
-                    "reasons": reasons or ["not_approved"],
-                }
-            )
+            row: dict[str, Any] = {
+                "invoice_id": str(invoice.id),
+                "reference": invoice.reference,
+                "amount": money(invoice.total, invoice.currency),
+                "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+                "reasons": reasons or ["not_approved"],
+            }
+            if offer is not None:
+                # Highlighted: paying it early in this run would save this much.
+                row["saving"] = money(offer.saving, offer.currency)
+                row["pay_by"] = offer.pay_by.isoformat()
+            plan.excluded.append(row)
             continue
         running += amount
-        plan.items.append(PlannedItem(invoice, amount))
+        plan.items.append(PlannedItem(invoice, amount, offer, discount))
     return plan
 
 
@@ -325,6 +375,7 @@ async def propose_run(
     execution_date: dt.date,
     due_on_or_before: dt.date | None,
     invoice_ids: Sequence[uuid.UUID] | None = None,
+    include_early_payment: bool = False,
 ) -> PayPaymentRun:
     """Create the run and schedule its invoices. The caller commits, then starts the
     approval run (``pay_payment_run``)."""
@@ -336,6 +387,7 @@ async def propose_run(
         due_on_or_before=due_on_or_before,
         invoice_ids=invoice_ids,
         lock=True,
+        include_early_payment=include_early_payment,
     )
     if not plan.items:
         raise NothingToPayError(plan.excluded)
@@ -378,7 +430,7 @@ async def propose_run(
                 currency=currency,
                 due_date=invoice.due_date,
                 execution_date=execution_date,
-                discount=None,
+                discount=planned.discount,
                 bank_account_id=invoice.approved_account_id,
                 bank_details_digest=str(invoice.approved_bank_digest),
                 checks_digest=str(invoice.approved_checks_digest),
@@ -403,11 +455,17 @@ async def propose_run(
             "cash_limit": money(cash_limit, currency),
             "execution_date": execution_date.isoformat(),
             "due_on_or_before": due_on_or_before.isoformat() if due_on_or_before else None,
+            "include_early_payment": include_early_payment,
             "excluded": plan.excluded[:100],
         },
         output={
             "items": [str(p.invoice.id) for p in plan.items],
             "total": money(plan.total, currency),
+            "discounts": {
+                str(p.invoice.id): money(p.discount, currency)
+                for p in plan.items
+                if p.discount is not None
+            },
             "status": run.status,
         },
     )

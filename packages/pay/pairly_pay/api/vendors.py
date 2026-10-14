@@ -272,9 +272,9 @@ async def update(
     if "legal_name" in fields and body.legal_name:
         vendor.legal_name = clean_text(body.legal_name, 200)
         changed.append("legal_name")
-    for name in ("legal_name_ar", "trade_name", "trade_licence", "category"):
+    for name in ("legal_name_ar", "trade_name", "trade_licence", "category", "payment_terms"):
         if name in fields:
-            limit = 64 if name in {"trade_licence", "category"} else 200
+            limit = {"trade_licence": 64, "category": 64, "payment_terms": 120}.get(name, 200)
             setattr(vendor, name, clean_text(getattr(body, name), limit) or None)
             changed.append(name)
     if "legal_name" in changed or "trade_name" in changed:

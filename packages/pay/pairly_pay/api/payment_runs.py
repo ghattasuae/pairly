@@ -5,7 +5,9 @@
 * ``GET  /payment-runs``                      newest first (``pay.payment_run.read``).
 * ``GET  /payment-runs/{id}``                 one run with its items and what was left out.
 * ``POST /payment-runs/preview``              what a proposal would include and leave out,
-  and why (``pay.payment_run.create``). Writes nothing.
+  and why (``pay.payment_run.create``). Writes nothing. Invoices whose early-payment
+  discount is still open on the execution date carry the saving and the pay-by date;
+  ``include_early_payment`` takes them (``pairly_pay.discounts``).
 * ``POST /payment-runs``                      propose a run (``pay.payment_run.create``,
   people only). The approval run starts after the commit; the proposer never approves.
 * ``POST /payment-runs/{id}/export``          download the bank file, ``format`` ``csv`` or
@@ -84,6 +86,10 @@ class PayRunProposalIn(_In):
     execution_date: dt.date
     due_on_or_before: dt.date | None = None
     invoice_ids: Annotated[list[uuid.UUID], Field(max_length=500)] | None = None
+    # Also take approved invoices not due yet whose early-payment discount is still open
+    # on the execution date, and pay every invoice with an open discount its discounted
+    # amount. Approvals and holds apply all the same.
+    include_early_payment: bool = False
 
 
 class PayRunExportIn(_In):
@@ -112,7 +118,7 @@ class PayRunItemOut(BaseModel):
     amount: Decimal
     currency: str
     due_date: dt.date | None
-    # Placeholder for the early-payment discount optimiser: always empty for now.
+    # The early-payment discount taken: ``amount`` is what is due less this.
     discount: Decimal | None
     bank_account_masked: str | None
     end_to_end_id: str
@@ -126,6 +132,23 @@ class PayRunExcludedOut(BaseModel):
     amount: str | None
     due_date: str | None
     reasons: list[str]
+    # An early-payment discount still open on the execution date: what paying it in
+    # this run would save, and by when.
+    saving: str | None = None
+    pay_by: str | None = None
+
+
+class PayRunPreviewItemOut(BaseModel):
+    invoice_id: uuid.UUID
+    reference: str
+    vendor_name: str | None
+    amount: str | None
+    due_date: str | None
+    # The discount the run takes (``include_early_payment``), else None.
+    discount: str | None
+    # An early-payment discount open on the execution date (highlighted either way).
+    saving: str | None
+    pay_by: str | None
 
 
 class PayRunSummary(BaseModel):
@@ -168,7 +191,12 @@ class PayRunPreview(BaseModel):
     currency: str
     cash_limit: Decimal
     total: Decimal
-    items: list[dict[str, Any]]
+    include_early_payment: bool
+    # What the discounts the run takes save.
+    savings: Decimal
+    # What the open discounts would save if the run took them all.
+    savings_available: Decimal
+    items: list[PayRunPreviewItemOut]
     excluded: list[PayRunExcludedOut]
 
 
@@ -204,6 +232,8 @@ def _excluded(rows: list[Any]) -> list[PayRunExcludedOut]:
             amount=r.get("amount"),
             due_date=r.get("due_date"),
             reasons=list(r.get("reasons") or []),
+            saving=r.get("saving"),
+            pay_by=r.get("pay_by"),
         )
         for r in rows
         if isinstance(r, dict) and r.get("invoice_id")
@@ -273,22 +303,31 @@ async def _detail(session: OrgSession, actor: Actor, run: PayPaymentRun) -> PayR
 
 
 def _preview(plan: Plan) -> PayRunPreview:
+    excluded = _excluded(plan.excluded)
+    available = sum((p.offer.saving for p in plan.items if p.offer is not None), Decimal(0)) + sum(
+        (Decimal(e.saving) for e in excluded if e.saving), Decimal(0)
+    )
     return PayRunPreview(
         currency=plan.currency,
         cash_limit=Decimal(money(plan.cash_limit, plan.currency) or "0"),
         total=Decimal(money(plan.total, plan.currency) or "0"),
+        include_early_payment=plan.include_early_payment,
+        savings=Decimal(money(plan.savings, plan.currency) or "0"),
+        savings_available=Decimal(money(available, plan.currency) or "0"),
         items=[
-            {
-                "invoice_id": str(p.invoice.id),
-                "reference": p.invoice.reference,
-                "vendor_name": p.invoice.vendor_name,
-                "amount": money(p.amount, plan.currency),
-                "due_date": p.invoice.due_date.isoformat() if p.invoice.due_date else None,
-                "discount": None,
-            }
+            PayRunPreviewItemOut(
+                invoice_id=p.invoice.id,
+                reference=p.invoice.reference,
+                vendor_name=p.invoice.vendor_name,
+                amount=money(p.amount, plan.currency),
+                due_date=p.invoice.due_date.isoformat() if p.invoice.due_date else None,
+                discount=money(p.discount, plan.currency),
+                saving=money(p.offer.saving, plan.currency) if p.offer else None,
+                pay_by=p.offer.pay_by.isoformat() if p.offer else None,
+            )
             for p in plan.items
         ],
-        excluded=_excluded(plan.excluded),
+        excluded=excluded,
     )
 
 
@@ -350,6 +389,7 @@ async def preview_run(
         execution_date=body.execution_date,
         due_on_or_before=body.due_on_or_before,
         invoice_ids=body.invoice_ids,
+        include_early_payment=body.include_early_payment,
     )
     return _preview(plan)
 
@@ -376,6 +416,7 @@ async def propose(
             execution_date=body.execution_date,
             due_on_or_before=body.due_on_or_before,
             invoice_ids=body.invoice_ids,
+            include_early_payment=body.include_early_payment,
         )
     except NothingToPayError as exc:
         return problem_response(

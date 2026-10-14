@@ -165,6 +165,7 @@ async def vendor_detail(session: AsyncSession, actor: Actor, vendor: PayVendor) 
         phone_changed_at=vendor.phone_changed_at,
         email_domains=list(vendor.email_domains),
         category=vendor.category,
+        payment_terms=vendor.payment_terms,
         document_ids=list(vendor.document_ids),
         hold_set_at=vendor.hold_set_at,
         hold_sticky=is_sticky(vendor),

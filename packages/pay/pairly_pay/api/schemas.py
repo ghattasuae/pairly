@@ -100,6 +100,10 @@ class PayVendorPatchIn(_In):
     ) = None
     email_domains: Annotated[list[Domain], Field(max_length=10)] | None = None
     category: Annotated[str, StringConstraints(strip_whitespace=True, max_length=64)] | None = None
+    # The agreed payment terms, for example "2/10 net 30" (early-payment discounts).
+    payment_terms: (
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] | None
+    ) = None
 
 
 class PayVendorCheckIn(_In):
@@ -319,6 +323,7 @@ class PayVendorDetail(PayVendorSummary):
     phone_changed_at: datetime | None
     email_domains: list[str]
     category: str | None
+    payment_terms: str | None = None
     document_ids: list[str]
     hold_set_at: datetime | None
     hold_sticky: bool

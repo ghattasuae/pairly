@@ -235,6 +235,7 @@ def apply_values(invoice: PayInvoice, values: Mapping[str, Any]) -> None:
     invoice.invoice_number = _text(values.get("invoice_number"), 64)
     invoice.invoice_date = _date(values.get("invoice_date"))
     invoice.due_date = _date(values.get("due_date"))
+    invoice.payment_terms = _text(values.get("payment_terms"), 120)
     currency = values.get("currency")
     invoice.currency = currency if isinstance(currency, str) and len(currency) == 3 else None
     invoice.po_number = _text(values.get("po_number"), 64)
