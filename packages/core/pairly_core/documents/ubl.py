@@ -5,9 +5,10 @@
 A structured e-invoice needs no model: every value is read exactly as the XML states it
 (amounts stay the decimal strings they are, dates stay ISO). The parser produces:
 
-* ``text``: one readable line per value (``Invoice number: INV-1``, ``Line 2 quantity:
-  5``), so people, the guardrails and the evidence locator all see the same content as
-  for any other document. Free-text notes (``cbc:Note``) are kept as ``Note:`` lines:
+* ``text``: one readable line per header value (``Invoice number: INV-1``) and one row
+  per invoice line (``2. Docking station 5 405.58 S 5.00 2027.90``, columns named once
+  above the rows), so people, the guardrails and the evidence locator all see the same
+  content as for any other document. Free-text notes (``cbc:Note``) are kept as ``Note:`` lines:
   they are the usual place for an injected instruction, and the guardrails must read
   them like any text.
 * ``metadata["einvoice:data"]``: the structured values as canonical JSON. Each value is
@@ -46,6 +47,17 @@ MAX_XML_BYTES: Final = 32 * 1024 * 1024
 MAX_LINES: Final = 500
 MAX_VALUE_CHARS: Final = 200
 MAX_NOTES: Final = 20
+# The evidence locator's longest quote (``pairly_core.extraction.evidence``).
+MAX_QUOTE_CHARS: Final = 240
+LINE_COLUMNS: Final = (
+    "number",
+    "description",
+    "quantity",
+    "unit price",
+    "VAT category",
+    "VAT rate in percent",
+    "line total",
+)
 DATA_KEY: Final = "einvoice:data"
 
 INVOICE_NS: Final = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
@@ -186,29 +198,27 @@ def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWa
         warnings.append(
             ParseWarning(code="lines_truncated", message=f"only the first {MAX_LINES} lines read")
         )
+    if elements:
+        out.lines.append(f"Invoice lines ({', '.join(LINE_COLUMNS)}):")
     for position, element in enumerate(elements[:MAX_LINES], start=1):
+        values = {
+            "description": _text(element, "cac:Item/cbc:Name"),
+            "quantity": _text(element, "cbc:InvoicedQuantity"),
+            "unit_price": _text(element, "cac:Price/cbc:PriceAmount"),
+            "vat_category": _text(element, "cac:Item/cac:ClassifiedTaxCategory/cbc:ID"),
+            "vat_rate": _text(element, "cac:Item/cac:ClassifiedTaxCategory/cbc:Percent"),
+            "line_total": _text(element, "cbc:LineExtensionAmount"),
+        }
         number = _text(element, "cbc:ID") or str(position)
-        label = f"Line {position}"
+        # One row per line, values in column order and separated by single spaces: a
+        # label repeated on every row would read as keyword stuffing to the guardrails.
+        row = f"{position}. " + " ".join(v if v is not None else "-" for v in values.values())
+        out.lines.append(row)
         line: dict[str, Any] = {"line_no": number}
-        for key, name, value in (
-            ("description", "description", _text(element, "cac:Item/cbc:Name")),
-            ("quantity", "quantity", _text(element, "cbc:InvoicedQuantity")),
-            ("unit_price", "unit price", _text(element, "cac:Price/cbc:PriceAmount")),
-            (
-                "vat_category",
-                "VAT category",
-                _text(element, "cac:Item/cac:ClassifiedTaxCategory/cbc:ID"),
-            ),
-            (
-                "vat_rate",
-                "VAT rate (percent)",
-                _text(element, "cac:Item/cac:ClassifiedTaxCategory/cbc:Percent"),
-            ),
-            ("line_total", "line total", _text(element, "cbc:LineExtensionAmount")),
-        ):
-            item = out.add(f"{label} {name}", value)
-            if item is not None:
-                line[key] = item
+        for key, value in values.items():
+            if value is not None:
+                quote = row if len(row) <= MAX_QUOTE_CHARS else value
+                line[key] = {"value": value, "quote": quote}
         lines.append(line)
 
     notes = [_clean(n.text) for n in root.findall(_path("cbc:Note"))]

@@ -118,11 +118,14 @@ def test_dual_approval_rules() -> None:
     assert len(rules.chains) == 1
 
 
-def test_activation_job_declared() -> None:
-    (job,) = SCHEDULED_JOBS
-    assert job.name == "pay_bank_change_activation"
-    assert job.every_minutes == 5
-    assert job.run is not None
+def test_scheduled_jobs_declared() -> None:
+    activation, intake = SCHEDULED_JOBS
+    assert activation.name == "pay_bank_change_activation"
+    assert activation.every_minutes == 5
+    assert activation.run is not None
+    assert intake.name == "pay_invoice_intake_start"
+    assert intake.every_minutes == 1
+    assert intake.run is not None
 
 
 def test_onboarding_link_format() -> None:

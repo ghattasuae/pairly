@@ -22,23 +22,35 @@ parents by ``(org_id, id)``, so no row can reference another organisation's.
 * ``pay_vendor_invites`` and ``pay_vendor_onboarding_sessions``: the signed single-use
   onboarding link and the short session it opens (``pairly_pay.onboarding``).
 * ``pay_settings``: per organisation settings (cooling-off hours).
+
+Invoices (``pay_0002``, same rules):
+
+* ``pay_invoices``: one row per invoice document (file hash dedupe: unique per
+  document), its status lifecycle, source, vendor link and how it was found, the
+  current header values and why it needs a person.
+* ``pay_intake_emails``: how Pay classified an inbound email (invoice, marketing,
+  unsure) and the receipt it sent.
+* ``pay_invoice_corrections``: corrections filed per vendor, insert only.
 """
 
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Final
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Index,
     Integer,
+    Numeric,
     String,
     UniqueConstraint,
     Uuid,
@@ -477,3 +489,202 @@ class PaySettings(Base, OrgScoped):
     updated_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
     updated_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
     updated_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ invoices (pay_0002)
+
+INVOICES: Final = "pay_invoices"
+INTAKE_EMAILS: Final = "pay_intake_emails"
+CORRECTIONS: Final = "pay_invoice_corrections"
+
+
+class InvoiceStatus(StrEnum):
+    # Intake has the document; the pay_invoice run has not started yet.
+    RECEIVED = "received"
+    # The run is reading the invoice (scan, parse, guardrails, extraction, vendor).
+    EXTRACTING = "extracting"
+    # A person must look: low confidence, guardrail findings, no vendor, a failed step.
+    NEEDS_REVIEW = "needs_review"
+    # Read and matched; the checks and approvals of later steps take it from here.
+    READY = "ready"
+    APPROVED = "approved"
+    SCHEDULED = "scheduled"
+    PAID = "paid"
+    # Closed by a person (not an invoice, a duplicate, a fake). Never by an agent.
+    REJECTED = "rejected"
+
+
+class InvoiceSource(StrEnum):
+    EMAIL = "email"
+    UPLOAD = "upload"
+    API = "api"
+
+
+class ExtractionSource(StrEnum):
+    MODEL = "model"
+    EINVOICE = "einvoice"
+
+
+class EmailClass(StrEnum):
+    INVOICE = "invoice"
+    MARKETING = "marketing"
+    # The rules could not tell: a person looks (the email's body becomes an invoice in
+    # needs_review with the reason).
+    UNSURE = "unsure"
+
+
+class PayInvoice(Base, OrgScoped):
+    __tablename__ = INVOICES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_invoices_org_id_id"),
+        UniqueConstraint("org_id", "reference", name="uq_pay_invoices_org_id_reference"),
+        # File hash dedupe: a document (one file in this workflow) is one invoice.
+        UniqueConstraint("org_id", "document_id", name="uq_pay_invoices_org_id_document_id"),
+        ForeignKeyConstraint(
+            ["org_id", "vendor_id"],
+            ["pay_vendors.org_id", "pay_vendors.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_vendor_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "intake_email_id"],
+            ["pay_intake_emails.org_id", "pay_intake_emails.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_intake_email_org",
+        ),
+        CheckConstraint(f"status IN ({_in(InvoiceStatus)})", name="status_valid"),
+        CheckConstraint(f"source IN ({_in(InvoiceSource)})", name="source_valid"),
+        CheckConstraint(
+            f"extraction_source IS NULL OR extraction_source IN ({_in(ExtractionSource)})",
+            name="extraction_source_valid",
+        ),
+        CheckConstraint("currency IS NULL OR currency ~ '^[A-Z]{3}$'", name="currency_format"),
+        Index("ix_pay_invoices_status", "org_id", "status", "created_at"),
+        Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    reference: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("documents.id", ondelete="RESTRICT"), nullable=False
+    )
+    intake_email_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    # The receipt reference the sender got (``REF-...``), for email intake.
+    intake_reference: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Domains the invoice came from: the sender's, and the forwarded original sender's.
+    sender_domains: Mapped[list[str]] = _jsonb_list()
+    submitted_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    submitted_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    submitted_by: Mapped[uuid.UUID | None] = _user_fk()
+    run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT"), nullable=True
+    )
+    extraction_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("extractions.id", ondelete="RESTRICT"), nullable=True
+    )
+    extraction_source: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    guardrail_report: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    sanitized_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    removed_spans: Mapped[list[Any]] = _jsonb_list()
+    # Vendor link and how it was found: {method, confidence, candidates, conflict}.
+    vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    vendor_match: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    # Current header values (corrections included), for lists and later checks.
+    vendor_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    vendor_trn: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    invoice_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    po_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    subtotal: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    vat_amount: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    total: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    review_reasons: Mapped[list[str]] = _jsonb_list()
+    decision_ids: Mapped[list[str]] = _jsonb_list()
+    reviewed_by: Mapped[uuid.UUID | None] = _user_fk()
+    reviewed_at: Mapped[datetime | None] = _ts()
+    rejected_by: Mapped[uuid.UUID | None] = _user_fk()
+    rejected_at: Mapped[datetime | None] = _ts()
+    reject_reason: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+
+
+class PayIntakeEmail(Base, OrgScoped):
+    """How Pay classified one inbound email, and the receipt it sent."""
+
+    __tablename__ = INTAKE_EMAILS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_intake_emails_org_id_id"),
+        UniqueConstraint(
+            "org_id", "inbound_email_id", name="uq_pay_intake_emails_org_id_inbound_email_id"
+        ),
+        CheckConstraint(f"classification IN ({_in(EmailClass)})", name="classification_valid"),
+        Index("ix_pay_intake_emails_created", "org_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    inbound_email_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("inbound_emails.id", ondelete="RESTRICT"), nullable=False
+    )
+    classification: Mapped[str] = mapped_column(String(16), nullable=False)
+    confidence: Mapped[str] = mapped_column(String(8), nullable=False)
+    reasons: Mapped[list[str]] = _jsonb_list()
+    reference: Mapped[str] = mapped_column(String(32), nullable=False)
+    sender_domain: Mapped[str | None] = mapped_column(String(253), nullable=True)
+    forwarded_domain: Mapped[str | None] = mapped_column(String(253), nullable=True)
+    invoice_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Attachments kept with the email but not read as invoices (terms, logos).
+    supporting_document_ids: Mapped[list[str]] = _jsonb_list()
+    receipt_sent: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    receipt_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = _created()
+
+
+class PayInvoiceCorrection(Base, OrgScoped):
+    """A person's correction of one extracted field, kept per vendor (brief 4.3.4).
+
+    The engine's ``extraction_corrections`` row is the record of the correction; this
+    row files it under the vendor so the next invoice from that vendor can learn from it
+    (``pairly_pay.learning``). Insert only. Bank-detail corrections keep no values here.
+    """
+
+    __tablename__ = CORRECTIONS
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["org_id", "invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoice_corrections_invoice_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "vendor_id"],
+            ["pay_vendors.org_id", "pay_vendors.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoice_corrections_vendor_org",
+        ),
+        Index("ix_pay_invoice_corrections_vendor", "org_id", "vendor_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    invoice_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    extraction_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("extractions.id", ondelete="RESTRICT"), nullable=False
+    )
+    correction_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("extraction_corrections.id", ondelete="RESTRICT"), nullable=False
+    )
+    field_path: Mapped[str] = mapped_column(String(200), nullable=False)
+    field_pattern: Mapped[str] = mapped_column(String(200), nullable=False)
+    old_value: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    new_value: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    corrected_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    created_at: Mapped[datetime] = _created()
