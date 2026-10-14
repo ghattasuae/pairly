@@ -12,7 +12,9 @@
 * ``GET  /invoices/{id}``                 one invoice for the side-by-side viewer: the
   document, every field with confidence, flags, evidence spans and corrections, the
   vendor link and how it was found, the guardrail findings (their text only for people
-  who process invoices) and why it needs a person.
+  who process invoices), why it needs a person, every check's result with its findings
+  (one sentence each, English and Arabic), the risk score, and each suspected original
+  of a duplicate side by side (``compare``).
 * ``POST /invoices/{id}/corrections``     correct one field, with a reason
   (``pay.invoice.process`` and ``pay.extraction.correct``; people only). Recorded by
   the engine and filed under the vendor so the next invoice learns from it.
@@ -67,6 +69,7 @@ from pairly_core.ingestion.service import (
 from pairly_core.ingestion.storage import StorageError
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
+from pairly_pay.checks.service import lines_of, suspected_originals
 from pairly_pay.common import WORKFLOW, By, audit, record_step
 from pairly_pay.intake import pay_policy
 from pairly_pay.invoice_start import start_after_intake
@@ -241,6 +244,67 @@ class PayInvoiceEmailOut(BaseModel):
     receipt_sent: bool
 
 
+class PayCheckFindingOut(BaseModel):
+    code: str
+    rule: str
+    severity: str
+    # One sentence in English and Arabic.
+    message: dict[str, str]
+    evidence: dict[str, Any]
+    original_id: uuid.UUID | None
+    related_ids: list[uuid.UUID]
+    needs_review: bool
+
+
+class PayCheckOut(BaseModel):
+    check: str
+    status: Literal["pass", "fail", "error"]
+    error: str | None
+    findings: list[PayCheckFindingOut]
+
+
+class PayRiskOut(BaseModel):
+    assessment_id: uuid.UUID | None
+    score: float | None
+    level: str
+    requires_human: bool
+    reasons: list[str]
+    explanation: dict[str, str]
+
+
+class PayCompareLineOut(BaseModel):
+    description: str | None
+    quantity: str | None
+    unit_price: str | None
+    line_total: str | None
+
+
+class PayCompareSideOut(BaseModel):
+    id: uuid.UUID
+    reference: str
+    status: str
+    document_id: uuid.UUID
+    vendor_name: str | None
+    invoice_number: str | None
+    invoice_date: date | None
+    due_date: date | None
+    currency: str | None
+    po_number: str | None
+    subtotal: Decimal | None
+    vat_amount: Decimal | None
+    total: Decimal | None
+    lines: list[PayCompareLineOut]
+    created_at: datetime
+
+
+class PayCompareOut(BaseModel):
+    """A suspected original, side by side with this invoice (brief 4.4.2)."""
+
+    rules: list[str]
+    invoice: PayCompareSideOut
+    original: PayCompareSideOut
+
+
 class PayInvoiceDetail(PayInvoiceSummary):
     po_number: str | None
     subtotal: Decimal | None
@@ -257,9 +321,129 @@ class PayInvoiceDetail(PayInvoiceSummary):
     reviewed_at: datetime | None
     rejected_at: datetime | None
     can_process: bool
+    # Validation and fraud checks (WP4.6): every check's result, the risk score, and the
+    # suspected originals of a duplicate side by side.
+    checks: list[PayCheckOut] = Field(default_factory=list)
+    risk: PayRiskOut | None = None
+    compare: list[PayCompareOut] = Field(default_factory=list)
 
 
 # ------------------------------------------------------------------ helpers
+
+
+def _uuid(value: Any) -> uuid.UUID | None:
+    try:
+        return uuid.UUID(str(value))
+    except ValueError:
+        return None
+
+
+def _checks(invoice: PayInvoice) -> list[PayCheckOut]:
+    out: list[PayCheckOut] = []
+    for item in invoice.checks[:20]:
+        if not isinstance(item, dict) or item.get("status") not in {"pass", "fail", "error"}:
+            continue
+        findings: list[PayCheckFindingOut] = []
+        for f in list(item.get("findings") or [])[:40]:
+            if not isinstance(f, dict):
+                continue
+            raw = f.get("message")
+            message: dict[str, Any] = raw if isinstance(raw, dict) else {}
+            findings.append(
+                PayCheckFindingOut(
+                    code=str(f.get("code", "")),
+                    rule=str(f.get("rule", "")),
+                    severity=str(f.get("severity", "")),
+                    message={"en": str(message.get("en", "")), "ar": str(message.get("ar", ""))},
+                    evidence=dict(f.get("evidence") or {}),
+                    original_id=_uuid(f.get("original_id")) if f.get("original_id") else None,
+                    related_ids=[
+                        u for u in (_uuid(r) for r in f.get("related_ids") or []) if u is not None
+                    ],
+                    needs_review=bool(f.get("needs_review")),
+                )
+            )
+        out.append(
+            PayCheckOut(
+                check=str(item.get("check", "")),
+                status=item["status"],
+                error=str(item["error"]) if item.get("error") else None,
+                findings=findings,
+            )
+        )
+    return out
+
+
+def _risk(invoice: PayInvoice) -> PayRiskOut | None:
+    data = invoice.risk or {}
+    if not data:
+        return None
+    raw = data.get("explanation")
+    explanation: dict[str, Any] = raw if isinstance(raw, dict) else {}
+    score = data.get("score")
+    return PayRiskOut(
+        assessment_id=_uuid(data.get("assessment_id")) if data.get("assessment_id") else None,
+        score=float(score) if isinstance(score, int | float) else None,
+        level=str(data.get("level", "high")),
+        requires_human=bool(data.get("requires_human", True)),
+        reasons=[str(r) for r in data.get("reasons") or []][:20],
+        explanation={"en": str(explanation.get("en", "")), "ar": str(explanation.get("ar", ""))},
+    )
+
+
+def _side(invoice: PayInvoice, stored: StoredExtraction | None) -> PayCompareSideOut:
+    values = stored.current_values() if stored is not None else {}
+    lines = lines_of(values)
+
+    def text(value: Decimal | None) -> str | None:
+        return None if value is None else f"{value.normalize():f}"
+
+    return PayCompareSideOut(
+        id=invoice.id,
+        reference=invoice.reference,
+        status=invoice.status,
+        document_id=invoice.document_id,
+        vendor_name=invoice.vendor_name,
+        invoice_number=invoice.invoice_number,
+        invoice_date=invoice.invoice_date,
+        due_date=invoice.due_date,
+        currency=invoice.currency,
+        po_number=invoice.po_number,
+        subtotal=money(invoice.subtotal),
+        vat_amount=money(invoice.vat_amount),
+        total=money(invoice.total),
+        lines=[
+            PayCompareLineOut(
+                description=x.description,
+                quantity=text(x.quantity),
+                unit_price=text(x.unit_price),
+                line_total=text(x.line_total),
+            )
+            for x in lines[:100]
+        ],
+        created_at=invoice.created_at,
+    )
+
+
+async def _compare(
+    session: OrgSession, invoice: PayInvoice, stored: StoredExtraction | None
+) -> list[PayCompareOut]:
+    """The suspected originals (this organisation's only: the session is org bound)."""
+    pairs = suspected_originals(invoice)[:5]
+    if not pairs:
+        return []
+    wanted = {u: rules for value, rules in pairs if (u := _uuid(value)) is not None}
+    rows = await session.scalars(select(PayInvoice).where(PayInvoice.id.in_(list(wanted))))
+    mine = _side(invoice, stored)
+    out: list[PayCompareOut] = []
+    for row in rows:
+        other = await load_extraction(session, row.extraction_id) if row.extraction_id else None
+        out.append(
+            PayCompareOut(
+                rules=sorted(set(wanted[row.id])), invoice=mine, original=_side(row, other)
+            )
+        )
+    return out
 
 
 async def _vendors(session: OrgSession, ids: set[uuid.UUID]) -> dict[uuid.UUID, PayVendor]:
@@ -448,6 +632,9 @@ async def _detail(
         reviewed_at=invoice.reviewed_at,
         rejected_at=invoice.rejected_at,
         can_process=processor,
+        checks=_checks(invoice),
+        risk=_risk(invoice),
+        compare=await _compare(session, invoice, stored),
     )
 
 

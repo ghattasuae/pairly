@@ -20,7 +20,8 @@
 * ``POST /vendors/{id}/hold``              manual payment hold (``pay.hold.manage``)
 * ``POST /vendors/{id}/hold/release``      release a sticky or manual hold; 409 while a
   ticket is open
-* ``GET|PUT /settings``                     cooling-off hours (``pay.settings.manage``)
+* ``GET|PUT /settings``                     cooling-off hours and invoice check settings
+                                             (``pay.settings.manage``)
 """
 
 from __future__ import annotations
@@ -53,6 +54,8 @@ from pairly_pay.api.schemas import (
 )
 from pairly_pay.api.views import vendor_detail, vendor_summary
 from pairly_pay.bank_changes import open_ticket, open_ticket_of
+from pairly_pay.checks.service import load_settings
+from pairly_pay.checks.settings import parse_settings
 from pairly_pay.common import VENDOR_ENTITY, By, audit, clean_text, record_step
 from pairly_pay.holds import HoldStillNeededError, place_hold, release_hold
 from pairly_pay.iban import format_iban, validate_bic, validate_iban
@@ -481,6 +484,7 @@ async def get_settings(actor: CurrentActor, session: OrgSession) -> PaySettingsO
     return PaySettingsOut(
         cooling_off_hours=settings.cooling_off_hours,
         phone_change_window_days=settings.phone_change_window_days,
+        checks=(await load_settings(session)).as_json(),
         can_manage=actor.has(SETTINGS_MANAGE),
     )
 
@@ -495,12 +499,17 @@ async def put_settings(
     previous = await settings_of(session)
     by = By.of(actor)
     now = datetime.now(UTC)
+    stored_checks = dict(row.check_settings) if row is not None else {}
+    if body.checks is not None:
+        changes = body.checks.model_dump(mode="json", exclude_none=True)
+        stored_checks = parse_settings({**stored_checks, **changes}).as_json()
     if row is None:
         row = PaySettings(
             id=uuid.uuid4(),
             org_id=actor.org_id,
             cooling_off_hours=body.cooling_off_hours,
             phone_change_window_days=body.phone_change_window_days,
+            check_settings=stored_checks,
             updated_by_type=by.actor_type.value,
             updated_by_id=by.actor_id,
             updated_at=now,
@@ -509,6 +518,7 @@ async def put_settings(
     else:
         row.cooling_off_hours = body.cooling_off_hours
         row.phone_change_window_days = body.phone_change_window_days
+        row.check_settings = stored_checks
         row.updated_by_type = by.actor_type.value
         row.updated_by_id = by.actor_id
         row.updated_at = now
@@ -523,10 +533,14 @@ async def put_settings(
             "cooling_off_hours": body.cooling_off_hours,
             "previous_cooling_off_hours": previous.cooling_off_hours,
             "phone_change_window_days": body.phone_change_window_days,
+            "checks_changed": sorted(
+                body.checks.model_dump(exclude_none=True) if body.checks else {}
+            ),
         },
     )
     return PaySettingsOut(
         cooling_off_hours=row.cooling_off_hours,
         phone_change_window_days=row.phone_change_window_days,
+        checks=parse_settings(stored_checks).as_json(),
         can_manage=True,
     )
