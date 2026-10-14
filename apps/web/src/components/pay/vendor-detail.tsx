@@ -13,7 +13,7 @@ import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useRouter } from "@/i18n/navigation";
-import { requestBankChange, vendorAction } from "@/lib/actions/pay";
+import { requestBankChange, updatePaymentTerms, vendorAction } from "@/lib/actions/pay";
 import type { PayVendorDetail } from "@/lib/pay/types";
 
 import { ErrorText, HoldBadge, Panel, TicketStatusBadge, VendorStatusBadge } from "./common";
@@ -162,6 +162,90 @@ function ReasonAction({
         {label}
       </Button>
     </form>
+  );
+}
+
+/** The vendor's agreed payment terms: shown to everyone who reads the vendor, edited
+ * by those who may write it. Early-payment discounts ("2/10 net 30") come from here
+ * when an invoice prints no terms of its own. */
+export function PaymentTermsPanel({
+  vendor,
+  onSaved,
+}: {
+  vendor: PayVendorDetail;
+  onSaved: (v: PayVendorDetail) => void;
+}) {
+  const t = useTranslations("Pay.vendor.terms");
+  const ids = useId();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(vendor.payment_terms ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const editable = vendor.can_write && vendor.status !== "rejected" && vendor.status !== "archived";
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const result = await updatePaymentTerms(vendor.id, value);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.code);
+      return;
+    }
+    setEditing(false);
+    setValue(result.vendor.payment_terms ?? "");
+    onSaved(result.vendor);
+  }
+
+  return (
+    <Panel title={t("title")} data-payment-terms>
+      <p className="text-sm text-muted-foreground">{t("intro")}</p>
+      {!editing ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm font-medium" data-terms-value>
+            {vendor.payment_terms ? <bdi>{vendor.payment_terms}</bdi> : t("none")}
+          </p>
+          {editable && (
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-terms-edit>
+              {t("edit")}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={save} className="space-y-2" data-terms-form>
+          <Label htmlFor={`${ids}-terms`}>{t("label")}</Label>
+          <Input
+            id={`${ids}-terms`}
+            maxLength={120}
+            placeholder={t("placeholder")}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">{t("hint")}</p>
+          <ErrorText code={error} />
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={busy} data-terms-save>
+              {busy && <Loader2 aria-hidden className="animate-spin" />}
+              {t("save")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => {
+                setEditing(false);
+                setError(null);
+                setValue(vendor.payment_terms ?? "");
+              }}
+            >
+              {t("cancel")}
+            </Button>
+          </div>
+        </form>
+      )}
+    </Panel>
   );
 }
 
@@ -320,6 +404,8 @@ export function VendorDetailView({
           )}
         </Panel>
       </div>
+
+      <PaymentTermsPanel vendor={vendor} onSaved={setVendor} />
 
       <Panel title={t("bankTitle")} data-bank-accounts>
         <p className="text-sm text-muted-foreground">{t("bankIntro")}</p>

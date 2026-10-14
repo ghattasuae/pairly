@@ -226,6 +226,25 @@ export async function vendorAction(
   return toAction(result, (vendor) => ({ vendor }));
 }
 
+const paymentTerms = z.string().trim().max(120);
+
+/** Set or clear a vendor's agreed payment terms ("2/10 net 30"): the API audits it and
+ * the early-payment optimiser reads them. An empty value clears the terms. */
+export async function updatePaymentTerms(
+  vendorId: string,
+  terms: string,
+): Promise<ActionResult<{ vendor: PayVendorDetail }>> {
+  const parsed = paymentTerms.safeParse(terms);
+  if (!uuid.safeParse(vendorId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.PATCH("/v1/pay/vendors/{vendor_id}", {
+      params: { path: { vendor_id: vendorId } },
+      body: { payment_terms: parsed.data || null },
+    }),
+  );
+  return toAction(result, (vendor) => ({ vendor }));
+}
+
 export async function createInvite(input: {
   company_hint?: string;
   email?: string;

@@ -3112,7 +3112,18 @@
       "holdOn": "Payments to this vendor are on hold.",
       "holdOff": "Payments to this vendor are not on hold.",
       "release": "Release the hold",
-      "placeHold": "Hold payments"
+      "placeHold": "Hold payments",
+      "terms": {
+        "title": "Payment terms",
+        "intro": "The terms agreed with this vendor. An invoice that prints no terms of its own uses these, and an early-payment discount (for example 2/10 net 30) is offered from them.",
+        "none": "No terms on file",
+        "edit": "Edit terms",
+        "label": "Agreed terms",
+        "placeholder": "2/10 net 30",
+        "hint": "Leave empty to clear. Every change is recorded in the audit log.",
+        "save": "Save terms",
+        "cancel": "Cancel"
+      }
     },
     "risk": {
       "title": "Risk profile",
