@@ -11271,6 +11271,8 @@ export type components = {
             /** Invoices */
             invoices: number;
             on_time_payment_rate: components["schemas"]["PayMetricOut"];
+            /** Open Payables */
+            open_payables: components["schemas"]["PayMetricOut"][];
             /** Since */
             since: string | null;
             touchless_rate: components["schemas"]["PayMetricOut"];

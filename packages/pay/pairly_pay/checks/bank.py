@@ -15,6 +15,9 @@ to pay: only details that went through a verified, dual-approved ticket are.
 * the IBAN differs from the active account: ``bank_mismatch`` (critical, ticket).
 
 Evidence carries the last four characters only, never a full IBAN.
+
+A credit note pays nothing, so its printed bank details are never compared and never
+open a ticket: the check passes (every other check still runs on it).
 """
 
 from __future__ import annotations
@@ -27,13 +30,14 @@ from pairly_pay.iban import normalize_iban, validate_iban
 
 CHECK: Final = "bank"
 VERSION: Final = "1"
+CREDIT_NOTE: Final = "credit_note"
 # Rules after which the service opens a change ticket.
 TICKET_RULES: Final = frozenset({"bank_mismatch", "bank_not_on_file"})
 
 
 def check_bank(facts: InvoiceFacts) -> CheckResult:
     findings: list[Finding] = []
-    if not facts.bank_iban:
+    if not facts.bank_iban or facts.document_type == CREDIT_NOTE:
         return result(CHECK, VERSION, findings)
     printed = normalize_iban(facts.bank_iban)
     last4 = printed[-4:]

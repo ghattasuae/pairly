@@ -4,7 +4,8 @@
 ``pay.analytics.read``.
 
 * ``GET /analytics?since=&until=``  every metric of ``pairly_pay.analytics`` with the
-  records behind it (invoices, bank-detail changes, approvals by reference).
+  records behind it (invoices, bank-detail changes, approvals by reference). Open
+  payables are as of now, whatever the period.
 
 Computed from the organisation's own tables at request time (Row Level Security); no
 number is stored or invented, and a metric without data is ``null``, never 0.
@@ -12,6 +13,7 @@ number is stored or invented, and a metric without data is ``null``, never 0.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from typing import Any
 
@@ -22,6 +24,7 @@ from pairly_core.errors import BadRequestError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import authorize
 from pairly_pay.analytics import Metric, compute, load_facts
+from pairly_pay.payables import COMMITTED, load_payables
 from pairly_pay.permissions import ANALYTICS_READ
 
 router = APIRouter(tags=["pay"])
@@ -58,6 +61,7 @@ class PayAnalyticsOut(BaseModel):
     approval_sla_breaches: PayMetricOut
     on_time_payment_rate: PayMetricOut
     days_payable_outstanding: PayMetricOut
+    open_payables: list[PayMetricOut]
 
 
 def metric_out(m: Metric) -> PayMetricOut:
@@ -75,6 +79,7 @@ async def pay_analytics(
     if since is not None and until is not None and until < since:
         raise BadRequestError("until is before since")
     facts = await load_facts(session, since=since, until=until)
+    facts = replace(facts, payables=await load_payables(session, COMMITTED))
     now = datetime.now(UTC)
     result = compute(facts, now=now)
     return PayAnalyticsOut(
@@ -92,4 +97,5 @@ async def pay_analytics(
         approval_sla_breaches=metric_out(result.approval_sla_breaches),
         on_time_payment_rate=metric_out(result.on_time_payment_rate),
         days_payable_outstanding=metric_out(result.days_payable_outstanding),
+        open_payables=[metric_out(m) for m in result.open_payables],
     )

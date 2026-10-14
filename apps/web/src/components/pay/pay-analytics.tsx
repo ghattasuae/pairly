@@ -198,6 +198,18 @@ export function PayAnalyticsView({ data }: { data: PayAnalytics }) {
         <Rows metrics={outcomes} label={(m) => t(`outcome.${keyTail(m.key)}` as "outcome.open")} />
       </Section>
 
+      <Section title={t("openPayablesTitle")} intro={t("openPayablesIntro")}>
+        <Rows
+          metrics={data.open_payables}
+          label={(m) =>
+            `${String(detail(m, "currency") ?? keyTail(m.key))} · ${t("openPayablesCredits", {
+              gross: String(detail(m, "gross") ?? ""),
+              credits: String(detail(m, "credits_applied") ?? ""),
+            })}`
+          }
+        />
+      </Section>
+
       <Section title={t("paymentTitle")}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Tile title={t("slaBreaches")} metric={data.approval_sla_breaches} note={t("slaNote")} />

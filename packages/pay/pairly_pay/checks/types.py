@@ -216,6 +216,9 @@ class InvoiceFacts:
     guardrail_report: GuardrailReport | None = None
     # Whether anything was read at all (extraction or e-invoice).
     read: bool = True
+    # ``invoice`` or ``credit_note`` (``pay_0012``): a credit note pays nothing, so the
+    # bank check skips its printed bank details; every other check runs.
+    document_type: str = "invoice"
 
 
 @dataclass(frozen=True, slots=True)

@@ -3813,7 +3813,10 @@
       "onTime": "On-time payment rate",
       "onTimeNote": "Paid invoices with a due date, paid on or before it.",
       "dpo": "Days payable outstanding",
-      "dpoNote": "Average days from the invoice date to payment, over paid invoices."
+      "dpoNote": "Average days from the invoice date to payment, over paid invoices.",
+      "openPayablesTitle": "Open payables",
+      "openPayablesIntro": "What is still to pay on approved and scheduled invoices today, after the credit notes applied to them. Not limited to the period.",
+      "openPayablesCredits": "Gross {gross}, credits applied {credits}"
     },
     "coding": {
       "title": "GL coding",

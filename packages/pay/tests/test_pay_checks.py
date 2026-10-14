@@ -345,6 +345,29 @@ def test_bank_change_attacks_are_all_caught() -> None:
     assert len(caught) == len(attacks("bank_change")) == 5
 
 
+def test_a_credit_note_skips_only_the_bank_check() -> None:
+    """A credit note pays nothing: its printed bank details are never compared and never
+    open a ticket, but every other check still runs on it."""
+    spec = attacks("bank_change")[0]
+    invoice = facts_of(spec)
+    assert "bank_mismatch" in rules(check_bank(invoice))
+    credit = replace(invoice, document_type="credit_note")
+    assert check_bank(credit).status is CheckStatus.PASS
+    assert check_bank(credit).findings == ()
+    for other in (
+        replace(credit, bank_iban="AE000000000000000000001"),
+        replace(credit, vendor=None),
+    ):
+        assert check_bank(other).status is CheckStatus.PASS
+    as_credit = run_pure_checks(credit, History(), SETTINGS, document_required=False)
+    as_invoice = run_pure_checks(invoice, History(), SETTINGS, document_required=False)
+    assert set(as_credit) == set(as_invoice)
+    assert as_credit["bank"].status is CheckStatus.PASS
+    assert as_invoice["bank"].status is CheckStatus.FAIL
+    for name in set(as_invoice) - {"bank"}:
+        assert as_credit[name] == as_invoice[name], name
+
+
 def test_bank_rules() -> None:
     spec = next(s for s in dataset().regular() if s.record.truth.bank is not None)
     facts = facts_of(spec)

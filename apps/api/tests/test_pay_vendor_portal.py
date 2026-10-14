@@ -502,6 +502,14 @@ async def test_credit_note_through_intake_reduces_what_is_paid(
     assert staff_view["vendor"]["id"] == vendor_id
     assert staff_view["status"] == "needs_review"
     assert "credit_note" in staff_view["review_reasons"]
+    # A credit note pays nothing: its printed bank details are not compared (no ticket,
+    # no hold), every other check ran.
+    checks = {c["check"]: c for c in staff_view["checks"]}
+    assert checks["bank"]["status"] == "pass"
+    assert {"arithmetic", "duplicates"} <= set(checks)
+    tickets = await flow.ok("GET", "/v1/pay/bank-changes", fworld, "clerk")
+    items = tickets["items"] if isinstance(tickets, dict) else tickets
+    assert [t for t in items if t.get("vendor_id") == vendor_id] == []
     # Never sent for approval or paid.
     refused = await flow.call(
         "POST", f"/v1/pay/invoices/{credit_id}/submit", fworld, "clerk", json={"note": "x"}
@@ -542,6 +550,13 @@ async def test_credit_note_through_intake_reduces_what_is_paid(
     (item,) = [i for i in preview["items"] if i["invoice_id"] == invoice_id]
     assert Decimal(item["amount"]) == invoice_total - credit_total
     assert credit_id not in {i["invoice_id"] for i in preview["items"]}
+    # Analytics: the open payable is the approved amount less the applied credit.
+    analytics = await flow.ok("GET", "/v1/pay/analytics", fworld, "finance")
+    (aed,) = [m for m in analytics["open_payables"] if m["key"] == "open_payables.AED"]
+    assert Decimal(aed["detail"]["amount"]) == invoice_total - credit_total
+    assert Decimal(aed["detail"]["gross"]) == invoice_total
+    assert Decimal(aed["detail"]["credits_applied"]) == credit_total
+    assert {r["id"] for r in aed["records"]} == {invoice_id}
     approved = {
         i["id"]: i for i in (await flow.client.get(f"{PORTAL}/invoices", headers=session)).json()
     }

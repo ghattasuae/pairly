@@ -266,6 +266,7 @@ async def build_facts(
         else None,
         guardrail_report=report,
         read=stored is not None,
+        document_type=invoice.document_type,
     )
     return facts, document
 

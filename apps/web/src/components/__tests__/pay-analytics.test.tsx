@@ -48,6 +48,13 @@ function analytics(patch: Partial<PayAnalytics> = {}): PayAnalytics {
     approval_sla_breaches: metric("approval_sla_breaches", null, "count"),
     on_time_payment_rate: metric("on_time_payment_rate", 0.5, "rate"),
     days_payable_outstanding: metric("days_payable_outstanding", 21, "days"),
+    open_payables: [
+      metric("open_payables.AED", 750, "amount", {
+        detail: { currency: "AED", amount: "750.00", gross: "1000.00", credits_applied: "250.00" },
+        records: [{ kind: "invoice", id: INVOICE, label: "AP-0001" }],
+        records_total: 1,
+      }),
+    ],
     ...patch,
   };
 }
@@ -77,6 +84,13 @@ describe("PayAnalyticsView", () => {
     expect(tile("exceptions.check.bank")).toHaveTextContent("Check: bank details");
     expect(tile("duplicates_prevented_value.AED")).toHaveTextContent("500");
     expect(tile("fraud_flags.rejected")).toHaveTextContent("Rejected");
+    // Open payables: net of the credit notes applied, with the invoices behind it.
+    expect(tile("open_payables.AED")).toHaveTextContent("750");
+    expect(tile("open_payables.AED")).toHaveTextContent("credits applied 250.00");
+    expect(within(tile("open_payables.AED")).getByRole("link", { name: "AP-0001" })).toHaveAttribute(
+      "href",
+      `/pay/invoices/${INVOICE}`,
+    );
   });
 
   it("reads in Arabic, with no data where nothing was counted", () => {

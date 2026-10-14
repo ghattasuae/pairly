@@ -16789,6 +16789,13 @@
           "on_time_payment_rate": {
             "$ref": "#/components/schemas/PayMetricOut"
           },
+          "open_payables": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Open Payables",
+            "type": "array"
+          },
           "since": {
             "anyOf": [
               {
@@ -16831,7 +16838,8 @@
           "fraud_flags",
           "approval_sla_breaches",
           "on_time_payment_rate",
-          "days_payable_outstanding"
+          "days_payable_outstanding",
+          "open_payables"
         ],
         "title": "PayAnalyticsOut",
         "type": "object"

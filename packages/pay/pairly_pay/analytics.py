@@ -38,6 +38,10 @@ no data has ``value`` None, never a made-up zero. Methods, stated plainly:
 * on-time payment rate: paid invoices with a due date, paid on or before it.
 * days payable outstanding: days from the invoice date to payment, over paid invoices
   with an invoice date. Median and mean; ``value`` is the mean.
+* open payables, per currency, now (not limited to the period): what is still to pay on
+  approved and scheduled invoices, the approved amount less the credit notes applied to
+  each (``pairly_pay.payables.amount_due``); the gross amount and the credits applied
+  are in the detail. Credit notes are never counted as payables.
 """
 
 from __future__ import annotations
@@ -56,9 +60,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.approvals.models import Approval, ApprovalStep
 from pairly_core.models.llm import ModelCall
+from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import WORKFLOW
 from pairly_pay.invoices import INVOICE_ENTITY
 from pairly_pay.models import PayBankChangeTicket, PayInvoice
+from pairly_pay.payables import PayableFact, amount_due, gross_amount
 
 RecordKind = Literal["invoice", "bank_change", "approval"]
 
@@ -141,6 +147,8 @@ class Facts:
     invoices: tuple[InvoiceFact, ...] = ()
     tickets: tuple[TicketFact, ...] = ()
     steps: tuple[StepFact, ...] = ()
+    # Approved and scheduled invoices now (``pairly_pay.payables.load_payables``).
+    payables: tuple[PayableFact, ...] = ()
 
 
 def _bounds(since: date | None, until: date | None) -> tuple[datetime | None, datetime | None]:
@@ -573,6 +581,39 @@ def days_payable_outstanding(invoices: Sequence[InvoiceFact]) -> Metric:
     )
 
 
+def open_payables(payables: Sequence[PayableFact]) -> list[Metric]:
+    """Per currency: what is still to pay on approved and scheduled invoices, after the
+    credit notes applied to them."""
+    by_currency: dict[str, list[PayableFact]] = defaultdict(list)
+    for p in payables:
+        if p.committed and p.currency and amount_due(p) is not None:
+            by_currency[p.currency].append(p)
+    out: list[Metric] = []
+    for currency in sorted(by_currency):
+        rows = by_currency[currency]
+        net = sum((amount_due(p) or Decimal(0) for p in rows), Decimal(0))
+        gross = sum((gross_amount(p) or Decimal(0) for p in rows), Decimal(0))
+        credits = sum(
+            (min(p.credit_total, gross_amount(p) or Decimal(0)) for p in rows), Decimal(0)
+        )
+        out.append(
+            _metric(
+                f"open_payables.{currency}",
+                float(net),
+                "amount",
+                len(rows),
+                [RecordLink("invoice", str(p.id), p.reference) for p in rows],
+                currency=currency,
+                amount=amount_text(net, currency),
+                gross=amount_text(gross, currency),
+                credits_applied=amount_text(credits, currency),
+                scheduled=sum(1 for p in rows if p.status == "scheduled"),
+                approved=sum(1 for p in rows if p.status == "approved"),
+            )
+        )
+    return out
+
+
 @dataclass(slots=True)
 class PayAnalytics:
     invoices: int
@@ -586,6 +627,7 @@ class PayAnalytics:
     approval_sla_breaches: Metric
     on_time_payment_rate: Metric
     days_payable_outstanding: Metric
+    open_payables: list[Metric] = field(default_factory=list)
 
 
 def compute(facts: Facts, *, now: datetime) -> PayAnalytics:
@@ -602,4 +644,5 @@ def compute(facts: Facts, *, now: datetime) -> PayAnalytics:
         approval_sla_breaches=sla_breaches(facts.steps, now),
         on_time_payment_rate=on_time_rate(invoices),
         days_payable_outstanding=days_payable_outstanding(invoices),
+        open_payables=open_payables(facts.payables),
     )
