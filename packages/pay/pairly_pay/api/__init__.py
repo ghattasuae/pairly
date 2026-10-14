@@ -9,8 +9,7 @@
 * ``onboarding``: invite links for the AP team, and the vendor's self-service form
   (no sign-in, rate limited).
 * ``invoices``: invoice intake by upload and API, the invoice list and the side-by-side
-  review (corrections, vendor link, reviewed, rejected), the inbound address (WP4.4,
-  WP4.5).
+  review (corrections, vendor link, reviewed, rejected) (WP4.4, WP4.5).
 
 Imported only by the API process (the worker never loads routes).
 """

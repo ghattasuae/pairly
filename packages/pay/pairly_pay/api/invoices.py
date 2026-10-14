@@ -20,10 +20,9 @@
 * ``POST /invoices/{id}/review``          ``needs_review`` to ``ready`` after a person
   checked it (``pay.invoice.process``).
 * ``POST /invoices/{id}/reject``          close it, with a reason (``pay.invoice.process``).
-* ``GET  /intake/address``                whether the Pay inbound address is set up
-  (``pay.settings.manage``).
-* ``POST /intake/address/rotate``         a new inbound address; the full address is
-  shown once (``pay.settings.manage``, a second factor).
+
+The inbound email address is made with ``pairly-admin inbound rotate`` (the token is
+shown once; the application role cannot write addresses).
 """
 
 from __future__ import annotations
@@ -38,7 +37,7 @@ from typing import Annotated, Any, Final, Literal
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import func, or_, select
 
 from pairly_api.idempotency import idempotent
@@ -52,12 +51,12 @@ from pairly_api.uploads import (
     receive_upload,
     rejected_response,
 )
+from pairly_core.documents.model import NormalizedDocument
 from pairly_core.errors import BadRequestError, ForbiddenError
 from pairly_core.extraction.schema import path_pattern
 from pairly_core.extraction.service import StoredExtraction, correct_field, load_extraction
 from pairly_core.identity import Context, CurrentActor, OrgSession
-from pairly_core.ingestion.addresses import inbound_address, rotate_inbound_token
-from pairly_core.ingestion.models import Document, DocumentSource, InboundAddress
+from pairly_core.ingestion.models import Document, DocumentSource
 from pairly_core.ingestion.service import (
     AuditBy,
     RejectReason,
@@ -65,7 +64,7 @@ from pairly_core.ingestion.service import (
     ingest_spooled,
     record_rejection,
 )
-from pairly_core.models.tenancy import Organisation
+from pairly_core.ingestion.storage import StorageError
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_pay.common import WORKFLOW, By, audit, record_step
@@ -96,7 +95,6 @@ from pairly_pay.permissions import (
     INVOICE_PROCESS,
     INVOICE_READ,
     INVOICE_UPLOAD,
-    SETTINGS_MANAGE,
 )
 
 log = structlog.get_logger("pairly_pay.api.invoices")
@@ -229,6 +227,9 @@ class PayInvoiceDocumentOut(BaseModel):
     original_filename: str | None
     status: str
     sha256: str
+    # The parsed text, for documents without pages to draw (email body, DOCX, XML):
+    # the viewer shows it and marks evidence by its offsets.
+    text: str | None = None
 
 
 class PayInvoiceEmailOut(BaseModel):
@@ -258,13 +259,6 @@ class PayInvoiceDetail(PayInvoiceSummary):
     can_process: bool
 
 
-class PayInboundAddressOut(BaseModel):
-    configured: bool
-    rotated_at: datetime | None
-    # Only right after a rotation: the token is never stored, so never shown again.
-    address: str | None = None
-
-
 # ------------------------------------------------------------------ helpers
 
 
@@ -283,6 +277,18 @@ def _vendor_out(vendor: PayVendor | None) -> PayInvoiceVendorOut | None:
     )
 
 
+_CENT: Final = Decimal("0.01")
+
+
+def money(value: Decimal | None) -> Decimal | None:
+    """The stored amount as printed: two places, more only when the invoice had more
+    (the column keeps four, for three-place currencies)."""
+    if value is None:
+        return None
+    cents = value.quantize(_CENT)
+    return cents if cents == value else value.normalize()
+
+
 def _summary_fields(invoice: PayInvoice, vendor: PayVendor | None) -> dict[str, Any]:
     return {
         "id": invoice.id,
@@ -296,7 +302,7 @@ def _summary_fields(invoice: PayInvoice, vendor: PayVendor | None) -> dict[str, 
         "invoice_date": invoice.invoice_date,
         "due_date": invoice.due_date,
         "currency": invoice.currency,
-        "total": invoice.total,
+        "total": money(invoice.total),
         "review_reasons": list(invoice.review_reasons),
         "intake_reference": invoice.intake_reference,
         "created_at": invoice.created_at,
@@ -374,7 +380,26 @@ def _findings(invoice: PayInvoice, processor: bool) -> list[PayInvoiceFindingOut
     return out
 
 
-async def _detail(session: OrgSession, actor: Actor, invoice: PayInvoice) -> PayInvoiceDetail:
+_DRAWN: Final = ("application/pdf", "image/")
+MAX_TEXT: Final = 200_000
+
+
+async def _text(request: Request, document: Document) -> str | None:
+    """The parsed text of a document the viewer cannot draw, or None."""
+    if document.media_type.startswith(_DRAWN) or not document.parse_result_key:
+        return None
+    try:
+        raw = await get_services(request).store.get_bytes(
+            document.parse_result_key, max_bytes=64 * 1024 * 1024
+        )
+        return NormalizedDocument.model_validate_json(raw).text[:MAX_TEXT]
+    except (StorageError, ValidationError, ValueError):
+        return None
+
+
+async def _detail(
+    request: Request, session: OrgSession, actor: Actor, invoice: PayInvoice
+) -> PayInvoiceDetail:
     vendors = await _vendors(session, {invoice.vendor_id} if invoice.vendor_id else set())
     document = await session.scalar(select(Document).where(Document.id == invoice.document_id))
     if document is None:  # pragma: no cover - a foreign key
@@ -393,8 +418,8 @@ async def _detail(session: OrgSession, actor: Actor, invoice: PayInvoice) -> Pay
     return PayInvoiceDetail(
         **_summary_fields(invoice, vendors.get(invoice.vendor_id) if invoice.vendor_id else None),
         po_number=invoice.po_number,
-        subtotal=invoice.subtotal,
-        vat_amount=invoice.vat_amount,
+        subtotal=money(invoice.subtotal),
+        vat_amount=money(invoice.vat_amount),
         vendor_trn=invoice.vendor_trn,
         sender_domains=list(invoice.sender_domains),
         vendor_match=dict(invoice.vendor_match),
@@ -404,6 +429,7 @@ async def _detail(session: OrgSession, actor: Actor, invoice: PayInvoice) -> Pay
             original_filename=document.original_filename,
             status=document.status,
             sha256=document.sha256,
+            text=await _text(request, document),
         ),
         extraction=_extraction(stored, invoice.extraction_source) if stored else None,
         findings=_findings(invoice, processor),
@@ -576,11 +602,11 @@ async def list_invoices(
 
 @router.get("/invoices/{invoice_id}", response_model=PayInvoiceDetail)
 async def get_invoice_detail(
-    invoice_id: uuid.UUID, actor: CurrentActor, session: OrgSession
+    request: Request, invoice_id: uuid.UUID, actor: CurrentActor, session: OrgSession
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_READ)
     invoice = await get_invoice(session, invoice_id)
-    return await _detail(session, actor, invoice)
+    return await _detail(request, session, actor, invoice)
 
 
 # ------------------------------------------------------------------ a person's actions
@@ -588,6 +614,7 @@ async def get_invoice_detail(
 
 @router.post("/invoices/{invoice_id}/corrections", response_model=PayInvoiceDetail)
 async def correct_invoice_field(
+    request: Request,
     invoice_id: uuid.UUID,
     body: PayInvoiceCorrectionIn,
     actor: CurrentActor,
@@ -641,68 +668,46 @@ async def correct_invoice_field(
         },
     )
     await refresh_decisions(session, invoice)
-    return await _detail(session, actor, invoice)
+    return await _detail(request, session, actor, invoice)
 
 
 @router.post("/invoices/{invoice_id}/vendor", response_model=PayInvoiceDetail)
 async def link_invoice_vendor(
-    invoice_id: uuid.UUID, body: PayInvoiceVendorIn, actor: CurrentActor, session: OrgSession
+    request: Request,
+    invoice_id: uuid.UUID,
+    body: PayInvoiceVendorIn,
+    actor: CurrentActor,
+    session: OrgSession,
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_PROCESS)
     _person(actor)
     invoice = await link_vendor(session, actor, invoice_id, body.vendor_id)
-    return await _detail(session, actor, invoice)
+    return await _detail(request, session, actor, invoice)
 
 
 @router.post("/invoices/{invoice_id}/review", response_model=PayInvoiceDetail)
 async def review_invoice(
-    invoice_id: uuid.UUID, body: PayInvoiceReviewIn, actor: CurrentActor, session: OrgSession
+    request: Request,
+    invoice_id: uuid.UUID,
+    body: PayInvoiceReviewIn,
+    actor: CurrentActor,
+    session: OrgSession,
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_PROCESS)
     _person(actor)
     invoice = await mark_reviewed(session, actor, invoice_id, body.note)
-    return await _detail(session, actor, invoice)
+    return await _detail(request, session, actor, invoice)
 
 
 @router.post("/invoices/{invoice_id}/reject", response_model=PayInvoiceDetail)
 async def reject(
-    invoice_id: uuid.UUID, body: PayInvoiceRejectIn, actor: CurrentActor, session: OrgSession
+    request: Request,
+    invoice_id: uuid.UUID,
+    body: PayInvoiceRejectIn,
+    actor: CurrentActor,
+    session: OrgSession,
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_PROCESS)
     _person(actor)
     invoice = await reject_invoice(session, actor, invoice_id, body.reason)
-    return await _detail(session, actor, invoice)
-
-
-# ------------------------------------------------------------------ inbound address
-
-
-@router.get("/intake/address", response_model=PayInboundAddressOut)
-async def get_inbound_address(actor: CurrentActor, session: OrgSession) -> PayInboundAddressOut:
-    authorize(actor, SETTINGS_MANAGE)
-    row = await session.scalar(select(InboundAddress).where(InboundAddress.workflow == WORKFLOW))
-    return PayInboundAddressOut(
-        configured=row is not None, rotated_at=row.rotated_at if row else None
-    )
-
-
-@router.post("/intake/address/rotate", response_model=PayInboundAddressOut)
-async def rotate_inbound_address(
-    request: Request, actor: CurrentActor, session: OrgSession
-) -> PayInboundAddressOut:
-    authorize(actor, SETTINGS_MANAGE)
-    _person(actor)
-    org = await session.scalar(select(Organisation).where(Organisation.id == actor.org_id))
-    if org is None:  # pragma: no cover - the actor's own organisation
-        raise BadRequestError("organisation not found")
-    by = By.of(actor)
-    token = await rotate_inbound_token(
-        session, workflow=WORKFLOW, actor_type=by.actor_type, actor_id=by.actor_id
-    )
-    domain = get_services(request).settings.inbound_email_domain
-    row = await session.scalar(select(InboundAddress).where(InboundAddress.workflow == WORKFLOW))
-    return PayInboundAddressOut(
-        configured=True,
-        rotated_at=row.rotated_at if row else None,
-        address=inbound_address(WORKFLOW, org.slug, token, domain),
-    )
+    return await _detail(request, session, actor, invoice)

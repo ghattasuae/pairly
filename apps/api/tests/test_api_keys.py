@@ -254,7 +254,9 @@ async def test_key_permissions_are_its_scopes_only(api: Api, org: Org) -> None:
 async def test_use_audit_and_tenant_isolation(
     api: Api, org: Org, owner_engine: AsyncEngine, make_org: OrgFactory
 ) -> None:
-    key, created = await api.new_key(org)
+    # Pay documents are read with Pay's own permission (pay.document.read); uploads to
+    # /v1/documents stay on core.document.upload.
+    key, created = await api.new_key(org, scopes=[READ, UPLOAD, "pay.document.read"])
     uploaded = await api.upload(key, pdf_bytes("isolation"))
     assert uploaded.status_code == 201, uploaded.text
     document_id = uploaded.json()["document_id"]
