@@ -31,6 +31,9 @@ Invoices (``pay_0002``, same rules):
 * ``pay_intake_emails``: how Pay classified an inbound email (invoice, marketing,
   unsure) and the receipt it sent.
 * ``pay_invoice_corrections``: corrections filed per vendor, insert only.
+
+Checks (``pay_0003``): ``pay_invoices`` gains the comparison keys, the check results and
+the risk score of ``pairly_pay.checks``; ``pay_settings`` gains ``check_settings``.
 """
 
 from __future__ import annotations
@@ -486,6 +489,10 @@ class PaySettings(Base, OrgScoped):
     phone_change_window_days: Mapped[int] = mapped_column(
         Integer, nullable=False, default=DEFAULT_PHONE_WINDOW_DAYS
     )
+    # Invoice check settings (``pairly_pay.checks.settings``; empty: the defaults).
+    check_settings: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
     updated_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
     updated_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
     updated_at: Mapped[datetime] = _created()
@@ -561,6 +568,7 @@ class PayInvoice(Base, OrgScoped):
         CheckConstraint("currency IS NULL OR currency ~ '^[A-Z]{3}$'", name="currency_format"),
         Index("ix_pay_invoices_status", "org_id", "status", "created_at"),
         Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
+        Index("ix_pay_invoices_number_key", "org_id", "vendor_id", "number_key"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -606,6 +614,17 @@ class PayInvoice(Base, OrgScoped):
     total: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     review_reasons: Mapped[list[str]] = _jsonb_list()
     decision_ids: Mapped[list[str]] = _jsonb_list()
+    # Validation and fraud checks (WP4.6, ``pay_0003``, ``pairly_pay.checks``): what
+    # later invoices are compared with (number without separators, line items digest,
+    # template fingerprint), every check's result with its findings, and the risk score.
+    number_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lines_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fingerprint: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    checks: Mapped[list[Any]] = _jsonb_list()
+    risk: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    checked_at: Mapped[datetime | None] = _ts()
     reviewed_by: Mapped[uuid.UUID | None] = _user_fk()
     reviewed_at: Mapped[datetime | None] = _ts()
     rejected_by: Mapped[uuid.UUID | None] = _user_fk()

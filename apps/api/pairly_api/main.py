@@ -117,23 +117,28 @@ def _graph_services(
     sessionmaker: async_sessionmaker[AsyncSession], documents: DocumentServices | None
 ) -> GraphServices:
     """What graph nodes may use in this process: the model router (recorded mode unless
-    configured otherwise) and, when document storage is configured, the store, the
+    configured otherwise), the metered embedder (policy search) and, when document
+    storage is configured, the store, the
     scanner (only when ClamAV or the development fake is configured) and the sandboxed
     parse settings."""
     from pairly_core.documents.pipeline import ParseConfig
     from pairly_core.ingestion.scan import scanner_from_settings
     from pairly_core.llm.factory import build_router
     from pairly_core.llm.settings import load_llm_settings
+    from pairly_core.retrieval.metered import build_metered_embedder
 
-    router = build_router(load_llm_settings(), sessionmaker)
+    llm = load_llm_settings()
+    router = build_router(llm, sessionmaker)
+    embedder = build_metered_embedder(llm, sessionmaker)
     if documents is None:
-        return GraphServices(router=router)
+        return GraphServices(router=router, embedder=embedder)
     ingestion = documents.settings
     return GraphServices(
         store=documents.store,
         router=router,
         scanner=scanner_from_settings(ingestion),
         parse_config=ParseConfig.from_settings(ingestion),
+        embedder=embedder,
     )
 
 

@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Pay invoice risk policy, version 1 (published per organisation the first time it is
+# needed; an admin publishes a new version to change it). Each Pay check is one detector
+# (pairly_pay.checks.risk). The combiner always sends critical and error signals, and
+# any missing detector, to a person; this policy also sends high signals and any
+# combined score of 0.6 or more (two medium findings from different checks).
+schema: pairly.risk_policy/v1
+name: pay.invoice
+method: noisy_or
+review_threshold: 0.6
+force_review_severity: high
+default_weight: 1.0
+weights:
+  pay.arithmetic: 1.0
+  pay.duplicates: 1.0
+  pay.bank: 1.0
+  pay.impersonation: 0.9
+  pay.amounts: 0.8
+  pay.forgery: 0.8
+  pay.injection: 1.0
+  pay.policy: 1.0
+required_detectors:
+  - pay.arithmetic
+  - pay.duplicates
+  - pay.bank
+  - pay.impersonation
+  - pay.amounts
+  - pay.forgery
+  - pay.injection
+  - pay.policy
+levels:
+  medium: 0.3
+  high: 0.6
+  critical: 0.9

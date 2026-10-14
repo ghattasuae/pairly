@@ -24,9 +24,11 @@
                   (recorded responses in ``recorded`` mode), with the few-shot hints of
                   the vendor the document text points to (``pairly_pay.learning``).
 * ``match``       links the vendor (TRN, IBAN blind index, sender domain, name).
-* ``finish``      runs the registered checks (``CHECKS``: the hook for WP4.6
-                  validation and fraud checks), then stops at ``ready`` when nothing
-                  needs a person, else ``needs_review`` with every reason.
+* ``finish``      runs the registered checks (``CHECKS``: the WP4.6 validation and
+                  fraud checks of ``pairly_pay.checks``, each in a savepoint, fail
+                  closed), then stops at ``ready`` when nothing needs a person, else
+                  ``needs_review`` with every reason. A bank mismatch opens a change
+                  ticket (the vendor's payments are held) in this transaction.
 
 Approvals and payment (WP4.7) start from ``ready`` invoices; this graph never approves,
 schedules or pays. Fail closed at every step: a step that cannot run (no parse, model
@@ -68,6 +70,7 @@ from pairly_core.llm.router import ModelRouter
 from pairly_core.llm.types import CallContext
 from pairly_core.workflow.context import WorkflowContext
 from pairly_core.workflow.runtime import node_retry
+from pairly_pay.checks.service import CheckServices, run_invoice_checks
 from pairly_pay.common import WORKFLOW, By, audit
 from pairly_pay.einvoice import is_einvoice, read_einvoice
 from pairly_pay.invoice_schema import PayInvoice
@@ -95,9 +98,29 @@ PARSE_POLL_SECONDS: Final = 1.0
 _PENDING = frozenset({DocumentStatus.RECEIVED, DocumentStatus.SCANNING, DocumentStatus.CLEAN})
 
 # A check that runs in ``finish`` and returns review reasons (empty: nothing found).
-# WP4.6 registers arithmetic, VAT, duplicate, bank mismatch and fraud checks here.
-InvoiceCheck = Callable[[AsyncSession, PayInvoiceRow], Awaitable[list[str]]]
-CHECKS: list[InvoiceCheck] = []
+# WP4.6 registers the validation and fraud checks (``pairly_pay.checks.service``).
+InvoiceCheck = Callable[[AsyncSession, PayInvoiceRow, WorkflowContext], Awaitable[list[str]]]
+
+
+async def validation_checks(
+    session: AsyncSession, invoice: PayInvoiceRow, ctx: WorkflowContext
+) -> list[str]:
+    """Arithmetic, VAT, duplicates, bank mismatch, impersonation, amounts, fake
+    signals, injection, policy and the risk score (``pairly_pay.checks``)."""
+    services = ctx.services
+    return await run_invoice_checks(
+        session,
+        invoice,
+        CheckServices(
+            org_id=ctx.org_id,
+            store=services.store,
+            router=services.router,
+            embedder=services.embedder,
+        ),
+    )
+
+
+CHECKS: list[InvoiceCheck] = [validation_checks]
 
 
 class InvoiceState(TypedDict, total=False):
@@ -475,8 +498,13 @@ async def finish(state: InvoiceState, runtime: Ctx) -> dict[str, Any]:
             add_reasons(invoice, ["not_read"])
         for check in CHECKS:
             try:
-                add_reasons(invoice, await check(session, invoice))
+                # A savepoint: a check that fails leaves the transaction usable.
+                async with session.begin_nested():
+                    reasons = await check(session, invoice, ctx)
+                add_reasons(invoice, reasons)
             except Exception as exc:  # a check that cannot run sends it to a person
+                log.error("pay.invoice.check_failed", error=type(exc).__name__)
+                await session.refresh(invoice)
                 add_reasons(invoice, [f"check_failed:{type(exc).__name__}"])
         status = InvoiceStatus.NEEDS_REVIEW if invoice.review_reasons else InvoiceStatus.READY
         invoice.status = status.value

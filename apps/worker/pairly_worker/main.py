@@ -65,6 +65,7 @@ from pairly_core.notifications.settings import load_notification_settings
 from pairly_core.plugins import discover_plugins
 from pairly_core.rbac import build_registry
 from pairly_core.retention.rules import build_retention_registry
+from pairly_core.retrieval.metered import build_metered_embedder
 from pairly_core.search.documents import PURGE_JOB
 from pairly_core.webhooks.events import build_event_registry, install_event_registry
 from pairly_core.workflow.checkpoint import TenantCheckpointer
@@ -123,14 +124,16 @@ def setup_audit_anchors(ctx: dict[str, Any], config: WorkerConfig) -> None:
 def graph_services(
     ctx: dict[str, Any], sessionmaker: async_sessionmaker[AsyncSession]
 ) -> GraphServices:
-    """Engine services for graph nodes the worker runs (resumed runs): the model router
-    and the document services ``setup_documents`` put in ``ctx`` (absent in tests
-    without ingestion settings)."""
+    """Engine services for graph nodes the worker runs (resumed runs): the model router,
+    the metered embedder (policy search) and the document services ``setup_documents``
+    put in ``ctx`` (absent in tests without ingestion settings)."""
+    llm = load_llm_settings()
     return GraphServices(
         store=ctx.get("store"),
-        router=build_router(load_llm_settings(), sessionmaker),
+        router=build_router(llm, sessionmaker),
         scanner=ctx.get("scanner"),
         parse_config=ctx.get("parse_config"),
+        embedder=build_metered_embedder(llm, sessionmaker),
     )
 
 

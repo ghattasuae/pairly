@@ -3,7 +3,8 @@
 """Engine services a graph node may use (``runtime.context.services``).
 
 Graph nodes need the same engine services the API and the worker hold: the document
-store (to read a parsed document), the model router (extraction, checks), and, for
+store (to read a parsed document), the model router (extraction, checks), the embedder
+(policy search), and, for
 graphs that drive a document through intake themselves, the virus scanner and the parse
 settings. The process that runs graphs (API or worker) builds one ``GraphServices`` and
 hands it to ``WorkflowRuntime``; every run's ``WorkflowContext`` carries it.
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from pairly_core.ingestion.scan import VirusScanner
     from pairly_core.ingestion.storage import ObjectStore
     from pairly_core.llm.router import ModelRouter
+    from pairly_core.retrieval.embeddings import Embedder
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +37,8 @@ class GraphServices:
     router: ModelRouter | None = None
     scanner: VirusScanner | None = None
     parse_config: ParseConfig | None = None
+    # Embeddings for policy search (metered against the organisation's model budget).
+    embedder: Embedder | None = None
 
 
 NO_SERVICES = GraphServices()
