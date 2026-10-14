@@ -36,8 +36,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "ck_pay_payment_run_items_discount_not_negative", "pay_payment_run_items", type_="check"
+    op.execute(
+        "ALTER TABLE pay_payment_run_items "
+        "DROP CONSTRAINT ck_pay_payment_run_items_discount_not_negative"
     )
     op.drop_column("pay_vendors", "payment_terms")
     op.drop_column("pay_invoices", "payment_terms")
