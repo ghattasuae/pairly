@@ -33,13 +33,14 @@ ROWS: Final = (
 
 def section(result: dict[str, Any]) -> str:
     dataset = result.get("dataset", {})
+    scans = "included" if dataset.get("scans_included") else "not parsed"
     lines = [
         BEGIN,
         "## Pay validation and fraud checks (`python -m evals.pay`)",
         "",
         f"Dataset: `synth.pay`, seed {dataset.get('seed')}: {dataset.get('regular')} regular "
         f"and {dataset.get('attacks')} attack invoices; {dataset.get('parsed')} documents "
-        f"parsed and scanned (scans {'included' if dataset.get('scans_included') else 'not parsed'}).",
+        f"parsed and scanned (scans {scans}).",
         "",
         "**The read values are the synthetic ground truth**, so these numbers measure the "
         "checks with a perfect reader, not extraction. No model runs; the spend policy search "
