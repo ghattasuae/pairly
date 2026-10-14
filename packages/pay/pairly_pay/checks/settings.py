@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, replace
-from decimal import Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any, Final
 
 DEFAULT_STANDARD_RATE: Final = Decimal("5.00")
@@ -163,3 +163,22 @@ def parse_settings(data: Mapping[str, Any] | None) -> CheckSettings:
 
 def minor_unit(currency: str | None) -> Decimal:
     return Decimal("0.001") if (currency or "") in THREE_PLACE_CURRENCIES else Decimal("0.01")
+
+
+def to_minor_unit(value: Decimal, currency: str | None) -> Decimal:
+    """``value`` rounded half up to the currency's minor unit (3 places for BHD, KWD,
+    OMR and the other three-place currencies, else 2)."""
+    return value.quantize(minor_unit(currency), rounding=ROUND_HALF_UP)
+
+
+def amount_text(value: Decimal | None, currency: str | None) -> str | None:
+    """The amount as a plain string at the currency's precision: what approval payloads,
+    digests, audit entries and decision records carry (never fewer places than the
+    currency has, so a three-place amount keeps its last digit)."""
+    return None if value is None else format(to_minor_unit(value, currency), "f")
+
+
+def amount_display(value: Decimal, currency: str | None) -> str:
+    """The amount for a message: grouped thousands, at the currency's precision."""
+    places = 3 if (currency or "") in THREE_PLACE_CURRENCIES else 2
+    return f"{to_minor_unit(value, currency):,.{places}f}"

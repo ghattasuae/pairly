@@ -25,10 +25,10 @@ import re
 import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Final
 
-from pairly_pay.checks.settings import minor_unit
+from pairly_pay.checks.settings import to_minor_unit
 
 PAIN001_NS: Final = "urn:iso:std:iso:20022:tech:xsd:pain.001.001.09"
 CSV_HEADER: Final = (
@@ -81,13 +81,11 @@ class Batch:
 
 
 def amount_text(value: Decimal, currency: str) -> str:
-    unit = minor_unit(currency)
-    return format(value.quantize(unit, rounding=ROUND_HALF_UP), "f")
+    return format(to_minor_unit(value, currency), "f")
 
 
 def control_sum(payments: Sequence[Payment]) -> Decimal:
-    return sum((p.amount.quantize(minor_unit(p.currency), ROUND_HALF_UP) for p in payments),
-               Decimal(0))  # fmt: skip
+    return sum((to_minor_unit(p.amount, p.currency) for p in payments), Decimal(0))
 
 
 def clean(text: str | None, limit: int = MAX_NAME) -> str:

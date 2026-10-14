@@ -57,6 +57,7 @@ from pairly_core.policy_versions import latest_policy
 from pairly_core.rbac import Actor
 from pairly_core.workflow.spec import FinalActionCall
 from pairly_pay.checks.service import checks_by_name, suspected_originals
+from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import By, audit, record_step
 from pairly_pay.invoices import (
     INVOICE_ENTITY,
@@ -130,8 +131,9 @@ def risk_level(invoice: PayInvoice) -> str:
     return level if level in {"low", "medium", "high", "critical"} else "critical"
 
 
-def money(value: Decimal | None) -> str | None:
-    return None if value is None else format(value.quantize(Decimal("0.01")), "f")
+def money(value: Decimal | None, currency: str | None) -> str | None:
+    """The amount at the currency's minor-unit precision (``amount_text``)."""
+    return amount_text(value, currency)
 
 
 async def preparers(session: AsyncSession, invoice: PayInvoice) -> list[uuid.UUID]:
@@ -177,7 +179,7 @@ def approval_payload(
         "vendor_id": str(vendor.id),
         "vendor_name": vendor.legal_name,
         "invoice_number": invoice.invoice_number,
-        "amount": money(invoice.total),
+        "amount": money(invoice.total, invoice.currency),
         "currency": invoice.currency,
         "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
         "department": invoice.department,
@@ -227,9 +229,9 @@ def approval_context(
             "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
             "po_number": invoice.po_number,
             "currency": invoice.currency,
-            "subtotal": money(invoice.subtotal),
-            "vat_amount": money(invoice.vat_amount),
-            "total": money(invoice.total),
+            "subtotal": money(invoice.subtotal, invoice.currency),
+            "vat_amount": money(invoice.vat_amount, invoice.currency),
+            "total": money(invoice.total, invoice.currency),
             "department": invoice.department,
             "category": invoice.category or vendor.category,
         },
@@ -370,7 +372,7 @@ async def _approve_by_rule(
         entity_type=INVOICE_ENTITY,
         entity_id=invoice.id,
         payload={
-            "amount": money(invoice.total),
+            "amount": money(invoice.total, invoice.currency),
             "currency": invoice.currency,
             "limit": str(settings.auto_approve_limit),
             "risk_level": risk_level(invoice),
@@ -551,7 +553,7 @@ async def approve_invoice(session: AsyncSession, call: FinalActionCall) -> Mappi
         payload={
             "approval_id": str(call.approval_id),
             "approvers": invoice.approver_ids,
-            "amount": money(invoice.total),
+            "amount": money(invoice.total, invoice.currency),
             "currency": invoice.currency,
         },
     )

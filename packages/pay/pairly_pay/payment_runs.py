@@ -49,6 +49,7 @@ from pairly_core.errors import BadRequestError, ConflictError, NotFoundError
 from pairly_core.rbac import Actor
 from pairly_core.workflow.spec import FinalActionCall
 from pairly_pay.bank_files import Batch, Payment, to_csv, to_pain001
+from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import By, audit, decision_ids_of, new_reference, record_step
 from pairly_pay.freshness import check_inputs_digest, checks_failed
 from pairly_pay.invoices import INVOICE_ENTITY, refresh_decisions
@@ -111,8 +112,9 @@ class ExportRefusedError(ConflictError):
         self.problems = list(problems)
 
 
-def money(value: Decimal | None) -> str | None:
-    return None if value is None else format(value.quantize(Decimal("0.01")), "f")
+def money(value: Decimal | None, currency: str | None) -> str | None:
+    """The amount at the currency's minor-unit precision (``amount_text``)."""
+    return amount_text(value, currency)
 
 
 # ------------------------------------------------------------------ reading
@@ -212,7 +214,7 @@ def items_digest(items: Sequence[PayPaymentRunItem]) -> str:
     material = [
         [
             str(i.invoice_id),
-            money(i.amount),
+            money(i.amount, i.currency),
             i.currency,
             str(i.bank_account_id),
             i.bank_details_digest,
@@ -301,7 +303,7 @@ async def plan_run(
                 {
                     "invoice_id": str(invoice.id),
                     "reference": invoice.reference,
-                    "amount": money(invoice.total),
+                    "amount": money(invoice.total, invoice.currency),
                     "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
                     "reasons": reasons or ["not_approved"],
                 }
@@ -395,14 +397,14 @@ async def propose_run(
         action="pay.payment_run.proposed",
         inputs={
             "currency": currency,
-            "cash_limit": money(cash_limit),
+            "cash_limit": money(cash_limit, currency),
             "execution_date": execution_date.isoformat(),
             "due_on_or_before": due_on_or_before.isoformat() if due_on_or_before else None,
             "excluded": plan.excluded[:100],
         },
         output={
             "items": [str(p.invoice.id) for p in plan.items],
-            "total": money(plan.total),
+            "total": money(plan.total, currency),
             "status": run.status,
         },
     )
@@ -416,7 +418,7 @@ async def propose_run(
             "reference": run.reference,
             "items": len(plan.items),
             "excluded": len(plan.excluded),
-            "total": money(plan.total),
+            "total": money(plan.total, currency),
             "currency": currency,
         },
     )
@@ -441,8 +443,8 @@ def approval_payload(run: PayPaymentRun, items: Sequence[PayPaymentRunItem]) -> 
         "payment_run_id": str(run.id),
         "reference": run.reference,
         "currency": run.currency,
-        "total": money(run.total),
-        "cash_limit": money(run.cash_limit),
+        "total": money(run.total, run.currency),
+        "cash_limit": money(run.cash_limit, run.currency),
         "items": str(len(items)),
         "execution_date": run.execution_date.isoformat(),
         "items_digest": items_digest(items),
@@ -475,7 +477,7 @@ async def approval_context(
                 if i.invoice_id in invoices
                 else None,
                 "vendor": vendors[i.vendor_id].legal_name if i.vendor_id in vendors else None,
-                "amount": money(i.amount),
+                "amount": money(i.amount, i.currency),
                 "due_date": i.due_date.isoformat() if i.due_date else None,
             }
             for i in items

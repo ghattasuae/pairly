@@ -24,7 +24,7 @@ from typing import Final
 
 from pairly_core.risk.stats import amount_outlier
 from pairly_core.risk.types import Severity
-from pairly_pay.checks.settings import CheckSettings
+from pairly_pay.checks.settings import CheckSettings, amount_display
 from pairly_pay.checks.types import (
     CheckResult,
     Finding,
@@ -40,8 +40,8 @@ CHECK: Final = "amounts"
 VERSION: Final = "1"
 
 
-def _money(value: Decimal) -> str:
-    return f"{value:,.2f}"
+def _money(value: Decimal, currency: str | None) -> str:
+    return amount_display(value, currency)
 
 
 def _outlier(facts: InvoiceFacts, history: History, settings: CheckSettings) -> Finding | None:
@@ -81,9 +81,9 @@ def _outlier(facts: InvoiceFacts, history: History, settings: CheckSettings) -> 
             "history_size": found.history_size,
             "ratio": str(ratio.quantize(Decimal("0.01"))),
         },
-        amount=_money(facts.total),
+        amount=_money(facts.total, facts.currency),
         currency=facts.currency,
-        median=_money(found.median),
+        median=_money(found.median, facts.currency),
         count=found.history_size,
     )
 
@@ -101,7 +101,7 @@ def _round(facts: InvoiceFacts, settings: CheckSettings) -> Finding | None:
                 "round_amount",
                 Severity.LOW,
                 evidence={"amount": str(value)},
-                amount=_money(value),
+                amount=_money(value, facts.currency),
             )
     return None
 
@@ -141,9 +141,9 @@ def _split(facts: InvoiceFacts, history: History, settings: CheckSettings) -> Fi
         related_ids=tuple(p.id for p in group),
         count=len(group) + 1,
         days=window,
-        threshold=_money(threshold),
+        threshold=_money(threshold, settings.approval_currency),
         currency=settings.approval_currency,
-        sum=_money(total),
+        sum=_money(total, settings.approval_currency),
     )
 
 

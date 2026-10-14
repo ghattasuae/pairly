@@ -183,8 +183,8 @@ def _summary(run: PayPaymentRun) -> dict[str, Any]:
         "reference": run.reference,
         "status": run.status,
         "currency": run.currency,
-        "cash_limit": money(run.cash_limit),
-        "total": money(run.total),
+        "cash_limit": money(run.cash_limit, run.currency),
+        "total": money(run.total, run.currency),
         "item_count": run.item_count,
         "execution_date": run.execution_date,
         "proposed_by": run.proposed_by,
@@ -243,7 +243,7 @@ async def _detail(session: OrgSession, actor: Actor, run: PayPaymentRun) -> PayR
                 invoice_number=invoice.invoice_number if invoice else None,
                 vendor_id=item.vendor_id,
                 vendor_name=vendor.legal_name if vendor else None,
-                amount=Decimal(money(item.amount) or "0"),
+                amount=Decimal(money(item.amount, item.currency) or "0"),
                 currency=item.currency,
                 due_date=item.due_date,
                 discount=item.discount,
@@ -275,14 +275,14 @@ async def _detail(session: OrgSession, actor: Actor, run: PayPaymentRun) -> PayR
 def _preview(plan: Plan) -> PayRunPreview:
     return PayRunPreview(
         currency=plan.currency,
-        cash_limit=Decimal(money(plan.cash_limit) or "0"),
-        total=Decimal(money(plan.total) or "0"),
+        cash_limit=Decimal(money(plan.cash_limit, plan.currency) or "0"),
+        total=Decimal(money(plan.total, plan.currency) or "0"),
         items=[
             {
                 "invoice_id": str(p.invoice.id),
                 "reference": p.invoice.reference,
                 "vendor_name": p.invoice.vendor_name,
-                "amount": money(p.amount),
+                "amount": money(p.amount, plan.currency),
                 "due_date": p.invoice.due_date.isoformat() if p.invoice.due_date else None,
                 "discount": None,
             }
