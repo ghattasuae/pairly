@@ -29,6 +29,9 @@ attributes):
                       live once their cooling-off period is over.
                       ``pay_invoice_intake_start``, every minute: start reading received
                       invoices (email intake), and send stuck ones to a person.
+                      ``pay_inbound_drop``, every minute, development and test only:
+                      deliver the ``.eml`` files dropped in ``PAIRLY_INBOUND_DROP_DIR``
+                      (``pairly_pay.inbound_drop``).
 
 Importing this module also registers the Pay tables on ``Base.metadata``.
 """
@@ -52,6 +55,7 @@ from pairly_pay.approvals import INVOICE_RULES_V1, approve_invoice
 from pairly_pay.approvals import VERSION as APPROVAL_GRAPH_VERSION
 from pairly_pay.bank_changes import FINAL_ACTION, approve_bank_change
 from pairly_pay.graph import APPROVAL_TYPE, GRAPH, VERSION, build_graph
+from pairly_pay.inbound_drop import DROP_JOB
 from pairly_pay.invoice_graph import GRAPH as INVOICE_GRAPH
 from pairly_pay.invoice_graph import VERSION as INVOICE_GRAPH_VERSION
 from pairly_pay.invoice_graph import build_graph as build_invoice_graph
@@ -149,6 +153,7 @@ SCHEDULED_JOBS: tuple[JobSpec, ...] = (
         every_minutes=5,
     ),
     INTAKE_JOB,
+    DROP_JOB,
 )
 
 

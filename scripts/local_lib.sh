@@ -183,7 +183,11 @@ local_app_env() {
 # The worker: the app env plus the audit signing key (only the worker holds it).
 local_worker_env() {
   local_app_env
-  LOCAL_ENV+=("PAIRLY_AUDIT_SIGNING_KEY=$PAIRLY_AUDIT_SIGNING_KEY")
+  LOCAL_ENV+=(
+    "PAIRLY_AUDIT_SIGNING_KEY=$PAIRLY_AUDIT_SIGNING_KEY"
+    # Development only: Pay's pay_inbound_drop job delivers .eml files dropped here.
+    "PAIRLY_INBOUND_DROP_DIR=$LOCAL_DIR/inbound"
+  )
 }
 
 # Alembic, pairly-admin and the development seed: the owner role (the migrate job).

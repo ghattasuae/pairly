@@ -47,7 +47,7 @@ endif
 .PHONY: help install hooks env dev demo demo-expense demo-hire down logs ps test evals lint format typecheck
 .PHONY: local-up local-down local-status local-test local-logs
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
-.PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now
+.PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now inbound-drop
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
 
 help: ## List targets
@@ -171,6 +171,15 @@ dev-seed-hire-screening: ## Development only: the screening e2e job, recordings 
 		echo 'usage: make dev-seed-hire-screening ORG=<org slug> OUT=<directory> [COUNT=20]'; exit 2; fi
 	$(RUN_SEED) python scripts/e2e_hire_screening_seed.py \
 		--org-slug "$(ORG)" --out "$(OUT)" --count "$(or $(COUNT),20)"
+
+# There is no mail receiver in development: this hands an .eml file to Pay's email intake
+# as if it had been mailed to the address in its To header (pairly_pay.inbound_drop). The
+# worker also delivers files dropped in .local/inbound/ every minute. Native stack only;
+# refused outside PAIRLY_ENV=development and test.
+inbound-drop: ## Development only: deliver an .eml to the org whose inbound address is in its To header (FILE)
+	@if [ -z "$(FILE)" ]; then echo 'usage: make inbound-drop FILE=<path to .eml>'; exit 2; fi
+	@test -f "$(FILE)" || { echo "no such file: $(FILE)"; exit 2; }
+	$(LOCAL) exec worker -- python -m pairly_pay.inbound_drop "$(abspath $(FILE))"
 
 audit-anchor-now: ## Development only: sign and store every org's audit chain head now (normally nightly)
 	$(RUN_WORKER) python -m pairly_worker.run_now audit_anchor_nightly

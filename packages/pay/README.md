@@ -26,6 +26,10 @@ Built so far (M4):
   stay with the email, an invoice in the body is read from the body, forwarded chains
   keep the original sender's domain, marketing is ignored, unclear mail goes to a
   person, and the sender gets a receipt with a reference (engine backscatter rules).
+  In development there is no mail receiver: `make inbound-drop FILE=<eml>` delivers a
+  file to the org whose address is in its `To` header, and the worker's
+  `pay_inbound_drop` job delivers files dropped in `.local/inbound/`
+  (`inbound_drop.py`; refused outside development and test).
 * **Extraction** (`invoice_schema.py`, `invoice_graph.py`, `einvoice.py`): the
   `pay_invoice` graph scans, parses, runs the guardrails, then reads the invoice with
   the model (`Extracted[T]` fields with quotes and spans, Decimal money, per-field

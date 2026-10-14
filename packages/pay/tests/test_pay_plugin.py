@@ -119,13 +119,16 @@ def test_dual_approval_rules() -> None:
 
 
 def test_scheduled_jobs_declared() -> None:
-    activation, intake = SCHEDULED_JOBS
+    activation, intake, drop = SCHEDULED_JOBS
     assert activation.name == "pay_bank_change_activation"
     assert activation.every_minutes == 5
     assert activation.run is not None
     assert intake.name == "pay_invoice_intake_start"
     assert intake.every_minutes == 1
     assert intake.run is not None
+    assert drop.name == "pay_inbound_drop"
+    assert drop.every_minutes == 1
+    assert drop.run is not None
 
 
 def test_onboarding_link_format() -> None:
