@@ -177,3 +177,7 @@ export const submitVendorForm = unavailable;
 // Pay invoices (lib/actions/pay.ts).
 export const correctInvoiceField = unavailable;
 export const invoiceAction = unavailable;
+export const codeInvoice = unavailable;
+export const previewRun = unavailable;
+export const proposeRun = unavailable;
+export const runAction = unavailable;
