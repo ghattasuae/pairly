@@ -16743,6 +16743,580 @@
         "title": "PayCancelIn",
         "type": "object"
       },
+      "PayCheckFindingOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "message": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Message",
+            "type": "object"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "boolean"
+          },
+          "original_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Id"
+          },
+          "related_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Related Ids",
+            "type": "array"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "rule",
+          "severity",
+          "message",
+          "evidence",
+          "original_id",
+          "related_ids",
+          "needs_review"
+        ],
+        "title": "PayCheckFindingOut",
+        "type": "object"
+      },
+      "PayCheckOut": {
+        "properties": {
+          "check": {
+            "title": "Check",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/PayCheckFindingOut"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "status",
+          "error",
+          "findings"
+        ],
+        "title": "PayCheckOut",
+        "type": "object"
+      },
+      "PayCheckSettingsIn": {
+        "additionalProperties": false,
+        "description": "Invoice check settings (``pairly_pay.checks.settings``); omitted keys keep their\ncurrent value.",
+        "properties": {
+          "approval_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Currency"
+          },
+          "approval_threshold": {
+            "anyOf": [
+              {
+                "maximum": 1000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Threshold"
+          },
+          "duplicate_window_days": {
+            "anyOf": [
+              {
+                "maximum": 366,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Window Days"
+          },
+          "extra_vat_rates": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "maximum": 100,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Vat Rates"
+          },
+          "metadata_late_days": {
+            "anyOf": [
+              {
+                "maximum": 3650,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Late Days"
+          },
+          "outlier_min_history": {
+            "anyOf": [
+              {
+                "maximum": 1000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outlier Min History"
+          },
+          "outlier_min_ratio": {
+            "anyOf": [
+              {
+                "maximum": 1000,
+                "minimum": 1,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outlier Min Ratio"
+          },
+          "outlier_threshold": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outlier Threshold"
+          },
+          "round_minimum": {
+            "anyOf": [
+              {
+                "maximum": 1000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Minimum"
+          },
+          "round_unit": {
+            "anyOf": [
+              {
+                "maximum": 1000000000,
+                "minimum": 0.01,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Unit"
+          },
+          "rounding_units": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rounding Units"
+          },
+          "split_margin_pct": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split Margin Pct"
+          },
+          "split_window_days": {
+            "anyOf": [
+              {
+                "maximum": 366,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split Window Days"
+          },
+          "standard_vat_rate": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard Vat Rate"
+          }
+        },
+        "title": "PayCheckSettingsIn",
+        "type": "object"
+      },
+      "PayCompareLineOut": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "line_total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Total"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price"
+          }
+        },
+        "required": [
+          "description",
+          "quantity",
+          "unit_price",
+          "line_total"
+        ],
+        "title": "PayCompareLineOut",
+        "type": "object"
+      },
+      "PayCompareOut": {
+        "description": "A suspected original, side by side with this invoice (brief 4.4.2).",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/PayCompareSideOut"
+          },
+          "original": {
+            "$ref": "#/components/schemas/PayCompareSideOut"
+          },
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rules",
+          "invoice",
+          "original"
+        ],
+        "title": "PayCompareOut",
+        "type": "object"
+      },
+      "PayCompareSideOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayCompareLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "po_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Po Number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "vat_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Amount"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "document_id",
+          "vendor_name",
+          "invoice_number",
+          "invoice_date",
+          "due_date",
+          "currency",
+          "po_number",
+          "subtotal",
+          "vat_amount",
+          "total",
+          "lines",
+          "created_at"
+        ],
+        "title": "PayCompareSideOut",
+        "type": "object"
+      },
       "PayContactIn": {
         "additionalProperties": false,
         "properties": {
@@ -17421,6 +17995,20 @@
             "title": "Can Process",
             "type": "boolean"
           },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/PayCheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "compare": {
+            "items": {
+              "$ref": "#/components/schemas/PayCompareOut"
+            },
+            "title": "Compare",
+            "type": "array"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -17583,6 +18171,16 @@
               }
             ],
             "title": "Reviewed At"
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayRiskOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "sender_domains": {
             "items": {
@@ -18598,9 +19196,78 @@
         "title": "PayRequestContactIn",
         "type": "object"
       },
+      "PayRiskOut": {
+        "properties": {
+          "assessment_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Id"
+          },
+          "explanation": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Explanation",
+            "type": "object"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "requires_human": {
+            "title": "Requires Human",
+            "type": "boolean"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "assessment_id",
+          "score",
+          "level",
+          "requires_human",
+          "reasons",
+          "explanation"
+        ],
+        "title": "PayRiskOut",
+        "type": "object"
+      },
       "PaySettingsIn": {
         "additionalProperties": false,
         "properties": {
+          "checks": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCheckSettingsIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "cooling_off_hours": {
             "maximum": 720,
             "minimum": 0,
@@ -18626,6 +19293,11 @@
           "can_manage": {
             "title": "Can Manage",
             "type": "boolean"
+          },
+          "checks": {
+            "additionalProperties": true,
+            "title": "Checks",
+            "type": "object"
           },
           "cooling_off_hours": {
             "title": "Cooling Off Hours",

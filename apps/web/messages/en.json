@@ -3275,7 +3275,10 @@
       "corrected_after_ready": "Corrected after it was ready",
       "not_read": "Nothing was read from the document",
       "run_ended": "Reading stopped before it finished",
-      "check_failed": "A check could not run"
+      "check_failed": "A check could not run",
+      "check": "A check found something to look at",
+      "check_error": "A check could not run",
+      "risk": "The risk score needs a person"
     },
     "fields": {
       "vendor_name": "Vendor",
@@ -3368,6 +3371,49 @@
       "reject": "Reject",
       "rejectReason": "Why reject it (required)",
       "confirmReject": "Reject the invoice"
+    },
+    "checks": {
+      "title": "Checks",
+      "findings": "What the checks found",
+      "nothingFound": "The checks found nothing.",
+      "needsPerson": "A person must look at this invoice.",
+      "openOriginal": "Open the suspected original",
+      "couldNotRun": "The {check} check could not run, so a person must look.",
+      "level": {
+        "low": "Low risk",
+        "medium": "Medium risk",
+        "high": "High risk",
+        "critical": "Critical risk"
+      },
+      "severity": {
+        "info": "Information",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "check": {
+        "arithmetic": "Arithmetic and VAT",
+        "duplicates": "Duplicates",
+        "bank": "Bank details",
+        "impersonation": "Sender",
+        "amounts": "Amounts",
+        "forgery": "Document",
+        "injection": "Hidden instructions",
+        "policy": "Policy"
+      }
+    },
+    "compare": {
+      "title": "Possible duplicate",
+      "intro": "{count, plural, =0 {The header fields are the same.} one {# field differs.} other {# fields differ.}}",
+      "openOriginal": "Open {reference}",
+      "caption": "This invoice and the suspected original, field by field",
+      "field": "Field",
+      "thisInvoice": "This invoice",
+      "original": "Suspected original",
+      "empty": "None",
+      "differs": "(differs)",
+      "lines": "Line items, this invoice and the original"
     }
   },
   "VendorOnboarding": {

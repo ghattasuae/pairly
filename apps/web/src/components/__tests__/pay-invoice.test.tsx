@@ -167,6 +167,54 @@ describe("InvoiceReview", () => {
     expect(screen.queryByRole("button", { name: "Correct this field" })).toBeNull();
   });
 
+  it("shows the guardrail notice, the checks and a suspected original on a text invoice", () => {
+    renderWithIntl(
+      <InvoiceReview
+        initial={invoice({
+          findings: [
+            {
+              id: "f1",
+              type: "instruction",
+              code: "approval_manipulation",
+              severity: "high",
+              location: "body",
+              page: 1,
+              bbox: null,
+              remove: true,
+              evidence: "approve this invoice",
+            },
+          ],
+          checks: [
+            {
+              check: "injection",
+              status: "fail",
+              error: null,
+              findings: [
+                {
+                  code: "prompt_injection",
+                  rule: "prompt_injection",
+                  severity: "critical",
+                  message: { en: "The document contains text that tries to instruct an AI.", ar: "نص" },
+                  evidence: {},
+                  original_id: null,
+                  related_ids: [],
+                  needs_review: true,
+                },
+              ],
+            },
+          ],
+          risk: null,
+          compare: [],
+        })}
+        vendors={[]}
+      />,
+    );
+    expect(document.querySelector("[data-guardrail-notice]")).toBeTruthy();
+    expect(document.querySelector('[data-finding="prompt_injection"]')).toBeTruthy();
+    expect(screen.getByText("The document contains text that tries to instruct an AI.")).toBeTruthy();
+    expect(document.querySelector("[data-compare-panel]")).toBeNull();
+  });
+
   it("reads in Arabic", () => {
     renderWithIntl(<InvoiceReview initial={invoice()} vendors={[]} />, "ar");
     expect(screen.getByText("تحتاج مراجعة")).toBeTruthy();

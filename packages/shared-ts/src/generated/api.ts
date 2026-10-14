@@ -10618,6 +10618,141 @@ export type components = {
             /** Reason */
             reason: string;
         };
+        /** PayCheckFindingOut */
+        PayCheckFindingOut: {
+            /** Code */
+            code: string;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Message */
+            message: {
+                [key: string]: string;
+            };
+            /** Needs Review */
+            needs_review: boolean;
+            /** Original Id */
+            original_id: string | null;
+            /** Related Ids */
+            related_ids: string[];
+            /** Rule */
+            rule: string;
+            /** Severity */
+            severity: string;
+        };
+        /** PayCheckOut */
+        PayCheckOut: {
+            /** Check */
+            check: string;
+            /** Error */
+            error: string | null;
+            /** Findings */
+            findings: components["schemas"]["PayCheckFindingOut"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "fail" | "error";
+        };
+        /**
+         * PayCheckSettingsIn
+         * @description Invoice check settings (``pairly_pay.checks.settings``); omitted keys keep their
+         *     current value.
+         */
+        PayCheckSettingsIn: {
+            /** Approval Currency */
+            approval_currency?: string | null;
+            /** Approval Threshold */
+            approval_threshold?: number | string | null;
+            /** Duplicate Window Days */
+            duplicate_window_days?: number | null;
+            /** Extra Vat Rates */
+            extra_vat_rates?: (number | string)[] | null;
+            /** Metadata Late Days */
+            metadata_late_days?: number | null;
+            /** Outlier Min History */
+            outlier_min_history?: number | null;
+            /** Outlier Min Ratio */
+            outlier_min_ratio?: number | string | null;
+            /** Outlier Threshold */
+            outlier_threshold?: number | string | null;
+            /** Round Minimum */
+            round_minimum?: number | string | null;
+            /** Round Unit */
+            round_unit?: number | string | null;
+            /** Rounding Units */
+            rounding_units?: number | null;
+            /** Split Margin Pct */
+            split_margin_pct?: number | string | null;
+            /** Split Window Days */
+            split_window_days?: number | null;
+            /** Standard Vat Rate */
+            standard_vat_rate?: number | string | null;
+        };
+        /** PayCompareLineOut */
+        PayCompareLineOut: {
+            /** Description */
+            description: string | null;
+            /** Line Total */
+            line_total: string | null;
+            /** Quantity */
+            quantity: string | null;
+            /** Unit Price */
+            unit_price: string | null;
+        };
+        /**
+         * PayCompareOut
+         * @description A suspected original, side by side with this invoice (brief 4.4.2).
+         */
+        PayCompareOut: {
+            invoice: components["schemas"]["PayCompareSideOut"];
+            original: components["schemas"]["PayCompareSideOut"];
+            /** Rules */
+            rules: string[];
+        };
+        /** PayCompareSideOut */
+        PayCompareSideOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Lines */
+            lines: components["schemas"]["PayCompareLineOut"][];
+            /** Po Number */
+            po_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string | null;
+            /** Total */
+            total: string | null;
+            /** Vat Amount */
+            vat_amount: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
         /** PayContactIn */
         PayContactIn: {
             /** Email */
@@ -10840,6 +10975,10 @@ export type components = {
         PayInvoiceDetail: {
             /** Can Process */
             can_process: boolean;
+            /** Checks */
+            checks?: components["schemas"]["PayCheckOut"][];
+            /** Compare */
+            compare?: components["schemas"]["PayCompareOut"][];
             /**
              * Created At
              * Format: date-time
@@ -10886,6 +11025,7 @@ export type components = {
             review_reasons: string[];
             /** Reviewed At */
             reviewed_at: string | null;
+            risk?: components["schemas"]["PayRiskOut"] | null;
             /** Sender Domains */
             sender_domains: string[];
             /** Source */
@@ -11201,8 +11341,26 @@ export type components = {
             /** Phone */
             phone?: string | null;
         };
+        /** PayRiskOut */
+        PayRiskOut: {
+            /** Assessment Id */
+            assessment_id: string | null;
+            /** Explanation */
+            explanation: {
+                [key: string]: string;
+            };
+            /** Level */
+            level: string;
+            /** Reasons */
+            reasons: string[];
+            /** Requires Human */
+            requires_human: boolean;
+            /** Score */
+            score: number | null;
+        };
         /** PaySettingsIn */
         PaySettingsIn: {
+            checks?: components["schemas"]["PayCheckSettingsIn"] | null;
             /** Cooling Off Hours */
             cooling_off_hours: number;
             /**
@@ -11215,6 +11373,10 @@ export type components = {
         PaySettingsOut: {
             /** Can Manage */
             can_manage: boolean;
+            /** Checks */
+            checks?: {
+                [key: string]: unknown;
+            };
             /** Cooling Off Hours */
             cooling_off_hours: number;
             /** Phone Change Window Days */

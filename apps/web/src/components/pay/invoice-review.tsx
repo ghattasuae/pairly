@@ -8,6 +8,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type * as React from "react";
 
 import { DocumentViewer } from "@/components/document/document-viewer";
+import { GuardrailNotice } from "@/components/document/guardrail-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, Textarea } from "@/components/ui/form-controls";
@@ -34,6 +35,7 @@ import type { PayInvoiceDetail } from "@/lib/pay/types";
 import { cn } from "@/lib/utils";
 
 import { ErrorText, VendorStatusBadge } from "./common";
+import { ComparePanel, InvoiceChecks } from "./invoice-checks";
 
 const KNOWN_REASONS = new Set([
   "extraction",
@@ -50,6 +52,9 @@ const KNOWN_REASONS = new Set([
   "not_read",
   "run_ended",
   "check_failed",
+  "check",
+  "check_error",
+  "risk",
 ]);
 
 export function InvoiceStatusBadge({ status }: { status: string }) {
@@ -315,6 +320,8 @@ export function InvoiceReview({
         {drawn ? (
           <DocumentViewer documentId={document.id} highlights={highlights} focus={focus} subject="invoice" notice />
         ) : document.text ? (
+          <>
+          <GuardrailNotice highlights={highlightsFromFindings(invoice.findings)} subject="invoice" headingLevel={2} />
           <div
             ref={textRef}
             role="document"
@@ -341,9 +348,11 @@ export function InvoiceReview({
               ),
             )}
           </div>
+          </>
         ) : (
           <p className="rounded-xl border bg-surface p-6 text-sm text-muted-foreground">{t("noText")}</p>
         )}
+        <ComparePanel compare={invoice.compare ?? []} />
         <Link href={`/documents/${document.id}`} className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline">
           <ScanSearch aria-hidden className="size-4" />
           {t("openDocument")}
@@ -392,6 +401,8 @@ export function InvoiceReview({
           </p>
           <ReviewReasons reasons={invoice.review_reasons} />
         </section>
+
+        <InvoiceChecks checks={invoice.checks ?? []} risk={invoice.risk} />
 
         {invoice.extraction ? (
           <div className="space-y-4">
