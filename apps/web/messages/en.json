@@ -2912,5 +2912,385 @@
       "inbox": "Approval inbox",
       "referrals": "Make a referral link"
     }
+  },
+  "Pay": {
+    "tabs": {
+      "label": "Pay sections",
+      "vendors": "Vendors",
+      "changes": "Bank detail changes",
+      "invites": "Onboarding invites"
+    },
+    "errors": {
+      "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
+      "bank_change_state": "This change cannot take that step now. Reload the page.",
+      "bank_details_invalid": "The bank details are not valid. Check the IBAN, the account name and the SWIFT code.",
+      "bank_details_unchanged": "These are already the vendor's bank details.",
+      "no_phone_on_file": "The vendor has no phone number on file to call back. Add one first.",
+      "phone_invalid": "The phone number is not valid. Use the international format, for example +971 4 123 4567.",
+      "trn_invalid": "The TRN is not valid. A UAE TRN has 15 digits.",
+      "vendor_duplicate": "This vendor looks like one that already exists. Check the possible duplicates.",
+      "vendor_not_open": "This vendor was rejected or archived.",
+      "segregation_of_duties": "You asked for this change, so someone else must make the call and approve it."
+    },
+    "vendorStatus": {
+      "pending": "Pending review",
+      "active": "Active",
+      "rejected": "Rejected",
+      "archived": "Archived"
+    },
+    "ticketStatus": {
+      "awaiting_verification": "Waiting for the call",
+      "awaiting_approval": "Waiting for two approvals",
+      "cooling_off": "Cooling-off",
+      "completed": "Active",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled",
+      "failed": "Stopped"
+    },
+    "hold": {
+      "badge": "Payments on hold",
+      "reason": {
+        "bank_change": "bank change open",
+        "verification_failed": "call did not confirm",
+        "cancelled_keep_hold": "kept after a cancelled change",
+        "approval_not_possible": "dual approval not possible",
+        "manual": "placed by finance"
+      }
+    },
+    "vendors": {
+      "title": "Vendors",
+      "intro": "Every vendor you pay, with masked bank details, payment holds and onboardings waiting for review.",
+      "search": "Search by name, reference or TRN",
+      "filter": "Show",
+      "filters": {
+        "all": "All ({count})",
+        "pending": "Pending review ({count})",
+        "hold": "On hold ({count})"
+      },
+      "add": "Add a vendor",
+      "empty": "No vendors here yet",
+      "emptyHelp": "Add a vendor, or send an onboarding invite so the vendor fills in its own details.",
+      "trn": "TRN",
+      "openChange": "Open bank change"
+    },
+    "form": {
+      "title": "Add a vendor",
+      "intro": "Check first: Pairly validates the IBAN and TRN and looks for vendors that may be the same company.",
+      "company": "Company",
+      "contact": "Contact",
+      "bank": "Bank details",
+      "field": {
+        "legal_name": "Legal name",
+        "legal_name_ar": "Legal name in Arabic",
+        "trade_name": "Trade name",
+        "country": "Country",
+        "trade_licence": "Trade licence number",
+        "trn": "TRN",
+        "line1": "Address",
+        "city": "City",
+        "phone_on_file": "Phone number on file",
+        "contact_name": "Contact name",
+        "contact_email": "Contact email",
+        "contact_phone": "Contact phone",
+        "email_domain": "Email domain invoices come from",
+        "iban": "IBAN",
+        "account_name": "Name on the account",
+        "bank_name": "Bank name",
+        "swift": "SWIFT code"
+      },
+      "phoneHint": "Pairly calls this number back before any change of bank details. Take it from a source you trust, such as the trade licence.",
+      "check": "Check details",
+      "create": "Create vendor",
+      "ibanValid": "IBAN {iban} is valid (bank code {bank}).",
+      "ibanError": {
+        "format": "The IBAN is not in the right format.",
+        "country": "This country has no IBAN.",
+        "length": "The IBAN has the wrong length for its country.",
+        "structure": "The IBAN has letters or digits in the wrong places for its country.",
+        "checksum": "The IBAN check digits do not match. Check for a typing error."
+      },
+      "trnValid": "The TRN has 15 digits. It is not verified with the tax authority yet.",
+      "trnError": {
+        "empty": "The TRN is empty.",
+        "not_digits": "The TRN must be digits only.",
+        "length": "A UAE TRN has 15 digits."
+      },
+      "swiftCountryDiffers": "The SWIFT code is from another country than the IBAN. Check it.",
+      "duplicates": "Possible duplicates",
+      "duplicateReason": {
+        "name": "similar name",
+        "trn": "same TRN",
+        "iban": "same IBAN"
+      },
+      "noDuplicates": "No similar vendor found.",
+      "acknowledgeSimilar": "I checked the similar names and this is a different company."
+    },
+    "request": {
+      "intro": "A change opens a locked ticket and holds every payment to this vendor until the change is verified by phone and approved by two people.",
+      "field": {
+        "iban": "New IBAN",
+        "account_name": "Name on the account",
+        "bank_name": "Bank name",
+        "swift": "SWIFT code",
+        "source": "Where the request came from",
+        "note": "Note"
+      },
+      "source": {
+        "email": "Email",
+        "staff": "Staff",
+        "invoice": "Invoice",
+        "vendor_portal": "Vendor portal"
+      },
+      "contactTitle": "Contact details in the request",
+      "contactHint": "Kept for investigation only. Nobody sees them and nobody calls them: the call back always uses the number already on file.",
+      "contact": {
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email"
+      },
+      "submit": "Open the change and hold payments"
+    },
+    "vendor": {
+      "title": "Vendor",
+      "reason": "Reason",
+      "noteOptional": "Note (optional)",
+      "review": {
+        "title": "Onboarding review",
+        "intro": "The vendor filled in this form itself. Check the details and the possible duplicates. Accepting sends its bank details through the change workflow: a call back and two approvals.",
+        "duplicates": "Possible duplicates",
+        "accept": "Accept and verify bank details",
+        "reject": "Reject"
+      },
+      "record": "Record",
+      "field": {
+        "legal_name_ar": "Legal name in Arabic",
+        "trade_name": "Trade name",
+        "country": "Country",
+        "trade_licence": "Trade licence",
+        "trn": "TRN",
+        "address": "Address",
+        "phone_on_file": "Phone on file",
+        "email_domains": "Email domains",
+        "contact": "Contact"
+      },
+      "trnStatus": {
+        "none": "no TRN",
+        "not_verified": "format checked, not verified",
+        "verified": "verified",
+        "invalid": "invalid"
+      },
+      "none": "None",
+      "bankTitle": "Bank details",
+      "bankIntro": "Shown masked. Bank details only change through a verified change ticket.",
+      "noAccounts": "No bank details yet.",
+      "accountStatus": {
+        "proposed": "Proposed",
+        "active": "Active",
+        "retired": "Replaced",
+        "rejected": "Rejected"
+      },
+      "requestChange": "Change bank details",
+      "changesTitle": "Bank detail changes",
+      "holdTitle": "Payment hold",
+      "holdOn": "Payments to this vendor are on hold.",
+      "holdOff": "Payments to this vendor are not on hold.",
+      "release": "Release the hold",
+      "placeHold": "Hold payments"
+    },
+    "risk": {
+      "title": "Risk profile",
+      "age": "Record age",
+      "days": "{count, plural, =0 {Today} one {# day} other {# days}}",
+      "requests": "Bank change requests in 90 days",
+      "payments": "Payment history",
+      "paymentsLater": "Available once payment runs start.",
+      "signal": {
+        "new_vendor": "New vendor record",
+        "recent_bank_change_request": "Recent bank change request",
+        "recent_rejected_bank_change": "A recent bank change was rejected",
+        "phone_on_file_changed_recently": "The phone number on file changed recently",
+        "payment_hold": "Payments on hold",
+        "no_trn": "No TRN on file"
+      },
+      "noSignals": "Nothing unusual."
+    },
+    "change": {
+      "title": "Bank detail change",
+      "heading": "Bank detail change {reference}",
+      "steps": {
+        "requested": "Requested",
+        "call": "Call back",
+        "approvals": "Two approvals",
+        "cooling": "Cooling-off",
+        "active": "Active"
+      },
+      "bankCode": "bank code",
+      "noPrevious": "No bank details before this change.",
+      "noHold": "Payments are not on hold.",
+      "outcome": {
+        "verification_failed": "The vendor did not confirm the change on the number on file. The old details stay.",
+        "rejected_by_approver": "An approver rejected the change. The old details stay.",
+        "changes_requested_by_approver": "An approver sent the change back. The old details stay.",
+        "approval_not_possible": "Two different people could not approve this change, so it stopped. The old details stay.",
+        "executor_refused": "The final check refused the change. The old details stay.",
+        "activation_refused": "The final check before activation refused the change. The old details stay.",
+        "proposed_details_missing": "The proposed details are missing. The old details stay.",
+        "cancelled_from_awaiting_verification": "Cancelled before the call. The old details stay.",
+        "cancelled_from_cooling_off": "Cancelled during the cooling-off period. The old details stay."
+      },
+      "holdKept": "Payments stay on hold until finance releases them.",
+      "compare": "Old and new details",
+      "current": "Current",
+      "proposed": "Proposed",
+      "requested": "Requested {when} by {source}.",
+      "source": {
+        "staff": "staff",
+        "email": "email",
+        "invoice": "an invoice",
+        "vendor_portal": "the vendor portal",
+        "onboarding": "onboarding"
+      },
+      "calls": "Calls",
+      "callResult": {
+        "confirmed": "Confirmed",
+        "not_confirmed": "Not confirmed",
+        "no_answer": "No answer"
+      },
+      "calledEnding": "Called the number on file ending {last4}.",
+      "approvals": "Approvals",
+      "sod": "Two different people approve. Neither the person who asked nor the person who made the call can approve.",
+      "approvalStep": {
+        "first_approval": "First approval",
+        "second_approval": "Second approval"
+      },
+      "stepStatus": {
+        "waiting": "waiting",
+        "active": "waiting for a decision",
+        "approved": "approved",
+        "rejected": "rejected",
+        "changes_requested": "sent back",
+        "cancelled": "cancelled"
+      },
+      "afterCall": "The approvals start after the call confirms the change.",
+      "noApproval": "No approval yet.",
+      "openInbox": "Open in the inbox",
+      "startApproval": "Start the approvals again",
+      "coolingOff": "Approved. The new details become active on {when}, after a {hours, plural, one {# hour} other {# hours}} cooling-off period. Payments stay on hold until then.",
+      "activated": "The new details became active on {when}.",
+      "cancelTitle": "Cancel this change"
+    },
+    "verify": {
+      "title": "Call back checklist",
+      "step1": "Call the number on file shown here. Never use a number from the email, the invoice or the letter.",
+      "step2": "Ask for a person you already know at the vendor and confirm that they asked for this change.",
+      "step3": "Read the new IBAN and the name on the account back to them.",
+      "step4": "Record what they said.",
+      "numberOnFile": "Number on file",
+      "numberHidden": "Only people who verify changes see the number. It ends in {last4}.",
+      "neverRequestNumber": "Pairly never shows a number from the request.",
+      "requestHadContact": "The request gave its own contact details. They are kept for investigation and are not shown.",
+      "phoneRecentlyChanged": "The number on file changed shortly before this request. Fraudsters often change the phone number first. Confirm the number against the trade licence or an official directory before you call.",
+      "script": {
+        "title": "Call script",
+        "line1": "Hello, this is the accounts payable team. I am calling {vendor} on the number we have on file.",
+        "line2": "We received a request to change your bank details. Did your company ask for this change?",
+        "line3": "Please confirm the new IBAN:",
+        "line4": "And the name on the account: {name}.",
+        "line5": "Thank you. We will only pay to the new account after two approvals."
+      },
+      "result": "What did the vendor say?",
+      "results": {
+        "confirmed": "Confirmed the change",
+        "not_confirmed": "Did not ask for it",
+        "no_answer": "No answer"
+      },
+      "notes": "Notes from the call",
+      "attest": "I called the number on file shown on this page, not a number from the request.",
+      "record": "Record the call",
+      "notYou": "You asked for this change, so someone else must make the call.",
+      "someoneElse": "A person who verifies bank changes makes the call."
+    },
+    "cancel": {
+      "reason": "Why cancel?",
+      "keepHold": "Keep payments on hold until finance releases them",
+      "submit": "Cancel the change"
+    },
+    "changes": {
+      "title": "Bank detail changes",
+      "intro": "Every request to change a vendor's bank details. Payments to the vendor stay on hold while a change is open.",
+      "openOnly": "Open changes only",
+      "empty": "No bank detail changes to show."
+    },
+    "invites": {
+      "title": "Onboarding invites",
+      "intro": "Send a vendor a signed link to fill in its own details. The link works once and expires after 7 days.",
+      "new": "New invite",
+      "company": "Company (optional)",
+      "email": "Email it is for (optional)",
+      "language": "Form language",
+      "languages": {
+        "en": "English",
+        "ar": "Arabic"
+      },
+      "create": "Create the link",
+      "linkOnce": "Copy this link now and send it to the vendor. It is shown only once.",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "list": "Invites",
+      "empty": "No invites yet.",
+      "noCompany": "Unnamed vendor",
+      "state": {
+        "open": "Not opened",
+        "opened": "Opened",
+        "submitted": "Submitted",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "expires": "Expires {when}",
+      "review": "Review",
+      "revoke": "Revoke"
+    }
+  },
+  "VendorOnboarding": {
+    "title": "Vendor details",
+    "opening": "Opening the form...",
+    "linkInvalid": "This link has already been used or has expired.",
+    "linkHelp": "Ask your contact at the company that sent it for a new link.",
+    "heading": "Your details for {company}",
+    "intro": "Fill in your company, contact and bank details. Fields marked with a star are required. Your bank details are confirmed by phone before any payment.",
+    "section": {
+      "company": "Company",
+      "contact": "Contact",
+      "bank": "Bank details",
+      "documents": "Documents"
+    },
+    "field": {
+      "legal_name": "Legal name",
+      "legal_name_ar": "Legal name in Arabic",
+      "trade_name": "Trade name",
+      "country": "Country",
+      "trade_licence": "Trade licence number",
+      "trn": "TRN (UAE VAT number)",
+      "line1": "Address",
+      "city": "City",
+      "phone_on_file": "Main company phone number",
+      "contact_name": "Your name",
+      "contact_role": "Your role",
+      "contact_email": "Your email",
+      "email_domain": "Email domain you send invoices from",
+      "iban": "IBAN",
+      "account_name": "Name on the account",
+      "bank_name": "Bank name",
+      "swift": "SWIFT code"
+    },
+    "phoneHint": "We call this number to confirm any change of bank details.",
+    "bankHint": "Use the account in your company's name. We confirm it with you by phone before paying.",
+    "documentsHint": "Add your trade licence, TRN certificate and a bank letter (PDF or image, up to {max} files).",
+    "document": "Document",
+    "addDocument": "Add a document",
+    "confirm": "I confirm these details are correct and I am allowed to give them.",
+    "submit": "Send my details",
+    "doneTitle": "Thank you",
+    "doneBody": "{company} received your details (reference {reference}). The team will contact you on your main phone number if they have questions."
   }
 }

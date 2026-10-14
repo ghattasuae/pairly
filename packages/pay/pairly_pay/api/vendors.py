@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select
@@ -132,7 +132,7 @@ def address_json(address: Any) -> dict[str, Any]:
 async def list_vendors(
     actor: CurrentActor,
     session: OrgSession,
-    status: Annotated[VendorStatus | None, Query()] = None,
+    status: Annotated[Literal["pending", "active", "rejected", "archived"] | None, Query()] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     hold: Annotated[bool | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
@@ -140,7 +140,7 @@ async def list_vendors(
     authorize(actor, VENDOR_READ)
     query = select(PayVendor).order_by(PayVendor.legal_name, PayVendor.id)
     if status is not None:
-        query = query.where(PayVendor.status == status.value)
+        query = query.where(PayVendor.status == VendorStatus(status).value)
     if hold is not None:
         query = query.where(PayVendor.payment_hold.is_(hold))
     condition = vendor_filter(q)

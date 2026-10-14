@@ -3871,6 +3871,354 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/bank-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Changes */
+        get: operations["list_changes_v1_pay_bank_changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/bank-changes/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Change */
+        get: operations["get_change_v1_pay_bank_changes__ticket_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/bank-changes/{ticket_id}/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record */
+        post: operations["record_v1_pay_bank_changes__ticket_id__calls_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/bank-changes/{ticket_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_v1_pay_bank_changes__ticket_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/bank-changes/{ticket_id}/start-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Approval */
+        post: operations["start_approval_v1_pay_bank_changes__ticket_id__start_approval_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/public/vendor-onboarding/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Link */
+        post: operations["open_link_v1_pay_public_vendor_onboarding_open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_v1_pay_settings_get"];
+        /** Put Settings */
+        put: operations["put_settings_v1_pay_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Invites */
+        get: operations["list_invites_v1_pay_vendor_invites_get"];
+        put?: never;
+        /** Invite */
+        post: operations["invite_v1_pay_vendor_invites_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-invites/{invite_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke */
+        post: operations["revoke_v1_pay_vendor_invites__invite_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-onboarding/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Page */
+        get: operations["page_v1_pay_vendor_onboarding_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-onboarding/me/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload */
+        post: operations["upload_v1_pay_vendor_onboarding_me_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendor-onboarding/me/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["submit_v1_pay_vendor_onboarding_me_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vendors */
+        get: operations["list_vendors_v1_pay_vendors_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_v1_pay_vendors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get One */
+        get: operations["get_one_v1_pay_vendors__vendor_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update */
+        patch: operations["update_v1_pay_vendors__vendor_id__patch"];
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept
+         * @description Accept an onboarding. Bank details it carried go through a change ticket; the
+         *     vendor becomes active when the ticket completes (or now, without bank details).
+         */
+        post: operations["accept_v1_pay_vendors__vendor_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/bank-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Change */
+        post: operations["request_change_v1_pay_vendors__vendor_id__bank_changes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hold */
+        post: operations["hold_v1_pay_vendors__vendor_id__hold_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/hold/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release */
+        post: operations["release_v1_pay_vendors__vendor_id__hold_release_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/{vendor_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject */
+        post: operations["reject_v1_pay_vendors__vendor_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/vendors/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Vendor */
+        post: operations["check_vendor_v1_pay_vendors_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/policies/documents": {
         parameters: {
             query?: never;
@@ -10036,6 +10384,741 @@ export type components = {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** PayAcceptIn */
+        PayAcceptIn: {
+            /** Note */
+            note?: string | null;
+        };
+        /** PayAddressIn */
+        PayAddressIn: {
+            /** City */
+            city?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Line1 */
+            line1?: string | null;
+            /** Line2 */
+            line2?: string | null;
+            /** Po Box */
+            po_box?: string | null;
+            /** Region */
+            region?: string | null;
+        };
+        /** PayApprovalStepOut */
+        PayApprovalStepOut: {
+            /** Decided By */
+            decided_by: string[];
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+        };
+        /** PayBankAccountOut */
+        PayBankAccountOut: {
+            /** Account Name */
+            account_name: string;
+            /** Activated At */
+            activated_at: string | null;
+            /** Bank Code */
+            bank_code: string | null;
+            /** Bank Name */
+            bank_name: string | null;
+            /** Country */
+            country: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Iban Masked */
+            iban_masked: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Retired At */
+            retired_at: string | null;
+            /** Status */
+            status: string;
+            /** Swift */
+            swift: string | null;
+        };
+        /** PayBankChangeIn */
+        PayBankChangeIn: {
+            bank: components["schemas"]["PayBankIn"];
+            /** Note */
+            note?: string | null;
+            request_contact?: components["schemas"]["PayRequestContactIn"] | null;
+            /**
+             * Source
+             * @default staff
+             * @enum {string}
+             */
+            source: "staff" | "email" | "invoice" | "vendor_portal";
+        };
+        /** PayBankIn */
+        PayBankIn: {
+            /** Account Name */
+            account_name: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Iban */
+            iban: string;
+            /** Swift */
+            swift?: string | null;
+        };
+        /** PayCallIn */
+        PayCallIn: {
+            /** Called Number On File */
+            called_number_on_file: boolean;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Result
+             * @enum {string}
+             */
+            result: "confirmed" | "not_confirmed" | "no_answer";
+        };
+        /** PayCallOut */
+        PayCallOut: {
+            /**
+             * Called By
+             * Format: uuid
+             */
+            called_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Notes */
+            notes: string | null;
+            /** Number Last4 */
+            number_last4: string;
+            /** Result */
+            result: string;
+        };
+        /** PayCancelIn */
+        PayCancelIn: {
+            /**
+             * Keep Hold
+             * @default false
+             */
+            keep_hold: boolean;
+            /** Reason */
+            reason: string;
+        };
+        /** PayContactIn */
+        PayContactIn: {
+            /** Email */
+            email?: string | null;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone?: string | null;
+            /** Role */
+            role?: string | null;
+        };
+        /** PayContactOut */
+        PayContactOut: {
+            /** Email */
+            email?: string | null;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone?: string | null;
+            /** Role */
+            role?: string | null;
+        };
+        /** PayDuplicateOut */
+        PayDuplicateOut: {
+            /** Legal Name */
+            legal_name: string;
+            /** Reasons */
+            reasons: string[];
+            /** Reference */
+            reference: string;
+            /** Score */
+            score: string;
+            /** Status */
+            status: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+        };
+        /** PayFieldCheckOut */
+        PayFieldCheckOut: {
+            /** Bank Code */
+            bank_code?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Formatted */
+            formatted?: string | null;
+            /** Valid */
+            valid: boolean;
+        };
+        /** PayInviteCreatedOut */
+        PayInviteCreatedOut: {
+            /** Company Hint */
+            company_hint: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Locale */
+            locale: string;
+            /** Path */
+            path: string;
+            /** State */
+            state: string;
+            /** Token */
+            token: string;
+            /** Used At */
+            used_at: string | null;
+            /** Vendor Id */
+            vendor_id: string | null;
+        };
+        /** PayInviteIn */
+        PayInviteIn: {
+            /** Company Hint */
+            company_hint?: string | null;
+            /** Email */
+            email?: string | null;
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+        };
+        /** PayInviteList */
+        PayInviteList: {
+            /** Items */
+            items: components["schemas"]["PayInviteOut"][];
+        };
+        /** PayInviteOut */
+        PayInviteOut: {
+            /** Company Hint */
+            company_hint: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Locale */
+            locale: string;
+            /** State */
+            state: string;
+            /** Used At */
+            used_at: string | null;
+            /** Vendor Id */
+            vendor_id: string | null;
+        };
+        /** PayOnboardingDocumentOut */
+        PayOnboardingDocumentOut: {
+            /** Filename */
+            filename: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** PayOnboardingDoneOut */
+        PayOnboardingDoneOut: {
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+        };
+        /** PayOnboardingIn */
+        PayOnboardingIn: {
+            address?: components["schemas"]["PayAddressIn"];
+            bank: components["schemas"]["PayBankIn"];
+            /** Category */
+            category?: string | null;
+            /**
+             * Confirm
+             * @constant
+             */
+            confirm: true;
+            /** Contacts */
+            contacts: components["schemas"]["PayContactIn"][];
+            /** Country */
+            country: string;
+            /**
+             * Email Domains
+             * @default []
+             */
+            email_domains: string[];
+            /** Legal Name */
+            legal_name: string;
+            /** Legal Name Ar */
+            legal_name_ar?: string | null;
+            /** Phone On File */
+            phone_on_file: string;
+            /** Trade Licence */
+            trade_licence?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Trn */
+            trn?: string | null;
+        };
+        /** PayOnboardingPageOut */
+        PayOnboardingPageOut: {
+            /** Company */
+            company: string;
+            /** Company Hint */
+            company_hint: string | null;
+            /** Documents */
+            documents: components["schemas"]["PayOnboardingDocumentOut"][];
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Locale */
+            locale: string;
+            /** Max Documents */
+            max_documents: number;
+        };
+        /** PayReasonIn */
+        PayReasonIn: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * PayRequestContactIn
+         * @description Contact details the change request itself gave (an email signature, a letter).
+         *     Stored for investigation only: never shown, never called.
+         */
+        PayRequestContactIn: {
+            /** Email */
+            email?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** PaySettingsIn */
+        PaySettingsIn: {
+            /** Cooling Off Hours */
+            cooling_off_hours: number;
+            /**
+             * Phone Change Window Days
+             * @default 30
+             */
+            phone_change_window_days: number;
+        };
+        /** PaySettingsOut */
+        PaySettingsOut: {
+            /** Can Manage */
+            can_manage: boolean;
+            /** Cooling Off Hours */
+            cooling_off_hours: number;
+            /** Phone Change Window Days */
+            phone_change_window_days: number;
+        };
+        /** PayTicketDetail */
+        PayTicketDetail: {
+            /** Activates At */
+            activates_at: string | null;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Approval Status */
+            approval_status: string | null;
+            /** Approval Steps */
+            approval_steps: components["schemas"]["PayApprovalStepOut"][];
+            /** Approved At */
+            approved_at: string | null;
+            /** Approver Ids */
+            approver_ids: string[];
+            /** Can Cancel */
+            can_cancel: boolean;
+            /** Can Start Approval */
+            can_start_approval: boolean;
+            /** Can Verify */
+            can_verify: boolean;
+            /** Closed At */
+            closed_at: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Cooling Off Hours */
+            cooling_off_hours: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decision Ids */
+            decision_ids: string[];
+            /** Hold Kept */
+            hold_kept: boolean | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** New Iban Masked */
+            new_iban_masked: string;
+            /** Note */
+            note: string | null;
+            /** Outcome */
+            outcome: string | null;
+            previous_account: components["schemas"]["PayBankAccountOut"] | null;
+            proposed_account: components["schemas"]["PayBankAccountOut"];
+            /** Proposed Iban */
+            proposed_iban: string | null;
+            /** Reference */
+            reference: string;
+            /** Request Had Contact Details */
+            request_had_contact_details: boolean;
+            /** Requested By Id */
+            requested_by_id: string;
+            /** Requested By Type */
+            requested_by_type: string;
+            /** Requester User Id */
+            requester_user_id: string | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Vendor Hold Reason */
+            vendor_hold_reason: string | null;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string;
+            /** Vendor Payment Hold */
+            vendor_payment_hold: boolean;
+            /** Vendor Reference */
+            vendor_reference: string;
+            verification: components["schemas"]["PayVerificationOut"];
+        };
+        /** PayTicketList */
+        PayTicketList: {
+            /** Items */
+            items: components["schemas"]["PayTicketSummary"][];
+        };
+        /** PayTicketSummary */
+        PayTicketSummary: {
+            /** Activates At */
+            activates_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** New Iban Masked */
+            new_iban_masked: string;
+            /** Outcome */
+            outcome: string | null;
+            /** Reference */
+            reference: string;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string;
+            /** Vendor Reference */
+            vendor_reference: string;
+        };
+        /** PayTokenIn */
+        PayTokenIn: {
+            /** Token */
+            token: string;
+        };
+        /** PayVendorCheckIn */
+        PayVendorCheckIn: {
+            /** Iban */
+            iban?: string | null;
+            /**
+             * Legal Name
+             * @default
+             */
+            legal_name: string;
+            /** Swift */
+            swift?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Trn */
+            trn?: string | null;
+        };
+        /** PayVendorCheckOut */
+        PayVendorCheckOut: {
+            /** Duplicates */
+            duplicates: components["schemas"]["PayDuplicateOut"][];
+            iban: components["schemas"]["PayFieldCheckOut"] | null;
+            swift: components["schemas"]["PayFieldCheckOut"] | null;
+            trn: components["schemas"]["PayFieldCheckOut"] | null;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** PayVendorDetail */
+        PayVendorDetail: {
+            /** Accounts */
+            accounts: components["schemas"]["PayBankAccountOut"][];
+            /** Activated At */
+            activated_at: string | null;
+            /** Address */
+            address: {
+                [key: string]: unknown;
+            };
+            /** Can Manage Hold */
+            can_manage_hold: boolean;
+            /** Can Request Change */
+            can_request_change: boolean;
+            /** Can Write */
+            can_write: boolean;
+            /** Category */
+            category: string | null;
+            /** Contacts */
+            contacts: components["schemas"]["PayContactOut"][];
+            /** Country */
+            country: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Ids */
+            document_ids: string[];
+            /** Duplicates */
+            duplicates: components["schemas"]["PayDuplicateOut"][];
+            /** Email Domains */
+            email_domains: string[];
+            /** Hold Reason */
+            hold_reason: string | null;
+            /** Hold Set At */
+            hold_set_at: string | null;
+            /** Hold Sticky */
+            hold_sticky: boolean;
+            /** Iban Masked */
+            iban_masked: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Legal Name */
+            legal_name: string;
+            /** Legal Name Ar */
+            legal_name_ar: string | null;
+            /** Open Ticket Id */
+            open_ticket_id: string | null;
+            /** Payment Hold */
+            payment_hold: boolean;
+            /** Phone Changed At */
+            phone_changed_at: string | null;
+            /** Phone On File */
+            phone_on_file: string | null;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Risk */
+            risk: {
+                [key: string]: unknown;
+            };
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Tickets */
+            tickets: components["schemas"]["PayTicketSummary"][];
+            /** Trade Licence */
+            trade_licence: string | null;
+            /** Trade Name */
+            trade_name: string | null;
+            /** Trn */
+            trn: string | null;
+            /** Trn Status */
+            trn_status: string;
+        };
+        /** PayVendorIn */
+        PayVendorIn: {
+            /**
+             * Acknowledge Similar
+             * @default false
+             */
+            acknowledge_similar: boolean;
+            address?: components["schemas"]["PayAddressIn"];
+            bank?: components["schemas"]["PayBankIn"] | null;
+            /** Category */
+            category?: string | null;
+            /**
+             * Contacts
+             * @default []
+             */
+            contacts: components["schemas"]["PayContactIn"][];
+            /** Country */
+            country: string;
+            /**
+             * Email Domains
+             * @default []
+             */
+            email_domains: string[];
+            /** Legal Name */
+            legal_name: string;
+            /** Legal Name Ar */
+            legal_name_ar?: string | null;
+            /** Phone On File */
+            phone_on_file?: string | null;
+            /** Trade Licence */
+            trade_licence?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Trn */
+            trn?: string | null;
+        };
+        /** PayVendorList */
+        PayVendorList: {
+            /** Items */
+            items: components["schemas"]["PayVendorSummary"][];
+        };
+        /** PayVendorPatchIn */
+        PayVendorPatchIn: {
+            address?: components["schemas"]["PayAddressIn"] | null;
+            /** Category */
+            category?: string | null;
+            /** Contacts */
+            contacts?: components["schemas"]["PayContactIn"][] | null;
+            /** Email Domains */
+            email_domains?: string[] | null;
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Legal Name Ar */
+            legal_name_ar?: string | null;
+            /** Phone On File */
+            phone_on_file?: string | null;
+            /** Trade Licence */
+            trade_licence?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Trn */
+            trn?: string | null;
+        };
+        /** PayVendorSessionOut */
+        PayVendorSessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Session Token */
+            session_token: string;
+        };
+        /** PayVendorSummary */
+        PayVendorSummary: {
+            /** Country */
+            country: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Hold Reason */
+            hold_reason: string | null;
+            /** Iban Masked */
+            iban_masked: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Legal Name */
+            legal_name: string;
+            /** Open Ticket Id */
+            open_ticket_id: string | null;
+            /** Payment Hold */
+            payment_hold: boolean;
+            /** Reference */
+            reference: string;
+            /** Review Reasons */
+            review_reasons: string[];
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Trade Name */
+            trade_name: string | null;
+            /** Trn */
+            trn: string | null;
+        };
+        /** PayVerificationOut */
+        PayVerificationOut: {
+            /** Calls */
+            calls: components["schemas"]["PayCallOut"][];
+            /** Phone Last4 */
+            phone_last4: string;
+            /** Phone On File */
+            phone_on_file: string | null;
+            /** Phone Recently Changed */
+            phone_recently_changed: boolean;
+            /** Verified At */
+            verified_at: string | null;
+            /** Verified By */
+            verified_by: string | null;
         };
         /** PlanQuestion */
         PlanQuestion: {
@@ -18575,6 +19658,756 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_changes_v1_pay_bank_changes_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                open_only?: boolean;
+                status?: ("awaiting_verification" | "awaiting_approval" | "cooling_off" | "completed" | "rejected" | "cancelled" | "failed") | null;
+                vendor_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_change_v1_pay_bank_changes__ticket_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_v1_pay_bank_changes__ticket_id__calls_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayCallIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_v1_pay_bank_changes__ticket_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayCancelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_approval_v1_pay_bank_changes__ticket_id__start_approval_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_link_v1_pay_public_vendor_onboarding_open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_v1_pay_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaySettingsOut"];
+                };
+            };
+        };
+    };
+    put_settings_v1_pay_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaySettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaySettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invites_v1_pay_vendor_invites_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInviteList"];
+                };
+            };
+        };
+    };
+    invite_v1_pay_vendor_invites_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInviteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInviteCreatedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_v1_pay_vendor_invites__invite_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInviteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    page_v1_pay_vendor_onboarding_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayOnboardingPageOut"];
+                };
+            };
+        };
+    };
+    upload_v1_pay_vendor_onboarding_me_documents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayOnboardingPageOut"];
+                };
+            };
+        };
+    };
+    submit_v1_pay_vendor_onboarding_me_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayOnboardingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayOnboardingDoneOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_vendors_v1_pay_vendors_get: {
+        parameters: {
+            query?: {
+                hold?: boolean | null;
+                limit?: number;
+                q?: string | null;
+                status?: ("pending" | "active" | "rejected" | "archived") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_v1_pay_vendors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayVendorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_one_v1_pay_vendors__vendor_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_v1_pay_vendors__vendor_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayVendorPatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_v1_pay_vendors__vendor_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayAcceptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_change_v1_pay_vendors__vendor_id__bank_changes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayBankChangeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hold_v1_pay_vendors__vendor_id__hold_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    release_v1_pay_vendors__vendor_id__hold_release_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_v1_pay_vendors__vendor_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_vendor_v1_pay_vendors_check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayVendorCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayVendorCheckOut"];
+                };
             };
             /** @description Validation Error */
             422: {

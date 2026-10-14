@@ -26,7 +26,7 @@ The approvals themselves happen in the inbox (``/v1/approvals``), approval type
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 import structlog
 from fastapi import APIRouter, Query
@@ -125,7 +125,19 @@ async def request_change(
 async def list_changes(
     actor: CurrentActor,
     session: OrgSession,
-    status: Annotated[TicketStatus | None, Query()] = None,
+    status: Annotated[
+        Literal[
+            "awaiting_verification",
+            "awaiting_approval",
+            "cooling_off",
+            "completed",
+            "rejected",
+            "cancelled",
+            "failed",
+        ]
+        | None,
+        Query(),
+    ] = None,
     vendor_id: Annotated[uuid.UUID | None, Query()] = None,
     open_only: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
@@ -135,7 +147,7 @@ async def list_changes(
         PayBankChangeTicket.created_at.desc(), PayBankChangeTicket.id
     )
     if status is not None:
-        query = query.where(PayBankChangeTicket.status == status.value)
+        query = query.where(PayBankChangeTicket.status == TicketStatus(status).value)
     if open_only:
         query = query.where(
             PayBankChangeTicket.status.in_(

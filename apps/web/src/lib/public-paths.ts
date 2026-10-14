@@ -12,6 +12,8 @@
 // `/reference` is a referee's form opened from its signed link (its own HTTP-only session
 // cookie for one reference request; the API decides every access).
 // `/survey` is the candidate experience survey (a signed single use link in the fragment).
+// `/vendor-onboarding` is a vendor's self-service form opened from its signed single use
+// invite link (its own HTTP-only session cookie for one invite; the API decides access).
 // `/portal` is the candidate portal: candidates never have a staff session; the portal
 // checks its own session (an HTTP-only cookie) and the API decides every access.
 const PUBLIC_PATHS = [
@@ -28,6 +30,7 @@ const PUBLIC_PATHS = [
   "/scorecard",
   "/reference",
   "/survey",
+  "/vendor-onboarding",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
