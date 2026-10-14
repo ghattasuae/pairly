@@ -70,8 +70,8 @@ Who does what (brief 4.1, 6.2):
   read with Pay's own permission, so a member limited to Pay can open the invoice
   viewer. Uploads to ``/v1/documents`` stay on ``core.document.upload`` (no
   ``pay.document.upload`` is declared), so existing API keys keep working.
-* **Analytics** (``pay.analytics.read``): the Pay analytics page (brief 4.9), for
-  finance controllers and admins.
+* **Analytics** (``pay.analytics.read``): the Pay analytics page (brief 4.9) and the
+  cash forecast, for finance controllers and admins.
 * **Extractions** (``pay.extraction.read`` / ``correct``): what was read from a Pay
   document and the corrections of it. ``correct`` is never an agent's.
 """

@@ -4075,6 +4075,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cash Forecast */
+        get: operations["cash_forecast_v1_pay_forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/goods-receipts": {
         parameters: {
             query?: never;
@@ -11866,6 +11883,92 @@ export type components = {
             formatted?: string | null;
             /** Valid */
             valid: boolean;
+        };
+        /** PayForecastBucketOut */
+        PayForecastBucketOut: {
+            /** Amount */
+            amount: string;
+            /** Count */
+            count: number;
+            /** Credits */
+            credits: string;
+            /** Gross */
+            gross: string;
+            /** Invoices */
+            invoices: components["schemas"]["PayForecastInvoiceOut"][];
+        };
+        /** PayForecastCurrencyOut */
+        PayForecastCurrencyOut: {
+            /** Committed Total */
+            committed_total: string;
+            /** Currency */
+            currency: string;
+            /** In Review Total */
+            in_review_total: string;
+            later_committed: components["schemas"]["PayForecastBucketOut"];
+            later_in_review: components["schemas"]["PayForecastBucketOut"];
+            undated_committed: components["schemas"]["PayForecastBucketOut"];
+            undated_in_review: components["schemas"]["PayForecastBucketOut"];
+            /** Weeks */
+            weeks: components["schemas"]["PayForecastWeekOut"][];
+        };
+        /** PayForecastInvoiceOut */
+        PayForecastInvoiceOut: {
+            /** Amount */
+            amount: string | null;
+            /** Credits */
+            credits: string;
+            /** Expected Date */
+            expected_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayForecastOut */
+        PayForecastOut: {
+            /** Currencies */
+            currencies: components["schemas"]["PayForecastCurrencyOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /** Unpriced */
+            unpriced: components["schemas"]["PayForecastInvoiceOut"][];
+            /** Weeks */
+            weeks: number;
+        };
+        /** PayForecastWeekOut */
+        PayForecastWeekOut: {
+            committed: components["schemas"]["PayForecastBucketOut"];
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            in_review: components["schemas"]["PayForecastBucketOut"];
+            /** Index */
+            index: number;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
         };
         /** PayGoodsReceiptIn */
         PayGoodsReceiptIn: {
@@ -23032,6 +23135,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayExceptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_forecast_v1_pay_forecast_get: {
+        parameters: {
+            query?: {
+                weeks?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayForecastOut"];
                 };
             };
             /** @description Validation Error */

@@ -56,7 +56,7 @@ export function PayUnavailable({ retry }: { retry: string }) {
 
 /**
  * The Pay section's own tabs: vendors, invoices, exceptions, purchase orders, payment runs, bank-detail changes,
- * onboarding invites, approval rules, analytics, settings.
+ * onboarding invites, approval rules, analytics, the cash forecast, settings.
  */
 export async function PayHeader({
   title,
@@ -77,6 +77,7 @@ export async function PayHeader({
     | "rules"
     | "settings"
     | "analytics"
+    | "forecast"
     | null;
   permissions: string[];
 }) {
@@ -91,6 +92,7 @@ export async function PayHeader({
     { key: "invites" as const, href: "/pay/invites", show: permissions.includes("pay.vendor.write") },
     { key: "rules" as const, href: "/pay/approval-rules", show: permissions.includes("pay.invoice.read") },
     { key: "analytics" as const, href: "/pay/analytics", show: permissions.includes("pay.analytics.read") },
+    { key: "forecast" as const, href: "/pay/forecast", show: permissions.includes("pay.analytics.read") },
     { key: "settings" as const, href: "/pay/settings", show: permissions.includes("pay.settings.manage") },
   ].filter((tab) => tab.show);
   return (

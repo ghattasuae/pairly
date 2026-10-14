@@ -2926,7 +2926,8 @@
       "orders": "Purchase orders",
       "settings": "Settings",
       "analytics": "Analytics",
-      "exceptions": "Exceptions"
+      "exceptions": "Exceptions",
+      "forecast": "Cash forecast"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -3966,6 +3967,28 @@
       "applyNote": "Note (optional)",
       "apply": "Apply the credit note",
       "applied": "Applied. The invoice will be paid that much less."
+    },
+    "forecast": {
+      "title": "Cash forecast",
+      "intro": "What you will pay in the next weeks, per currency: approved and scheduled invoices by their expected payment date, after the credit notes applied to them. Invoices still in review are shown apart. Every number opens the invoices behind it.",
+      "weeks": "Weeks",
+      "apply": "Show",
+      "empty": "Nothing to pay: no approved, scheduled or in-review invoices.",
+      "currency": "{currency}: {committed} committed, {review} in review",
+      "col": {
+        "week": "Week",
+        "committed": "Approved and scheduled",
+        "inReview": "Still in review"
+      },
+      "week": "{start} to {end}",
+      "thisWeek": "This week (and overdue)",
+      "later": "Later",
+      "undated": "No date",
+      "credits": "after {credits} of credits",
+      "invoices": "{count, plural, one {# invoice} other {# invoices}}",
+      "expected": "expected {when}",
+      "unpriced": "{count, plural, one {# invoice has no amount or currency yet} other {# invoices have no amount or currency yet}}",
+      "method": "Expected payment date: the payment run's date for a scheduled invoice, else the due date, else the invoice date. A date already past counts as this week."
     }
   },
   "VendorOnboarding": {

@@ -18835,6 +18835,241 @@
         "title": "PayFieldCheckOut",
         "type": "object"
       },
+      "PayForecastBucketOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "string"
+          },
+          "gross": {
+            "title": "Gross",
+            "type": "string"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PayForecastInvoiceOut"
+            },
+            "title": "Invoices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "amount",
+          "gross",
+          "credits",
+          "count",
+          "invoices"
+        ],
+        "title": "PayForecastBucketOut",
+        "type": "object"
+      },
+      "PayForecastCurrencyOut": {
+        "properties": {
+          "committed_total": {
+            "title": "Committed Total",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "in_review_total": {
+            "title": "In Review Total",
+            "type": "string"
+          },
+          "later_committed": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "later_in_review": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "undated_committed": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "undated_in_review": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/PayForecastWeekOut"
+            },
+            "title": "Weeks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "committed_total",
+          "in_review_total",
+          "weeks",
+          "later_committed",
+          "later_in_review",
+          "undated_committed",
+          "undated_in_review"
+        ],
+        "title": "PayForecastCurrencyOut",
+        "type": "object"
+      },
+      "PayForecastInvoiceOut": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "string"
+          },
+          "expected_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_number",
+          "vendor_name",
+          "status",
+          "expected_date",
+          "amount",
+          "credits"
+        ],
+        "title": "PayForecastInvoiceOut",
+        "type": "object"
+      },
+      "PayForecastOut": {
+        "properties": {
+          "currencies": {
+            "items": {
+              "$ref": "#/components/schemas/PayForecastCurrencyOut"
+            },
+            "title": "Currencies",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "today": {
+            "format": "date",
+            "title": "Today",
+            "type": "string"
+          },
+          "unpriced": {
+            "items": {
+              "$ref": "#/components/schemas/PayForecastInvoiceOut"
+            },
+            "title": "Unpriced",
+            "type": "array"
+          },
+          "weeks": {
+            "title": "Weeks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generated_at",
+          "today",
+          "weeks",
+          "currencies",
+          "unpriced"
+        ],
+        "title": "PayForecastOut",
+        "type": "object"
+      },
+      "PayForecastWeekOut": {
+        "properties": {
+          "committed": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "in_review": {
+            "$ref": "#/components/schemas/PayForecastBucketOut"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end",
+          "committed",
+          "in_review"
+        ],
+        "title": "PayForecastWeekOut",
+        "type": "object"
+      },
       "PayGoodsReceiptIn": {
         "additionalProperties": false,
         "properties": {
@@ -40389,6 +40624,51 @@
           }
         },
         "summary": "List Exceptions",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/forecast": {
+      "get": {
+        "operationId": "cash_forecast_v1_pay_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "weeks",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 26,
+              "minimum": 1,
+              "title": "Weeks",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayForecastOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cash Forecast",
         "tags": [
           "pay"
         ]

@@ -239,3 +239,76 @@ async def test_pay_analytics_on_a_hand_built_dataset(
     theirs = await api.ok("GET", "/v1/pay/analytics", other, "finance")
     assert theirs["invoices"] == 0
     assert theirs["bank_changes_blocked"]["records"] == []
+
+
+async def test_cash_forecast_by_week_net_of_credits_with_review_apart(
+    api: Api, world: PayWorld, other: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    docs = [s.record.id for s in dataset().docs if s.record.format == "pdf"][:5]
+    vendor = await api.ok(
+        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(0)
+    )
+    (account,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT id FROM pay_vendor_bank_accounts WHERE vendor_id = :v AND status = 'active'",
+        {"v": uuid.UUID(vendor["id"])},
+    )
+    today = datetime.now(UTC).date()
+    monday = today - timedelta(days=today.weekday())
+    overdue = await _invoice(
+        api, world, owner_engine, docs[0], account.id,
+        status="approved", approved_at=T0, due_date=today - timedelta(days=20), total=100,
+    )  # fmt: skip
+    credited = await _invoice(
+        api, world, owner_engine, docs[1], account.id,
+        status="approved", approved_at=T0, due_date=monday + timedelta(days=15), total=1000,
+        credit_total=250,
+    )  # fmt: skip
+    review = await _invoice(
+        api, world, owner_engine, docs[2], account.id,
+        status="needs_review", due_date=monday + timedelta(days=16), total=400,
+    )  # fmt: skip
+    credit_note = await _invoice(
+        api, world, owner_engine, docs[3], account.id,
+        status="needs_review", due_date=monday + timedelta(days=15), total=90,
+        document_type="credit_note",
+    )  # fmt: skip
+    undated = await _invoice(
+        api, world, owner_engine, docs[4], account.id, status="approved", approved_at=T0, total=70,
+    )  # fmt: skip
+
+    for name in ("clerk", "approver", "auditor"):
+        denied = await api.client.get("/v1/pay/forecast", headers=api.headers(world, name))
+        assert denied.status_code == 403, name
+    too_long = await api.client.get(
+        "/v1/pay/forecast?weeks=27", headers=api.headers(world, "finance")
+    )
+    assert too_long.status_code == 422
+    data = await api.ok("GET", "/v1/pay/forecast", world, "finance")
+    assert data["weeks"] == 12
+    assert data["today"] == today.isoformat()
+    (aed,) = data["currencies"]
+    assert aed["currency"] == "AED"
+    weeks = aed["weeks"]
+    assert len(weeks) == 12
+    assert weeks[0]["start"] == monday.isoformat()
+    assert weeks[0]["committed"]["amount"] == "100.00"
+    assert [i["id"] for i in weeks[0]["committed"]["invoices"]] == [overdue]
+    assert weeks[0]["committed"]["invoices"][0]["expected_date"] == today.isoformat()
+    third = weeks[2]
+    assert third["committed"]["amount"] == "750.00"
+    assert (third["committed"]["gross"], third["committed"]["credits"]) == ("1000.00", "250.00")
+    assert [i["id"] for i in third["committed"]["invoices"]] == [credited]
+    assert third["in_review"]["amount"] == "400.00"
+    assert [i["id"] for i in third["in_review"]["invoices"]] == [review]
+    assert aed["committed_total"] == "850.00"
+    assert aed["in_review_total"] == "400.00"
+    assert [i["id"] for i in aed["undated_committed"]["invoices"]] == [undated]
+    listed = {
+        i["id"] for w in weeks for line in ("committed", "in_review") for i in w[line]["invoices"]
+    }
+    assert credit_note not in listed  # a credit note pays nothing
+    # Another organisation sees none of it.
+    theirs = await api.ok("GET", "/v1/pay/forecast", other, "finance")
+    assert theirs["currencies"] == []
