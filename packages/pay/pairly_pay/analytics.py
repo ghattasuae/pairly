@@ -154,7 +154,12 @@ async def load_facts(
     session: AsyncSession, *, since: date | None = None, until: date | None = None
 ) -> Facts:
     start, end = _bounds(since, until)
-    query = select(PayInvoice).order_by(PayInvoice.created_at, PayInvoice.id).limit(MAX_INVOICES)
+    # The newest invoices when a period holds more than MAX_INVOICES.
+    query = (
+        select(PayInvoice)
+        .order_by(PayInvoice.created_at.desc(), PayInvoice.id.desc())
+        .limit(MAX_INVOICES)
+    )
     tickets_q = select(PayBankChangeTicket).order_by(PayBankChangeTicket.created_at)
     if start is not None:
         query = query.where(PayInvoice.created_at >= start)
