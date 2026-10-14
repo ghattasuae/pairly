@@ -22,7 +22,7 @@ type S = components["schemas"];
 
 export type ScreeningQueue = S["HireScreeningQueueOut"];
 export type QueueItem = S["HireQueueItemOut"];
-export type ScreeningPanel = S["pairly_hire__api__screening__HireScreeningOut"];
+export type ScreeningPanel = S["HireScreeningOut"];
 export type ScreeningCriterion = S["HireScreeningCriterion"];
 export type ScreeningEvidence = S["HireScreeningEvidence"];
 export type ScreeningFlag = S["HireScreeningFlag"];

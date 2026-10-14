@@ -90,14 +90,14 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class PoLineIn(_In):
+class PayPoLineIn(_In):
     line_no: Annotated[int, Field(ge=1, le=100_000)]
     description: Annotated[str, Field(min_length=1, max_length=500)]
     quantity: Quantity
     unit_price: Price
 
 
-class PurchaseOrderIn(_In):
+class PayPurchaseOrderIn(_In):
     po_number: Annotated[str, Field(pattern=NUMBER)]
     vendor_id: uuid.UUID
     currency: Annotated[str, Field(pattern=r"^[A-Z]{3}$")]
@@ -105,31 +105,31 @@ class PurchaseOrderIn(_In):
     match_type: Literal["2-way", "3-way"] = "3-way"
     department: Annotated[str, Field(max_length=64)] | None = None
     requester: Annotated[str, Field(max_length=120)] | None = None
-    lines: Annotated[list[PoLineIn], Field(min_length=1, max_length=500)]
+    lines: Annotated[list[PayPoLineIn], Field(min_length=1, max_length=500)]
 
 
-class ReceiptLineIn(_In):
+class PayReceiptLineIn(_In):
     po_line_no: Annotated[int, Field(ge=1, le=100_000)]
     quantity: Quantity
 
 
-class GoodsReceiptIn(_In):
+class PayGoodsReceiptIn(_In):
     grn_number: Annotated[str, Field(pattern=NUMBER)]
     po_id: uuid.UUID
     received_date: dt.date
     received_by: Annotated[str, Field(max_length=120)] | None = None
-    lines: Annotated[list[ReceiptLineIn], Field(min_length=1, max_length=500)]
+    lines: Annotated[list[PayReceiptLineIn], Field(min_length=1, max_length=500)]
 
 
-class CloseIn(_In):
+class PayCloseIn(_In):
     reason: Annotated[str, Field(min_length=1, max_length=500)]
 
 
-class CsvIn(_In):
+class PayCsvIn(_In):
     csv: Annotated[str, Field(min_length=1, max_length=MAX_CSV_BYTES)]
 
 
-class PoSummary(BaseModel):
+class PayPoSummary(BaseModel):
     id: uuid.UUID
     po_number: str
     vendor_id: uuid.UUID
@@ -148,7 +148,7 @@ class PoSummary(BaseModel):
     created_at: dt.datetime
 
 
-class PoLineOut(BaseModel):
+class PayPoLineOut(BaseModel):
     line_no: int
     description: str
     quantity: str
@@ -158,7 +158,7 @@ class PoLineOut(BaseModel):
     invoiced: str
 
 
-class ReceiptOut(BaseModel):
+class PayReceiptOut(BaseModel):
     id: uuid.UUID
     grn_number: str
     po_id: uuid.UUID
@@ -171,7 +171,7 @@ class ReceiptOut(BaseModel):
     rematched: list[uuid.UUID] = Field(default_factory=list)
 
 
-class PoInvoiceOut(BaseModel):
+class PayPoInvoiceOut(BaseModel):
     id: uuid.UUID
     reference: str
     invoice_number: str | None
@@ -180,11 +180,11 @@ class PoInvoiceOut(BaseModel):
     matching: str | None
 
 
-class PoDetail(PoSummary):
+class PayPoDetail(PayPoSummary):
     requester: str | None
-    lines: list[PoLineOut]
-    receipts: list[ReceiptOut]
-    invoices: list[PoInvoiceOut]
+    lines: list[PayPoLineOut]
+    receipts: list[PayReceiptOut]
+    invoices: list[PayPoInvoiceOut]
     closed_at: dt.datetime | None = None
     closed_by_type: str | None = None
     close_reason: str | None = None
@@ -192,12 +192,12 @@ class PoDetail(PoSummary):
     rechecked: list[uuid.UUID] = Field(default_factory=list)
 
 
-class PoList(BaseModel):
-    items: list[PoSummary]
+class PayPoList(BaseModel):
+    items: list[PayPoSummary]
     counts: dict[str, int]
 
 
-class ImportOut(BaseModel):
+class PayImportOut(BaseModel):
     created: int
     ids: list[uuid.UUID]
     numbers: list[str]
@@ -265,8 +265,8 @@ def _summary(
     }
 
 
-def _receipt(r: PayGoodsReceipt) -> ReceiptOut:
-    return ReceiptOut(
+def _receipt(r: PayGoodsReceipt) -> PayReceiptOut:
+    return PayReceiptOut(
         id=r.id,
         grn_number=r.grn_number,
         po_id=r.po_id,
@@ -278,7 +278,7 @@ def _receipt(r: PayGoodsReceipt) -> ReceiptOut:
     )
 
 
-async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PoDetail:
+async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PayPoDetail:
     vendor = await session.scalar(select(PayVendor).where(PayVendor.id == po.vendor_id))
     received = await received_quantities(session, po.id)
     invoices = list(
@@ -297,11 +297,11 @@ async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PoDetail:
             invoiced[line_no] = invoiced.get(line_no, Decimal(0)) + quantity
     receipts = await receipts_of(session, po.id)
     live = [i for i in invoices if i.status != InvoiceStatus.REJECTED.value]
-    return PoDetail(
+    return PayPoDetail(
         **_summary(po, vendor, len(receipts), len(live)),
         requester=po.requester,
         lines=[
-            PoLineOut(
+            PayPoLineOut(
                 line_no=line.line_no,
                 description=line.description,
                 quantity=number_text(line.quantity),
@@ -317,7 +317,7 @@ async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PoDetail:
         closed_by_type=po.closed_by_type,
         close_reason=po.close_reason,
         invoices=[
-            PoInvoiceOut(
+            PayPoInvoiceOut(
                 id=i.id,
                 reference=i.reference,
                 invoice_number=i.invoice_number,
@@ -333,7 +333,7 @@ async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PoDetail:
 # ------------------------------------------------------------------ reading
 
 
-@router.get("/purchase-orders", response_model=PoList)
+@router.get("/purchase-orders", response_model=PayPoList)
 async def list_purchase_orders(
     actor: CurrentActor,
     session: OrgSession,
@@ -341,7 +341,7 @@ async def list_purchase_orders(
     status: Annotated[Literal["open", "closed", "cancelled"] | None, Query()] = None,
     q: Annotated[str | None, Query(max_length=64)] = None,
     limit: Annotated[int, Query(ge=1, le=MAX_LIST)] = 50,
-) -> PoList:
+) -> PayPoList:
     authorize(actor, PURCHASE_ORDER_READ)
     query = select(PayPurchaseOrder)
     if vendor_id is not None:
@@ -373,9 +373,9 @@ async def list_purchase_orders(
     counts = await session.execute(
         select(PayPurchaseOrder.status, func.count()).group_by(PayPurchaseOrder.status)
     )
-    return PoList(
+    return PayPoList(
         items=[
-            PoSummary(
+            PayPoSummary(
                 **_summary(
                     r, vendors.get(r.vendor_id), receipts.get(r.id, 0), invoices.get(r.id, 0)
                 )
@@ -386,10 +386,10 @@ async def list_purchase_orders(
     )
 
 
-@router.get("/purchase-orders/{po_id}", response_model=PoDetail)
+@router.get("/purchase-orders/{po_id}", response_model=PayPoDetail)
 async def get_purchase_order_detail(
     po_id: uuid.UUID, actor: CurrentActor, session: OrgSession
-) -> PoDetail:
+) -> PayPoDetail:
     authorize(actor, PURCHASE_ORDER_READ)
     return await _detail(session, await get_purchase_order(session, po_id))
 
@@ -397,9 +397,9 @@ async def get_purchase_order_detail(
 # ------------------------------------------------------------------ creating
 
 
-@router.post("/purchase-orders", status_code=201, response_model=PoDetail)
+@router.post("/purchase-orders", status_code=201, response_model=PayPoDetail)
 async def create(
-    request: Request, body: PurchaseOrderIn, actor: CurrentActor, session: OrgSession
+    request: Request, body: PayPurchaseOrderIn, actor: CurrentActor, session: OrgSession
 ) -> Any:
     authorize(actor, PURCHASE_ORDER_WRITE)
     data = PoInput(
@@ -421,25 +421,25 @@ async def create(
     return await _detail(session, po)
 
 
-@router.post("/purchase-orders/import", response_model=ImportOut)
+@router.post("/purchase-orders/import", response_model=PayImportOut)
 async def import_pos(
-    request: Request, body: CsvIn, actor: CurrentActor, session: OrgSession
+    request: Request, body: PayCsvIn, actor: CurrentActor, session: OrgSession
 ) -> Any:
     authorize(actor, PURCHASE_ORDER_WRITE)
     try:
         result = await import_purchase_orders(session, By.of(actor), body.csv)
     except (InvalidPurchaseDataError, PurchaseNumberTakenError) as exc:
         return _problem(request, exc)
-    return ImportOut(created=len(result.created), ids=result.created, numbers=result.numbers)
+    return PayImportOut(created=len(result.created), ids=result.created, numbers=result.numbers)
 
 
-@router.get("/goods-receipts", response_model=list[ReceiptOut])
+@router.get("/goods-receipts", response_model=list[PayReceiptOut])
 async def list_receipts(
     actor: CurrentActor,
     session: OrgSession,
     po_id: Annotated[uuid.UUID | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=MAX_LIST)] = 50,
-) -> list[ReceiptOut]:
+) -> list[PayReceiptOut]:
     authorize(actor, PURCHASE_ORDER_READ)
     query = select(PayGoodsReceipt)
     if po_id is not None:
@@ -450,10 +450,10 @@ async def list_receipts(
     return [_receipt(r) for r in rows]
 
 
-@router.post("/goods-receipts", status_code=201, response_model=ReceiptOut)
+@router.post("/goods-receipts", status_code=201, response_model=PayReceiptOut)
 async def create_receipt(
     request: Request,
-    body: GoodsReceiptIn,
+    body: PayGoodsReceiptIn,
     actor: CurrentActor,
     session: OrgSession,
     runtime: Runtime,
@@ -477,9 +477,9 @@ async def create_receipt(
     return out
 
 
-@router.post("/goods-receipts/import", response_model=ImportOut)
+@router.post("/goods-receipts/import", response_model=PayImportOut)
 async def import_receipts(
-    request: Request, body: CsvIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
+    request: Request, body: PayCsvIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
 ) -> Any:
     authorize(actor, PURCHASE_ORDER_WRITE)
     try:
@@ -492,7 +492,7 @@ async def import_receipts(
         )
     )
     rematched = await after_receipt(session, po_ids, check_services(runtime, actor), By.of(actor))
-    return ImportOut(
+    return PayImportOut(
         created=len(result.created), ids=result.created, numbers=result.numbers, rematched=rematched
     )
 
@@ -505,10 +505,10 @@ def _person(actor: Actor) -> None:
         raise ForbiddenError("only a person can do this")
 
 
-@router.post("/purchase-orders/{po_id}/close", response_model=PoDetail)
+@router.post("/purchase-orders/{po_id}/close", response_model=PayPoDetail)
 async def close(
-    po_id: uuid.UUID, body: CloseIn, actor: CurrentActor, session: OrgSession
-) -> PoDetail:
+    po_id: uuid.UUID, body: PayCloseIn, actor: CurrentActor, session: OrgSession
+) -> PayPoDetail:
     """The PO takes no more invoices. Invoices received before keep their match."""
     authorize(actor, PURCHASE_ORDER_WRITE)
     _person(actor)
@@ -516,10 +516,10 @@ async def close(
     return await _detail(session, po)
 
 
-@router.post("/purchase-orders/{po_id}/cancel", response_model=PoDetail)
+@router.post("/purchase-orders/{po_id}/cancel", response_model=PayPoDetail)
 async def cancel(
-    po_id: uuid.UUID, body: CloseIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
-) -> PoDetail:
+    po_id: uuid.UUID, body: PayCloseIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
+) -> PayPoDetail:
     """The order did not happen (a second factor). Its invoices still with a person run
     the checks again and fail matching; one awaiting approval can no longer be approved."""
     authorize(actor, PURCHASE_ORDER_MANAGE)

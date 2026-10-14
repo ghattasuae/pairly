@@ -73,42 +73,42 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class CodingEntryIn(_In):
+class PayCodingEntryIn(_In):
     code: CodeText
     name: Annotated[str, Field(min_length=1, max_length=160)]
     name_ar: Annotated[str, Field(max_length=160)] | None = None
 
 
-class CodingListIn(_In):
-    entries: Annotated[list[CodingEntryIn], Field(min_length=1, max_length=MAX_ENTRIES)]
+class PayCodingListIn(_In):
+    entries: Annotated[list[PayCodingEntryIn], Field(min_length=1, max_length=MAX_ENTRIES)]
 
 
-class CodingCsvIn(_In):
+class PayCodingCsvIn(_In):
     csv: Annotated[str, Field(min_length=1, max_length=MAX_CSV_BYTES)]
 
 
-class LineCodingIn(_In):
+class PayLineCodingIn(_In):
     line_index: Annotated[int, Field(ge=0, le=999)]
     gl_code: CodeText | None = None
     cost_centre: CodeText | None = None
 
 
-class InvoiceCodingIn(_In):
-    lines: Annotated[list[LineCodingIn], Field(min_length=1, max_length=500)]
+class PayInvoiceLinesCodingIn(_In):
+    lines: Annotated[list[PayLineCodingIn], Field(min_length=1, max_length=500)]
 
 
-class ModelSuggestionsIn(_In):
+class PayModelSuggestionsIn(_In):
     # Lines to ask about; empty: every line without a high confidence suggestion.
     line_indexes: Annotated[list[Annotated[int, Field(ge=0, le=999)]], Field(max_length=50)] = []
 
 
-class CodingEntryOut(BaseModel):
+class PayCodingEntryOut(BaseModel):
     code: str
     name: str
     name_ar: str | None
 
 
-class CodingListOut(BaseModel):
+class PayCodingListOut(BaseModel):
     id: uuid.UUID
     kind: str
     version: int
@@ -118,17 +118,17 @@ class CodingListOut(BaseModel):
     created_at: dt.datetime
 
 
-class CodingListDetail(CodingListOut):
-    entries: list[CodingEntryOut]
+class PayCodingListDetail(PayCodingListOut):
+    entries: list[PayCodingEntryOut]
 
 
-class CodingListsOut(BaseModel):
-    gl_accounts: CodingListDetail | None
-    cost_centres: CodingListDetail | None
+class PayCodingListsOut(BaseModel):
+    gl_accounts: PayCodingListDetail | None
+    cost_centres: PayCodingListDetail | None
     can_manage: bool
 
 
-class SuggestionOut(BaseModel):
+class PaySuggestionOut(BaseModel):
     gl_code: str | None
     cost_centre: str | None
     confidence: float
@@ -140,7 +140,7 @@ class SuggestionOut(BaseModel):
     reason: str | None = None
 
 
-class LineCodingOut(BaseModel):
+class PayLineCodingOut(BaseModel):
     line_index: int
     description: str | None
     gl_code: str | None
@@ -148,32 +148,32 @@ class LineCodingOut(BaseModel):
     source: str | None
     corrected: bool
     coded_at: dt.datetime | None
-    suggestion: SuggestionOut | None
+    suggestion: PaySuggestionOut | None
 
 
-class InvoiceCodingOut(BaseModel):
+class PayInvoiceCodingOut(BaseModel):
     invoice_id: uuid.UUID
     status: str
     gl_list_version: int | None
     cc_list_version: int | None
-    gl_accounts: list[CodingEntryOut]
-    cost_centres: list[CodingEntryOut]
-    lines: list[LineCodingOut]
+    gl_accounts: list[PayCodingEntryOut]
+    cost_centres: list[PayCodingEntryOut]
+    lines: list[PayLineCodingOut]
     can_code: bool
     auto_coding: bool
     checks_state: Literal["current", "stale", "failed", "missing"]
 
 
-class ModelLineOut(BaseModel):
+class PayModelLineOut(BaseModel):
     line_index: int
-    suggestion: SuggestionOut | None
+    suggestion: PaySuggestionOut | None
     # Why there is none: "no_model_suggestion" or "model_unavailable".
     problem: str | None
     from_recording: bool = False
 
 
-class ModelSuggestionsOut(BaseModel):
-    lines: list[ModelLineOut]
+class PayModelSuggestionsOut(BaseModel):
+    lines: list[PayModelLineOut]
 
 
 def _person(actor: Actor) -> None:
@@ -181,12 +181,12 @@ def _person(actor: Actor) -> None:
         raise ForbiddenError("only a person can do this")
 
 
-def _entry(e: PayCodingEntry) -> CodingEntryOut:
-    return CodingEntryOut(code=e.code, name=e.name, name_ar=e.name_ar)
+def _entry(e: PayCodingEntry) -> PayCodingEntryOut:
+    return PayCodingEntryOut(code=e.code, name=e.name, name_ar=e.name_ar)
 
 
-def _list(row: PayCodingList) -> CodingListOut:
-    return CodingListOut(
+def _list(row: PayCodingList) -> PayCodingListOut:
+    return PayCodingListOut(
         id=row.id,
         kind=row.kind,
         version=row.version,
@@ -197,11 +197,11 @@ def _list(row: PayCodingList) -> CodingListOut:
     )
 
 
-def _suggestion(found: Suggestion | None) -> SuggestionOut | None:
+def _suggestion(found: Suggestion | None) -> PaySuggestionOut | None:
     if found is None:
         return None
     level = found.level
-    return SuggestionOut(
+    return PaySuggestionOut(
         gl_code=found.gl_code,
         cost_centre=found.cost_centre,
         confidence=round(found.confidence, 3),
@@ -223,14 +223,14 @@ async def _detail(session: OrgSession, kind: CodingKind, row: PayCodingList | No
     if row is None:
         return None
     entries = await entries_of(session, row)
-    return CodingListDetail(**_list(row).model_dump(), entries=[_entry(e) for e in entries])
+    return PayCodingListDetail(**_list(row).model_dump(), entries=[_entry(e) for e in entries])
 
 
 async def _invoice_coding(
     session: OrgSession, actor: Actor, view: CodingView, invoice_id: uuid.UUID
-) -> InvoiceCodingOut:
+) -> PayInvoiceCodingOut:
     invoice = await get_invoice(session, invoice_id)
-    return InvoiceCodingOut(
+    return PayInvoiceCodingOut(
         invoice_id=invoice.id,
         status=invoice.status,
         gl_list_version=view.lists.gl.version if view.lists.gl else None,
@@ -238,7 +238,7 @@ async def _invoice_coding(
         gl_accounts=[_entry(e) for e in view.lists.gl_entries],
         cost_centres=[_entry(e) for e in view.lists.cc_entries],
         lines=[
-            LineCodingOut(
+            PayLineCodingOut(
                 line_index=x.line.index,
                 description=x.line.description,
                 gl_code=x.coding.gl_code if x.coding else None,
@@ -261,30 +261,30 @@ async def _invoice_coding(
 # ------------------------------------------------------------------ lists
 
 
-@router.get("/coding", response_model=CodingListsOut)
-async def get_lists(actor: CurrentActor, session: OrgSession) -> CodingListsOut:
+@router.get("/coding", response_model=PayCodingListsOut)
+async def get_lists(actor: CurrentActor, session: OrgSession) -> PayCodingListsOut:
     authorize(actor, INVOICE_READ)
     lists = await lists_in_force(session)
-    return CodingListsOut(
+    return PayCodingListsOut(
         gl_accounts=await _detail(session, CodingKind.GL_ACCOUNT, lists.gl),
         cost_centres=await _detail(session, CodingKind.COST_CENTRE, lists.cc),
         can_manage=actor.has(CODING_MANAGE),
     )
 
 
-@router.get("/coding/{list_path}/versions", response_model=list[CodingListOut])
+@router.get("/coding/{list_path}/versions", response_model=list[PayCodingListOut])
 async def get_versions(
     list_path: ListPath, actor: CurrentActor, session: OrgSession
-) -> list[CodingListOut]:
+) -> list[PayCodingListOut]:
     authorize(actor, INVOICE_READ)
     return [_list(row) for row in await list_versions(session, LIST_PATHS[list_path])]
 
 
-@router.post("/coding/{list_path}", status_code=201, response_model=CodingListDetail)
+@router.post("/coding/{list_path}", status_code=201, response_model=PayCodingListDetail)
 async def create_version(
     request: Request,
     list_path: ListPath,
-    body: CodingListIn,
+    body: PayCodingListIn,
     actor: CurrentActor,
     session: OrgSession,
 ) -> Any:
@@ -299,11 +299,11 @@ async def create_version(
     return await _detail(session, kind, row)
 
 
-@router.post("/coding/{list_path}/import", status_code=201, response_model=CodingListDetail)
+@router.post("/coding/{list_path}/import", status_code=201, response_model=PayCodingListDetail)
 async def import_version(
     request: Request,
     list_path: ListPath,
-    body: CodingCsvIn,
+    body: PayCodingCsvIn,
     actor: CurrentActor,
     session: OrgSession,
 ) -> Any:
@@ -320,10 +320,10 @@ async def import_version(
 # ------------------------------------------------------------------ invoice lines
 
 
-@router.get("/invoices/{invoice_id}/coding", response_model=InvoiceCodingOut)
+@router.get("/invoices/{invoice_id}/coding", response_model=PayInvoiceCodingOut)
 async def get_invoice_coding(
     invoice_id: uuid.UUID, actor: CurrentActor, session: OrgSession
-) -> InvoiceCodingOut:
+) -> PayInvoiceCodingOut:
     authorize(actor, INVOICE_READ)
     invoice = await get_invoice(session, invoice_id)
     settings = await load_settings(session)
@@ -331,11 +331,11 @@ async def get_invoice_coding(
     return await _invoice_coding(session, actor, view, invoice.id)
 
 
-@router.put("/invoices/{invoice_id}/coding/lines", response_model=InvoiceCodingOut)
+@router.put("/invoices/{invoice_id}/coding/lines", response_model=PayInvoiceCodingOut)
 async def put_invoice_coding(
     request: Request,
     invoice_id: uuid.UUID,
-    body: InvoiceCodingIn,
+    body: PayInvoiceLinesCodingIn,
     actor: CurrentActor,
     session: OrgSession,
     runtime: Runtime,
@@ -364,14 +364,16 @@ async def put_invoice_coding(
     return await _invoice_coding(session, actor, view, invoice_id)
 
 
-@router.post("/invoices/{invoice_id}/coding/model-suggestions", response_model=ModelSuggestionsOut)
+@router.post(
+    "/invoices/{invoice_id}/coding/model-suggestions", response_model=PayModelSuggestionsOut
+)
 async def ask_model(
     invoice_id: uuid.UUID,
-    body: ModelSuggestionsIn,
+    body: PayModelSuggestionsIn,
     actor: CurrentActor,
     session: OrgSession,
     runtime: Runtime,
-) -> ModelSuggestionsOut:
+) -> PayModelSuggestionsOut:
     """Model suggestions for lines the history cannot code. Nothing is stored or applied:
     the person sees them and codes the lines themselves."""
     authorize(actor, INVOICE_PROCESS)
@@ -386,11 +388,13 @@ async def ask_model(
         or (not wanted and (x.suggestion is None or x.suggestion.level != "high"))
     ][:MAX_MODEL_LINES]
     router = runtime.services.router
-    out: list[ModelLineOut] = []
+    out: list[PayModelLineOut] = []
     for x in lines:
         if router is None:
             out.append(
-                ModelLineOut(line_index=x.line.index, suggestion=None, problem="model_unavailable")
+                PayModelLineOut(
+                    line_index=x.line.index, suggestion=None, problem="model_unavailable"
+                )
             )
             continue
         try:
@@ -399,7 +403,7 @@ async def ask_model(
             )
         except NoModelSuggestionError:
             out.append(
-                ModelLineOut(
+                PayModelLineOut(
                     line_index=x.line.index, suggestion=None, problem="no_model_suggestion"
                 )
             )
@@ -407,15 +411,17 @@ async def ask_model(
         except ModelUnavailable as exc:
             log.info("pay.coding.model_unavailable", error=type(exc).__name__)
             out.append(
-                ModelLineOut(line_index=x.line.index, suggestion=None, problem="model_unavailable")
+                PayModelLineOut(
+                    line_index=x.line.index, suggestion=None, problem="model_unavailable"
+                )
             )
             continue
         out.append(
-            ModelLineOut(
+            PayModelLineOut(
                 line_index=x.line.index,
                 suggestion=_suggestion(found.suggestion),
                 problem=None,
                 from_recording=found.from_recording,
             )
         )
-    return ModelSuggestionsOut(lines=out)
+    return PayModelSuggestionsOut(lines=out)

@@ -301,7 +301,7 @@ class OverrideOut(BaseModel):
     policy_document: PolicyDocumentOut
 
 
-class SearchIn(BaseModel):
+class PolicySearchIn(BaseModel):
     query: Annotated[str, Field(min_length=1, max_length=2000)]
     names: Annotated[list[PolicyName], Field(max_length=50)] | None = None
     limit: Annotated[int, Field(ge=1, le=20)] = 8
@@ -693,7 +693,7 @@ async def override_document(
 
 @router.post("/search", response_model=list[SearchHitOut])
 async def search_policies(
-    body: SearchIn, actor: ReadActor, session: OrgSession, embedder: EmbedderDep
+    body: PolicySearchIn, actor: ReadActor, session: OrgSession, embedder: EmbedderDep
 ) -> list[SearchHitOut]:
     docs = {d.id: d for d in await active_policy_documents(session, names=body.names)}
     try:

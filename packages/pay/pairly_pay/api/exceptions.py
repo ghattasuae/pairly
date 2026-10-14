@@ -86,24 +86,24 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class TextOut(BaseModel):
+class PayTextOut(BaseModel):
     en: str
     ar: str
 
 
-class TemplateOut(BaseModel):
+class PayTemplateOut(BaseModel):
     id: str
     recipient: Literal["vendor", "requester"]
 
 
-class ExceptionCategoryOut(BaseModel):
+class PayExceptionCategoryOut(BaseModel):
     category: Category
-    explanations: list[TextOut]
-    resolution: TextOut
-    templates: list[TemplateOut]
+    explanations: list[PayTextOut]
+    resolution: PayTextOut
+    templates: list[PayTemplateOut]
 
 
-class ExceptionItemOut(BaseModel):
+class PayExceptionItemOut(BaseModel):
     id: uuid.UUID
     reference: str
     status: str
@@ -115,11 +115,11 @@ class ExceptionItemOut(BaseModel):
     created_at: datetime
     age_hours: int
     overdue: bool
-    categories: list[ExceptionCategoryOut]
+    categories: list[PayExceptionCategoryOut]
 
 
-class ExceptionsOut(BaseModel):
-    items: list[ExceptionItemOut]
+class PayExceptionsOut(BaseModel):
+    items: list[PayExceptionItemOut]
     counts: dict[str, int]
     total: int
     overdue: int
@@ -127,19 +127,19 @@ class ExceptionsOut(BaseModel):
     can_message: bool
 
 
-class DraftIn(_In):
+class PayDraftIn(_In):
     category: Category
     template_id: Annotated[str, Field(pattern=r"^[a-z_]{1,32}$")]
     locale: Locale = "en"
     personalise: bool = False
 
 
-class ContactOut(BaseModel):
+class PayMessageContactOut(BaseModel):
     name: str
     email: str
 
 
-class DraftOut(BaseModel):
+class PayDraftOut(BaseModel):
     category: Category
     template_id: str
     recipient: Literal["vendor", "requester"]
@@ -152,12 +152,12 @@ class DraftOut(BaseModel):
     from_recording: bool
     model_call_id: uuid.UUID | None
     # Vendor: the contacts on file with an email address (the only vendor recipients).
-    contacts: list[ContactOut]
+    contacts: list[PayMessageContactOut]
     # Requester: the name on the purchase order, when there is one (a hint only).
     requester_hint: str | None
 
 
-class MessageIn(_In):
+class PayMessageIn(_In):
     category: Category
     template_id: Annotated[str, Field(pattern=r"^[a-z_]{1,32}$")]
     locale: Locale = "en"
@@ -167,7 +167,7 @@ class MessageIn(_In):
     model_call_id: uuid.UUID | None = None
 
 
-class MessageOut(BaseModel):
+class PayMessageOut(BaseModel):
     id: uuid.UUID
     reference: str
     invoice_id: uuid.UUID
@@ -192,8 +192,8 @@ def _person(actor: Actor) -> None:
         raise ForbiddenError("only a person can do this")
 
 
-def _message(row: PayMessage, full: bool) -> MessageOut:
-    return MessageOut(
+def _message(row: PayMessage, full: bool) -> PayMessageOut:
+    return PayMessageOut(
         id=row.id,
         reference=row.reference,
         invoice_id=row.invoice_id,
@@ -218,14 +218,14 @@ def _message(row: PayMessage, full: bool) -> MessageOut:
 # ------------------------------------------------------------------ the queue
 
 
-@router.get("/exceptions", response_model=ExceptionsOut)
+@router.get("/exceptions", response_model=PayExceptionsOut)
 async def list_exceptions(
     actor: CurrentActor,
     session: OrgSession,
     category: Annotated[Category | None, Query()] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
-) -> ExceptionsOut:
+) -> PayExceptionsOut:
     authorize(actor, INVOICE_READ)
     settings = await load_settings(session)
     query = select(PayInvoice).where(PayInvoice.status == InvoiceStatus.NEEDS_REVIEW.value)
@@ -244,7 +244,7 @@ async def list_exceptions(
     )
     now = datetime.now(UTC)
     counts = dict.fromkeys(CATEGORIES, 0)
-    items: list[ExceptionItemOut] = []
+    items: list[PayExceptionItemOut] = []
     overdue = 0
     for invoice in rows:
         found = categorise(invoice)
@@ -257,7 +257,7 @@ async def list_exceptions(
         if len(items) >= limit:
             continue
         items.append(
-            ExceptionItemOut(
+            PayExceptionItemOut(
                 id=invoice.id,
                 reference=invoice.reference,
                 status=invoice.status,
@@ -270,19 +270,20 @@ async def list_exceptions(
                 age_hours=age.hours,
                 overdue=age.overdue,
                 categories=[
-                    ExceptionCategoryOut(
+                    PayExceptionCategoryOut(
                         category=c.key,  # type: ignore[arg-type]
-                        explanations=[TextOut(en=e.en, ar=e.ar) for e in c.explanations],
-                        resolution=TextOut(en=c.resolution[0], ar=c.resolution[1]),
+                        explanations=[PayTextOut(en=e.en, ar=e.ar) for e in c.explanations],
+                        resolution=PayTextOut(en=c.resolution[0], ar=c.resolution[1]),
                         templates=[
-                            TemplateOut(id=t.id, recipient=t.recipient.value) for t in c.templates
+                            PayTemplateOut(id=t.id, recipient=t.recipient.value)
+                            for t in c.templates
                         ],
                     )
                     for c in found
                 ],
             )
         )
-    return ExceptionsOut(
+    return PayExceptionsOut(
         items=items,
         counts=counts,
         total=len(rows),
@@ -295,14 +296,14 @@ async def list_exceptions(
 # ------------------------------------------------------------------ messages
 
 
-@router.post("/invoices/{invoice_id}/messages/draft", response_model=DraftOut)
+@router.post("/invoices/{invoice_id}/messages/draft", response_model=PayDraftOut)
 async def draft_message(
     invoice_id: uuid.UUID,
-    body: DraftIn,
+    body: PayDraftIn,
     actor: CurrentActor,
     session: OrgSession,
     runtime: Runtime,
-) -> DraftOut:
+) -> PayDraftOut:
     """A drafted message (nothing is saved). The personal paragraph is optional and
     checked; without the model the template alone is the draft."""
     authorize(actor, MESSAGE_CREATE)
@@ -333,17 +334,19 @@ async def draft_message(
             except ModelUnavailable as exc:
                 log.info("pay.message.model_unavailable", error=type(exc).__name__)
                 problems = ["model_unavailable"]
-    contacts: list[ContactOut] = []
+    contacts: list[PayMessageContactOut] = []
     hint: str | None = None
     if template.recipient is MessageRecipient.VENDOR and invoice.vendor_id is not None:
         vendor = await session.scalar(select(PayVendor).where(PayVendor.id == invoice.vendor_id))
         if vendor is not None:
-            contacts = [ContactOut(name=c.name, email=c.email) for c in vendor_contacts(vendor)]
+            contacts = [
+                PayMessageContactOut(name=c.name, email=c.email) for c in vendor_contacts(vendor)
+            ]
     if template.recipient is MessageRecipient.REQUESTER and invoice.po_id is not None:
         hint = await session.scalar(
             select(PayPurchaseOrder.requester).where(PayPurchaseOrder.id == invoice.po_id)
         )
-    return DraftOut(
+    return PayDraftOut(
         category=body.category,
         template_id=template.id,
         recipient=template.recipient.value,
@@ -359,14 +362,14 @@ async def draft_message(
     )
 
 
-@router.post("/invoices/{invoice_id}/messages", status_code=201, response_model=MessageOut)
+@router.post("/invoices/{invoice_id}/messages", status_code=201, response_model=PayMessageOut)
 async def submit_message(
     invoice_id: uuid.UUID,
-    body: MessageIn,
+    body: PayMessageIn,
     actor: CurrentActor,
     session: OrgSession,
     runtime: Runtime,
-) -> MessageOut:
+) -> PayMessageOut:
     """Save the message and start its approval run; it is sent only once another
     person approved this exact text."""
     authorize(actor, MESSAGE_CREATE)
@@ -410,10 +413,10 @@ async def submit_message(
     return _message(row, True)
 
 
-@router.get("/invoices/{invoice_id}/messages", response_model=list[MessageOut])
+@router.get("/invoices/{invoice_id}/messages", response_model=list[PayMessageOut])
 async def list_messages(
     invoice_id: uuid.UUID, actor: CurrentActor, session: OrgSession
-) -> list[MessageOut]:
+) -> list[PayMessageOut]:
     authorize(actor, INVOICE_READ)
     invoice = await get_invoice(session, invoice_id)
     full = actor.has(MESSAGE_CREATE)

@@ -206,7 +206,7 @@ class HireCriterionOut(BaseModel):
     quotes: list[str]
 
 
-class HireScreeningOut(BaseModel):
+class HirePipelineScreeningOut(BaseModel):
     status: str
     overall: str | None
     criteria: list[HireCriterionOut]
@@ -233,7 +233,7 @@ class HireProfileOut(BaseModel):
     updates_email: bool
     talent_pool: bool
     referred_by: str | None
-    screening: HireScreeningOut | None
+    screening: HirePipelineScreeningOut | None
     messages: list[HireMessageSummaryOut]
     timeline: list[HireEventOut]
 
@@ -463,7 +463,7 @@ async def get_profile(
     following = record.stages.next_after(record.stage_key)
     screening = None
     if result.screening is not None:
-        screening = HireScreeningOut(
+        screening = HirePipelineScreeningOut(
             status=result.screening.status,
             overall=result.screening.overall,
             criteria=[

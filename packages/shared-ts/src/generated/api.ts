@@ -5575,105 +5575,10 @@ export type components = {
             /** Next Cursor */
             next_cursor: string | null;
         };
-        /** CloseIn */
-        CloseIn: {
-            /** Reason */
-            reason: string;
-        };
-        /** CodingCsvIn */
-        CodingCsvIn: {
-            /** Csv */
-            csv: string;
-        };
-        /** CodingEntryIn */
-        CodingEntryIn: {
-            /** Code */
-            code: string;
-            /** Name */
-            name: string;
-            /** Name Ar */
-            name_ar?: string | null;
-        };
-        /** CodingEntryOut */
-        CodingEntryOut: {
-            /** Code */
-            code: string;
-            /** Name */
-            name: string;
-            /** Name Ar */
-            name_ar: string | null;
-        };
-        /** CodingListDetail */
-        CodingListDetail: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Created By Type */
-            created_by_type: string;
-            /** Entries */
-            entries: components["schemas"]["CodingEntryOut"][];
-            /** Entry Count */
-            entry_count: number;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Kind */
-            kind: string;
-            /** Source */
-            source: string;
-            /** Version */
-            version: number;
-        };
-        /** CodingListIn */
-        CodingListIn: {
-            /** Entries */
-            entries: components["schemas"]["CodingEntryIn"][];
-        };
-        /** CodingListOut */
-        CodingListOut: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Created By Type */
-            created_by_type: string;
-            /** Entry Count */
-            entry_count: number;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Kind */
-            kind: string;
-            /** Source */
-            source: string;
-            /** Version */
-            version: number;
-        };
-        /** CodingListsOut */
-        CodingListsOut: {
-            /** Can Manage */
-            can_manage: boolean;
-            cost_centres: components["schemas"]["CodingListDetail"] | null;
-            gl_accounts: components["schemas"]["CodingListDetail"] | null;
-        };
         /** ConnectIn */
         ConnectIn: {
             /** Token */
             token: string;
-        };
-        /** ContactOut */
-        ContactOut: {
-            /** Email */
-            email: string;
-            /** Name */
-            name: string;
         };
         /** ContentUrlOut */
         ContentUrlOut: {
@@ -5723,11 +5628,6 @@ export type components = {
             old_value: unknown;
             /** Reason */
             reason: string;
-        };
-        /** CsvIn */
-        CsvIn: {
-            /** Csv */
-            csv: string;
         };
         /**
          * Decision
@@ -5989,63 +5889,6 @@ export type components = {
             /** Url */
             url: string;
         };
-        /** DraftIn */
-        DraftIn: {
-            /**
-             * Category
-             * @enum {string}
-             */
-            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
-            /**
-             * Locale
-             * @default en
-             * @enum {string}
-             */
-            locale: "en" | "ar";
-            /**
-             * Personalise
-             * @default false
-             */
-            personalise: boolean;
-            /** Template Id */
-            template_id: string;
-        };
-        /** DraftOut */
-        DraftOut: {
-            /** Ai Note */
-            ai_note: string | null;
-            /** Ai Problems */
-            ai_problems: string[];
-            /**
-             * Category
-             * @enum {string}
-             */
-            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
-            /** Contacts */
-            contacts: components["schemas"]["ContactOut"][];
-            /** From Recording */
-            from_recording: boolean;
-            /**
-             * Locale
-             * @enum {string}
-             */
-            locale: "en" | "ar";
-            /** Message */
-            message: string;
-            /** Model Call Id */
-            model_call_id: string | null;
-            /**
-             * Recipient
-             * @enum {string}
-             */
-            recipient: "vendor" | "requester";
-            /** Requester Hint */
-            requester_hint: string | null;
-            /** Template Id */
-            template_id: string;
-            /** Template Text */
-            template_text: string;
-        };
         /** DryRunIn */
         DryRunIn: {
             /** As Of */
@@ -6181,69 +6024,6 @@ export type components = {
             description: string;
             /** Key */
             key: string;
-        };
-        /** ExceptionCategoryOut */
-        ExceptionCategoryOut: {
-            /**
-             * Category
-             * @enum {string}
-             */
-            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
-            /** Explanations */
-            explanations: components["schemas"]["TextOut"][];
-            resolution: components["schemas"]["TextOut"];
-            /** Templates */
-            templates: components["schemas"]["pairly_pay__api__exceptions__TemplateOut"][];
-        };
-        /** ExceptionItemOut */
-        ExceptionItemOut: {
-            /** Age Hours */
-            age_hours: number;
-            /** Categories */
-            categories: components["schemas"]["ExceptionCategoryOut"][];
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Currency */
-            currency: string | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Invoice Number */
-            invoice_number: string | null;
-            /** Overdue */
-            overdue: boolean;
-            /** Po Number */
-            po_number: string | null;
-            /** Reference */
-            reference: string;
-            /** Status */
-            status: string;
-            /** Total */
-            total: string | null;
-            /** Vendor Name */
-            vendor_name: string | null;
-        };
-        /** ExceptionsOut */
-        ExceptionsOut: {
-            /** Can Message */
-            can_message: boolean;
-            /** Counts */
-            counts: {
-                [key: string]: number;
-            };
-            /** Items */
-            items: components["schemas"]["ExceptionItemOut"][];
-            /** Overdue */
-            overdue: number;
-            /** Sla Hours */
-            sla_hours: number;
-            /** Total */
-            total: number;
         };
         /** ExpenseApprovalDecisionOut */
         ExpenseApprovalDecisionOut: {
@@ -6736,25 +6516,6 @@ export type components = {
             key: string;
             /** Overridden */
             overridden: boolean;
-        };
-        /** GoodsReceiptIn */
-        GoodsReceiptIn: {
-            /** Grn Number */
-            grn_number: string;
-            /** Lines */
-            lines: components["schemas"]["ReceiptLineIn"][];
-            /**
-             * Po Id
-             * Format: uuid
-             */
-            po_id: string;
-            /** Received By */
-            received_by?: string | null;
-            /**
-             * Received Date
-             * Format: date
-             */
-            received_date: string;
         };
         /** HireAiDraftIn */
         HireAiDraftIn: {
@@ -8927,6 +8688,15 @@ export type components = {
             /** Timezone */
             timezone: string;
         };
+        /** HirePipelineScreeningOut */
+        HirePipelineScreeningOut: {
+            /** Criteria */
+            criteria: components["schemas"]["HireCriterionOut"][];
+            /** Overall */
+            overall: string | null;
+            /** Status */
+            status: string;
+        };
         /** HirePlanCriterionOut */
         HirePlanCriterionOut: {
             /** Evidence */
@@ -9416,7 +9186,7 @@ export type components = {
             referred_by: string | null;
             /** Review Reasons */
             review_reasons: string[];
-            screening: components["schemas"]["pairly_hire__api__pipeline__HireScreeningOut"] | null;
+            screening: components["schemas"]["HirePipelineScreeningOut"] | null;
             /** Stage Key */
             stage_key: string;
             /** Stage Label */
@@ -10366,6 +10136,99 @@ export type components = {
             /** Suggestion */
             suggestion: string | null;
         };
+        /** HireScreeningOut */
+        HireScreeningOut: {
+            /** Ai Overall Score */
+            ai_overall_score: number | null;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Blind */
+            blind: boolean;
+            /** Blind Config */
+            blind_config: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Criteria */
+            criteria: components["schemas"]["HireScreeningCriterion"][];
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision Ids */
+            decision_ids: string[];
+            /** Document Id */
+            document_id: string | null;
+            /** Failure Reason */
+            failure_reason: string | null;
+            /** Flags */
+            flags: components["schemas"]["HireScreeningFlag"][];
+            /** Guardrail Findings */
+            guardrail_findings: components["schemas"]["HireScreeningFinding"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Knockouts */
+            knockouts: components["schemas"]["HireScreeningKnockout"][];
+            /** Models */
+            models: {
+                [key: string]: unknown;
+            };
+            /** Overall Score */
+            overall_score: number | null;
+            /** Overrides */
+            overrides: {
+                [key: string]: unknown;
+            }[];
+            /** Profile */
+            profile: {
+                [key: string]: unknown;
+            } | null;
+            /** Review Reasons */
+            review_reasons: string[];
+            /**
+             * Rubric Policy Id
+             * Format: uuid
+             */
+            rubric_policy_id: string;
+            /** Rubric Version */
+            rubric_version: number | null;
+            /** Run Id */
+            run_id: string | null;
+            /** Run Status */
+            run_status: string | null;
+            /** Scale */
+            scale: {
+                [key: string]: number;
+            };
+            /** Score Decision Id */
+            score_decision_id: string | null;
+            /** Scored */
+            scored: boolean;
+            /** Status */
+            status: string;
+            /** Text */
+            text: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** HireScreeningQueueOut */
         HireScreeningQueueOut: {
             /** Blind Mode */
@@ -10812,17 +10675,6 @@ export type components = {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
-        /** ImportOut */
-        ImportOut: {
-            /** Created */
-            created: number;
-            /** Ids */
-            ids: string[];
-            /** Numbers */
-            numbers: string[];
-            /** Rematched */
-            rematched?: string[];
-        };
         /** InboxOut */
         InboxOut: {
             /** Items */
@@ -10917,40 +10769,6 @@ export type components = {
             /** Workflow */
             workflow: string | null;
         };
-        /** InvoiceCodingIn */
-        InvoiceCodingIn: {
-            /** Lines */
-            lines: components["schemas"]["LineCodingIn"][];
-        };
-        /** InvoiceCodingOut */
-        InvoiceCodingOut: {
-            /** Auto Coding */
-            auto_coding: boolean;
-            /** Can Code */
-            can_code: boolean;
-            /** Cc List Version */
-            cc_list_version: number | null;
-            /**
-             * Checks State
-             * @enum {string}
-             */
-            checks_state: "current" | "stale" | "failed" | "missing";
-            /** Cost Centres */
-            cost_centres: components["schemas"]["CodingEntryOut"][];
-            /** Gl Accounts */
-            gl_accounts: components["schemas"]["CodingEntryOut"][];
-            /** Gl List Version */
-            gl_list_version: number | null;
-            /**
-             * Invoice Id
-             * Format: uuid
-             */
-            invoice_id: string;
-            /** Lines */
-            lines: components["schemas"]["LineCodingOut"][];
-            /** Status */
-            status: string;
-        };
         /** IssueOut */
         IssueOut: {
             /** Code */
@@ -10974,33 +10792,6 @@ export type components = {
          * @enum {string}
          */
         Lang: "en" | "ar";
-        /** LineCodingIn */
-        LineCodingIn: {
-            /** Cost Centre */
-            cost_centre?: string | null;
-            /** Gl Code */
-            gl_code?: string | null;
-            /** Line Index */
-            line_index: number;
-        };
-        /** LineCodingOut */
-        LineCodingOut: {
-            /** Coded At */
-            coded_at: string | null;
-            /** Corrected */
-            corrected: boolean;
-            /** Cost Centre */
-            cost_centre: string | null;
-            /** Description */
-            description: string | null;
-            /** Gl Code */
-            gl_code: string | null;
-            /** Line Index */
-            line_index: number;
-            /** Source */
-            source: string | null;
-            suggestion: components["schemas"]["SuggestionOut"] | null;
-        };
         /** LinkConfirmIn */
         LinkConfirmIn: {
             /** Reason */
@@ -11099,103 +10890,6 @@ export type components = {
             /** Second Factor Permissions */
             second_factor_permissions: string[];
         };
-        /** MessageIn */
-        MessageIn: {
-            /**
-             * Ai Note
-             * @default false
-             */
-            ai_note: boolean;
-            /**
-             * Category
-             * @enum {string}
-             */
-            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
-            /**
-             * Locale
-             * @default en
-             * @enum {string}
-             */
-            locale: "en" | "ar";
-            /** Message */
-            message: string;
-            /** Model Call Id */
-            model_call_id?: string | null;
-            /** Recipient Email */
-            recipient_email: string;
-            /** Template Id */
-            template_id: string;
-        };
-        /** MessageOut */
-        MessageOut: {
-            /** Ai Note */
-            ai_note: boolean;
-            /** Approval Id */
-            approval_id: string | null;
-            /** Category */
-            category: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Invoice Id
-             * Format: uuid
-             */
-            invoice_id: string;
-            /** Locale */
-            locale: string;
-            /** Message */
-            message: string | null;
-            /** Recipient Email */
-            recipient_email: string | null;
-            /** Recipient Kind */
-            recipient_kind: string;
-            /** Recipient Name */
-            recipient_name: string | null;
-            /** Reference */
-            reference: string;
-            /** Sent At */
-            sent_at: string | null;
-            /** Status */
-            status: string;
-            /** Status Reason */
-            status_reason: string | null;
-            /** Template Id */
-            template_id: string;
-        };
-        /** ModelLineOut */
-        ModelLineOut: {
-            /**
-             * From Recording
-             * @default false
-             */
-            from_recording: boolean;
-            /** Line Index */
-            line_index: number;
-            /** Problem */
-            problem: string | null;
-            suggestion: components["schemas"]["SuggestionOut"] | null;
-        };
-        /** ModelSuggestionsIn */
-        ModelSuggestionsIn: {
-            /**
-             * Line Indexes
-             * @default []
-             */
-            line_indexes: number[];
-        };
-        /** ModelSuggestionsOut */
-        ModelSuggestionsOut: {
-            /** Lines */
-            lines: components["schemas"]["ModelLineOut"][];
-        };
         /** MyOrgsOut */
         MyOrgsOut: {
             /** Items */
@@ -11268,179 +10962,6 @@ export type components = {
             second_admin_required: boolean;
             /** Status */
             status: string;
-        };
-        /** TemplateOut */
-        pairly_api__routes__notification_templates__TemplateOut: {
-            /** Body */
-            body: string;
-            /** Body Html */
-            body_html: string | null;
-            /** Category */
-            category: string;
-            /** Channel */
-            channel: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Key */
-            key: string;
-            /** Locale */
-            locale: string;
-            /** Requires Approval */
-            requires_approval: boolean;
-            /** Subject */
-            subject: string | null;
-            /** System */
-            system: boolean;
-            /** Variables */
-            variables: {
-                [key: string]: unknown;
-            };
-            /** Version */
-            version: number;
-        };
-        /** SearchIn */
-        pairly_api__routes__policies__SearchIn: {
-            /**
-             * Limit
-             * @default 8
-             */
-            limit: number;
-            /** Names */
-            names?: string[] | null;
-            /** Query */
-            query: string;
-        };
-        /** SearchIn */
-        pairly_api__routes__search__SearchIn: {
-            /** Kinds */
-            kinds?: string[] | null;
-            /**
-             * Limit
-             * @default 10
-             */
-            limit: number;
-            /** Query */
-            query: string;
-        };
-        /** HireScreeningOut */
-        pairly_hire__api__pipeline__HireScreeningOut: {
-            /** Criteria */
-            criteria: components["schemas"]["HireCriterionOut"][];
-            /** Overall */
-            overall: string | null;
-            /** Status */
-            status: string;
-        };
-        /** HireScreeningOut */
-        pairly_hire__api__screening__HireScreeningOut: {
-            /** Ai Overall Score */
-            ai_overall_score: number | null;
-            /**
-             * Application Id
-             * Format: uuid
-             */
-            application_id: string;
-            /** Approval Id */
-            approval_id: string | null;
-            /** Blind */
-            blind: boolean;
-            /** Blind Config */
-            blind_config: {
-                [key: string]: unknown;
-            };
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Criteria */
-            criteria: components["schemas"]["HireScreeningCriterion"][];
-            /** Decided At */
-            decided_at: string | null;
-            /** Decision Ids */
-            decision_ids: string[];
-            /** Document Id */
-            document_id: string | null;
-            /** Failure Reason */
-            failure_reason: string | null;
-            /** Flags */
-            flags: components["schemas"]["HireScreeningFlag"][];
-            /** Guardrail Findings */
-            guardrail_findings: components["schemas"]["HireScreeningFinding"][];
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Job Id
-             * Format: uuid
-             */
-            job_id: string;
-            /** Knockouts */
-            knockouts: components["schemas"]["HireScreeningKnockout"][];
-            /** Models */
-            models: {
-                [key: string]: unknown;
-            };
-            /** Overall Score */
-            overall_score: number | null;
-            /** Overrides */
-            overrides: {
-                [key: string]: unknown;
-            }[];
-            /** Profile */
-            profile: {
-                [key: string]: unknown;
-            } | null;
-            /** Review Reasons */
-            review_reasons: string[];
-            /**
-             * Rubric Policy Id
-             * Format: uuid
-             */
-            rubric_policy_id: string;
-            /** Rubric Version */
-            rubric_version: number | null;
-            /** Run Id */
-            run_id: string | null;
-            /** Run Status */
-            run_status: string | null;
-            /** Scale */
-            scale: {
-                [key: string]: number;
-            };
-            /** Score Decision Id */
-            score_decision_id: string | null;
-            /** Scored */
-            scored: boolean;
-            /** Status */
-            status: string;
-            /** Text */
-            text: string | null;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-        };
-        /** TemplateOut */
-        pairly_pay__api__exceptions__TemplateOut: {
-            /** Id */
-            id: string;
-            /**
-             * Recipient
-             * @enum {string}
-             */
-            recipient: "vendor" | "requester";
         };
         /** PayAcceptIn */
         PayAcceptIn: {
@@ -11686,6 +11207,94 @@ export type components = {
             /** Standard Vat Rate */
             standard_vat_rate?: number | string | null;
         };
+        /** PayCloseIn */
+        PayCloseIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** PayCodingCsvIn */
+        PayCodingCsvIn: {
+            /** Csv */
+            csv: string;
+        };
+        /** PayCodingEntryIn */
+        PayCodingEntryIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Name Ar */
+            name_ar?: string | null;
+        };
+        /** PayCodingEntryOut */
+        PayCodingEntryOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Name Ar */
+            name_ar: string | null;
+        };
+        /** PayCodingListDetail */
+        PayCodingListDetail: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Type */
+            created_by_type: string;
+            /** Entries */
+            entries: components["schemas"]["PayCodingEntryOut"][];
+            /** Entry Count */
+            entry_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Version */
+            version: number;
+        };
+        /** PayCodingListIn */
+        PayCodingListIn: {
+            /** Entries */
+            entries: components["schemas"]["PayCodingEntryIn"][];
+        };
+        /** PayCodingListOut */
+        PayCodingListOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Type */
+            created_by_type: string;
+            /** Entry Count */
+            entry_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Version */
+            version: number;
+        };
+        /** PayCodingListsOut */
+        PayCodingListsOut: {
+            /** Can Manage */
+            can_manage: boolean;
+            cost_centres: components["schemas"]["PayCodingListDetail"] | null;
+            gl_accounts: components["schemas"]["PayCodingListDetail"] | null;
+        };
         /** PayCompareLineOut */
         PayCompareLineOut: {
             /** Description */
@@ -11771,6 +11380,68 @@ export type components = {
             /** Role */
             role?: string | null;
         };
+        /** PayCsvIn */
+        PayCsvIn: {
+            /** Csv */
+            csv: string;
+        };
+        /** PayDraftIn */
+        PayDraftIn: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /**
+             * Personalise
+             * @default false
+             */
+            personalise: boolean;
+            /** Template Id */
+            template_id: string;
+        };
+        /** PayDraftOut */
+        PayDraftOut: {
+            /** Ai Note */
+            ai_note: string | null;
+            /** Ai Problems */
+            ai_problems: string[];
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /** Contacts */
+            contacts: components["schemas"]["PayMessageContactOut"][];
+            /** From Recording */
+            from_recording: boolean;
+            /**
+             * Locale
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Message */
+            message: string;
+            /** Model Call Id */
+            model_call_id: string | null;
+            /**
+             * Recipient
+             * @enum {string}
+             */
+            recipient: "vendor" | "requester";
+            /** Requester Hint */
+            requester_hint: string | null;
+            /** Template Id */
+            template_id: string;
+            /** Template Text */
+            template_text: string;
+        };
         /** PayDuplicateOut */
         PayDuplicateOut: {
             /** Legal Name */
@@ -11789,6 +11460,69 @@ export type components = {
              */
             vendor_id: string;
         };
+        /** PayExceptionCategoryOut */
+        PayExceptionCategoryOut: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /** Explanations */
+            explanations: components["schemas"]["PayTextOut"][];
+            resolution: components["schemas"]["PayTextOut"];
+            /** Templates */
+            templates: components["schemas"]["PayTemplateOut"][];
+        };
+        /** PayExceptionItemOut */
+        PayExceptionItemOut: {
+            /** Age Hours */
+            age_hours: number;
+            /** Categories */
+            categories: components["schemas"]["PayExceptionCategoryOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Overdue */
+            overdue: boolean;
+            /** Po Number */
+            po_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayExceptionsOut */
+        PayExceptionsOut: {
+            /** Can Message */
+            can_message: boolean;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["PayExceptionItemOut"][];
+            /** Overdue */
+            overdue: number;
+            /** Sla Hours */
+            sla_hours: number;
+            /** Total */
+            total: number;
+        };
         /** PayFieldCheckOut */
         PayFieldCheckOut: {
             /** Bank Code */
@@ -11801,6 +11535,36 @@ export type components = {
             formatted?: string | null;
             /** Valid */
             valid: boolean;
+        };
+        /** PayGoodsReceiptIn */
+        PayGoodsReceiptIn: {
+            /** Grn Number */
+            grn_number: string;
+            /** Lines */
+            lines: components["schemas"]["PayReceiptLineIn"][];
+            /**
+             * Po Id
+             * Format: uuid
+             */
+            po_id: string;
+            /** Received By */
+            received_by?: string | null;
+            /**
+             * Received Date
+             * Format: date
+             */
+            received_date: string;
+        };
+        /** PayImportOut */
+        PayImportOut: {
+            /** Created */
+            created: number;
+            /** Ids */
+            ids: string[];
+            /** Numbers */
+            numbers: string[];
+            /** Rematched */
+            rematched?: string[];
         };
         /** PayInviteCreatedOut */
         PayInviteCreatedOut: {
@@ -11916,6 +11680,35 @@ export type components = {
             category?: string | null;
             /** Department */
             department?: string | null;
+        };
+        /** PayInvoiceCodingOut */
+        PayInvoiceCodingOut: {
+            /** Auto Coding */
+            auto_coding: boolean;
+            /** Can Code */
+            can_code: boolean;
+            /** Cc List Version */
+            cc_list_version: number | null;
+            /**
+             * Checks State
+             * @enum {string}
+             */
+            checks_state: "current" | "stale" | "failed" | "missing";
+            /** Cost Centres */
+            cost_centres: components["schemas"]["PayCodingEntryOut"][];
+            /** Gl Accounts */
+            gl_accounts: components["schemas"]["PayCodingEntryOut"][];
+            /** Gl List Version */
+            gl_list_version: number | null;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Lines */
+            lines: components["schemas"]["PayLineCodingOut"][];
+            /** Status */
+            status: string;
         };
         /** PayInvoiceCorrectionIn */
         PayInvoiceCorrectionIn: {
@@ -12226,6 +12019,11 @@ export type components = {
             /** Type */
             type: string;
         };
+        /** PayInvoiceLinesCodingIn */
+        PayInvoiceLinesCodingIn: {
+            /** Lines */
+            lines: components["schemas"]["PayLineCodingIn"][];
+        };
         /** PayInvoiceList */
         PayInvoiceList: {
             /** Counts */
@@ -12322,6 +12120,111 @@ export type components = {
             /** Status */
             status: string;
         };
+        /** PayLineCodingIn */
+        PayLineCodingIn: {
+            /** Cost Centre */
+            cost_centre?: string | null;
+            /** Gl Code */
+            gl_code?: string | null;
+            /** Line Index */
+            line_index: number;
+        };
+        /** PayLineCodingOut */
+        PayLineCodingOut: {
+            /** Coded At */
+            coded_at: string | null;
+            /** Corrected */
+            corrected: boolean;
+            /** Cost Centre */
+            cost_centre: string | null;
+            /** Description */
+            description: string | null;
+            /** Gl Code */
+            gl_code: string | null;
+            /** Line Index */
+            line_index: number;
+            /** Source */
+            source: string | null;
+            suggestion: components["schemas"]["PaySuggestionOut"] | null;
+        };
+        /** PayMessageContactOut */
+        PayMessageContactOut: {
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+        };
+        /** PayMessageIn */
+        PayMessageIn: {
+            /**
+             * Ai Note
+             * @default false
+             */
+            ai_note: boolean;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Message */
+            message: string;
+            /** Model Call Id */
+            model_call_id?: string | null;
+            /** Recipient Email */
+            recipient_email: string;
+            /** Template Id */
+            template_id: string;
+        };
+        /** PayMessageOut */
+        PayMessageOut: {
+            /** Ai Note */
+            ai_note: boolean;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Category */
+            category: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Locale */
+            locale: string;
+            /** Message */
+            message: string | null;
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Kind */
+            recipient_kind: string;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Reference */
+            reference: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Template Id */
+            template_id: string;
+        };
         /** PayMetricOut */
         PayMetricOut: {
             /** Detail */
@@ -12340,6 +12243,32 @@ export type components = {
             unit: string;
             /** Value */
             value: number | null;
+        };
+        /** PayModelLineOut */
+        PayModelLineOut: {
+            /**
+             * From Recording
+             * @default false
+             */
+            from_recording: boolean;
+            /** Line Index */
+            line_index: number;
+            /** Problem */
+            problem: string | null;
+            suggestion: components["schemas"]["PaySuggestionOut"] | null;
+        };
+        /** PayModelSuggestionsIn */
+        PayModelSuggestionsIn: {
+            /**
+             * Line Indexes
+             * @default []
+             */
+            line_indexes: number[];
+        };
+        /** PayModelSuggestionsOut */
+        PayModelSuggestionsOut: {
+            /** Lines */
+            lines: components["schemas"]["PayModelLineOut"][];
         };
         /** PayOnboardingDocumentOut */
         PayOnboardingDocumentOut: {
@@ -12430,10 +12359,244 @@ export type components = {
             /** Payer Name */
             payer_name?: string | null;
         };
+        /** PayPoDetail */
+        PayPoDetail: {
+            /** Close Reason */
+            close_reason?: string | null;
+            /** Closed At */
+            closed_at?: string | null;
+            /** Closed By Type */
+            closed_by_type?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Department */
+            department: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Invoices */
+            invoices: components["schemas"]["PayPoInvoiceOut"][];
+            /** Line Count */
+            line_count: number;
+            /** Lines */
+            lines: components["schemas"]["PayPoLineOut"][];
+            /** Match Type */
+            match_type: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Receipt Count */
+            receipt_count: number;
+            /** Receipts */
+            receipts: components["schemas"]["PayReceiptOut"][];
+            /** Rechecked */
+            rechecked?: string[];
+            /** Requester */
+            requester: string | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Vendor Reference */
+            vendor_reference: string | null;
+        };
+        /** PayPoInvoiceOut */
+        PayPoInvoiceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Matching */
+            matching: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+        };
+        /** PayPoLineIn */
+        PayPoLineIn: {
+            /** Description */
+            description: string;
+            /** Line No */
+            line_no: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit Price */
+            unit_price: number | string;
+        };
+        /** PayPoLineOut */
+        PayPoLineOut: {
+            /** Description */
+            description: string;
+            /** Invoiced */
+            invoiced: string;
+            /** Line No */
+            line_no: number;
+            /** Line Total */
+            line_total: string;
+            /** Quantity */
+            quantity: string;
+            /** Received */
+            received: string;
+            /** Unit Price */
+            unit_price: string;
+        };
+        /** PayPoList */
+        PayPoList: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["PayPoSummary"][];
+        };
+        /** PayPoSummary */
+        PayPoSummary: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Department */
+            department: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Line Count */
+            line_count: number;
+            /** Match Type */
+            match_type: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Receipt Count */
+            receipt_count: number;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Vendor Reference */
+            vendor_reference: string | null;
+        };
+        /** PayPurchaseOrderIn */
+        PayPurchaseOrderIn: {
+            /** Currency */
+            currency: string;
+            /** Department */
+            department?: string | null;
+            /** Lines */
+            lines: components["schemas"]["PayPoLineIn"][];
+            /**
+             * Match Type
+             * @default 3-way
+             * @enum {string}
+             */
+            match_type: "2-way" | "3-way";
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Po Number */
+            po_number: string;
+            /** Requester */
+            requester?: string | null;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+        };
         /** PayReasonIn */
         PayReasonIn: {
             /** Reason */
             reason: string;
+        };
+        /** PayReceiptLineIn */
+        PayReceiptLineIn: {
+            /** Po Line No */
+            po_line_no: number;
+            /** Quantity */
+            quantity: number | string;
+        };
+        /** PayReceiptOut */
+        PayReceiptOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Grn Number */
+            grn_number: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line Count */
+            line_count: number;
+            /**
+             * Po Id
+             * Format: uuid
+             */
+            po_id: string;
+            /** Received By */
+            received_by: string | null;
+            /**
+             * Received Date
+             * Format: date
+             */
+            received_date: string;
+            /** Rematched */
+            rematched?: string[];
+            /** Source */
+            source: string;
         };
         /** PayRecordLinkOut */
         PayRecordLinkOut: {
@@ -12771,6 +12934,48 @@ export type components = {
             };
             /** Phone Change Window Days */
             phone_change_window_days: number;
+        };
+        /** PaySuggestionOut */
+        PaySuggestionOut: {
+            /** Confidence */
+            confidence: number;
+            /** Cost Centre */
+            cost_centre: string | null;
+            /** Examples */
+            examples: string[];
+            /** Gl Code */
+            gl_code: string | null;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low";
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "history" | "model";
+            /** Reason */
+            reason?: string | null;
+            /** Support */
+            support: number;
+        };
+        /** PayTemplateOut */
+        PayTemplateOut: {
+            /** Id */
+            id: string;
+            /**
+             * Recipient
+             * @enum {string}
+             */
+            recipient: "vendor" | "requester";
+        };
+        /** PayTextOut */
+        PayTextOut: {
+            /** Ar */
+            ar: string;
+            /** En */
+            en: string;
         };
         /** PayTicketDetail */
         PayTicketDetail: {
@@ -13170,87 +13375,6 @@ export type components = {
             /** Questions */
             questions: components["schemas"]["PlanQuestion"][];
         };
-        /** PoDetail */
-        PoDetail: {
-            /** Close Reason */
-            close_reason?: string | null;
-            /** Closed At */
-            closed_at?: string | null;
-            /** Closed By Type */
-            closed_by_type?: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Currency */
-            currency: string;
-            /** Department */
-            department: string | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Invoice Count */
-            invoice_count: number;
-            /** Invoices */
-            invoices: components["schemas"]["PoInvoiceOut"][];
-            /** Line Count */
-            line_count: number;
-            /** Lines */
-            lines: components["schemas"]["PoLineOut"][];
-            /** Match Type */
-            match_type: string;
-            /**
-             * Order Date
-             * Format: date
-             */
-            order_date: string;
-            /** Po Number */
-            po_number: string;
-            /** Receipt Count */
-            receipt_count: number;
-            /** Receipts */
-            receipts: components["schemas"]["ReceiptOut"][];
-            /** Rechecked */
-            rechecked?: string[];
-            /** Requester */
-            requester: string | null;
-            /** Source */
-            source: string;
-            /** Status */
-            status: string;
-            /** Subtotal */
-            subtotal: string;
-            /**
-             * Vendor Id
-             * Format: uuid
-             */
-            vendor_id: string;
-            /** Vendor Name */
-            vendor_name: string | null;
-            /** Vendor Reference */
-            vendor_reference: string | null;
-        };
-        /** PoInvoiceOut */
-        PoInvoiceOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Invoice Number */
-            invoice_number: string | null;
-            /** Matching */
-            matching: string | null;
-            /** Reference */
-            reference: string;
-            /** Status */
-            status: string;
-            /** Total */
-            total: string | null;
-        };
         /** PolicyDocumentOut */
         PolicyDocumentOut: {
             /** Archived At */
@@ -13304,6 +13428,18 @@ export type components = {
             warning_count: number;
             /** Warnings */
             warnings: components["schemas"]["PolicyWarningOut"][];
+        };
+        /** PolicySearchIn */
+        PolicySearchIn: {
+            /**
+             * Limit
+             * @default 8
+             */
+            limit: number;
+            /** Names */
+            names?: string[] | null;
+            /** Query */
+            query: string;
         };
         /** PolicyUploadOut */
         PolicyUploadOut: {
@@ -13360,90 +13496,6 @@ export type components = {
             severity: string;
             /** Type */
             type: string;
-        };
-        /** PoLineIn */
-        PoLineIn: {
-            /** Description */
-            description: string;
-            /** Line No */
-            line_no: number;
-            /** Quantity */
-            quantity: number | string;
-            /** Unit Price */
-            unit_price: number | string;
-        };
-        /** PoLineOut */
-        PoLineOut: {
-            /** Description */
-            description: string;
-            /** Invoiced */
-            invoiced: string;
-            /** Line No */
-            line_no: number;
-            /** Line Total */
-            line_total: string;
-            /** Quantity */
-            quantity: string;
-            /** Received */
-            received: string;
-            /** Unit Price */
-            unit_price: string;
-        };
-        /** PoList */
-        PoList: {
-            /** Counts */
-            counts: {
-                [key: string]: number;
-            };
-            /** Items */
-            items: components["schemas"]["PoSummary"][];
-        };
-        /** PoSummary */
-        PoSummary: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Currency */
-            currency: string;
-            /** Department */
-            department: string | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Invoice Count */
-            invoice_count: number;
-            /** Line Count */
-            line_count: number;
-            /** Match Type */
-            match_type: string;
-            /**
-             * Order Date
-             * Format: date
-             */
-            order_date: string;
-            /** Po Number */
-            po_number: string;
-            /** Receipt Count */
-            receipt_count: number;
-            /** Source */
-            source: string;
-            /** Status */
-            status: string;
-            /** Subtotal */
-            subtotal: string;
-            /**
-             * Vendor Id
-             * Format: uuid
-             */
-            vendor_id: string;
-            /** Vendor Name */
-            vendor_name: string | null;
-            /** Vendor Reference */
-            vendor_reference: string | null;
         };
         /** PreferencesIn */
         PreferencesIn: {
@@ -13554,75 +13606,6 @@ export type components = {
             /** Created */
             created: boolean;
             version: components["schemas"]["PolicyVersionOut"];
-        };
-        /** PurchaseOrderIn */
-        PurchaseOrderIn: {
-            /** Currency */
-            currency: string;
-            /** Department */
-            department?: string | null;
-            /** Lines */
-            lines: components["schemas"]["PoLineIn"][];
-            /**
-             * Match Type
-             * @default 3-way
-             * @enum {string}
-             */
-            match_type: "2-way" | "3-way";
-            /**
-             * Order Date
-             * Format: date
-             */
-            order_date: string;
-            /** Po Number */
-            po_number: string;
-            /** Requester */
-            requester?: string | null;
-            /**
-             * Vendor Id
-             * Format: uuid
-             */
-            vendor_id: string;
-        };
-        /** ReceiptLineIn */
-        ReceiptLineIn: {
-            /** Po Line No */
-            po_line_no: number;
-            /** Quantity */
-            quantity: number | string;
-        };
-        /** ReceiptOut */
-        ReceiptOut: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Grn Number */
-            grn_number: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Line Count */
-            line_count: number;
-            /**
-             * Po Id
-             * Format: uuid
-             */
-            po_id: string;
-            /** Received By */
-            received_by: string | null;
-            /**
-             * Received Date
-             * Format: date
-             */
-            received_date: string;
-            /** Rematched */
-            rematched?: string[];
-            /** Source */
-            source: string;
         };
         /** ReplayIn */
         ReplayIn: {
@@ -13809,7 +13792,7 @@ export type components = {
         SavedOut: {
             /** Issues */
             issues: components["schemas"]["IssueOut"][];
-            template: components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"];
+            template: components["schemas"]["TemplateOut"];
         };
         /** SearchHitOut */
         SearchHitOut: {
@@ -13839,6 +13822,18 @@ export type components = {
             title: string;
             /** Version */
             version: number;
+        };
+        /** SearchIn */
+        SearchIn: {
+            /** Kinds */
+            kinds?: string[] | null;
+            /**
+             * Limit
+             * @default 10
+             */
+            limit: number;
+            /** Query */
+            query: string;
         };
         /** SlackIn */
         SlackIn: {
@@ -13952,31 +13947,6 @@ export type components = {
             /** Subject Type */
             subject_type: string | null;
         };
-        /** SuggestionOut */
-        SuggestionOut: {
-            /** Confidence */
-            confidence: number;
-            /** Cost Centre */
-            cost_centre: string | null;
-            /** Examples */
-            examples: string[];
-            /** Gl Code */
-            gl_code: string | null;
-            /**
-             * Level
-             * @enum {string}
-             */
-            level: "high" | "medium" | "low";
-            /**
-             * Method
-             * @enum {string}
-             */
-            method: "history" | "model";
-            /** Reason */
-            reason?: string | null;
-            /** Support */
-            support: number;
-        };
         /** TemplateIn */
         TemplateIn: {
             /** Body */
@@ -14011,12 +13981,42 @@ export type components = {
                 };
             };
         };
-        /** TextOut */
-        TextOut: {
-            /** Ar */
-            ar: string;
-            /** En */
-            en: string;
+        /** TemplateOut */
+        TemplateOut: {
+            /** Body */
+            body: string;
+            /** Body Html */
+            body_html: string | null;
+            /** Category */
+            category: string;
+            /** Channel */
+            channel: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Locale */
+            locale: string;
+            /** Requires Approval */
+            requires_approval: boolean;
+            /** Subject */
+            subject: string | null;
+            /** System */
+            system: boolean;
+            /** Variables */
+            variables: {
+                [key: string]: unknown;
+            };
+            /** Version */
+            version: number;
         };
         /** TokenIn */
         TokenIn: {
@@ -16031,7 +16031,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["pairly_hire__api__screening__HireScreeningOut"];
+                    "application/json": components["schemas"]["HireScreeningOut"];
                 };
             };
             /** @description Validation Error */
@@ -16066,7 +16066,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["pairly_hire__api__screening__HireScreeningOut"];
+                    "application/json": components["schemas"]["HireScreeningOut"];
                 };
             };
             /** @description Validation Error */
@@ -21577,7 +21577,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"][];
+                    "application/json": components["schemas"]["TemplateOut"][];
                 };
             };
         };
@@ -21632,7 +21632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"][];
+                    "application/json": components["schemas"]["TemplateOut"][];
                 };
             };
             /** @description Validation Error */
@@ -22149,7 +22149,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CodingListsOut"];
+                    "application/json": components["schemas"]["PayCodingListsOut"];
                 };
             };
         };
@@ -22165,7 +22165,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CodingListIn"];
+                "application/json": components["schemas"]["PayCodingListIn"];
             };
         };
         responses: {
@@ -22175,7 +22175,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CodingListDetail"];
+                    "application/json": components["schemas"]["PayCodingListDetail"];
                 };
             };
             /** @description Validation Error */
@@ -22200,7 +22200,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CodingCsvIn"];
+                "application/json": components["schemas"]["PayCodingCsvIn"];
             };
         };
         responses: {
@@ -22210,7 +22210,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CodingListDetail"];
+                    "application/json": components["schemas"]["PayCodingListDetail"];
                 };
             };
             /** @description Validation Error */
@@ -22241,7 +22241,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CodingListOut"][];
+                    "application/json": components["schemas"]["PayCodingListOut"][];
                 };
             };
             /** @description Validation Error */
@@ -22274,7 +22274,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ExceptionsOut"];
+                    "application/json": components["schemas"]["PayExceptionsOut"];
                 };
             };
             /** @description Validation Error */
@@ -22306,7 +22306,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReceiptOut"][];
+                    "application/json": components["schemas"]["PayReceiptOut"][];
                 };
             };
             /** @description Validation Error */
@@ -22329,7 +22329,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["GoodsReceiptIn"];
+                "application/json": components["schemas"]["PayGoodsReceiptIn"];
             };
         };
         responses: {
@@ -22339,7 +22339,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReceiptOut"];
+                    "application/json": components["schemas"]["PayReceiptOut"];
                 };
             };
             /** @description Validation Error */
@@ -22362,7 +22362,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CsvIn"];
+                "application/json": components["schemas"]["PayCsvIn"];
             };
         };
         responses: {
@@ -22372,7 +22372,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportOut"];
+                    "application/json": components["schemas"]["PayImportOut"];
                 };
             };
             /** @description Validation Error */
@@ -22539,7 +22539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InvoiceCodingOut"];
+                    "application/json": components["schemas"]["PayInvoiceCodingOut"];
                 };
             };
             /** @description Validation Error */
@@ -22599,7 +22599,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InvoiceCodingIn"];
+                "application/json": components["schemas"]["PayInvoiceLinesCodingIn"];
             };
         };
         responses: {
@@ -22609,7 +22609,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InvoiceCodingOut"];
+                    "application/json": components["schemas"]["PayInvoiceCodingOut"];
                 };
             };
             /** @description Validation Error */
@@ -22634,7 +22634,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ModelSuggestionsIn"];
+                "application/json": components["schemas"]["PayModelSuggestionsIn"];
             };
         };
         responses: {
@@ -22644,7 +22644,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ModelSuggestionsOut"];
+                    "application/json": components["schemas"]["PayModelSuggestionsOut"];
                 };
             };
             /** @description Validation Error */
@@ -22710,7 +22710,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageOut"][];
+                    "application/json": components["schemas"]["PayMessageOut"][];
                 };
             };
             /** @description Validation Error */
@@ -22735,7 +22735,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MessageIn"];
+                "application/json": components["schemas"]["PayMessageIn"];
             };
         };
         responses: {
@@ -22745,7 +22745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageOut"];
+                    "application/json": components["schemas"]["PayMessageOut"];
                 };
             };
             /** @description Validation Error */
@@ -22770,7 +22770,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DraftIn"];
+                "application/json": components["schemas"]["PayDraftIn"];
             };
         };
         responses: {
@@ -22780,7 +22780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DraftOut"];
+                    "application/json": components["schemas"]["PayDraftOut"];
                 };
             };
             /** @description Validation Error */
@@ -23230,7 +23230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoList"];
+                    "application/json": components["schemas"]["PayPoList"];
                 };
             };
             /** @description Validation Error */
@@ -23253,7 +23253,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PurchaseOrderIn"];
+                "application/json": components["schemas"]["PayPurchaseOrderIn"];
             };
         };
         responses: {
@@ -23263,7 +23263,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoDetail"];
+                    "application/json": components["schemas"]["PayPoDetail"];
                 };
             };
             /** @description Validation Error */
@@ -23294,7 +23294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoDetail"];
+                    "application/json": components["schemas"]["PayPoDetail"];
                 };
             };
             /** @description Validation Error */
@@ -23319,7 +23319,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CloseIn"];
+                "application/json": components["schemas"]["PayCloseIn"];
             };
         };
         responses: {
@@ -23329,7 +23329,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoDetail"];
+                    "application/json": components["schemas"]["PayPoDetail"];
                 };
             };
             /** @description Validation Error */
@@ -23354,7 +23354,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CloseIn"];
+                "application/json": components["schemas"]["PayCloseIn"];
             };
         };
         responses: {
@@ -23364,7 +23364,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoDetail"];
+                    "application/json": components["schemas"]["PayPoDetail"];
                 };
             };
             /** @description Validation Error */
@@ -23387,7 +23387,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CsvIn"];
+                "application/json": components["schemas"]["PayCsvIn"];
             };
         };
         responses: {
@@ -23397,7 +23397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportOut"];
+                    "application/json": components["schemas"]["PayImportOut"];
                 };
             };
             /** @description Validation Error */
@@ -24397,7 +24397,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["pairly_api__routes__policies__SearchIn"];
+                "application/json": components["schemas"]["PolicySearchIn"];
             };
         };
         responses: {
@@ -24470,7 +24470,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["pairly_api__routes__search__SearchIn"];
+                "application/json": components["schemas"]["SearchIn"];
             };
         };
         responses: {

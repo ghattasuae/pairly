@@ -1043,254 +1043,6 @@
         "title": "AuditPage",
         "type": "object"
       },
-      "CloseIn": {
-        "additionalProperties": false,
-        "properties": {
-          "reason": {
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "reason"
-        ],
-        "title": "CloseIn",
-        "type": "object"
-      },
-      "CodingCsvIn": {
-        "additionalProperties": false,
-        "properties": {
-          "csv": {
-            "maxLength": 1000000,
-            "minLength": 1,
-            "title": "Csv",
-            "type": "string"
-          }
-        },
-        "required": [
-          "csv"
-        ],
-        "title": "CodingCsvIn",
-        "type": "object"
-      },
-      "CodingEntryIn": {
-        "additionalProperties": false,
-        "properties": {
-          "code": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
-            "title": "Code",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "name_ar": {
-            "anyOf": [
-              {
-                "maxLength": 160,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name Ar"
-          }
-        },
-        "required": [
-          "code",
-          "name"
-        ],
-        "title": "CodingEntryIn",
-        "type": "object"
-      },
-      "CodingEntryOut": {
-        "properties": {
-          "code": {
-            "title": "Code",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "name_ar": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name Ar"
-          }
-        },
-        "required": [
-          "code",
-          "name",
-          "name_ar"
-        ],
-        "title": "CodingEntryOut",
-        "type": "object"
-      },
-      "CodingListDetail": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "created_by_type": {
-            "title": "Created By Type",
-            "type": "string"
-          },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/CodingEntryOut"
-            },
-            "title": "Entries",
-            "type": "array"
-          },
-          "entry_count": {
-            "title": "Entry Count",
-            "type": "integer"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "kind": {
-            "title": "Kind",
-            "type": "string"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "version",
-          "entry_count",
-          "source",
-          "created_by_type",
-          "created_at",
-          "entries"
-        ],
-        "title": "CodingListDetail",
-        "type": "object"
-      },
-      "CodingListIn": {
-        "additionalProperties": false,
-        "properties": {
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/CodingEntryIn"
-            },
-            "maxItems": 2000,
-            "minItems": 1,
-            "title": "Entries",
-            "type": "array"
-          }
-        },
-        "required": [
-          "entries"
-        ],
-        "title": "CodingListIn",
-        "type": "object"
-      },
-      "CodingListOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "created_by_type": {
-            "title": "Created By Type",
-            "type": "string"
-          },
-          "entry_count": {
-            "title": "Entry Count",
-            "type": "integer"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "kind": {
-            "title": "Kind",
-            "type": "string"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "version",
-          "entry_count",
-          "source",
-          "created_by_type",
-          "created_at"
-        ],
-        "title": "CodingListOut",
-        "type": "object"
-      },
-      "CodingListsOut": {
-        "properties": {
-          "can_manage": {
-            "title": "Can Manage",
-            "type": "boolean"
-          },
-          "cost_centres": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CodingListDetail"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "gl_accounts": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CodingListDetail"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "gl_accounts",
-          "cost_centres",
-          "can_manage"
-        ],
-        "title": "CodingListsOut",
-        "type": "object"
-      },
       "ConnectIn": {
         "properties": {
           "token": {
@@ -1305,24 +1057,6 @@
           "token"
         ],
         "title": "ConnectIn",
-        "type": "object"
-      },
-      "ContactOut": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "email"
-        ],
-        "title": "ContactOut",
         "type": "object"
       },
       "ContentUrlOut": {
@@ -1438,22 +1172,6 @@
           "created_at"
         ],
         "title": "CorrectionOut",
-        "type": "object"
-      },
-      "CsvIn": {
-        "additionalProperties": false,
-        "properties": {
-          "csv": {
-            "maxLength": 1000000,
-            "minLength": 1,
-            "title": "Csv",
-            "type": "string"
-          }
-        },
-        "required": [
-          "csv"
-        ],
-        "title": "CsvIn",
         "type": "object"
       },
       "Decision": {
@@ -2159,166 +1877,6 @@
         "title": "DownloadOut",
         "type": "object"
       },
-      "DraftIn": {
-        "additionalProperties": false,
-        "properties": {
-          "category": {
-            "enum": [
-              "no_po",
-              "price_variance",
-              "quantity_variance",
-              "missing_receipt",
-              "duplicate_suspect",
-              "bank_mismatch",
-              "policy_breach",
-              "low_confidence",
-              "other"
-            ],
-            "title": "Category",
-            "type": "string"
-          },
-          "locale": {
-            "default": "en",
-            "enum": [
-              "en",
-              "ar"
-            ],
-            "title": "Locale",
-            "type": "string"
-          },
-          "personalise": {
-            "default": false,
-            "title": "Personalise",
-            "type": "boolean"
-          },
-          "template_id": {
-            "pattern": "^[a-z_]{1,32}$",
-            "title": "Template Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "category",
-          "template_id"
-        ],
-        "title": "DraftIn",
-        "type": "object"
-      },
-      "DraftOut": {
-        "properties": {
-          "ai_note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ai Note"
-          },
-          "ai_problems": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Ai Problems",
-            "type": "array"
-          },
-          "category": {
-            "enum": [
-              "no_po",
-              "price_variance",
-              "quantity_variance",
-              "missing_receipt",
-              "duplicate_suspect",
-              "bank_mismatch",
-              "policy_breach",
-              "low_confidence",
-              "other"
-            ],
-            "title": "Category",
-            "type": "string"
-          },
-          "contacts": {
-            "items": {
-              "$ref": "#/components/schemas/ContactOut"
-            },
-            "title": "Contacts",
-            "type": "array"
-          },
-          "from_recording": {
-            "title": "From Recording",
-            "type": "boolean"
-          },
-          "locale": {
-            "enum": [
-              "en",
-              "ar"
-            ],
-            "title": "Locale",
-            "type": "string"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          },
-          "model_call_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model Call Id"
-          },
-          "recipient": {
-            "enum": [
-              "vendor",
-              "requester"
-            ],
-            "title": "Recipient",
-            "type": "string"
-          },
-          "requester_hint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requester Hint"
-          },
-          "template_id": {
-            "title": "Template Id",
-            "type": "string"
-          },
-          "template_text": {
-            "title": "Template Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "category",
-          "template_id",
-          "recipient",
-          "locale",
-          "message",
-          "template_text",
-          "ai_note",
-          "ai_problems",
-          "from_recording",
-          "model_call_id",
-          "contacts",
-          "requester_hint"
-        ],
-        "title": "DraftOut",
-        "type": "object"
-      },
       "DryRunIn": {
         "properties": {
           "as_of": {
@@ -2732,203 +2290,6 @@
           "description"
         ],
         "title": "EventTypeOut",
-        "type": "object"
-      },
-      "ExceptionCategoryOut": {
-        "properties": {
-          "category": {
-            "enum": [
-              "no_po",
-              "price_variance",
-              "quantity_variance",
-              "missing_receipt",
-              "duplicate_suspect",
-              "bank_mismatch",
-              "policy_breach",
-              "low_confidence",
-              "other"
-            ],
-            "title": "Category",
-            "type": "string"
-          },
-          "explanations": {
-            "items": {
-              "$ref": "#/components/schemas/TextOut"
-            },
-            "title": "Explanations",
-            "type": "array"
-          },
-          "resolution": {
-            "$ref": "#/components/schemas/TextOut"
-          },
-          "templates": {
-            "items": {
-              "$ref": "#/components/schemas/pairly_pay__api__exceptions__TemplateOut"
-            },
-            "title": "Templates",
-            "type": "array"
-          }
-        },
-        "required": [
-          "category",
-          "explanations",
-          "resolution",
-          "templates"
-        ],
-        "title": "ExceptionCategoryOut",
-        "type": "object"
-      },
-      "ExceptionItemOut": {
-        "properties": {
-          "age_hours": {
-            "title": "Age Hours",
-            "type": "integer"
-          },
-          "categories": {
-            "items": {
-              "$ref": "#/components/schemas/ExceptionCategoryOut"
-            },
-            "title": "Categories",
-            "type": "array"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "currency": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Currency"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "invoice_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Invoice Number"
-          },
-          "overdue": {
-            "title": "Overdue",
-            "type": "boolean"
-          },
-          "po_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Po Number"
-          },
-          "reference": {
-            "title": "Reference",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "total": {
-            "anyOf": [
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total"
-          },
-          "vendor_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vendor Name"
-          }
-        },
-        "required": [
-          "id",
-          "reference",
-          "status",
-          "vendor_name",
-          "invoice_number",
-          "po_number",
-          "currency",
-          "total",
-          "created_at",
-          "age_hours",
-          "overdue",
-          "categories"
-        ],
-        "title": "ExceptionItemOut",
-        "type": "object"
-      },
-      "ExceptionsOut": {
-        "properties": {
-          "can_message": {
-            "title": "Can Message",
-            "type": "boolean"
-          },
-          "counts": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "title": "Counts",
-            "type": "object"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ExceptionItemOut"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "overdue": {
-            "title": "Overdue",
-            "type": "integer"
-          },
-          "sla_hours": {
-            "title": "Sla Hours",
-            "type": "integer"
-          },
-          "total": {
-            "title": "Total",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "items",
-          "counts",
-          "total",
-          "overdue",
-          "sla_hours",
-          "can_message"
-        ],
-        "title": "ExceptionsOut",
         "type": "object"
       },
       "ExpenseApprovalDecisionOut": {
@@ -4411,55 +3772,6 @@
           "overridden"
         ],
         "title": "FlagOut",
-        "type": "object"
-      },
-      "GoodsReceiptIn": {
-        "additionalProperties": false,
-        "properties": {
-          "grn_number": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
-            "title": "Grn Number",
-            "type": "string"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/ReceiptLineIn"
-            },
-            "maxItems": 500,
-            "minItems": 1,
-            "title": "Lines",
-            "type": "array"
-          },
-          "po_id": {
-            "format": "uuid",
-            "title": "Po Id",
-            "type": "string"
-          },
-          "received_by": {
-            "anyOf": [
-              {
-                "maxLength": 120,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Received By"
-          },
-          "received_date": {
-            "format": "date",
-            "title": "Received Date",
-            "type": "string"
-          }
-        },
-        "required": [
-          "grn_number",
-          "po_id",
-          "received_date",
-          "lines"
-        ],
-        "title": "GoodsReceiptIn",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -10989,6 +10301,39 @@
         "title": "HirePanelMemberOut",
         "type": "object"
       },
+      "HirePipelineScreeningOut": {
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireCriterionOut"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "overall",
+          "criteria"
+        ],
+        "title": "HirePipelineScreeningOut",
+        "type": "object"
+      },
       "HirePlanCriterionOut": {
         "properties": {
           "evidence": {
@@ -12253,7 +11598,7 @@
           "screening": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/pairly_hire__api__pipeline__HireScreeningOut"
+                "$ref": "#/components/schemas/HirePipelineScreeningOut"
               },
               {
                 "type": "null"
@@ -14969,6 +14314,291 @@
         "title": "HireScreeningKnockout",
         "type": "object"
       },
+      "HireScreeningOut": {
+        "properties": {
+          "ai_overall_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Overall Score"
+          },
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "blind": {
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "blind_config": {
+            "additionalProperties": true,
+            "title": "Blind Config",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/HireScreeningCriterion"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decision Ids",
+            "type": "array"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/HireScreeningFlag"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "guardrail_findings": {
+            "items": {
+              "$ref": "#/components/schemas/HireScreeningFinding"
+            },
+            "title": "Guardrail Findings",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "knockouts": {
+            "items": {
+              "$ref": "#/components/schemas/HireScreeningKnockout"
+            },
+            "title": "Knockouts",
+            "type": "array"
+          },
+          "models": {
+            "additionalProperties": true,
+            "title": "Models",
+            "type": "object"
+          },
+          "overall_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Score"
+          },
+          "overrides": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Overrides",
+            "type": "array"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "rubric_policy_id": {
+            "format": "uuid",
+            "title": "Rubric Policy Id",
+            "type": "string"
+          },
+          "rubric_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rubric Version"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Status"
+          },
+          "scale": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Scale",
+            "type": "object"
+          },
+          "score_decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Decision Id"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "job_id",
+          "status",
+          "run_id",
+          "run_status",
+          "blind",
+          "blind_config",
+          "rubric_policy_id",
+          "rubric_version",
+          "scale",
+          "scored",
+          "overall_score",
+          "ai_overall_score",
+          "criteria",
+          "flags",
+          "guardrail_findings",
+          "knockouts",
+          "review_reasons",
+          "models",
+          "profile",
+          "text",
+          "document_id",
+          "approval_id",
+          "score_decision_id",
+          "decision_ids",
+          "overrides",
+          "failure_reason",
+          "created_at",
+          "updated_at",
+          "decided_at"
+        ],
+        "title": "HireScreeningOut",
+        "type": "object"
+      },
       "HireScreeningQueueOut": {
         "properties": {
           "blind_mode": {
@@ -16219,44 +15849,6 @@
         "title": "HitOut",
         "type": "object"
       },
-      "ImportOut": {
-        "properties": {
-          "created": {
-            "title": "Created",
-            "type": "integer"
-          },
-          "ids": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "title": "Ids",
-            "type": "array"
-          },
-          "numbers": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Numbers",
-            "type": "array"
-          },
-          "rematched": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "title": "Rematched",
-            "type": "array"
-          }
-        },
-        "required": [
-          "created",
-          "ids",
-          "numbers"
-        ],
-        "title": "ImportOut",
-        "type": "object"
-      },
       "InboxOut": {
         "properties": {
           "items": {
@@ -16527,113 +16119,6 @@
         "title": "InvitationPreviewOut",
         "type": "object"
       },
-      "InvoiceCodingIn": {
-        "additionalProperties": false,
-        "properties": {
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/LineCodingIn"
-            },
-            "maxItems": 500,
-            "minItems": 1,
-            "title": "Lines",
-            "type": "array"
-          }
-        },
-        "required": [
-          "lines"
-        ],
-        "title": "InvoiceCodingIn",
-        "type": "object"
-      },
-      "InvoiceCodingOut": {
-        "properties": {
-          "auto_coding": {
-            "title": "Auto Coding",
-            "type": "boolean"
-          },
-          "can_code": {
-            "title": "Can Code",
-            "type": "boolean"
-          },
-          "cc_list_version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cc List Version"
-          },
-          "checks_state": {
-            "enum": [
-              "current",
-              "stale",
-              "failed",
-              "missing"
-            ],
-            "title": "Checks State",
-            "type": "string"
-          },
-          "cost_centres": {
-            "items": {
-              "$ref": "#/components/schemas/CodingEntryOut"
-            },
-            "title": "Cost Centres",
-            "type": "array"
-          },
-          "gl_accounts": {
-            "items": {
-              "$ref": "#/components/schemas/CodingEntryOut"
-            },
-            "title": "Gl Accounts",
-            "type": "array"
-          },
-          "gl_list_version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Gl List Version"
-          },
-          "invoice_id": {
-            "format": "uuid",
-            "title": "Invoice Id",
-            "type": "string"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/LineCodingOut"
-            },
-            "title": "Lines",
-            "type": "array"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "invoice_id",
-          "status",
-          "gl_list_version",
-          "cc_list_version",
-          "gl_accounts",
-          "cost_centres",
-          "lines",
-          "can_code",
-          "auto_coding",
-          "checks_state"
-        ],
-        "title": "InvoiceCodingOut",
-        "type": "object"
-      },
       "IssueOut": {
         "properties": {
           "code": {
@@ -16694,136 +16179,6 @@
         ],
         "title": "Lang",
         "type": "string"
-      },
-      "LineCodingIn": {
-        "additionalProperties": false,
-        "properties": {
-          "cost_centre": {
-            "anyOf": [
-              {
-                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cost Centre"
-          },
-          "gl_code": {
-            "anyOf": [
-              {
-                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Gl Code"
-          },
-          "line_index": {
-            "maximum": 999,
-            "minimum": 0,
-            "title": "Line Index",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "line_index"
-        ],
-        "title": "LineCodingIn",
-        "type": "object"
-      },
-      "LineCodingOut": {
-        "properties": {
-          "coded_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Coded At"
-          },
-          "corrected": {
-            "title": "Corrected",
-            "type": "boolean"
-          },
-          "cost_centre": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cost Centre"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "gl_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Gl Code"
-          },
-          "line_index": {
-            "title": "Line Index",
-            "type": "integer"
-          },
-          "source": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source"
-          },
-          "suggestion": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SuggestionOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "line_index",
-          "description",
-          "gl_code",
-          "cost_centre",
-          "source",
-          "corrected",
-          "coded_at",
-          "suggestion"
-        ],
-        "title": "LineCodingOut",
-        "type": "object"
       },
       "LinkConfirmIn": {
         "properties": {
@@ -17083,287 +16438,6 @@
           "granted_at"
         ],
         "title": "MemberRoleOut",
-        "type": "object"
-      },
-      "MessageIn": {
-        "additionalProperties": false,
-        "properties": {
-          "ai_note": {
-            "default": false,
-            "title": "Ai Note",
-            "type": "boolean"
-          },
-          "category": {
-            "enum": [
-              "no_po",
-              "price_variance",
-              "quantity_variance",
-              "missing_receipt",
-              "duplicate_suspect",
-              "bank_mismatch",
-              "policy_breach",
-              "low_confidence",
-              "other"
-            ],
-            "title": "Category",
-            "type": "string"
-          },
-          "locale": {
-            "default": "en",
-            "enum": [
-              "en",
-              "ar"
-            ],
-            "title": "Locale",
-            "type": "string"
-          },
-          "message": {
-            "maxLength": 3000,
-            "minLength": 1,
-            "title": "Message",
-            "type": "string"
-          },
-          "model_call_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model Call Id"
-          },
-          "recipient_email": {
-            "maxLength": 254,
-            "minLength": 3,
-            "title": "Recipient Email",
-            "type": "string"
-          },
-          "template_id": {
-            "pattern": "^[a-z_]{1,32}$",
-            "title": "Template Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "category",
-          "template_id",
-          "message",
-          "recipient_email"
-        ],
-        "title": "MessageIn",
-        "type": "object"
-      },
-      "MessageOut": {
-        "properties": {
-          "ai_note": {
-            "title": "Ai Note",
-            "type": "boolean"
-          },
-          "approval_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Approval Id"
-          },
-          "category": {
-            "title": "Category",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "invoice_id": {
-            "format": "uuid",
-            "title": "Invoice Id",
-            "type": "string"
-          },
-          "locale": {
-            "title": "Locale",
-            "type": "string"
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message"
-          },
-          "recipient_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recipient Email"
-          },
-          "recipient_kind": {
-            "title": "Recipient Kind",
-            "type": "string"
-          },
-          "recipient_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recipient Name"
-          },
-          "reference": {
-            "title": "Reference",
-            "type": "string"
-          },
-          "sent_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sent At"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "status_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Status Reason"
-          },
-          "template_id": {
-            "title": "Template Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "reference",
-          "invoice_id",
-          "category",
-          "template_id",
-          "recipient_kind",
-          "recipient_name",
-          "recipient_email",
-          "message",
-          "locale",
-          "ai_note",
-          "status",
-          "status_reason",
-          "approval_id",
-          "created_at",
-          "sent_at"
-        ],
-        "title": "MessageOut",
-        "type": "object"
-      },
-      "ModelLineOut": {
-        "properties": {
-          "from_recording": {
-            "default": false,
-            "title": "From Recording",
-            "type": "boolean"
-          },
-          "line_index": {
-            "title": "Line Index",
-            "type": "integer"
-          },
-          "problem": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Problem"
-          },
-          "suggestion": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SuggestionOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "line_index",
-          "suggestion",
-          "problem"
-        ],
-        "title": "ModelLineOut",
-        "type": "object"
-      },
-      "ModelSuggestionsIn": {
-        "additionalProperties": false,
-        "properties": {
-          "line_indexes": {
-            "default": [],
-            "items": {
-              "maximum": 999,
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 50,
-            "title": "Line Indexes",
-            "type": "array"
-          }
-        },
-        "title": "ModelSuggestionsIn",
-        "type": "object"
-      },
-      "ModelSuggestionsOut": {
-        "properties": {
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/ModelLineOut"
-            },
-            "title": "Lines",
-            "type": "array"
-          }
-        },
-        "required": [
-          "lines"
-        ],
-        "title": "ModelSuggestionsOut",
         "type": "object"
       },
       "MyOrgsOut": {
@@ -18527,6 +17601,254 @@
         "title": "PayCheckSettingsIn",
         "type": "object"
       },
+      "PayCloseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PayCloseIn",
+        "type": "object"
+      },
+      "PayCodingCsvIn": {
+        "additionalProperties": false,
+        "properties": {
+          "csv": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Csv",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv"
+        ],
+        "title": "PayCodingCsvIn",
+        "type": "object"
+      },
+      "PayCodingEntryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "PayCodingEntryIn",
+        "type": "object"
+      },
+      "PayCodingEntryOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "name_ar"
+        ],
+        "title": "PayCodingEntryOut",
+        "type": "object"
+      },
+      "PayCodingListDetail": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/PayCodingEntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "entry_count": {
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "entry_count",
+          "source",
+          "created_by_type",
+          "created_at",
+          "entries"
+        ],
+        "title": "PayCodingListDetail",
+        "type": "object"
+      },
+      "PayCodingListIn": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/PayCodingEntryIn"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "PayCodingListIn",
+        "type": "object"
+      },
+      "PayCodingListOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "entry_count": {
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "entry_count",
+          "source",
+          "created_by_type",
+          "created_at"
+        ],
+        "title": "PayCodingListOut",
+        "type": "object"
+      },
+      "PayCodingListsOut": {
+        "properties": {
+          "can_manage": {
+            "title": "Can Manage",
+            "type": "boolean"
+          },
+          "cost_centres": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCodingListDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gl_accounts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCodingListDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gl_accounts",
+          "cost_centres",
+          "can_manage"
+        ],
+        "title": "PayCodingListsOut",
+        "type": "object"
+      },
       "PayCompareLineOut": {
         "properties": {
           "description": {
@@ -18863,6 +18185,182 @@
         "title": "PayContactOut",
         "type": "object"
       },
+      "PayCsvIn": {
+        "additionalProperties": false,
+        "properties": {
+          "csv": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Csv",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv"
+        ],
+        "title": "PayCsvIn",
+        "type": "object"
+      },
+      "PayDraftIn": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "personalise": {
+            "default": false,
+            "title": "Personalise",
+            "type": "boolean"
+          },
+          "template_id": {
+            "pattern": "^[a-z_]{1,32}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id"
+        ],
+        "title": "PayDraftIn",
+        "type": "object"
+      },
+      "PayDraftOut": {
+        "properties": {
+          "ai_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Note"
+          },
+          "ai_problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Problems",
+            "type": "array"
+          },
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/PayMessageContactOut"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "locale": {
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "model_call_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Call Id"
+          },
+          "recipient": {
+            "enum": [
+              "vendor",
+              "requester"
+            ],
+            "title": "Recipient",
+            "type": "string"
+          },
+          "requester_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester Hint"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_text": {
+            "title": "Template Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id",
+          "recipient",
+          "locale",
+          "message",
+          "template_text",
+          "ai_note",
+          "ai_problems",
+          "from_recording",
+          "model_call_id",
+          "contacts",
+          "requester_hint"
+        ],
+        "title": "PayDraftOut",
+        "type": "object"
+      },
       "PayDuplicateOut": {
         "properties": {
           "legal_name": {
@@ -18903,6 +18401,203 @@
           "score"
         ],
         "title": "PayDuplicateOut",
+        "type": "object"
+      },
+      "PayExceptionCategoryOut": {
+        "properties": {
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "explanations": {
+            "items": {
+              "$ref": "#/components/schemas/PayTextOut"
+            },
+            "title": "Explanations",
+            "type": "array"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/PayTextOut"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/PayTemplateOut"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "explanations",
+          "resolution",
+          "templates"
+        ],
+        "title": "PayExceptionCategoryOut",
+        "type": "object"
+      },
+      "PayExceptionItemOut": {
+        "properties": {
+          "age_hours": {
+            "title": "Age Hours",
+            "type": "integer"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/PayExceptionCategoryOut"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "po_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Po Number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "vendor_name",
+          "invoice_number",
+          "po_number",
+          "currency",
+          "total",
+          "created_at",
+          "age_hours",
+          "overdue",
+          "categories"
+        ],
+        "title": "PayExceptionItemOut",
+        "type": "object"
+      },
+      "PayExceptionsOut": {
+        "properties": {
+          "can_message": {
+            "title": "Can Message",
+            "type": "boolean"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayExceptionItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "integer"
+          },
+          "sla_hours": {
+            "title": "Sla Hours",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "counts",
+          "total",
+          "overdue",
+          "sla_hours",
+          "can_message"
+        ],
+        "title": "PayExceptionsOut",
         "type": "object"
       },
       "PayFieldCheckOut": {
@@ -18960,6 +18655,93 @@
           "valid"
         ],
         "title": "PayFieldCheckOut",
+        "type": "object"
+      },
+      "PayGoodsReceiptIn": {
+        "additionalProperties": false,
+        "properties": {
+          "grn_number": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
+            "title": "Grn Number",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayReceiptLineIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "po_id": {
+            "format": "uuid",
+            "title": "Po Id",
+            "type": "string"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "received_date": {
+            "format": "date",
+            "title": "Received Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grn_number",
+          "po_id",
+          "received_date",
+          "lines"
+        ],
+        "title": "PayGoodsReceiptIn",
+        "type": "object"
+      },
+      "PayImportOut": {
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "integer"
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Ids",
+            "type": "array"
+          },
+          "numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Numbers",
+            "type": "array"
+          },
+          "rematched": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rematched",
+            "type": "array"
+          }
+        },
+        "required": [
+          "created",
+          "ids",
+          "numbers"
+        ],
+        "title": "PayImportOut",
         "type": "object"
       },
       "PayInviteCreatedOut": {
@@ -19354,6 +19136,94 @@
           }
         },
         "title": "PayInvoiceCodingIn",
+        "type": "object"
+      },
+      "PayInvoiceCodingOut": {
+        "properties": {
+          "auto_coding": {
+            "title": "Auto Coding",
+            "type": "boolean"
+          },
+          "can_code": {
+            "title": "Can Code",
+            "type": "boolean"
+          },
+          "cc_list_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cc List Version"
+          },
+          "checks_state": {
+            "enum": [
+              "current",
+              "stale",
+              "failed",
+              "missing"
+            ],
+            "title": "Checks State",
+            "type": "string"
+          },
+          "cost_centres": {
+            "items": {
+              "$ref": "#/components/schemas/PayCodingEntryOut"
+            },
+            "title": "Cost Centres",
+            "type": "array"
+          },
+          "gl_accounts": {
+            "items": {
+              "$ref": "#/components/schemas/PayCodingEntryOut"
+            },
+            "title": "Gl Accounts",
+            "type": "array"
+          },
+          "gl_list_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl List Version"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayLineCodingOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "status",
+          "gl_list_version",
+          "cc_list_version",
+          "gl_accounts",
+          "cost_centres",
+          "lines",
+          "can_code",
+          "auto_coding",
+          "checks_state"
+        ],
+        "title": "PayInvoiceCodingOut",
         "type": "object"
       },
       "PayInvoiceCorrectionIn": {
@@ -20392,6 +20262,25 @@
         "title": "PayInvoiceFindingOut",
         "type": "object"
       },
+      "PayInvoiceLinesCodingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayLineCodingIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "PayInvoiceLinesCodingIn",
+        "type": "object"
+      },
       "PayInvoiceList": {
         "properties": {
           "counts": {
@@ -20689,6 +20578,360 @@
         "title": "PayInvoiceVendorOut",
         "type": "object"
       },
+      "PayLineCodingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_centre": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "line_index": {
+            "maximum": 999,
+            "minimum": 0,
+            "title": "Line Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "line_index"
+        ],
+        "title": "PayLineCodingIn",
+        "type": "object"
+      },
+      "PayLineCodingOut": {
+        "properties": {
+          "coded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coded At"
+          },
+          "corrected": {
+            "title": "Corrected",
+            "type": "boolean"
+          },
+          "cost_centre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "line_index": {
+            "title": "Line Index",
+            "type": "integer"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaySuggestionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "line_index",
+          "description",
+          "gl_code",
+          "cost_centre",
+          "source",
+          "corrected",
+          "coded_at",
+          "suggestion"
+        ],
+        "title": "PayLineCodingOut",
+        "type": "object"
+      },
+      "PayMessageContactOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ],
+        "title": "PayMessageContactOut",
+        "type": "object"
+      },
+      "PayMessageIn": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_note": {
+            "default": false,
+            "title": "Ai Note",
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "model_call_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Call Id"
+          },
+          "recipient_email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Recipient Email",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-z_]{1,32}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id",
+          "message",
+          "recipient_email"
+        ],
+        "title": "PayMessageIn",
+        "type": "object"
+      },
+      "PayMessageOut": {
+        "properties": {
+          "ai_note": {
+            "title": "Ai Note",
+            "type": "boolean"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "recipient_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Email"
+          },
+          "recipient_kind": {
+            "title": "Recipient Kind",
+            "type": "string"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Name"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_id",
+          "category",
+          "template_id",
+          "recipient_kind",
+          "recipient_name",
+          "recipient_email",
+          "message",
+          "locale",
+          "ai_note",
+          "status",
+          "status_reason",
+          "approval_id",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "PayMessageOut",
+        "type": "object"
+      },
       "PayMetricOut": {
         "properties": {
           "detail": {
@@ -20741,6 +20984,81 @@
           "detail"
         ],
         "title": "PayMetricOut",
+        "type": "object"
+      },
+      "PayModelLineOut": {
+        "properties": {
+          "from_recording": {
+            "default": false,
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "line_index": {
+            "title": "Line Index",
+            "type": "integer"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaySuggestionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "line_index",
+          "suggestion",
+          "problem"
+        ],
+        "title": "PayModelLineOut",
+        "type": "object"
+      },
+      "PayModelSuggestionsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "line_indexes": {
+            "default": [],
+            "items": {
+              "maximum": 999,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 50,
+            "title": "Line Indexes",
+            "type": "array"
+          }
+        },
+        "title": "PayModelSuggestionsIn",
+        "type": "object"
+      },
+      "PayModelSuggestionsOut": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayModelLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "PayModelSuggestionsOut",
         "type": "object"
       },
       "PayOnboardingDocumentOut": {
@@ -21060,6 +21378,566 @@
         "title": "PayPaymentSettingsIn",
         "type": "object"
       },
+      "PayPoDetail": {
+        "properties": {
+          "close_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Reason"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "closed_by_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By Type"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_count": {
+            "title": "Invoice Count",
+            "type": "integer"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PayPoInvoiceOut"
+            },
+            "title": "Invoices",
+            "type": "array"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayPoLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "match_type": {
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "title": "Po Number",
+            "type": "string"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "receipts": {
+            "items": {
+              "$ref": "#/components/schemas/PayReceiptOut"
+            },
+            "title": "Receipts",
+            "type": "array"
+          },
+          "rechecked": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rechecked",
+            "type": "array"
+          },
+          "requester": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "title": "Subtotal",
+            "type": "string"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "vendor_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Reference"
+          }
+        },
+        "required": [
+          "id",
+          "po_number",
+          "vendor_id",
+          "vendor_name",
+          "vendor_reference",
+          "status",
+          "match_type",
+          "currency",
+          "order_date",
+          "department",
+          "subtotal",
+          "line_count",
+          "receipt_count",
+          "invoice_count",
+          "source",
+          "created_at",
+          "requester",
+          "lines",
+          "receipts",
+          "invoices"
+        ],
+        "title": "PayPoDetail",
+        "type": "object"
+      },
+      "PayPoInvoiceOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "matching": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matching"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_number",
+          "status",
+          "total",
+          "matching"
+        ],
+        "title": "PayPoInvoiceOut",
+        "type": "object"
+      },
+      "PayPoLineIn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "line_no": {
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Line No",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Unit Price"
+          }
+        },
+        "required": [
+          "line_no",
+          "description",
+          "quantity",
+          "unit_price"
+        ],
+        "title": "PayPoLineIn",
+        "type": "object"
+      },
+      "PayPoLineOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "invoiced": {
+            "title": "Invoiced",
+            "type": "string"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          },
+          "line_total": {
+            "title": "Line Total",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "received": {
+            "title": "Received",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line_no",
+          "description",
+          "quantity",
+          "unit_price",
+          "line_total",
+          "received",
+          "invoiced"
+        ],
+        "title": "PayPoLineOut",
+        "type": "object"
+      },
+      "PayPoList": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayPoSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "counts"
+        ],
+        "title": "PayPoList",
+        "type": "object"
+      },
+      "PayPoSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_count": {
+            "title": "Invoice Count",
+            "type": "integer"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "match_type": {
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "title": "Po Number",
+            "type": "string"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "title": "Subtotal",
+            "type": "string"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "vendor_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Reference"
+          }
+        },
+        "required": [
+          "id",
+          "po_number",
+          "vendor_id",
+          "vendor_name",
+          "vendor_reference",
+          "status",
+          "match_type",
+          "currency",
+          "order_date",
+          "department",
+          "subtotal",
+          "line_count",
+          "receipt_count",
+          "invoice_count",
+          "source",
+          "created_at"
+        ],
+        "title": "PayPoSummary",
+        "type": "object"
+      },
+      "PayPurchaseOrderIn": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayPoLineIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "match_type": {
+            "default": "3-way",
+            "enum": [
+              "2-way",
+              "3-way"
+            ],
+            "title": "Match Type",
+            "type": "string"
+          },
+          "order_date": {
+            "format": "date",
+            "title": "Order Date",
+            "type": "string"
+          },
+          "po_number": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
+            "title": "Po Number",
+            "type": "string"
+          },
+          "requester": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "po_number",
+          "vendor_id",
+          "currency",
+          "order_date",
+          "lines"
+        ],
+        "title": "PayPurchaseOrderIn",
+        "type": "object"
+      },
       "PayReasonIn": {
         "additionalProperties": false,
         "properties": {
@@ -21074,6 +21952,104 @@
           "reason"
         ],
         "title": "PayReasonIn",
+        "type": "object"
+      },
+      "PayReceiptLineIn": {
+        "additionalProperties": false,
+        "properties": {
+          "po_line_no": {
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Po Line No",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "po_line_no",
+          "quantity"
+        ],
+        "title": "PayReceiptLineIn",
+        "type": "object"
+      },
+      "PayReceiptOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "grn_number": {
+            "title": "Grn Number",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "po_id": {
+            "format": "uuid",
+            "title": "Po Id",
+            "type": "string"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "received_date": {
+            "format": "date",
+            "title": "Received Date",
+            "type": "string"
+          },
+          "rematched": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rematched",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "grn_number",
+          "po_id",
+          "received_date",
+          "received_by",
+          "line_count",
+          "source",
+          "created_at"
+        ],
+        "title": "PayReceiptOut",
         "type": "object"
       },
       "PayRecordLinkOut": {
@@ -22106,6 +23082,126 @@
           "can_manage"
         ],
         "title": "PaySettingsOut",
+        "type": "object"
+      },
+      "PaySuggestionOut": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "cost_centre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Centre"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Examples",
+            "type": "array"
+          },
+          "gl_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Code"
+          },
+          "level": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "history",
+              "model"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "support": {
+            "title": "Support",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gl_code",
+          "cost_centre",
+          "confidence",
+          "level",
+          "method",
+          "support",
+          "examples"
+        ],
+        "title": "PaySuggestionOut",
+        "type": "object"
+      },
+      "PayTemplateOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "recipient": {
+            "enum": [
+              "vendor",
+              "requester"
+            ],
+            "title": "Recipient",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "recipient"
+        ],
+        "title": "PayTemplateOut",
+        "type": "object"
+      },
+      "PayTextOut": {
+        "properties": {
+          "ar": {
+            "title": "Ar",
+            "type": "string"
+          },
+          "en": {
+            "title": "En",
+            "type": "string"
+          }
+        },
+        "required": [
+          "en",
+          "ar"
+        ],
+        "title": "PayTextOut",
         "type": "object"
       },
       "PayTicketDetail": {
@@ -23501,490 +24597,6 @@
         "title": "PlanStage",
         "type": "object"
       },
-      "PoDetail": {
-        "properties": {
-          "close_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Close Reason"
-          },
-          "closed_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed At"
-          },
-          "closed_by_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed By Type"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "currency": {
-            "title": "Currency",
-            "type": "string"
-          },
-          "department": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Department"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "invoice_count": {
-            "title": "Invoice Count",
-            "type": "integer"
-          },
-          "invoices": {
-            "items": {
-              "$ref": "#/components/schemas/PoInvoiceOut"
-            },
-            "title": "Invoices",
-            "type": "array"
-          },
-          "line_count": {
-            "title": "Line Count",
-            "type": "integer"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/PoLineOut"
-            },
-            "title": "Lines",
-            "type": "array"
-          },
-          "match_type": {
-            "title": "Match Type",
-            "type": "string"
-          },
-          "order_date": {
-            "format": "date",
-            "title": "Order Date",
-            "type": "string"
-          },
-          "po_number": {
-            "title": "Po Number",
-            "type": "string"
-          },
-          "receipt_count": {
-            "title": "Receipt Count",
-            "type": "integer"
-          },
-          "receipts": {
-            "items": {
-              "$ref": "#/components/schemas/ReceiptOut"
-            },
-            "title": "Receipts",
-            "type": "array"
-          },
-          "rechecked": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "title": "Rechecked",
-            "type": "array"
-          },
-          "requester": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requester"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "subtotal": {
-            "title": "Subtotal",
-            "type": "string"
-          },
-          "vendor_id": {
-            "format": "uuid",
-            "title": "Vendor Id",
-            "type": "string"
-          },
-          "vendor_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vendor Name"
-          },
-          "vendor_reference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vendor Reference"
-          }
-        },
-        "required": [
-          "id",
-          "po_number",
-          "vendor_id",
-          "vendor_name",
-          "vendor_reference",
-          "status",
-          "match_type",
-          "currency",
-          "order_date",
-          "department",
-          "subtotal",
-          "line_count",
-          "receipt_count",
-          "invoice_count",
-          "source",
-          "created_at",
-          "requester",
-          "lines",
-          "receipts",
-          "invoices"
-        ],
-        "title": "PoDetail",
-        "type": "object"
-      },
-      "PoInvoiceOut": {
-        "properties": {
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "invoice_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Invoice Number"
-          },
-          "matching": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Matching"
-          },
-          "reference": {
-            "title": "Reference",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "total": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total"
-          }
-        },
-        "required": [
-          "id",
-          "reference",
-          "invoice_number",
-          "status",
-          "total",
-          "matching"
-        ],
-        "title": "PoInvoiceOut",
-        "type": "object"
-      },
-      "PoLineIn": {
-        "additionalProperties": false,
-        "properties": {
-          "description": {
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
-          "line_no": {
-            "maximum": 100000,
-            "minimum": 1,
-            "title": "Line No",
-            "type": "integer"
-          },
-          "quantity": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0,
-                "maximum": 1000000000000,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
-                "type": "string"
-              }
-            ],
-            "title": "Quantity"
-          },
-          "unit_price": {
-            "anyOf": [
-              {
-                "maximum": 1000000000000,
-                "minimum": 0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
-                "type": "string"
-              }
-            ],
-            "title": "Unit Price"
-          }
-        },
-        "required": [
-          "line_no",
-          "description",
-          "quantity",
-          "unit_price"
-        ],
-        "title": "PoLineIn",
-        "type": "object"
-      },
-      "PoLineOut": {
-        "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
-          "invoiced": {
-            "title": "Invoiced",
-            "type": "string"
-          },
-          "line_no": {
-            "title": "Line No",
-            "type": "integer"
-          },
-          "line_total": {
-            "title": "Line Total",
-            "type": "string"
-          },
-          "quantity": {
-            "title": "Quantity",
-            "type": "string"
-          },
-          "received": {
-            "title": "Received",
-            "type": "string"
-          },
-          "unit_price": {
-            "title": "Unit Price",
-            "type": "string"
-          }
-        },
-        "required": [
-          "line_no",
-          "description",
-          "quantity",
-          "unit_price",
-          "line_total",
-          "received",
-          "invoiced"
-        ],
-        "title": "PoLineOut",
-        "type": "object"
-      },
-      "PoList": {
-        "properties": {
-          "counts": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "title": "Counts",
-            "type": "object"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/PoSummary"
-            },
-            "title": "Items",
-            "type": "array"
-          }
-        },
-        "required": [
-          "items",
-          "counts"
-        ],
-        "title": "PoList",
-        "type": "object"
-      },
-      "PoSummary": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "currency": {
-            "title": "Currency",
-            "type": "string"
-          },
-          "department": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Department"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "invoice_count": {
-            "title": "Invoice Count",
-            "type": "integer"
-          },
-          "line_count": {
-            "title": "Line Count",
-            "type": "integer"
-          },
-          "match_type": {
-            "title": "Match Type",
-            "type": "string"
-          },
-          "order_date": {
-            "format": "date",
-            "title": "Order Date",
-            "type": "string"
-          },
-          "po_number": {
-            "title": "Po Number",
-            "type": "string"
-          },
-          "receipt_count": {
-            "title": "Receipt Count",
-            "type": "integer"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "subtotal": {
-            "title": "Subtotal",
-            "type": "string"
-          },
-          "vendor_id": {
-            "format": "uuid",
-            "title": "Vendor Id",
-            "type": "string"
-          },
-          "vendor_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vendor Name"
-          },
-          "vendor_reference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vendor Reference"
-          }
-        },
-        "required": [
-          "id",
-          "po_number",
-          "vendor_id",
-          "vendor_name",
-          "vendor_reference",
-          "status",
-          "match_type",
-          "currency",
-          "order_date",
-          "department",
-          "subtotal",
-          "line_count",
-          "receipt_count",
-          "invoice_count",
-          "source",
-          "created_at"
-        ],
-        "title": "PoSummary",
-        "type": "object"
-      },
       "PolicyDocumentOut": {
         "properties": {
           "archived_at": {
@@ -24179,6 +24791,44 @@
           "warnings"
         ],
         "title": "PolicyDocumentOut",
+        "type": "object"
+      },
+      "PolicySearchIn": {
+        "properties": {
+          "limit": {
+            "default": 8,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "names": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^[a-z][a-z0-9_.]{0,127}$",
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Names"
+          },
+          "query": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "PolicySearchIn",
         "type": "object"
       },
       "PolicyUploadOut": {
@@ -24683,180 +25333,6 @@
           "version"
         ],
         "title": "PublishOut",
-        "type": "object"
-      },
-      "PurchaseOrderIn": {
-        "additionalProperties": false,
-        "properties": {
-          "currency": {
-            "pattern": "^[A-Z]{3}$",
-            "title": "Currency",
-            "type": "string"
-          },
-          "department": {
-            "anyOf": [
-              {
-                "maxLength": 64,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Department"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/PoLineIn"
-            },
-            "maxItems": 500,
-            "minItems": 1,
-            "title": "Lines",
-            "type": "array"
-          },
-          "match_type": {
-            "default": "3-way",
-            "enum": [
-              "2-way",
-              "3-way"
-            ],
-            "title": "Match Type",
-            "type": "string"
-          },
-          "order_date": {
-            "format": "date",
-            "title": "Order Date",
-            "type": "string"
-          },
-          "po_number": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ./#_-]{0,63}$",
-            "title": "Po Number",
-            "type": "string"
-          },
-          "requester": {
-            "anyOf": [
-              {
-                "maxLength": 120,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requester"
-          },
-          "vendor_id": {
-            "format": "uuid",
-            "title": "Vendor Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "po_number",
-          "vendor_id",
-          "currency",
-          "order_date",
-          "lines"
-        ],
-        "title": "PurchaseOrderIn",
-        "type": "object"
-      },
-      "ReceiptLineIn": {
-        "additionalProperties": false,
-        "properties": {
-          "po_line_no": {
-            "maximum": 100000,
-            "minimum": 1,
-            "title": "Po Line No",
-            "type": "integer"
-          },
-          "quantity": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0,
-                "maximum": 1000000000000,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
-                "type": "string"
-              }
-            ],
-            "title": "Quantity"
-          }
-        },
-        "required": [
-          "po_line_no",
-          "quantity"
-        ],
-        "title": "ReceiptLineIn",
-        "type": "object"
-      },
-      "ReceiptOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "grn_number": {
-            "title": "Grn Number",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "line_count": {
-            "title": "Line Count",
-            "type": "integer"
-          },
-          "po_id": {
-            "format": "uuid",
-            "title": "Po Id",
-            "type": "string"
-          },
-          "received_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Received By"
-          },
-          "received_date": {
-            "format": "date",
-            "title": "Received Date",
-            "type": "string"
-          },
-          "rematched": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "title": "Rematched",
-            "type": "array"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "grn_number",
-          "po_id",
-          "received_date",
-          "received_by",
-          "line_count",
-          "source",
-          "created_at"
-        ],
-        "title": "ReceiptOut",
         "type": "object"
       },
       "ReplayIn": {
@@ -25369,7 +25845,7 @@
             "type": "array"
           },
           "template": {
-            "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
+            "$ref": "#/components/schemas/TemplateOut"
           }
         },
         "required": [
@@ -25458,6 +25934,45 @@
           "score"
         ],
         "title": "SearchHitOut",
+        "type": "object"
+      },
+      "SearchIn": {
+        "properties": {
+          "kinds": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^[a-z][a-z0-9_]{0,31}$",
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kinds"
+          },
+          "limit": {
+            "default": 10,
+            "maximum": 50,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "query": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "SearchIn",
         "type": "object"
       },
       "SlackIn": {
@@ -25810,86 +26325,6 @@
         "title": "StoredResultOut",
         "type": "object"
       },
-      "SuggestionOut": {
-        "properties": {
-          "confidence": {
-            "title": "Confidence",
-            "type": "number"
-          },
-          "cost_centre": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cost Centre"
-          },
-          "examples": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Examples",
-            "type": "array"
-          },
-          "gl_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Gl Code"
-          },
-          "level": {
-            "enum": [
-              "high",
-              "medium",
-              "low"
-            ],
-            "title": "Level",
-            "type": "string"
-          },
-          "method": {
-            "enum": [
-              "history",
-              "model"
-            ],
-            "title": "Method",
-            "type": "string"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reason"
-          },
-          "support": {
-            "title": "Support",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "gl_code",
-          "cost_centre",
-          "confidence",
-          "level",
-          "method",
-          "support",
-          "examples"
-        ],
-        "title": "SuggestionOut",
-        "type": "object"
-      },
       "TemplateIn": {
         "properties": {
           "body": {
@@ -25980,22 +26415,94 @@
         "title": "TemplateIn",
         "type": "object"
       },
-      "TextOut": {
+      "TemplateOut": {
         "properties": {
-          "ar": {
-            "title": "Ar",
+          "body": {
+            "title": "Body",
             "type": "string"
           },
-          "en": {
-            "title": "En",
+          "body_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Html"
+          },
+          "category": {
+            "title": "Category",
             "type": "string"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "requires_approval": {
+            "title": "Requires Approval",
+            "type": "boolean"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "system": {
+            "title": "System",
+            "type": "boolean"
+          },
+          "variables": {
+            "additionalProperties": true,
+            "title": "Variables",
+            "type": "object"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
           }
         },
         "required": [
-          "en",
-          "ar"
+          "id",
+          "key",
+          "channel",
+          "locale",
+          "version",
+          "category",
+          "system",
+          "subject",
+          "body",
+          "body_html",
+          "variables",
+          "requires_approval",
+          "created_at"
         ],
-        "title": "TextOut",
+        "title": "TemplateOut",
         "type": "object"
       },
       "TokenIn": {
@@ -26225,513 +26732,6 @@
           "reason"
         ],
         "title": "VerifyOut",
-        "type": "object"
-      },
-      "pairly_api__routes__notification_templates__TemplateOut": {
-        "properties": {
-          "body": {
-            "title": "Body",
-            "type": "string"
-          },
-          "body_html": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Body Html"
-          },
-          "category": {
-            "title": "Category",
-            "type": "string"
-          },
-          "channel": {
-            "title": "Channel",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "key": {
-            "title": "Key",
-            "type": "string"
-          },
-          "locale": {
-            "title": "Locale",
-            "type": "string"
-          },
-          "requires_approval": {
-            "title": "Requires Approval",
-            "type": "boolean"
-          },
-          "subject": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Subject"
-          },
-          "system": {
-            "title": "System",
-            "type": "boolean"
-          },
-          "variables": {
-            "additionalProperties": true,
-            "title": "Variables",
-            "type": "object"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "key",
-          "channel",
-          "locale",
-          "version",
-          "category",
-          "system",
-          "subject",
-          "body",
-          "body_html",
-          "variables",
-          "requires_approval",
-          "created_at"
-        ],
-        "title": "TemplateOut",
-        "type": "object"
-      },
-      "pairly_api__routes__policies__SearchIn": {
-        "properties": {
-          "limit": {
-            "default": 8,
-            "maximum": 20,
-            "minimum": 1,
-            "title": "Limit",
-            "type": "integer"
-          },
-          "names": {
-            "anyOf": [
-              {
-                "items": {
-                  "pattern": "^[a-z][a-z0-9_.]{0,127}$",
-                  "type": "string"
-                },
-                "maxItems": 50,
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Names"
-          },
-          "query": {
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Query",
-            "type": "string"
-          }
-        },
-        "required": [
-          "query"
-        ],
-        "title": "SearchIn",
-        "type": "object"
-      },
-      "pairly_api__routes__search__SearchIn": {
-        "properties": {
-          "kinds": {
-            "anyOf": [
-              {
-                "items": {
-                  "pattern": "^[a-z][a-z0-9_]{0,31}$",
-                  "type": "string"
-                },
-                "maxItems": 20,
-                "minItems": 1,
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Kinds"
-          },
-          "limit": {
-            "default": 10,
-            "maximum": 50,
-            "minimum": 1,
-            "title": "Limit",
-            "type": "integer"
-          },
-          "query": {
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Query",
-            "type": "string"
-          }
-        },
-        "required": [
-          "query"
-        ],
-        "title": "SearchIn",
-        "type": "object"
-      },
-      "pairly_hire__api__pipeline__HireScreeningOut": {
-        "properties": {
-          "criteria": {
-            "items": {
-              "$ref": "#/components/schemas/HireCriterionOut"
-            },
-            "title": "Criteria",
-            "type": "array"
-          },
-          "overall": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Overall"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status",
-          "overall",
-          "criteria"
-        ],
-        "title": "HireScreeningOut",
-        "type": "object"
-      },
-      "pairly_hire__api__screening__HireScreeningOut": {
-        "properties": {
-          "ai_overall_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ai Overall Score"
-          },
-          "application_id": {
-            "format": "uuid",
-            "title": "Application Id",
-            "type": "string"
-          },
-          "approval_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Approval Id"
-          },
-          "blind": {
-            "title": "Blind",
-            "type": "boolean"
-          },
-          "blind_config": {
-            "additionalProperties": true,
-            "title": "Blind Config",
-            "type": "object"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "criteria": {
-            "items": {
-              "$ref": "#/components/schemas/HireScreeningCriterion"
-            },
-            "title": "Criteria",
-            "type": "array"
-          },
-          "decided_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Decided At"
-          },
-          "decision_ids": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Decision Ids",
-            "type": "array"
-          },
-          "document_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Document Id"
-          },
-          "failure_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Failure Reason"
-          },
-          "flags": {
-            "items": {
-              "$ref": "#/components/schemas/HireScreeningFlag"
-            },
-            "title": "Flags",
-            "type": "array"
-          },
-          "guardrail_findings": {
-            "items": {
-              "$ref": "#/components/schemas/HireScreeningFinding"
-            },
-            "title": "Guardrail Findings",
-            "type": "array"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "job_id": {
-            "format": "uuid",
-            "title": "Job Id",
-            "type": "string"
-          },
-          "knockouts": {
-            "items": {
-              "$ref": "#/components/schemas/HireScreeningKnockout"
-            },
-            "title": "Knockouts",
-            "type": "array"
-          },
-          "models": {
-            "additionalProperties": true,
-            "title": "Models",
-            "type": "object"
-          },
-          "overall_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Overall Score"
-          },
-          "overrides": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Overrides",
-            "type": "array"
-          },
-          "profile": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Profile"
-          },
-          "review_reasons": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Review Reasons",
-            "type": "array"
-          },
-          "rubric_policy_id": {
-            "format": "uuid",
-            "title": "Rubric Policy Id",
-            "type": "string"
-          },
-          "rubric_version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rubric Version"
-          },
-          "run_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Id"
-          },
-          "run_status": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Status"
-          },
-          "scale": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "title": "Scale",
-            "type": "object"
-          },
-          "score_decision_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score Decision Id"
-          },
-          "scored": {
-            "title": "Scored",
-            "type": "boolean"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "application_id",
-          "job_id",
-          "status",
-          "run_id",
-          "run_status",
-          "blind",
-          "blind_config",
-          "rubric_policy_id",
-          "rubric_version",
-          "scale",
-          "scored",
-          "overall_score",
-          "ai_overall_score",
-          "criteria",
-          "flags",
-          "guardrail_findings",
-          "knockouts",
-          "review_reasons",
-          "models",
-          "profile",
-          "text",
-          "document_id",
-          "approval_id",
-          "score_decision_id",
-          "decision_ids",
-          "overrides",
-          "failure_reason",
-          "created_at",
-          "updated_at",
-          "decided_at"
-        ],
-        "title": "HireScreeningOut",
-        "type": "object"
-      },
-      "pairly_pay__api__exceptions__TemplateOut": {
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "recipient": {
-            "enum": [
-              "vendor",
-              "requester"
-            ],
-            "title": "Recipient",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "recipient"
-        ],
-        "title": "TemplateOut",
         "type": "object"
       }
     }
@@ -29985,7 +29985,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/pairly_hire__api__screening__HireScreeningOut"
+                  "$ref": "#/components/schemas/HireScreeningOut"
                 }
               }
             },
@@ -30038,7 +30038,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/pairly_hire__api__screening__HireScreeningOut"
+                  "$ref": "#/components/schemas/HireScreeningOut"
                 }
               }
             },
@@ -37725,7 +37725,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
+                    "$ref": "#/components/schemas/TemplateOut"
                   },
                   "title": "Response List Templates V1 Notification Templates Get",
                   "type": "array"
@@ -37841,7 +37841,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
+                    "$ref": "#/components/schemas/TemplateOut"
                   },
                   "title": "Response List Versions V1 Notification Templates  Key  Versions Get",
                   "type": "array"
@@ -38584,7 +38584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CodingListsOut"
+                  "$ref": "#/components/schemas/PayCodingListsOut"
                 }
               }
             },
@@ -38619,7 +38619,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CodingListIn"
+                "$ref": "#/components/schemas/PayCodingListIn"
               }
             }
           },
@@ -38630,7 +38630,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CodingListDetail"
+                  "$ref": "#/components/schemas/PayCodingListDetail"
                 }
               }
             },
@@ -38675,7 +38675,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CodingCsvIn"
+                "$ref": "#/components/schemas/PayCodingCsvIn"
               }
             }
           },
@@ -38686,7 +38686,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CodingListDetail"
+                  "$ref": "#/components/schemas/PayCodingListDetail"
                 }
               }
             },
@@ -38733,7 +38733,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CodingListOut"
+                    "$ref": "#/components/schemas/PayCodingListOut"
                   },
                   "title": "Response Get Versions V1 Pay Coding  List Path  Versions Get",
                   "type": "array"
@@ -38825,7 +38825,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExceptionsOut"
+                  "$ref": "#/components/schemas/PayExceptionsOut"
                 }
               }
             },
@@ -38888,7 +38888,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ReceiptOut"
+                    "$ref": "#/components/schemas/PayReceiptOut"
                   },
                   "title": "Response List Receipts V1 Pay Goods Receipts Get",
                   "type": "array"
@@ -38919,7 +38919,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GoodsReceiptIn"
+                "$ref": "#/components/schemas/PayGoodsReceiptIn"
               }
             }
           },
@@ -38930,7 +38930,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReceiptOut"
+                  "$ref": "#/components/schemas/PayReceiptOut"
                 }
               }
             },
@@ -38960,7 +38960,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CsvIn"
+                "$ref": "#/components/schemas/PayCsvIn"
               }
             }
           },
@@ -38971,7 +38971,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportOut"
+                  "$ref": "#/components/schemas/PayImportOut"
                 }
               }
             },
@@ -39218,7 +39218,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvoiceCodingOut"
+                  "$ref": "#/components/schemas/PayInvoiceCodingOut"
                 }
               }
             },
@@ -39313,7 +39313,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvoiceCodingIn"
+                "$ref": "#/components/schemas/PayInvoiceLinesCodingIn"
               }
             }
           },
@@ -39324,7 +39324,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvoiceCodingOut"
+                  "$ref": "#/components/schemas/PayInvoiceCodingOut"
                 }
               }
             },
@@ -39367,7 +39367,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ModelSuggestionsIn"
+                "$ref": "#/components/schemas/PayModelSuggestionsIn"
               }
             }
           },
@@ -39378,7 +39378,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModelSuggestionsOut"
+                  "$ref": "#/components/schemas/PayModelSuggestionsOut"
                 }
               }
             },
@@ -39475,7 +39475,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/MessageOut"
+                    "$ref": "#/components/schemas/PayMessageOut"
                   },
                   "title": "Response List Messages V1 Pay Invoices  Invoice Id  Messages Get",
                   "type": "array"
@@ -39519,7 +39519,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MessageIn"
+                "$ref": "#/components/schemas/PayMessageIn"
               }
             }
           },
@@ -39530,7 +39530,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageOut"
+                  "$ref": "#/components/schemas/PayMessageOut"
                 }
               }
             },
@@ -39573,7 +39573,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DraftIn"
+                "$ref": "#/components/schemas/PayDraftIn"
               }
             }
           },
@@ -39584,7 +39584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftOut"
+                  "$ref": "#/components/schemas/PayDraftOut"
                 }
               }
             },
@@ -40295,7 +40295,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoList"
+                  "$ref": "#/components/schemas/PayPoList"
                 }
               }
             },
@@ -40323,7 +40323,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PurchaseOrderIn"
+                "$ref": "#/components/schemas/PayPurchaseOrderIn"
               }
             }
           },
@@ -40334,7 +40334,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoDetail"
+                  "$ref": "#/components/schemas/PayPoDetail"
                 }
               }
             },
@@ -40364,7 +40364,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CsvIn"
+                "$ref": "#/components/schemas/PayCsvIn"
               }
             }
           },
@@ -40375,7 +40375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportOut"
+                  "$ref": "#/components/schemas/PayImportOut"
                 }
               }
             },
@@ -40418,7 +40418,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoDetail"
+                  "$ref": "#/components/schemas/PayPoDetail"
                 }
               }
             },
@@ -40461,7 +40461,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CloseIn"
+                "$ref": "#/components/schemas/PayCloseIn"
               }
             }
           },
@@ -40472,7 +40472,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoDetail"
+                  "$ref": "#/components/schemas/PayPoDetail"
                 }
               }
             },
@@ -40515,7 +40515,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CloseIn"
+                "$ref": "#/components/schemas/PayCloseIn"
               }
             }
           },
@@ -40526,7 +40526,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoDetail"
+                  "$ref": "#/components/schemas/PayPoDetail"
                 }
               }
             },
@@ -41964,7 +41964,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/pairly_api__routes__policies__SearchIn"
+                "$ref": "#/components/schemas/PolicySearchIn"
               }
             }
           },
@@ -42055,7 +42055,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/pairly_api__routes__search__SearchIn"
+                "$ref": "#/components/schemas/SearchIn"
               }
             }
           },
