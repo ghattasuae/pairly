@@ -15,7 +15,9 @@ read and its vendor matched:
    (``source=invoice``, system opened, joining an open ticket), which places the
    vendor's payment hold in the same transaction; if no ticket can be opened (no phone
    on file, a closed vendor) the vendor is held anyway (``manual``, a person releases
-   it) and a finding says why. Audited (``pay.invoice.bank_mismatch``);
+   it) and a finding says why. Audited (``pay.invoice.bank_mismatch``). When a ticket
+   was opened or joined, the approvers and finance controllers get an urgent alert
+   (``pairly_pay.alerts``) linking to it;
 4. split invoices: the related invoices that are ``ready`` go back to ``needs_review``;
 5. purchase order matching (``pairly_pay.checks.matching``): the cited PO is locked for
    the transaction; the PO it resolves to and the allocation of the invoice lines to its
@@ -62,6 +64,7 @@ from pairly_core.retrieval.embeddings import Embedder
 from pairly_core.risk.combiner import POLICY_KIND, risk_policy_validator
 from pairly_core.risk.service import assess, find_hash_matches
 from pairly_core.risk.types import RiskContext, Severity
+from pairly_pay.alerts import alert_bank_change
 from pairly_pay.bank_changes import (
     NoPhoneOnFileError,
     SameDetailsError,
@@ -95,6 +98,7 @@ from pairly_pay.invoices import INVOICE_ENTITY, InvoiceNotFoundError, add_reason
 from pairly_pay.models import (
     HoldReason,
     InvoiceStatus,
+    PayBankChangeTicket,
     PayInvoice,
     PayPurchaseOrder,
     PaySettings,
@@ -404,6 +408,7 @@ async def _open_bank_ticket(
     now = datetime.now(UTC)
     payload: dict[str, Any] = {"vendor_id": str(invoice.vendor_id)}
     extra: list[Finding] = []
+    alert: tuple[PayBankChangeTicket, str, bool] | None = None
     try:
         async with session.begin_nested():
             checked = check_bank(
@@ -427,6 +432,7 @@ async def _open_bank_ticket(
                 "ticket_reference": opened.ticket.reference,
                 "created": opened.created,
             }
+            alert = (opened.ticket, checked.last4, not opened.created)
     except (
         NoPhoneOnFileError,
         VendorNotOpenError,
@@ -457,6 +463,17 @@ async def _open_bank_ticket(
         session, by, "pay.invoice.bank_mismatch", entity_type=INVOICE_ENTITY, entity_id=invoice.id,
         payload=payload,
     )  # fmt: skip
+    if alert is not None:
+        vendor_row = await session.get(PayVendor, invoice.vendor_id)
+        if vendor_row is not None:
+            await alert_bank_change(
+                session,
+                ticket=alert[0],
+                vendor=vendor_row,
+                invoice=invoice,
+                iban_last4=alert[1],
+                joined=alert[2],
+            )
     ticket = payload.get("ticket_id")
     findings = tuple(
         dataclasses.replace(f, evidence={**f.evidence, "ticket_id": ticket})

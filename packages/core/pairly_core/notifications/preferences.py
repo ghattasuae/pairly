@@ -68,6 +68,9 @@ CATEGORIES: Final[Mapping[str, CategoryPolicy]] = {
     "data_requests": CategoryPolicy(
         True, frozenset({"email", "in_app"}), always_urgent=True, configurable=False
     ),
+    # Alerts about money at risk (a bank-detail change an invoice check opened): every
+    # channel, at once, and never switched off.
+    "urgent": CategoryPolicy(True, _ALL, always_urgent=True, configurable=False),
 }
 DEFAULT_POLICY: Final = CategoryPolicy(False, frozenset({"email", "in_app"}))
 

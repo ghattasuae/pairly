@@ -18,19 +18,24 @@ The ``pay_invoice`` graph runs the checks in ``finish``:
 from __future__ import annotations
 
 import datetime as dt
+import re
+import time
 import uuid
 from typing import Any
+from urllib.parse import urlencode
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_core.db import create_sessionmaker
+from pairly_core.integrations.slack.signature import compute
 from pairly_core.jobs.registry import JobContext
 from pairly_pay import invoice_graph
 from pairly_pay.checks import policy as pay_policy
 from pairly_pay.invoice_start import start_pending_org
 
 from . import test_pay_invoices as base
+from .notify_support import SLACK_SECRET, WEB_URL, notifications, text_of
 from .pay_support import PayWorld, audit_actions, owner_rows, vendor_body
 from .test_pay_invoices import Api, _address, _email, dataset, demo, vendor_index
 
@@ -159,6 +164,94 @@ async def test_bank_change_opens_a_ticket_and_holds_the_vendor(
         "SELECT kind, name, version FROM policy_versions WHERE name = 'pay.invoice'",
     )
     assert {(p.kind, p.version) for p in policies} == {("rules", 1), ("risk_policy", 1)}
+
+
+def _signed(form: dict[str, str]) -> tuple[bytes, dict[str, str]]:
+    body = urlencode(form).encode()
+    ts = str(int(time.time()))
+    return body, {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Slack-Request-Timestamp": ts,
+        "X-Slack-Signature": compute(SLACK_SECRET, ts, body),
+    }
+
+
+async def _link_slack(api: Api, world: PayWorld, name: str) -> None:
+    """The organisation connects Slack and ``name`` links their Slack account."""
+    team = "T" + uuid.uuid4().hex[:10].upper()
+    await api.ok(
+        "PUT",
+        "/v1/integrations/slack",
+        world,
+        "admin",
+        json={"team_id": team, "bot_token": "xoxb-1234567890-test-bot-token"},
+    )
+    body, headers = _signed(
+        {
+            "team_id": team,
+            "user_id": "U" + uuid.uuid4().hex[:10].upper(),
+            "command": "/pairly",
+            "text": "connect",
+        }
+    )
+    answer = await api.client.post("/v1/integrations/slack/commands", content=body, headers=headers)
+    assert answer.status_code == 200, answer.text
+    found = re.search(r"/integrations/slack/connect#([A-Za-z0-9_-]{43})", answer.json()["text"])
+    assert found is not None
+    linked = await api.client.post(
+        "/v1/integrations/slack/connect/confirm",
+        json={"token": found.group(1)},
+        headers=api.headers(world, name),
+    )
+    assert linked.status_code == 200, linked.text
+
+
+async def test_bank_change_alerts_the_approvers_and_finance(
+    api: Api, world: PayWorld, owner_engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PAIRLY_PUBLIC_WEB_URL", WEB_URL)
+    await _link_slack(api, world, "approver")
+    await _vendor_for(api, world, demo("bank_change"))
+    invoice_id = await _run_email(api, world, owner_engine, "eml-0003")
+    detail = await api.invoice(world, invoice_id)
+    (mismatch,) = [f for f in _check(detail, "bank")["findings"] if f["rule"] == "bank_mismatch"]
+    ticket_id = mismatch["evidence"]["ticket_id"]
+    last4 = mismatch["evidence"]["printed_last4"]
+
+    rows = await notifications(
+        create_sessionmaker(api.engine), world.org_id, template_key="pay.bank_change.alert"
+    )
+    told = {"approver", "approver2", "finance"}
+    by_person: dict[uuid.UUID, dict[str, tuple[Any, dict[str, Any]]]] = {}
+    for row, content in rows:
+        by_person.setdefault(row.recipient_user_id, {})[row.channel] = (row, content)
+    # The approvers and the finance controller, nobody else (not the clerks, the admin,
+    # the auditor or the recruiter).
+    assert set(by_person) == {world.id(n) for n in told}
+    for name in told:
+        channels = by_person[world.id(name)]
+        assert set(channels) == {"email", "slack", "in_app"}
+        for row, _ in channels.values():
+            assert row.category == "urgent"
+            assert row.urgency == "urgent"
+        email_row, email = channels["email"]
+        assert email_row.status == "queued"
+        assert f"{WEB_URL}/pay/bank-changes/{ticket_id}" in email["text"]
+        assert email["link"] == f"/pay/bank-changes/{ticket_id}"
+        assert last4 in email["text"]
+        # Never more of the account number than its last four characters.
+        assert not re.search(r"[A-Z]{2}[0-9]{2}[A-Z0-9 ]{8,}", text_of(email))
+        slack_row, _ = channels["slack"]
+        expected = "queued" if name == "approver" else "suppressed"
+        assert slack_row.status == expected, (name, slack_row.status, slack_row.reason)
+    # The bell: an unread urgent item that opens the ticket.
+    feed = await api.ok("GET", "/v1/notifications", world, "finance")
+    (item,) = [i for i in feed["items"] if i["category"] == "urgent"]
+    assert item["link"] == f"/pay/bank-changes/{ticket_id}"
+    assert item["urgency"] == "urgent"
+    assert last4 in item["body"]
+    clerk_feed = await api.ok("GET", "/v1/notifications", world, "clerk")
+    assert not [i for i in clerk_feed["items"] if i["category"] == "urgent"]
 
 
 async def test_bank_mismatch_without_phone_holds_the_vendor_anyway(
