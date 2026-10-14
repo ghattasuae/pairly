@@ -11,6 +11,7 @@ import { JsonView } from "@/components/data/json-view";
 import { ApprovalStatusBadge, SlaBadge } from "@/components/data/status-badges";
 import { DocumentViewer } from "@/components/document/document-viewer";
 import { GuardrailNotice } from "@/components/document/guardrail-notice";
+import { isPayContext, PayApprovalEvidence } from "@/components/pay/approval-evidence";
 import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -217,6 +218,14 @@ export function ApprovalPanel({
                 <JsonView value={detail.payload} />
               </div>
             </Section>
+
+            {isPayContext(detail.context) && (
+              <Section title={t("payEvidence")} id={`${headingId}-pay`}>
+                <div className="rounded-xl border bg-surface p-4">
+                  <PayApprovalEvidence context={detail.context} />
+                </div>
+              </Section>
+            )}
 
             {context?.documentId && (
               <Section title={t("evidence")} id={`${headingId}-evidence`}>

@@ -54,7 +54,10 @@ export function PayUnavailable({ retry }: { retry: string }) {
   );
 }
 
-/** The Pay section's own tabs: vendors, invoices, bank-detail changes, onboarding invites. */
+/**
+ * The Pay section's own tabs: vendors, invoices, payment runs, bank-detail changes,
+ * onboarding invites, approval rules.
+ */
 export async function PayHeader({
   title,
   intro,
@@ -63,15 +66,17 @@ export async function PayHeader({
 }: {
   title: string;
   intro?: string;
-  current: "vendors" | "invoices" | "changes" | "invites" | null;
+  current: "vendors" | "invoices" | "runs" | "changes" | "invites" | "rules" | null;
   permissions: string[];
 }) {
   const t = await getTranslations("Pay.tabs");
   const tabs = [
     { key: "vendors" as const, href: "/pay", show: permissions.includes("pay.vendor.read") },
     { key: "invoices" as const, href: "/pay/invoices", show: permissions.includes("pay.invoice.read") },
+    { key: "runs" as const, href: "/pay/payment-runs", show: permissions.includes("pay.payment_run.read") },
     { key: "changes" as const, href: "/pay/bank-changes", show: permissions.includes("pay.bank_change.read") },
     { key: "invites" as const, href: "/pay/invites", show: permissions.includes("pay.vendor.write") },
+    { key: "rules" as const, href: "/pay/approval-rules", show: permissions.includes("pay.invoice.read") },
   ].filter((tab) => tab.show);
   return (
     <div className="space-y-4">

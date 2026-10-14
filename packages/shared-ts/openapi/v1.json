@@ -17752,6 +17752,162 @@
         "title": "PayInviteOut",
         "type": "object"
       },
+      "PayInvoiceApprovalOut": {
+        "description": "Who sent it for approval, the engine approval, and what was approved.",
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Account Id"
+          },
+          "approved_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Amount"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "approved_by_rule": {
+            "title": "Approved By Rule",
+            "type": "boolean"
+          },
+          "approved_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Currency"
+          },
+          "approver_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Approver Ids",
+            "type": "array"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "submitted_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted By"
+          }
+        },
+        "required": [
+          "submitted_by",
+          "submitted_at",
+          "approval_id",
+          "run_id",
+          "approved_at",
+          "approved_by_rule",
+          "approver_ids",
+          "approved_amount",
+          "approved_currency",
+          "approved_account_id"
+        ],
+        "title": "PayInvoiceApprovalOut",
+        "type": "object"
+      },
+      "PayInvoiceCodingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          }
+        },
+        "title": "PayInvoiceCodingIn",
+        "type": "object"
+      },
       "PayInvoiceCorrectionIn": {
         "additionalProperties": false,
         "properties": {
@@ -17833,6 +17989,17 @@
       },
       "PayInvoiceCreated": {
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -17848,6 +18015,17 @@
               }
             ],
             "title": "Currency"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
           },
           "document_id": {
             "format": "uuid",
@@ -17991,9 +18169,37 @@
       },
       "PayInvoiceDetail": {
         "properties": {
+          "approval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayInvoiceApprovalOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
           "can_process": {
             "title": "Can Process",
             "type": "boolean"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
           },
           "checks": {
             "items": {
@@ -18001,6 +18207,17 @@
             },
             "title": "Checks",
             "type": "array"
+          },
+          "checks_state": {
+            "default": "missing",
+            "enum": [
+              "current",
+              "stale",
+              "failed",
+              "missing"
+            ],
+            "title": "Checks State",
+            "type": "string"
           },
           "compare": {
             "items": {
@@ -18031,6 +18248,17 @@
             },
             "title": "Decision Ids",
             "type": "array"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
           },
           "document": {
             "$ref": "#/components/schemas/PayInvoiceDocumentOut"
@@ -18117,6 +18345,41 @@
               }
             ],
             "title": "Invoice Number"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "payment_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Run Id"
           },
           "po_number": {
             "anyOf": [
@@ -18723,8 +18986,38 @@
         "title": "PayInvoiceReviewIn",
         "type": "object"
       },
+      "PayInvoiceSubmitIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "PayInvoiceSubmitIn",
+        "type": "object"
+      },
       "PayInvoiceSummary": {
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -18740,6 +19033,17 @@
               }
             ],
             "title": "Currency"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
           },
           "document_id": {
             "format": "uuid",
@@ -19136,6 +19440,107 @@
         "title": "PayOnboardingPageOut",
         "type": "object"
       },
+      "PayPaymentSettingsIn": {
+        "additionalProperties": false,
+        "description": "Approval and payment settings (``pairly_pay.payment_settings``); omitted keys keep\ntheir current value. ``auto_approve_low_risk`` is off by default.",
+        "properties": {
+          "auto_approve_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Approve Currency"
+          },
+          "auto_approve_limit": {
+            "anyOf": [
+              {
+                "maximum": 1000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Approve Limit"
+          },
+          "auto_approve_low_risk": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Approve Low Risk"
+          },
+          "default_cash_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Cash Limit"
+          },
+          "payer_bic": {
+            "anyOf": [
+              {
+                "maxLength": 11,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payer Bic"
+          },
+          "payer_iban": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payer Iban"
+          },
+          "payer_name": {
+            "anyOf": [
+              {
+                "maxLength": 140,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payer Name"
+          }
+        },
+        "title": "PayPaymentSettingsIn",
+        "type": "object"
+      },
       "PayReasonIn": {
         "additionalProperties": false,
         "properties": {
@@ -19255,6 +19660,836 @@
         "title": "PayRiskOut",
         "type": "object"
       },
+      "PayRulesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayRulesOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PayRulesList",
+        "type": "object"
+      },
+      "PayRulesOut": {
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayRulesVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approval_type": {
+            "title": "Approval Type",
+            "type": "string"
+          },
+          "default_content": {
+            "title": "Default Content",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/PayRulesVersionOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "approval_type",
+          "title",
+          "active",
+          "default_content",
+          "versions"
+        ],
+        "title": "PayRulesOut",
+        "type": "object"
+      },
+      "PayRulesVersionOut": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "content",
+          "content_hash",
+          "created_at"
+        ],
+        "title": "PayRulesVersionOut",
+        "type": "object"
+      },
+      "PayRunCancelIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PayRunCancelIn",
+        "type": "object"
+      },
+      "PayRunDetail": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "approver_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Approver Ids",
+            "type": "array"
+          },
+          "can_approve": {
+            "title": "Can Approve",
+            "type": "boolean"
+          },
+          "can_cancel": {
+            "title": "Can Cancel",
+            "type": "boolean"
+          },
+          "can_export": {
+            "title": "Can Export",
+            "type": "boolean"
+          },
+          "can_mark_paid": {
+            "title": "Can Mark Paid",
+            "type": "boolean"
+          },
+          "cash_limit": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cash Limit",
+            "type": "string"
+          },
+          "close_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Reason"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "decision_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decision Ids",
+            "type": "array"
+          },
+          "due_on_or_before": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due On Or Before"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/PayRunExcludedOut"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "execution_date": {
+            "format": "date",
+            "title": "Execution Date",
+            "type": "string"
+          },
+          "exported_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exported At"
+          },
+          "exports": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Exports",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_count": {
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayRunItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          },
+          "proposed_by": {
+            "format": "uuid",
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "currency",
+          "cash_limit",
+          "total",
+          "item_count",
+          "execution_date",
+          "proposed_by",
+          "approval_id",
+          "approved_at",
+          "exported_at",
+          "paid_at",
+          "created_at",
+          "due_on_or_before",
+          "approver_ids",
+          "items",
+          "excluded",
+          "exports",
+          "close_reason",
+          "decision_ids",
+          "can_approve",
+          "can_export",
+          "can_mark_paid",
+          "can_cancel"
+        ],
+        "title": "PayRunDetail",
+        "type": "object"
+      },
+      "PayRunExcludedOut": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "reference",
+          "amount",
+          "due_date",
+          "reasons"
+        ],
+        "title": "PayRunExcludedOut",
+        "type": "object"
+      },
+      "PayRunExportIn": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "csv",
+            "enum": [
+              "csv",
+              "pain001"
+            ],
+            "title": "Format",
+            "type": "string"
+          }
+        },
+        "title": "PayRunExportIn",
+        "type": "object"
+      },
+      "PayRunItemOut": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "bank_account_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Masked"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "discount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "end_to_end_id": {
+            "title": "End To End Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "invoice_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Reference"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "vendor_id": {
+            "format": "uuid",
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "status",
+          "invoice_id",
+          "invoice_reference",
+          "invoice_number",
+          "vendor_id",
+          "vendor_name",
+          "amount",
+          "currency",
+          "due_date",
+          "discount",
+          "bank_account_masked",
+          "end_to_end_id",
+          "paid_at",
+          "payment_reference"
+        ],
+        "title": "PayRunItemOut",
+        "type": "object"
+      },
+      "PayRunList": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "counts"
+        ],
+        "title": "PayRunList",
+        "type": "object"
+      },
+      "PayRunPaidIn": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 500,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Ids"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reference": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[\\w./:#-]+$",
+            "title": "Reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "title": "PayRunPaidIn",
+        "type": "object"
+      },
+      "PayRunPreview": {
+        "properties": {
+          "cash_limit": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cash Limit",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/PayRunExcludedOut"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "cash_limit",
+          "total",
+          "items",
+          "excluded"
+        ],
+        "title": "PayRunPreview",
+        "type": "object"
+      },
+      "PayRunProposalIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cash_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1000000000000,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash Limit"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "due_on_or_before": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due On Or Before"
+          },
+          "execution_date": {
+            "format": "date",
+            "title": "Execution Date",
+            "type": "string"
+          },
+          "invoice_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 500,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Ids"
+          }
+        },
+        "required": [
+          "currency",
+          "execution_date"
+        ],
+        "title": "PayRunProposalIn",
+        "type": "object"
+      },
+      "PayRunSummary": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "cash_limit": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cash Limit",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "execution_date": {
+            "format": "date",
+            "title": "Execution Date",
+            "type": "string"
+          },
+          "exported_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exported At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_count": {
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          },
+          "proposed_by": {
+            "format": "uuid",
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "currency",
+          "cash_limit",
+          "total",
+          "item_count",
+          "execution_date",
+          "proposed_by",
+          "approval_id",
+          "approved_at",
+          "exported_at",
+          "paid_at",
+          "created_at"
+        ],
+        "title": "PayRunSummary",
+        "type": "object"
+      },
       "PaySettingsIn": {
         "additionalProperties": false,
         "properties": {
@@ -19273,6 +20508,16 @@
             "minimum": 0,
             "title": "Cooling Off Hours",
             "type": "integer"
+          },
+          "payments": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayPaymentSettingsIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "phone_change_window_days": {
             "default": 30,
@@ -19302,6 +20547,11 @@
           "cooling_off_hours": {
             "title": "Cooling Off Hours",
             "type": "integer"
+          },
+          "payments": {
+            "additionalProperties": true,
+            "title": "Payments",
+            "type": "object"
           },
           "phone_change_window_days": {
             "title": "Phone Change Window Days",
@@ -34629,6 +35879,27 @@
         ]
       }
     },
+    "/v1/pay/approval-rules": {
+      "get": {
+        "operationId": "approval_rules_v1_pay_approval_rules_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRulesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Approval Rules",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
     "/v1/pay/bank-changes": {
       "get": {
         "operationId": "list_changes_v1_pay_bank_changes_get",
@@ -34934,6 +36205,7 @@
                     "extracting",
                     "needs_review",
                     "ready",
+                    "awaiting_approval",
                     "approved",
                     "scheduled",
                     "paid",
@@ -35072,6 +36344,104 @@
           }
         },
         "summary": "Get Invoice Detail",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/checks": {
+      "post": {
+        "description": "Run every check again (stale results, or a check that could not run).",
+        "operationId": "rerun_checks_v1_pay_invoices__invoice_id__checks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInvoiceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rerun Checks",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/coding": {
+      "post": {
+        "description": "Set the department and category the approval rules route on. The checks run\nagain (the spend policy reads the coding).",
+        "operationId": "code_invoice_v1_pay_invoices__invoice_id__coding_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayInvoiceCodingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInvoiceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Code Invoice",
         "tags": [
           "pay"
         ]
@@ -35236,6 +36606,60 @@
         ]
       }
     },
+    "/v1/pay/invoices/{invoice_id}/submit": {
+      "post": {
+        "description": "Send a ``ready`` invoice for approval (``pay.invoice.submit``, people only).\nRefused (409, with the reasons) while the vendor is held, a bank-detail change is\nopen, or the checks are stale or failed. The approval run starts after the commit,\nunless an approval rule the organisation turned on approved it.",
+        "operationId": "submit_for_approval_route_v1_pay_invoices__invoice_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayInvoiceSubmitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInvoiceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit For Approval Route",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
     "/v1/pay/invoices/{invoice_id}/vendor": {
       "post": {
         "operationId": "link_invoice_vendor_v1_pay_invoices__invoice_id__vendor_post",
@@ -35284,6 +36708,363 @@
           }
         },
         "summary": "Link Invoice Vendor",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs": {
+      "get": {
+        "operationId": "list_runs_v1_pay_payment_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "awaiting_approval",
+                    "approved",
+                    "exported",
+                    "paid",
+                    "rejected",
+                    "cancelled",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Runs",
+        "tags": [
+          "pay"
+        ]
+      },
+      "post": {
+        "operationId": "propose_v1_pay_payment_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunProposalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs/preview": {
+      "post": {
+        "operationId": "preview_run_v1_pay_payment_runs_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunProposalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Run",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_detail_v1_pay_payment_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run Detail",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_v1_pay_payment_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunCancelIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs/{run_id}/export": {
+      "post": {
+        "operationId": "export_v1_pay_payment_runs__run_id__export_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunExportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Export V1 Pay Payment Runs  Run Id  Export Post"
+                }
+              },
+              "application/xml": {},
+              "text/csv": {}
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Something changed since the approval: no file"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/payment-runs/{run_id}/paid": {
+      "post": {
+        "operationId": "paid_v1_pay_payment_runs__run_id__paid_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunPaidIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Paid",
         "tags": [
           "pay"
         ]

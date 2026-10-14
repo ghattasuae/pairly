@@ -28,18 +28,25 @@ export function jsonProblem(status: number, code: string): Response {
   return Response.json({ code }, { status, headers: { "Cache-Control": "no-store" } });
 }
 
-/** Open an API request as the signed-in user in their active organisation. */
+/**
+ * Open an API request as the signed-in user in their active organisation. A GET unless
+ * `json` is given, which is sent as the body of a POST.
+ */
 export async function upstream(
   path: `/v1/${string}`,
-  init: { accept: string; signal?: AbortSignal; extraHeaders?: Record<string, string> },
+  init: { accept: string; signal?: AbortSignal; extraHeaders?: Record<string, string>; json?: unknown },
 ): Promise<Response> {
   const token = await getApiToken();
   if (!token) throw new NotSignedInError();
   const headers = buildApiHeaders(token, await getActiveOrgId());
   headers.set("Accept", init.accept);
   for (const [key, value] of Object.entries(init.extraHeaders ?? {})) headers.set(key, value);
+  const post = init.json !== undefined;
+  if (post) headers.set("Content-Type", "application/json");
   return fetch(`${serverEnv().apiInternalUrl}${path}`, {
+    method: post ? "POST" : "GET",
     headers,
+    ...(post ? { body: JSON.stringify(init.json) } : {}),
     cache: "no-store",
     redirect: "error",
     ...(init.signal ? { signal: init.signal } : {}),

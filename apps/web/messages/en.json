@@ -711,7 +711,8 @@
       },
       "reasonLabel": "Reason",
       "reasonHint": "Required. Say what is wrong or what to change. Press Ctrl and Enter to send."
-    }
+    },
+    "payEvidence": "Invoice evidence"
   },
   "ApprovalLink": {
     "titlePlain": "Approval link",
@@ -2919,7 +2920,9 @@
       "vendors": "Vendors",
       "changes": "Bank detail changes",
       "invites": "Onboarding invites",
-      "invoices": "Invoices"
+      "invoices": "Invoices",
+      "runs": "Payment runs",
+      "rules": "Approval rules"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -2931,7 +2934,11 @@
       "trn_invalid": "The TRN is not valid. A UAE TRN has 15 digits.",
       "vendor_duplicate": "This vendor looks like one that already exists. Check the possible duplicates.",
       "vendor_not_open": "This vendor was rejected or archived.",
-      "segregation_of_duties": "You asked for this change, so someone else must make the call and approve it."
+      "segregation_of_duties": "You asked for this change, so someone else must make the call and approve it.",
+      "not_approvable": "This invoice cannot be sent for approval yet. Check the reasons shown.",
+      "export_refused": "The bank file was not made because something changed since the approval.",
+      "nothing_to_pay": "No approved invoice can go in this run.",
+      "cash_limit_required": "Set a cash limit for the run."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -3259,7 +3266,8 @@
       "approved": "Approved",
       "scheduled": "Scheduled",
       "paid": "Paid",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_approval": "Awaiting approval"
     },
     "reasons": {
       "extraction": "A value needs checking",
@@ -3278,7 +3286,13 @@
       "check_failed": "A check could not run",
       "check": "A check found something to look at",
       "check_error": "A check could not run",
-      "risk": "The risk score needs a person"
+      "risk": "The risk score needs a person",
+      "coded_after_ready": "The coding changed after it was ready",
+      "approval_blocked": "It could not be sent for approval",
+      "approval_refused": "The approval was refused at the last check",
+      "approval_not_possible": "No approval chain or approver could be found",
+      "approval_not_started": "The approval did not start",
+      "changes_requested_by_approver": "An approver asked for changes"
     },
     "fields": {
       "vendor_name": "Vendor",
@@ -3300,7 +3314,9 @@
       "description": "Description",
       "quantity": "Quantity",
       "unit_price": "Unit price",
-      "line_total": "Line total"
+      "line_total": "Line total",
+      "department": "Department",
+      "category": "Category"
     },
     "invoices": {
       "title": "Invoices",
@@ -3414,6 +3430,153 @@
       "empty": "None",
       "differs": "(differs)",
       "lines": "Line items, this invoice and the original"
+    },
+    "blockers": {
+      "no_vendor": "No vendor is linked",
+      "vendor_not_active": "The vendor is not active",
+      "vendor_held": "Payments to this vendor are on hold",
+      "bank_change_open": "A bank detail change is open for this vendor",
+      "no_bank_details": "The vendor has no bank details on file",
+      "checks_stale": "The checks are out of date",
+      "checks_failed": "A check could not run",
+      "checks_missing": "The checks have not run",
+      "amount_missing": "There is no amount to pay",
+      "currency_missing": "There is no currency",
+      "not_approved": "Not approved",
+      "bank_details_changed": "The bank details changed since the approval",
+      "checks_changed_since_approval": "The invoice changed since the approval",
+      "amount_changed": "The amount changed since the approval",
+      "currency_changed": "The currency changed since the approval",
+      "invoice_not_in_this_run": "The invoice is no longer in this run",
+      "invoice_missing": "The invoice is missing",
+      "over_cash_limit": "Over the cash limit of the run",
+      "not_due_yet": "Not due by the chosen date",
+      "run_full": "The run is full",
+      "nothing_left_to_pay": "Nothing is left to pay in this run",
+      "payer_details_missing": "Add the paying account in the Pay settings first",
+      "not_ready": "The invoice is not ready"
+    },
+    "approval": {
+      "title": "Approval and payment",
+      "checksState": {
+        "current": "Checks current",
+        "stale": "Checks out of date",
+        "failed": "A check could not run",
+        "missing": "Checks not run"
+      },
+      "checksHelp": {
+        "stale": "The invoice changed after the checks ran. Run them again before it can move on.",
+        "failed": "A check could not run. Run the checks again; it cannot be approved until they all run.",
+        "missing": "The checks have not finished for this invoice. Run them before it can move on."
+      },
+      "rerun": "Run the checks again",
+      "department": "Department",
+      "category": "Category",
+      "saveCoding": "Save coding",
+      "codingHelp": "The approval rules use the department and the category. Saving runs the checks again.",
+      "blocked": "It cannot be sent for approval yet:",
+      "note": "Note for the approvers (optional)",
+      "submit": "Send for approval",
+      "submitHelp": "You processed this invoice, so you cannot approve it.",
+      "awaiting": "Waiting for the approvers.",
+      "openInInbox": "Open in the inbox",
+      "approvedByRule": "Approved by a rule on {when}. A finance controller still approves the payment run.",
+      "approvedByPeople": "{count, plural, one {Approved by # person on {when}} other {Approved by # people on {when}}}",
+      "inRun": "Open the payment run",
+      "paidOn": "Paid on {when}"
+    },
+    "runStatus": {
+      "awaiting_approval": "Awaiting approval",
+      "approved": "Approved",
+      "exported": "File downloaded",
+      "paid": "Paid",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled",
+      "failed": "Stopped"
+    },
+    "runs": {
+      "title": "Payment runs",
+      "intro": "Pay approved invoices in one run. A finance controller approves it, then you download the bank file. Pairly never sends money.",
+      "detailTitle": "Payment run",
+      "detailHeading": "Payment run {reference}",
+      "proposeTitle": "Propose a payment run",
+      "proposeHelp": "Approved invoices due by the date are taken oldest first, up to the cash limit. Held vendors and invoices that changed are left out, with the reason.",
+      "currency": "Currency",
+      "cashLimit": "Cash limit",
+      "executionDate": "Pay on",
+      "dueBy": "Due on or before",
+      "preview": "Preview",
+      "previewSummary": "{count, plural, one {# invoice for} other {# invoices for}}",
+      "due": "due {when}",
+      "noDue": "no due date",
+      "discountNote": "Early payment discounts are not calculated yet.",
+      "propose": "Propose this run",
+      "filter": "Filter by status",
+      "all": "All",
+      "emptyTitle": "No payment runs yet",
+      "emptyBody": "Propose one when invoices are approved.",
+      "invoices": "{count, plural, one {# invoice} other {# invoices}}",
+      "payOn": "Pay on {when}",
+      "excluded": "{count, plural, one {# invoice left out} other {# invoices left out}}",
+      "limitLine": "{count, plural, one {# invoice, cash limit} other {# invoices, cash limit}}",
+      "unpaid": "Not paid yet:",
+      "paid": "Paid:",
+      "closed": "Ended:",
+      "awaiting": "Waiting for a finance controller.",
+      "openInInbox": "Approve or reject in the inbox",
+      "noBank": "Pairly has no bank connection. You take the file to your bank.",
+      "items": "{count, plural, one {# invoice in this run} other {# invoices in this run}}",
+      "col": {
+        "invoice": "Invoice",
+        "vendor": "Vendor",
+        "due": "Due",
+        "account": "Account",
+        "amount": "Amount",
+        "status": "Status"
+      },
+      "accountChanged": "changed",
+      "itemStatus": {
+        "included": "To pay",
+        "paid": "Paid",
+        "released": "Taken out"
+      },
+      "fileTitle": "Bank file",
+      "fileHelp": "Every payment is checked again against the vendor master before the file is made.",
+      "downloadCsv": "Download CSV",
+      "downloadXml": "Download ISO 20022 XML",
+      "refused": "No file was made. This changed since the approval:",
+      "exportLine": "{format}, {count} payments, digest",
+      "bankReference": "Bank reference",
+      "markPaid": "Mark the rest paid",
+      "cancel": "Cancel this run",
+      "cancelReason": "Why",
+      "confirmCancel": "Cancel the run"
+    },
+    "rules": {
+      "title": "Approval rules",
+      "intro": "Who approves what, as versioned rules. Read only here.",
+      "version": "Version {version}",
+      "notUsed": "Not used yet",
+      "since": "since {when}",
+      "defaultHelp": "These default rules become version 1 the first time this kind of approval is used.",
+      "chains": "Chains, first match wins:",
+      "versions": "Versions",
+      "versionLine": "Version {version}, {when}",
+      "publishHelp": "An admin publishes a new version. Approvals keep the version they used."
+    },
+    "evidence": {
+      "leftOut": "{count, plural, one {# invoice was left out} other {# invoices were left out}}",
+      "openRun": "Open the payment run",
+      "risk": "Risk",
+      "level": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "vendorRisk": "Vendor risk: {level}",
+      "suspectedOriginals": "{count, plural, one {# possible original, compare them side by side} other {# possible originals, compare them side by side}}",
+      "openInvoice": "Open the invoice side by side"
     }
   },
   "VendorOnboarding": {

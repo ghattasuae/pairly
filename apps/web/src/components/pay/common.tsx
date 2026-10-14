@@ -22,6 +22,10 @@ const PAY_CODES = new Set([
   "vendor_duplicate",
   "vendor_not_open",
   "segregation_of_duties",
+  "not_approvable",
+  "export_refused",
+  "nothing_to_pay",
+  "cash_limit_required",
 ]);
 
 export function ErrorText({ code, className }: { code: string | null; className?: string }) {

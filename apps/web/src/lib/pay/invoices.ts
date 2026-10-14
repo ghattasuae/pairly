@@ -16,6 +16,7 @@ export const INVOICE_STATUSES = [
   "extracting",
   "needs_review",
   "ready",
+  "awaiting_approval",
   "approved",
   "scheduled",
   "paid",

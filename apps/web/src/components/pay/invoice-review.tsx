@@ -35,6 +35,7 @@ import type { PayInvoiceDetail } from "@/lib/pay/types";
 import { cn } from "@/lib/utils";
 
 import { ErrorText, VendorStatusBadge } from "./common";
+import { InvoiceApprovalPanel } from "./invoice-approval";
 import { ComparePanel, InvoiceChecks } from "./invoice-checks";
 
 const KNOWN_REASONS = new Set([
@@ -55,11 +56,22 @@ const KNOWN_REASONS = new Set([
   "check",
   "check_error",
   "risk",
+  "coded_after_ready",
+  "approval_blocked",
+  "approval_refused",
+  "approval_not_possible",
+  "approval_not_started",
+  "changes_requested_by_approver",
 ]);
 
 export function InvoiceStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.invoiceStatus");
-  const variant = status === "needs_review" ? "signal" : status === "ready" || status === "paid" ? "default" : "outline";
+  const variant =
+    status === "needs_review" || status === "awaiting_approval"
+      ? "signal"
+      : status === "ready" || status === "approved" || status === "paid"
+        ? "default"
+        : "outline";
   return (
     <Badge variant={variant} data-invoice-status={status}>
       {t(status as "ready")}
@@ -403,6 +415,8 @@ export function InvoiceReview({
         </section>
 
         <InvoiceChecks checks={invoice.checks ?? []} risk={invoice.risk} />
+
+        <InvoiceApprovalPanel invoice={invoice} onChange={setInvoice} />
 
         {invoice.extraction ? (
           <div className="space-y-4">

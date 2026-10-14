@@ -3871,6 +3871,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/approval-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval Rules */
+        get: operations["approval_rules_v1_pay_approval_rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/bank-changes": {
         parameters: {
             query?: never;
@@ -3991,6 +4008,47 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/invoices/{invoice_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rerun Checks
+         * @description Run every check again (stale results, or a check that could not run).
+         */
+        post: operations["rerun_checks_v1_pay_invoices__invoice_id__checks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/coding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Code Invoice
+         * @description Set the department and category the approval rules route on. The checks run
+         *     again (the spend policy reads the coding).
+         */
+        post: operations["code_invoice_v1_pay_invoices__invoice_id__coding_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/invoices/{invoice_id}/corrections": {
         parameters: {
             query?: never;
@@ -4042,6 +4100,29 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/invoices/{invoice_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit For Approval Route
+         * @description Send a ``ready`` invoice for approval (``pay.invoice.submit``, people only).
+         *     Refused (409, with the reasons) while the vendor is held, a bank-detail change is
+         *     open, or the checks are stale or failed. The approval run starts after the commit,
+         *     unless an approval rule the organisation turned on approved it.
+         */
+        post: operations["submit_for_approval_route_v1_pay_invoices__invoice_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/invoices/{invoice_id}/vendor": {
         parameters: {
             query?: never;
@@ -4053,6 +4134,109 @@ export type paths = {
         put?: never;
         /** Link Invoice Vendor */
         post: operations["link_invoice_vendor_v1_pay_invoices__invoice_id__vendor_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Runs */
+        get: operations["list_runs_v1_pay_payment_runs_get"];
+        put?: never;
+        /** Propose */
+        post: operations["propose_v1_pay_payment_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run Detail */
+        get: operations["get_run_detail_v1_pay_payment_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs/{run_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_v1_pay_payment_runs__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs/{run_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export */
+        post: operations["export_v1_pay_payment_runs__run_id__export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs/{run_id}/paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paid */
+        post: operations["paid_v1_pay_payment_runs__run_id__paid_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/payment-runs/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Run */
+        post: operations["preview_run_v1_pay_payment_runs_preview_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10888,6 +11072,39 @@ export type components = {
             /** Vendor Id */
             vendor_id: string | null;
         };
+        /**
+         * PayInvoiceApprovalOut
+         * @description Who sent it for approval, the engine approval, and what was approved.
+         */
+        PayInvoiceApprovalOut: {
+            /** Approval Id */
+            approval_id: string | null;
+            /** Approved Account Id */
+            approved_account_id: string | null;
+            /** Approved Amount */
+            approved_amount: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Approved By Rule */
+            approved_by_rule: boolean;
+            /** Approved Currency */
+            approved_currency: string | null;
+            /** Approver Ids */
+            approver_ids: string[];
+            /** Run Id */
+            run_id: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Submitted By */
+            submitted_by: string | null;
+        };
+        /** PayInvoiceCodingIn */
+        PayInvoiceCodingIn: {
+            /** Category */
+            category?: string | null;
+            /** Department */
+            department?: string | null;
+        };
         /** PayInvoiceCorrectionIn */
         PayInvoiceCorrectionIn: {
             /** Field Path */
@@ -10925,6 +11142,8 @@ export type components = {
         };
         /** PayInvoiceCreated */
         PayInvoiceCreated: {
+            /** Category */
+            category?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -10932,6 +11151,8 @@ export type components = {
             created_at: string;
             /** Currency */
             currency: string | null;
+            /** Department */
+            department?: string | null;
             /**
              * Document Id
              * Format: uuid
@@ -10973,10 +11194,21 @@ export type components = {
         };
         /** PayInvoiceDetail */
         PayInvoiceDetail: {
+            approval?: components["schemas"]["PayInvoiceApprovalOut"] | null;
+            /** Blockers */
+            blockers?: string[];
             /** Can Process */
             can_process: boolean;
+            /** Category */
+            category?: string | null;
             /** Checks */
             checks?: components["schemas"]["PayCheckOut"][];
+            /**
+             * Checks State
+             * @default missing
+             * @enum {string}
+             */
+            checks_state: "current" | "stale" | "failed" | "missing";
             /** Compare */
             compare?: components["schemas"]["PayCompareOut"][];
             /**
@@ -10988,6 +11220,8 @@ export type components = {
             currency: string | null;
             /** Decision Ids */
             decision_ids: string[];
+            /** Department */
+            department?: string | null;
             document: components["schemas"]["PayInvoiceDocumentOut"];
             /**
              * Document Id
@@ -11011,6 +11245,12 @@ export type components = {
             invoice_date: string | null;
             /** Invoice Number */
             invoice_number: string | null;
+            /** Paid At */
+            paid_at?: string | null;
+            /** Payment Reference */
+            payment_reference?: string | null;
+            /** Payment Run Id */
+            payment_run_id?: string | null;
             /** Po Number */
             po_number: string | null;
             /** Reference */
@@ -11187,8 +11427,15 @@ export type components = {
             /** Note */
             note?: string | null;
         };
+        /** PayInvoiceSubmitIn */
+        PayInvoiceSubmitIn: {
+            /** Note */
+            note?: string | null;
+        };
         /** PayInvoiceSummary */
         PayInvoiceSummary: {
+            /** Category */
+            category?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -11196,6 +11443,8 @@ export type components = {
             created_at: string;
             /** Currency */
             currency: string | null;
+            /** Department */
+            department?: string | null;
             /**
              * Document Id
              * Format: uuid
@@ -11323,6 +11572,27 @@ export type components = {
             /** Max Documents */
             max_documents: number;
         };
+        /**
+         * PayPaymentSettingsIn
+         * @description Approval and payment settings (``pairly_pay.payment_settings``); omitted keys keep
+         *     their current value. ``auto_approve_low_risk`` is off by default.
+         */
+        PayPaymentSettingsIn: {
+            /** Auto Approve Currency */
+            auto_approve_currency?: string | null;
+            /** Auto Approve Limit */
+            auto_approve_limit?: number | string | null;
+            /** Auto Approve Low Risk */
+            auto_approve_low_risk?: boolean | null;
+            /** Default Cash Limit */
+            default_cash_limit?: number | string | null;
+            /** Payer Bic */
+            payer_bic?: string | null;
+            /** Payer Iban */
+            payer_iban?: string | null;
+            /** Payer Name */
+            payer_name?: string | null;
+        };
         /** PayReasonIn */
         PayReasonIn: {
             /** Reason */
@@ -11358,11 +11628,281 @@ export type components = {
             /** Score */
             score: number | null;
         };
+        /** PayRulesList */
+        PayRulesList: {
+            /** Items */
+            items: components["schemas"]["PayRulesOut"][];
+        };
+        /** PayRulesOut */
+        PayRulesOut: {
+            active: components["schemas"]["PayRulesVersionOut"] | null;
+            /** Approval Type */
+            approval_type: string;
+            /** Default Content */
+            default_content: string;
+            /** Title */
+            title: string;
+            /** Versions */
+            versions: components["schemas"]["PayRulesVersionOut"][];
+        };
+        /** PayRulesVersionOut */
+        PayRulesVersionOut: {
+            /** Content */
+            content: string;
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+        };
+        /** PayRunCancelIn */
+        PayRunCancelIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** PayRunDetail */
+        PayRunDetail: {
+            /** Approval Id */
+            approval_id: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Approver Ids */
+            approver_ids: string[];
+            /** Can Approve */
+            can_approve: boolean;
+            /** Can Cancel */
+            can_cancel: boolean;
+            /** Can Export */
+            can_export: boolean;
+            /** Can Mark Paid */
+            can_mark_paid: boolean;
+            /** Cash Limit */
+            cash_limit: string;
+            /** Close Reason */
+            close_reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Decision Ids */
+            decision_ids: string[];
+            /** Due On Or Before */
+            due_on_or_before: string | null;
+            /** Excluded */
+            excluded: components["schemas"]["PayRunExcludedOut"][];
+            /**
+             * Execution Date
+             * Format: date
+             */
+            execution_date: string;
+            /** Exported At */
+            exported_at: string | null;
+            /** Exports */
+            exports: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Item Count */
+            item_count: number;
+            /** Items */
+            items: components["schemas"]["PayRunItemOut"][];
+            /** Paid At */
+            paid_at: string | null;
+            /**
+             * Proposed By
+             * Format: uuid
+             */
+            proposed_by: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string;
+        };
+        /** PayRunExcludedOut */
+        PayRunExcludedOut: {
+            /** Amount */
+            amount: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Reasons */
+            reasons: string[];
+            /** Reference */
+            reference: string | null;
+        };
+        /** PayRunExportIn */
+        PayRunExportIn: {
+            /**
+             * Format
+             * @default csv
+             * @enum {string}
+             */
+            format: "csv" | "pain001";
+        };
+        /** PayRunItemOut */
+        PayRunItemOut: {
+            /** Amount */
+            amount: string;
+            /** Bank Account Masked */
+            bank_account_masked: string | null;
+            /** Currency */
+            currency: string;
+            /** Discount */
+            discount: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** End To End Id */
+            end_to_end_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Invoice Reference */
+            invoice_reference: string | null;
+            /** Paid At */
+            paid_at: string | null;
+            /** Payment Reference */
+            payment_reference: string | null;
+            /** Position */
+            position: number;
+            /** Status */
+            status: string;
+            /**
+             * Vendor Id
+             * Format: uuid
+             */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayRunList */
+        PayRunList: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["PayRunSummary"][];
+        };
+        /** PayRunPaidIn */
+        PayRunPaidIn: {
+            /** Invoice Ids */
+            invoice_ids?: string[] | null;
+            /** Note */
+            note?: string | null;
+            /** Reference */
+            reference: string;
+        };
+        /** PayRunPreview */
+        PayRunPreview: {
+            /** Cash Limit */
+            cash_limit: string;
+            /** Currency */
+            currency: string;
+            /** Excluded */
+            excluded: components["schemas"]["PayRunExcludedOut"][];
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Total */
+            total: string;
+        };
+        /** PayRunProposalIn */
+        PayRunProposalIn: {
+            /** Cash Limit */
+            cash_limit?: number | string | null;
+            /** Currency */
+            currency: string;
+            /** Due On Or Before */
+            due_on_or_before?: string | null;
+            /**
+             * Execution Date
+             * Format: date
+             */
+            execution_date: string;
+            /** Invoice Ids */
+            invoice_ids?: string[] | null;
+        };
+        /** PayRunSummary */
+        PayRunSummary: {
+            /** Approval Id */
+            approval_id: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Cash Limit */
+            cash_limit: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Execution Date
+             * Format: date
+             */
+            execution_date: string;
+            /** Exported At */
+            exported_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Item Count */
+            item_count: number;
+            /** Paid At */
+            paid_at: string | null;
+            /**
+             * Proposed By
+             * Format: uuid
+             */
+            proposed_by: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string;
+        };
         /** PaySettingsIn */
         PaySettingsIn: {
             checks?: components["schemas"]["PayCheckSettingsIn"] | null;
             /** Cooling Off Hours */
             cooling_off_hours: number;
+            payments?: components["schemas"]["PayPaymentSettingsIn"] | null;
             /**
              * Phone Change Window Days
              * @default 30
@@ -11379,6 +11919,10 @@ export type components = {
             };
             /** Cooling Off Hours */
             cooling_off_hours: number;
+            /** Payments */
+            payments?: {
+                [key: string]: unknown;
+            };
             /** Phone Change Window Days */
             phone_change_window_days: number;
         };
@@ -20297,6 +20841,26 @@ export interface operations {
             };
         };
     };
+    approval_rules_v1_pay_approval_rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRulesList"];
+                };
+            };
+        };
+    };
     list_changes_v1_pay_bank_changes_get: {
         parameters: {
             query?: {
@@ -20468,7 +21032,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 q?: string | null;
-                status?: ("received" | "extracting" | "needs_review" | "ready" | "approved" | "scheduled" | "paid" | "rejected") | null;
+                status?: ("received" | "extracting" | "needs_review" | "ready" | "awaiting_approval" | "approved" | "scheduled" | "paid" | "rejected") | null;
             };
             header?: never;
             path?: never;
@@ -20547,6 +21111,72 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rerun_checks_v1_pay_invoices__invoice_id__checks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    code_invoice_v1_pay_invoices__invoice_id__coding_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceCodingIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -20673,6 +21303,41 @@ export interface operations {
             };
         };
     };
+    submit_for_approval_route_v1_pay_invoices__invoice_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceSubmitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     link_invoice_vendor_v1_pay_invoices__invoice_id__vendor_post: {
         parameters: {
             query?: never;
@@ -20695,6 +21360,249 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runs_v1_pay_payment_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                status?: ("awaiting_approval" | "approved" | "exported" | "paid" | "rejected" | "cancelled" | "failed") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_v1_pay_payment_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunProposalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_detail_v1_pay_payment_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_v1_pay_payment_runs__run_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunCancelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_v1_pay_payment_runs__run_id__export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunExportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "application/xml": unknown;
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Something changed since the approval: no file */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paid_v1_pay_payment_runs__run_id__paid_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunPaidIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_run_v1_pay_payment_runs_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunProposalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRunPreview"];
                 };
             };
             /** @description Validation Error */

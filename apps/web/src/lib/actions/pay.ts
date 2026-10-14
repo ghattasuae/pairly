@@ -17,6 +17,8 @@ import type {
   PayInviteCreated,
   PayInvite,
   PayInvoiceDetail,
+  PayRunDetail,
+  PayRunPreview,
   PayTicketDetail,
   PayVendorCheck,
   PayVendorDetail,
@@ -263,14 +265,28 @@ export async function correctInvoiceField(
   return toAction(result, (invoice) => ({ invoice }));
 }
 
-/** Mark reviewed (to ready), reject (with a reason) or link the vendor. */
+/**
+ * Mark reviewed (to ready), reject (with a reason), link the vendor, run the checks
+ * again, or send for approval (with an optional note).
+ */
 export async function invoiceAction(
   invoiceId: string,
-  action: "review" | "reject" | "vendor",
+  action: "review" | "reject" | "vendor" | "checks" | "submit",
   text: string,
 ): Promise<ActionResult<{ invoice: PayInvoiceDetail }>> {
   if (!uuid.safeParse(invoiceId).success) return bad;
   const path = { params: { path: { invoice_id: invoiceId } } };
+  if (action === "checks") {
+    const result = await callApi((api) => api.POST("/v1/pay/invoices/{invoice_id}/checks", path));
+    return toAction(result, (invoice) => ({ invoice }));
+  }
+  if (action === "submit") {
+    if (text.length > 1000) return bad;
+    const result = await callApi((api) =>
+      api.POST("/v1/pay/invoices/{invoice_id}/submit", { ...path, body: text.trim() ? { note: text.trim() } : {} }),
+    );
+    return toAction(result, (invoice) => ({ invoice }));
+  }
   if (action === "review") {
     if (text.length > 1000) return bad;
     const result = await callApi((api) =>
@@ -293,4 +309,90 @@ export async function invoiceAction(
     return toAction(result, (invoice) => ({ invoice }));
   }
   return bad;
+}
+
+const codingKey = z.union([z.literal(""), z.string().regex(/^[a-z][a-z0-9_]{0,63}$/)]);
+
+/** Set the department and category the approval rules route on. The checks run again. */
+export async function codeInvoice(
+  invoiceId: string,
+  input: { department: string; category: string },
+): Promise<ActionResult<{ invoice: PayInvoiceDetail }>> {
+  const parsed = z.object({ department: codingKey, category: codingKey }).strict().safeParse(input);
+  if (!uuid.safeParse(invoiceId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/invoices/{invoice_id}/coding", {
+      params: { path: { invoice_id: invoiceId } },
+      body: { department: parsed.data.department || null, category: parsed.data.category || null },
+    }),
+  );
+  return toAction(result, (invoice) => ({ invoice }));
+}
+
+// ------------------------------------------------------------------ payment runs (WP4.7)
+
+const decimal = z.string().trim().regex(/^\d{1,13}(\.\d{1,4})?$/);
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+const proposalInput = z
+  .object({
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    cash_limit: decimal,
+    execution_date: isoDate,
+    due_on_or_before: z.union([z.literal(""), isoDate]),
+  })
+  .strict();
+
+export type PayRunProposalInput = z.input<typeof proposalInput>;
+
+function proposalBody(input: z.output<typeof proposalInput>) {
+  return {
+    currency: input.currency,
+    cash_limit: input.cash_limit,
+    execution_date: input.execution_date,
+    ...(input.due_on_or_before ? { due_on_or_before: input.due_on_or_before } : {}),
+  };
+}
+
+/** What a proposal would pay and leave out (writes nothing). */
+export async function previewRun(input: PayRunProposalInput): Promise<ActionResult<{ preview: PayRunPreview }>> {
+  const parsed = proposalInput.safeParse(input);
+  if (!parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/payment-runs/preview", { body: proposalBody(parsed.data) as never }),
+  );
+  return toAction(result, (preview) => ({ preview }));
+}
+
+/** Propose the run; a finance controller approves it in the inbox. */
+export async function proposeRun(input: PayRunProposalInput): Promise<ActionResult<{ run: PayRunDetail }>> {
+  const parsed = proposalInput.safeParse(input);
+  if (!parsed.success) return bad;
+  const result = await callApi(
+    (api) => api.POST("/v1/pay/payment-runs", { body: proposalBody(parsed.data) as never }),
+    { okStatuses: [201] },
+  );
+  return toAction(result, (run) => ({ run }));
+}
+
+/** Mark the run's unpaid invoices paid (after the bank confirmed), or cancel the run. */
+export async function runAction(
+  runId: string,
+  action: "paid" | "cancel",
+  text: string,
+): Promise<ActionResult<{ run: PayRunDetail }>> {
+  if (!uuid.safeParse(runId).success) return bad;
+  const path = { params: { path: { run_id: runId } } };
+  if (action === "paid") {
+    if (!/^[\w./:#-]{1,64}$/.test(text.trim())) return bad;
+    const result = await callApi((api) =>
+      api.POST("/v1/pay/payment-runs/{run_id}/paid", { ...path, body: { reference: text.trim() } }),
+    );
+    return toAction(result, (run) => ({ run }));
+  }
+  if (!reason.safeParse(text).success || text.trim().length > 1000) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/payment-runs/{run_id}/cancel", { ...path, body: { reason: text.trim() } }),
+  );
+  return toAction(result, (run) => ({ run }));
 }
