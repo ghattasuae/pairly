@@ -46,7 +46,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("ck_pay_purchase_orders_closed_has_evidence", T, type_="check")
+    op.drop_constraint("closed_has_evidence", T, type_="check")
     op.drop_column(T, "close_reason")
     op.drop_column(T, "closed_by_id")
     op.drop_column(T, "closed_by_type")

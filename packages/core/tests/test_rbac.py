@@ -310,6 +310,7 @@ def test_workflow_scope_limits_what_must_be_held(registry: RoleRegistry) -> None
         "pay.bank_change.approve",
         "pay.invoice.read",
         "pay.invoice.approve",
+        "pay.message.approve",
         "pay.document.read",
         "pay.extraction.read",
         "pay.payment_run.read",

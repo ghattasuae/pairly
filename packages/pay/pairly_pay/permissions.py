@@ -64,8 +64,8 @@ Who does what (brief 4.1, 6.2):
 * **Messages about exceptions** (``pay.message.*``, brief 4.5.4): ``create`` a drafted
   message to a vendor contact on file or to the requester (AP clerks, finance
   controllers; the start permission of the ``pay_message`` graph, so the writer is a
-  preparer); ``approve`` it before it is sent (another AP clerk or a finance
-  controller; an ``approve`` action, so a second factor).
+  preparer); ``approve`` it before it is sent (approvers and finance controllers, who
+  already decide for Pay; an ``approve`` action, so a second factor).
 * **Documents** (``pay.document.read``): Pay documents (invoices, onboarding files) are
   read with Pay's own permission, so a member limited to Pay can open the invoice
   viewer. Uploads to ``/v1/documents`` stay on ``core.document.upload`` (no
@@ -221,7 +221,7 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
     PermissionSpec(
         MESSAGE_APPROVE,
         "Approve a drafted message before it is sent",
-        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+        frozenset({R.APPROVER, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(DOCUMENT_READ, "View Pay documents and their content", _READERS | {R.AGENT}),
     PermissionSpec(

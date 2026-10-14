@@ -637,10 +637,11 @@ async def test_me_reports_second_factor(live: Live, orgs: TwoTenants) -> None:
     ).json()
     assert without["second_factor"] is False
     # Approvers decide pay appeals through pay.invoice.approve (scoped per workflow), and
-    # approve vendor bank-detail changes.
+    # approve vendor bank-detail changes and drafted messages about invoice exceptions.
     assert without["second_factor_permissions"] == [
         "pay.bank_change.approve",
         "pay.invoice.approve",
+        "pay.message.approve",
     ]
     with_otp = (
         await live.client.get("/v1/me", headers=live.auth(a.subject, org=a.org_id, amr=OTP))

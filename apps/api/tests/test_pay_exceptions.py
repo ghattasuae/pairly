@@ -167,7 +167,7 @@ async def test_a_vendor_message_is_sent_only_after_another_person_approves(
     queued = "SELECT template_key, status FROM notifications WHERE approval_id = :a"
     assert await owner_rows(owner_engine, fworld.org_id, queued, {"a": approval_id}) == []
 
-    decided = await flow.decide(fworld, "clerk2", approval_id)
+    decided = await flow.decide(fworld, "approver", approval_id)
     assert decided.status_code == 200, decided.text
     (notification,) = await owner_rows(owner_engine, fworld.org_id, queued, {"a": approval_id})
     assert notification.template_key == "pay.vendor.message"
