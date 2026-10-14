@@ -228,7 +228,8 @@ calls (for example `infra/docker-compose.yml -f my-override.yml`) and implies
 
 Development seed: `make dev-seed-approval ORG=<slug> EMAIL=<member email> ARGS="..."` gives
 the member the `approver` role in Pay, starts a placeholder run and requests one
-`pay.invoice` approval through the real approval service (`--overdue`, `--link approve`
+`pay.invoice` approval through the real approval service, routed by Pay's bundled default
+rules (the seed brings no rules of its own; `--overdue`, `--link approve`
 for a signed link token, `--decision` for a synthetic decision record). It prints JSON and
 refuses to run without `PAIRLY_DEVSEED=1` (the target sets it) or with
 `PAIRLY_ENV=production`. After a decision the API logs that the placeholder run cannot

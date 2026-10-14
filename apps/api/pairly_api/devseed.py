@@ -5,8 +5,9 @@
     python -m pairly_api.devseed approval --org-slug e2e-x --approver-email you@e2e.test \
         [--title "..."] [--overdue] [--link approve|reject|request_changes] [--decision]
 
-Creates one pending approval in the organisation, workflow-agnostic (approval type
-``pay.invoice``, the decision permission the placeholder Pay plugin already declares):
+Creates one pending approval in the organisation (approval type ``pay.invoice``, with
+the type, permission and bundled default rules the installed Pay plugin declares, so a
+dev org runs exactly the rules Pay publishes as version 1, never seed-only ones):
 
 1. gives the person the ``approver`` role for the ``pay`` workflow, so they may decide it
    (still subject to the TOTP step-up, segregation of duties and assignment);
@@ -31,7 +32,7 @@ import json
 import os
 import sys
 import uuid
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
 
 from sqlalchemy import func, select
@@ -48,7 +49,7 @@ from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.decisions.models import DecisionKind
 from pairly_core.decisions.service import DecisionDraft, record_decision
 from pairly_core.models import Membership, Organisation, Role, User
-from pairly_core.plugins import discover_plugins
+from pairly_core.plugins import WorkflowPlugin, discover_plugins
 from pairly_core.rbac import build_registry
 from pairly_core.signed_links import issue_link
 from pairly_core.workflow.models import RunStatus, WorkflowRun, thread_id_for
@@ -58,22 +59,21 @@ OWNER_URL_ENV = "PAIRLY_DATABASE_URL_OWNER"
 ALLOWED_ENVS = frozenset({"development", "test"})
 SEED_ACTOR = "pairly.devseed"
 
-RULES = """\
-schema: pairly.approval_rules/v1
-approval_type: pay.invoice
-sla_hours: 24
-warn_hours: 4
-escalation:
-  roles: [finance_controller]
-chains:
-  - name: standard
-    steps:
-      - {name: approver, mode: any_of, roles: [approver]}
-"""
+APPROVAL_TYPE_KEY = "pay.invoice"
 
-APPROVAL_TYPE = ApprovalType(
-    key="pay.invoice", permission="pay.invoice.approve", default_rules=RULES, title="Invoice"
-)
+
+def plugin_approval_type(
+    plugins: Iterable[WorkflowPlugin], key: str = APPROVAL_TYPE_KEY
+) -> ApprovalType:
+    """The approval type as the installed workflow plugin declares it, bundled default
+    rules included. The seed never brings rules of its own: whatever it publishes as
+    version 1 in a dev org is what that org would get from the plugin anyway."""
+    for plugin in plugins:
+        for spec in plugin.graphs:
+            for kind in spec.approval_types:
+                if kind.key == key:
+                    return kind
+    raise SystemExit(f"no installed workflow plugin declares the approval type {key!r}")
 
 
 async def seed_approval(
@@ -103,7 +103,9 @@ async def seed_approval(
         if org is None:
             raise SystemExit(f"unknown organisation {org_slug!r}")
 
-        registry = build_registry(discover_plugins().values())
+        plugins = list(discover_plugins().values())
+        registry = build_registry(plugins)
+        approval_type = plugin_approval_type(plugins)
         session = sessionmaker()
         set_tenant(session, org.id, None)
         async with session, session.begin():
@@ -213,12 +215,16 @@ async def seed_approval(
                 ApprovalRequest(
                     run_id=run_id,
                     step_key="approve",
-                    approval_type=APPROVAL_TYPE,
+                    approval_type=approval_type,
                     title=title,
+                    # Low risk, a small amount, no category or department: Pay's
+                    # default rules route it to their standard one-step chain.
                     payload={
                         "amount": "120.00",
                         "currency": "AED",
                         "vendor": "Sample Supplies LLC",
+                        "risk_level": "low",
+                        "vendor_risk": "low",
                     },
                     context={
                         "summary": "Synthetic invoice for the end-to-end suite.",
