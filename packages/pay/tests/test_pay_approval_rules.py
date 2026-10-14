@@ -23,6 +23,7 @@ from pairly_pay.approvals import (
     vendor_risk_level,
 )
 from pairly_pay.models import PayInvoice
+from pairly_pay.payment_runs import PAYMENT_RUN_RULES_V1
 from pairly_pay.payment_settings import PaymentSettings, parse_payment_settings
 from pairly_pay.plugin import BANK_CHANGE_RULES_V1
 
@@ -72,6 +73,7 @@ def test_high_risk_chains_need_two_people_and_a_finance_controller() -> None:
 
 
 def test_bundled_rules_parse() -> None:
+    assert parse_rules(PAYMENT_RUN_RULES_V1).chains[0].steps[0].roles == ["finance_controller"]
     assert parse_rules(BANK_CHANGE_RULES_V1).approval_type == "pay.bank_change"
 
 

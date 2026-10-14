@@ -583,6 +583,20 @@ class PayInvoice(Base, OrgScoped):
             ondelete="RESTRICT",
             name="fk_pay_invoices_approved_account_org",
         ),
+        ForeignKeyConstraint(
+            ["org_id", "payment_run_id"],
+            ["pay_payment_runs.org_id", "pay_payment_runs.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_payment_run_org",
+        ),
+        CheckConstraint(
+            "status NOT IN ('scheduled', 'paid') OR payment_run_id IS NOT NULL",
+            name="scheduled_has_run",
+        ),
+        CheckConstraint(
+            "status <> 'paid' OR (paid_at IS NOT NULL AND paid_by IS NOT NULL)",
+            name="paid_has_evidence",
+        ),
         CheckConstraint(
             "status NOT IN ('approved', 'scheduled', 'paid') OR (approved_at IS NOT NULL "
             "AND approved_account_id IS NOT NULL AND approved_bank_digest IS NOT NULL "
@@ -682,6 +696,12 @@ class PayInvoice(Base, OrgScoped):
     approved_account_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     approved_bank_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     approved_checks_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Payment (``pay_0006``, ``pairly_pay.payment_runs``): the run that pays it, and when
+    # a person marked it paid (after the bank confirmed, outside Pairly).
+    payment_run_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    paid_at: Mapped[datetime | None] = _ts()
+    paid_by: Mapped[uuid.UUID | None] = _user_fk()
+    payment_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
 
@@ -759,3 +779,157 @@ class PayInvoiceCorrection(Base, OrgScoped):
     new_value: Mapped[Any] = mapped_column(JSONB, nullable=True)
     corrected_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
     created_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ payment runs (pay_0006)
+
+PAYMENT_RUNS: Final = "pay_payment_runs"
+PAYMENT_RUN_ITEMS: Final = "pay_payment_run_items"
+
+
+class PaymentRunStatus(StrEnum):
+    # Proposed by a person; the ``pay_payment_run`` run waits for a finance controller.
+    AWAITING_APPROVAL = "awaiting_approval"
+    APPROVED = "approved"
+    # A bank file was downloaded at least once. Nothing was sent to a bank.
+    EXPORTED = "exported"
+    PAID = "paid"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    # The final action refused (something changed since the proposal): nothing is paid.
+    FAILED = "failed"
+
+
+OPEN_RUN_STATUSES: Final = frozenset(
+    {PaymentRunStatus.AWAITING_APPROVAL, PaymentRunStatus.APPROVED, PaymentRunStatus.EXPORTED}
+)
+
+
+class RunItemStatus(StrEnum):
+    INCLUDED = "included"
+    PAID = "paid"
+    # Back out of the run (rejected, cancelled, failed): the invoice is approved again.
+    RELEASED = "released"
+
+
+class PayPaymentRun(Base, OrgScoped):
+    """A proposal to pay approved invoices, its approval, its bank files and its end."""
+
+    __tablename__ = PAYMENT_RUNS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_payment_runs_org_id_id"),
+        UniqueConstraint("org_id", "reference", name="uq_pay_payment_runs_org_id_reference"),
+        CheckConstraint(f"status IN ({_in(PaymentRunStatus)})", name="status_valid"),
+        CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency_format"),
+        CheckConstraint("cash_limit > 0", name="cash_limit_positive"),
+        CheckConstraint("total >= 0 AND total <= cash_limit", name="total_within_limit"),
+        CheckConstraint(
+            "status NOT IN ('approved', 'exported', 'paid') OR approved_at IS NOT NULL",
+            name="approved_has_time",
+        ),
+        Index("ix_pay_payment_runs_status", "org_id", "status", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    reference: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    cash_limit: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    total: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    item_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    execution_date: Mapped[date] = mapped_column(Date, nullable=False)
+    due_on_or_before: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Invoices the proposal left out, and why: [{invoice_id, reference, reason}].
+    excluded: Mapped[list[Any]] = _jsonb_list()
+    proposed_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT"), nullable=True
+    )
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("approvals.id", ondelete="RESTRICT"), nullable=True
+    )
+    approver_ids: Mapped[list[str]] = _jsonb_list()
+    approved_at: Mapped[datetime | None] = _ts()
+    export_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    # Every download: [{format, sha256, items, at, by}]. The files themselves are not
+    # kept (they hold bank details); the digest proves which one was given out.
+    exports: Mapped[list[Any]] = _jsonb_list()
+    exported_at: Mapped[datetime | None] = _ts()
+    paid_at: Mapped[datetime | None] = _ts()
+    closed_at: Mapped[datetime | None] = _ts()
+    close_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    decision_ids: Mapped[list[str]] = _jsonb_list()
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+
+
+class PayPaymentRunItem(Base, OrgScoped):
+    """One invoice of a payment run, with the bank account and digests it was proposed,
+    approved and exported with."""
+
+    __tablename__ = PAYMENT_RUN_ITEMS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_payment_run_items_org_id_id"),
+        ForeignKeyConstraint(
+            ["org_id", "payment_run_id"],
+            ["pay_payment_runs.org_id", "pay_payment_runs.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_payment_run_items_run_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_payment_run_items_invoice_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "vendor_id"],
+            ["pay_vendors.org_id", "pay_vendors.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_payment_run_items_vendor_org",
+        ),
+        ForeignKeyConstraint(
+            ["org_id", "bank_account_id"],
+            ["pay_vendor_bank_accounts.org_id", "pay_vendor_bank_accounts.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_payment_run_items_account_org",
+        ),
+        CheckConstraint(f"status IN ({_in(RunItemStatus)})", name="status_valid"),
+        CheckConstraint("amount > 0", name="amount_positive"),
+        CheckConstraint(
+            "status <> 'paid' OR (paid_at IS NOT NULL AND paid_by IS NOT NULL)",
+            name="paid_has_evidence",
+        ),
+        Index("ix_pay_payment_run_items_run", "org_id", "payment_run_id", "position"),
+        # An invoice is in at most one run at a time.
+        Index(
+            "uq_pay_payment_run_items_one_active",
+            "org_id",
+            "invoice_id",
+            unique=True,
+            postgresql_where=text("status <> 'released'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    payment_run_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    invoice_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    vendor_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Placeholder for the early-payment discount optimiser (brief 4.6.4): not computed.
+    discount: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    bank_account_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    bank_details_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    checks_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    end_to_end_id: Mapped[str] = mapped_column(String(35), nullable=False)
+    paid_at: Mapped[datetime | None] = _ts()
+    paid_by: Mapped[uuid.UUID | None] = _user_fk()
+    payment_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()

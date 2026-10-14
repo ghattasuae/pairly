@@ -189,12 +189,14 @@ async def test_rules_route_by_department_category_and_risk(
     # The rules page shows the active YAML and its versions.
     rules = await flow.ok("GET", "/v1/pay/approval-rules", fworld, "approver")
     by_type = {r["approval_type"]: r for r in rules["items"]}
-    assert set(by_type) >= {"pay.invoice", "pay.bank_change"}
+    assert set(by_type) >= {"pay.invoice", "pay.payment_run", "pay.bank_change"}
     invoice_rules = by_type["pay.invoice"]
     assert invoice_rules["active"]["version"] == 1
     assert "marketing_budget" in invoice_rules["active"]["content"]
     assert [v["version"] for v in invoice_rules["versions"]] == [1]
     assert by_type["pay.bank_change"]["active"] is None
+    assert by_type["pay.payment_run"]["active"] is None
+    assert "finance_controller" in by_type["pay.payment_run"]["default_content"]
     assert "dual_control" in by_type["pay.bank_change"]["default_content"]
 
 

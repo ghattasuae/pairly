@@ -394,6 +394,10 @@ class PayInvoiceDetail(PayInvoiceSummary):
     # Why it cannot be approved or paid now (``pairly_pay.payability``; empty: nothing).
     blockers: list[str] = Field(default_factory=list)
     approval: PayInvoiceApprovalOut | None = None
+    # Payment (``pairly_pay.payment_runs``): the run that pays it, and when it was paid.
+    payment_run_id: uuid.UUID | None = None
+    paid_at: datetime | None = None
+    payment_reference: str | None = None
     can_process: bool
     # Validation and fraud checks (WP4.6): every check's result, the risk score, and the
     # suspected originals of a duplicate side by side.
@@ -735,6 +739,9 @@ async def _detail(
         )
         if invoice.approval_submitted_at is not None
         else None,
+        payment_run_id=invoice.payment_run_id,
+        paid_at=invoice.paid_at,
+        payment_reference=invoice.payment_reference,
     )
 
 

@@ -18,6 +18,10 @@ attributes):
                       waits for its approvers (approval type ``pay.invoice``, rules in
                       ``policy/invoice_approval_rules.yaml``), final action
                       ``approve_invoice``.
+                      ``pay_payment_run``: a proposed payment run waits for a finance
+                      controller (approval type ``pay.payment_run``), final action
+                      ``approve_payment_run``. No bank connection: the run ends in a
+                      file a person downloads.
 * ``api_router``      the ``/v1/pay`` routes (imported only when called, so the worker
                       never loads them).
 * ``migrations_dir``  the ``pay`` Alembic branch (``migrations/``).
@@ -53,6 +57,12 @@ from pairly_pay.invoice_graph import VERSION as INVOICE_GRAPH_VERSION
 from pairly_pay.invoice_graph import build_graph as build_invoice_graph
 from pairly_pay.invoice_start import INTAKE_JOB
 from pairly_pay.jobs import ACTIVATION_JOB, activate_due_changes
+from pairly_pay.payment_run_graph import build_graph as build_payment_run_graph
+from pairly_pay.payment_runs import APPROVAL_TYPE as RUN_APPROVAL_TYPE
+from pairly_pay.payment_runs import FINAL_ACTION as RUN_FINAL_ACTION
+from pairly_pay.payment_runs import GRAPH as RUN_GRAPH
+from pairly_pay.payment_runs import PAYMENT_RUN_RULES_V1, approve_payment_run
+from pairly_pay.payment_runs import VERSION as RUN_GRAPH_VERSION
 from pairly_pay.permissions import (
     BANK_CHANGE_APPROVE,
     BANK_CHANGE_CREATE,
@@ -61,6 +71,9 @@ from pairly_pay.permissions import (
     INVOICE_PROPOSE,
     INVOICE_READ,
     INVOICE_SUBMIT,
+    PAYMENT_RUN_APPROVE,
+    PAYMENT_RUN_CREATE,
+    PAYMENT_RUN_READ,
     PERMISSIONS,
 )
 
@@ -113,6 +126,20 @@ PAY_INVOICE_APPROVAL: GraphSpec = GraphSpec(
     description="An invoice sent for approval waits for the approvers its rules pick.",
 )
 
+PAY_PAYMENT_RUN: GraphSpec = GraphSpec(
+    workflow="pay",
+    name=RUN_GRAPH,
+    version=RUN_GRAPH_VERSION,
+    build=build_payment_run_graph,
+    start_permission=PAYMENT_RUN_CREATE,
+    read_permission=PAYMENT_RUN_READ,
+    approval_types=(
+        ApprovalType(RUN_APPROVAL_TYPE, PAYMENT_RUN_APPROVE, PAYMENT_RUN_RULES_V1, "Payment run"),
+    ),
+    final_actions={RUN_FINAL_ACTION: approve_payment_run},
+    description="A proposed payment run waits for a finance controller.",
+)
+
 SCHEDULED_JOBS: tuple[JobSpec, ...] = (
     JobSpec(
         ACTIVATION_JOB,
@@ -136,7 +163,12 @@ class PayPlugin:
     id: str = "pay"
     name: str = "Pairly Pay"
     permissions: tuple[PermissionSpec, ...] = field(default=PERMISSIONS)
-    graphs: tuple[GraphSpec, ...] = (PAY_BANK_CHANGE, PAY_INVOICE, PAY_INVOICE_APPROVAL)
+    graphs: tuple[GraphSpec, ...] = (
+        PAY_BANK_CHANGE,
+        PAY_INVOICE,
+        PAY_INVOICE_APPROVAL,
+        PAY_PAYMENT_RUN,
+    )
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
 
