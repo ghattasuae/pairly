@@ -180,16 +180,22 @@ def details_digest(
     return digest
 
 
-def digest_matches(ticket: PayBankChangeTicket, account: PayVendorBankAccount) -> bool:
-    """Whether the stored proposed account still decrypts to the details the ticket was
-    opened with (any configured blind index key version)."""
+def details_match(digest: str, account: PayVendorBankAccount) -> bool:
+    """Whether ``account`` decrypts to the details ``digest`` was made of (any
+    configured blind index key version)."""
     try:
         canonical = _canonical(
             iban_of(account), account_name_of(account), account.bank_name, account.swift
         )
     except Exception:
         return False
-    return ticket.details_digest in blind_index_candidates("text", canonical, ticket.org_id)
+    return digest in blind_index_candidates("text", canonical, account.org_id)
+
+
+def digest_matches(ticket: PayBankChangeTicket, account: PayVendorBankAccount) -> bool:
+    """Whether the stored proposed account still decrypts to the details the ticket was
+    opened with (any configured blind index key version)."""
+    return account.org_id == ticket.org_id and details_match(ticket.details_digest, account)
 
 
 # ------------------------------------------------------------------ reading

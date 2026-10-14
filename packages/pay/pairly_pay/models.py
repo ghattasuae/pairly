@@ -493,6 +493,10 @@ class PaySettings(Base, OrgScoped):
     check_settings: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
     )
+    # Approval and payment settings (``pairly_pay.payment_settings``, ``pay_0005``).
+    payment_settings: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
     updated_by_type: Mapped[str] = mapped_column(String(16), nullable=False)
     updated_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
     updated_at: Mapped[datetime] = _created()
@@ -514,6 +518,9 @@ class InvoiceStatus(StrEnum):
     NEEDS_REVIEW = "needs_review"
     # Read and matched; the checks and approvals of later steps take it from here.
     READY = "ready"
+    # Submitted by a person; the ``pay_invoice_approval`` run waits for the approvers
+    # (WP4.7, ``pay_0005``). Nothing about the invoice can change meanwhile.
+    AWAITING_APPROVAL = "awaiting_approval"
     APPROVED = "approved"
     SCHEDULED = "scheduled"
     PAID = "paid"
@@ -570,6 +577,18 @@ class PayInvoice(Base, OrgScoped):
             "checks_digest IS NULL OR checks_digest ~ '^[0-9a-f]{64}$'",
             name="checks_digest_format",
         ),
+        ForeignKeyConstraint(
+            ["org_id", "approved_account_id"],
+            ["pay_vendor_bank_accounts.org_id", "pay_vendor_bank_accounts.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_invoices_approved_account_org",
+        ),
+        CheckConstraint(
+            "status NOT IN ('approved', 'scheduled', 'paid') OR (approved_at IS NOT NULL "
+            "AND approved_account_id IS NOT NULL AND approved_bank_digest IS NOT NULL "
+            "AND approved_checks_digest IS NOT NULL AND approved_amount IS NOT NULL)",
+            name="approved_has_evidence",
+        ),
         Index("ix_pay_invoices_status", "org_id", "status", "created_at"),
         Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
         Index("ix_pay_invoices_number_key", "org_id", "vendor_id", "number_key"),
@@ -577,7 +596,7 @@ class PayInvoice(Base, OrgScoped):
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     reference: Mapped[str] = mapped_column(String(16), nullable=False)
-    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
     source: Mapped[str] = mapped_column(String(16), nullable=False)
     document_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("documents.id", ondelete="RESTRICT"), nullable=False
@@ -641,6 +660,28 @@ class PayInvoice(Base, OrgScoped):
     rejected_by: Mapped[uuid.UUID | None] = _user_fk()
     rejected_at: Mapped[datetime | None] = _ts()
     reject_reason: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    # Approval (WP4.7, ``pay_0005``, ``pairly_pay.approvals``). Who sent it for
+    # approval, the run and the engine approval, and what was approved: the people (or
+    # the rule), the amount, the vendor's bank account and the keyed digest of its
+    # details, and the check digest. Payment runs and the bank file compare with these.
+    approval_submitted_by: Mapped[uuid.UUID | None] = _user_fk()
+    approval_submitted_at: Mapped[datetime | None] = _ts()
+    approval_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT"), nullable=True
+    )
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("approvals.id", ondelete="RESTRICT"), nullable=True
+    )
+    approved_at: Mapped[datetime | None] = _ts()
+    approved_by_rule: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    approver_ids: Mapped[list[str]] = _jsonb_list()
+    approved_amount: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    approved_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    approved_account_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    approved_bank_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    approved_checks_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
 

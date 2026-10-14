@@ -14,6 +14,10 @@ attributes):
                       extraction or e-invoice reading, vendor match) up to ``ready`` or
                       ``needs_review``. No approval and no final action: it never
                       approves or pays anything.
+                      ``pay_invoice_approval``: an invoice a person sent for approval
+                      waits for its approvers (approval type ``pay.invoice``, rules in
+                      ``policy/invoice_approval_rules.yaml``), final action
+                      ``approve_invoice``.
 * ``api_router``      the ``/v1/pay`` routes (imported only when called, so the worker
                       never loads them).
 * ``migrations_dir``  the ``pay`` Alembic branch (``migrations/``).
@@ -36,6 +40,12 @@ from pairly_core.jobs.registry import JobSpec
 from pairly_core.rbac import PermissionSpec
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
 from pairly_pay import models  # noqa: F401  (registers the Pay tables)
+from pairly_pay.approval_graph import build_graph as build_approval_graph
+from pairly_pay.approvals import APPROVAL_TYPE as INVOICE_APPROVAL_TYPE
+from pairly_pay.approvals import FINAL_ACTION as INVOICE_FINAL_ACTION
+from pairly_pay.approvals import GRAPH as APPROVAL_GRAPH
+from pairly_pay.approvals import INVOICE_RULES_V1, approve_invoice
+from pairly_pay.approvals import VERSION as APPROVAL_GRAPH_VERSION
 from pairly_pay.bank_changes import FINAL_ACTION, approve_bank_change
 from pairly_pay.graph import APPROVAL_TYPE, GRAPH, VERSION, build_graph
 from pairly_pay.invoice_graph import GRAPH as INVOICE_GRAPH
@@ -47,8 +57,10 @@ from pairly_pay.permissions import (
     BANK_CHANGE_APPROVE,
     BANK_CHANGE_CREATE,
     BANK_CHANGE_READ,
+    INVOICE_APPROVE,
     INVOICE_PROPOSE,
     INVOICE_READ,
+    INVOICE_SUBMIT,
     PERMISSIONS,
 )
 
@@ -87,6 +99,20 @@ PAY_INVOICE: GraphSpec = GraphSpec(
     description="Read one received invoice and stop at ready or needs review.",
 )
 
+PAY_INVOICE_APPROVAL: GraphSpec = GraphSpec(
+    workflow="pay",
+    name=APPROVAL_GRAPH,
+    version=APPROVAL_GRAPH_VERSION,
+    build=build_approval_graph,
+    start_permission=INVOICE_SUBMIT,
+    read_permission=INVOICE_READ,
+    approval_types=(
+        ApprovalType(INVOICE_APPROVAL_TYPE, INVOICE_APPROVE, INVOICE_RULES_V1, "Invoice approval"),
+    ),
+    final_actions={INVOICE_FINAL_ACTION: approve_invoice},
+    description="An invoice sent for approval waits for the approvers its rules pick.",
+)
+
 SCHEDULED_JOBS: tuple[JobSpec, ...] = (
     JobSpec(
         ACTIVATION_JOB,
@@ -110,7 +136,7 @@ class PayPlugin:
     id: str = "pay"
     name: str = "Pairly Pay"
     permissions: tuple[PermissionSpec, ...] = field(default=PERMISSIONS)
-    graphs: tuple[GraphSpec, ...] = (PAY_BANK_CHANGE, PAY_INVOICE)
+    graphs: tuple[GraphSpec, ...] = (PAY_BANK_CHANGE, PAY_INVOICE, PAY_INVOICE_APPROVAL)
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
 

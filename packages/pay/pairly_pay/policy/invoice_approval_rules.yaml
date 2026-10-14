@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves an invoice for payment, version 1 (brief 4.6.1). The first chain whose
+# conditions all hold wins; the last chain is the default. Conditions read the approval
+# payload (pairly_pay.approvals.approval_payload): amount, currency, department,
+# category, vendor_risk (low, medium, high) and risk_level (low, medium, high,
+# critical).
+#
+# Whatever a later version says, the code also holds these: a high or critical risk
+# invoice is never approved by a rule; the person who processed, coded or corrected the
+# invoice, or sent it for approval, can never approve it; nobody approves two steps; an
+# invoice whose vendor is held or has an open bank-detail change cannot be approved.
+schema: pairly.approval_rules/v1
+approval_type: pay.invoice
+sla_hours: 24
+warn_hours: 4
+escalation:
+  roles: [finance_controller]
+chains:
+  - name: high_risk
+    when:
+      - {field: risk_level, op: in, value: [high, critical]}
+    steps:
+      - {name: approver, mode: any_of, roles: [approver, finance_controller]}
+      - {name: finance, mode: any_of, roles: [finance_controller]}
+  - name: risky_vendor
+    when:
+      - {field: vendor_risk, op: eq, value: high}
+    steps:
+      - {name: approver, mode: any_of, roles: [approver, finance_controller]}
+      - {name: finance, mode: any_of, roles: [finance_controller]}
+  - name: large_amount
+    when:
+      - {field: amount, op: gt, value: "50000"}
+    steps:
+      - {name: approver, mode: any_of, roles: [approver, finance_controller]}
+      - {name: finance, mode: any_of, roles: [finance_controller]}
+  - name: capital_spend
+    when:
+      - {field: category, op: in, value: [it_hardware, construction]}
+    steps:
+      - {name: approver, mode: any_of, roles: [approver, finance_controller]}
+      - {name: finance, mode: any_of, roles: [finance_controller], sla_hours: 48}
+  - name: marketing_budget
+    when:
+      - {field: department, op: eq, value: marketing}
+    steps:
+      - {name: budget_owner, mode: any_of, roles: [approver]}
+  - name: standard
+    steps:
+      - {name: approver, mode: any_of, roles: [approver, finance_controller]}

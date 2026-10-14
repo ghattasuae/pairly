@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves a payment run, version 1 (brief 4.6.3): a finance controller. The person
+# who proposed the run never approves it (the engine makes the proposer a preparer, and
+# the final action checks it again from the decision rows).
+schema: pairly.approval_rules/v1
+approval_type: pay.payment_run
+sla_hours: 24
+warn_hours: 4
+chains:
+  - name: finance_controller
+    steps:
+      - {name: finance, mode: any_of, roles: [finance_controller]}

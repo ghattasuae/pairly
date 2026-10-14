@@ -34,7 +34,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from pairly_core.crypto.blind_index import blind_index
-from pairly_core.errors import ConflictError, ForbiddenError
+from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_pay.api.schemas import (
@@ -70,6 +70,7 @@ from pairly_pay.models import (
     VendorSource,
     VendorStatus,
 )
+from pairly_pay.payment_settings import load_payment_settings, parse_payment_settings
 from pairly_pay.permissions import (
     BANK_CHANGE_CREATE,
     HOLD_MANAGE,
@@ -485,6 +486,7 @@ async def get_settings(actor: CurrentActor, session: OrgSession) -> PaySettingsO
         cooling_off_hours=settings.cooling_off_hours,
         phone_change_window_days=settings.phone_change_window_days,
         checks=(await load_settings(session)).as_json(),
+        payments=(await load_payment_settings(session)).as_json(),
         can_manage=actor.has(SETTINGS_MANAGE),
     )
 
@@ -503,6 +505,15 @@ async def put_settings(
     if body.checks is not None:
         changes = body.checks.model_dump(mode="json", exclude_none=True)
         stored_checks = parse_settings({**stored_checks, **changes}).as_json()
+    stored_payments = dict(row.payment_settings) if row is not None else {}
+    if body.payments is not None:
+        payment_changes = body.payments.model_dump(mode="json", exclude_none=True)
+        merged = {**stored_payments, **payment_changes}
+        parsed = parse_payment_settings(merged)
+        for key in ("payer_iban", "payer_bic"):
+            if merged.get(key) and getattr(parsed, key) is None:
+                raise BadRequestError(f"{key} is not valid")
+        stored_payments = parsed.as_json()
     if row is None:
         row = PaySettings(
             id=uuid.uuid4(),
@@ -510,6 +521,7 @@ async def put_settings(
             cooling_off_hours=body.cooling_off_hours,
             phone_change_window_days=body.phone_change_window_days,
             check_settings=stored_checks,
+            payment_settings=stored_payments,
             updated_by_type=by.actor_type.value,
             updated_by_id=by.actor_id,
             updated_at=now,
@@ -519,6 +531,7 @@ async def put_settings(
         row.cooling_off_hours = body.cooling_off_hours
         row.phone_change_window_days = body.phone_change_window_days
         row.check_settings = stored_checks
+        row.payment_settings = stored_payments
         row.updated_by_type = by.actor_type.value
         row.updated_by_id = by.actor_id
         row.updated_at = now
@@ -536,11 +549,15 @@ async def put_settings(
             "checks_changed": sorted(
                 body.checks.model_dump(exclude_none=True) if body.checks else {}
             ),
+            "payments_changed": sorted(
+                body.payments.model_dump(exclude_none=True) if body.payments else {}
+            ),
         },
     )
     return PaySettingsOut(
         cooling_off_hours=row.cooling_off_hours,
         phone_change_window_days=row.phone_change_window_days,
         checks=parse_settings(stored_checks).as_json(),
+        payments=parse_payment_settings(stored_payments).as_json(),
         can_manage=True,
     )

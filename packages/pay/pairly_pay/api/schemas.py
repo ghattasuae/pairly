@@ -167,10 +167,28 @@ class PayCheckSettingsIn(_In):
     metadata_late_days: Annotated[int, Field(ge=1, le=3650)] | None = None
 
 
+class PayPaymentSettingsIn(_In):
+    """Approval and payment settings (``pairly_pay.payment_settings``); omitted keys keep
+    their current value. ``auto_approve_low_risk`` is off by default."""
+
+    auto_approve_low_risk: bool | None = None
+    auto_approve_limit: Annotated[Decimal, Field(ge=0, le=1_000_000_000)] | None = None
+    auto_approve_currency: Annotated[str, Field(pattern=r"^[A-Z]{3}$")] | None = None
+    payer_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=140)] | None = (
+        None
+    )
+    payer_iban: Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None = (
+        None
+    )
+    payer_bic: Annotated[str, StringConstraints(strip_whitespace=True, max_length=11)] | None = None
+    default_cash_limit: Annotated[Decimal, Field(gt=0, le=1_000_000_000_000)] | None = None
+
+
 class PaySettingsIn(_In):
     cooling_off_hours: Annotated[int, Field(ge=0, le=720)]
     phone_change_window_days: Annotated[int, Field(ge=0, le=365)] = 30
     checks: PayCheckSettingsIn | None = None
+    payments: PayPaymentSettingsIn | None = None
 
 
 class PayInviteIn(_In):
@@ -362,6 +380,8 @@ class PaySettingsOut(BaseModel):
     phone_change_window_days: int
     # The invoice check settings in force (defaults filled in).
     checks: dict[str, Any] = Field(default_factory=dict)
+    # The approval and payment settings in force (defaults filled in).
+    payments: dict[str, Any] = Field(default_factory=dict)
     can_manage: bool
 
 

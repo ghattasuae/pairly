@@ -34,7 +34,23 @@ Who does what (brief 4.1, 6.2):
     invoice is read by the agent, whoever sent it) and later proposes coding and flags.
   - ``process``: the AP clerk's work on an invoice: correct fields, link the vendor,
     mark it reviewed, reject it (coding and matching later).
-  - ``approve``: approve an invoice for payment (later steps).
+  - ``submit``: send a ``ready`` invoice for approval (AP clerks, finance
+    controllers). The start permission of the ``pay_invoice_approval`` graph, so the
+    sender is a preparer and never approves it.
+  - ``approve``: approve an invoice for payment (approvers and finance controllers;
+    the approval rules pick who, ``policy/invoice_approval_rules.yaml``).
+
+* **Payment runs** (``pay.payment_run.*``, WP4.7):
+
+  - ``read``: the payment run list and detail.
+  - ``create``: propose a run from approved invoices, or cancel one before it is paid
+    (AP clerks, finance controllers). It is the start permission of the
+    ``pay_payment_run`` graph, so the proposer is a preparer and never approves it.
+  - ``approve``: approve a run (finance controllers only). A second factor.
+  - ``export``: download the bank payment file (AP clerks, finance controllers). An
+    ``export`` action, so a second factor. Nothing is sent to a bank.
+  - ``record`` (``pay.payment.record``): mark invoices of an exported run as paid,
+    after the bank confirmed it outside Pairly.
 
 * **Documents** (``pay.document.read``): Pay documents (invoices, onboarding files) are
   read with Pay's own permission, so a member limited to Pay can open the invoice
@@ -62,8 +78,14 @@ SETTINGS_MANAGE: Final = "pay.settings.manage"
 INVOICE_READ: Final = "pay.invoice.read"
 INVOICE_PROPOSE: Final = "pay.invoice.propose"
 INVOICE_PROCESS: Final = "pay.invoice.process"
+INVOICE_SUBMIT: Final = "pay.invoice.submit"
 INVOICE_APPROVE: Final = "pay.invoice.approve"
 INVOICE_UPLOAD: Final = "pay.invoice.upload"
+PAYMENT_RUN_READ: Final = "pay.payment_run.read"
+PAYMENT_RUN_CREATE: Final = "pay.payment_run.create"
+PAYMENT_RUN_APPROVE: Final = "pay.payment_run.approve"
+PAYMENT_RUN_EXPORT: Final = "pay.payment_run.export"
+PAYMENT_RECORD: Final = "pay.payment.record"
 DOCUMENT_READ: Final = "pay.document.read"
 EXTRACTION_READ: Final = "pay.extraction.read"
 EXTRACTION_CORRECT: Final = "pay.extraction.correct"
@@ -115,6 +137,11 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(
+        INVOICE_SUBMIT,
+        "Send an invoice for approval",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
         INVOICE_APPROVE,
         "Approve an invoice for payment",
         frozenset({R.APPROVER, R.FINANCE_CONTROLLER}),
@@ -123,6 +150,27 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         INVOICE_UPLOAD,
         "Submit invoices by upload or through the API",
         frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(PAYMENT_RUN_READ, "View payment runs", _READERS),
+    PermissionSpec(
+        PAYMENT_RUN_CREATE,
+        "Propose or cancel a payment run",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        PAYMENT_RUN_APPROVE,
+        "Approve a payment run",
+        frozenset({R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        PAYMENT_RUN_EXPORT,
+        "Download the bank payment file of an approved run",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        PAYMENT_RECORD,
+        "Mark invoices of an exported payment run as paid",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(DOCUMENT_READ, "View Pay documents and their content", _READERS | {R.AGENT}),
     PermissionSpec(

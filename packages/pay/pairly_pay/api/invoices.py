@@ -30,6 +30,9 @@ risk in the same transaction (``recheck_invoice``), so the results always descri
 invoice as it is. A bank-detail correction that differs from the vendor master opens or
 joins the change ticket and holds the vendor, like the automatic check.
 * ``POST /invoices/{id}/reject``          close it, with a reason (``pay.invoice.process``).
+* ``POST /invoices/{id}/submit``          send a ``ready`` invoice for approval
+  (``pay.invoice.submit``, ``pairly_pay.approvals``). The approvers decide in the
+  engine's inbox, from the signed email links or from Slack.
 
 The inbound email address is made with ``pairly-admin inbound rotate`` (the token is
 shown once; the application role cannot write addresses).
@@ -77,6 +80,8 @@ from pairly_core.ingestion.service import (
 from pairly_core.ingestion.storage import StorageError
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
+from pairly_pay.approvals import GRAPH as APPROVAL_GRAPH
+from pairly_pay.approvals import NotApprovableError, back_to_person, submit_for_approval
 from pairly_pay.checks.service import (
     CheckServices,
     RecheckTrigger,
@@ -109,10 +114,12 @@ from pairly_pay.models import (
     PayInvoice,
     PayVendor,
 )
+from pairly_pay.payability import blockers
 from pairly_pay.permissions import (
     EXTRACTION_CORRECT,
     INVOICE_PROCESS,
     INVOICE_READ,
+    INVOICE_SUBMIT,
     INVOICE_UPLOAD,
 )
 
@@ -130,7 +137,15 @@ Runtime = Annotated[WorkflowRuntime, Depends(get_runtime)]
 
 MAX_LIST: Final = 200
 STATUS_VALUES = Literal[
-    "received", "extracting", "needs_review", "ready", "approved", "scheduled", "paid", "rejected"
+    "received",
+    "extracting",
+    "needs_review",
+    "ready",
+    "awaiting_approval",
+    "approved",
+    "scheduled",
+    "paid",
+    "rejected",
 ]
 
 
@@ -338,6 +353,25 @@ class PayCompareOut(BaseModel):
     original: PayCompareSideOut
 
 
+class PayInvoiceApprovalOut(BaseModel):
+    """Who sent it for approval, the engine approval, and what was approved."""
+
+    submitted_by: uuid.UUID | None
+    submitted_at: datetime | None
+    approval_id: uuid.UUID | None
+    run_id: uuid.UUID | None
+    approved_at: datetime | None
+    approved_by_rule: bool
+    approver_ids: list[str]
+    approved_amount: Decimal | None
+    approved_currency: str | None
+    approved_account_id: uuid.UUID | None
+
+
+class PayInvoiceSubmitIn(_In):
+    note: str | None = Field(default=None, max_length=1000)
+
+
 class PayInvoiceDetail(PayInvoiceSummary):
     po_number: str | None
     subtotal: Decimal | None
@@ -357,6 +391,9 @@ class PayInvoiceDetail(PayInvoiceSummary):
     # changed since (run the checks again); ``failed``: a check could not run;
     # ``missing``: the checks never finished. Only ``current`` may be approved or paid.
     checks_state: Literal["current", "stale", "failed", "missing"] = "missing"
+    # Why it cannot be approved or paid now (``pairly_pay.payability``; empty: nothing).
+    blockers: list[str] = Field(default_factory=list)
+    approval: PayInvoiceApprovalOut | None = None
     can_process: bool
     # Validation and fraud checks (WP4.6): every check's result, the risk score, and the
     # suspected originals of a duplicate side by side.
@@ -675,6 +712,29 @@ async def _detail(
         risk=_risk(invoice),
         compare=await _compare(session, invoice, stored),
         checks_state=CHECKS_STATE[await checks_problem(session, invoice)],
+        blockers=await blockers(session, invoice)
+        if invoice.status
+        in {
+            InvoiceStatus.READY.value,
+            InvoiceStatus.AWAITING_APPROVAL.value,
+            InvoiceStatus.APPROVED.value,
+            InvoiceStatus.SCHEDULED.value,
+        }
+        else [],
+        approval=PayInvoiceApprovalOut(
+            submitted_by=invoice.approval_submitted_by,
+            submitted_at=invoice.approval_submitted_at,
+            approval_id=invoice.approval_id,
+            run_id=invoice.approval_run_id,
+            approved_at=invoice.approved_at,
+            approved_by_rule=invoice.approved_by_rule,
+            approver_ids=list(invoice.approver_ids),
+            approved_amount=money(invoice.approved_amount),
+            approved_currency=invoice.approved_currency,
+            approved_account_id=invoice.approved_account_id,
+        )
+        if invoice.approval_submitted_at is not None
+        else None,
     )
 
 
@@ -1021,4 +1081,54 @@ async def reject(
     authorize(actor, INVOICE_PROCESS)
     _person(actor)
     invoice = await reject_invoice(session, actor, invoice_id, body.reason)
+    return await _detail(request, session, actor, invoice)
+
+
+# ------------------------------------------------------------------ approval
+
+
+@router.post("/invoices/{invoice_id}/submit", response_model=PayInvoiceDetail)
+async def submit_for_approval_route(
+    request: Request,
+    invoice_id: uuid.UUID,
+    body: PayInvoiceSubmitIn,
+    actor: CurrentActor,
+    session: OrgSession,
+    runtime: Runtime,
+) -> Any:
+    """Send a ``ready`` invoice for approval (``pay.invoice.submit``, people only).
+    Refused (409, with the reasons) while the vendor is held, a bank-detail change is
+    open, or the checks are stale or failed. The approval run starts after the commit,
+    unless an approval rule the organisation turned on approved it."""
+    authorize(actor, INVOICE_SUBMIT)
+    _person(actor)
+    try:
+        submission = await submit_for_approval(session, actor, invoice_id, body.note)
+    except NotApprovableError as exc:
+        return problem_response(
+            request,
+            409,
+            "not_approvable",
+            detail=str(exc),
+            reasons=exc.reasons,
+        )
+    await session.commit()
+    if not submission.by_rule:
+        try:
+            await runtime.start_run(
+                actor,
+                workflow=WORKFLOW,
+                graph=APPROVAL_GRAPH,
+                input={"invoice_id": str(invoice_id)},
+                entity_type=INVOICE_ENTITY,
+                entity_id=str(invoice_id),
+            )
+        except Exception as exc:
+            log.warning("pay_invoice_approval_not_started", error=type(exc).__name__)
+        invoice = await get_invoice(session, invoice_id, lock=True)
+        if invoice.status == InvoiceStatus.AWAITING_APPROVAL.value and invoice.approval_id is None:
+            # The run did not get as far as the approval: a person looks (fail closed).
+            await back_to_person(session, invoice_id, "approval_not_started", run_id=None)
+        await session.commit()
+    invoice = await get_invoice(session, invoice_id)
     return await _detail(request, session, actor, invoice)
