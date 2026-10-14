@@ -528,3 +528,40 @@ async def test_nested_optional_group_and_integer_range(
     assert result.data is not None
     assert result.data.amount.value == 10
     assert result.data.bank.iban.value is None
+
+
+# ------------------------------------------------------------------ deterministic answers
+
+
+def test_extract_from_answers_runs_the_same_checks(invoice_doc: NormalizedDocument) -> None:
+    from pairly_core.extraction.engine import FieldAnswer, extract_from_answers
+
+    answers = [FieldAnswer.model_validate(a) for a in with_fields(drop=("currency",))]
+    answers.append(FieldAnswer(path="currency", value="AED", quote="not in it", confidence=1.0))
+    result = extract_from_answers(
+        invoice_doc,
+        guarded(invoice_doc),
+        Invoice,
+        answers,
+        source="test_reader",
+        source_version="1",
+    )
+    data = result.data
+    assert data is not None
+    assert data.invoice_number.value == "INV-2026-0042"
+    assert data.total.value == Money(amount=Decimal("2362.50"), currency="AED")
+    # A quote the document does not contain is no evidence, whoever answered.
+    assert FieldFlag.NO_EVIDENCE in data.currency.flags
+    assert result.status is ExtractionStatus.NEEDS_HUMAN
+    assert result.model_call.prompt_task == "test_reader"
+    assert result.model_call.model is None
+    assert result.model_call.call_ids == ()
+    with pytest.raises(UnguardedInputError):
+        extract_from_answers(
+            invoice_doc,
+            PassThroughInput(invoice_doc.text),  # type: ignore[arg-type]
+            Invoice,
+            answers,
+            source="test_reader",
+            source_version="1",
+        )

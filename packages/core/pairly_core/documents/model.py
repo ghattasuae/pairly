@@ -217,5 +217,6 @@ REVIEW_WARNINGS = frozenset(
         "image_too_large",
         "no_text",
         "unsafe_xml",
+        "lines_truncated",
     }
 )

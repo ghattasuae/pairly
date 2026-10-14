@@ -402,7 +402,40 @@ async def extract[S: ExtractionModel](
         log.warning("extraction.model_unavailable", schema=compiled.name, code=exc.code)
         return _failed(compiled, f"model_unavailable:{exc.code}", description, task)
 
-    answers, duplicates, ignored = _index_answers(compiled, result.value.fields)
+    call_ids = tuple(a.call_id for a in result.attempts if a.call_id is not None)
+    return _checked(
+        doc,
+        sanitized_input,
+        schema,
+        compiled,
+        description,
+        task,
+        result.value.fields,
+        ModelCallInfo(
+            call_ids=call_ids or (result.call_id,),
+            chain_id=result.chain_id,
+            prompt_task=result.task,
+            prompt_version=result.prompt_version,
+            prompt_hash=result.prompt_hash,
+            provider=result.provider,
+            model=result.model,
+            from_recording=result.from_recording,
+        ),
+    )
+
+
+def _checked[S: ExtractionModel](
+    doc: NormalizedDocument,
+    sanitized_input: GuardedInput,
+    schema: type[S],
+    compiled: CompiledSchema,
+    description: Mapping[str, Any],
+    task: TaskSpec,
+    answers_in: Sequence[FieldAnswer],
+    call: ModelCallInfo,
+) -> ExtractionResult[S]:
+    """Check every answer against the schema and the document (shared by both sources)."""
+    answers, duplicates, ignored = _index_answers(compiled, answers_in)
     walk = _Walk(
         answers=answers,
         duplicates=duplicates,
@@ -420,23 +453,56 @@ async def extract[S: ExtractionModel](
     except ValidationError:  # pragma: no cover - values are parsed to the field types
         log.error("extraction.data_invalid", schema=compiled.name)
         return _failed(compiled, "data_validation_failed", description, task)
-    call_ids = tuple(a.call_id for a in result.attempts if a.call_id is not None)
     return ExtractionResult(
         schema=compiled,
         status=ExtractionStatus.NEEDS_HUMAN if reasons else ExtractionStatus.OK,
         reasons=tuple(dict.fromkeys(reasons)),
         fields=tuple(walk.results),
         data=instance,
-        model_call=ModelCallInfo(
-            call_ids=call_ids or (result.call_id,),
-            chain_id=result.chain_id,
-            prompt_task=result.task,
-            prompt_version=result.prompt_version,
-            prompt_hash=result.prompt_hash,
-            provider=result.provider,
-            model=result.model,
-            from_recording=result.from_recording,
-        ),
+        model_call=call,
         ignored_paths=tuple(ignored),
         schema_description=description,
+    )
+
+
+def extract_from_answers[S: ExtractionModel](
+    doc: NormalizedDocument,
+    sanitized_input: GuardedInput,
+    schema: type[S],
+    answers: Sequence[FieldAnswer],
+    *,
+    source: str,
+    source_version: str,
+) -> ExtractionResult[S]:
+    """Check answers read by a deterministic reader instead of a model (a structured
+    e-invoice), with exactly the checks a model's answers get: the path must exist, the
+    value must parse, the quote must be found in the sanitized text and back the value.
+    ``source`` names the reader (stored as the prompt task, with no model). Raises
+    ``UnguardedInputError`` like ``extract``."""
+    if not isinstance(sanitized_input, GuardedInput):
+        raise UnguardedInputError("extract_from_answers() only accepts a GuardedInput")
+    sanitized_input.check(doc)
+    compiled = compile_schema(schema)
+    description = compiled.describe()
+    task = TaskSpec(name=source, prompt_version=source_version)
+    if not sanitized_input.text.strip():
+        return _failed(compiled, "no_text", description, task)
+    return _checked(
+        doc,
+        sanitized_input,
+        schema,
+        compiled,
+        description,
+        task,
+        answers,
+        ModelCallInfo(
+            call_ids=(),
+            chain_id=None,
+            prompt_task=source,
+            prompt_version=source_version,
+            prompt_hash=None,
+            provider=None,
+            model=None,
+            from_recording=False,
+        ),
     )

@@ -2,7 +2,8 @@
 # Copyright (c) 2026 Proofly Technology
 """XML documents: dispatch to a registered e-invoice parser (UBL, Peppol PINT AE).
 
-No e-invoice parser ships yet (M5). Until then every XML document fails parsing with
+The default registry knows UBL 2.1 invoices, Peppol PINT AE included
+(``pairly_core.documents.ubl``). Any other XML fails parsing with
 ``unsupported_einvoice_format`` and goes to the human queue. XML with a DTD or entity
 declarations is refused outright (XXE and billion-laughs guard).
 """
