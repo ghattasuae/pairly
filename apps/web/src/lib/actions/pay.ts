@@ -19,6 +19,7 @@ import type {
   PayInvoiceDetail,
   PayRunDetail,
   PayRunPreview,
+  PaySettings,
   PayTicketDetail,
   PayVendorCheck,
   PayVendorDetail,
@@ -442,4 +443,44 @@ export async function importPurchaseCsv(kind: "orders" | "receipts", csv: string
   });
   if (result.ok) return { ok: true, created: result.data.created, numbers: result.data.numbers };
   return { ok: false, code: result.code, problems: importProblems(error) };
+}
+
+// ------------------------------------------------------------------ settings
+
+const decimalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .regex(/^\d{1,13}(\.\d{1,4})?$/)
+    .refine((v) => Number(v) <= max);
+
+const settingsInput = z.object({
+  cooling_off_hours: z.number().int().min(0).max(720),
+  phone_change_window_days: z.number().int().min(0).max(365),
+  checks: z.object({
+    duplicate_window_days: z.number().int().min(0).max(366),
+    match_price_pct: decimalText(100),
+    match_quantity_pct: decimalText(100),
+    match_total_pct: decimalText(100),
+    match_total_amount: decimalText(1_000_000),
+    require_po: z.boolean(),
+  }),
+  payments: z.object({
+    auto_approve_low_risk: z.boolean(),
+    auto_approve_limit: decimalText(1_000_000_000),
+    auto_approve_currency: z.string().regex(/^[A-Z]{3}$/),
+  }),
+});
+
+export type PaySettingsInput = z.input<typeof settingsInput>;
+
+/**
+ * Save the Pay settings (`pay.settings.manage`, a second factor). Only the settings this
+ * page shows are sent; the API keeps every other check and payment setting as it is.
+ */
+export async function savePaySettings(input: PaySettingsInput): Promise<ActionResult<{ settings: PaySettings }>> {
+  const parsed = settingsInput.safeParse(input);
+  if (!parsed.success) return bad;
+  const result = await callApi((api) => api.PUT("/v1/pay/settings", { body: parsed.data as never }));
+  return toAction(result, (settings) => ({ settings }));
 }

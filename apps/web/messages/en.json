@@ -2923,7 +2923,8 @@
       "invoices": "Invoices",
       "runs": "Payment runs",
       "rules": "Approval rules",
-      "orders": "Purchase orders"
+      "orders": "Purchase orders",
+      "settings": "Settings"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -3681,6 +3682,38 @@
       "vendorRisk": "Vendor risk: {level}",
       "suspectedOriginals": "{count, plural, one {# possible original, compare them side by side} other {# possible originals, compare them side by side}}",
       "openInvoice": "Open the invoice side by side"
+    },
+    "settings": {
+      "title": "Pay settings",
+      "intro": "How bank-detail changes wait, what the invoice checks allow, and whether low-risk invoices may be approved by a rule.",
+      "readOnly": "You can see these settings but not change them.",
+      "bankTitle": "Bank-detail changes",
+      "coolingOff": "Cooling-off (hours)",
+      "coolingOffHint": "After two people approve new bank details, they wait this long before they are used. Anyone who may approve can still cancel. 0 to 720.",
+      "phoneWindow": "Recent phone change (days)",
+      "phoneWindowHint": "A change ticket is flagged when the vendor's phone number on file changed within this many days. 0 to 365.",
+      "checksTitle": "Invoice checks",
+      "duplicateWindow": "Duplicate window (days)",
+      "duplicateWindowHint": "The same total from the same vendor within this many days is flagged as a possible duplicate. 0 to 366.",
+      "pricePct": "Price tolerance (%)",
+      "pricePctHint": "How far a unit price may be above the purchase order price.",
+      "quantityPct": "Quantity tolerance (%)",
+      "quantityPctHint": "How far an invoiced quantity may be above what is left to invoice.",
+      "totalPct": "Total tolerance (%)",
+      "totalPctHint": "How far the subtotal may be above the purchase order value of its lines.",
+      "totalAmount": "Total tolerance (amount)",
+      "totalAmountHint": "The same, as an amount. The larger of the two applies.",
+      "requirePo": "Require a purchase order on every invoice",
+      "requirePoHint": "Off: only invoices from vendors with purchase orders on file must cite one.",
+      "ruleTitle": "Rule approval",
+      "ruleOn": "Approve low-risk invoices by rule",
+      "ruleOnHint": "Off by default. Only invoices with low risk, matched to their purchase order, from a low-risk vendor and under the limit. High and critical risk never.",
+      "ruleLimit": "Limit",
+      "ruleLimitHint": "Invoices at or above this amount always go to a person.",
+      "ruleCurrency": "Currency of the limit",
+      "ruleCurrencyHint": "Three letters, for example AED. Invoices in another currency go to a person.",
+      "save": "Save settings",
+      "saved": "Saved"
     }
   },
   "VendorOnboarding": {

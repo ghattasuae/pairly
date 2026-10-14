@@ -167,7 +167,7 @@ describe("ReviewReasons", () => {
     expect(items[1]).toHaveTextContent("bank details on the invoice differ from the vendor master");
     expect(items[2]).toHaveTextContent("The risk score needs a person");
     for (const item of items) expect(item).not.toHaveTextContent("A check found something to look at");
-    const code = within(items[1]).getByText("(bank_mismatch)");
+    const code = within(items[1] as HTMLElement).getByText("(bank_mismatch)");
     expect(code).toHaveAttribute("title", "check:bank_mismatch");
   });
 
