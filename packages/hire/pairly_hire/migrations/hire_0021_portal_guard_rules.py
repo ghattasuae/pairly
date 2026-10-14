@@ -31,6 +31,7 @@ from collections.abc import Sequence
 from alembic import op
 
 from pairly_core.migration_helpers import (
+    drop_portal_guard_statements,
     drop_portal_rule_statements,
     portal_guard_statements,
     portal_rule_statements,
@@ -108,4 +109,5 @@ def downgrade() -> None:
         for stmt in drop_portal_rule_statements(table, KIND):
             op.execute(stmt)
     for table in GUARDED:
-        op.execute(f"DROP POLICY IF EXISTS {table}_portal_guard ON {table}")
+        for stmt in drop_portal_guard_statements(table):
+            op.execute(stmt)

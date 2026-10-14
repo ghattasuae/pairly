@@ -13,13 +13,15 @@ Candidates (Pairly Hire) and vendor contacts (Pairly Pay) sign in to portals. Th
 Two layers of restrictive policies apply while a portal subject is set. Restrictive policies are combined with AND, so each layer can only narrow what the other allows.
 
 1. **Plugin tables.** Each plugin keys policies on its own subject (`hire_0004b` and later, `pay_0012`). A portal session sees only its own candidate's or vendor's rows, and nothing reviewers or AP wrote.
-2. **Core tables (the portal guard, migration `0022`).** Every org-scoped core table and `users` has a `<table>_portal_guard` policy. While a portal subject is set, the table shows no rows and accepts no writes. A code path that queries a core table from a portal request by mistake sees nothing. Plugin tables with no portal policy of their own get the same guard (`portal_guard_statements`). Examples: `expense_notes`, `hire_org_settings`, `hire_messaging_settings`.
+2. **Core tables (the portal guard, migrations `0022` and `0023`).** Every org-scoped core table and `users` has four restrictive policies, one per command: `<table>_portal_guard_select`, `_insert`, `_update` and `_delete`. While a portal subject is set, the table shows no rows and accepts no writes. A code path that queries a core table from a portal request by mistake sees nothing. Plugin tables with no portal policy of their own get the same guard (`portal_guard_statements`). Examples: `expense_notes`, `hire_org_settings`, `hire_messaging_settings`.
 
 ### Narrow exceptions
 
-A rule in `portal_guard_rules` names a table, a kind of portal person (`*` for any) and SQL conditions for rows shown and rows written. Each condition is tied to the subject. `portal_guard_apply(table)` rebuilds the table's guard from all of its rules, so each plugin adds its own rules without touching anyone else's. Only migrations write rules: the application role has no privilege on the table.
+A rule in `portal_guard_rules` names a table, a kind of portal person (`*` for any), the commands it allows (`commands`: SELECT, INSERT, UPDATE, DELETE) and SQL conditions for rows shown and rows written. Each condition is tied to the subject. `portal_guard_apply(table)` rebuilds the table's four policies from all of its rules, each from the rules that name its command, so each plugin adds its own rules without touching anyone else's. Only migrations write rules: the application role has no privilege on the table.
 
-| Table | Who | Shown | Written |
+No rule allows UPDATE or DELETE today: a portal person's own uploads are insert and read only. A command no rule of the table names is closed (SELECT, UPDATE and DELETE see no row; INSERT is refused).
+
+| Table | Who | Shown (SELECT) | Written (INSERT) |
 |---|---|---|---|
 | `documents` | any portal person | files they uploaded (`portal_subject`, filled by the database from the setting) | only as themselves |
 | `templates` | any portal person | yes (the email texts) | never |
@@ -54,4 +56,5 @@ A portal upload of bytes that someone else's file already has gets a plain 409 (
 * each table has a restrictive portal policy;
 * after real vendor and candidate portal flows, a portal session of anyone else sees no row of any table except the shared templates and Pay's settings;
 * the portal person sees, among core tables, only what the rules above allow;
-* writes outside the rules are refused.
+* writes outside the rules are refused;
+* every rule names its commands and none allows UPDATE or DELETE; a forged UPDATE or DELETE on every exception table, by the vendor and by the candidate, touches no row.

@@ -60,16 +60,31 @@ PORTAL_ACTIVE_FN = "app_portal_active()"
 PORTAL_ANY = "*"
 
 
+PORTAL_COMMANDS: tuple[str, ...] = ("SELECT", "INSERT", "UPDATE", "DELETE")
+
+
 def portal_guard_statements(table: str) -> list[str]:
-    """Close an org-scoped table to portal sessions (core migration 0022).
+    """Close an org-scoped table to portal sessions (core migrations 0022 and 0023).
 
     While a portal subject is set (``app.portal_subject``: a candidate or a vendor
     contact signed in to a portal) the table shows no rows and accepts no writes, except
-    what the rules of ``portal_rule_statements`` allow. Staff, agents and jobs never set
-    a portal subject, so the guard changes nothing for them. Call it in the migration
-    that creates any org-scoped table that has no portal policy of its own.
+    what the rules of ``portal_rule_statements`` allow, command by command (restrictive
+    policies ``<table>_portal_guard_select``, ``_insert``, ``_update``, ``_delete``).
+    Staff, agents and jobs never set a portal subject, so the guard changes nothing for
+    them. Call it in the migration that creates any org-scoped table that has no portal
+    policy of its own.
     """
     return [f"SELECT portal_guard_apply('{ident(table)}')"]
+
+
+def drop_portal_guard_statements(table: str) -> list[str]:
+    """Remove a table's portal guard (downgrades), whichever shape it has: the single
+    policy of migration 0022 or the per-command policies of 0023."""
+    t = ident(table)
+    return [
+        f"DROP POLICY IF EXISTS {t}_portal_guard ON {t}",
+        *(f"DROP POLICY IF EXISTS {t}_portal_guard_{c.lower()} ON {t}" for c in PORTAL_COMMANDS),
+    ]
 
 
 def portal_rule_statements(
@@ -78,14 +93,22 @@ def portal_rule_statements(
     *,
     using: str | None = None,
     check: str | None = None,
+    commands: tuple[str, ...] | None = None,
 ) -> list[str]:
     """A narrow exception to a table's portal guard, for one kind of portal person
     (``hire_candidate``, ``pay_vendor``; ``PORTAL_ANY`` for every kind). ``using`` (rows
-    shown) and ``check`` (rows written) are SQL conditions tied to the subject
-    (``app_portal_id()``, a plugin's own subject function); ``None`` allows nothing.
-    The rules live in ``portal_guard_rules`` and the table's ``<table>_portal_guard``
-    policy is rebuilt from all of them, so plugins add their own without touching
-    each other's."""
+    shown, and rows an UPDATE or DELETE may touch) and ``check`` (rows written) are SQL
+    conditions tied to the subject (``app_portal_id()``, a plugin's own subject
+    function); ``None`` allows nothing.
+
+    ``commands`` names what the rule allows, a subset of ``PORTAL_COMMANDS``: SELECT and
+    DELETE need ``using``, INSERT needs ``check``, UPDATE needs both. ``None`` is the
+    shape of the rules written before migration 0023 (the column did not exist yet):
+    the database then derives SELECT when ``using`` is set and INSERT when ``check`` is
+    set, never UPDATE or DELETE.
+
+    The rules live in ``portal_guard_rules`` and the table's guard policies are rebuilt
+    from all of them, so plugins add their own without touching each other's."""
     t = ident(table)
     if subject_kind != PORTAL_ANY:
         ident(subject_kind)
@@ -96,11 +119,24 @@ def portal_rule_statements(
     def quoted(part: str | None) -> str:
         return "NULL" if part is None else f"$rule${part}$rule$"
 
+    columns = "table_name, subject_kind, using_sql, check_sql"
+    values = f"'{t}', '{subject_kind}', {quoted(using)}, {quoted(check)}"
+    updates = "using_sql = EXCLUDED.using_sql, check_sql = EXCLUDED.check_sql"
+    if commands is not None:
+        named = tuple(dict.fromkeys(c.upper() for c in commands))
+        if not named or not set(named) <= set(PORTAL_COMMANDS):
+            raise ValueError(f"portal rule commands must be a subset of {PORTAL_COMMANDS}")
+        if {"SELECT", "UPDATE", "DELETE"} & set(named) and using is None:
+            raise ValueError("SELECT, UPDATE and DELETE need a using condition")
+        if {"INSERT", "UPDATE"} & set(named) and check is None:
+            raise ValueError("INSERT and UPDATE need a check condition")
+        columns += ", commands"
+        values += ", ARRAY[" + ", ".join(f"'{c}'" for c in named) + "]::text[]"
+        updates += ", commands = EXCLUDED.commands"
     return [
-        "INSERT INTO portal_guard_rules (table_name, subject_kind, using_sql, check_sql) "  # noqa: S608 (constant SQL, never user input)
-        f"VALUES ('{t}', '{subject_kind}', {quoted(using)}, {quoted(check)}) "
-        "ON CONFLICT (table_name, subject_kind) DO UPDATE "
-        "SET using_sql = EXCLUDED.using_sql, check_sql = EXCLUDED.check_sql",
+        f"INSERT INTO portal_guard_rules ({columns}) "  # noqa: S608 (constant SQL, never user input)
+        f"VALUES ({values}) "
+        f"ON CONFLICT (table_name, subject_kind) DO UPDATE SET {updates}",
         f"SELECT portal_guard_apply('{t}')",
     ]
 

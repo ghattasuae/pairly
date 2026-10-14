@@ -14,7 +14,7 @@ from collections.abc import Sequence
 
 from alembic import op
 
-from pairly_core.migration_helpers import portal_guard_statements
+from pairly_core.migration_helpers import drop_portal_guard_statements, portal_guard_statements
 
 revision: str = "expense_0004"
 down_revision: str | None = "expense_0003"
@@ -28,4 +28,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP POLICY IF EXISTS expense_notes_portal_guard ON expense_notes")
+    for stmt in drop_portal_guard_statements("expense_notes"):
+        op.execute(stmt)
