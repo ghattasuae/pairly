@@ -139,7 +139,8 @@ async def test_create_purchase_order_and_receipt(
 
     # Cancelled POs receive nothing.
     await owner_rows(owner_engine, world.org_id,
-                     "UPDATE pay_purchase_orders SET status = 'cancelled' WHERE id = :i",
+                     "UPDATE pay_purchase_orders SET status = 'cancelled', closed_at = now(), "
+                     "closed_by_type = 'user', closed_by_id = 'test' WHERE id = :i",
                      {"i": po["id"]})  # fmt: skip
     late = receipt | {"grn_number": "GRN-2026-0004"}
     response = await api.call("POST", "/v1/pay/goods-receipts", world, "clerk", json=late)

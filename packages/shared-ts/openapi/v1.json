@@ -1043,6 +1043,22 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "CloseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "CloseIn",
+        "type": "object"
+      },
       "CodingCsvIn": {
         "additionalProperties": false,
         "properties": {
@@ -16223,6 +16239,14 @@
             },
             "title": "Numbers",
             "type": "array"
+          },
+          "rematched": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rematched",
+            "type": "array"
           }
         },
         "required": [
@@ -23479,6 +23503,40 @@
       },
       "PoDetail": {
         "properties": {
+          "close_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Reason"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "closed_by_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By Type"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -23548,6 +23606,14 @@
               "$ref": "#/components/schemas/ReceiptOut"
             },
             "title": "Receipts",
+            "type": "array"
+          },
+          "rechecked": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rechecked",
             "type": "array"
           },
           "requester": {
@@ -24766,6 +24832,14 @@
             "format": "date",
             "title": "Received Date",
             "type": "string"
+          },
+          "rematched": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rematched",
+            "type": "array"
           },
           "source": {
             "title": "Source",
@@ -40362,6 +40436,114 @@
           }
         },
         "summary": "Get Purchase Order Detail",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/purchase-orders/{po_id}/cancel": {
+      "post": {
+        "description": "The order did not happen (a second factor). Its invoices still with a person run\nthe checks again and fail matching; one awaiting approval can no longer be approved.",
+        "operationId": "cancel_v1_pay_purchase_orders__po_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "po_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Po Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/purchase-orders/{po_id}/close": {
+      "post": {
+        "description": "The PO takes no more invoices. Invoices received before keep their match.",
+        "operationId": "close_v1_pay_purchase_orders__po_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "po_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Po Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close",
         "tags": [
           "pay"
         ]

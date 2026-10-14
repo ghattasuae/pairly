@@ -107,6 +107,7 @@ from pairly_pay.models import (
     VendorStatus,
 )
 from pairly_pay.purchase_orders import (
+    effective_status,
     find_purchase_order,
     invoiced_quantities,
     po_lines,
@@ -377,7 +378,7 @@ async def purchase_order_facts(
         number=po.po_number,
         vendor_id=str(po.vendor_id),
         currency=po.currency,
-        status=po.status,
+        status=effective_status(po, invoice.created_at),
         match_type=po.match_type,
         lines=tuple(
             PoLineFacts(line.line_no, line.description, line.quantity, line.unit_price)
@@ -723,6 +724,10 @@ class RecheckTrigger(StrEnum):
     VENDOR_LINKED = "vendor_linked"
     CODING = "coding"
     PERSON = "person"
+    # A goods receipt arrived for the PO of an invoice waiting for one.
+    GOODS_RECEIPT = "goods_receipt"
+    # The PO the invoice cites was cancelled.
+    PO_CANCELLED = "po_cancelled"
 
 
 async def recheck_invoice(

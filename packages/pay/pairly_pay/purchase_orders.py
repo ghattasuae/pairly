@@ -12,6 +12,12 @@
   can never be received more than it was ordered (counting every earlier receipt), and
   a cancelled or closed PO receives nothing.
 
+A person **closes** a PO (``close_purchase_order``: it takes no more invoices; the
+invoices received before keep their match) or **cancels** it (``cancel_purchase_order``:
+the order did not happen; refused while an invoice matched with it is approved,
+scheduled or paid). Either way a closed or cancelled PO fails matching for later
+invoices with a clear reason (``effective_status``), and receives no goods.
+
 Both are created from JSON (``create_purchase_order``, ``create_goods_receipt``) or
 imported from CSV (``import_purchase_orders``, ``import_goods_receipts``). Validation
 is strict: every value is checked (plain decimals only, no signs, exponents or
@@ -124,6 +130,11 @@ class RowError:
 class PurchaseOrderNotFoundError(NotFoundError):
     def __init__(self) -> None:
         super().__init__("purchase order not found")
+
+
+class PurchaseOrderStateError(ConflictError):
+    code = "purchase_order_state"
+    title = "The purchase order cannot change now"
 
 
 class InvalidPurchaseDataError(BadRequestError):
@@ -392,6 +403,85 @@ async def invoiced_quantities(
         for line_no, quantity in allocation_of(invoice).items():
             out[line_no] = out.get(line_no, Decimal(0)) + quantity
     return out
+
+
+def effective_status(po: PayPurchaseOrder, invoice_created_at: dt.datetime | None) -> str:
+    """The PO's status for one invoice: a PO closed after the invoice arrived is still
+    open for it (its match stands), so closing never changes an invoice already in
+    flight. A cancelled PO is cancelled for every invoice."""
+    if (
+        po.status == PoStatus.CLOSED.value
+        and po.closed_at is not None
+        and invoice_created_at is not None
+        and invoice_created_at <= po.closed_at
+    ):
+        return PoStatus.OPEN.value
+    return po.status
+
+
+# ------------------------------------------------------------------ closing
+
+PAID_OR_APPROVED: Final = frozenset(
+    {InvoiceStatus.APPROVED.value, InvoiceStatus.SCHEDULED.value, InvoiceStatus.PAID.value}
+)
+
+
+async def _end(
+    session: AsyncSession, by: By, po_id: uuid.UUID, status: PoStatus, reason: str
+) -> PayPurchaseOrder:
+    text_reason = clean_text(reason, 501)
+    if not text_reason:
+        raise BadRequestError("a reason is required")
+    if len(text_reason) > 500:
+        raise BadRequestError("the reason is longer than 500 characters")
+    po = await get_purchase_order(session, po_id, lock=True)
+    if po.status != PoStatus.OPEN.value:
+        raise PurchaseOrderStateError(f"the purchase order is {po.status}")
+    now = dt.datetime.now(dt.UTC)
+    po.status = status.value
+    po.closed_at = now
+    po.closed_by_type = by.actor_type.value
+    po.closed_by_id = by.actor_id
+    po.close_reason = text_reason
+    po.updated_at = now
+    await session.flush()
+    await audit(
+        session,
+        by,
+        f"pay.purchase_order.{status.value}",
+        entity_type=PO_ENTITY,
+        entity_id=po.id,
+        payload={"po_number": po.po_number, "reason": text_reason[:200]},
+    )
+    return po
+
+
+async def close_purchase_order(
+    session: AsyncSession, by: By, po_id: uuid.UUID, reason: str
+) -> PayPurchaseOrder:
+    """An open PO takes no more invoices (audited). Invoices received before keep their
+    match; later ones fail matching (``po_closed``)."""
+    return await _end(session, by, po_id, PoStatus.CLOSED, reason)
+
+
+async def cancel_purchase_order(
+    session: AsyncSession, by: By, po_id: uuid.UUID, reason: str
+) -> PayPurchaseOrder:
+    """The order did not happen (audited). Refused while an invoice matched with it is
+    approved, scheduled or paid: that money is committed, close the PO instead. Every
+    other invoice citing it fails matching from now on (an invoice awaiting approval
+    gets stale checks, so it can no longer be approved)."""
+    await get_purchase_order(session, po_id, lock=True)  # before looking at its invoices
+    committed = await session.scalar(
+        select(PayInvoice.reference)
+        .where(PayInvoice.po_id == po_id, PayInvoice.status.in_(sorted(PAID_OR_APPROVED)))
+        .limit(1)
+    )
+    if committed is not None:
+        raise PurchaseOrderStateError(
+            f"invoice {committed} of this purchase order is approved or paid: close it instead"
+        )
+    return await _end(session, by, po_id, PoStatus.CANCELLED, reason)
 
 
 # ------------------------------------------------------------------ creating

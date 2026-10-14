@@ -54,6 +54,8 @@ GL coding (``pay_0009``, same rules, ``pairly_pay.coding``):
 * ``pay_coding_corrections``: a person chose another code than the suggestion (insert
   only).
 
+Purchase orders gain who closed or cancelled them, when and why (``pay_0011``).
+
 Messages (``pay_0010``, same rules, ``pairly_pay.messages``): ``pay_messages``, a drafted
 message about an invoice exception to the vendor or the requester, sent only after a
 person approved its exact text. Recipient and text are encrypted.
@@ -1018,6 +1020,10 @@ class PayPurchaseOrder(Base, OrgScoped):
         CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency_format"),
         CheckConstraint("subtotal >= 0", name="subtotal_not_negative"),
         CheckConstraint("line_count > 0", name="has_lines"),
+        CheckConstraint(
+            "status = 'open' OR (closed_at IS NOT NULL AND closed_by_id IS NOT NULL)",
+            name="closed_has_evidence",
+        ),
         Index("ix_pay_purchase_orders_vendor", "org_id", "vendor_id", "created_at"),
     )
 
@@ -1038,6 +1044,12 @@ class PayPurchaseOrder(Base, OrgScoped):
     created_by_id: Mapped[str] = mapped_column(String(128), nullable=False)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
+    # Closed or cancelled by a person (``pay_0011``): when, by whom and why. Invoices
+    # received before a PO was closed keep their match; later ones are not matched.
+    closed_at: Mapped[datetime | None] = _ts()
+    closed_by_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    closed_by_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    close_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class PayPurchaseOrderLine(Base, OrgScoped):

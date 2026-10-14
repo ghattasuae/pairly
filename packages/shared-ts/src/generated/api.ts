@@ -4517,6 +4517,47 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/purchase-orders/{po_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel
+         * @description The order did not happen (a second factor). Its invoices still with a person run
+         *     the checks again and fail matching; one awaiting approval can no longer be approved.
+         */
+        post: operations["cancel_v1_pay_purchase_orders__po_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/purchase-orders/{po_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close
+         * @description The PO takes no more invoices. Invoices received before keep their match.
+         */
+        post: operations["close_v1_pay_purchase_orders__po_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/purchase-orders/import": {
         parameters: {
             query?: never;
@@ -5533,6 +5574,11 @@ export type components = {
             items: components["schemas"]["AuditEventOut"][];
             /** Next Cursor */
             next_cursor: string | null;
+        };
+        /** CloseIn */
+        CloseIn: {
+            /** Reason */
+            reason: string;
         };
         /** CodingCsvIn */
         CodingCsvIn: {
@@ -10774,6 +10820,8 @@ export type components = {
             ids: string[];
             /** Numbers */
             numbers: string[];
+            /** Rematched */
+            rematched?: string[];
         };
         /** InboxOut */
         InboxOut: {
@@ -13124,6 +13172,12 @@ export type components = {
         };
         /** PoDetail */
         PoDetail: {
+            /** Close Reason */
+            close_reason?: string | null;
+            /** Closed At */
+            closed_at?: string | null;
+            /** Closed By Type */
+            closed_by_type?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -13159,6 +13213,8 @@ export type components = {
             receipt_count: number;
             /** Receipts */
             receipts: components["schemas"]["ReceiptOut"][];
+            /** Rechecked */
+            rechecked?: string[];
             /** Requester */
             requester: string | null;
             /** Source */
@@ -13563,6 +13619,8 @@ export type components = {
              * Format: date
              */
             received_date: string;
+            /** Rematched */
+            rematched?: string[];
             /** Source */
             source: string;
         };
@@ -23229,6 +23287,76 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_v1_pay_purchase_orders__po_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                po_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_v1_pay_purchase_orders__po_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                po_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

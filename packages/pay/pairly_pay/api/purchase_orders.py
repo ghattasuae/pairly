@@ -9,10 +9,21 @@
 * ``POST /purchase-orders``               create one (``pay.purchase_order.write``).
 * ``POST /purchase-orders/import``        ``{"csv": "..."}``, one row per line; all or
   nothing, every problem with its row (400 ``invalid_purchase_data``).
-* ``POST /goods-receipts``                record one receipt against an open PO.
-* ``POST /goods-receipts/import``         ``{"csv": "..."}``, one row per PO line.
+* ``POST /purchase-orders/{id}/close``    ``{"reason": ...}``: the PO takes no more
+  invoices (``pay.purchase_order.write``, people only). Invoices received before keep
+  their match.
+* ``POST /purchase-orders/{id}/cancel``   ``{"reason": ...}``: the order did not happen
+  (``pay.purchase_order.manage``, a second factor; people only). Refused (409) while an
+  invoice matched with it is approved, scheduled or paid. Its invoices still with a
+  person run the checks again and fail matching (``rechecked``).
+* ``POST /goods-receipts``                record one receipt against an open PO. The
+  invoices of that PO waiting for a receipt run the checks again (``rematched``,
+  ``pairly_pay.rematch``).
+* ``POST /goods-receipts/import``         ``{"csv": "..."}``, one row per PO line (the
+  same re-matching for every PO it touches).
 
-Numbers already on file answer 409 ``number_taken``. Every creation is audited.
+Numbers already on file answer 409 ``number_taken``. Every creation, close and cancel
+is audited.
 """
 
 from __future__ import annotations
@@ -27,8 +38,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_, select
 
 from pairly_api.problems import problem_response
+from pairly_core.errors import ForbiddenError
 from pairly_core.identity import CurrentActor, OrgSession
-from pairly_core.rbac import authorize
+from pairly_core.rbac import Actor, ActorKind, authorize
+from pairly_pay.api.invoices import Runtime, check_services
 from pairly_pay.checks.settings import amount_text
 from pairly_pay.common import By
 from pairly_pay.models import (
@@ -39,7 +52,11 @@ from pairly_pay.models import (
     PayPurchaseOrder,
     PayVendor,
 )
-from pairly_pay.permissions import PURCHASE_ORDER_READ, PURCHASE_ORDER_WRITE
+from pairly_pay.permissions import (
+    PURCHASE_ORDER_MANAGE,
+    PURCHASE_ORDER_READ,
+    PURCHASE_ORDER_WRITE,
+)
 from pairly_pay.purchase_orders import (
     MAX_CSV_BYTES,
     InvalidPurchaseDataError,
@@ -49,6 +66,8 @@ from pairly_pay.purchase_orders import (
     ReceiptInput,
     ReceiptLineInput,
     allocation_of,
+    cancel_purchase_order,
+    close_purchase_order,
     create_goods_receipt,
     create_purchase_order,
     get_purchase_order,
@@ -58,6 +77,7 @@ from pairly_pay.purchase_orders import (
     receipts_of,
     received_quantities,
 )
+from pairly_pay.rematch import after_cancel, after_receipt
 
 router = APIRouter(tags=["pay"])
 MAX_LIST: Final = 200
@@ -99,6 +119,10 @@ class GoodsReceiptIn(_In):
     received_date: dt.date
     received_by: Annotated[str, Field(max_length=120)] | None = None
     lines: Annotated[list[ReceiptLineIn], Field(min_length=1, max_length=500)]
+
+
+class CloseIn(_In):
+    reason: Annotated[str, Field(min_length=1, max_length=500)]
 
 
 class CsvIn(_In):
@@ -143,6 +167,8 @@ class ReceiptOut(BaseModel):
     line_count: int
     source: str
     created_at: dt.datetime
+    # Invoices of the PO that were waiting for a receipt and ran the checks again.
+    rematched: list[uuid.UUID] = Field(default_factory=list)
 
 
 class PoInvoiceOut(BaseModel):
@@ -159,6 +185,11 @@ class PoDetail(PoSummary):
     lines: list[PoLineOut]
     receipts: list[ReceiptOut]
     invoices: list[PoInvoiceOut]
+    closed_at: dt.datetime | None = None
+    closed_by_type: str | None = None
+    close_reason: str | None = None
+    # Invoices that ran the checks again because the PO was cancelled.
+    rechecked: list[uuid.UUID] = Field(default_factory=list)
 
 
 class PoList(BaseModel):
@@ -170,6 +201,8 @@ class ImportOut(BaseModel):
     created: int
     ids: list[uuid.UUID]
     numbers: list[str]
+    # Goods receipts: the invoices waiting for one that ran the checks again.
+    rematched: list[uuid.UUID] = Field(default_factory=list)
 
 
 def number_text(value: Decimal) -> str:
@@ -280,6 +313,9 @@ async def _detail(session: OrgSession, po: PayPurchaseOrder) -> PoDetail:
             for line in await po_lines(session, po.id)
         ],
         receipts=[_receipt(r) for r in receipts],
+        closed_at=po.closed_at,
+        closed_by_type=po.closed_by_type,
+        close_reason=po.close_reason,
         invoices=[
             PoInvoiceOut(
                 id=i.id,
@@ -416,7 +452,11 @@ async def list_receipts(
 
 @router.post("/goods-receipts", status_code=201, response_model=ReceiptOut)
 async def create_receipt(
-    request: Request, body: GoodsReceiptIn, actor: CurrentActor, session: OrgSession
+    request: Request,
+    body: GoodsReceiptIn,
+    actor: CurrentActor,
+    session: OrgSession,
+    runtime: Runtime,
 ) -> Any:
     authorize(actor, PURCHASE_ORDER_WRITE)
     data = ReceiptInput(
@@ -430,16 +470,62 @@ async def create_receipt(
         receipt = await create_goods_receipt(session, By.of(actor), data)
     except (InvalidPurchaseDataError, PurchaseNumberTakenError) as exc:
         return _problem(request, exc)
-    return _receipt(receipt)
+    out = _receipt(receipt)
+    out.rematched = await after_receipt(
+        session, [receipt.po_id], check_services(runtime, actor), By.of(actor)
+    )
+    return out
 
 
 @router.post("/goods-receipts/import", response_model=ImportOut)
 async def import_receipts(
-    request: Request, body: CsvIn, actor: CurrentActor, session: OrgSession
+    request: Request, body: CsvIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
 ) -> Any:
     authorize(actor, PURCHASE_ORDER_WRITE)
     try:
         result = await import_goods_receipts(session, By.of(actor), body.csv)
     except (InvalidPurchaseDataError, PurchaseNumberTakenError) as exc:
         return _problem(request, exc)
-    return ImportOut(created=len(result.created), ids=result.created, numbers=result.numbers)
+    po_ids = list(
+        await session.scalars(
+            select(PayGoodsReceipt.po_id).where(PayGoodsReceipt.id.in_(result.created)).distinct()
+        )
+    )
+    rematched = await after_receipt(session, po_ids, check_services(runtime, actor), By.of(actor))
+    return ImportOut(
+        created=len(result.created), ids=result.created, numbers=result.numbers, rematched=rematched
+    )
+
+
+# ------------------------------------------------------------------ closing
+
+
+def _person(actor: Actor) -> None:
+    if actor.kind is not ActorKind.USER:
+        raise ForbiddenError("only a person can do this")
+
+
+@router.post("/purchase-orders/{po_id}/close", response_model=PoDetail)
+async def close(
+    po_id: uuid.UUID, body: CloseIn, actor: CurrentActor, session: OrgSession
+) -> PoDetail:
+    """The PO takes no more invoices. Invoices received before keep their match."""
+    authorize(actor, PURCHASE_ORDER_WRITE)
+    _person(actor)
+    po = await close_purchase_order(session, By.of(actor), po_id, body.reason)
+    return await _detail(session, po)
+
+
+@router.post("/purchase-orders/{po_id}/cancel", response_model=PoDetail)
+async def cancel(
+    po_id: uuid.UUID, body: CloseIn, actor: CurrentActor, session: OrgSession, runtime: Runtime
+) -> PoDetail:
+    """The order did not happen (a second factor). Its invoices still with a person run
+    the checks again and fail matching; one awaiting approval can no longer be approved."""
+    authorize(actor, PURCHASE_ORDER_MANAGE)
+    _person(actor)
+    po = await cancel_purchase_order(session, By.of(actor), po_id, body.reason)
+    rechecked = await after_cancel(session, po.id, check_services(runtime, actor), By.of(actor))
+    detail = await _detail(session, po)
+    detail.rechecked = rechecked
+    return detail

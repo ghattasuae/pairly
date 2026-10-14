@@ -54,7 +54,9 @@ Who does what (brief 4.1, 6.2):
 
 * **Purchase orders and goods receipts** (``pay.purchase_order.*``, brief 4.5.1):
   ``read`` for the readers and the agent (matching reads them); ``write`` (create or
-  import from CSV) for AP clerks, finance controllers and admins.
+  import from CSV, close a PO) for AP clerks, finance controllers and admins;
+  ``manage`` (cancel a PO, which stops invoices already matched with it from being
+  approved) for finance controllers and admins, with a second factor.
 
 * **Chart of accounts and cost centres** (``pay.coding.manage``, brief 4.5.3): create a
   new version of a list or import one from CSV (admins, finance controllers). A
@@ -102,6 +104,7 @@ PAYMENT_RUN_EXPORT: Final = "pay.payment_run.export"
 PAYMENT_RECORD: Final = "pay.payment.record"
 PURCHASE_ORDER_READ: Final = "pay.purchase_order.read"
 PURCHASE_ORDER_WRITE: Final = "pay.purchase_order.write"
+PURCHASE_ORDER_MANAGE: Final = "pay.purchase_order.manage"
 DOCUMENT_READ: Final = "pay.document.read"
 EXTRACTION_READ: Final = "pay.extraction.read"
 EXTRACTION_CORRECT: Final = "pay.extraction.correct"
@@ -197,8 +200,13 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
     ),
     PermissionSpec(
         PURCHASE_ORDER_WRITE,
-        "Create or import purchase orders and goods receipts",
+        "Create or import purchase orders and goods receipts, close a purchase order",
         frozenset({R.ADMIN, R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        PURCHASE_ORDER_MANAGE,
+        "Cancel a purchase order (invoices matched with it can no longer be approved)",
+        frozenset({R.ADMIN, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(
         CODING_MANAGE,

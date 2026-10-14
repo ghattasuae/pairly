@@ -36,7 +36,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.extraction.service import load_extraction
 from pairly_pay.models import PayInvoice, PayInvoiceLineCoding
-from pairly_pay.purchase_orders import find_purchase_order
+from pairly_pay.purchase_orders import effective_status, find_purchase_order
 from pairly_pay.vendors import active_account
 
 DIGEST_VERSION: Final = 1
@@ -90,7 +90,9 @@ async def check_inputs_digest(session: AsyncSession, invoice: PayInvoice) -> str
         # must not make an approved invoice stale.
         material["po"] = {
             "id": str(po.id),
-            "status": po.status,
+            # A PO closed after the invoice arrived is still open for it: closing never
+            # makes an invoice already in flight stale. Cancelling does.
+            "status": effective_status(po, invoice.created_at),
             "vendor_id": str(po.vendor_id),
             "currency": po.currency,
             "match_type": po.match_type,

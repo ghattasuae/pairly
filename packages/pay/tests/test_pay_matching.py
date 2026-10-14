@@ -31,6 +31,8 @@ from pairly_pay.checks.types import (
     PoLineFacts,
     VendorFacts,
 )
+from pairly_pay.models import PayPurchaseOrder
+from pairly_pay.purchase_orders import effective_status
 
 D = Decimal
 SETTINGS = CheckSettings()
@@ -232,3 +234,15 @@ def test_matching_is_one_of_the_pure_checks_and_fails_closed() -> None:
     )
     assert broken["matching"].status is CheckStatus.ERROR
     assert broken["matching"].needs_review
+
+
+def test_a_po_closed_after_the_invoice_arrived_is_still_open_for_it() -> None:
+    closed_at = dt.datetime(2026, 10, 10, tzinfo=dt.UTC)
+    po = PayPurchaseOrder(status="closed", closed_at=closed_at)
+    assert effective_status(po, closed_at - dt.timedelta(hours=1)) == "open"
+    assert effective_status(po, closed_at) == "open"
+    assert effective_status(po, closed_at + dt.timedelta(seconds=1)) == "closed"
+    assert effective_status(po, None) == "closed"
+    cancelled = PayPurchaseOrder(status="cancelled", closed_at=closed_at)
+    assert effective_status(cancelled, closed_at - dt.timedelta(days=1)) == "cancelled"
+    assert effective_status(PayPurchaseOrder(status="open"), None) == "open"
