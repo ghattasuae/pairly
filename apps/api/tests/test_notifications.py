@@ -202,7 +202,9 @@ async def test_approval_emails_carry_signed_links_only_when_sent_now(
         assert (row.status, row.reason) == (status, reason), name
         assert _tokens(content) == [], name
         assert "/approvals/link" not in text_of(content), name
-        assert content["link"] == f"{WEB_URL}/approvals/{approval_id}"
+        # The in-app and digest link is an app path; the email text has the full link.
+        assert content["link"] == f"/inbox?item={approval_id}"
+        assert f"{WEB_URL}/inbox?item={approval_id}" in content["text"]
         if status == "queued":
             assert row.next_attempt_at is not None
             assert row.next_attempt_at > now

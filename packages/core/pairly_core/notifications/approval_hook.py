@@ -16,7 +16,8 @@ What they get, per channel and preferences (``pairly_core.notifications.preferen
 * Slack (when the person linked their Slack account and the organisation has Slack):
   a Block Kit message whose Approve and Reject buttons open the same page with
   ``slack_link`` tokens, plus a native "remind me" button.
-* in-app: an item linking to the approval in the inbox.
+* in-app: an item linking to the approval in the inbox (``/inbox?item=<id>``, an app
+  path; email and Slack carry the same page as a full link).
 
 Links are only issued when the message goes out now. When the email or Slack message is
 held (digest, snooze, quiet hours), it carries the inbox link only: a 30 minute link
@@ -50,6 +51,7 @@ from pairly_core.approvals.service import active_delegations, db_now
 from pairly_core.errors import BadRequestError
 from pairly_core.integrations.slack.blocks import SlackButton, approval_buttons
 from pairly_core.integrations.slack.links import active_slack, slack_link_for_user
+from pairly_core.notifications.links import absolute_url, approval_path
 from pairly_core.notifications.models import NotificationPreference, Urgency
 from pairly_core.notifications.preferences import plan, preferences_from_row
 from pairly_core.notifications.service import Extras, Recipient, notify
@@ -182,7 +184,8 @@ class NotificationApprovalHook(BaseApprovalHook):
                 select(NotificationPreference).where(NotificationPreference.user_id == person)
             )
         )
-        inbox_url = f"{self._settings.web_url}/approvals/{approval.id}"
+        path = approval_path(approval.id)
+        inbox_url = absolute_url(self._settings.web_url, path)
         base = {
             "title": approval.title,
             "step": step_name,
@@ -208,7 +211,7 @@ class NotificationApprovalHook(BaseApprovalHook):
             variables=email_vars,
             dedupe_key=dedupe,
             channels=["email"],
-            extras=Extras(link=inbox_url),
+            extras=Extras(link=path),
             template_key=key,
             urgency=urgency,
             workflow=approval.workflow,
@@ -240,7 +243,7 @@ class NotificationApprovalHook(BaseApprovalHook):
             variables=base,
             dedupe_key=dedupe,
             channels=["slack"],
-            extras=Extras(link=inbox_url, slack_buttons=buttons, slack_note=note),
+            extras=Extras(link=path, slack_buttons=buttons, slack_note=note),
             template_key=key,
             urgency=urgency,
             workflow=approval.workflow,
@@ -253,7 +256,7 @@ class NotificationApprovalHook(BaseApprovalHook):
             variables=base,
             dedupe_key=dedupe,
             channels=["in_app"],
-            extras=Extras(link=inbox_url),
+            extras=Extras(link=path),
             template_key=key,
             urgency=urgency,
             workflow=approval.workflow,

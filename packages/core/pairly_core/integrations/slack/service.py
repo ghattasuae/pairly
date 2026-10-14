@@ -62,6 +62,7 @@ from pairly_core.integrations.models import (
 )
 from pairly_core.integrations.slack.blocks import NATIVE_ACTIONS, REMIND_LATER, WEB_ACTIONS
 from pairly_core.integrations.slack.links import SLACK, user_for_slack
+from pairly_core.notifications.links import absolute_url, approval_path
 from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_core.rbac import Actor, authorize
 from pairly_core.signed_links import hash_token, is_well_formed_token
@@ -463,10 +464,13 @@ async def _act(
             session,
             recipient=Recipient.user(link.user_id),
             template_key="core.approval.reminder",
-            variables={"title": approval.title, "inbox_url": f"{web_url}/approvals/{approval.id}"},
+            variables={
+                "title": approval.title,
+                "inbox_url": absolute_url(web_url, approval_path(approval.id)),
+            },
             dedupe_key=f"reminder:{approval.id}:{link.user_id}:{interaction.action_ts}",
             channels=["slack"],
-            extras=Extras(link=f"{web_url}/approvals/{approval.id}"),
+            extras=Extras(link=approval_path(approval.id)),
             workflow=approval.workflow,
             not_before=now + REMIND_AFTER,
         )

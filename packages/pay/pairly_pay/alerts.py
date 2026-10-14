@@ -20,7 +20,6 @@ a failure is logged and skipped: an alert never blocks the hold or the ticket.
 
 from __future__ import annotations
 
-import os
 import uuid
 from typing import Final
 
@@ -28,6 +27,7 @@ import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.approvals.service import role_members
+from pairly_core.notifications.links import absolute_url, public_web_url
 from pairly_core.notifications.models import Urgency
 from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_pay.common import WORKFLOW
@@ -43,11 +43,6 @@ ALERT_ACTOR: Final = "pairly.pay.checks"
 def ticket_path(ticket_id: uuid.UUID) -> str:
     """The app path of a bank-detail change ticket (no locale: the bell adds it)."""
     return f"/pay/bank-changes/{ticket_id}"
-
-
-def _web_url() -> str | None:
-    value = os.environ.get("PAIRLY_PUBLIC_WEB_URL", "").strip().rstrip("/")
-    return value if value.startswith(("https://", "http://")) else None
 
 
 def _last4(value: str) -> str:
@@ -66,7 +61,6 @@ async def alert_bank_change(
     """Notify the approvers and finance controllers. Returns how many people were told."""
     people = sorted(await role_members(session, ALERT_ROLES, WORKFLOW))
     path = ticket_path(ticket.id)
-    base = _web_url()
     variables: dict[str, object] = {
         "vendor": vendor.trade_name or vendor.legal_name,
         "invoice_reference": invoice.reference,
@@ -74,8 +68,9 @@ async def alert_bank_change(
         "iban_last4": _last4(iban_last4),
         "joined": joined,
     }
-    if base is not None:
-        variables["ticket_url"] = f"{base}{path}"
+    url = absolute_url(public_web_url(), path)
+    if url is not None:
+        variables["ticket_url"] = url
     told = 0
     for person in people:
         try:

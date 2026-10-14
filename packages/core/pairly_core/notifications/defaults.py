@@ -47,7 +47,9 @@ _APPROVAL_VARS: Final = {
     "due_at": _v("datetime", "2026-10-08T09:00:00+00:00"),
     "approve_url": _v("url", "https://app.pairly.example/approvals/link#sample", required=False),
     "reject_url": _v("url", "https://app.pairly.example/approvals/link#sample", required=False),
-    "inbox_url": _v("url", "https://app.pairly.example/approvals"),
+    "inbox_url": _v(
+        "url", "https://app.pairly.example/inbox?item=3f2a9c1d-5b7e-4c2a-9d1f-0a1b2c3d4e5f"
+    ),
     "expires_minutes": _v("integer", 30, required=False),
 }
 _INAPP_APPROVAL_VARS: Final = {k: _APPROVAL_VARS[k] for k in ("title", "step", "due_at")}
@@ -302,7 +304,7 @@ _DIGEST_VARS: Final = {
         [
             {
                 "title": "Approval needed: Invoice INV-1042",
-                "url": "https://app.pairly.example/approvals",
+                "url": "https://app.pairly.example/inbox?item=3f2a9c1d-5b7e-4c2a-9d1f-0a1b2c3d4e5f",
             }
         ],
     ),
@@ -348,7 +350,10 @@ _OFFER_VARS: Final = {
     "candidate_name": _v("string", "Sam Example"),
     "job_title": _v("string", "Accounts Payable Specialist"),
     "company": _v("string", "Example Trading LLC"),
-    "offer_url": _v("url", "https://app.pairly.example/offers/sample"),
+    "offer_url": _v(
+        "url",
+        "https://app.pairly.example/en/portal/applications/3f2a9c1d-5b7e-4c2a-9d1f-0a1b2c3d4e5f/offer",
+    ),
 }
 _VENDOR_VARS: Final = {
     "vendor_name": _v("string", "Example Supplies"),
@@ -442,7 +447,7 @@ _APPEAL_VARS: Final = {
     "decision_id": _v("string", "dec_01JABCDEFGHJKMNPQRSTVWXYZ0"),
     "workflow": _v("string", "pay"),
     "due_at": _v("datetime", "2026-10-21T09:00:00+00:00"),
-    "queue_url": _v("url", "https://app.pairly.example/appeals"),
+    "queue_url": _v("url", "https://app.pairly.example/decisions/dec_01JABCDEFGHJKMNPQRSTVWXYZ0"),
 }
 _SHORT_APPEAL_VARS: Final = {k: _APPEAL_VARS[k] for k in ("appeal_ref", "workflow", "due_at")}
 APPEAL_ESCALATED: Final = (

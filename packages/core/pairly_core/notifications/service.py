@@ -59,6 +59,7 @@ from pairly_core.integrations.slack.blocks import SlackButton, message_blocks
 from pairly_core.integrations.slack.links import active_slack, slack_link_for_user
 from pairly_core.models import User
 from pairly_core.notifications.email import MAX_ATTACHMENTS, Attachment
+from pairly_core.notifications.links import is_app_path
 from pairly_core.notifications.models import (
     Notification,
     NotificationPreference,
@@ -160,7 +161,9 @@ class NotifyResult:
 class Extras:
     """Channel extras that are not template text."""
 
-    # A link for the in-app item and the digest line (never a single-use token).
+    # A link for the in-app item and the digest line: an app path without a locale
+    # (``/inbox?item=<id>``, ``pairly_core.notifications.links``), never a full URL and
+    # never a single-use token.
     link: str | None = None
     slack_buttons: Sequence[SlackButton] = ()
     slack_note: str | None = None
@@ -393,6 +396,9 @@ async def notify(
     if not dedupe_key or len(dedupe_key) > MAX_DEDUPE_KEY:
         raise BadRequestError("invalid dedupe key")
     extras = extras or Extras()
+    if extras.link is not None and not is_app_path(extras.link):
+        # The bell follows only a same-origin path of the app (``links.is_app_path``).
+        raise BadRequestError("a notification link is an app path such as /inbox?item=<id>")
     if len(extras.attachments) > MAX_ATTACHMENTS:
         raise BadRequestError("too many attachments")
     wanted = list(channels) if channels is not None else list(CHANNELS)

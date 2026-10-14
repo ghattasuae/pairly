@@ -45,7 +45,7 @@ from pairly_core.search.service import search
 from pairly_core.search.sources import SearchRegistry
 from pairly_hire.api.common import web_url
 from pairly_hire.jobs import get_job
-from pairly_hire.links import LinkConfig, links_from_settings
+from pairly_hire.links import LinkConfig, links_from_settings, pipeline_path
 from pairly_hire.messaging.sla import sla_days, waiting
 from pairly_hire.models import HireApplication
 from pairly_hire.permissions import (
@@ -518,11 +518,7 @@ async def add_note(
     app = await session.scalar(
         select(HireApplication.job_id).where(HireApplication.id == application_id)
     )
-    link = (
-        f"{links(request).web_url}/en/hire/jobs/{app}/pipeline?candidate={application_id}"
-        if app is not None and links(request).web_url
-        else None
-    )
+    link = pipeline_path(app, candidate=application_id) if app is not None else None
     added = await notes.add_note(
         session,
         actor,

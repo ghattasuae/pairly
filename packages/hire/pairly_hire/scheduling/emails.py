@@ -44,7 +44,7 @@ from pairly_core.notifications.templates import resolve_template, source_of
 from pairly_core.notifications.templating import TemplateRenderError, render_source
 from pairly_core.scheduling.availability import zone
 from pairly_core.scheduling.ics import IcsEvent, IcsPerson, build_ics
-from pairly_hire.links import LinkConfig, links_from_env, links_from_settings
+from pairly_hire.links import LinkConfig, links_from_env, links_from_settings, pipeline_path
 from pairly_hire.messaging.compose import Author, mark_updated
 from pairly_hire.messaging.models import HireMessage, MessagePurpose, MessageStatus
 from pairly_hire.pipeline.hooks import application_blind, screening_summary
@@ -471,7 +471,7 @@ async def send_to_panel(
             channels=list(mail.channels),
             urgency=Urgency.URGENT if mail.urgent else Urgency.NORMAL,
             extras=Extras(
-                link=interview_url,
+                link=pipeline_path(record.job.id, candidate=record.app.id),
                 attachments=(own_attachment,) if own_attachment is not None else (),
             ),
             workflow=WORKFLOW,

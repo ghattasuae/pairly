@@ -8,39 +8,32 @@ const QUERY = /^\?[A-Za-z0-9_=&%.:-]{0,512}$/;
 const BASE = "http://placeholder.invalid";
 
 /**
- * A link from a notification, made safe to follow inside the app: only a path of this
- * app (`/<locale>/...` with plain segments, an optional simple query), whether it came
- * as a path or as a full URL (the API builds links from its own idea of the web
- * address, which can differ from the one in the address bar). Anything else is null.
+ * A link from a notification, made safe to follow inside the app: only a same-origin
+ * relative path of this app (`/inbox?item=...`, `/<locale>/pay/bank-changes/...`) with
+ * plain segments and an optional simple query. The API stores every notification link
+ * as such a path without a locale; the viewer's `locale` goes in front.
  *
- * Paths the API stores without a locale (`/hire/data-requests?request=...`) get the
- * viewer's `locale` in front, but only when the link is a same-origin relative path:
- * an absolute URL (`https://host/hire/...`) or a protocol-relative one (`//host/...`,
- * `/\host/...`) without a locale is still refused.
+ * Anything else is null: a full URL (even to this app's own host), a protocol-relative
+ * one (`//host/...`, `/\host/...`), a path the URL parser had to rewrite (dot segments,
+ * tabs, backslashes), or a path without a locale when no valid locale is given.
  */
 export function inAppPath(link: string | null | undefined, locale?: string): string | null {
   if (!link || link.length > 1024) return null;
+  if (!link.startsWith("/") || /^\/[/\\]/.test(link)) return null;
   let url: URL;
   try {
     url = new URL(link, BASE);
   } catch {
     return null;
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-  if (url.username || url.password) return null;
-  // Same origin, a single leading slash, and nothing the URL parser had to rewrite (dot
-  // segments, tabs, backslashes): only then may a locale be put in front.
-  const relative =
-    url.origin === BASE &&
-    link.startsWith("/") &&
-    !/^\/[/\\]/.test(link) &&
-    link.split(/[?#]/, 1)[0] === url.pathname;
+  if (url.origin !== BASE || url.username || url.password) return null;
+  if (link.split(/[?#]/, 1)[0] !== url.pathname) return null;
   const [first, head, ...rest] = url.pathname.split("/");
   if (first !== "" || head === undefined) return null;
   let segments: string[];
   if (isLocale(head)) {
     segments = [head, ...rest];
-  } else if (relative && locale !== undefined && isLocale(locale)) {
+  } else if (locale !== undefined && isLocale(locale)) {
     segments = [locale, head, ...rest];
   } else {
     return null;

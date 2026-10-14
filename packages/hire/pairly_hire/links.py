@@ -47,6 +47,20 @@ class LinkConfig:
         return bool(self.secret) and bool(self.web_url)
 
 
+def pipeline_path(
+    job_id: uuid.UUID, *, candidate: uuid.UUID | None = None, sla: bool = False
+) -> str:
+    """The app path of a job's pipeline (a notification's in-app link, no locale)."""
+    if candidate is not None:
+        return f"/hire/jobs/{job_id}/pipeline?candidate={candidate}"
+    return f"/hire/jobs/{job_id}/pipeline?sla=1" if sla else f"/hire/jobs/{job_id}/pipeline"
+
+
+def kit_path(application_id: uuid.UUID) -> str:
+    """The app path of an application's interview kit, where its scorecards are."""
+    return f"/hire/applications/{application_id}/kit"
+
+
 def links_from_settings(settings: NotificationSettings | None) -> LinkConfig:
     if settings is None:
         return LinkConfig(None, None)

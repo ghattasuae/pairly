@@ -40,7 +40,7 @@ from pairly_core.db import set_tenant
 from pairly_core.jobs.registry import JobContext
 from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_core.rbac import Actor, RoleRegistry
-from pairly_hire.links import LinkConfig, links_from_env
+from pairly_hire.links import LinkConfig, links_from_env, pipeline_path
 from pairly_hire.messaging import library
 from pairly_hire.messaging.compose import Author, create_draft
 from pairly_hire.messaging.graph import restart_stuck
@@ -226,7 +226,7 @@ async def draft_overdue(
                 variables=variables,
                 dedupe_key=f"hire.sla:{job.id}:{user_id}:{now.date().isoformat()}",
                 channels=channels,
-                extras=Extras(link=url),
+                extras=Extras(link=pipeline_path(job.id, sla=True)),
                 workflow=WORKFLOW,
                 actor_type=ActorType.SYSTEM,
                 actor_id=SLA_ACTOR,

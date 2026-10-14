@@ -65,6 +65,7 @@ from pairly_core.ingestion.models import Document, DocumentStatus
 from pairly_core.ingestion.scan import scan_document as virus_scan
 from pairly_core.ingestion.storage import StorageError
 from pairly_core.llm.types import CallContext
+from pairly_core.notifications.links import absolute_url, public_web_url
 from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_core.policy.service import Subject, evaluate_and_record
 from pairly_core.policy_versions import PolicyError
@@ -104,6 +105,8 @@ FINAL_ACTION: Final = "mark_reimbursable"
 ACTOR_ID: Final = "pairly.expense.graph"
 ASSESSMENT_TYPE: Final = "expense.note"
 DECIDED_EVENT: Final = "expense.note.decided"
+# Where a decided note points: the expense page lists the submitter's notes.
+NOTES_PATH: Final = "/expense"
 MAX_NORMALIZED_BYTES: Final = 64 * 1024 * 1024
 # How long ``wait_parse`` waits for the worker to scan and parse the receipt when this
 # process cannot do it itself. Past it, the note goes to a person (fail closed).
@@ -583,11 +586,6 @@ async def changes(state: NoteState, runtime: Ctx) -> dict[str, Any]:
     return {}
 
 
-def _web_url() -> str | None:
-    value = os.environ.get("PAIRLY_PUBLIC_WEB_URL", "").strip().rstrip("/")
-    return value if value.startswith(("https://", "http://")) else None
-
-
 async def notify_submitter(state: NoteState, runtime: Ctx) -> dict[str, Any]:
     """Tell the submitter, and webhook subscribers (``expense.note.decided``). A failure
     here is logged, never undoes the decision."""
@@ -603,8 +601,8 @@ async def notify_submitter(state: NoteState, runtime: Ctx) -> dict[str, Any]:
                 .order_by(ApprovalDecision.created_at.desc())
                 .limit(1)
             )
-            base = _web_url()
-            url = f"{base}/expense/notes/{note_id}" if base else None
+            # The expense page lists the submitter's notes (there is no page per note).
+            url = absolute_url(public_web_url(), NOTES_PATH)
             variables: dict[str, Any] = {"title": _title(note), "outcome": outcome}
             if reason:
                 variables["reason"] = reason[:500]
@@ -617,7 +615,7 @@ async def notify_submitter(state: NoteState, runtime: Ctx) -> dict[str, Any]:
                 variables=variables,
                 dedupe_key=f"expense:{note_id}:{outcome}",
                 channels=["email", "in_app"],
-                extras=Extras(link=url),
+                extras=Extras(link=NOTES_PATH),
                 workflow=WORKFLOW,
             )
             await publish_event(

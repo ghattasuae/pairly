@@ -188,8 +188,10 @@ describe("evidence highlights", () => {
 describe("links and tokens", () => {
   it("follows only in-app paths from notifications", () => {
     expect(inAppPath("/en/inbox?item=abc")).toBe("/en/inbox?item=abc");
-    expect(inAppPath("http://localhost:3100/ar/inbox")).toBe("/ar/inbox");
-    expect(inAppPath("https://evil.example/en/inbox")).toBe("/en/inbox");
+    // Full URLs are refused, even to this app's own host or with a locale.
+    expect(inAppPath("http://localhost:3100/ar/inbox")).toBeNull();
+    expect(inAppPath("https://evil.example/en/inbox")).toBeNull();
+    expect(inAppPath("https://app.pairly.example/approvals/" + ID, "en")).toBeNull();
     expect(inAppPath("//evil.example")).toBeNull();
     expect(inAppPath("javascript:alert(1)")).toBeNull();
     expect(inAppPath("/xx/inbox")).toBeNull();
@@ -213,6 +215,18 @@ describe("links and tokens", () => {
     expect(inAppPath("hire/data-requests", "en")).toBeNull();
     expect(inAppPath("/hire/../admin", "en")).toBeNull();
     expect(inAppPath("/hire/<x>", "en")).toBeNull();
+  });
+
+  it("opens the paths the API stores for notifications", () => {
+    expect(inAppPath(`/inbox?item=${ID}`, "en")).toBe(`/en/inbox?item=${ID}`);
+    expect(inAppPath(`/pay/bank-changes/${ID}`, "ar")).toBe(`/ar/pay/bank-changes/${ID}`);
+    expect(inAppPath(`/decisions/dec_01JABCDEFGHJKMNPQRSTVWXYZ0`, "en")).toBe(
+      "/en/decisions/dec_01JABCDEFGHJKMNPQRSTVWXYZ0",
+    );
+    expect(inAppPath(`/hire/jobs/${ID}/pipeline?candidate=${ID}`, "en")).toBe(
+      `/en/hire/jobs/${ID}/pipeline?candidate=${ID}`,
+    );
+    expect(inAppPath("/expense", "ar")).toBe("/ar/expense");
   });
 
   it("reads approval link tokens from the fragment in both forms", () => {

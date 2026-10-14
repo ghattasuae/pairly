@@ -84,7 +84,7 @@ _STATUS_VARS: Final = _BASE | {
 }
 _INTERVIEW_VARS: Final = _BASE | {
     "interview_details": _v("text", "A 45 minute video call with the team on Tuesday at 10:00."),
-    "schedule_url": _v("url", "https://app.pairly.example/schedule/sample", required=False),
+    "schedule_url": _v("url", "https://app.pairly.example/en/schedule#sample", required=False),
 }
 _REMINDER_VARS: Final = _BASE | {
     "interview_details": _v("text", "A 45 minute video call with the team on Tuesday at 10:00."),

@@ -30,6 +30,7 @@ from pairly_core.decisions.models import Appeal, DecisionRecord
 from pairly_core.decisions.permissions import APPEAL_DECIDE
 from pairly_core.decisions.scope import DECIDE_ACTIONS
 from pairly_core.models import Membership
+from pairly_core.notifications.links import absolute_url, decision_path
 from pairly_core.notifications.models import Urgency
 from pairly_core.notifications.service import Extras, Recipient, notify
 from pairly_core.notifications.settings import NotificationSettings
@@ -83,7 +84,9 @@ class AppealEscalationNotifier:
         if record.actor_type == ActorType.USER.value:
             with contextlib.suppress(ValueError):
                 excluded.add(uuid.UUID(record.actor_id))
-        queue_url = f"{self.settings.web_url}/appeals/{appeal.id}"
+        # The decision record, where its appeals are decided.
+        path = decision_path(record.id)
+        queue_url = absolute_url(self.settings.web_url, path)
         variables = {
             "appeal_ref": appeal_ref(appeal.id),
             "decision_id": record.id,
@@ -104,7 +107,7 @@ class AppealEscalationNotifier:
                         variables=variables,
                         dedupe_key=f"appeal:{appeal.id}:escalated:{person}",
                         urgency=Urgency.URGENT,
-                        extras=Extras(link=queue_url),
+                        extras=Extras(link=path),
                         workflow=record.workflow,
                     )
                 sent += 1

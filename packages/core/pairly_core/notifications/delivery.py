@@ -47,6 +47,7 @@ from pairly_core.notifications.email import (
     EmailTransport,
     OutgoingEmail,
 )
+from pairly_core.notifications.links import absolute_url, is_app_path, public_web_url
 from pairly_core.notifications.models import Notification, NotificationStatus
 from pairly_core.notifications.service import (
     NOTIFY_ACTOR,
@@ -241,6 +242,17 @@ class DigestStats:
     failed: int = 0
 
 
+def _digest_url(link: object) -> str:
+    """The full link of an item in the digest email (items store an app path)."""
+    if not isinstance(link, str) or not link:
+        return ""
+    if link.startswith(("https://", "http://")):
+        return link  # an item stored before links became app paths
+    if not is_app_path(link):
+        return ""
+    return absolute_url(public_web_url(), link) or ""
+
+
 async def _digest_for(
     session: AsyncSession,
     user_id: uuid.UUID,
@@ -260,7 +272,7 @@ async def _digest_for(
             lines.append(
                 {
                     "title": str(entry.get("title") or ""),
-                    "url": str(entry.get("url") or ""),
+                    "url": _digest_url(entry.get("url")),
                 }
             )
     results = await notify(

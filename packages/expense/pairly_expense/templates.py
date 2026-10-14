@@ -28,7 +28,7 @@ VARIABLES: Final = {
     "title": _v("string", "Al Noor Cafe, 86.50 AED"),
     "outcome": _v("string", "approved"),
     "reason": _v("string", "Within policy", required=False),
-    "note_url": _v("url", "https://app.pairly.example/expense/notes/sample", required=False),
+    "note_url": _v("url", "https://app.pairly.example/expense", required=False),
 }
 
 _EN_OUTCOME = (

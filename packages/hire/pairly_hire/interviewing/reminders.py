@@ -38,6 +38,7 @@ from pairly_hire.interviewing.links import issue_link
 from pairly_hire.interviewing.models import HireScorecard
 from pairly_hire.interviewing.plan import interview_stage
 from pairly_hire.interviewing.templates import SCORECARD_REMINDER
+from pairly_hire.links import kit_path
 from pairly_hire.pipeline.hooks import application_blind
 from pairly_hire.pipeline.records import load_record
 from pairly_hire.pipeline.rediscovery import org_ids
@@ -179,7 +180,7 @@ async def send_due_reminders(
                 variables=values,
                 dedupe_key=f"hire.sc:{row.id}:{kind}:{(row.snoozed_until or now).isoformat()}",
                 channels=["email"],
-                extras=Extras(link=open_url),
+                extras=Extras(link=kit_path(record.app.id)),
                 workflow="hire",
                 actor_type=ActorType.SYSTEM,
                 actor_id=ACTOR,
