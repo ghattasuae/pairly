@@ -22,11 +22,16 @@ attributes):
                       controller (approval type ``pay.payment_run``), final action
                       ``approve_payment_run``. No bank connection: the run ends in a
                       file a person downloads.
+                      ``pay_message``: a drafted message about an invoice exception waits
+                      for another person (approval type ``pay.message``), final action
+                      ``send_pay_message`` through the engine's sensitive template.
 * ``api_router``      the ``/v1/pay`` routes (imported only when called, so the worker
                       never loads them).
 * ``migrations_dir``  the ``pay`` Alembic branch (``migrations/``).
-* ``prompt_roots``    the versioned prompt ``pay_coding_suggest`` (an optional GL coding
-                      suggestion, ``pairly_pay.coding``).
+* ``prompt_roots``    the versioned prompts ``pay_coding_suggest`` (an optional GL coding
+                      suggestion, ``pairly_pay.coding``) and ``pay_exception_note`` (the
+                      optional personal paragraph of a drafted message,
+                      ``pairly_pay.exceptions``).
 * ``scheduled_jobs``  ``pay_bank_change_activation``, every 5 minutes: new details go
                       live once their cooling-off period is over.
                       ``pay_invoice_intake_start``, every minute: start reading received
@@ -63,6 +68,12 @@ from pairly_pay.invoice_graph import VERSION as INVOICE_GRAPH_VERSION
 from pairly_pay.invoice_graph import build_graph as build_invoice_graph
 from pairly_pay.invoice_start import INTAKE_JOB
 from pairly_pay.jobs import ACTIVATION_JOB, activate_due_changes
+from pairly_pay.messages import APPROVAL_TYPE as MESSAGE_APPROVAL_TYPE
+from pairly_pay.messages import FINAL_ACTION as MESSAGE_FINAL_ACTION
+from pairly_pay.messages import GRAPH as MESSAGE_GRAPH
+from pairly_pay.messages import MESSAGE_RULES_V1, send_pay_message
+from pairly_pay.messages import VERSION as MESSAGE_GRAPH_VERSION
+from pairly_pay.messages import build_graph as build_message_graph
 from pairly_pay.payment_run_graph import build_graph as build_payment_run_graph
 from pairly_pay.payment_runs import APPROVAL_TYPE as RUN_APPROVAL_TYPE
 from pairly_pay.payment_runs import FINAL_ACTION as RUN_FINAL_ACTION
@@ -77,6 +88,8 @@ from pairly_pay.permissions import (
     INVOICE_PROPOSE,
     INVOICE_READ,
     INVOICE_SUBMIT,
+    MESSAGE_APPROVE,
+    MESSAGE_CREATE,
     PAYMENT_RUN_APPROVE,
     PAYMENT_RUN_CREATE,
     PAYMENT_RUN_READ,
@@ -146,6 +159,22 @@ PAY_PAYMENT_RUN: GraphSpec = GraphSpec(
     description="A proposed payment run waits for a finance controller.",
 )
 
+PAY_MESSAGE: GraphSpec = GraphSpec(
+    workflow="pay",
+    name=MESSAGE_GRAPH,
+    version=MESSAGE_GRAPH_VERSION,
+    build=build_message_graph,
+    start_permission=MESSAGE_CREATE,
+    read_permission=INVOICE_READ,
+    approval_types=(
+        ApprovalType(
+            MESSAGE_APPROVAL_TYPE, MESSAGE_APPROVE, MESSAGE_RULES_V1, "Message about an invoice"
+        ),
+    ),
+    final_actions={MESSAGE_FINAL_ACTION: send_pay_message},
+    description="A drafted message to a vendor or requester waits for another person.",
+)
+
 SCHEDULED_JOBS: tuple[JobSpec, ...] = (
     JobSpec(
         ACTIVATION_JOB,
@@ -175,6 +204,7 @@ class PayPlugin:
         PAY_INVOICE,
         PAY_INVOICE_APPROVAL,
         PAY_PAYMENT_RUN,
+        PAY_MESSAGE,
     )
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
     prompt_roots: tuple[Path, ...] = (Path(__file__).resolve().parent / "prompts",)

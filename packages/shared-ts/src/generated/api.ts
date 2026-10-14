@@ -4058,6 +4058,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exceptions */
+        get: operations["list_exceptions_v1_pay_exceptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/goods-receipts": {
         parameters: {
             query?: never;
@@ -4222,6 +4239,49 @@ export type paths = {
         put?: never;
         /** Correct Invoice Field */
         post: operations["correct_invoice_field_v1_pay_invoices__invoice_id__corrections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Messages */
+        get: operations["list_messages_v1_pay_invoices__invoice_id__messages_get"];
+        put?: never;
+        /**
+         * Submit Message
+         * @description Save the message and start its approval run; it is sent only once another
+         *     person approved this exact text.
+         */
+        post: operations["submit_message_v1_pay_invoices__invoice_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/invoices/{invoice_id}/messages/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft Message
+         * @description A drafted message (nothing is saved). The personal paragraph is optional and
+         *     checked; without the model the template alone is the draft.
+         */
+        post: operations["draft_message_v1_pay_invoices__invoice_id__messages_draft_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5562,6 +5622,13 @@ export type components = {
             /** Token */
             token: string;
         };
+        /** ContactOut */
+        ContactOut: {
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+        };
         /** ContentUrlOut */
         ContentUrlOut: {
             /**
@@ -5876,6 +5943,63 @@ export type components = {
             /** Url */
             url: string;
         };
+        /** DraftIn */
+        DraftIn: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /**
+             * Personalise
+             * @default false
+             */
+            personalise: boolean;
+            /** Template Id */
+            template_id: string;
+        };
+        /** DraftOut */
+        DraftOut: {
+            /** Ai Note */
+            ai_note: string | null;
+            /** Ai Problems */
+            ai_problems: string[];
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /** Contacts */
+            contacts: components["schemas"]["ContactOut"][];
+            /** From Recording */
+            from_recording: boolean;
+            /**
+             * Locale
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Message */
+            message: string;
+            /** Model Call Id */
+            model_call_id: string | null;
+            /**
+             * Recipient
+             * @enum {string}
+             */
+            recipient: "vendor" | "requester";
+            /** Requester Hint */
+            requester_hint: string | null;
+            /** Template Id */
+            template_id: string;
+            /** Template Text */
+            template_text: string;
+        };
         /** DryRunIn */
         DryRunIn: {
             /** As Of */
@@ -6011,6 +6135,69 @@ export type components = {
             description: string;
             /** Key */
             key: string;
+        };
+        /** ExceptionCategoryOut */
+        ExceptionCategoryOut: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /** Explanations */
+            explanations: components["schemas"]["TextOut"][];
+            resolution: components["schemas"]["TextOut"];
+            /** Templates */
+            templates: components["schemas"]["pairly_pay__api__exceptions__TemplateOut"][];
+        };
+        /** ExceptionItemOut */
+        ExceptionItemOut: {
+            /** Age Hours */
+            age_hours: number;
+            /** Categories */
+            categories: components["schemas"]["ExceptionCategoryOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Overdue */
+            overdue: boolean;
+            /** Po Number */
+            po_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Total */
+            total: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** ExceptionsOut */
+        ExceptionsOut: {
+            /** Can Message */
+            can_message: boolean;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["ExceptionItemOut"][];
+            /** Overdue */
+            overdue: number;
+            /** Sla Hours */
+            sla_hours: number;
+            /** Total */
+            total: number;
         };
         /** ExpenseApprovalDecisionOut */
         ExpenseApprovalDecisionOut: {
@@ -10864,6 +11051,77 @@ export type components = {
             /** Second Factor Permissions */
             second_factor_permissions: string[];
         };
+        /** MessageIn */
+        MessageIn: {
+            /**
+             * Ai Note
+             * @default false
+             */
+            ai_note: boolean;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other";
+            /**
+             * Locale
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** Message */
+            message: string;
+            /** Model Call Id */
+            model_call_id?: string | null;
+            /** Recipient Email */
+            recipient_email: string;
+            /** Template Id */
+            template_id: string;
+        };
+        /** MessageOut */
+        MessageOut: {
+            /** Ai Note */
+            ai_note: boolean;
+            /** Approval Id */
+            approval_id: string | null;
+            /** Category */
+            category: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Locale */
+            locale: string;
+            /** Message */
+            message: string | null;
+            /** Recipient Email */
+            recipient_email: string | null;
+            /** Recipient Kind */
+            recipient_kind: string;
+            /** Recipient Name */
+            recipient_name: string | null;
+            /** Reference */
+            reference: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Template Id */
+            template_id: string;
+        };
         /** ModelLineOut */
         ModelLineOut: {
             /**
@@ -10962,6 +11220,43 @@ export type components = {
             second_admin_required: boolean;
             /** Status */
             status: string;
+        };
+        /** TemplateOut */
+        pairly_api__routes__notification_templates__TemplateOut: {
+            /** Body */
+            body: string;
+            /** Body Html */
+            body_html: string | null;
+            /** Category */
+            category: string;
+            /** Channel */
+            channel: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Locale */
+            locale: string;
+            /** Requires Approval */
+            requires_approval: boolean;
+            /** Subject */
+            subject: string | null;
+            /** System */
+            system: boolean;
+            /** Variables */
+            variables: {
+                [key: string]: unknown;
+            };
+            /** Version */
+            version: number;
         };
         /** SearchIn */
         pairly_api__routes__policies__SearchIn: {
@@ -11088,6 +11383,16 @@ export type components = {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** TemplateOut */
+        pairly_pay__api__exceptions__TemplateOut: {
+            /** Id */
+            id: string;
+            /**
+             * Recipient
+             * @enum {string}
+             */
+            recipient: "vendor" | "requester";
         };
         /** PayAcceptIn */
         PayAcceptIn: {
@@ -11298,6 +11603,8 @@ export type components = {
             auto_code_high_confidence?: boolean | null;
             /** Duplicate Window Days */
             duplicate_window_days?: number | null;
+            /** Exception Sla Hours */
+            exception_sla_hours?: number | null;
             /** Extra Vat Rates */
             extra_vat_rates?: (number | string)[] | null;
             /** Match Price Pct */
@@ -13444,7 +13751,7 @@ export type components = {
         SavedOut: {
             /** Issues */
             issues: components["schemas"]["IssueOut"][];
-            template: components["schemas"]["TemplateOut"];
+            template: components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"];
         };
         /** SearchHitOut */
         SearchHitOut: {
@@ -13646,42 +13953,12 @@ export type components = {
                 };
             };
         };
-        /** TemplateOut */
-        TemplateOut: {
-            /** Body */
-            body: string;
-            /** Body Html */
-            body_html: string | null;
-            /** Category */
-            category: string;
-            /** Channel */
-            channel: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Key */
-            key: string;
-            /** Locale */
-            locale: string;
-            /** Requires Approval */
-            requires_approval: boolean;
-            /** Subject */
-            subject: string | null;
-            /** System */
-            system: boolean;
-            /** Variables */
-            variables: {
-                [key: string]: unknown;
-            };
-            /** Version */
-            version: number;
+        /** TextOut */
+        TextOut: {
+            /** Ar */
+            ar: string;
+            /** En */
+            en: string;
         };
         /** TokenIn */
         TokenIn: {
@@ -21242,7 +21519,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TemplateOut"][];
+                    "application/json": components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"][];
                 };
             };
         };
@@ -21297,7 +21574,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TemplateOut"][];
+                    "application/json": components["schemas"]["pairly_api__routes__notification_templates__TemplateOut"][];
                 };
             };
             /** @description Validation Error */
@@ -21920,6 +22197,39 @@ export interface operations {
             };
         };
     };
+    list_exceptions_v1_pay_exceptions_get: {
+        parameters: {
+            query?: {
+                category?: ("no_po" | "price_variance" | "quantity_variance" | "missing_receipt" | "duplicate_suspect" | "bank_mismatch" | "policy_breach" | "low_confidence" | "other") | null;
+                limit?: number;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExceptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_receipts_v1_pay_goods_receipts_get: {
         parameters: {
             query?: {
@@ -22312,6 +22622,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_messages_v1_pay_invoices__invoice_id__messages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_message_v1_pay_invoices__invoice_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    draft_message_v1_pay_invoices__invoice_id__messages_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
                 };
             };
             /** @description Validation Error */

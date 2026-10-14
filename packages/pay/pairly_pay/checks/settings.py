@@ -25,6 +25,8 @@
 * Coding (``pairly_pay.coding``): ``auto_code_high_confidence`` lets the system code an
   invoice line by itself when the suggestion from history is of high confidence. Off by
   default: a person confirms every code.
+* Exceptions queue (``pairly_pay.exceptions``): an invoice waiting for a person longer
+  than ``exception_sla_hours`` is overdue.
 
 Unknown keys in the stored JSON are ignored; a malformed value falls back to its default
 (and the setting is validated when it is saved).
@@ -100,6 +102,7 @@ class CheckSettings:
     match_total_amount: Decimal = Decimal("1.00")
     require_po: bool = False
     auto_code_high_confidence: bool = False
+    exception_sla_hours: int = 48
     home_country: str = "AE"
     zero_rated_words: tuple[str, ...] = field(default=ZERO_RATED_WORDS)
     exempt_words: tuple[str, ...] = field(default=EXEMPT_WORDS)
@@ -130,6 +133,7 @@ class CheckSettings:
             "match_total_amount": str(self.match_total_amount),
             "require_po": self.require_po,
             "auto_code_high_confidence": self.auto_code_high_confidence,
+            "exception_sla_hours": self.exception_sla_hours,
         }
 
 
@@ -152,6 +156,7 @@ _INTS: Final = {
     "split_window_days": (0, 366),
     "outlier_min_history": (1, 1000),
     "metadata_late_days": (1, 3650),
+    "exception_sla_hours": (1, 720),
 }
 
 

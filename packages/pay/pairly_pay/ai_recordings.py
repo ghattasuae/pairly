@@ -9,6 +9,9 @@ it). The demo seed imports it next to the extraction bundle (``pairly_pay.record
 
 * ``pay_coding_suggest/v1``: one entry per demo invoice line under the demo chart of
   accounts and cost centres (``pairly_pay.coding_demo``).
+* ``pay_exception_note/v1``: one entry per message template and language
+  (``pairly_pay.exceptions.MESSAGE_TEMPLATES``). The inputs name no invoice, vendor or
+  person, so these answer for every invoice.
 
 The router keys a recording on the exact request (task, prompt version and hash,
 provider, model, inputs, schema, settings; ``pairly_core.llm.hashing``), so this mirrors
@@ -45,6 +48,13 @@ from pairly_core.llm.types import TaskSpec
 from pairly_pay import coding_demo
 from pairly_pay.coding import TASK as CODING_TASK
 from pairly_pay.coding import ModelCoding, model_inputs
+from pairly_pay.exceptions import (
+    MESSAGE_TEMPLATES,
+    NOTE_TASK,
+    ExceptionNote,
+    check_note,
+    note_inputs,
+)
 from pairly_pay.models import CodingKind, PayCodingEntry
 
 PROVIDER: Final = "anthropic"
@@ -121,8 +131,41 @@ def coding_entries() -> list[dict[str, Any]]:
     return out
 
 
+# Scripted personal paragraphs: one for a vendor, one for a colleague, per language.
+NOTES: Final[dict[str, dict[str, str]]] = {
+    "vendor": {
+        "en": "Thank you for your help with this. We want to settle your invoice as soon as "
+        "we can.",
+        "ar": "شكرا لتعاونكم في هذا الأمر. نرغب في تسوية فاتورتكم في أقرب وقت ممكن.",
+    },
+    "requester": {
+        "en": "Thank you for your help. A quick answer lets us pay the vendor on time.",
+        "ar": "شكرا لمساعدتك. الرد السريع يتيح لنا الدفع للمورد في الوقت المحدد.",
+    },
+}
+
+
+def note_entries() -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for template in MESSAGE_TEMPLATES.values():
+        for locale in ("en", "ar"):
+            note = NOTES[template.recipient.value][locale]
+            problems = check_note(note, locale)
+            if problems:
+                raise RecordingError(f"{template.id} ({locale}): {problems}")
+            out.append(
+                entry_for(
+                    NOTE_TASK,
+                    ExceptionNote,
+                    note_inputs(template, locale),
+                    ExceptionNote(note=note),
+                )
+            )
+    return out
+
+
 def build_entries() -> list[dict[str, Any]]:
-    entries = coding_entries()
+    entries = coding_entries() + note_entries()
     entries.sort(key=lambda e: e["request_hash"])
     return entries
 

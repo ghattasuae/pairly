@@ -53,6 +53,10 @@ GL coding (``pay_0009``, same rules, ``pairly_pay.coding``):
   from).
 * ``pay_coding_corrections``: a person chose another code than the suggestion (insert
   only).
+
+Messages (``pay_0010``, same rules, ``pairly_pay.messages``): ``pay_messages``, a drafted
+message about an invoice exception to the vendor or the requester, sent only after a
+person approved its exact text. Recipient and text are encrypted.
 """
 
 from __future__ import annotations
@@ -1284,3 +1288,89 @@ class PayCodingCorrection(Base, OrgScoped):
     chosen_cost_centre: Mapped[str | None] = mapped_column(String(32), nullable=True)
     corrected_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
     created_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ messages (pay_0010)
+
+MESSAGES: Final = "pay_messages"
+
+
+class MessageStatus(StrEnum):
+    # Saved by a person; the ``pay_message`` run asks for the approval.
+    SUBMITTED = "submitted"
+    AWAITING_APPROVAL = "awaiting_approval"
+    # Approved and handed to the engine's notifications (sent by the worker).
+    QUEUED = "queued"
+    DECLINED = "declined"
+    CHANGES_REQUESTED = "changes_requested"
+    # Not sent: the run could not start, nobody may approve, or the send was refused.
+    FAILED = "failed"
+
+
+class MessageRecipient(StrEnum):
+    VENDOR = "vendor"
+    REQUESTER = "requester"
+
+
+class PayMessage(Base, OrgScoped):
+    """A drafted message about an invoice exception, to the vendor (a contact on file)
+    or to the requester (a member of the organisation). Sent only after a person
+    approved its exact text (the engine's sensitive template ``pay.vendor.message``)."""
+
+    __tablename__ = MESSAGES
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_messages_org_id_id"),
+        UniqueConstraint("org_id", "reference", name="uq_pay_messages_org_id_reference"),
+        ForeignKeyConstraint(
+            ["org_id", "invoice_id"],
+            ["pay_invoices.org_id", "pay_invoices.id"],
+            ondelete="RESTRICT",
+            name="fk_pay_messages_invoice_org",
+        ),
+        CheckConstraint(f"status IN ({_in(MessageStatus)})", name="status_valid"),
+        CheckConstraint(f"recipient_kind IN ({_in(MessageRecipient)})", name="recipient_valid"),
+        CheckConstraint("locale IN ('en', 'ar')", name="locale_valid"),
+        CheckConstraint(
+            "recipient_kind <> 'requester' OR recipient_user_id IS NOT NULL",
+            name="requester_is_member",
+        ),
+        CheckConstraint(
+            "recipient_kind <> 'vendor' OR recipient_email IS NOT NULL", name="vendor_has_email"
+        ),
+        CheckConstraint(
+            "status <> 'queued' OR (approval_id IS NOT NULL AND notification_id IS NOT NULL)",
+            name="queued_has_approval",
+        ),
+        Index("ix_pay_messages_invoice", "org_id", "invoice_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    reference: Mapped[str] = mapped_column(String(16), nullable=False)
+    invoice_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    category: Mapped[str] = mapped_column(String(32), nullable=False)
+    template_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    recipient_kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    recipient_user_id: Mapped[uuid.UUID | None] = _user_fk()
+    recipient_name: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    recipient_email: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    locale: Mapped[str] = mapped_column(String(2), nullable=False)
+    message: Mapped[Sealed] = mapped_column(EncryptedString(), nullable=False)
+    # The personal paragraph came from the model (prompt ``pay_exception_note``).
+    ai_note: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    model_call_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    status_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT"), nullable=True
+    )
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("approvals.id", ondelete="RESTRICT"), nullable=True
+    )
+    notification_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    submitted_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _created()
+    sent_at: Mapped[datetime | None] = _ts()

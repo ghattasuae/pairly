@@ -173,6 +173,8 @@ class PayCheckSettingsIn(_In):
     require_po: bool | None = None
     # GL coding (``pairly_pay.coding``): code high confidence lines without a person.
     auto_code_high_confidence: bool | None = None
+    # Exceptions queue (``pairly_pay.exceptions``): hours before a waiting invoice is overdue.
+    exception_sla_hours: Annotated[int, Field(ge=1, le=720)] | None = None
 
 
 class PayPaymentSettingsIn(_In):

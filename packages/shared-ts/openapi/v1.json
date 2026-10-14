@@ -1291,6 +1291,24 @@
         "title": "ConnectIn",
         "type": "object"
       },
+      "ContactOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ],
+        "title": "ContactOut",
+        "type": "object"
+      },
       "ContentUrlOut": {
         "properties": {
           "expires_at": {
@@ -2125,6 +2143,166 @@
         "title": "DownloadOut",
         "type": "object"
       },
+      "DraftIn": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "personalise": {
+            "default": false,
+            "title": "Personalise",
+            "type": "boolean"
+          },
+          "template_id": {
+            "pattern": "^[a-z_]{1,32}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id"
+        ],
+        "title": "DraftIn",
+        "type": "object"
+      },
+      "DraftOut": {
+        "properties": {
+          "ai_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Note"
+          },
+          "ai_problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Problems",
+            "type": "array"
+          },
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactOut"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "from_recording": {
+            "title": "From Recording",
+            "type": "boolean"
+          },
+          "locale": {
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "model_call_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Call Id"
+          },
+          "recipient": {
+            "enum": [
+              "vendor",
+              "requester"
+            ],
+            "title": "Recipient",
+            "type": "string"
+          },
+          "requester_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requester Hint"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_text": {
+            "title": "Template Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id",
+          "recipient",
+          "locale",
+          "message",
+          "template_text",
+          "ai_note",
+          "ai_problems",
+          "from_recording",
+          "model_call_id",
+          "contacts",
+          "requester_hint"
+        ],
+        "title": "DraftOut",
+        "type": "object"
+      },
       "DryRunIn": {
         "properties": {
           "as_of": {
@@ -2538,6 +2716,203 @@
           "description"
         ],
         "title": "EventTypeOut",
+        "type": "object"
+      },
+      "ExceptionCategoryOut": {
+        "properties": {
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "explanations": {
+            "items": {
+              "$ref": "#/components/schemas/TextOut"
+            },
+            "title": "Explanations",
+            "type": "array"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/TextOut"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/pairly_pay__api__exceptions__TemplateOut"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "explanations",
+          "resolution",
+          "templates"
+        ],
+        "title": "ExceptionCategoryOut",
+        "type": "object"
+      },
+      "ExceptionItemOut": {
+        "properties": {
+          "age_hours": {
+            "title": "Age Hours",
+            "type": "integer"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/ExceptionCategoryOut"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "po_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Po Number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "vendor_name",
+          "invoice_number",
+          "po_number",
+          "currency",
+          "total",
+          "created_at",
+          "age_hours",
+          "overdue",
+          "categories"
+        ],
+        "title": "ExceptionItemOut",
+        "type": "object"
+      },
+      "ExceptionsOut": {
+        "properties": {
+          "can_message": {
+            "title": "Can Message",
+            "type": "boolean"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExceptionItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "integer"
+          },
+          "sla_hours": {
+            "title": "Sla Hours",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "counts",
+          "total",
+          "overdue",
+          "sla_hours",
+          "can_message"
+        ],
+        "title": "ExceptionsOut",
         "type": "object"
       },
       "ExpenseApprovalDecisionOut": {
@@ -16686,6 +17061,212 @@
         "title": "MemberRoleOut",
         "type": "object"
       },
+      "MessageIn": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_note": {
+            "default": false,
+            "title": "Ai Note",
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "no_po",
+              "price_variance",
+              "quantity_variance",
+              "missing_receipt",
+              "duplicate_suspect",
+              "bank_mismatch",
+              "policy_breach",
+              "low_confidence",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "model_call_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Call Id"
+          },
+          "recipient_email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Recipient Email",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-z_]{1,32}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "template_id",
+          "message",
+          "recipient_email"
+        ],
+        "title": "MessageIn",
+        "type": "object"
+      },
+      "MessageOut": {
+        "properties": {
+          "ai_note": {
+            "title": "Ai Note",
+            "type": "boolean"
+          },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "recipient_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Email"
+          },
+          "recipient_kind": {
+            "title": "Recipient Kind",
+            "type": "string"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Name"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_id",
+          "category",
+          "template_id",
+          "recipient_kind",
+          "recipient_name",
+          "recipient_email",
+          "message",
+          "locale",
+          "ai_note",
+          "status",
+          "status_reason",
+          "approval_id",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "MessageOut",
+        "type": "object"
+      },
       "ModelLineOut": {
         "properties": {
           "from_recording": {
@@ -17646,6 +18227,19 @@
               }
             ],
             "title": "Duplicate Window Days"
+          },
+          "exception_sla_hours": {
+            "anyOf": [
+              {
+                "maximum": 720,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exception Sla Hours"
           },
           "extra_vat_rates": {
             "anyOf": [
@@ -24701,7 +25295,7 @@
             "type": "array"
           },
           "template": {
-            "$ref": "#/components/schemas/TemplateOut"
+            "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
           }
         },
         "required": [
@@ -25312,94 +25906,22 @@
         "title": "TemplateIn",
         "type": "object"
       },
-      "TemplateOut": {
+      "TextOut": {
         "properties": {
-          "body": {
-            "title": "Body",
+          "ar": {
+            "title": "Ar",
             "type": "string"
           },
-          "body_html": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Body Html"
-          },
-          "category": {
-            "title": "Category",
+          "en": {
+            "title": "En",
             "type": "string"
-          },
-          "channel": {
-            "title": "Channel",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "key": {
-            "title": "Key",
-            "type": "string"
-          },
-          "locale": {
-            "title": "Locale",
-            "type": "string"
-          },
-          "requires_approval": {
-            "title": "Requires Approval",
-            "type": "boolean"
-          },
-          "subject": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Subject"
-          },
-          "system": {
-            "title": "System",
-            "type": "boolean"
-          },
-          "variables": {
-            "additionalProperties": true,
-            "title": "Variables",
-            "type": "object"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
           }
         },
         "required": [
-          "id",
-          "key",
-          "channel",
-          "locale",
-          "version",
-          "category",
-          "system",
-          "subject",
-          "body",
-          "body_html",
-          "variables",
-          "requires_approval",
-          "created_at"
+          "en",
+          "ar"
         ],
-        "title": "TemplateOut",
+        "title": "TextOut",
         "type": "object"
       },
       "TokenIn": {
@@ -25629,6 +26151,96 @@
           "reason"
         ],
         "title": "VerifyOut",
+        "type": "object"
+      },
+      "pairly_api__routes__notification_templates__TemplateOut": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "body_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Html"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "requires_approval": {
+            "title": "Requires Approval",
+            "type": "boolean"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "system": {
+            "title": "System",
+            "type": "boolean"
+          },
+          "variables": {
+            "additionalProperties": true,
+            "title": "Variables",
+            "type": "object"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "channel",
+          "locale",
+          "version",
+          "category",
+          "system",
+          "subject",
+          "body",
+          "body_html",
+          "variables",
+          "requires_approval",
+          "created_at"
+        ],
+        "title": "TemplateOut",
         "type": "object"
       },
       "pairly_api__routes__policies__SearchIn": {
@@ -26024,6 +26636,28 @@
           "decided_at"
         ],
         "title": "HireScreeningOut",
+        "type": "object"
+      },
+      "pairly_pay__api__exceptions__TemplateOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "recipient": {
+            "enum": [
+              "vendor",
+              "requester"
+            ],
+            "title": "Recipient",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "recipient"
+        ],
+        "title": "TemplateOut",
         "type": "object"
       }
     }
@@ -37017,7 +37651,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/TemplateOut"
+                    "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
                   },
                   "title": "Response List Templates V1 Notification Templates Get",
                   "type": "array"
@@ -37133,7 +37767,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/TemplateOut"
+                    "$ref": "#/components/schemas/pairly_api__routes__notification_templates__TemplateOut"
                   },
                   "title": "Response List Versions V1 Notification Templates  Key  Versions Get",
                   "type": "array"
@@ -38051,6 +38685,95 @@
         ]
       }
     },
+    "/v1/pay/exceptions": {
+      "get": {
+        "operationId": "list_exceptions_v1_pay_exceptions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "no_po",
+                    "price_variance",
+                    "quantity_variance",
+                    "missing_receipt",
+                    "duplicate_suspect",
+                    "bank_mismatch",
+                    "policy_breach",
+                    "low_confidence",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExceptionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Exceptions",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
     "/v1/pay/goods-receipts": {
       "get": {
         "operationId": "list_receipts_v1_pay_goods_receipts_get",
@@ -38652,6 +39375,159 @@
           }
         },
         "summary": "Correct Invoice Field",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/messages": {
+      "get": {
+        "operationId": "list_messages_v1_pay_invoices__invoice_id__messages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MessageOut"
+                  },
+                  "title": "Response List Messages V1 Pay Invoices  Invoice Id  Messages Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Messages",
+        "tags": [
+          "pay"
+        ]
+      },
+      "post": {
+        "description": "Save the message and start its approval run; it is sent only once another\nperson approved this exact text.",
+        "operationId": "submit_message_v1_pay_invoices__invoice_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Message",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/invoices/{invoice_id}/messages/draft": {
+      "post": {
+        "description": "A drafted message (nothing is saved). The personal paragraph is optional and\nchecked; without the model the template alone is the draft.",
+        "operationId": "draft_message_v1_pay_invoices__invoice_id__messages_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft Message",
         "tags": [
           "pay"
         ]

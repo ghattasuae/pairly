@@ -59,6 +59,11 @@ Who does what (brief 4.1, 6.2):
 * **Chart of accounts and cost centres** (``pay.coding.manage``, brief 4.5.3): create a
   new version of a list or import one from CSV (admins, finance controllers). A
   ``manage`` action, so a second factor. Coding invoice lines is ``process``.
+* **Messages about exceptions** (``pay.message.*``, brief 4.5.4): ``create`` a drafted
+  message to a vendor contact on file or to the requester (AP clerks, finance
+  controllers; the start permission of the ``pay_message`` graph, so the writer is a
+  preparer); ``approve`` it before it is sent (another AP clerk or a finance
+  controller; an ``approve`` action, so a second factor).
 * **Documents** (``pay.document.read``): Pay documents (invoices, onboarding files) are
   read with Pay's own permission, so a member limited to Pay can open the invoice
   viewer. Uploads to ``/v1/documents`` stay on ``core.document.upload`` (no
@@ -102,6 +107,8 @@ EXTRACTION_READ: Final = "pay.extraction.read"
 EXTRACTION_CORRECT: Final = "pay.extraction.correct"
 ANALYTICS_READ: Final = "pay.analytics.read"
 CODING_MANAGE: Final = "pay.coding.manage"
+MESSAGE_CREATE: Final = "pay.message.create"
+MESSAGE_APPROVE: Final = "pay.message.approve"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -197,6 +204,16 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         CODING_MANAGE,
         "Change the chart of accounts and the cost centres (new versions, CSV import)",
         frozenset({R.ADMIN, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        MESSAGE_CREATE,
+        "Draft a message to a vendor or a requester about an invoice exception",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        MESSAGE_APPROVE,
+        "Approve a drafted message before it is sent",
+        frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(DOCUMENT_READ, "View Pay documents and their content", _READERS | {R.AGENT}),
     PermissionSpec(
