@@ -182,3 +182,4 @@ export const previewRun = unavailable;
 export const proposeRun = unavailable;
 export const runAction = unavailable;
 export const importPurchaseCsv = unavailable;
+export const savePaySettings = unavailable;
