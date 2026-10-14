@@ -388,6 +388,7 @@ def test_a_vendor_portal_actor_only_ever_acts_in_its_vendor_portal() -> None:
     for permission in held[1:]:
         with pytest.raises(PermissionDeniedError) as denied:
             authorize(vendor, permission)
+        assert denied.value.denial is not None
         assert denied.value.denial.reason == "vendor_action_not_allowed"
 
 
@@ -396,4 +397,5 @@ def test_a_candidate_never_acts_in_a_vendor_portal() -> None:
     authorize(candidate, "hire.portal.read")
     with pytest.raises(PermissionDeniedError) as denied:
         authorize(candidate, "pay.vendor_portal.read")
+    assert denied.value.denial is not None
     assert denied.value.denial.reason == "candidate_action_not_allowed"

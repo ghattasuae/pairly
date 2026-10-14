@@ -35,7 +35,8 @@ def test_no_two_models_share_a_component_name() -> None:
 
 
 def _model(module: str, field: str) -> type[BaseModel]:
-    model: type[BaseModel] = create_model("DraftOut", __module__=module, **{field: (str, ...)})
+    fields: dict[str, Any] = {field: (str, ...)}
+    model: type[BaseModel] = create_model("DraftOut", __module__=module, **fields)
     return model
 
 
