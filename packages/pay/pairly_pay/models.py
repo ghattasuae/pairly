@@ -566,6 +566,10 @@ class PayInvoice(Base, OrgScoped):
             name="extraction_source_valid",
         ),
         CheckConstraint("currency IS NULL OR currency ~ '^[A-Z]{3}$'", name="currency_format"),
+        CheckConstraint(
+            "checks_digest IS NULL OR checks_digest ~ '^[0-9a-f]{64}$'",
+            name="checks_digest_format",
+        ),
         Index("ix_pay_invoices_status", "org_id", "status", "created_at"),
         Index("ix_pay_invoices_vendor", "org_id", "vendor_id", "created_at"),
         Index("ix_pay_invoices_number_key", "org_id", "vendor_id", "number_key"),
@@ -625,6 +629,13 @@ class PayInvoice(Base, OrgScoped):
         JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
     )
     checked_at: Mapped[datetime | None] = _ts()
+    # SHA-256 of the inputs the checks ran on (``pairly_pay.freshness``, ``pay_0004``):
+    # when the invoice now hashes differently, the stored results are stale.
+    checks_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Coding a person sets (``pay_0004``): what the approval rules route on. The
+    # category defaults to the vendor's when empty.
+    department: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    category: Mapped[str | None] = mapped_column(String(64), nullable=True)
     reviewed_by: Mapped[uuid.UUID | None] = _user_fk()
     reviewed_at: Mapped[datetime | None] = _ts()
     rejected_by: Mapped[uuid.UUID | None] = _user_fk()

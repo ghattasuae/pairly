@@ -19,8 +19,16 @@
   (``pay.invoice.process`` and ``pay.extraction.correct``; people only). Recorded by
   the engine and filed under the vendor so the next invoice learns from it.
 * ``POST /invoices/{id}/vendor``          link the vendor (``pay.invoice.process``).
+* ``POST /invoices/{id}/coding``          department and category, which the approval
+  rules route on (``pay.invoice.process``).
+* ``POST /invoices/{id}/checks``          run every check again (``pay.invoice.process``).
 * ``POST /invoices/{id}/review``          ``needs_review`` to ``ready`` after a person
-  checked it (``pay.invoice.process``).
+  checked it (``pay.invoice.process``). Refused while the checks are stale.
+
+Security: a correction, a vendor link and a coding change re-run every check and the
+risk in the same transaction (``recheck_invoice``), so the results always describe the
+invoice as it is. A bank-detail correction that differs from the vendor master opens or
+joins the change ticket and holds the vendor, like the automatic check.
 * ``POST /invoices/{id}/reject``          close it, with a reason (``pay.invoice.process``).
 
 The inbound email address is made with ``pairly-admin inbound rotate`` (the token is
@@ -69,8 +77,15 @@ from pairly_core.ingestion.service import (
 from pairly_core.ingestion.storage import StorageError
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
-from pairly_pay.checks.service import lines_of, suspected_originals
+from pairly_pay.checks.service import (
+    CheckServices,
+    RecheckTrigger,
+    lines_of,
+    recheck_invoice,
+    suspected_originals,
+)
 from pairly_pay.common import WORKFLOW, By, audit, record_step
+from pairly_pay.freshness import FAILED, MISSING, STALE, checks_problem
 from pairly_pay.intake import pay_policy
 from pairly_pay.invoice_start import start_after_intake
 from pairly_pay.invoices import (
@@ -84,6 +99,7 @@ from pairly_pay.invoices import (
     refresh_decisions,
     refresh_values,
     reject_invoice,
+    set_coding,
 )
 from pairly_pay.learning import file_correction
 from pairly_pay.models import (
@@ -101,6 +117,13 @@ from pairly_pay.permissions import (
 )
 
 log = structlog.get_logger("pairly_pay.api.invoices")
+
+CHECKS_STATE: Final[dict[str | None, Literal["current", "stale", "failed", "missing"]]] = {
+    None: "current",
+    STALE: "stale",
+    FAILED: "failed",
+    MISSING: "missing",
+}
 
 router = APIRouter(tags=["pay"])
 Runtime = Annotated[WorkflowRuntime, Depends(get_runtime)]
@@ -136,6 +159,14 @@ class PayInvoiceRejectIn(_In):
     reason: str = Field(min_length=1, max_length=1000)
 
 
+CodingKey = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")]
+
+
+class PayInvoiceCodingIn(_In):
+    department: CodingKey | None = None
+    category: CodingKey | None = None
+
+
 class PayInvoiceVendorOut(BaseModel):
     id: uuid.UUID
     reference: str
@@ -158,6 +189,8 @@ class PayInvoiceSummary(BaseModel):
     total: Decimal | None
     review_reasons: list[str]
     intake_reference: str | None
+    department: str | None = None
+    category: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -320,6 +353,10 @@ class PayInvoiceDetail(PayInvoiceSummary):
     decision_ids: list[str]
     reviewed_at: datetime | None
     rejected_at: datetime | None
+    # ``current``: the check results are about the invoice as it is now; ``stale``: it
+    # changed since (run the checks again); ``failed``: a check could not run;
+    # ``missing``: the checks never finished. Only ``current`` may be approved or paid.
+    checks_state: Literal["current", "stale", "failed", "missing"] = "missing"
     can_process: bool
     # Validation and fraud checks (WP4.6): every check's result, the risk score, and the
     # suspected originals of a duplicate side by side.
@@ -489,6 +526,8 @@ def _summary_fields(invoice: PayInvoice, vendor: PayVendor | None) -> dict[str, 
         "total": money(invoice.total),
         "review_reasons": list(invoice.review_reasons),
         "intake_reference": invoice.intake_reference,
+        "department": invoice.department,
+        "category": invoice.category,
         "created_at": invoice.created_at,
         "updated_at": invoice.updated_at,
     }
@@ -635,6 +674,18 @@ async def _detail(
         checks=_checks(invoice),
         risk=_risk(invoice),
         compare=await _compare(session, invoice, stored),
+        checks_state=CHECKS_STATE[await checks_problem(session, invoice)],
+    )
+
+
+def check_services(runtime: WorkflowRuntime, actor: Actor) -> CheckServices:
+    """What the checks may use in a request: the engine services the runs use."""
+    services = runtime.services
+    return CheckServices(
+        org_id=actor.org_id,
+        store=services.store,
+        router=services.router,
+        embedder=services.embedder,
     )
 
 
@@ -807,6 +858,7 @@ async def correct_invoice_field(
     actor: CurrentActor,
     session: OrgSession,
     ctx: Context,
+    runtime: Runtime,
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_PROCESS)
     authorize(actor, EXTRACTION_CORRECT)
@@ -854,6 +906,16 @@ async def correct_invoice_field(
             "vendor_id": str(invoice.vendor_id) if invoice.vendor_id else None,
         },
     )
+    # Security: the checks and the risk run again on the corrected invoice, now, in this
+    # transaction. A bank-detail correction that differs from the vendor master opens or
+    # joins the change ticket and holds the vendor, exactly like the automatic check.
+    await recheck_invoice(
+        session,
+        invoice,
+        check_services(runtime, actor),
+        trigger=RecheckTrigger.CORRECTION,
+        by=By.of(actor),
+    )
     await refresh_decisions(session, invoice)
     return await _detail(request, session, actor, invoice)
 
@@ -865,10 +927,72 @@ async def link_invoice_vendor(
     body: PayInvoiceVendorIn,
     actor: CurrentActor,
     session: OrgSession,
+    runtime: Runtime,
 ) -> PayInvoiceDetail:
     authorize(actor, INVOICE_PROCESS)
     _person(actor)
     invoice = await link_vendor(session, actor, invoice_id, body.vendor_id)
+    # Another vendor changes what was checked (bank details, duplicates, domains).
+    await recheck_invoice(
+        session,
+        invoice,
+        check_services(runtime, actor),
+        trigger=RecheckTrigger.VENDOR_LINKED,
+        by=By.of(actor),
+    )
+    await refresh_decisions(session, invoice)
+    return await _detail(request, session, actor, invoice)
+
+
+@router.post("/invoices/{invoice_id}/coding", response_model=PayInvoiceDetail)
+async def code_invoice(
+    request: Request,
+    invoice_id: uuid.UUID,
+    body: PayInvoiceCodingIn,
+    actor: CurrentActor,
+    session: OrgSession,
+    runtime: Runtime,
+) -> PayInvoiceDetail:
+    """Set the department and category the approval rules route on. The checks run
+    again (the spend policy reads the coding)."""
+    authorize(actor, INVOICE_PROCESS)
+    _person(actor)
+    invoice = await set_coding(session, actor, invoice_id, body.department, body.category)
+    await recheck_invoice(
+        session,
+        invoice,
+        check_services(runtime, actor),
+        trigger=RecheckTrigger.CODING,
+        by=By.of(actor),
+    )
+    await refresh_decisions(session, invoice)
+    return await _detail(request, session, actor, invoice)
+
+
+@router.post("/invoices/{invoice_id}/checks", response_model=PayInvoiceDetail)
+async def rerun_checks(
+    request: Request,
+    invoice_id: uuid.UUID,
+    actor: CurrentActor,
+    session: OrgSession,
+    runtime: Runtime,
+) -> PayInvoiceDetail:
+    """Run every check again (stale results, or a check that could not run)."""
+    authorize(actor, INVOICE_PROCESS)
+    _person(actor)
+    invoice = await get_invoice(session, invoice_id, lock=True)
+    if invoice.status not in {InvoiceStatus.NEEDS_REVIEW.value, InvoiceStatus.READY.value}:
+        raise InvoiceStateError(f"the invoice is {invoice.status}")
+    if invoice.extraction_id is None:
+        raise InvoiceStateError("nothing was read from this invoice yet")
+    await recheck_invoice(
+        session,
+        invoice,
+        check_services(runtime, actor),
+        trigger=RecheckTrigger.PERSON,
+        by=By.of(actor),
+    )
+    await refresh_decisions(session, invoice)
     return await _detail(request, session, actor, invoice)
 
 

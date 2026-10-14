@@ -37,6 +37,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
+from enum import StrEnum
 from typing import Any, Final
 
 import structlog
@@ -83,6 +84,7 @@ from pairly_pay.checks.types import (
     finding,
 )
 from pairly_pay.common import By, audit
+from pairly_pay.freshness import check_inputs_digest
 from pairly_pay.holds import place_hold
 from pairly_pay.invoices import INVOICE_ENTITY, InvoiceNotFoundError, add_reasons, get_invoice
 from pairly_pay.models import (
@@ -468,6 +470,8 @@ async def run_invoice_checks(
 ) -> list[str]:
     """Run every check on ``invoice`` (locked by the caller). Returns review reasons."""
     settings = await load_settings(session)
+    # What these results are about (``pairly_pay.freshness``): taken before anything runs.
+    inputs_digest = await check_inputs_digest(session, invoice)
     facts, document = await build_facts(session, invoice, services)
     history = await build_history(session, invoice, facts, document)
     keys: Keys = keys_of(facts)
@@ -540,6 +544,7 @@ async def run_invoice_checks(
     invoice.checks = [results[name].as_json() for name in risk.CHECK_NAMES if name in results]
     invoice.risk = risk_json
     invoice.checked_at = now
+    invoice.checks_digest = inputs_digest
     reasons = review_reasons(results, risk_json)
     statuses = {name: r.status.value for name, r in results.items()}
     await record_decision(
@@ -562,6 +567,7 @@ async def run_invoice_checks(
                     "known_domains": len(history.vendor_domains),
                 },
                 "rule_evaluations": evaluations,
+                "checks_digest": inputs_digest,
                 "risk_assessment_id": risk_json.get("assessment_id"),
             },
             output={
@@ -615,3 +621,67 @@ def ids(values: Sequence[str]) -> list[uuid.UUID]:
         except ValueError:
             continue
     return out
+
+
+# ------------------------------------------------------------------ a person's change
+
+# Review reasons the checks own: replaced, not added to, when the checks run again.
+CHECK_REASON_PREFIXES: Final = ("check:", "check_error:", "check_failed:", "risk:")
+
+
+class RecheckTrigger(StrEnum):
+    CORRECTION = "correction"
+    VENDOR_LINKED = "vendor_linked"
+    CODING = "coding"
+    PERSON = "person"
+
+
+async def recheck_invoice(
+    session: AsyncSession,
+    invoice: PayInvoice,
+    services: CheckServices,
+    *,
+    trigger: RecheckTrigger,
+    by: By,
+) -> list[str]:
+    """Run every check and the risk again on ``invoice`` (locked by the caller), in the
+    caller's transaction, after a person changed what the checks read.
+
+    The same code as intake (``run_invoice_checks``), so a bank-detail correction that
+    differs from the vendor master opens or joins the change ticket and holds the
+    vendor exactly like the automatic check. The check reasons are replaced by the new
+    ones. A ``ready`` invoice goes back to a person when a check now needs one. If the
+    checks cannot run, the stored digest is cleared: the invoice stays stale, so it can
+    never be approved or paid (fail closed). Returns the new check reasons.
+    """
+    before = invoice.status
+    await session.flush()
+    try:
+        async with session.begin_nested():
+            reasons = await run_invoice_checks(session, invoice, services)
+    except Exception as exc:  # a check run that fails leaves the invoice stale
+        log.error("pay.checks.recheck_failed", error=type(exc).__name__)
+        await session.refresh(invoice)
+        invoice.checks_digest = None
+        reasons = [f"check_failed:{type(exc).__name__}"]
+    kept = [r for r in invoice.review_reasons if not r.startswith(CHECK_REASON_PREFIXES)]
+    invoice.review_reasons = kept
+    add_reasons(invoice, reasons)
+    if invoice.status == InvoiceStatus.READY.value and reasons:
+        invoice.status = InvoiceStatus.NEEDS_REVIEW.value
+    invoice.updated_at = datetime.now(UTC)
+    await audit(
+        session,
+        by,
+        "pay.invoice.rechecked",
+        entity_type=INVOICE_ENTITY,
+        entity_id=invoice.id,
+        payload={
+            "trigger": trigger.value,
+            "previous_status": before,
+            "status": invoice.status,
+            "checks_current": invoice.checks_digest is not None,
+            "review_reasons": reasons[:20],
+        },
+    )
+    return reasons

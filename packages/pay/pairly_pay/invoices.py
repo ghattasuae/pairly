@@ -36,6 +36,7 @@ from pairly_core.extraction.service import StoredExtraction, load_extraction
 from pairly_core.ingestion.models import Document
 from pairly_core.rbac import Actor
 from pairly_pay.common import By, audit, clean_text, decision_ids_of, new_reference, record_step
+from pairly_pay.freshness import MISSING, STALE, checks_problem
 from pairly_pay.models import (
     InvoiceSource,
     InvoiceStatus,
@@ -293,13 +294,56 @@ async def link_vendor(
     return invoice
 
 
+async def set_coding(
+    session: AsyncSession,
+    actor: Actor,
+    invoice_id: uuid.UUID,
+    department: str | None,
+    category: str | None,
+) -> PayInvoice:
+    """A person sets the department and category (the caller runs the checks again)."""
+    invoice = await get_invoice(session, invoice_id, lock=True)
+    _open(invoice, InvoiceStatus.NEEDS_REVIEW, InvoiceStatus.READY)
+    previous = {"department": invoice.department, "category": invoice.category}
+    invoice.department = department
+    invoice.category = category
+    invoice.updated_at = datetime.now(UTC)
+    if invoice.status == InvoiceStatus.READY.value and previous != {
+        "department": department,
+        "category": category,
+    }:
+        # The coding is what the approval rules route on: a person looks again.
+        invoice.status = InvoiceStatus.NEEDS_REVIEW.value
+        add_reasons(invoice, ["coded_after_ready"])
+    await record_step(
+        session,
+        By.of(actor),
+        entity_type=INVOICE_ENTITY,
+        entity_id=invoice.id,
+        action="pay.invoice.coded",
+        inputs={"previous": previous},
+        output={"department": department, "category": category, "status": invoice.status},
+    )
+    await audit(
+        session,
+        actor,
+        "pay.invoice.coded",
+        entity_type=INVOICE_ENTITY,
+        entity_id=invoice.id,
+        payload={"department": department, "category": category, "previous": previous},
+    )
+    await refresh_decisions(session, invoice)
+    return invoice
+
+
 async def mark_reviewed(
     session: AsyncSession, actor: Actor, invoice_id: uuid.UUID, note: str | None
 ) -> PayInvoice:
     """A person checked the invoice side by side: ``needs_review`` to ``ready``.
 
-    Refused unless the invoice has an active vendor and the fields every later step
-    needs have a value (corrected where they were doubtful)."""
+    Refused unless the invoice has an active vendor, the fields every later step
+    needs have a value (corrected where they were doubtful), and the check results are
+    about the invoice as it is now (``pairly_pay.freshness``)."""
     invoice = await get_invoice(session, invoice_id, lock=True)
     _open(invoice, InvoiceStatus.NEEDS_REVIEW)
     text = _reason(note, required=False)
@@ -316,6 +360,9 @@ async def mark_reviewed(
     )
     if vendor is None or vendor.status != VendorStatus.ACTIVE.value:
         raise InvoiceStateError("link the invoice to an active vendor first")
+    if await checks_problem(session, invoice) in {STALE, MISSING}:
+        # The results describe another version of this invoice: run them again first.
+        raise InvoiceStateError("the checks are out of date: run them again first")
     accepted = [f.path for f in stored.fields if f.flags]
     now = datetime.now(UTC)
     invoice.status = InvoiceStatus.READY.value
