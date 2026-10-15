@@ -315,6 +315,7 @@ def test_workflow_scope_limits_what_must_be_held(registry: RoleRegistry) -> None
         "pay.extraction.read",
         "pay.payment_run.read",
         "pay.purchase_order.read",
+        "pay.reconciliation.read",
     }
 
 
