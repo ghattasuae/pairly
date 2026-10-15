@@ -10,7 +10,7 @@ import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { saveDownload, type DownloadResult } from "@/lib/pay/download";
-import type { PayAgingBucket, PayMonthEnd } from "@/lib/pay/types";
+import type { PayAgingBucket, PayJournalExport, PayMonthEnd } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
 
@@ -108,7 +108,15 @@ function DownloadButton({
  * suggestions for goods received not invoiced, and the exceptions still open among
  * invoices received by then. Every figure opens the records it adds up.
  */
-export function PayMonthEndView({ data, download = defaultDownload }: { data: PayMonthEnd; download?: MonthEndDownload }) {
+export function PayMonthEndView({
+  data,
+  exports = [],
+  download = defaultDownload,
+}: {
+  data: PayMonthEnd;
+  exports?: PayJournalExport[];
+  download?: MonthEndDownload;
+}) {
   const t = useTranslations("Pay.monthEnd");
   const format = useFormatter();
   const asOf = format.dateTime(new Date(data.as_of), { dateStyle: "medium", timeZone: "UTC" });
@@ -126,6 +134,23 @@ export function PayMonthEndView({ data, download = defaultDownload }: { data: Pa
           </DownloadButton>
         )}
       </div>
+
+      {exports.length > 0 && (
+        <div className="rounded-lg border p-3 text-sm" data-journal-exports>
+          <p className="font-medium">{t("exportsTitle")}</p>
+          <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+            {exports.map((e) => (
+              <li key={e.id} className="flex flex-wrap gap-x-3">
+                <span>{format.dateTime(new Date(e.created_at), { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })}</span>
+                <span>{t("exportCounts", { entries: e.entry_count, lines: e.line_count })}</span>
+                <code className="font-mono" dir="ltr" title={e.sha256}>
+                  SHA-256 {e.sha256.slice(0, 16)}
+                </code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Panel title={t("payablesTitle")} data-aging-panel>
         {data.aging.length === 0 ? (

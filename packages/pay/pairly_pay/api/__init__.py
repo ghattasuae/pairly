@@ -45,6 +45,7 @@ from pairly_pay.api import (
     exceptions,
     forecast,
     invoices,
+    journal,
     month_end,
     onboarding,
     payment_runs,
@@ -67,6 +68,7 @@ router.include_router(analytics.router)
 router.include_router(forecast.router)
 router.include_router(reconciliation.router)
 router.include_router(month_end.router)
+router.include_router(journal.router)
 router.include_router(coding.router)
 router.include_router(exceptions.router)
 router.include_router(vendor_portal.router)

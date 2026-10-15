@@ -34,6 +34,7 @@ export default async function PayMonthEndPage({ params, searchParams }: Props) {
   const period = monthEndPeriod(await searchParams);
   const result = await callApi((api) => api.GET("/v1/pay/month-end", { params: { query: { period } } }));
   if (!result.ok) return <PayUnavailable retry={`/${locale}/pay/month-end`} />;
+  const exports = await callApi((api) => api.GET("/v1/pay/journal/exports", { params: { query: { period } } }));
   const t = await getTranslations("Pay.monthEnd");
   return (
     <PayFrame>
@@ -54,7 +55,7 @@ export default async function PayMonthEndPage({ params, searchParams }: Props) {
           {t("apply")}
         </button>
       </form>
-      <PayMonthEndView data={result.data} />
+      <PayMonthEndView data={result.data} exports={exports.ok ? exports.data : []} />
     </PayFrame>
   );
 }

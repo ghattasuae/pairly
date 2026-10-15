@@ -123,6 +123,30 @@ describe("PayMonthEndView", () => {
     ]);
   });
 
+  it("lists the journal exports of the month with their digest", () => {
+    const sha = "ab".repeat(32);
+    renderWithIntl(
+      <PayMonthEndView
+        data={data()}
+        exports={[
+          {
+            id: "44444444-4444-4444-8444-444444444444",
+            period: "2026-09",
+            format: "generic",
+            sha256: sha,
+            entry_count: 4,
+            line_count: 12,
+            exported_by: "55555555-5555-4555-8555-555555555555",
+            created_at: "2026-10-02T09:00:00Z",
+          },
+        ]}
+        download={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("4 entries, 12 lines")).toBeInTheDocument();
+    expect(screen.getByTitle(sha)).toBeInTheDocument();
+  });
+
   it("hides the journal export without the permission and renders in Arabic", () => {
     renderWithIntl(<PayMonthEndView data={data({ can_export_journal: false, aging: [], accruals: [] })} download={vi.fn()} />, "ar");
     expect(screen.queryByRole("button", { name: "تصدير القيود (CSV)" })).not.toBeInTheDocument();

@@ -21267,6 +21267,72 @@
         "title": "PayInvoiceVendorOut",
         "type": "object"
       },
+      "PayJournalExportIn": {
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period"
+        ],
+        "title": "PayJournalExportIn",
+        "type": "object"
+      },
+      "PayJournalExportOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "entry_count": {
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "exported_by": {
+            "format": "uuid",
+            "title": "Exported By",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "period",
+          "format",
+          "sha256",
+          "entry_count",
+          "line_count",
+          "exported_by",
+          "created_at"
+        ],
+        "title": "PayJournalExportOut",
+        "type": "object"
+      },
       "PayLineCodingIn": {
         "additionalProperties": false,
         "properties": {
@@ -42682,6 +42748,95 @@
           }
         },
         "summary": "Link Invoice Vendor",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/journal/export": {
+      "post": {
+        "operationId": "export_journal_v1_pay_journal_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayJournalExportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Export Journal V1 Pay Journal Export Post"
+                }
+              },
+              "text/csv": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Journal",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/journal/exports": {
+      "get": {
+        "operationId": "list_exports_v1_pay_journal_exports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "title": "Period",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PayJournalExportOut"
+                  },
+                  "title": "Response List Exports V1 Pay Journal Exports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Exports",
         "tags": [
           "pay"
         ]

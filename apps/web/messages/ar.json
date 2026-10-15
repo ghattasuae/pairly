@@ -4110,7 +4110,9 @@
         "policy_breach": "مخالفة للسياسة",
         "low_confidence": "ثقة منخفضة",
         "other": "أخرى"
-      }
+      },
+      "exportsTitle": "تصديرات القيود لهذا الشهر",
+      "exportCounts": "{entries, plural, one {قيد واحد} two {قيدان} few {# قيود} many {# قيدًا} other {# قيد}}، {lines, plural, one {سطر واحد} two {سطران} few {# أسطر} many {# سطرًا} other {# سطر}}"
     }
   },
   "VendorOnboarding": {

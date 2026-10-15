@@ -4110,7 +4110,9 @@
         "policy_breach": "Policy breach",
         "low_confidence": "Low confidence",
         "other": "Other"
-      }
+      },
+      "exportsTitle": "Journal exports of this month",
+      "exportCounts": "{entries, plural, one {# entry} other {# entries}}, {lines, plural, one {# line} other {# lines}}"
     }
   },
   "VendorOnboarding": {

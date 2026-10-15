@@ -1659,3 +1659,31 @@ class PayBankStatementLine(Base, OrgScoped):
     matched_at: Mapped[datetime | None] = _ts()
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _created()
+
+
+# ------------------------------------------------------------------ journal exports (pay_0017)
+
+JOURNAL_EXPORTS: Final = "pay_journal_exports"
+
+
+class PayJournalExport(Base, OrgScoped):
+    """One download of the generic journal of a period: who, when and the file's
+    digest (the file itself is not kept). Insert only."""
+
+    __tablename__ = JOURNAL_EXPORTS
+    __table_args__ = (
+        UniqueConstraint("org_id", "id", name="uq_pay_journal_exports_org_id_id"),
+        CheckConstraint("period ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'", name="period_format"),
+        CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="sha256_format"),
+        CheckConstraint("entry_count >= 0 AND line_count >= 0", name="counts_not_negative"),
+        Index("ix_pay_journal_exports_period", "org_id", "period", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    period: Mapped[str] = mapped_column(String(7), nullable=False)
+    format: Mapped[str] = mapped_column(String(16), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    entry_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    exported_by: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    created_at: Mapped[datetime] = _created()

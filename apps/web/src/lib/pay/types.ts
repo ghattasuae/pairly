@@ -62,6 +62,7 @@ export type PayStatementLine = S["PayStatementLineOut"];
 export type PayUnexplained = S["PayUnexplainedOut"];
 export type PayMonthEnd = S["PayMonthEndOut"];
 export type PayAgingBucket = S["PayAgingBucketOut"];
+export type PayJournalExport = S["PayJournalExportOut"];
 
 // Vendor portal, the AP team's side (brief 4.7).
 export type PayPortalAccess = S["PayPortalAccessOut"];
