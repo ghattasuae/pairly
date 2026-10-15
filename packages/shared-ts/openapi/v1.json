@@ -18444,6 +18444,208 @@
         "title": "PayCsvIn",
         "type": "object"
       },
+      "PayDashAmountOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "currency",
+          "amount",
+          "count",
+          "href"
+        ],
+        "title": "PayDashAmountOut",
+        "type": "object"
+      },
+      "PayDashItemOut": {
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "detail": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Detail",
+            "type": "object"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label",
+          "href",
+          "at",
+          "detail"
+        ],
+        "title": "PayDashItemOut",
+        "type": "object"
+      },
+      "PayDashSectionOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayDashItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count",
+          "href",
+          "items"
+        ],
+        "title": "PayDashSectionOut",
+        "type": "object"
+      },
+      "PayDashboardOut": {
+        "properties": {
+          "action": {
+            "items": {
+              "$ref": "#/components/schemas/PayDashSectionOut"
+            },
+            "title": "Action",
+            "type": "array"
+          },
+          "amounts": {
+            "items": {
+              "$ref": "#/components/schemas/PayDashAmountOut"
+            },
+            "title": "Amounts",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/PayMetricOut"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/PayDashSectionOut"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "role",
+          "generated_at",
+          "action",
+          "sections",
+          "amounts",
+          "metrics",
+          "links"
+        ],
+        "title": "PayDashboardOut",
+        "type": "object"
+      },
       "PayDraftIn": {
         "additionalProperties": false,
         "properties": {
@@ -41484,6 +41686,69 @@
           }
         },
         "summary": "Get Versions",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/dashboards/ap-clerk": {
+      "get": {
+        "operationId": "ap_clerk_dashboard_v1_pay_dashboards_ap_clerk_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ap Clerk Dashboard",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/dashboards/approver": {
+      "get": {
+        "operationId": "approver_dashboard_v1_pay_dashboards_approver_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Approver Dashboard",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/dashboards/finance-controller": {
+      "get": {
+        "operationId": "finance_controller_dashboard_v1_pay_dashboards_finance_controller_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayDashboardOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Finance Controller Dashboard",
         "tags": [
           "pay"
         ]

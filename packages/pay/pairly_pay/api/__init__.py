@@ -20,6 +20,7 @@
   paid; unmatched lines and paid invoices no statement explains.
 * ``month_end``: the month-end report (open payables and aging, accrual suggestions,
   open exceptions) and its CSV; ``journal``: the generic journal export.
+* ``dashboards``: the AP clerk, approver and finance controller dashboards on Home.
 * ``exceptions``: the exceptions queue and drafted messages to vendors and requesters,
   sent only after approval (brief 4.5.4).
 * ``coding``: the chart of accounts and cost centres, and GL coding of invoice lines
@@ -42,6 +43,7 @@ from pairly_pay.api import (
     approval_rules,
     bank_changes,
     coding,
+    dashboards,
     exceptions,
     forecast,
     invoices,
@@ -69,6 +71,7 @@ router.include_router(forecast.router)
 router.include_router(reconciliation.router)
 router.include_router(month_end.router)
 router.include_router(journal.router)
+router.include_router(dashboards.router)
 router.include_router(coding.router)
 router.include_router(exceptions.router)
 router.include_router(vendor_portal.router)

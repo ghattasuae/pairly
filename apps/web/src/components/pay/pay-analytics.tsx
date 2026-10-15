@@ -53,7 +53,7 @@ export function PayMetricValue({ metric }: { metric: PayMetric }) {
 }
 
 /** The records a number was computed from, each linking to its page. */
-function Records({ metric }: { metric: PayMetric }) {
+export function PayMetricRecords({ metric }: { metric: PayMetric }) {
   const t = useTranslations("Pay.analytics");
   if (metric.records_total === 0) return null;
   return (
@@ -98,7 +98,7 @@ function Tile({ title, metric, note }: { title: string; metric: PayMetric; note?
       </p>
       <p className="text-xs text-muted-foreground">{t("sample", { n: metric.n })}</p>
       {note && <p className="text-xs text-muted-foreground">{note}</p>}
-      <Records metric={metric} />
+      <PayMetricRecords metric={metric} />
     </div>
   );
 }
@@ -136,7 +136,7 @@ function Rows({ metrics, label }: { metrics: PayMetric[]; label: (m: PayMetric) 
             </span>
           </div>
           <p className="text-xs text-muted-foreground">{t("sample", { n: m.n })}</p>
-          <Records metric={m} />
+          <PayMetricRecords metric={m} />
         </li>
       ))}
     </ul>

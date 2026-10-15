@@ -4338,5 +4338,111 @@
     "doneTitle": "تم ربط Slack",
     "done": "حسابك في Slack مرتبط الآن بـ Pairly. رسائل الموافقة في Slack تفتح في Pairly لك.",
     "openInbox": "افتح صندوق الموافقات"
+  },
+  "PayDashboards": {
+    "title": {
+      "ap_clerk": "الحسابات الدائنة",
+      "approver": "موافقاتك في الدفع",
+      "finance_controller": "المالية"
+    },
+    "needsYou": "{count, plural, =0 {لا شيء يحتاجك الآن} one {أمر واحد يحتاجك} two {أمران يحتاجانك} few {# أمور تحتاجك} many {# أمرًا يحتاجك} other {# أمر يحتاجك}}",
+    "howItsGoing": "سير العمل",
+    "pages": "صفحات الدفع",
+    "countLink": "{count} {what}: افتحها",
+    "seeAll": "عرض الكل ({count})",
+    "emptyAction": "لا شيء بالانتظار.",
+    "emptySection": "لا شيء هنا.",
+    "done": "تم",
+    "open": "{count, plural, one {مفتوح واحد} two {مفتوحان} few {# مفتوحة} many {# مفتوحًا} other {# مفتوح}}",
+    "count": "{count, plural, one {فاتورة واحدة} two {فاتورتان} few {# فواتير} many {# فاتورة} other {# فاتورة}}",
+    "invoices": "{count, plural, one {فاتورة واحدة} two {فاتورتان} few {# فواتير} many {# فاتورة} other {# فاتورة}}",
+    "saving": "وفّر {saving} إذا دُفعت قبل {date}",
+    "runsOn": "تُدفع في {date}",
+    "trend": "وصل {received}، منها {flagged} باستثناءات",
+    "week": "أسبوع {start}",
+    "decision": {
+      "approve": "موافقة",
+      "reject": "رفض",
+      "other": "قرار"
+    },
+    "risk": {
+      "low": "مخاطر منخفضة",
+      "medium": "مخاطر متوسطة",
+      "high": "مخاطر عالية",
+      "critical": "مخاطر حرجة"
+    },
+    "sla": {
+      "on_track": "في الموعد",
+      "due_soon": "يقترب الموعد",
+      "overdue": "متأخر"
+    },
+    "section": {
+      "to_review": "استثناءات للمراجعة",
+      "ready": "جاهزة للإرسال للموافقة",
+      "low_confidence": "حقول قُرئت بثقة منخفضة",
+      "duplicates": "يُشتبه بتكرارها",
+      "waiting_on_vendor": "بانتظار المورد",
+      "intake": "قيد القراءة",
+      "exceptions_by_category": "الاستثناءات حسب الفئة",
+      "awaiting_me": "بانتظار موافقتك",
+      "delegated": "مفوّضة إليك",
+      "history": "قراراتك في آخر 30 يومًا",
+      "upcoming_runs": "دفعات السداد القادمة",
+      "discounts": "خصومات الدفع المبكر المتاحة",
+      "exceptions_trend": "الاستثناءات في آخر أربعة أسابيع",
+      "month_end": "إقفال الشهر الماضي"
+    },
+    "category": {
+      "no_po": "بلا أمر شراء",
+      "price_variance": "فرق في السعر",
+      "quantity_variance": "فرق في الكمية",
+      "missing_receipt": "استلام ناقص",
+      "duplicate_suspect": "يُشتبه بالتكرار",
+      "bank_mismatch": "عدم تطابق البنك",
+      "policy_breach": "مخالفة للسياسة",
+      "low_confidence": "ثقة منخفضة",
+      "other": "أخرى"
+    },
+    "check": {
+      "journal_exported": "تم تصدير القيود",
+      "statements_matched": "تمت مطابقة كشوف البنك",
+      "exceptions_cleared": "تمت معالجة الاستثناءات"
+    },
+    "amount": {
+      "payables": "الذمم الدائنة المفتوحة",
+      "forecast_4_weeks": "للدفع في الأسابيع الأربعة القادمة",
+      "approved_this_month": "ما وافقت عليه هذا الشهر",
+      "aging": {
+        "current": "لم يحن موعدها",
+        "1_30": "متأخرة 1 إلى 30 يومًا",
+        "31_60": "متأخرة 31 إلى 60 يومًا",
+        "61_90": "متأخرة 61 إلى 90 يومًا",
+        "90_plus": "متأخرة أكثر من 90 يومًا",
+        "undated": "بلا تاريخ"
+      }
+    },
+    "metric": {
+      "reviewed_7d": "راجعتَ، 7 أيام",
+      "reviewed_30d": "راجعتَ، 30 يومًا",
+      "submitted_7d": "أرسلتَ للموافقة، 7 أيام",
+      "submitted_30d": "أرسلتَ للموافقة، 30 يومًا",
+      "approved_this_month": "فواتير وافقت عليها هذا الشهر",
+      "touchless_rate": "نسبة المعالجة الآلية، 90 يومًا",
+      "cycle_receipt_to_payment": "من الاستلام إلى الدفع، الوسيط",
+      "cost_per_invoice": "تكلفة النموذج لكل فاتورة",
+      "days_payable_outstanding": "أيام سداد الذمم الدائنة",
+      "bank_changes_blocked": "محاولات تغيير البنك المحظورة",
+      "fraud_flags": "مؤشرات الاحتيال"
+    },
+    "link": {
+      "exceptions": "الاستثناءات",
+      "invoices": "الفواتير",
+      "inbox": "صندوق الوارد",
+      "analytics": "التحليلات",
+      "forecast": "توقعات النقد",
+      "month_end": "إقفال الشهر",
+      "reconciliation": "التسوية",
+      "payment_runs": "دفعات السداد"
+    }
   }
 }

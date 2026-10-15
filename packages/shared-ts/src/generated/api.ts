@@ -4058,6 +4058,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/dashboards/ap-clerk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ap Clerk Dashboard */
+        get: operations["ap_clerk_dashboard_v1_pay_dashboards_ap_clerk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/dashboards/approver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approver Dashboard */
+        get: operations["approver_dashboard_v1_pay_dashboards_approver_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/dashboards/finance-controller": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Finance Controller Dashboard */
+        get: operations["finance_controller_dashboard_v1_pay_dashboards_finance_controller_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/exceptions": {
         parameters: {
             query?: never;
@@ -11873,6 +11924,67 @@ export type components = {
         PayCsvIn: {
             /** Csv */
             csv: string;
+        };
+        /** PayDashAmountOut */
+        PayDashAmountOut: {
+            /** Amount */
+            amount: string;
+            /** Count */
+            count: number;
+            /** Currency */
+            currency: string;
+            /** Href */
+            href: string;
+            /** Key */
+            key: string;
+        };
+        /** PayDashboardOut */
+        PayDashboardOut: {
+            /** Action */
+            action: components["schemas"]["PayDashSectionOut"][];
+            /** Amounts */
+            amounts: components["schemas"]["PayDashAmountOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Links */
+            links: string[];
+            /** Metrics */
+            metrics: components["schemas"]["PayMetricOut"][];
+            /** Role */
+            role: string;
+            /** Sections */
+            sections: components["schemas"]["PayDashSectionOut"][];
+        };
+        /** PayDashItemOut */
+        PayDashItemOut: {
+            /** At */
+            at: string | null;
+            /** Detail */
+            detail: {
+                [key: string]: string | number | boolean | null;
+            };
+            /** Href */
+            href: string | null;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+        };
+        /** PayDashSectionOut */
+        PayDashSectionOut: {
+            /** Count */
+            count: number;
+            /** Href */
+            href: string | null;
+            /** Items */
+            items: components["schemas"]["PayDashItemOut"][];
+            /** Key */
+            key: string;
         };
         /** PayDraftIn */
         PayDraftIn: {
@@ -23578,6 +23690,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ap_clerk_dashboard_v1_pay_dashboards_ap_clerk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayDashboardOut"];
+                };
+            };
+        };
+    };
+    approver_dashboard_v1_pay_dashboards_approver_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayDashboardOut"];
+                };
+            };
+        };
+    };
+    finance_controller_dashboard_v1_pay_dashboards_finance_controller_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayDashboardOut"];
                 };
             };
         };

@@ -4338,5 +4338,111 @@
     "doneTitle": "Slack is connected",
     "done": "Your Slack account is now linked to Pairly. Approval messages in Slack open in Pairly for you.",
     "openInbox": "Open the approval inbox"
+  },
+  "PayDashboards": {
+    "title": {
+      "ap_clerk": "Accounts payable",
+      "approver": "Your Pay approvals",
+      "finance_controller": "Finance"
+    },
+    "needsYou": "{count, plural, =0 {Nothing needs you now} one {# thing needs you} other {# things need you}}",
+    "howItsGoing": "How it is going",
+    "pages": "Pay pages",
+    "countLink": "{count} {what}: open them",
+    "seeAll": "See all {count}",
+    "emptyAction": "Nothing waiting.",
+    "emptySection": "Nothing here.",
+    "done": "Done",
+    "open": "{count, plural, one {# open} other {# open}}",
+    "count": "{count, plural, one {# invoice} other {# invoices}}",
+    "invoices": "{count, plural, one {# invoice} other {# invoices}}",
+    "saving": "save {saving} if paid by {date}",
+    "runsOn": "pays on {date}",
+    "trend": "{received} received, {flagged} with exceptions",
+    "week": "Week of {start}",
+    "decision": {
+      "approve": "Approved",
+      "reject": "Rejected",
+      "other": "Decided"
+    },
+    "risk": {
+      "low": "Low risk",
+      "medium": "Medium risk",
+      "high": "High risk",
+      "critical": "Critical risk"
+    },
+    "sla": {
+      "on_track": "On time",
+      "due_soon": "Due soon",
+      "overdue": "Overdue"
+    },
+    "section": {
+      "to_review": "Exceptions to review",
+      "ready": "Ready to send for approval",
+      "low_confidence": "Fields read with low confidence",
+      "duplicates": "Duplicate suspects",
+      "waiting_on_vendor": "Waiting on a vendor",
+      "intake": "Being read",
+      "exceptions_by_category": "Exceptions by category",
+      "awaiting_me": "Waiting for your approval",
+      "delegated": "Delegated to you",
+      "history": "Your decisions, last 30 days",
+      "upcoming_runs": "Payment runs to come",
+      "discounts": "Early-payment discounts open",
+      "exceptions_trend": "Exceptions, last four weeks",
+      "month_end": "Last month's close"
+    },
+    "category": {
+      "no_po": "No PO",
+      "price_variance": "Price variance",
+      "quantity_variance": "Quantity variance",
+      "missing_receipt": "Missing receipt",
+      "duplicate_suspect": "Duplicate suspect",
+      "bank_mismatch": "Bank mismatch",
+      "policy_breach": "Policy breach",
+      "low_confidence": "Low confidence",
+      "other": "Other"
+    },
+    "check": {
+      "journal_exported": "Journal exported",
+      "statements_matched": "Bank statements matched",
+      "exceptions_cleared": "Exceptions cleared"
+    },
+    "amount": {
+      "payables": "Open payables",
+      "forecast_4_weeks": "To pay in the next four weeks",
+      "approved_this_month": "You approved this month",
+      "aging": {
+        "current": "Not due yet",
+        "1_30": "1 to 30 days late",
+        "31_60": "31 to 60 days late",
+        "61_90": "61 to 90 days late",
+        "90_plus": "Over 90 days late",
+        "undated": "No date"
+      }
+    },
+    "metric": {
+      "reviewed_7d": "You reviewed, 7 days",
+      "reviewed_30d": "You reviewed, 30 days",
+      "submitted_7d": "You sent for approval, 7 days",
+      "submitted_30d": "You sent for approval, 30 days",
+      "approved_this_month": "Invoices you approved this month",
+      "touchless_rate": "Touchless rate, 90 days",
+      "cycle_receipt_to_payment": "Receipt to payment, median",
+      "cost_per_invoice": "Model cost per invoice",
+      "days_payable_outstanding": "Days payable outstanding",
+      "bank_changes_blocked": "Bank-change attempts blocked",
+      "fraud_flags": "Fraud flags"
+    },
+    "link": {
+      "exceptions": "Exceptions",
+      "invoices": "Invoices",
+      "inbox": "Inbox",
+      "analytics": "Analytics",
+      "forecast": "Cash forecast",
+      "month_end": "Month end",
+      "reconciliation": "Reconciliation",
+      "payment_runs": "Payment runs"
+    }
   }
 }

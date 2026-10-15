@@ -85,6 +85,10 @@ def test_role_grants() -> None:
     assert _holders(BANK_CHANGE_APPROVE) == {"approver", "finance_controller"}
     assert _holders(HOLD_MANAGE) == {"finance_controller"}
     assert _holders(SETTINGS_MANAGE) == {"admin", "finance_controller"}
+    assert _holders("pay.reconciliation.upload") == {"ap_clerk", "finance_controller"}
+    assert _holders("pay.month_end.read") == {"admin", "finance_controller", "auditor"}
+    assert _holders("pay.journal.export") == {"admin", "finance_controller"}
+    assert requires_second_factor("pay.journal.export")
     registry = build_registry([plugin])
     agent = {p for p in registry.permissions_for_role(BuiltinRole.AGENT) if p.startswith("pay.")}
     assert agent

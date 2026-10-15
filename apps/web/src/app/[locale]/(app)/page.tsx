@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import type * as React from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { PayRoleDashboard } from "@/components/home/pay-dashboards";
 import { RoleDashboard } from "@/components/home/role-dashboards";
 import { ActionNeeded } from "@/components/states/action-needed";
 import { NotProvisioned } from "@/components/states/not-provisioned";
@@ -17,6 +18,13 @@ import { callApi } from "@/lib/api/call";
 import { signedInWithBackupCode } from "@/lib/auth/amr";
 import { getSession, remainingBackupCodes, twoFactorEnabled } from "@/lib/auth/server";
 import { actionTotal, DASHBOARD_PATHS, dashboardsFor, type Dashboard, type DashboardKey } from "@/lib/hire/dashboards";
+import {
+  PAY_DASHBOARD_PATHS,
+  payActionTotal,
+  payDashboardsFor,
+  type PayDashboard,
+  type PayDashboardKey,
+} from "@/lib/pay/dashboards";
 import { resolveViewer } from "@/lib/provisioning";
 import { formatRole, type Lookup } from "@/lib/role-label";
 import { secondFactorNeed } from "@/lib/viewer-state";
@@ -44,13 +52,25 @@ export default async function HomePage({ params }: Props) {
   // fails to load is left out with a note; the API checks every permission again.
   const keys: DashboardKey[] =
     viewer.status === "ready" && !need ? dashboardsFor(viewer.me.roles, viewer.me.permissions) : [];
-  const loaded = await Promise.all(keys.map((key) => callApi((api) => api.GET(DASHBOARD_PATHS[key]))));
+  // Pay's dashboards (brief 5.1 items 8 to 10) come with Hire's, by role.
+  const payKeys: PayDashboardKey[] =
+    viewer.status === "ready" && !need ? payDashboardsFor(viewer.me.roles, viewer.me.permissions) : [];
+  const [loaded, payLoaded] = await Promise.all([
+    Promise.all(keys.map((key) => callApi((api) => api.GET(DASHBOARD_PATHS[key])))),
+    Promise.all(payKeys.map((key) => callApi((api) => api.GET(PAY_DASHBOARD_PATHS[key])))),
+  ]);
   const boards: { key: DashboardKey; data: Dashboard }[] = [];
   keys.forEach((key, index) => {
     const result = loaded[index];
     if (result?.ok) boards.push({ key, data: result.data });
   });
-  const failed = loaded.some((result) => !result.ok);
+  const payBoards: { key: PayDashboardKey; data: PayDashboard }[] = [];
+  payKeys.forEach((key, index) => {
+    const result = payLoaded[index];
+    if (result?.ok) payBoards.push({ key, data: result.data });
+  });
+  const failed = loaded.some((result) => !result.ok) || payLoaded.some((result) => !result.ok);
+  const shown = boards.length + payBoards.length;
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
@@ -71,10 +91,10 @@ export default async function HomePage({ params }: Props) {
           </PageHeader>
           {backup !== undefined && <BackupCodeNotice remaining={backup} />}
           {need && <SecondFactorNeeded need={need} />}
-          {boards.length === 0 && (
+          {shown === 0 && (
             <div className="rise" style={{ "--rise-index": 1 } as React.CSSProperties}>
               <ActionNeeded count={0} />
-              {!need && keys.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{t("noDashboards")}</p>}
+              {!need && keys.length === 0 && payKeys.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{t("noDashboards")}</p>}
             </div>
           )}
           {failed && (
@@ -82,14 +102,22 @@ export default async function HomePage({ params }: Props) {
               {t("dashboardsUnavailable")}
             </p>
           )}
-          {boards.length > 0 && (
-            <p className="sr-only" data-action-total={actionTotal(boards.map((b) => b.data))}>
+          {shown > 0 && (
+            <p
+              className="sr-only"
+              data-action-total={actionTotal(boards.map((b) => b.data)) + payActionTotal(payBoards.map((b) => b.data))}
+            >
               {t("actionNeeded")}
             </p>
           )}
           {boards.map((board, index) => (
             <div key={board.key} className="rise" style={{ "--rise-index": index + 1 } as React.CSSProperties}>
               <RoleDashboard dashboard={board.key} data={board.data} />
+            </div>
+          ))}
+          {payBoards.map((board, index) => (
+            <div key={`pay-${board.key}`} className="rise" style={{ "--rise-index": boards.length + index + 1 } as React.CSSProperties}>
+              <PayRoleDashboard dashboard={board.key} data={board.data} />
             </div>
           ))}
         </>
