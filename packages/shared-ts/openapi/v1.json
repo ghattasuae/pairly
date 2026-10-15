@@ -16656,6 +16656,103 @@
         "title": "PayAcceptIn",
         "type": "object"
       },
+      "PayAccrualCurrencyOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PayAccrualLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "total",
+          "count",
+          "lines"
+        ],
+        "title": "PayAccrualCurrencyOut",
+        "type": "object"
+      },
+      "PayAccrualLineOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "invoiced": {
+            "title": "Invoiced",
+            "type": "string"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          },
+          "po_id": {
+            "format": "uuid",
+            "title": "Po Id",
+            "type": "string"
+          },
+          "po_number": {
+            "title": "Po Number",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "received": {
+            "title": "Received",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "po_id",
+          "po_number",
+          "vendor_name",
+          "line_no",
+          "description",
+          "received",
+          "invoiced",
+          "quantity",
+          "unit_price",
+          "amount"
+        ],
+        "title": "PayAccrualLineOut",
+        "type": "object"
+      },
       "PayAddressIn": {
         "additionalProperties": false,
         "properties": {
@@ -16733,6 +16830,68 @@
           }
         },
         "title": "PayAddressIn",
+        "type": "object"
+      },
+      "PayAgingBucketOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "bucket": {
+            "title": "Bucket",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PayMonthEndInvoiceOut"
+            },
+            "title": "Invoices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bucket",
+          "amount",
+          "count",
+          "invoices"
+        ],
+        "title": "PayAgingBucketOut",
+        "type": "object"
+      },
+      "PayAgingCurrencyOut": {
+        "properties": {
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/PayAgingBucketOut"
+            },
+            "title": "Buckets",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "total",
+          "count",
+          "buckets"
+        ],
+        "title": "PayAgingCurrencyOut",
         "type": "object"
       },
       "PayAnalyticsOut": {
@@ -18623,6 +18782,33 @@
           "templates"
         ],
         "title": "PayExceptionCategoryOut",
+        "type": "object"
+      },
+      "PayExceptionGroupOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "invoice_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Invoice Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "count",
+          "invoice_ids"
+        ],
+        "title": "PayExceptionGroupOut",
         "type": "object"
       },
       "PayExceptionItemOut": {
@@ -21580,6 +21766,242 @@
           "lines"
         ],
         "title": "PayModelSuggestionsOut",
+        "type": "object"
+      },
+      "PayMonthEndExceptionOut": {
+        "properties": {
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "vendor_name",
+          "currency",
+          "total",
+          "received_at",
+          "categories"
+        ],
+        "title": "PayMonthEndExceptionOut",
+        "type": "object"
+      },
+      "PayMonthEndInvoiceOut": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "invoice_number",
+          "vendor_name",
+          "status",
+          "due_date",
+          "invoice_date",
+          "amount"
+        ],
+        "title": "PayMonthEndInvoiceOut",
+        "type": "object"
+      },
+      "PayMonthEndOut": {
+        "properties": {
+          "accruals": {
+            "items": {
+              "$ref": "#/components/schemas/PayAccrualCurrencyOut"
+            },
+            "title": "Accruals",
+            "type": "array"
+          },
+          "aging": {
+            "items": {
+              "$ref": "#/components/schemas/PayAgingCurrencyOut"
+            },
+            "title": "Aging",
+            "type": "array"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "can_export_journal": {
+            "title": "Can Export Journal",
+            "type": "boolean"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "exception_groups": {
+            "items": {
+              "$ref": "#/components/schemas/PayExceptionGroupOut"
+            },
+            "title": "Exception Groups",
+            "type": "array"
+          },
+          "exceptions": {
+            "items": {
+              "$ref": "#/components/schemas/PayMonthEndExceptionOut"
+            },
+            "title": "Exceptions",
+            "type": "array"
+          },
+          "exceptions_count": {
+            "title": "Exceptions Count",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "unpriced": {
+            "items": {
+              "$ref": "#/components/schemas/PayMonthEndInvoiceOut"
+            },
+            "title": "Unpriced",
+            "type": "array"
+          }
+        },
+        "required": [
+          "period",
+          "start",
+          "end",
+          "as_of",
+          "aging",
+          "unpriced",
+          "accruals",
+          "exceptions",
+          "exceptions_count",
+          "exception_groups",
+          "can_export_journal"
+        ],
+        "title": "PayMonthEndOut",
         "type": "object"
       },
       "PayOnboardingDocumentOut": {
@@ -42260,6 +42682,107 @@
           }
         },
         "summary": "Link Invoice Vendor",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/month-end": {
+      "get": {
+        "operationId": "get_month_end_v1_pay_month_end_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayMonthEndOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Month End",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/month-end/export": {
+      "get": {
+        "operationId": "export_month_end_v1_pay_month_end_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Export Month End V1 Pay Month End Export Get"
+                }
+              },
+              "text/csv": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Month End",
         "tags": [
           "pay"
         ]

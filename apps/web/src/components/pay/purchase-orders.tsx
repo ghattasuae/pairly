@@ -274,7 +274,7 @@ export function PurchaseOrderList({
             </thead>
             <tbody className="divide-y">
               {items.map((po) => (
-                <tr key={po.id} data-po={po.po_number}>
+                <tr key={po.id} id={`po-${po.id}`} data-po={po.po_number}>
                   <td className="px-3 py-2 font-mono" dir="ltr">
                     {po.po_number}
                   </td>

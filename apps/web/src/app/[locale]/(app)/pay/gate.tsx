@@ -56,7 +56,7 @@ export function PayUnavailable({ retry }: { retry: string }) {
 
 /**
  * The Pay section's own tabs: vendors, invoices, exceptions, purchase orders, payment runs, bank-detail changes,
- * onboarding invites, approval rules, analytics, the cash forecast, reconciliation, settings.
+ * onboarding invites, approval rules, analytics, the cash forecast, reconciliation, month end, settings.
  */
 export async function PayHeader({
   title,
@@ -79,6 +79,7 @@ export async function PayHeader({
     | "analytics"
     | "forecast"
     | "reconciliation"
+    | "monthEnd"
     | null;
   permissions: string[];
 }) {
@@ -99,6 +100,7 @@ export async function PayHeader({
       href: "/pay/reconciliation",
       show: permissions.includes("pay.reconciliation.read"),
     },
+    { key: "monthEnd" as const, href: "/pay/month-end", show: permissions.includes("pay.month_end.read") },
     { key: "settings" as const, href: "/pay/settings", show: permissions.includes("pay.settings.manage") },
   ].filter((tab) => tab.show);
   return (

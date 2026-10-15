@@ -4430,6 +4430,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/month-end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Month End */
+        get: operations["get_month_end_v1_pay_month_end_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pay/month-end/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Month End */
+        get: operations["export_month_end_v1_pay_month_end_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/payment-runs": {
         parameters: {
             query?: never;
@@ -11302,6 +11336,43 @@ export type components = {
             /** Note */
             note?: string | null;
         };
+        /** PayAccrualCurrencyOut */
+        PayAccrualCurrencyOut: {
+            /** Count */
+            count: number;
+            /** Currency */
+            currency: string;
+            /** Lines */
+            lines: components["schemas"]["PayAccrualLineOut"][];
+            /** Total */
+            total: string;
+        };
+        /** PayAccrualLineOut */
+        PayAccrualLineOut: {
+            /** Amount */
+            amount: string;
+            /** Description */
+            description: string;
+            /** Invoiced */
+            invoiced: string;
+            /** Line No */
+            line_no: number;
+            /**
+             * Po Id
+             * Format: uuid
+             */
+            po_id: string;
+            /** Po Number */
+            po_number: string;
+            /** Quantity */
+            quantity: string;
+            /** Received */
+            received: string;
+            /** Unit Price */
+            unit_price: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
         /** PayAddressIn */
         PayAddressIn: {
             /** City */
@@ -11316,6 +11387,28 @@ export type components = {
             po_box?: string | null;
             /** Region */
             region?: string | null;
+        };
+        /** PayAgingBucketOut */
+        PayAgingBucketOut: {
+            /** Amount */
+            amount: string;
+            /** Bucket */
+            bucket: string;
+            /** Count */
+            count: number;
+            /** Invoices */
+            invoices: components["schemas"]["PayMonthEndInvoiceOut"][];
+        };
+        /** PayAgingCurrencyOut */
+        PayAgingCurrencyOut: {
+            /** Buckets */
+            buckets: components["schemas"]["PayAgingBucketOut"][];
+            /** Count */
+            count: number;
+            /** Currency */
+            currency: string;
+            /** Total */
+            total: string;
         };
         /** PayAnalyticsOut */
         PayAnalyticsOut: {
@@ -11871,6 +11964,15 @@ export type components = {
             resolution: components["schemas"]["PayTextOut"];
             /** Templates */
             templates: components["schemas"]["PayTemplateOut"][];
+        };
+        /** PayExceptionGroupOut */
+        PayExceptionGroupOut: {
+            /** Category */
+            category: string;
+            /** Count */
+            count: number;
+            /** Invoice Ids */
+            invoice_ids: string[];
         };
         /** PayExceptionItemOut */
         PayExceptionItemOut: {
@@ -12800,6 +12902,85 @@ export type components = {
         PayModelSuggestionsOut: {
             /** Lines */
             lines: components["schemas"]["PayModelLineOut"][];
+        };
+        /** PayMonthEndExceptionOut */
+        PayMonthEndExceptionOut: {
+            /** Categories */
+            categories: string[];
+            /** Currency */
+            currency: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Reference */
+            reference: string;
+            /** Total */
+            total: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayMonthEndInvoiceOut */
+        PayMonthEndInvoiceOut: {
+            /** Amount */
+            amount: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice Date */
+            invoice_date: string | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+        /** PayMonthEndOut */
+        PayMonthEndOut: {
+            /** Accruals */
+            accruals: components["schemas"]["PayAccrualCurrencyOut"][];
+            /** Aging */
+            aging: components["schemas"]["PayAgingCurrencyOut"][];
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Can Export Journal */
+            can_export_journal: boolean;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Exception Groups */
+            exception_groups: components["schemas"]["PayExceptionGroupOut"][];
+            /** Exceptions */
+            exceptions: components["schemas"]["PayMonthEndExceptionOut"][];
+            /** Exceptions Count */
+            exceptions_count: number;
+            /** Period */
+            period: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Unpriced */
+            unpriced: components["schemas"]["PayMonthEndInvoiceOut"][];
         };
         /** PayOnboardingDocumentOut */
         PayOnboardingDocumentOut: {
@@ -24132,6 +24313,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayInvoiceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_month_end_v1_pay_month_end_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayMonthEndOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_month_end_v1_pay_month_end_export_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "text/csv": unknown;
                 };
             };
             /** @description Validation Error */

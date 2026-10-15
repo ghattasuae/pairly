@@ -18,6 +18,8 @@
 * ``forecast``: the cash forecast, by week and currency, every number with its invoices.
 * ``reconciliation``: bank statements (CSV, camt.053) matched with payments marked
   paid; unmatched lines and paid invoices no statement explains.
+* ``month_end``: the month-end report (open payables and aging, accrual suggestions,
+  open exceptions) and its CSV; ``journal``: the generic journal export.
 * ``exceptions``: the exceptions queue and drafted messages to vendors and requesters,
   sent only after approval (brief 4.5.4).
 * ``coding``: the chart of accounts and cost centres, and GL coding of invoice lines
@@ -43,6 +45,7 @@ from pairly_pay.api import (
     exceptions,
     forecast,
     invoices,
+    month_end,
     onboarding,
     payment_runs,
     portal_admin,
@@ -63,6 +66,7 @@ router.include_router(purchase_orders.router)
 router.include_router(analytics.router)
 router.include_router(forecast.router)
 router.include_router(reconciliation.router)
+router.include_router(month_end.router)
 router.include_router(coding.router)
 router.include_router(exceptions.router)
 router.include_router(vendor_portal.router)

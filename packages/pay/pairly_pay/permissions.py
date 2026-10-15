@@ -75,6 +75,10 @@ Who does what (brief 4.1, 6.2):
 * **Reconciliation** (``pay.reconciliation.*``): ``read`` the bank statements and how
   their lines matched payments (the readers); ``upload`` a bank statement (CSV or
   camt.053) and match it now (AP clerks, finance controllers).
+* **Month end** (``pay.month_end.read``): the month-end report and its CSV (admins,
+  finance controllers, auditors). ``pay.journal.export``: the journal of approved
+  invoices and payments of a period (admins, finance controllers). An ``export``
+  action, so a second factor.
 * **Extractions** (``pay.extraction.read`` / ``correct``): what was read from a Pay
   document and the corrections of it. ``correct`` is never an agent's.
 """
@@ -117,6 +121,8 @@ MESSAGE_CREATE: Final = "pay.message.create"
 MESSAGE_APPROVE: Final = "pay.message.approve"
 RECONCILIATION_READ: Final = "pay.reconciliation.read"
 RECONCILIATION_UPLOAD: Final = "pay.reconciliation.upload"
+MONTH_END_READ: Final = "pay.month_end.read"
+JOURNAL_EXPORT: Final = "pay.journal.export"
 
 _READERS = frozenset({R.ADMIN, R.AP_CLERK, R.APPROVER, R.FINANCE_CONTROLLER, R.AUDITOR})
 
@@ -246,6 +252,16 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         RECONCILIATION_UPLOAD,
         "Import a bank statement and match it with payments",
         frozenset({R.AP_CLERK, R.FINANCE_CONTROLLER}),
+    ),
+    PermissionSpec(
+        MONTH_END_READ,
+        "View the month-end report: open payables, aging, accruals and exceptions",
+        frozenset({R.ADMIN, R.FINANCE_CONTROLLER, R.AUDITOR}),
+    ),
+    PermissionSpec(
+        JOURNAL_EXPORT,
+        "Download the journal of approved invoices and payments for a period",
+        frozenset({R.ADMIN, R.FINANCE_CONTROLLER}),
     ),
     PermissionSpec(
         ANALYTICS_READ,

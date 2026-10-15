@@ -2928,7 +2928,8 @@
       "analytics": "Analytics",
       "exceptions": "Exceptions",
       "forecast": "Cash forecast",
-      "reconciliation": "Reconciliation"
+      "reconciliation": "Reconciliation",
+      "monthEnd": "Month end"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -4067,6 +4068,48 @@
         "statement": "Statement",
         "matchedWith": "Matched with",
         "why": "Why not matched"
+      }
+    },
+    "monthEnd": {
+      "title": "Month end",
+      "intro": "What was owed at the end of the month, what was received but not invoiced, and what was still waiting for a person. Every figure opens the records behind it.",
+      "period": "Month",
+      "apply": "Show",
+      "asOf": "Figures as of {when}.",
+      "downloadReport": "Download the report (CSV)",
+      "downloadJournal": "Export the journal (CSV)",
+      "payablesTitle": "Open payables and aging",
+      "noPayables": "Nothing was owed at the end of this month.",
+      "currency": "Currency",
+      "total": "Total",
+      "bucket": {
+        "current": "Not due yet",
+        "1_30": "1 to 30 days late",
+        "31_60": "31 to 60 days late",
+        "61_90": "61 to 90 days late",
+        "90_plus": "Over 90 days late",
+        "undated": "No date"
+      },
+      "invoices": "{count, plural, one {# invoice} other {# invoices}}",
+      "unpriced": "{count, plural, one {# invoice has no amount yet:} other {# invoices have no amount yet:}}",
+      "accrualsTitle": "Accrual suggestions: goods received not invoiced",
+      "accrualsIntro": "Quantities received by the end of the month that no invoice covered yet, valued at the purchase order price. A suggestion to book, not an entry.",
+      "noAccruals": "Everything received was invoiced.",
+      "accrualTotal": "To accrue:",
+      "accrualQuantity": "received {received}, invoiced {invoiced}, at {price}",
+      "exceptionsTitle": "Exceptions open",
+      "exceptionsIntro": "Invoices received by the end of the month that still wait for a person today. The queue keeps no history, so this is today's state of what had arrived.",
+      "noExceptions": "None.",
+      "category": {
+        "no_po": "No PO",
+        "price_variance": "Price variance",
+        "quantity_variance": "Quantity variance",
+        "missing_receipt": "Missing receipt",
+        "duplicate_suspect": "Duplicate suspect",
+        "bank_mismatch": "Bank mismatch",
+        "policy_breach": "Policy breach",
+        "low_confidence": "Low confidence",
+        "other": "Other"
       }
     }
   },
