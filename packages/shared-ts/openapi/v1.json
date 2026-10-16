@@ -16470,6 +16470,35 @@
         "title": "LinkTokenIn",
         "type": "object"
       },
+      "MeOrgOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sandbox": {
+            "title": "Sandbox",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "sandbox"
+        ],
+        "title": "MeOrgOut",
+        "type": "object"
+      },
       "MeOut": {
         "properties": {
           "display_name": {
@@ -16493,7 +16522,7 @@
             "type": "string"
           },
           "org": {
-            "$ref": "#/components/schemas/OrgOut"
+            "$ref": "#/components/schemas/MeOrgOut"
           },
           "permissions": {
             "items": {

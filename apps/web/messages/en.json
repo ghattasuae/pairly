@@ -1033,7 +1033,8 @@
     "revokeTitle": "Revoke this key?",
     "revokeBody": "\"{name}\" stops working at once. Anything that uses it will fail.",
     "revoked": "{name} revoked",
-    "modeHint": "Test keys work only in a sandbox organisation."
+    "modeHint": "This organisation uses live keys. Test keys work only in a sandbox organisation.",
+    "modeHintSandbox": "This is a sandbox organisation, so its keys are test keys. Live keys are created in your real organisation."
   },
   "WebhooksSettings": {
     "createTitle": "Add an endpoint",

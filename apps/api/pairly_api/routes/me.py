@@ -29,6 +29,11 @@ class OrgOut(BaseModel):
     slug: str
 
 
+class MeOrgOut(OrgOut):
+    # A sandbox organisation (``pairly-admin sandbox create``): only test API keys.
+    sandbox: bool
+
+
 class RoleOut(BaseModel):
     role: str
     workflow: str | None
@@ -38,7 +43,7 @@ class MeOut(BaseModel):
     id: uuid.UUID
     email: str
     display_name: str | None
-    org: OrgOut
+    org: MeOrgOut
     roles: list[RoleOut]
     permissions: list[str]
     # Whether this sign-in included a TOTP code (JWT amr contains "otp").
@@ -62,7 +67,7 @@ async def me(actor: CurrentActor, session: OrgSession) -> MeOut:
         id=user.id,
         email=user.email,
         display_name=user.display_name,
-        org=OrgOut(id=org.id, name=org.name, slug=org.slug),
+        org=MeOrgOut(id=org.id, name=org.name, slug=org.slug, sandbox=org.sandbox),
         roles=[RoleOut(role=g.role, workflow=g.workflow) for g in actor.grants],
         permissions=sorted(actor.permissions),
         second_factor=actor.has_second_factor,

@@ -337,6 +337,12 @@ async def test_test_keys_need_a_sandbox(
         "UPDATE organisations SET sandbox = true WHERE id = :o",
         o=sandbox.id,
     )
+    # /v1/me tells the web app, which then offers test keys only (the API still checks).
+    me = await api.client.get("/v1/me", headers=api.h(sandbox.tenant.subject, sandbox.id))
+    assert me.status_code == 200
+    assert me.json()["org"]["sandbox"] is True
+    other = await api.client.get("/v1/me", headers=api.h(org.tenant.subject, org.id))
+    assert other.json()["org"]["sandbox"] is False
     key, _ = await api.new_key(sandbox, mode="test")
     assert key.startswith("pk_test_")
     assert (await api.upload(key, pdf_bytes("sandbox"))).status_code == 201

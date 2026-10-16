@@ -38,7 +38,12 @@ export default async function ApiKeysPage({ params }: Props) {
   return (
     <SettingsFrame title={t("pages.apiKeys.title")} subtitle={t("pages.apiKeys.body")}>
       {keys.ok ? (
-        <ApiKeysPanel initial={keys.data} scopes={scopes} totpEnabled={twoFactorEnabled(session)} />
+        <ApiKeysPanel
+          initial={keys.data}
+          scopes={scopes}
+          totpEnabled={twoFactorEnabled(session)}
+          sandbox={viewer.me.org.sandbox}
+        />
       ) : (
         <Unavailable retryHref={`/${locale}/settings/api-keys`} />
       )}

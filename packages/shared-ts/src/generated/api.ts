@@ -11433,6 +11433,20 @@ export type components = {
             /** Workflow */
             workflow: string | null;
         };
+        /** MeOrgOut */
+        MeOrgOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Sandbox */
+            sandbox: boolean;
+            /** Slug */
+            slug: string;
+        };
         /** MeOut */
         MeOut: {
             /** Display Name */
@@ -11444,7 +11458,7 @@ export type components = {
              * Format: uuid
              */
             id: string;
-            org: components["schemas"]["OrgOut"];
+            org: components["schemas"]["MeOrgOut"];
             /** Permissions */
             permissions: string[];
             /** Roles */

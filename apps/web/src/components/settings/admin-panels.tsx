@@ -150,6 +150,7 @@ export function ApiKeysPanel({
   initial,
   scopes,
   totpEnabled,
+  sandbox = false,
   create = createApiKey,
   revoke = revokeApiKey,
 }: {
@@ -157,6 +158,8 @@ export function ApiKeysPanel({
   /** Permissions a key may hold that the person holds themselves. */
   scopes: string[];
   totpEnabled: boolean;
+  /** A sandbox organisation only has test keys; any other only live keys (the API checks). */
+  sandbox?: boolean;
   create?: typeof createApiKey;
   revoke?: typeof revokeApiKey;
 }) {
@@ -167,7 +170,8 @@ export function ApiKeysPanel({
   const ids = { name: useId(), mode: useId(), days: useId(), scopes: useId() };
   const [keys, setKeys] = useState(initial);
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<"live" | "test">("live");
+  const allowedMode = sandbox ? "test" : "live";
+  const [mode, setMode] = useState<"live" | "test">(allowedMode);
   const [days, setDays] = useState(90);
   const [chosen, setChosen] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
@@ -236,11 +240,15 @@ export function ApiKeysPanel({
               onChange={(e) => setMode(e.target.value === "test" ? "test" : "live")}
               aria-describedby={`${ids.mode}-hint`}
             >
-              <option value="live">{t("modes.live")}</option>
-              <option value="test">{t("modes.test")}</option>
+              <option value="live" disabled={sandbox}>
+                {t("modes.live")}
+              </option>
+              <option value="test" disabled={!sandbox}>
+                {t("modes.test")}
+              </option>
             </Select>
             <p id={`${ids.mode}-hint`} className="text-xs text-muted-foreground">
-              {t("modeHint")}
+              {sandbox ? t("modeHintSandbox") : t("modeHint")}
             </p>
           </div>
           <div className="space-y-2">

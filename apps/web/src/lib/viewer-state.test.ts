@@ -9,7 +9,7 @@ const me = {
   id: "7d6f1d1e-1111-4111-8111-111111111111",
   email: "sam@example.test",
   display_name: "Sam",
-  org: { id: "7d6f1d1e-2222-4222-8222-222222222222", name: "Acme", slug: "acme" },
+  org: { id: "7d6f1d1e-2222-4222-8222-222222222222", name: "Acme", slug: "acme", sandbox: false },
   roles: [{ role: "admin", workflow: null }],
   permissions: ["core.org.manage"],
   second_factor: false,
