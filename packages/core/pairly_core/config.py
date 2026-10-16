@@ -9,6 +9,7 @@ refuses to start instead of running with a guessed value.
 
 from __future__ import annotations
 
+import uuid
 from enum import StrEnum
 from typing import Annotated, Any
 from urllib.parse import urlsplit
@@ -95,6 +96,10 @@ class Settings(BaseSettings):
     # Batch API (M6): documents per minute per caller (API key or person), on top of the
     # request rate limit; a batch of 50 counts 50.
     batch_items_per_minute: int = Field(default=300, ge=1, le=100000)
+    # Platform operations (brief 5.1 item 15): the organisation whose admins run this
+    # deployment. Its admins (``core.platform.read``) see the cross-tenant operations
+    # dashboard (aggregates only). Unset: nobody does (the routes answer 404).
+    system_org_id: uuid.UUID | None = None
 
     @field_validator("auth_algorithms", "cors_origins", mode="before")
     @classmethod

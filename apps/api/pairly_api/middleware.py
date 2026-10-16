@@ -18,6 +18,7 @@ import structlog
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from pairly_api.problems import PROBLEM_JSON, problem_body
+from pairly_api.request_metrics import RequestMetrics
 
 log = structlog.get_logger("pairly_api.access")
 
@@ -32,12 +33,14 @@ _CSP_DOCS = (
     "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 )
 _DOCS_PATHS = frozenset({"/docs", "/docs/oauth2-redirect"})
+_PROBES = frozenset({"/healthz", "/readyz"})
 
 
 class EdgeMiddleware:
-    def __init__(self, app: ASGIApp, *, hsts: bool) -> None:
+    def __init__(self, app: ASGIApp, *, hsts: bool, metrics: RequestMetrics | None = None) -> None:
         self.app = app
         self.hsts = hsts
+        self.metrics = metrics
 
     def _security_headers(self, path: str) -> list[tuple[bytes, bytes]]:
         headers = [
@@ -105,7 +108,10 @@ class EdgeMiddleware:
             )
             await send_wrapper({"type": "http.response.body", "body": body})
         finally:
-            self._access_log(scope, status_holder.get("status", 500), started)
+            status = status_holder.get("status", 500)
+            self._access_log(scope, status, started)
+            if self.metrics is not None and path not in _PROBES:
+                self.metrics.record(status, (time.perf_counter() - started) * 1000)
 
     @staticmethod
     def _access_log(scope: Scope, status: int, started: float) -> None:

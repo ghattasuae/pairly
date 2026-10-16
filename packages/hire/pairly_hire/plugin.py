@@ -28,6 +28,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``retention_rules``  ``hire.applications.rejected`` (dry run, per-organisation months)
                    and ``hire.checklist.documents`` (checklist files after hire).
 * ``search_sources``  ``hire_candidate`` (talent rediscovery, consent and retention).
+* ``dashboard_sections``  Hire's parts of the admin and AI governance dashboards
+                   (``system_dashboards``: data requests, calendar integrations,
+                   guardrail findings, fairness runs, calibration agreement).
 * ``scheduled_jobs``  ``hire_screening_start``: starts the screening of submitted
                    applications whose CV is ready, every minute (``screening.start``);
                    ``hire_sla_drafts`` (anti-ghosting), ``hire_rediscovery_index`` and
@@ -61,6 +64,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pairly_core.dashboards.model import DashboardSectionSpec
 from pairly_core.flags.registry import FlagSpec
 from pairly_core.jobs.registry import JobSpec
 from pairly_core.notifications.service import allow_bound_message
@@ -126,6 +130,7 @@ from pairly_hire.selfid import models as selfid_models  # noqa: F401  (registers
 from pairly_hire.survey import models as survey_models  # noqa: F401  (tables)
 from pairly_hire.survey.service import JOB_NAME as SURVEY_JOB
 from pairly_hire.survey.service import run_invites_job as run_survey_invites_job
+from pairly_hire.system_dashboards import DASHBOARD_SECTIONS
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -292,6 +297,7 @@ class HirePlugin:
     search_sources: tuple[SearchSource, ...] = SEARCH_SOURCES
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
     feature_flags: tuple[FlagSpec, ...] = FEATURE_FLAGS
+    dashboard_sections: tuple[DashboardSectionSpec, ...] = DASHBOARD_SECTIONS
 
     def api_router(self) -> APIRouter:
         return api_router()

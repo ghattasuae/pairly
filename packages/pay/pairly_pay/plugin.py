@@ -56,6 +56,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from pairly_core.batches.intake import DocumentIntake
+from pairly_core.dashboards.model import DashboardSectionSpec
 from pairly_core.jobs.registry import JobSpec
 from pairly_core.rbac import PermissionSpec
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
@@ -104,6 +105,7 @@ from pairly_pay.permissions import (
 )
 from pairly_pay.portal import models as portal_models  # noqa: F401  (the portal tables)
 from pairly_pay.reconciliation import RECONCILIATION_JOB
+from pairly_pay.system_dashboards import DASHBOARD_SECTIONS
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -221,6 +223,8 @@ class PayPlugin:
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
     # The batch API turns each submitted document into an invoice (pairly_pay.batch_intake).
     document_intake: DocumentIntake = field(default=DOCUMENT_INTAKE)
+    # Pay's parts of the auditor and AI governance dashboards (pairly_pay.system_dashboards).
+    dashboard_sections: tuple[DashboardSectionSpec, ...] = DASHBOARD_SECTIONS
 
     def api_router(self) -> APIRouter:
         return api_router()

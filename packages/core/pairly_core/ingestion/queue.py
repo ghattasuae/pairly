@@ -44,6 +44,14 @@ class JobQueue(Protocol):
         ...
 
 
+@dataclass(frozen=True, slots=True)
+class QueueHealth:
+    depth: int
+    # The worker's last health-check line (counts only), None when no worker reported
+    # within its interval.
+    worker_heartbeat: str | None
+
+
 class ArqJobQueue:
     """Enqueue through an ``arq.connections.ArqRedis`` pool."""
 
@@ -74,6 +82,16 @@ class ArqJobQueue:
             )
             return False
         return queued is not None
+
+    async def health(self) -> QueueHealth:
+        """Queue depth and whether a worker reported in (arq's health-check key, which
+        a live worker refreshes every ``health_check_interval`` seconds with a TTL)."""
+        from arq.constants import default_queue_name, health_check_key_suffix
+
+        depth = int(await self._pool.zcard(default_queue_name))
+        beat = await self._pool.get(default_queue_name + health_check_key_suffix)
+        text = beat.decode("utf-8", "replace") if isinstance(beat, bytes) else beat
+        return QueueHealth(depth=depth, worker_heartbeat=str(text)[:200] if text else None)
 
     async def aclose(self) -> None:
         close = getattr(self._pool, "aclose", None) or getattr(self._pool, "close", None)

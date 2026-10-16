@@ -38,6 +38,7 @@ from pairly_api.idempotency import IdempotencyMiddleware, IdempotentReplay, repl
 from pairly_api.logs import configure_logging
 from pairly_api.middleware import EdgeMiddleware
 from pairly_api.problems import install_error_handlers
+from pairly_api.request_metrics import RequestMetrics
 from pairly_api.routes import (
     api_keys,
     approval_links,
@@ -45,6 +46,7 @@ from pairly_api.routes import (
     audit,
     batches,
     compliance,
+    dashboards,
     decisions,
     dev_objects,
     flags,
@@ -54,6 +56,7 @@ from pairly_api.routes import (
     members,
     notification_templates,
     notifications,
+    ops,
     policies,
     proposals,
     retention,
@@ -72,11 +75,13 @@ from pairly_core.auth import TokenVerifier
 from pairly_core.batches.intake import build_intake_registry
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
+from pairly_core.dashboards.model import build_section_registry
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.flags.registry import build_flag_registry, install_flag_registry
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.integrations.slack.transport import HttpSlackTransport, SlackTransport
+from pairly_core.jobs.registry import build_job_registry
 from pairly_core.notifications.approval_hook import NotificationApprovalHook
 from pairly_core.notifications.settings import NotificationSettings, load_notification_settings
 from pairly_core.plugins import WorkflowPlugin, discover_plugins, plugin_routers
@@ -208,6 +213,17 @@ def _lifespan(
     return lifespan
 
 
+def _default_budget_micros() -> int | None:
+    """The default monthly model budget (``PAIRLY_LLM_MONTHLY_BUDGET_USD``), for the
+    dashboards; None when the model settings cannot be read here."""
+    from pairly_core.llm.settings import load_llm_settings
+
+    try:
+        return int(load_llm_settings().llm_monthly_budget_usd * 1_000_000)
+    except (ConfigError, ValueError):
+        return None
+
+
 def _serves_dev_objects(settings: Settings, documents: DocumentServices | None) -> bool:
     """Mount ``/v1/_dev/objects`` only in development and test, with the filesystem store."""
     if settings.env not in {Environment.DEVELOPMENT, Environment.TEST}:
@@ -276,6 +292,10 @@ def create_app(
     app.state.retention_registry = build_retention_registry(workflow_plugins)
     app.state.intake_registry = build_intake_registry(workflow_plugins)
     app.state.batch_limiter = RateLimiter()
+    app.state.request_metrics = RequestMetrics()
+    app.state.default_budget_micros = _default_budget_micros()
+    app.state.job_registry = build_job_registry(workflow_plugins)
+    app.state.dashboard_sections = build_section_registry(workflow_plugins)
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
@@ -300,6 +320,8 @@ def create_app(
     v1.include_router(search.router)
     v1.include_router(retention.router)
     v1.include_router(proposals.router)
+    v1.include_router(dashboards.router)
+    v1.include_router(ops.router)
     if _serves_dev_objects(settings, documents):
         # Signed URLs of the filesystem object store (native development, no MinIO).
         v1.include_router(dev_objects.router)
@@ -329,7 +351,9 @@ def create_app(
     # Inside the edge layer: hashes Idempotency-Key requests and keeps their responses.
     app.add_middleware(IdempotencyMiddleware)
     # Added last, so it is the outermost layer and wraps every response.
-    app.add_middleware(EdgeMiddleware, hsts=settings.is_production)
+    app.add_middleware(
+        EdgeMiddleware, hsts=settings.is_production, metrics=app.state.request_metrics
+    )
     return app
 
 

@@ -461,6 +461,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/dashboards/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin */
+        get: operations["admin_v1_dashboards_admin_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/dashboards/ai-governance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai Governance */
+        get: operations["ai_governance_v1_dashboards_ai_governance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/dashboards/auditor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Auditor */
+        get: operations["auditor_v1_dashboards_auditor_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/decisions": {
         parameters: {
             query?: never;
@@ -3899,6 +3950,40 @@ export type paths = {
          *     leaves out.
          */
         post: operations["unsubscribe_v1_notifications_unsubscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ops/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard */
+        get: operations["dashboard_v1_ops_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ops/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jobs */
+        get: operations["jobs_v1_ops_jobs_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -11510,6 +11595,36 @@ export type components = {
             /** Unread */
             unread: number;
         };
+        /** OpsJobRunOut */
+        OpsJobRunOut: {
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Name */
+            job_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** OpsJobsOut */
+        OpsJobsOut: {
+            /** Items */
+            items: components["schemas"]["OpsJobRunOut"][];
+        };
         /**
          * Order
          * @enum {string}
@@ -15567,6 +15682,82 @@ export type components = {
             /** Subject Type */
             subject_type: string | null;
         };
+        /** SysDashboardOut */
+        SysDashboardOut: {
+            /** Action */
+            action: components["schemas"]["SysDashSectionOut"][];
+            /** Board */
+            board: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Links */
+            links: components["schemas"]["SysDashLinkOut"][];
+            /** Sections */
+            sections: components["schemas"]["SysDashSectionOut"][];
+        };
+        /** SysDashItemOut */
+        SysDashItemOut: {
+            /** At */
+            at: string | null;
+            /** Detail */
+            detail: {
+                [key: string]: string | number | boolean | null;
+            };
+            /** Href */
+            href: string | null;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Status */
+            status: string | null;
+        };
+        /** SysDashLinkOut */
+        SysDashLinkOut: {
+            /** Href */
+            href: string;
+            /** Key */
+            key: string;
+        };
+        /** SysDashSectionOut */
+        SysDashSectionOut: {
+            /** Count */
+            count: number | null;
+            /** Href */
+            href: string | null;
+            /** Items */
+            items: components["schemas"]["SysDashItemOut"][];
+            /** Key */
+            key: string;
+            /** Note */
+            note: string | null;
+            /** Source */
+            source: string | null;
+            /** Stats */
+            stats: components["schemas"]["SysDashStatOut"][];
+            /** Workflow */
+            workflow: string | null;
+        };
+        /** SysDashStatOut */
+        SysDashStatOut: {
+            /** Href */
+            href: string | null;
+            /** Key */
+            key: string;
+            /** N */
+            n: number | null;
+            /** Text */
+            text: string | null;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number | null;
+        };
         /** TemplateIn */
         TemplateIn: {
             /** Body */
@@ -16579,6 +16770,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_v1_dashboards_admin_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysDashboardOut"];
+                };
+            };
+        };
+    };
+    ai_governance_v1_dashboards_ai_governance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysDashboardOut"];
+                };
+            };
+        };
+    };
+    auditor_v1_dashboards_auditor_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysDashboardOut"];
                 };
             };
         };
@@ -23631,6 +23882,58 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_v1_ops_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SysDashboardOut"];
+                };
+            };
+        };
+    };
+    jobs_v1_ops_jobs_get: {
+        parameters: {
+            query?: {
+                job_name?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsJobsOut"];
+                };
             };
             /** @description Validation Error */
             422: {
