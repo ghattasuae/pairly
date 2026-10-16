@@ -173,3 +173,102 @@ def fold_for_quotes(text: str) -> Folded:
 def strip_invisible(text: str) -> str:
     """``text`` without invisible formatting characters (for display in explanations)."""
     return "".join(ch for ch in text if ord(ch) not in INVISIBLE)
+
+
+# ------------------------------------------------------------------ wrapped quotes
+
+LINE_BREAKS = frozenset("\n\r\x0b\x0c\x85\u2028\u2029")
+
+
+def _skip(s: str, i: int, end: int) -> int:
+    while i < end and is_invisible(s[i]):
+        i += 1
+    return i
+
+
+def _wrap_after(text: str, i: int, end: int) -> int | None:
+    """When ``text[i:]`` is a whitespace run (invisible characters allowed) holding a
+    line break and followed by a visible character, the index after it."""
+    k = i
+    has_break = False
+    while k < end and (text[k].isspace() or is_invisible(text[k])):
+        has_break = has_break or text[k] in LINE_BREAKS
+        k += 1
+    if has_break and k < end and k > i:
+        return k
+    return None
+
+
+def match_wrapped(text: str, quote: str, start: int, end: int | None = None) -> int | None:
+    """End (exclusive) of ``quote`` matched in ``text`` at exactly ``start``, or ``None``.
+
+    The quote's characters must appear in ``text`` in order and contiguous, with three
+    allowances only: a whitespace run of the quote matches any whitespace run of the
+    text (spaces, tabs or line breaks); invisible characters (soft hyphens, zero-width
+    characters) are ignored on both sides; and a line wrap inside a word is accepted,
+    with or without its hyphen ("manage-" then a line break then "ment" matches
+    "management" and "manage-ment"). Case and every other character must be equal."""
+    limit = len(text) if end is None else min(end, len(text))
+    q = quote.strip()
+    i, j, last = start, 0, None
+    while True:
+        i = _skip(text, i, limit)
+        j = _skip(q, j, len(q))
+        if j >= len(q):
+            return last
+        if i >= limit:
+            return None
+        qc, tc = q[j], text[i]
+        if qc.isspace():
+            if not tc.isspace():
+                return None
+            while i < limit and (text[i].isspace() or is_invisible(text[i])):
+                i += 1
+            while j < len(q) and (q[j].isspace() or is_invisible(q[j])):
+                j += 1
+            continue
+        # A line wrap in the text right after a soft hyphen: the word continues.
+        if tc.isspace() and last is not None and chr(SOFT_HYPHEN) in text[last:i]:
+            after = _wrap_after(text, i, limit)
+            if after is not None:
+                i = after
+                continue
+        if tc == "-" and qc != "-":
+            after = _wrap_after(text, i + 1, limit)
+            if after is None:
+                return None
+            i = after  # a hyphenated wrap quoted as one word
+            continue
+        if tc != qc:
+            return None
+        i += 1
+        j += 1
+        last = i
+        if tc == "-":
+            nxt = _skip(q, j, len(q))
+            after = _wrap_after(text, i, limit)
+            if after is not None and (nxt >= len(q) or not q[nxt].isspace()):
+                i = after  # "full-" then a line break then "cycle" quoted as "full-cycle"
+
+
+def find_wrapped(
+    text: str, quote: str, *, starts: range | None = None, end: int | None = None
+) -> list[tuple[int, int]]:
+    """Every ``[start, end)`` of ``text`` matching ``quote`` (``match_wrapped``) that
+    starts in ``starts`` (default: anywhere) and ends by ``end``."""
+    q = quote.strip()
+    head = _skip(q, 0, len(q))
+    if head >= len(q):
+        return []
+    first = q[head]
+    window = starts if starts is not None else range(len(text))
+    out: list[tuple[int, int]] = []
+    for s in window:
+        if s >= len(text):
+            break
+        if text[s] != first:
+            continue
+        stop = match_wrapped(text, q, s, end)
+        if stop is not None:
+            out.append((s, stop))
+    return out

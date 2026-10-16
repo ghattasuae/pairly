@@ -57,6 +57,7 @@ from pairly_core.guardrails.report import (
     Span,
     text_digest,
 )
+from pairly_core.guardrails.textnorm import find_wrapped, match_wrapped
 
 if TYPE_CHECKING:
     from pairly_core.llm.router import ModelRouter
@@ -247,7 +248,17 @@ class DocumentClassification:
     call_ids: list[str] = field(default_factory=list)
 
 
-def _locate(text: str, span: FlaggedSpan, by_id: dict[str, Segment]) -> tuple[int, int] | None:
+def _locate(
+    text: str, span: FlaggedSpan, by_id: dict[str, Segment], limit: int
+) -> tuple[int, int] | None:
+    """The exact range of ``span``'s quote in ``text``, or ``None`` (never a guess).
+
+    The quote must start in the segment the model names and end by ``limit`` (the end
+    of the text that call saw). A quote may run over a line wrap: the model reads the
+    text line by line and often joins two lines with a space, so whitespace runs, line
+    breaks, soft hyphens and hyphenated wraps are tolerated (``match_wrapped``); every
+    other character must appear in order and contiguous. The model's offsets win when
+    the quote matches there; otherwise the match must be unique in the segment."""
     quote = span.quote
     if not quote.strip():
         return None
@@ -256,10 +267,14 @@ def _locate(text: str, span: FlaggedSpan, by_id: dict[str, Segment]) -> tuple[in
     seg = by_id.get(span.segment)
     if seg is None:
         return None
-    first = seg.text.find(quote)
-    if first < 0 or seg.text.find(quote, first + 1) >= 0:
+    if seg.start <= span.start < seg.end:
+        stop = match_wrapped(text, quote, span.start, limit)
+        if stop is not None:
+            return span.start, stop
+    found = find_wrapped(text, quote, starts=range(seg.start, seg.end), end=limit)
+    if len(found) != 1:
         return None  # not there, or ambiguous: never guess
-    return seg.start + first, seg.start + first + len(quote)
+    return found[0]
 
 
 def _covered(start: int, end: int, report: GuardrailReport) -> bool:
@@ -322,8 +337,9 @@ async def classify_document(
         outcome.cost_micros += call.cost_micros
         outcome.spans_returned += len(call.spans)
         allowed = {s.id for s in group}
+        limit = max(s.end for s in group)
         for span in call.spans:
-            located = _locate(text, span, by_id) if span.segment in allowed else None
+            located = _locate(text, span, by_id, limit) if span.segment in allowed else None
             if located is None:
                 outcome.spans_invalid += 1
                 continue

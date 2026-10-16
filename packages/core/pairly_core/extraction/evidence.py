@@ -11,7 +11,9 @@ the document does not contain.
 
 Matching is normalised (Unicode NFKC, Arabic-Indic digits to ASCII, case folded,
 typographic quotes and dashes to ASCII, runs of whitespace to one space, zero-width
-characters dropped); the spans returned always point at the exact original text.
+characters and soft hyphens dropped). A word cut by a line wrap ("manage-" then a line
+break then "ment") also matches the whole word, with or without its hyphen. The spans
+returned always point at the exact original text.
 
 ``SanitizedInput`` is the contract with the guardrails (WP1.4): ``text`` is what the
 model sees, ``to_original(start, end)`` maps a half-open range of it to the original
@@ -28,7 +30,7 @@ from __future__ import annotations
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
 
 from pairly_core.documents.model import BBox, NormalizedDocument, Page
 from pairly_core.extraction.types import SourceSpan
@@ -75,16 +77,48 @@ class Normalized:
     index: tuple[int, ...]
 
 
-def normalize(text: str) -> Normalized:
+_LINE_BREAKS = frozenset("\n\r\x0b\x0c\x85\u2028\u2029")
+Wraps = Literal["space", "keep", "join"]
+WRAP_VARIANTS: tuple[Wraps, ...] = ("space", "keep", "join")
+
+
+def normalize(text: str, wraps: Wraps = "space") -> Normalized:
+    """``text`` normalised for matching, with the source index of each character.
+
+    ``wraps`` says what a line break inside a word becomes (a hyphen or a soft hyphen
+    right before a line break): ``space`` (the default) treats it as any whitespace,
+    ``keep`` joins the word and keeps the hyphen ("full-cycle"), ``join`` joins it
+    without the hyphen ("management"). A soft hyphen is dropped in every variant."""
     out: list[str] = []
     index: list[int] = []
     pending_space = False
-    for i, ch in enumerate(text):
+    soft_before = False  # a soft hyphen since the last visible character
+    n = len(text)
+    i = 0
+    while i < n:
+        ch = text[i]
         if ch in _ZERO_WIDTH:
+            soft_before = soft_before or ch == "\u00ad"
+            i += 1
             continue
         if ch.isspace():
-            pending_space = bool(out)
+            k = i
+            has_break = False
+            while k < n and (text[k].isspace() or text[k] in _ZERO_WIDTH):
+                has_break = has_break or text[k] in _LINE_BREAKS
+                k += 1
+            # A hyphen right after a letter or digit: a word cut by the line wrap.
+            hyphen = len(out) >= 2 and out[-1] == "-" and out[-2].isalnum()
+            if wraps != "space" and has_break and out and k < n and (soft_before or hyphen):
+                if wraps == "join" and hyphen and not soft_before:
+                    out.pop()
+                    index.pop()
+            else:
+                pending_space = bool(out)
+            soft_before = False
+            i = k
             continue
+        soft_before = False
         piece = ascii_digits(unicodedata.normalize("NFKC", ch)).translate(_PUNCT).casefold()
         for sub in piece:
             if sub.isspace():
@@ -96,12 +130,16 @@ def normalize(text: str) -> Normalized:
                 pending_space = False
             out.append(sub)
             index.append(i)
+        i += 1
     return Normalized("".join(out), tuple(index))
 
 
-def find_normalized(haystack: Normalized, needle: str) -> tuple[int, int] | None:
-    """First raw ``[start, end)`` range of ``haystack``'s source matching ``needle``."""
-    target = normalize(needle).text
+def find_normalized(
+    haystack: Normalized, needle: str, wraps: Wraps = "space"
+) -> tuple[int, int] | None:
+    """First raw ``[start, end)`` range of ``haystack``'s source matching ``needle``.
+    ``haystack`` must have been normalised with the same ``wraps``."""
+    target = normalize(needle, wraps).text
     if not target:
         return None
     pos = haystack.text.find(target)
@@ -124,7 +162,7 @@ class EvidenceLocator:
         self._doc = doc
         self._original = doc.text
         self._sanitized = sanitized
-        self._norm = normalize(sanitized.text)
+        self._norms: dict[Wraps, Normalized] = {}
         starts: list[int] = []
         offset = 0
         for page in doc.pages:
@@ -133,10 +171,29 @@ class EvidenceLocator:
         self._page_starts = starts
         self._boxes: dict[int, list[tuple[int, int, BBox]]] = {}
 
+    def _norm(self, wraps: Wraps) -> Normalized:
+        found = self._norms.get(wraps)
+        if found is None:
+            found = normalize(self._sanitized.text, wraps)
+            self._norms[wraps] = found
+        return found
+
     def locate(self, quote: str | None) -> Located | None:
+        """The quote in the model's text, mapped to the original, or ``None``.
+
+        Tried as-is first; then with line breaks inside words joined (a PDF line that
+        wraps a hyphenated or soft-hyphenated word), keeping and then dropping the
+        hyphen. The matched original text must normalise to the quote the same way."""
         if quote is None or not quote.strip() or len(quote) > MAX_QUOTE_CHARS:
             return None
-        found = find_normalized(self._norm, quote)
+        for wraps in WRAP_VARIANTS:
+            located = self._locate(quote, wraps)
+            if located is not None:
+                return located
+        return None
+
+    def _locate(self, quote: str, wraps: Wraps) -> Located | None:
+        found = find_normalized(self._norm(wraps), quote, wraps)
         if found is None:
             return None
         mapped = self._sanitized.to_original(*found)
@@ -146,7 +203,7 @@ class EvidenceLocator:
         if not 0 <= start < end <= len(self._original):
             return None
         # The offset map must agree with the text: never trust it blindly.
-        if normalize(self._original[start:end]).text != normalize(quote).text:
+        if normalize(self._original[start:end], wraps).text != normalize(quote, wraps).text:
             return None
         return Located(start, end, tuple(self._spans(start, end)))
 
