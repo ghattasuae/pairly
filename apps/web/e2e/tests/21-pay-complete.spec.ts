@@ -12,8 +12,8 @@ import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
 import { REPO_ROOT } from "../utils/stack";
 
 // M5 acceptance: Pay complete, on a `make demo` stack (org "demo", scripts/demo_pay.py)
-// after 18-pay-demo.spec.ts and 19-pay-ux-budgets.spec.ts (their sessions, and the
-// invoices 18 delivered), against the running native stack (LOCAL_WEB_PORT,
+// after 18-pay-demo.spec.ts and 19-pay-ux-budgets.spec.ts (their sessions, the run 18
+// scheduled and the invoice 19 approved), against the running native stack (LOCAL_WEB_PORT,
 // LOCAL_API_PORT, PAIRLY_OUTBOX_DIR):
 //
 // 1. the exceptions queue shows invoices by category, and a drafted message to a vendor
@@ -40,16 +40,17 @@ mkdirSync(AUTH_STATE_DIR, { recursive: true });
 const READ_WAIT = 300_000; // the worker reads a document within a minute or two
 const MAIL_WAIT = 150_000; // and delivers email once a minute
 
-// The seeded vendor with an approved invoice (scripts/demo_pay.py, synth.pay inv-0037).
-const CREDIT_VENDOR = "Malviro Facilities Management LLC";
-const CREDIT_INVOICE = "MAL/26/0859";
+// The invoice the approver approved in 19-pay-ux-budgets.spec.ts (synth.pay inv-0047):
+// approved after 18 scheduled its run, so still open for payment.
+const CREDIT_VENDOR = "Tuxiro Logistics LLC";
+const CREDIT_INVOICE = "TUX/26/1621";
 // A synthetic document the demo has a recorded reading of (synth.pay inv-0096), sent by
 // the vendor as the credit note: its total (AED 7691.32) is less than the invoice's.
 const CREDIT_DOC = "inv-0096";
 const CREDIT_TOTAL = "7691.32";
 // Agreed terms with a discount window that is still open for that invoice (issued
-// 2026-04-08): 2 percent off when paid within 200 days.
-const DISCOUNT_TERMS = "2/200 net 240";
+// 2026-03-20): 2 percent off when paid within 300 days.
+const DISCOUNT_TERMS = "2/300 net 330";
 
 const sharedFile = path.join(AUTH_STATE_DIR, "pay21-shared.json");
 interface Shared {
@@ -272,7 +273,7 @@ test("2. vendor portal: emailed link, invoice statuses, a credit note AP applies
 test("3. an early-payment discount appears and is taken in a payment run", async ({ browser }) => {
   test.setTimeout(240_000);
   const { context, page } = await asPay(browser, "clerk");
-  // The vendor's agreed terms offer the discount (the invoice prints only "Net 15").
+  // The vendor's agreed terms offer the discount (the invoice prints only "Due on receipt").
   await openVendor(page, CREDIT_VENDOR);
   const terms = page.locator("[data-payment-terms]");
   await terms.locator("[data-terms-edit]").click();
