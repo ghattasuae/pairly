@@ -13,6 +13,8 @@
   vendor a person creates gets its account ``active`` at once (no payment can have been
   made yet); details a vendor sends through the onboarding form start ``proposed``
   and only become active through a verified change ticket (``pairly_pay.bank_changes``).
+  The phone number on that form is only ``phone_claimed``: the number on file is the
+  one AP records from an independent source when it accepts the onboarding (M-05).
 * ``risk_profile`` (brief 4.1.5): record age, recent bank changes, a recent change of
   the phone number on file, the hold, and payment history (a placeholder until the
   payment work package records payments).
@@ -282,6 +284,8 @@ class VendorInput:
     phone_on_file: str | None = None
     email_domains: list[str] = field(default_factory=list)
     category: str | None = None
+    # The number a vendor's own form gave (M-05): kept, never the number on file.
+    phone_claimed: str | None = None
 
 
 def seal_contacts(vendor: PayVendor, contacts: list[dict[str, Any]]) -> None:
@@ -392,6 +396,10 @@ async def create_vendor(
         set_by=by.user_id if source is VendorSource.STAFF else None,
     )
     vendor.phone_changed_at = None  # the first number is not a change
+    if data.phone_claimed:
+        vendor.phone_claimed = seal(
+            PayVendor, "phone_claimed", data.phone_claimed, org_id=org_id, row_id=vendor_id
+        )  # type: ignore[assignment]
     session.add(vendor)
     await session.flush()
     account: PayVendorBankAccount | None = None
@@ -442,6 +450,17 @@ def contacts_of(vendor: PayVendor) -> list[dict[str, Any]]:
 def phone_of(vendor: PayVendor) -> str | None:
     value = opened(vendor, "phone_on_file")
     return str(value) if value is not None else None
+
+
+def phone_claimed_of(vendor: PayVendor) -> str | None:
+    """The number the vendor's own form claimed (never called). For a vendor onboarded
+    before M-05, the form's number is still the one on file, with nobody recorded."""
+    value = opened(vendor, "phone_claimed")
+    if value is not None:
+        return str(value)
+    if vendor.source == VendorSource.ONBOARDING.value and vendor.phone_set_by is None:
+        return phone_of(vendor)
+    return None
 
 
 async def accounts_of(session: AsyncSession, vendor_id: uuid.UUID) -> list[PayVendorBankAccount]:

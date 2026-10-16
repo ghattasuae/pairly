@@ -17,7 +17,8 @@ The vendor (no sign-in; rate limited; tokens in the body or a header, never a UR
   engine's intake (sniffed, size and type checked, virus scanned, deduplicated)
 * ``POST /vendor-onboarding/me/submit``      the form. Validated like a staff entry
   (IBAN, TRN, phone); becomes a ``pending`` vendor with its bank details ``proposed``
-  and the duplicate hints for the AP review. Ends the session.
+  and the duplicate hints for the AP review. The form's phone number is kept as claimed
+  only, never the number AP calls back on (M-05). Ends the session.
 """
 
 from __future__ import annotations
@@ -398,7 +399,9 @@ async def submit(body: PayOnboardingIn, request: Request, session: RequestSessio
             trn=trn,
             address=address_json(body.address),
             contacts=contacts_json(body.contacts),
-            phone_on_file=phone,
+            # Never the number on file: AP records that one from an independent source
+            # when it accepts the onboarding (security review 2026-10, M-05).
+            phone_claimed=phone,
             email_domains=sorted(set(body.email_domains)),
             category=clean_text(body.category, 64) or None,
         ),

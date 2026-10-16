@@ -15,7 +15,11 @@
   is open; a change is recorded (``phone_changed_at``) and flags later tickets.
 * ``POST /vendors/{id}/accept``            accept a pending onboarding: its bank details
   go through a change ticket (call back and dual approval); needs
-  ``pay.bank_change.create`` too when there are bank details
+  ``pay.bank_change.create`` too when there are bank details, and then ``callback``:
+  the number to call back taken from an independent source (``source``: trade licence,
+  signed contract, prior correspondence or official registry, and a ``reference``), which
+  becomes the number on file. The form's own number is kept as claimed, compared with
+  it, and never called (400 ``callback_source_required`` without one; M-05)
 * ``POST /vendors/{id}/reject``            reject a pending onboarding, with a reason
 * ``POST /vendors/{id}/hold``              manual payment hold (``pay.hold.manage``)
 * ``POST /vendors/{id}/hold/release``      release a sticky or manual hold; 409 while a
@@ -33,12 +37,14 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
-from pairly_core.crypto.blind_index import blind_index
+from pairly_core.crypto.blind_index import blind_index, blind_index_candidates
 from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError
 from pairly_core.identity import CurrentActor, OrgSession
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_pay.api.schemas import (
     PayAcceptIn,
+    PayCallbackIn,
+    PayCallbackSourceIn,
     PayContactIn,
     PayDuplicateOut,
     PayFieldCheckOut,
@@ -53,7 +59,7 @@ from pairly_pay.api.schemas import (
     PayVendorPatchIn,
 )
 from pairly_pay.api.views import vendor_detail, vendor_summaries
-from pairly_pay.bank_changes import open_ticket, open_ticket_of
+from pairly_pay.bank_changes import Callback, open_ticket, open_ticket_of
 from pairly_pay.checks.service import load_settings
 from pairly_pay.checks.settings import parse_settings
 from pairly_pay.common import VENDOR_ENTITY, By, audit, clean_text, record_step
@@ -61,6 +67,7 @@ from pairly_pay.holds import HoldStillNeededError, place_hold, release_hold
 from pairly_pay.iban import format_iban, validate_bic, validate_iban
 from pairly_pay.models import (
     AccountStatus,
+    CallbackSource,
     HoldReason,
     PaySettings,
     PayVendor,
@@ -83,6 +90,7 @@ from pairly_pay.vendors import (
     BankInput,
     CheckedBank,
     DuplicateVendorError,
+    InvalidPhoneError,
     VendorInput,
     account_name_of,
     accounts_of,
@@ -93,6 +101,7 @@ from pairly_pay.vendors import (
     find_duplicates,
     get_vendor,
     iban_of,
+    phone_claimed_of,
     seal_contacts,
     set_phone,
     settings_of,
@@ -340,6 +349,15 @@ async def accept(
     ticket_id: str | None = None
     if proposed is not None:
         authorize(actor, BANK_CHANGE_CREATE)
+        if body.callback is None:
+            raise CallbackRequiredError(
+                "record the vendor's phone number from an independent source (a trade "
+                "licence, a signed contract, earlier correspondence, an official registry) "
+                "with a reference: the number on the onboarding form is never called"
+            )
+        # The form's number, read before the one AP records takes its place.
+        claimed = phone_claimed_of(vendor)
+        callback = _record_callback_phone(vendor, body.callback, actor, now, claimed=claimed)
         bank = _bank_of(proposed)
         opened = await open_ticket(
             session,
@@ -349,6 +367,8 @@ async def accept(
             by=By.of(actor),
             note=body.note,
             reuse_account_id=proposed.id,
+            claims={"phone_on_form": claimed} if claimed else None,
+            callback=callback,
         )
         ticket_id = str(opened.ticket.id)
     else:
@@ -375,6 +395,43 @@ async def accept(
         reason=body.note,
     )
     return await vendor_detail(session, actor, vendor)
+
+
+class CallbackRequiredError(BadRequestError):
+    code = "callback_source_required"
+    title = "Record the call-back number from an independent source"
+
+
+def _record_callback_phone(
+    vendor: PayVendor,
+    callback: PayCallbackSourceIn,
+    actor: Actor,
+    now: datetime,
+    *,
+    phone: str | None = None,
+    claimed: str | None = None,
+) -> Callback:
+    """Make the number AP took from an independent source the vendor's number on file,
+    recorded by ``actor`` (M-05; M-04 then keeps them from verifying on it), and say
+    where it came from. ``phone``: the number when ``callback`` does not carry one."""
+    raw = callback.phone if isinstance(callback, PayCallbackIn) else phone
+    number = check_phone(raw)
+    if number is None:
+        raise InvalidPhoneError("phone_format")
+    set_phone(vendor, number, now, set_by=actor.id)
+    vendor.phone_set_by = actor.id  # also when it is the number already on file
+    vendor.phone_changed_at = None  # the first number AP recorded, not a change
+    matches: bool | None = None
+    if claimed:
+        matches = blind_index("phone", number, vendor.org_id) in blind_index_candidates(
+            "phone", claimed, vendor.org_id
+        )
+    return Callback(
+        CallbackSource(callback.source),
+        clean_text(callback.reference, 500),
+        person(actor),
+        matches,
+    )
 
 
 def _bank_of(account: PayVendorBankAccount) -> CheckedBank:

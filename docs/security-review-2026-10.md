@@ -14,7 +14,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | M-02 | Medium | API key leakage, elevation | An API key kept every scope after its creator was moved to another role or removed | Fixed, `9690234` |
 | M-03 | Medium | BEC, insider | Bank details a staff member enters on a new vendor are active at once, with no second person | Open, proposed fix below |
 | M-04 | Medium | BEC, insider | The person who changed a vendor's phone number on file (staff) may then record the call back on that number | Fixed |
-| M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Open, proposed fix below |
+| M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Fixed |
 | L-01 | Low | Recent change: response reuse | Reuse could pick a live decision replay (`replay_of`) once the original left the window | Fixed, `0e09c1f` |
 | L-02 | Low | Supply chain | CI ran `uv sync` without `--locked` | Fixed, `1b9ec47` |
 | L-03 | Low | API keys, portals, public forms (D) | Rate limits live in each API process's memory | Fixed |
@@ -80,11 +80,13 @@ A clerk may `PATCH` a vendor's phone number on file (no ticket open) and then re
 
 **Tests.** `apps/api/tests/test_pay_bank_changes.py`: `test_the_phone_changer_cannot_verify_on_the_new_number` (refused and audited, another person verifies, the final action and the activation refuse a forged verifier), `test_the_phone_changer_may_verify_once_the_window_has_passed`, `test_whoever_recorded_a_new_vendors_number_never_verifies_its_first_account`.
 
-### M-05 Onboarding call-back number comes from the onboarding form (open)
+### M-05 Onboarding call-back number comes from the onboarding form (fixed)
 
-A vendor invited to onboard enters its bank details and its phone number on the same form. Accepting the onboarding opens a ticket whose call back goes to that number, so an attacker who intercepted the invitation verifies their own details.
+A vendor invited to onboard enters its bank details and its phone number on the same form. Accepting the onboarding opened a ticket whose call back went to that number, so an attacker who intercepted the invitation verified their own details.
 
-**Proposed fix.** When accepting an onboarding with bank details, require the clerk to enter the call-back number from an independent source (the trade licence registry, an earlier contract), compare it to the form, and snapshot the entered one on the ticket.
+**Fix.** The form's number is now only `pay_vendors.phone_claimed` (encrypted, migration `pay_0020`), never the number on file. Accepting an onboarding with bank details needs `callback` (400 `callback_source_required` without it): the number from an independent source, the kind of source (`trade_licence`, `signed_contract`, `prior_correspondence`, `official_registry`) and a free-text reference, all required. That number becomes the number on file, recorded by the clerk (so M-04 keeps them from verifying it); the ticket stores the source, the encrypted reference, who recorded it and whether it matched the form (`callback_*`), and the form's number goes into the ticket's request claims (kept for investigation, never shown or called). An onboarding ticket without a source (one opened before the fix) cannot be verified (409 `callback_source_missing`), approved or activated (`callback_source_missing` in the final action and the activation) until AP records the number on it (`POST /bank-changes/{id}/callback-number`, `pay.bank_change.create`). The web app asks for the three fields on acceptance and on such a ticket, and shows the source to the verifier.
+
+**Tests.** `apps/api/tests/test_pay_onboarding.py`: `test_invite_open_upload_submit_review_and_verify` (no acceptance without a complete source, the independent number is the one on file and the only one to call, the form's never appears, the recorder cannot verify), `test_an_onboarding_ticket_without_an_independent_number_is_never_verified` (refused, recorded on the ticket, verified by someone else, the final action refuses a ticket without a source); the web tests `pay-onboarding-accept.test.tsx` and `pay.test.tsx`.
 
 ## Low
 

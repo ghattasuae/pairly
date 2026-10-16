@@ -12,11 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox, Textarea } from "@/components/ui/form-controls";
 import { Label } from "@/components/ui/label";
 import { Link } from "@/i18n/navigation";
-import { cancelBankChange, recordCall, startApproval } from "@/lib/actions/pay";
+import { cancelBankChange, recordCall, recordCallbackNumber, startApproval } from "@/lib/actions/pay";
 import { CHANGE_STEPS, changeStepIndex, groupIban, isOpenTicket } from "@/lib/pay/format";
 import type { PayBankAccount, PayTicketDetail, PayTicketSummary } from "@/lib/pay/types";
 import { cn } from "@/lib/utils";
 
+import { CallbackSourceFields, CallbackSourceView, type CallbackValue, EMPTY_CALLBACK, callbackComplete } from "./callback-source";
 import { ErrorText, HoldBadge, Panel, TicketStatusBadge } from "./common";
 
 type CallResult = "confirmed" | "not_confirmed" | "no_answer";
@@ -145,6 +146,8 @@ export function VerificationChecklist({
           )}
         </div>
       </div>
+      <CallbackSourceView ticket={ticket} />
+      {v.callback_required && <RecordCallbackForm ticket={ticket} onChange={onChange} />}
       <p className="text-sm font-medium" data-never-request-number>
         {t("neverRequestNumber")}
       </p>
@@ -219,6 +222,45 @@ export function VerificationChecklist({
         </p>
       )}
     </Panel>
+  );
+}
+
+/** An onboarding change without a number from an independent source cannot be
+ * verified: AP records one here first (security review 2026-10, M-05). */
+function RecordCallbackForm({ ticket, onChange }: { ticket: PayTicketDetail; onChange: (t: PayTicketDetail) => void }) {
+  const t = useTranslations("Pay.callback");
+  const [callback, setCallback] = useState<CallbackValue>(EMPTY_CALLBACK);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!callbackComplete(callback)) return;
+    setBusy(true);
+    setError(null);
+    const response = await recordCallbackNumber(ticket.id, callback);
+    setBusy(false);
+    if (!response.ok) {
+      setError(response.code);
+      return;
+    }
+    setCallback(EMPTY_CALLBACK);
+    onChange(response.ticket);
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3" data-record-callback>
+      <p className="flex items-start gap-2 rounded-lg border border-destructive/40 p-3 text-sm" role="note">
+        <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-destructive" />
+        {t("required")}
+      </p>
+      <CallbackSourceFields value={callback} onChange={setCallback} />
+      <ErrorText code={error} />
+      <Button type="submit" size="sm" disabled={busy || !callbackComplete(callback)}>
+        {busy && <Loader2 aria-hidden className="animate-spin" />}
+        {t("record")}
+      </Button>
+    </form>
   );
 }
 

@@ -122,8 +122,33 @@ class PayCancelIn(PayReasonIn):
     keep_hold: bool = False
 
 
+CallbackSourceName = Literal[
+    "trade_licence", "signed_contract", "prior_correspondence", "official_registry"
+]
+
+
+class PayCallbackSourceIn(_In):
+    """Where AP took the call-back number from, independently of whoever asked for the
+    bank details (security review 2026-10, M-05): the kind of source and a reference to
+    it (a licence number and registry, the contract, the letter). Both required."""
+
+    source: CallbackSourceName
+    reference: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=3, max_length=500)
+    ]
+
+
+class PayCallbackIn(PayCallbackSourceIn):
+    """The number to call back, recorded from that source (never from the request)."""
+
+    phone: Annotated[str, StringConstraints(strip_whitespace=True, min_length=5, max_length=40)]
+
+
 class PayAcceptIn(_In):
     note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)] | None = None
+    # Required when the onboarding carries bank details (M-05): the number the change is
+    # verified on, from an independent source. The form's own number is never used.
+    callback: PayCallbackIn | None = None
 
 
 class PayRequestContactIn(_In):
@@ -352,11 +377,26 @@ class PayApprovalStepOut(BaseModel):
     decided_by: list[uuid.UUID]
 
 
+class PayCallbackOut(BaseModel):
+    """Where the number to call came from (M-05). The reference only for people who
+    verify or approve."""
+
+    source: str
+    reference: str | None
+    recorded_by: uuid.UUID | None
+    # Whether it matched the number the request (the vendor's form) claimed.
+    matches_claim: bool | None
+
+
 class PayVerificationOut(BaseModel):
     # The number on file at opening, the only one to call. Only for people who verify.
     phone_on_file: str | None
     phone_last4: str
     phone_recently_changed: bool
+    # The independent source of the number, when AP recorded one (M-05).
+    callback: PayCallbackOut | None = None
+    # An onboarding change cannot be verified before AP records one.
+    callback_required: bool = False
     verified_by: uuid.UUID | None
     verified_at: datetime | None
     calls: list[PayCallOut]

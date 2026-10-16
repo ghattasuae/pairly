@@ -6,21 +6,30 @@
   documents (through the engine's intake) and submit the form.
 * A submission becomes a pending vendor with duplicate hints for the AP review.
 * Accepting it puts the vendor's own bank details through the change workflow (call
-  back, dual approval) before anything is payable to them.
+  back, dual approval) before anything is payable to them, on a number AP records from
+  an independent source; the form's own number is never called (security review
+  2026-10, M-05).
 """
 
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Any
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+from pairly_core.approvals.executor import ExecutorRefusedError
+from pairly_core.workflow.spec import FinalActionCall
+from pairly_pay.bank_changes import approve_bank_change, get_ticket
 
 from .pay_support import (
     PayApi,
     PayWorld,
     audit_actions,
     other,
+    owner_rows,
     pay_api,
     retire_documents,
     vendor_body,
@@ -149,22 +158,65 @@ async def test_invite_open_upload_submit_review_and_verify(
     # Accepting it puts the vendor's own bank details through the change workflow.
     # (No cooling-off here: the ticket keeps the hours set when it opens.)
     await api.ok("PUT", "/v1/pay/settings", world, "finance", json={"cooling_off_hours": 0})
-    accepted = await api.ok(
+    # Security review 2026-10, M-05: the number on the form is never the one called.
+    assert detail["phone_on_file"] is None
+    without = await api.call(
         "POST",
         f"/v1/pay/vendors/{vendor['id']}/accept",
         world,
         "clerk",
         json={"note": "Licence checked."},
     )
+    assert without.status_code == 400
+    assert without.json()["code"] == "callback_source_required"
+    for incomplete in (
+        {"phone": INDEPENDENT_PHONE, "source": "trade_licence"},
+        {"phone": INDEPENDENT_PHONE, "reference": "Licence 778899"},
+        {"phone": INDEPENDENT_PHONE, "source": "the vendor said so", "reference": "x" * 10},
+    ):
+        bad_source = await api.call(
+            "POST",
+            f"/v1/pay/vendors/{vendor['id']}/accept",
+            world,
+            "clerk",
+            json={"callback": incomplete},
+        )
+        assert bad_source.status_code == 422, incomplete
+    accepted = await api.ok(
+        "POST",
+        f"/v1/pay/vendors/{vendor['id']}/accept",
+        world,
+        "clerk",
+        json={"note": "Licence checked.", "callback": CALLBACK},
+    )
     assert accepted["status"] == "pending"
     assert accepted["payment_hold"] is True
+    assert accepted["phone_on_file"] == "+97128611630"
     ticket_id = accepted["open_ticket_id"]
     assert ticket_id is not None
     ticket = await api.ok("GET", f"/v1/pay/bank-changes/{ticket_id}", world, "clerk2")
     assert ticket["source"] == "onboarding"
     assert ticket["previous_account"] is None
     assert ticket["proposed_account"]["id"] == detail["accounts"][0]["id"]
-    assert ticket["verification"]["phone_on_file"] == "+97128611629"
+    assert ticket["verification"]["phone_on_file"] == "+97128611630"
+    assert ticket["verification"]["callback"] == {
+        "source": "trade_licence",
+        "reference": CALLBACK["reference"],
+        "recorded_by": str(world.id("clerk")),
+        "matches_claim": False,
+    }
+    assert ticket["verification"]["callback_required"] is False
+    assert ticket["request_had_contact_details"] is True
+    assert "8611629" not in json.dumps(ticket)
+    # The clerk who recorded the number does not call it (M-04).
+    mine = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/calls",
+        world,
+        "clerk",
+        json={"result": "confirmed", "called_number_on_file": True},
+    )
+    assert mine.status_code == 403
     call = await api.call(
         "POST",
         f"/v1/pay/bank-changes/{ticket_id}/calls",
@@ -184,6 +236,138 @@ async def test_invite_open_upload_submit_review_and_verify(
     assert actions[:2] == ["pay.vendor_invite.created", "pay.vendor_invite.opened"]
     assert "pay.vendor_invite.submitted" in actions
     await retire_documents(owner_engine, world.org_id)
+
+
+INDEPENDENT_PHONE = "+971 2 861 1630"
+CALLBACK = {
+    "phone": INDEPENDENT_PHONE,
+    "source": "trade_licence",
+    "reference": "Trade licence 778899, Abu Dhabi DED register, checked 16 Oct",
+}
+
+
+async def _onboarded(api: PayApi, world: PayWorld, index: int) -> dict[str, Any]:
+    """A submitted onboarding with bank details, pending review."""
+    invite = await api.ok("POST", "/v1/pay/vendor-invites", world, "clerk", status=201, json={})
+    opened = await _open(api, invite["token"])
+    assert opened.status_code == 200, opened.text
+    headers = {SESSION: opened.json()["session_token"]}
+    submitted = await api.client.post(
+        "/v1/pay/vendor-onboarding/me/submit", json=_form(index), headers=headers
+    )
+    assert submitted.status_code == 201, submitted.text
+    pending = (await api.ok("GET", "/v1/pay/vendors?status=pending", world, "clerk"))["items"]
+    (vendor,) = [v for v in pending if v["reference"] == submitted.json()["reference"]]
+    return dict(vendor)
+
+
+async def test_an_onboarding_ticket_without_an_independent_number_is_never_verified(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """M-05 for a ticket opened before the fix (the form's number was the number on file,
+    no source): it cannot be verified, approved or activated until AP records the number
+    from an independent source on the ticket."""
+    api = pay_api
+    vendor = await _onboarded(api, world, 1)
+    accepted = await api.ok(
+        "POST",
+        f"/v1/pay/vendors/{vendor['id']}/accept",
+        world,
+        "clerk",
+        json={"callback": CALLBACK},
+    )
+    ticket_id = accepted["open_ticket_id"]
+    # The state such a ticket had before: no source, the form's number to call.
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_bank_change_tickets SET callback_source = NULL, callback_reference = NULL, "
+        "callback_recorded_by = NULL, callback_matches_claim = NULL, phone_set_by = NULL "
+        "WHERE id = :t",
+        {"t": ticket_id},
+    )
+    shown = await api.ok("GET", f"/v1/pay/bank-changes/{ticket_id}", world, "clerk2")
+    assert shown["verification"]["callback_required"] is True
+    assert shown["can_verify"] is False
+    refused = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/calls",
+        world,
+        "clerk2",
+        json={"result": "confirmed", "called_number_on_file": True},
+    )
+    assert refused.status_code == 409, refused.text
+    assert refused.json()["code"] == "callback_source_missing"
+    # A verifier without create permission cannot record it; AP can.
+    denied = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/callback-number",
+        world,
+        "approver",
+        json=CALLBACK,
+    )
+    assert denied.status_code == 403
+    recorded = await api.ok(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/callback-number",
+        world,
+        "clerk2",
+        json={**CALLBACK, "phone": "+971 2 861 1631", "source": "signed_contract"},
+    )
+    assert recorded["verification"]["callback"]["source"] == "signed_contract"
+    assert recorded["verification"]["phone_on_file"] == "+97128611631"
+    assert recorded["can_verify"] is False  # clerk2 recorded it (M-04)
+    again = await api.call(
+        "POST", f"/v1/pay/bank-changes/{ticket_id}/callback-number", world, "clerk2", json=CALLBACK
+    )
+    assert again.status_code == 409
+    vendor_now = await api.ok("GET", f"/v1/pay/vendors/{vendor['id']}", world, "clerk")
+    assert vendor_now["phone_on_file"] == "+97128611631"
+    by_recorder = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/calls",
+        world,
+        "clerk2",
+        json={"result": "confirmed", "called_number_on_file": True},
+    )
+    assert by_recorder.status_code == 403
+    verified = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket_id}/calls",
+        world,
+        "finance",
+        json={"result": "confirmed", "called_number_on_file": True},
+    )
+    assert verified.status_code == 200, verified.text
+    assert verified.json()["verification"]["calls"][-1]["number_last4"] == "1631"
+    actions = await audit_actions(owner_engine, world.org_id, ticket_id)
+    assert "pay.bank_change.callback_recorded" in actions
+
+    # The final action refuses an onboarding ticket without a source, whatever happened.
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_bank_change_tickets SET callback_source = NULL, callback_reference = NULL, "
+        "callback_recorded_by = NULL WHERE id = :t",
+        {"t": ticket_id},
+    )
+    async with await api.in_org(world) as session, session.begin():
+        row = await get_ticket(session, uuid.UUID(ticket_id))
+        assert row.run_id is not None
+        assert row.approval_id is not None
+        call = FinalActionCall(
+            org_id=world.org_id,
+            run_id=row.run_id,
+            approval_id=row.approval_id,
+            step_key="dual_approval",
+            payload={"ticket_id": ticket_id, "details_digest": row.details_digest},
+            approver_ids=(world.id("approver"), world.id("approver2")),
+        )
+        with pytest.raises(ExecutorRefusedError) as caught:
+            async with session.begin_nested():
+                await approve_bank_change(session, call)
+        assert caught.value.reason == "callback_source_missing"
+        await session.rollback()
 
 
 async def test_revoked_and_rejected(

@@ -20,6 +20,8 @@ vi.mock("@/lib/actions/pay", () => ({
   startApproval: vi.fn(),
   cancelBankChange: vi.fn(),
   vendorAction: vi.fn(),
+  acceptOnboarding: vi.fn(),
+  recordCallbackNumber: vi.fn(),
   createInvite: vi.fn(),
   revokeInvite: vi.fn(),
 }));
@@ -80,6 +82,8 @@ function ticket(patch: Partial<PayTicketDetail> = {}, verification: Partial<PayT
       phone_on_file: ON_FILE,
       phone_last4: "1629",
       phone_recently_changed: false,
+      callback: null,
+      callback_required: false,
       verified_by: null,
       verified_at: null,
       calls: [],
@@ -157,7 +161,7 @@ describe("BankChangeView", () => {
 
   it("tells the requester someone else must call", () => {
     renderWithIntl(<BankChangeView initial={ticket({ can_verify: false })} totpEnabled returnPath="/x" />);
-    expect(screen.getByText("You asked for this change, so someone else must make the call.")).toBeInTheDocument();
+    expect(screen.getByText("You asked for this change or recorded the number to call, so someone else must make the call.")).toBeInTheDocument();
   });
 
   it("warns when the number on file changed recently", () => {
@@ -197,6 +201,65 @@ describe("BankChangeView", () => {
     );
     expect(screen.getByText(/did not confirm the change on the number on file/)).toBeInTheDocument();
     expect(screen.getByText(/stay on hold until finance releases them/)).toBeInTheDocument();
+  });
+});
+
+describe("independent call-back number (security review 2026-10, M-05)", () => {
+  it("shows where the number came from and that it differs from the request's", () => {
+    renderWithIntl(
+      <BankChangeView
+        totpEnabled
+        returnPath="/en/pay/bank-changes/x"
+        initial={ticket(
+          { source: "onboarding" },
+          {
+            callback: {
+              source: "trade_licence",
+              reference: "Licence 778899, DED register",
+              recorded_by: "44444444-4444-4444-8444-444444444444",
+              matches_claim: false,
+            },
+          },
+        )}
+      />,
+    );
+    const view = document.querySelector("[data-callback-view]");
+    expect(view?.textContent).toContain("Trade licence");
+    expect(view?.textContent).toContain("Licence 778899, DED register");
+    expect(document.querySelector("[data-callback-differs]")).not.toBeNull();
+    expect(document.querySelector("[data-record-callback]")).toBeNull();
+  });
+
+  it("asks for a number from an independent source before anyone can verify", async () => {
+    const recorded = ticket(
+      { source: "onboarding" },
+      {
+        callback: { source: "signed_contract", reference: "Contract SC-2026-14, page 1", recorded_by: null, matches_claim: null },
+      },
+    );
+    vi.mocked(pay.recordCallbackNumber).mockResolvedValue({ ok: true, ticket: recorded });
+    renderWithIntl(
+      <BankChangeView
+        totpEnabled
+        returnPath="/en/pay/bank-changes/x"
+        initial={ticket({ source: "onboarding", can_verify: false }, { callback_required: true })}
+      />,
+    );
+    expect(document.querySelector("[data-call-form]")).toBeNull();
+    const form = document.querySelector("[data-record-callback]");
+    expect(form).not.toBeNull();
+    const submit = screen.getByRole("button", { name: "Record the number" });
+    expect(submit).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Phone number from that source"), "+971 2 861 1630");
+    await userEvent.selectOptions(screen.getByLabelText("Where it comes from"), "signed_contract");
+    await userEvent.type(screen.getByLabelText("Reference"), "Contract SC-2026-14, page 1");
+    await userEvent.click(submit);
+    expect(pay.recordCallbackNumber).toHaveBeenCalledWith(recorded.id, {
+      phone: "+971 2 861 1630",
+      source: "signed_contract",
+      reference: "Contract SC-2026-14, page 1",
+    });
+    await waitFor(() => expect(document.querySelector("[data-record-callback]")).toBeNull());
   });
 });
 

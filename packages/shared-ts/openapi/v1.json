@@ -16938,6 +16938,16 @@
       "PayAcceptIn": {
         "additionalProperties": false,
         "properties": {
+          "callback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCallbackIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "note": {
             "anyOf": [
               {
@@ -17636,6 +17646,92 @@
           "created_at"
         ],
         "title": "PayCallOut",
+        "type": "object"
+      },
+      "PayCallbackIn": {
+        "additionalProperties": false,
+        "description": "The number to call back, recorded from that source (never from the request).",
+        "properties": {
+          "phone": {
+            "maxLength": 40,
+            "minLength": 5,
+            "title": "Phone",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reference",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "trade_licence",
+              "signed_contract",
+              "prior_correspondence",
+              "official_registry"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "reference",
+          "phone"
+        ],
+        "title": "PayCallbackIn",
+        "type": "object"
+      },
+      "PayCallbackOut": {
+        "description": "Where the number to call came from (M-05). The reference only for people who\nverify or approve.",
+        "properties": {
+          "matches_claim": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches Claim"
+          },
+          "recorded_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded By"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "reference",
+          "recorded_by",
+          "matches_claim"
+        ],
+        "title": "PayCallbackOut",
         "type": "object"
       },
       "PayCancelIn": {
@@ -27804,6 +27900,21 @@
       },
       "PayVerificationOut": {
         "properties": {
+          "callback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCallbackOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "callback_required": {
+            "default": false,
+            "title": "Callback Required",
+            "type": "boolean"
+          },
           "calls": {
             "items": {
               "$ref": "#/components/schemas/PayCallOut"
@@ -43029,6 +43140,60 @@
           }
         },
         "summary": "Get Change",
+        "tags": [
+          "pay"
+        ]
+      }
+    },
+    "/v1/pay/bank-changes/{ticket_id}/callback-number": {
+      "post": {
+        "description": "The number to call for an onboarding change opened without one from an\nindependent source (M-05): it becomes the number on file and the only one to call;\nwhoever records it does not verify.",
+        "operationId": "callback_number_v1_pay_bank_changes__ticket_id__callback_number_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ticket Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayCallbackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayTicketDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Callback Number",
         "tags": [
           "pay"
         ]

@@ -15,6 +15,10 @@
   recorded that number while it is recent or the vendor new, 403
   ``segregation_of_duties``, audited). ``confirmed``
   starts the dual approval run; ``not_confirmed`` rejects the change and keeps the hold.
+* ``POST /bank-changes/{id}/callback-number``  ``{"phone", "source", "reference"}``: the
+  number to call for an onboarding change that has none from an independent source yet
+  (``pay.bank_change.create``); until then the change cannot be verified (409
+  ``callback_source_missing``; security review 2026-10, M-05)
 * ``POST /bank-changes/{id}/start-approval``  start the approval run again when it did
   not start (same rules as recording the call)
 * ``POST /bank-changes/{id}/cancel``    cancel while waiting for the call
@@ -42,6 +46,7 @@ from pairly_core.workflow.models import TERMINAL_RUN_STATUSES, WorkflowRun
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_pay.api.schemas import (
     PayBankChangeIn,
+    PayCallbackIn,
     PayCallIn,
     PayCancelIn,
     PayTicketDetail,
@@ -56,18 +61,25 @@ from pairly_pay.bank_changes import (
     get_ticket,
     open_ticket,
     record_call,
+    record_callback_number,
     refuse_phone_recorder,
 )
-from pairly_pay.common import TICKET_ENTITY, By
+from pairly_pay.common import TICKET_ENTITY, By, clean_text
 from pairly_pay.graph import GRAPH
-from pairly_pay.models import CallResult, PayBankChangeTicket, TicketSource, TicketStatus
+from pairly_pay.models import (
+    CallbackSource,
+    CallResult,
+    PayBankChangeTicket,
+    TicketSource,
+    TicketStatus,
+)
 from pairly_pay.permissions import (
     BANK_CHANGE_APPROVE,
     BANK_CHANGE_CREATE,
     BANK_CHANGE_READ,
     BANK_CHANGE_VERIFY,
 )
-from pairly_pay.vendors import BankInput, check_bank, get_vendor
+from pairly_pay.vendors import BankInput, InvalidPhoneError, check_bank, check_phone, get_vendor
 
 log = structlog.get_logger("pairly_pay.api.bank_changes")
 
@@ -199,6 +211,29 @@ async def record(
     if started:
         await _start_run(runtime, actor, ticket_id)
     return await _fresh(session, actor, ticket_id)
+
+
+@router.post("/bank-changes/{ticket_id}/callback-number", response_model=PayTicketDetail)
+async def callback_number(
+    ticket_id: uuid.UUID, body: PayCallbackIn, actor: CurrentActor, session: OrgSession
+) -> PayTicketDetail:
+    """The number to call for an onboarding change opened without one from an
+    independent source (M-05): it becomes the number on file and the only one to call;
+    whoever records it does not verify."""
+    authorize(actor, BANK_CHANGE_CREATE)
+    person(actor)
+    phone = check_phone(body.phone)
+    if phone is None:
+        raise InvalidPhoneError("phone_format")
+    ticket = await record_callback_number(
+        session,
+        actor,
+        ticket_id,
+        phone=phone,
+        source=CallbackSource(body.source),
+        reference=clean_text(body.reference, 500),
+    )
+    return await ticket_detail(session, actor, ticket)
 
 
 @router.post("/bank-changes/{ticket_id}/start-approval", response_model=PayTicketDetail)

@@ -32,6 +32,8 @@ const PAY_CODES = new Set([
   "recipient_not_allowed",
   "invalid_statement",
   "statement_already_imported",
+  "callback_source_required",
+  "callback_source_missing",
 ]);
 
 export function ErrorText({ code, className }: { code: string | null; className?: string }) {

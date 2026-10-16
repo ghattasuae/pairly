@@ -13,9 +13,10 @@ import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useRouter } from "@/i18n/navigation";
-import { requestBankChange, updatePaymentTerms, vendorAction } from "@/lib/actions/pay";
+import { acceptOnboarding, requestBankChange, updatePaymentTerms, vendorAction } from "@/lib/actions/pay";
 import type { PayVendorDetail } from "@/lib/pay/types";
 
+import { CallbackSourceFields, type CallbackValue, EMPTY_CALLBACK, callbackComplete } from "./callback-source";
 import { ErrorText, HoldBadge, Panel, TicketStatusBadge, VendorStatusBadge } from "./common";
 
 const SOURCES = ["email", "staff", "invoice", "vendor_portal"] as const;
@@ -160,6 +161,53 @@ function ReasonAction({
       <Button type="submit" size="sm" variant={variant} disabled={busy}>
         {busy && <Loader2 aria-hidden className="animate-spin" />}
         {label}
+      </Button>
+    </form>
+  );
+}
+
+/** Accept an onboarding that carries bank details: the number to call back comes from
+ * an independent source AP names (security review 2026-10, M-05), never the form. */
+export function AcceptOnboardingForm({
+  vendorId,
+  onDone,
+  onStepUp,
+}: {
+  vendorId: string;
+  onDone: (v: PayVendorDetail) => void;
+  onStepUp: () => void;
+}) {
+  const t = useTranslations("Pay.vendor");
+  const ids = useId();
+  const [note, setNote] = useState("");
+  const [callback, setCallback] = useState<CallbackValue>(EMPTY_CALLBACK);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(e: React.FormEvent) {
+    e.preventDefault();
+    if (!callbackComplete(callback)) return;
+    setBusy(true);
+    setError(null);
+    const result = await acceptOnboarding(vendorId, { note, callback });
+    setBusy(false);
+    if (result.ok) {
+      onDone(result.vendor);
+      return;
+    }
+    if (result.code === "second_factor_required") onStepUp();
+    setError(result.code);
+  }
+
+  return (
+    <form onSubmit={run} className="space-y-3 sm:col-span-2" data-vendor-action="accept">
+      <CallbackSourceFields value={callback} onChange={setCallback} />
+      <Label htmlFor={`${ids}-note`}>{t("noteOptional")}</Label>
+      <Textarea id={`${ids}-note`} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
+      <ErrorText code={error} />
+      <Button type="submit" size="sm" disabled={busy || !callbackComplete(callback)}>
+        {busy && <Loader2 aria-hidden className="animate-spin" />}
+        {t("review.accept")}
       </Button>
     </form>
   );
@@ -317,7 +365,11 @@ export function VendorDetailView({
           )}
           {!vendor.open_ticket_id && (
             <div className="grid gap-4 sm:grid-cols-2">
-              <ReasonAction label={t("review.accept")} action="accept" optional vendorId={vendor.id} onDone={setVendor} onStepUp={() => setStepUp(true)} variant="default" />
+              {vendor.accounts.some((a) => a.status === "proposed") ? (
+                <AcceptOnboardingForm vendorId={vendor.id} onDone={setVendor} onStepUp={() => setStepUp(true)} />
+              ) : (
+                <ReasonAction label={t("review.accept")} action="accept" optional vendorId={vendor.id} onDone={setVendor} onStepUp={() => setStepUp(true)} variant="default" />
+              )}
               <ReasonAction label={t("review.reject")} action="reject" vendorId={vendor.id} onDone={setVendor} onStepUp={() => setStepUp(true)} />
             </div>
           )}

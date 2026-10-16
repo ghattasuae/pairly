@@ -3011,7 +3011,7 @@
       "trn_invalid": "The TRN is not valid. A UAE TRN has 15 digits.",
       "vendor_duplicate": "This vendor looks like one that already exists. Check the possible duplicates.",
       "vendor_not_open": "This vendor was rejected or archived.",
-      "segregation_of_duties": "You asked for this change, so someone else must make the call and approve it.",
+      "segregation_of_duties": "You asked for this change or recorded the number to call, so someone else must make the call and approve it.",
       "not_approvable": "This invoice cannot be sent for approval yet. Check the reasons shown.",
       "export_refused": "The bank file was not made because something changed since the approval.",
       "nothing_to_pay": "No approved invoice can go in this run.",
@@ -3021,7 +3021,9 @@
       "purchase_order_state": "This purchase order cannot change now. It may be closed already, or an invoice of it is approved or paid.",
       "recipient_not_allowed": "This message can only go to a contact on file of the vendor, or to a member of the organisation.",
       "invalid_statement": "The statement has problems. Nothing was imported.",
-      "statement_already_imported": "This statement file was already imported."
+      "statement_already_imported": "This statement file was already imported.",
+      "callback_source_required": "Record the vendor's phone number from an independent source, with a reference, before you accept. The number on the vendor's form is never called.",
+      "callback_source_missing": "Record the number to call from an independent source first. Then someone else can verify the change."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -3147,7 +3149,7 @@
       "noteOptional": "Note (optional)",
       "review": {
         "title": "Onboarding review",
-        "intro": "The vendor filled in this form itself. Check the details and the possible duplicates. Accepting sends its bank details through the change workflow: a call back and two approvals.",
+        "intro": "The vendor filled in this form itself. Check the details and the possible duplicates. Accepting sends its bank details through the change workflow: a call back on a number you take from an independent source, and two approvals.",
         "duplicates": "Possible duplicates",
         "accept": "Accept and verify bank details",
         "reject": "Reject"
@@ -3309,8 +3311,28 @@
       "notes": "Notes from the call",
       "attest": "I called the number on file shown on this page, not a number from the request.",
       "record": "Record the call",
-      "notYou": "You asked for this change, so someone else must make the call.",
+      "notYou": "You asked for this change or recorded the number to call, so someone else must make the call.",
       "someoneElse": "A person who verifies bank changes makes the call."
+    },
+    "callback": {
+      "title": "Number to call back",
+      "intro": "Take the vendor's phone number from a source that does not come with these bank details: the trade licence, a signed contract, earlier correspondence or an official registry. Never use the number on the vendor's form or in the request.",
+      "phone": "Phone number from that source",
+      "source": "Where it comes from",
+      "choose": "Choose a source",
+      "sources": {
+        "trade_licence": "Trade licence",
+        "signed_contract": "Signed contract",
+        "prior_correspondence": "Earlier correspondence",
+        "official_registry": "Official registry"
+      },
+      "reference": "Reference",
+      "referenceHint": "Say where to find it again, for example the licence number and the registry, or the date and page of the contract.",
+      "from": "Number taken from:",
+      "differs": "It differs from the number the request gave. Ask about the difference on the call: the request's own number is never called.",
+      "matches": "It is the number the request gave, confirmed from this source.",
+      "required": "This change has no number from an independent source yet, so nobody can verify it. Record one first. Whoever records it does not make the call.",
+      "record": "Record the number"
     },
     "cancel": {
       "reason": "Why cancel?",

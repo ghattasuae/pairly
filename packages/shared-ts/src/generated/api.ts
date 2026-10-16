@@ -4058,6 +4058,28 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/bank-changes/{ticket_id}/callback-number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Callback Number
+         * @description The number to call for an onboarding change opened without one from an
+         *     independent source (M-05): it becomes the number on file and the only one to call;
+         *     whoever records it does not verify.
+         */
+        post: operations["callback_number_v1_pay_bank_changes__ticket_id__callback_number_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/bank-changes/{ticket_id}/calls": {
         parameters: {
             query?: never;
@@ -11783,6 +11805,7 @@ export type components = {
         };
         /** PayAcceptIn */
         PayAcceptIn: {
+            callback?: components["schemas"]["PayCallbackIn"] | null;
             /** Note */
             note?: string | null;
         };
@@ -11960,6 +11983,36 @@ export type components = {
             iban: string;
             /** Swift */
             swift?: string | null;
+        };
+        /**
+         * PayCallbackIn
+         * @description The number to call back, recorded from that source (never from the request).
+         */
+        PayCallbackIn: {
+            /** Phone */
+            phone: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "trade_licence" | "signed_contract" | "prior_correspondence" | "official_registry";
+        };
+        /**
+         * PayCallbackOut
+         * @description Where the number to call came from (M-05). The reference only for people who
+         *     verify or approve.
+         */
+        PayCallbackOut: {
+            /** Matches Claim */
+            matches_claim: boolean | null;
+            /** Recorded By */
+            recorded_by: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Source */
+            source: string;
         };
         /** PayCallIn */
         PayCallIn: {
@@ -15184,6 +15237,12 @@ export type components = {
         };
         /** PayVerificationOut */
         PayVerificationOut: {
+            callback?: components["schemas"]["PayCallbackOut"] | null;
+            /**
+             * Callback Required
+             * @default false
+             */
+            callback_required: boolean;
             /** Calls */
             calls: components["schemas"]["PayCallOut"][];
             /** Phone Last4 */
@@ -24396,6 +24455,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayTicketDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    callback_number_v1_pay_bank_changes__ticket_id__callback_number_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayCallbackIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -176,6 +176,16 @@ class CallResult(StrEnum):
     NO_ANSWER = "no_answer"
 
 
+class CallbackSource(StrEnum):
+    """Where accounts payable took a call-back number from, independently of whoever
+    asked for the bank details (security review 2026-10, M-05 and M-03)."""
+
+    TRADE_LICENCE = "trade_licence"
+    SIGNED_CONTRACT = "signed_contract"
+    PRIOR_CORRESPONDENCE = "prior_correspondence"
+    OFFICIAL_REGISTRY = "official_registry"
+
+
 class TrnStatus(StrEnum):
     NONE = "none"
     NOT_VERIFIED = "not_verified"
@@ -266,6 +276,10 @@ class PayVendor(Base, OrgScoped):
     # change is recent or the vendor has no verified account yet (``pay_0019``, security
     # review 2026-10, M-04). NULL when no staff member recorded it.
     phone_set_by: Mapped[uuid.UUID | None] = _user_fk()
+    # The number the vendor's own onboarding form gave (``pay_0020``, M-05): kept for
+    # investigation and compared with the number AP records from an independent source,
+    # never shown in full and never called.
+    phone_claimed: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
     # Domains invoices and emails from this vendor normally come from.
     email_domains: Mapped[list[str]] = _jsonb_list()
     category: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -369,6 +383,11 @@ class PayBankChangeTicket(Base, OrgScoped):
             name="cooling_off_range",
         ),
         CheckConstraint("details_digest ~ '^[0-9a-f]{64}$'", name="details_digest_format"),
+        CheckConstraint(
+            f"callback_source IS NULL OR (callback_source IN ({_in(CallbackSource)}) "
+            "AND callback_reference IS NOT NULL AND callback_recorded_by IS NOT NULL)",
+            name="callback_source_valid",
+        ),
         Index("ix_pay_bank_change_tickets_status", "org_id", "status", "created_at"),
         Index("ix_pay_bank_change_tickets_vendor", "org_id", "vendor_id", "created_at"),
         Index(
@@ -414,6 +433,14 @@ class PayBankChangeTicket(Base, OrgScoped):
     # vendor without a verified account (``pay_0019``, M-04). Checked when the call is
     # recorded and again in the final action and the activation.
     phone_set_by: Mapped[uuid.UUID | None] = _user_fk()
+    # Where AP took the number to call from, independently of the request (``pay_0020``,
+    # M-05): a source type, a reference (encrypted: a licence number, a contract, a
+    # letter), who recorded it, and whether it matched the number the request claimed.
+    # Required before an onboarding ticket can be verified.
+    callback_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    callback_reference: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    callback_recorded_by: Mapped[uuid.UUID | None] = _user_fk()
+    callback_matches_claim: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     cooling_off_hours: Mapped[int] = mapped_column(Integer, nullable=False)
     verified_by: Mapped[uuid.UUID | None] = _user_fk()
     verified_at: Mapped[datetime | None] = _ts()

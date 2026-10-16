@@ -26,7 +26,12 @@ Rules, enforced here and again in the final action:
 * **Hold.** Opening a ticket places the vendor's payment hold in the same transaction
   (``pairly_pay.holds`` has the full rule for lifting it).
 * **Out of band, on the number on file.** The ticket snapshots the vendor's phone number
-  on file when it opens; a vendor without one cannot get a ticket. The verifier sees
+  on file when it opens; a vendor without one cannot get a ticket. When the details
+  come with the vendor itself (an onboarding form, a new vendor), the number is one AP
+  recorded from an independent source (``Callback``: a trade licence, a signed
+  contract, earlier correspondence, an official registry, with a reference), never the
+  one the request carried; an onboarding ticket without that source cannot be verified,
+  approved or activated (security review 2026-10, M-05). The verifier sees
   only that number, and a call record always stores that number (its last four
   digits). Whatever contact details the request itself carried (``request_claims``) are
   stored encrypted for investigation and never shown, returned or used. The number on
@@ -96,6 +101,7 @@ from pairly_pay.holds import STICKY, is_sticky, place_hold, recompute_hold
 from pairly_pay.models import (
     OPEN_TICKET_STATUSES,
     AccountStatus,
+    CallbackSource,
     CallResult,
     HoldReason,
     PayBankChangeCall,
@@ -116,6 +122,7 @@ from pairly_pay.vendors import (
     new_account,
     phone_of,
     phone_recorder_barred,
+    set_phone,
     settings_of,
 )
 
@@ -161,6 +168,49 @@ class VendorNotOpenError(ConflictError):
 class SegregationOfDutiesError(PermissionDeniedError):
     code = "segregation_of_duties"
     title = "Segregation of duties"
+
+
+class CallbackSourceMissingError(ConflictError):
+    code = "callback_source_missing"
+    title = "Record the call-back number from an independent source first"
+
+
+# ------------------------------------------------------------------ the call-back source
+
+
+@dataclass(frozen=True, slots=True)
+class Callback:
+    """Where AP took the number to call from, independently of the request (M-05)."""
+
+    source: CallbackSource
+    reference: str
+    recorded_by: uuid.UUID
+    # Whether it is the number the request (the vendor's form) claimed; None: none.
+    matches_claim: bool | None = None
+
+
+def needs_callback_source(ticket: PayBankChangeTicket) -> bool:
+    """An onboarding ticket must carry an independent call-back source before anyone
+    verifies, approves or activates it (fail closed for tickets opened before it)."""
+    return ticket.source == TicketSource.ONBOARDING.value and ticket.callback_source is None
+
+
+def callback_reference_of(ticket: PayBankChangeTicket) -> str | None:
+    value = opened(ticket, "callback_reference")
+    return str(value) if value is not None else None
+
+
+def _set_callback(ticket: PayBankChangeTicket, callback: Callback) -> None:
+    ticket.callback_source = callback.source.value
+    ticket.callback_reference = seal(
+        PayBankChangeTicket,
+        "callback_reference",
+        callback.reference,
+        org_id=ticket.org_id,
+        row_id=ticket.id,
+    )  # type: ignore[assignment]
+    ticket.callback_recorded_by = callback.recorded_by
+    ticket.callback_matches_claim = callback.matches_claim
 
 
 # ------------------------------------------------------------------ the locked details
@@ -289,6 +339,7 @@ async def open_ticket(
     claims: Mapping[str, Any] | None = None,
     join_open: bool = False,
     reuse_account_id: uuid.UUID | None = None,
+    callback: Callback | None = None,
 ) -> Opened:
     """Open a locked change ticket and hold the vendor's payments, in one transaction.
 
@@ -298,6 +349,8 @@ async def open_ticket(
 
     ``reuse_account_id``: the vendor's own ``proposed`` account to put through the ticket
     (details a vendor sent with its onboarding form) instead of a new row.
+
+    ``callback``: where AP took the number on file from (M-05), stored on the ticket.
     """
     now = datetime.now(UTC)
     vendor = await get_vendor(session, vendor_id, lock=True)
@@ -391,6 +444,8 @@ async def open_ticket(
         created_at=now,
         updated_at=now,
     )
+    if callback is not None:
+        _set_callback(ticket, callback)
     session.add(ticket)
     await session.flush()
     await place_hold(session, vendor, HoldReason.BANK_CHANGE, by, now)
@@ -405,6 +460,8 @@ async def open_ticket(
         "phone_recorder_barred": str(barred) if barred else None,
         "cooling_off_hours": ticket.cooling_off_hours,
         "request_carried_contact_details": clean_claims is not None,
+        "callback_source": ticket.callback_source,
+        "callback_matches_claim": ticket.callback_matches_claim,
     }
     await audit(
         session,
@@ -476,6 +533,11 @@ async def record_call(
             ),
         )
     refuse_phone_recorder(ticket, actor, "verify it")
+    if needs_callback_source(ticket):
+        raise CallbackSourceMissingError(
+            "record the vendor's phone number from an independent source (a trade "
+            "licence, a signed contract, earlier correspondence) before the call"
+        )
     now = datetime.now(UTC)
     by = By.of(actor)
     number = verify_phone_of(ticket)
@@ -541,6 +603,67 @@ async def record_call(
     )
     await refresh_decisions(session, ticket)
     return ticket, call
+
+
+async def record_callback_number(
+    session: AsyncSession,
+    actor: Actor,
+    ticket_id: uuid.UUID,
+    *,
+    phone: str,
+    source: CallbackSource,
+    reference: str,
+) -> PayBankChangeTicket:
+    """Record the number to call for an onboarding ticket that has none from an
+    independent source yet (one opened before M-05): it becomes the vendor's number on
+    file and the ticket's only number to call, and its recorder may not verify. The
+    caller holds ``pay.bank_change.create`` (checked by the route)."""
+    ticket = await get_ticket(session, ticket_id, lock=True)
+    if ticket.status != TicketStatus.AWAITING_VERIFICATION.value or not needs_callback_source(
+        ticket
+    ):
+        raise TicketStateError("this change already has its call-back number")
+    vendor = await get_vendor(session, ticket.vendor_id, lock=True)
+    now = datetime.now(UTC)
+    claimed = str(opened(vendor, "phone_claimed") or "") or verify_phone_of(ticket)
+    set_phone(vendor, phone, now, set_by=actor.id)
+    vendor.phone_set_by = actor.id
+    vendor.phone_changed_at = None  # the first number AP recorded, not a change
+    vendor.updated_at = now
+    bidx = blind_index("phone", phone, ticket.org_id)
+    ticket.verify_phone = seal(
+        PayBankChangeTicket, "verify_phone", phone, org_id=ticket.org_id, row_id=ticket.id
+    )  # type: ignore[assignment]
+    ticket.verify_phone_bidx = bidx
+    ticket.phone_set_by = actor.id  # recorded for a vendor without a verified account
+    matches = bool(claimed) and bidx in blind_index_candidates("phone", claimed, ticket.org_id)
+    _set_callback(ticket, Callback(source, reference, actor.id, matches))
+    ticket.updated_at = now
+    await session.flush()
+    await audit(
+        session,
+        actor,
+        "pay.bank_change.callback_recorded",
+        entity_type=TICKET_ENTITY,
+        entity_id=ticket.id,
+        payload={
+            "callback_source": source.value,
+            "number_last4": phone[-4:],
+            "matches_claim": matches,
+        },
+    )
+    await record_step(
+        session,
+        By.of(actor),
+        entity_type=TICKET_ENTITY,
+        entity_id=ticket.id,
+        action="callback_number_recorded",
+        inputs={"callback_source": source.value, "number_last4": phone[-4:]},
+        output={"status": ticket.status, "matches_claim": matches},
+        reason=reference,
+    )
+    await refresh_decisions(session, ticket)
+    return ticket
 
 
 # ------------------------------------------------------------------ approval
@@ -613,6 +736,8 @@ async def approve_bank_change(session: AsyncSession, call: FinalActionCall) -> M
         raise ExecutorRefusedError("not_verified")
     if ticket.phone_set_by is not None and ticket.verified_by == ticket.phone_set_by:
         raise ExecutorRefusedError("verifier_recorded_phone")
+    if needs_callback_source(ticket):
+        raise ExecutorRefusedError("callback_source_missing")
 
     now = datetime.now(UTC)
     by = By.system()
@@ -674,6 +799,8 @@ async def activate(session: AsyncSession, ticket: PayBankChangeTicket, *, now: d
         raise ActivationRefusedError("requester_or_verifier_approved")
     if ticket.phone_set_by is not None and ticket.verified_by == ticket.phone_set_by:
         raise ActivationRefusedError("verifier_recorded_phone")
+    if needs_callback_source(ticket):
+        raise ActivationRefusedError("callback_source_missing")
     vendor = await get_vendor(session, ticket.vendor_id, lock=True)
     proposed = await _account(session, ticket.proposed_account_id)
     if (

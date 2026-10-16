@@ -197,6 +197,51 @@ export async function cancelBankChange(
   return toAction(result, (ticket) => ({ ticket }));
 }
 
+const callbackSource = z.enum(["trade_licence", "signed_contract", "prior_correspondence", "official_registry"]);
+const callbackSchema = z
+  .object({
+    phone: z.string().trim().min(5).max(40),
+    source: callbackSource,
+    reference: z.string().trim().min(3).max(500),
+  })
+  .strict();
+
+/** Accept an onboarding. With bank details it needs the call-back number from an
+ * independent source (security review 2026-10, M-05): the number the vendor's own form
+ * gave is never the one called. */
+export async function acceptOnboarding(
+  vendorId: string,
+  input: { note: string; callback?: { phone: string; source: string; reference: string } },
+): Promise<ActionResult<{ vendor: PayVendorDetail }>> {
+  const parsed = z.object({ note: z.string().max(2000), callback: callbackSchema.optional() }).strict().safeParse(input);
+  if (!uuid.safeParse(vendorId).success || !parsed.success) return bad;
+  const note = parsed.data.note.trim();
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/vendors/{vendor_id}/accept", {
+      params: { path: { vendor_id: vendorId } },
+      body: { ...(note ? { note } : {}), ...(parsed.data.callback ? { callback: parsed.data.callback } : {}) },
+    }),
+  );
+  return toAction(result, (vendor) => ({ vendor }));
+}
+
+/** Record the call-back number from an independent source on an onboarding change that
+ * has none yet (M-05). */
+export async function recordCallbackNumber(
+  ticketId: string,
+  input: { phone: string; source: string; reference: string },
+): Promise<ActionResult<{ ticket: PayTicketDetail }>> {
+  const parsed = callbackSchema.safeParse(input);
+  if (!uuid.safeParse(ticketId).success || !parsed.success) return bad;
+  const result = await callApi((api) =>
+    api.POST("/v1/pay/bank-changes/{ticket_id}/callback-number", {
+      params: { path: { ticket_id: ticketId } },
+      body: parsed.data,
+    }),
+  );
+  return toAction(result, (ticket) => ({ ticket }));
+}
+
 type VendorAction = "accept" | "reject" | "hold" | "release";
 
 /** Accept or reject an onboarding, or place or release a payment hold. */

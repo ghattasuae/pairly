@@ -22,6 +22,7 @@ from pairly_core.rbac import Actor
 from pairly_pay.api.schemas import (
     PayApprovalStepOut,
     PayBankAccountOut,
+    PayCallbackOut,
     PayCallOut,
     PayContactOut,
     PayDuplicateOut,
@@ -31,7 +32,13 @@ from pairly_pay.api.schemas import (
     PayVendorSummary,
     PayVerificationOut,
 )
-from pairly_pay.bank_changes import calls_of, open_ticket_of, verify_phone_of
+from pairly_pay.bank_changes import (
+    callback_reference_of,
+    calls_of,
+    needs_callback_source,
+    open_ticket_of,
+    verify_phone_of,
+)
 from pairly_pay.common import opened
 from pairly_pay.holds import is_sticky
 from pairly_pay.models import (
@@ -316,6 +323,15 @@ async def ticket_detail(
             phone_on_file=phone if verifier else None,
             phone_last4=phone[-4:],
             phone_recently_changed=ticket.phone_recently_changed,
+            callback=PayCallbackOut(
+                source=ticket.callback_source,
+                reference=callback_reference_of(ticket) if insider else None,
+                recorded_by=ticket.callback_recorded_by,
+                matches_claim=ticket.callback_matches_claim,
+            )
+            if ticket.callback_source
+            else None,
+            callback_required=needs_callback_source(ticket),
             verified_by=ticket.verified_by,
             verified_at=ticket.verified_at,
             calls=calls,
@@ -332,7 +348,11 @@ async def ticket_detail(
         vendor_payment_hold=vendor.payment_hold,
         vendor_hold_reason=vendor.hold_reason,
         decision_ids=list(ticket.decision_ids),
-        can_verify=awaiting_call and verifier and not is_requester and not recorded_phone,
+        can_verify=awaiting_call
+        and verifier
+        and not is_requester
+        and not recorded_phone
+        and not needs_callback_source(ticket),
         can_cancel=bool(can_cancel),
         can_start_approval=ticket.status == TicketStatus.AWAITING_APPROVAL.value
         and ticket.approval_id is None
