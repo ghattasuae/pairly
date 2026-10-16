@@ -135,8 +135,10 @@ class DatabaseCallStore:
         self, session: AsyncSession, request_hash: str, *, org_id: uuid.UUID, since: datetime
     ) -> StoredCall | None:
         """The organisation's first live answer to ``request_hash`` since ``since``: a
-        real model response (live or record mode, not a replay or a reuse itself), not
-        erased. The first one, so every later identical request gets the same answer.
+        real model response (live or record mode, not served from a recording, not a
+        reuse itself, not a decision replay (``replay_of``), which is a check of an
+        earlier call and never the answer), not erased. The first one, so every later
+        identical request gets the same answer.
         Row Level Security scopes the query to the session's organisation; ``org_id``
         is checked as well."""
         row = await session.scalar(
@@ -148,6 +150,7 @@ class DatabaseCallStore:
                 ModelCall.status.in_([s.value for s in OUTPUT_STATUSES]),
                 ModelCall.from_recording.is_(False),
                 ModelCall.reused_from.is_(None),
+                ModelCall.replay_of.is_(None),
                 ModelCall.erased_at.is_(None),
                 ModelCall.response.is_not(None),
                 ModelCall.created_at >= since,

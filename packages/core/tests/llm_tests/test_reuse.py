@@ -56,6 +56,7 @@ class ReusableStore(MemoryStore):
                 and row["status"] in statuses
                 and not row.get("from_recording")
                 and row.get("reused_from") is None
+                and row.get("replay_of") is None
                 and row.get("response") is not None
                 and row["created_at"] >= since
             ):
@@ -170,6 +171,7 @@ async def test_database_lookup_filters() -> None:
         "model_calls.status IN ",
         "model_calls.from_recording IS false",
         "model_calls.reused_from IS NULL",
+        "model_calls.replay_of IS NULL",
         "model_calls.erased_at IS NULL",
         "model_calls.response IS NOT NULL",
         "model_calls.created_at >= ",

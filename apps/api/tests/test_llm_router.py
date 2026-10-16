@@ -470,6 +470,53 @@ async def test_replay_against_the_database(
     assert sorted(r.mode for r in replays) == ["record", "recorded"]
 
 
+async def test_reuse_never_crosses_orgs_or_reuses_a_replay(
+    llm_engine: AsyncEngine, prompts: PromptRegistry, clean_llm: TwoTenants
+) -> None:
+    """Security review 2026-10 (R-03): response reuse in live mode, on the real table."""
+    a, b = clean_llm.a.org_id, clean_llm.b.org_id
+    router, provider = make_router(llm_engine, prompts, mode=ModelMode.LIVE)
+    provider.script(HAIKU, GOOD, GOOD, {"label": "receipt", "confidence": 0.95})
+    first = await router.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=a)
+    again = await router.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=a)
+    assert len(provider.requests) == 1
+    assert again.value == first.value
+
+    # Organisation B sends the byte-identical request: it never gets A's answer.
+    other = await router.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=b)
+    assert len(provider.requests) == 2
+    assert other.request_hash == first.request_hash
+    rows_b = await _rows(llm_engine, b, "SELECT reused_from FROM model_calls")
+    assert [r.reused_from for r in rows_b] == [None]
+
+    # A live replay of A's call is a check, not an answer: once the original is out of
+    # the window, the replay (a different answer) must not become the reused one.
+    replayed = await router.replay(first.call_id, org_id=a, schema=Answer, task=TASK, live=True)
+    assert not replayed.matches
+    rows = await _rows(
+        llm_engine,
+        a,
+        "SELECT id, created_at, replay_of FROM model_calls WHERE reused_from IS NULL "
+        "ORDER BY created_at",
+    )
+    original, replay = rows
+    assert replay.replay_of == original.id
+    async with _session(llm_engine, a) as s, s.begin():
+        found = await DatabaseCallStore().find_reusable(
+            s, first.request_hash, org_id=a, since=original.created_at
+        )
+        later = await DatabaseCallStore().find_reusable(
+            s, first.request_hash, org_id=a, since=replay.created_at
+        )
+        cross = await DatabaseCallStore().find_reusable(
+            s, first.request_hash, org_id=b, since=original.created_at
+        )
+    assert found is not None
+    assert found.id == original.id
+    assert later is None
+    assert cross is None
+
+
 async def test_bundle_round_trip_between_orgs(
     llm_engine: AsyncEngine, prompts: PromptRegistry, clean_llm: TwoTenants
 ) -> None:
