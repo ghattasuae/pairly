@@ -265,7 +265,13 @@ export function DocumentViewer({
         dir="ltr"
         tabIndex={0}
         aria-label={t("pages")}
-        className={cn("relative overflow-auto p-3 outline-none", layout === "split" ? "h-[75vh]" : "max-h-[60vh] min-h-64")}
+        className={cn(
+          "relative overflow-auto p-3 outline-none",
+          // Stacked: the page area keeps its height while a PDF loads and once it shows
+          // (a page at full width is taller than 60vh), so the evidence list below
+          // never jumps down when the document arrives (layout shift).
+          layout === "split" ? "h-[75vh]" : phase.kind === "loading" || phase.kind === "pdf" ? "h-[60vh]" : "max-h-[60vh] min-h-64",
+        )}
       >
         {phase.kind === "loading" && <p className="p-6 text-center text-sm text-muted-foreground">{t("loading")}</p>}
         {phase.kind === "error" && (
