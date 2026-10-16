@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Final
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -231,11 +231,19 @@ async def ingest_spooled(
     submitted_by: uuid.UUID | None = None,
     inbound_email_id: uuid.UUID | None = None,
     media_type: str | None = None,
+    dedupe: bool = True,
 ) -> IngestOutcome:
     """Check, dedupe, store and record one spooled file in the session's organisation.
 
     ``media_type`` overrides sniffing only for content Pairly produced itself (an email
     body); never pass a client-declared type.
+
+    ``dedupe=False``: the file always gets its own row, even when the workflow already
+    holds the same bytes, and no later upload ever links to it (``Document.dedupe``).
+    For a submission that belongs to one person, such as a candidate's CV: linking it
+    to another candidate's row would show them that row's file name and metadata, and
+    tie the two together for erasure (security review 2026-10, L-09). The stored bytes
+    are shared all the same.
     """
     org = current_org(session)
     if org is None:
@@ -271,7 +279,7 @@ async def ingest_spooled(
         )
         return IngestOutcome("rejected", reason=reason, media_type=sniffed)
 
-    existing = await _existing(session, workflow, spooled.sha256)
+    existing = await _existing(session, workflow, spooled.sha256) if dedupe else None
     if existing is not None:
         await _audit(session, by, DocumentAction.DUPLICATE, existing, {"source": source.value})
         return IngestOutcome("duplicate", document=existing, media_type=existing.media_type)
@@ -296,8 +304,11 @@ async def ingest_spooled(
             status=DocumentStatus.RECEIVED.value,
             submitted_by=submitted_by,
             inbound_email_id=inbound_email_id,
+            dedupe=dedupe,
         )
-        .on_conflict_do_nothing(constraint="uq_documents_org_id_workflow_sha256")
+        .on_conflict_do_nothing(
+            index_elements=["org_id", "workflow", "sha256"], index_where=text("dedupe")
+        )
         .returning(Document.id)
     )
     if inserted is None:
@@ -350,10 +361,11 @@ async def ingest_spooled(
 
 
 async def _existing(session: AsyncSession, workflow: str, sha256: str) -> Document | None:
-    """The document with these bytes in this workflow (dedupe never crosses workflows)."""
+    """The document with these bytes in this workflow that takes part in dedupe (dedupe
+    never crosses workflows, and never reaches a row kept for one submission)."""
     result = await session.scalar(
         select(Document)
-        .where(Document.workflow == workflow, Document.sha256 == sha256)
+        .where(Document.workflow == workflow, Document.sha256 == sha256, Document.dedupe.is_(True))
         .execution_options(populate_existing=True)
     )
     return result

@@ -11,17 +11,20 @@ isolation of every Hire table, and the retention rule.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import uuid
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 from defusedxml import ElementTree
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from pairly_core.audit import ActorType
 from pairly_core.crypto.types import unseal
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.integrations.slack.transport import FakeSlackTransport
@@ -29,6 +32,7 @@ from pairly_core.notifications.delivery import Transports, deliver_org
 from pairly_core.notifications.outbox import OutboxTransport
 from pairly_core.retention.service import dry_run_org
 from pairly_hire.demo import BACKEND, SUPPORT_LEAD
+from pairly_hire.erasure import delete_candidate_objects, erase_candidate
 from pairly_hire.models import HireApplication, HireCandidate
 from pairly_hire.notice import CURRENT_VERSION
 from pairly_hire.retention import RULE_KEY
@@ -433,6 +437,192 @@ async def test_duplicate_applicants_across_jobs(
     # One candidate row per email address, never merged.
     (count,) = await owner_rows(owner_engine, world.org_id, "SELECT count(*) FROM hire_candidates")
     assert count[0] == 5
+
+
+async def _apply_with(
+    api: HireApi, world: HireWorld, slug: str, cv: bytes, filename: str, **kwargs: Any
+) -> None:
+    ip = kwargs.pop("ip")
+    started = await api.start(world, slug, ip=ip, **kwargs)
+    assert started.status_code == 201, started.text
+    token = started.json()["token"]
+    uploaded = await api.upload(world, token, cv, filename=filename, ip=ip)
+    assert uploaded.status_code == 201, uploaded.text
+    submitted = await api.submit(world, token, ip=ip)
+    assert submitted.status_code == 202, submitted.text
+
+
+async def test_identical_cvs_of_two_candidates_never_share_a_document_row(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, L-09: the same CV bytes from two candidates are two
+    document rows (one per application) over one stored object, so neither sees the
+    other's file name or metadata, and erasing one leaves the other's file intact."""
+    api = hire_api
+    job = await open_job(api, world)
+    same = cv_pdf("same-bytes")
+    await _apply_with(api, world, job["slug"], same, "Layla Haddad CV.pdf", ip="198.51.100.21")
+    await _apply_with(
+        api,
+        world,
+        job["slug"],
+        same,
+        "Omar Saleh resume.pdf",
+        email="omar.saleh@example.test",
+        full_name="Omar Saleh",
+        phone="+971 55 111 2222",
+        ip="198.51.100.22",
+    )
+    rows = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT a.id AS app, a.candidate_id, a.duplicate_signals, d.id AS doc, d.sha256, "
+        "d.storage_key, d.original_filename, d.dedupe "
+        "FROM hire_applications a JOIN documents d ON d.id = a.cv_document_id "
+        "ORDER BY a.submitted_at",
+    )
+    first, second = rows
+    assert first.doc != second.doc
+    assert first.candidate_id != second.candidate_id
+    assert (first.sha256, first.storage_key) == (second.sha256, second.storage_key)
+    assert first.original_filename == "Layla Haddad CV.pdf"
+    assert second.original_filename == "Omar Saleh resume.pdf"
+    assert not first.dedupe
+    assert not second.dedupe
+    # One stored object, each row scanned on its own.
+    assert sum(1 for k in api.store.objects if "/blobs/" in k) == 1
+    assert {j[2] for j in api.queue.jobs} == {first.doc, second.doc}
+    # The same bytes still raise the duplicate hint, by hash.
+    assert any("cv_hash" in e["signals"] for e in second.duplicate_signals)
+    # A staff upload of the same bytes to Hire never links to a candidate's row.
+    staff = await api.client.post(
+        "/v1/documents?workflow=hire",
+        files={"file": ("x.pdf", same, "application/pdf")},
+        headers=api.headers(world, "admin"),
+    )
+    assert staff.status_code == 201, staff.text
+    assert staff.json()["duplicate"] is False
+    assert staff.json()["document"]["id"] not in {str(first.doc), str(second.doc)}
+
+    # Erasing the first candidate leaves the second's row and the shared bytes alone.
+    session = create_sessionmaker(api.engine)()
+    async with session:
+        set_tenant(session, world.org_id, None)
+        async with session.begin():
+            candidate = await session.scalar(
+                select(HireCandidate).where(HireCandidate.id == first.candidate_id)
+            )
+            assert candidate is not None
+            counts = await erase_candidate(
+                session, candidate, actor_type=ActorType.SYSTEM, actor_id="test"
+            )
+            assert counts.documents == 1
+            assert counts.documents_shared == 0
+        async with session.begin():
+            removed = await delete_candidate_objects(session, api.store, first.candidate_id)
+            assert removed.error is None
+    after = {
+        r.id: r
+        for r in await owner_rows(
+            owner_engine,
+            world.org_id,
+            "SELECT id, status, original_filename, objects_erased_at FROM documents "
+            "WHERE id = ANY(:ids)",
+            {"ids": [first.doc, second.doc]},
+        )
+    }
+    assert after[first.doc].status == "erased"
+    assert after[first.doc].original_filename is None
+    assert after[second.doc].status != "erased"
+    assert after[second.doc].original_filename == "Omar Saleh resume.pdf"
+    assert after[second.doc].objects_erased_at is None
+    assert second.storage_key in api.store.objects
+
+
+async def test_the_migration_gives_each_application_its_own_row(
+    hire_api: HireApi, world: HireWorld, owner_engine: AsyncEngine
+) -> None:
+    """``hire_0022`` splits rows that applications shared before L-09: the earliest keeps
+    it, every other application gets a copy without the first sender's file name, and
+    its CV, files, document requests and screenings point at the copy."""
+    api = hire_api
+    job = await open_job(api, world)
+    await _apply_with(api, world, job["slug"], cv_pdf("legacy-a"), "first.pdf", ip="198.51.100.31")
+    await _apply_with(
+        api,
+        world,
+        job["slug"],
+        cv_pdf("legacy-b"),
+        "second.pdf",
+        email="second@example.test",
+        full_name="Second Person",
+        phone="+971 55 333 4444",
+        ip="198.51.100.32",
+    )
+    first, second = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT id, cv_document_id FROM hire_applications ORDER BY submitted_at",
+    )
+    # The state before the fix: the second application on the first one's row, by its
+    # CV and an extra file, and that row taking part in dedupe.
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE hire_applications SET cv_document_id = :doc, "
+        "files = jsonb_build_object('portfolio', CAST(:doc_text AS text)) WHERE id = :app",
+        {"doc": first.cv_document_id, "doc_text": str(first.cv_document_id), "app": second.id},
+    )
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE documents SET dedupe = true WHERE id = :doc",
+        {"doc": first.cv_document_id},
+    )
+    spec = importlib.util.spec_from_file_location(
+        "hire_0022",
+        Path(__file__).resolve().parents[3]
+        / "packages/hire/pairly_hire/migrations/hire_0022_document_per_application.py",
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    async with owner_engine.begin() as conn:
+        copies = await conn.run_sync(lambda c: migration.split_shared(c, [world.org_id]))
+    assert copies == 1
+    async with owner_engine.begin() as conn:
+        again = await conn.run_sync(lambda c: migration.split_shared(c, [world.org_id]))
+    assert again == 0
+    (moved,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT a.cv_document_id, a.files, d.original_filename, d.sha256, d.storage_key, "
+        "d.dedupe, d.status, d.portal_subject FROM hire_applications a "
+        "JOIN documents d ON d.id = a.cv_document_id WHERE a.id = :app",
+        {"app": second.id},
+    )
+    (kept,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT a.cv_document_id, d.original_filename, d.sha256, d.storage_key, d.dedupe, "
+        "d.status FROM hire_applications a JOIN documents d ON d.id = a.cv_document_id "
+        "WHERE a.id = :app",
+        {"app": first.id},
+    )
+    assert kept.cv_document_id == first.cv_document_id
+    assert kept.original_filename == "first.pdf"
+    assert moved.cv_document_id != first.cv_document_id
+    assert moved.files == {"portfolio": str(moved.cv_document_id)}
+    assert moved.original_filename is None
+    assert moved.portal_subject is None
+    assert (moved.sha256, moved.storage_key, moved.status) == (
+        kept.sha256,
+        kept.storage_key,
+        kept.status,
+    )
+    assert not moved.dedupe
+    assert not kept.dedupe
 
 
 # ------------------------------------------------------------------ self-identification report

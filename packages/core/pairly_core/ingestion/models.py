@@ -133,9 +133,15 @@ class InboundEmail(Base, OrgScoped, Timestamped):
 class Document(Base, OrgScoped, Timestamped):
     __tablename__ = "documents"
     __table_args__ = (
-        # Dedupe is per workflow; the stored object (keyed by org and hash) is shared.
-        UniqueConstraint(
-            "org_id", "workflow", "sha256", name="uq_documents_org_id_workflow_sha256"
+        # Dedupe is per workflow, among the rows that take part in it (``dedupe``); the
+        # stored object (keyed by org and hash) is shared by every row (migration 0033).
+        Index(
+            "uq_documents_org_id_workflow_sha256",
+            "org_id",
+            "workflow",
+            "sha256",
+            unique=True,
+            postgresql_where=text("dedupe"),
         ),
         CheckConstraint(f"status IN ({_in(DocumentStatus)})", name="status_valid"),
         CheckConstraint(f"source IN ({_in(DocumentSource)})", name="source_valid"),
@@ -163,6 +169,14 @@ class Document(Base, OrgScoped, Timestamped):
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    # Whether later identical bytes in this workflow link to this row (intake dedupe).
+    # False for a submission that must keep its own row whatever else holds the same
+    # bytes: a candidate's CV or file belongs to one application, so no candidate sees
+    # another's file name or metadata, and erasing one leaves the other (security
+    # review 2026-10, L-09). The bytes in storage are shared either way.
+    dedupe: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, default=DocumentStatus.RECEIVED.value
     )

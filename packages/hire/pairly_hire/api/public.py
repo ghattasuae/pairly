@@ -521,6 +521,9 @@ async def upload_file(
             filename=received.filename,
             policy=policy,
             by=by,
+            # One document row per application: never linked to another candidate's
+            # row with the same bytes (security review 2026-10, L-09).
+            dedupe=False,
         )
     if outcome.reason is not None or outcome.document is None:
         return rejected_response(request, outcome.reason or RejectReason.EMPTY, WORKFLOW)

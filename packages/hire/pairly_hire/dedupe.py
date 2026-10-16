@@ -8,8 +8,9 @@ Signals, all computed without plaintext lookups (personal fields are encrypted):
 * ``email``: one candidate row per email blind index, so the same address applying
   again (to another job, or the same job: ``same_job``) is the same candidate.
 * ``phone``: another candidate with the same phone blind index.
-* ``cv_hash``: another application with the same CV file (documents are deduplicated by
-  SHA-256 per workflow, so the same bytes are the same document).
+* ``cv_hash``: another application whose CV has the same SHA-256. Each application keeps
+  its own document row (security review 2026-10, L-09), so the bytes are compared, never
+  the row.
 * ``name``: another candidate whose name shares a word blind index, confirmed by a
   fuzzy comparison of the decrypted, normalised names (``NAME_THRESHOLD``). Catches
   reordered names, a dropped middle name, and small spelling differences.
@@ -31,8 +32,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.types import unseal
+from pairly_core.ingestion.models import Document
 from pairly_hire.models import ApplicationStatus, HireApplication, HireCandidate
 
+WORKFLOW: Final = "hire"
 NAME_THRESHOLD: Final = 0.85
 MAX_NAME_CANDIDATES: Final = 50
 
@@ -118,9 +121,14 @@ async def find_duplicates(
             signals.add(other, "phone")
 
     if app.cv_document_id is not None:
+        same_bytes = select(Document.id).where(
+            Document.sha256
+            == select(Document.sha256).where(Document.id == app.cv_document_id).scalar_subquery(),
+            Document.workflow == WORKFLOW,
+        )
         for other in await session.scalars(
             select(HireApplication).where(
-                HireApplication.cv_document_id == app.cv_document_id, others, submitted
+                HireApplication.cv_document_id.in_(same_bytes), others, submitted
             )
         ):
             signals.add(other, "cv_hash")
