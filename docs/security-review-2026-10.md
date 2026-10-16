@@ -25,7 +25,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | L-08 | Low | Repudiation | `job_run_start` and `job_run_finish` (SECURITY DEFINER) accept any job name or run id from the app role | Accepted risk |
 | L-09 | Low | Information disclosure | A public application whose CV has the same bytes as another candidate's is linked to that candidate's document row | Open, proposed fix below |
 | L-10 | Low | BEC | Vendor portal contacts (people and emails) change directly; AP messages go to those addresses | Open, proposed fix below |
-| L-11 | Low | Supply chain | The vendored Redoc checksum is checked by a test, not by `make api-docs` | Open, proposed fix below |
+| L-11 | Low | Supply chain | The vendored Redoc checksum is checked by a test, not by `make api-docs` | Fixed |
 | L-12 | Low | Malicious documents | A DOCX with an external attached template (remote template injection) is accepted | Open, proposed fix below |
 
 No critical finding. Nothing found in: prompt injection reaching a model input or an action, data exfiltration through the model, approval link replay, approval races, portal token forgery and cross-portal reads, webhook signatures and SSRF, RLS coverage, and the label-plus-value table evidence.
@@ -96,7 +96,7 @@ A vendor invited to onboard enters its bank details and its phone number on the 
 * **L-08 (accepted).** Job run history can be started or finished by any code path with the app role. It is operational history, not the audit log (which is hash chained and anchored).
 * **L-09.** Dedupe at intake (`uq_documents_org_id_workflow_sha256`) links a second applicant with byte-identical CV bytes to the first applicant's document row, so the second candidate's portal shows the first one's original file name, and erasing either affects both. Proposed fix: dedupe the stored blob only and give each submission its own `documents` row.
 * **L-10.** A mailbox attacker in the portal can add a contact email; AP messages are sent to an address a person picks and approves, never automatically. Proposed fix: mark contacts added through the portal as new for 30 days in the recipient picker.
-* **L-11.** `scripts/build_api_docs.py` embeds the vendored Redoc bundle without checking its SHA-256; only `scripts/tests/test_build_api_docs.py` does. Proposed fix: check the recorded checksum in the build too.
+* **L-11 (fixed).** `scripts/build_api_docs.py` embeds the vendored Redoc bundle without checking its SHA-256; only `scripts/tests/test_build_api_docs.py` did. The build now reads the bundle through `read_bundle`, which compares its SHA-256 with the recorded `REDOC_SHA256` before anything is written and stops `make api-docs` (non-zero exit, `BundleChecksumError`) on any other bundle. Test: `scripts/tests/test_build_api_docs.py::test_a_changed_bundle_stops_the_build_before_anything_is_written`.
 * **L-12.** A DOCX whose `word/_rels/settings.xml.rels` names an external `attachedTemplate` is accepted. Pairly never opens it in Word, but a person downloading it might. Proposed fix: refuse packages with `TargetMode="External"` template relationships, like L-04.
 
 ## Threat by threat

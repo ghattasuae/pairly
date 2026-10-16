@@ -11,9 +11,10 @@ at run time.
   commercial license (`NOTICE.md`, Bundled components).
 * SHA-256 of `redoc.standalone.js`:
   `dcaf76612bc4a3fbcc923a8966dee2f6146a5f32e5ce1b6f02dd60cbbf89500b`
-  (`scripts/tests/test_build_api_docs.py` checks it).
+  (`make api-docs` refuses any other bundle, `REDOC_SHA256` in `scripts/build_api_docs.py`;
+  `scripts/tests/test_build_api_docs.py` checks it too).
 
 To update: `npm pack redoc@<version>`, copy `package/bundles/redoc.standalone.js`,
 `package/bundles/redoc.standalone.js.LICENSE.txt` and `package/LICENSE` here, review the
-bundled licenses, and update the version and checksum in this file, the test and
-`scripts/third_party_notices.py`.
+bundled licenses, and update the version and checksum in this file, the build script, the
+test and `scripts/third_party_notices.py`.

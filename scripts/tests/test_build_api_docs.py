@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
 """``make api-docs``: the page is self-contained and fetches nothing at run time, the
-spec round-trips, and the vendored Redoc bundle is the reviewed one (license, checksum)."""
+spec round-trips, and the vendored Redoc bundle is the reviewed one (license, checksum),
+checked by the build itself too (security review 2026-10, L-11)."""
 
 from __future__ import annotations
 
@@ -10,9 +11,12 @@ import hashlib
 import importlib.util
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 from types import ModuleType
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT = ROOT / "packages" / "shared-ts" / "openapi" / "v1.json"
@@ -91,3 +95,27 @@ def test_a_hostile_description_cannot_break_out_of_the_page(tmp_path: Path) -> N
     text = page.read_text(encoding="utf-8")
     assert "<script>alert(1)" not in text
     assert text.count("</script>") == 3  # the JSON data, the bundle and the start-up code
+
+
+def test_the_build_checks_the_recorded_checksum() -> None:
+    assert docs.REDOC_SHA256 == REDOC_SHA256
+
+
+def test_a_changed_bundle_stops_the_build_before_anything_is_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vendor = tmp_path / "vendor"
+    shutil.copytree(VENDOR, vendor)
+    bundle = vendor / "redoc.standalone.js"
+    bundle.write_bytes(bundle.read_bytes() + b"\n;fetch('https://example.invalid/x');\n")
+    monkeypatch.setattr(docs, "VENDOR", vendor)
+    out = tmp_path / "out"
+    with pytest.raises(docs.BundleChecksumError) as refused:
+        docs.build(out, SNAPSHOT)
+    assert REDOC_SHA256 in str(refused.value)
+    assert not out.exists()
+    # Through the command line too (what `make api-docs` runs): a non-zero exit.
+    with pytest.raises(SystemExit) as exited:
+        docs.main(["--out", str(out), "--spec", str(SNAPSHOT)])
+    assert exited.value.code not in (0, None)
+    assert not out.exists()

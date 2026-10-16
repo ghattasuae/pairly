@@ -13,12 +13,17 @@ Content Security
 Policy allows no network access at all (``connect-src 'none'``, images and fonts only
 from ``data:``), so opening it, even from disk, fetches nothing. Redoc's own optional
 logo image is blocked by that policy and hides itself.
+
+The build refuses a bundle whose SHA-256 is not the reviewed one (``REDOC_SHA256``, also
+in the vendor README): a changed or swapped file never reaches the page (security
+review 2026-10, L-11).
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import html
 import importlib.util
 import json
@@ -31,6 +36,25 @@ ROOT: Final = Path(__file__).resolve().parents[1]
 VENDOR: Final = ROOT / "infra" / "api-docs" / "vendor" / "redoc"
 DUMP: Final = ROOT / "packages" / "shared-ts" / "scripts" / "dump_openapi.py"
 DEFAULT_OUT: Final = ROOT / "dist" / "api-docs"
+# SHA-256 of the reviewed ``redoc.standalone.js`` (Redoc 2.5.4, see the vendor README).
+REDOC_SHA256: Final = "dcaf76612bc4a3fbcc923a8966dee2f6146a5f32e5ce1b6f02dd60cbbf89500b"
+
+
+class BundleChecksumError(SystemExit):
+    """The vendored Redoc bundle is not the reviewed one: nothing is written."""
+
+
+def read_bundle(path: Path | None = None, expected: str = REDOC_SHA256) -> str:
+    """The vendored bundle as text, only when its SHA-256 is the reviewed one."""
+    raw = (path or VENDOR / "redoc.standalone.js").read_bytes()
+    actual = hashlib.sha256(raw).hexdigest()
+    if actual != expected:
+        raise BundleChecksumError(
+            f"the vendored Redoc bundle's SHA-256 is {actual}, not the reviewed {expected}: "
+            "review the new bundle and update REDOC_SHA256 (infra/api-docs/vendor/redoc/README.md)"
+        )
+    return raw.decode("utf-8")
+
 
 CSP: Final = "; ".join(
     [
@@ -110,6 +134,9 @@ def render_page(schema: dict[str, Any], redoc_js: str) -> str:
 
 
 def build(out: Path, spec_path: Path | None = None) -> tuple[Path, Path]:
+    # First, before anything is written: a bundle that is not the reviewed one stops the
+    # build.
+    redoc_js = read_bundle()
     if spec_path is not None:
         schema: dict[str, Any] = json.loads(spec_path.read_text(encoding="utf-8"))
     else:
@@ -119,7 +146,6 @@ def build(out: Path, spec_path: Path | None = None) -> tuple[Path, Path]:
     spec_file.write_text(
         json.dumps(schema, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    redoc_js = (VENDOR / "redoc.standalone.js").read_text(encoding="utf-8")
     page = out / "index.html"
     page.write_text(render_page(schema, redoc_js), encoding="utf-8")
     shutil.copyfile(VENDOR / "LICENSE", out / "redoc-LICENSE.txt")
