@@ -17,8 +17,8 @@ sandbox flag with counts.
   reconcile (their name has ``reconcile`` or ``sweep`` in it).
 * **Errors and latency**: from OpenTelemetry metrics when they are exported, else from
   the API's in-memory request counters; ``source`` says which.
-* **Storage and per-tenant usage**: documents, stored bytes, members, model calls and
-  cost this month per organisation (``ops_tenant_usage``).
+* **Storage and per-tenant usage**: documents, stored bytes, members, model calls (paid
+  and reused apart) and cost this month per organisation (``ops_tenant_usage``).
 * **Schedules**: the job registry (what runs when).
 """
 
@@ -238,7 +238,12 @@ async def _tenants(session: AsyncSession, now: datetime) -> tuple[Section, Secti
                     "members": int(r.members),
                     "documents": int(r.documents),
                     "storage_bytes": int(r.storage_bytes),
+                    # Every call, then apart: the paid ones and those that reused an
+                    # earlier answer (no model request, zero cost), as on the AI
+                    # governance board.
                     "model_calls_month": int(r.model_calls),
+                    "paid_calls_month": int(r.model_calls) - int(r.reused_calls),
+                    "reused_calls_month": int(r.reused_calls),
                     "cost_usd_month": int(r.cost_micros) / MICROS,
                 },
             )

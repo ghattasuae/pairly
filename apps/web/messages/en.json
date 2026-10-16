@@ -4733,6 +4733,8 @@
       "documents": "documents",
       "storage_bytes": "bytes stored",
       "model_calls_month": "model calls this month",
+      "paid_calls_month": "paid model calls this month",
+      "reused_calls_month": "reused answers this month (no cost)",
       "cost_usd_month": "cost this month (USD)",
       "schedule": "runs",
       "description": "what it does",

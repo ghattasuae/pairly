@@ -474,6 +474,40 @@ async def test_ops_dashboard_is_for_the_system_organisation_only(
         assert content not in raw, content
 
 
+async def test_ops_tenant_usage_counts_reused_calls_apart_from_paid_ones(
+    pay_api: PayApi, world: PayWorld, other: PayWorld
+) -> None:
+    """As on the AI governance board: two paid calls and one reused answer (zero cost)
+    are three calls this month, two paid, one reused, and the cost of the paid ones."""
+    api = pay_api
+    store = DatabaseCallStore()
+    # A cost no other test's organisation reaches, so this one is in the top 50.
+    big = 10**12
+    session = await api.in_org(world)
+    async with session, session.begin():
+        original = await store.insert(session, _call_row(world, cost_micros=big))
+        await store.insert(session, _call_row(world, cost_micros=big))
+        await store.insert(
+            session, _call_row(world, cost_micros=0, latency_ms=0, reused_from=original)
+        )
+    _system(api, world.org_id)
+    try:
+        board = await api.ok("GET", "/v1/ops/dashboard", world, "admin")
+    finally:
+        _system(api, None)
+    usage = {i["id"]: i for i in _section(board, "tenant_usage")["items"]}
+    detail = usage[str(world.org_id)]["detail"]
+    assert (
+        detail["model_calls_month"],
+        detail["paid_calls_month"],
+        detail["reused_calls_month"],
+    ) == (3, 2, 1)
+    assert detail["cost_usd_month"] == 2 * big / 1_000_000
+    if str(other.org_id) in usage:
+        theirs = usage[str(other.org_id)]["detail"]
+        assert (theirs["paid_calls_month"], theirs["reused_calls_month"]) == (0, 0)
+
+
 async def test_ops_jobs_lists_job_runs(pay_api: PayApi, world: PayWorld) -> None:
     api = pay_api
     sessionmaker = create_sessionmaker(api.engine)
