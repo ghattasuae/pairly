@@ -297,6 +297,8 @@ async def ticket_detail(
     approval_status, steps = await _approval_view(session, ticket.approval_id)
     awaiting_call = ticket.status == TicketStatus.AWAITING_VERIFICATION.value
     is_requester = ticket.requester_user_id is not None and ticket.requester_user_id == actor.id
+    # Recorded the number to call (M-04): someone else calls it.
+    recorded_phone = ticket.phone_set_by is not None and ticket.phone_set_by == actor.id
     can_cancel = (awaiting_call and verifier) or (
         ticket.status == TicketStatus.COOLING_OFF.value and approver
     )
@@ -330,10 +332,11 @@ async def ticket_detail(
         vendor_payment_hold=vendor.payment_hold,
         vendor_hold_reason=vendor.hold_reason,
         decision_ids=list(ticket.decision_ids),
-        can_verify=awaiting_call and verifier and not is_requester,
+        can_verify=awaiting_call and verifier and not is_requester and not recorded_phone,
         can_cancel=bool(can_cancel),
         can_start_approval=ticket.status == TicketStatus.AWAITING_APPROVAL.value
         and ticket.approval_id is None
         and verifier
-        and not is_requester,
+        and not is_requester
+        and not recorded_phone,
     )

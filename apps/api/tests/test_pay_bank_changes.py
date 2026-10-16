@@ -28,7 +28,13 @@ from pairly_core.approvals.executor import ExecutorRefusedError
 from pairly_core.db import create_sessionmaker
 from pairly_core.jobs.registry import JobContext
 from pairly_core.workflow.spec import FinalActionCall
-from pairly_pay.bank_changes import activate_due, approve_bank_change, get_ticket
+from pairly_pay.bank_changes import (
+    ActivationRefusedError,
+    activate,
+    activate_due,
+    approve_bank_change,
+    get_ticket,
+)
 from pairly_pay.jobs import activate_due_changes
 
 from .pay_support import (
@@ -542,6 +548,142 @@ async def test_final_action_rechecks_dual_control(pay_api: PayApi, world: PayWor
                     await approve_bank_change(session, case)
             assert caught.value.reason == reason
     assert verified["status"] == "awaiting_approval"
+
+
+NEW_PHONE = "+971 4 555 0123"
+
+
+async def _denials(owner: AsyncEngine, world: PayWorld, ticket_id: str) -> list[Any]:
+    rows = await owner_rows(
+        owner,
+        world.org_id,
+        "SELECT actor_id, payload FROM audit_events WHERE action = 'core.authz.denied' "
+        "AND entity_id = :t ORDER BY seq",
+        {"t": ticket_id},
+    )
+    return [r for r in rows if r.payload.get("reason") == "phone_recorder_cannot_verify"]
+
+
+async def test_the_phone_changer_cannot_verify_on_the_new_number(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, M-04: a clerk changes the vendor's number on file, then
+    records the call back of a change opened by someone else, on that number. Refused in
+    the API (audited) and again in the final action and the activation."""
+    api = pay_api
+    vendor = await _vendor(api, world, 2)
+    await api.ok(
+        "PATCH",
+        f"/v1/pay/vendors/{vendor['id']}",
+        world,
+        "clerk2",
+        json={"phone_on_file": NEW_PHONE},
+    )
+    ticket = await _open(api, world, vendor, bank_index=7, who="clerk")
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT phone_set_by, phone_recently_changed FROM pay_bank_change_tickets WHERE id = :t",
+        {"t": ticket["id"]},
+    )
+    assert row.phone_set_by == world.id("clerk2")
+    assert row.phone_recently_changed is True
+    seen = await _ticket(api, world, ticket["id"], who="clerk2")
+    assert seen["can_verify"] is False
+    assert seen["can_start_approval"] is False
+    refused = await _call(api, world, ticket, "confirmed", who="clerk2")
+    assert refused.status_code == 403, refused.text
+    assert refused.json()["code"] == "segregation_of_duties"
+    (denial,) = await _denials(owner_engine, world, ticket["id"])
+    assert denial.actor_id == str(world.id("clerk2"))
+    assert (await _ticket(api, world, ticket["id"]))["status"] == "awaiting_verification"
+    # Someone who neither asked nor recorded the number calls it.
+    verified = await _call(api, world, ticket, "confirmed", who="finance")
+    assert verified.status_code == 200, verified.text
+    assert verified.json()["status"] == "awaiting_approval"
+
+    # The final action and the activation refuse a verifier who recorded the number,
+    # whatever the ticket says.
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_bank_change_tickets SET verified_by = :c WHERE id = :t",
+        {"c": world.id("clerk2"), "t": ticket["id"]},
+    )
+    async with await api.in_org(world) as session, session.begin():
+        current = await get_ticket(session, uuid.UUID(ticket["id"]))
+        assert current.run_id is not None
+        assert current.approval_id is not None
+        call = FinalActionCall(
+            org_id=world.org_id,
+            run_id=current.run_id,
+            approval_id=current.approval_id,
+            step_key="dual_approval",
+            payload={"ticket_id": ticket["id"], "details_digest": current.details_digest},
+            approver_ids=(world.id("approver"), world.id("approver2")),
+        )
+        with pytest.raises(ExecutorRefusedError) as caught:
+            async with session.begin_nested():
+                await approve_bank_change(session, call)
+        assert caught.value.reason == "verifier_recorded_phone"
+        current.status = "cooling_off"
+        current.approved_at = datetime.now(UTC)
+        current.approver_ids = [str(world.id("approver")), str(world.id("approver2"))]
+        with pytest.raises(ActivationRefusedError) as stopped:
+            async with session.begin_nested():
+                await activate(session, current, now=datetime.now(UTC))
+        assert stopped.value.reason == "verifier_recorded_phone"
+        await session.rollback()
+
+
+async def test_the_phone_changer_may_verify_once_the_window_has_passed(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    api = pay_api
+    vendor = await _vendor(api, world, 3)
+    await api.ok(
+        "PATCH",
+        f"/v1/pay/vendors/{vendor['id']}",
+        world,
+        "clerk2",
+        json={"phone_on_file": NEW_PHONE},
+    )
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_vendors SET phone_changed_at = now() - interval '31 days' WHERE id = :v",
+        {"v": vendor["id"]},
+    )
+    ticket = await _open(api, world, vendor, bank_index=8, who="clerk")
+    assert (await _ticket(api, world, ticket["id"], who="clerk2"))["can_verify"] is True
+    verified = await _call(api, world, ticket, "confirmed", who="clerk2")
+    assert verified.status_code == 200, verified.text
+
+
+async def test_whoever_recorded_a_new_vendors_number_never_verifies_its_first_account(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """M-04: the clerk who entered a new vendor's number on file (no verified account
+    yet) cannot verify the first bank details on it, whoever asked for them."""
+    api = pay_api
+    body = vendor_body(4)
+    body.pop("bank")
+    vendor = await api.ok("POST", "/v1/pay/vendors", world, "clerk", status=201, json=body)
+    assert vendor["accounts"] == []
+    ticket = await _open(api, world, vendor, bank_index=6, who="clerk2")
+    (row,) = await owner_rows(
+        owner_engine,
+        world.org_id,
+        "SELECT phone_set_by FROM pay_bank_change_tickets WHERE id = :t",
+        {"t": ticket["id"]},
+    )
+    assert row.phone_set_by == world.id("clerk")
+    refused = await _call(api, world, ticket, "confirmed", who="clerk")
+    assert refused.status_code == 403
+    assert refused.json()["code"] == "segregation_of_duties"
+    assert len(await _denials(owner_engine, world, ticket["id"])) == 1
+    verified = await _call(api, world, ticket, "confirmed", who="finance")
+    assert verified.status_code == 200, verified.text
 
 
 async def test_tenant_isolation_of_tickets(

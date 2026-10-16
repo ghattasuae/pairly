@@ -11,7 +11,9 @@
   on-file number shows only to people who verify; the full new IBAN only to people
   who verify or approve.
 * ``POST /bank-changes/{id}/calls``     record the call back on the number on file
-  (``pay.bank_change.verify``, a second factor; never the requester). ``confirmed``
+  (``pay.bank_change.verify``, a second factor; never the requester, nor the person who
+  recorded that number while it is recent or the vendor new, 403
+  ``segregation_of_duties``, audited). ``confirmed``
   starts the dual approval run; ``not_confirmed`` rejects the change and keeps the hold.
 * ``POST /bank-changes/{id}/start-approval``  start the approval run again when it did
   not start (same rules as recording the call)
@@ -54,6 +56,7 @@ from pairly_pay.bank_changes import (
     get_ticket,
     open_ticket,
     record_call,
+    refuse_phone_recorder,
 )
 from pairly_pay.common import TICKET_ENTITY, By
 from pairly_pay.graph import GRAPH
@@ -214,6 +217,7 @@ async def start_approval(
                 actor=actor, permission=BANK_CHANGE_VERIFY, reason="segregation_of_duties"
             ),
         )
+    refuse_phone_recorder(ticket, actor, "start its approval")
     if ticket.run_id is not None:
         # A run owns it; only a run that ended may be replaced.
         run = await session.scalar(select(WorkflowRun).where(WorkflowRun.id == ticket.run_id))

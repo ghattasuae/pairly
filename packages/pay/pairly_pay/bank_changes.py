@@ -35,15 +35,19 @@ Rules, enforced here and again in the final action:
   (``phone_recently_changed``) for the verifier and the approvers.
 * **Segregation of duties** (four eyes twice):
 
-  1. the verifier is never the requester;
+  1. the verifier is never the requester, nor the person who recorded the number on
+     file while their change of it is within the phone-change window or while the
+     vendor has no verified account (``phone_set_by``, snapshot at opening; security
+     review 2026-10, M-04);
   2. neither the requester nor the verifier may approve, at any step, directly or as a
      delegate: both are preparers of the approval, so the approvals engine never
      assigns them and refuses their decision;
   3. two approvals by two different people: the ``pay.bank_change`` rules have two
      steps and the engine never lets one person decide two steps of a chain;
-  4. the final action re-checks 2 and 3 from the decision rows (at least two distinct
-     approvers, none of them the requester or the verifier), whatever the rules say,
-     and refuses otherwise (fail closed).
+  4. the final action re-checks 1 to 3 from the ticket and the decision rows (at least
+     two distinct approvers, none of them the requester or the verifier, a verifier who
+     did not record the number), whatever the rules say, and refuses otherwise (fail
+     closed); the activation checks the verifier again.
 
   A change a person requested therefore needs four different people; a change opened
   by the system (an invoice check) or the vendor needs three.
@@ -111,6 +115,7 @@ from pairly_pay.vendors import (
     iban_of,
     new_account,
     phone_of,
+    phone_recorder_barred,
     settings_of,
 )
 
@@ -329,6 +334,9 @@ async def open_ticket(
     settings = await settings_of(session)
     window = timedelta(days=settings.phone_change_window_days)
     recent_phone = vendor.phone_changed_at is not None and now - vendor.phone_changed_at <= window
+    barred = phone_recorder_barred(
+        vendor, has_verified_account=current is not None, now=now, window=window
+    )
 
     if reuse_account_id is not None:
         account = await _account(session, reuse_account_id)
@@ -376,6 +384,7 @@ async def open_ticket(
         ),
         verify_phone_bidx=vendor.phone_bidx,
         phone_recently_changed=recent_phone,
+        phone_set_by=barred,
         cooling_off_hours=settings.cooling_off_hours,
         approver_ids=[],
         decision_ids=[],
@@ -393,6 +402,7 @@ async def open_ticket(
         "proposed_account_id": str(account.id),
         "iban_last4": bank.last4,
         "phone_recently_changed": recent_phone,
+        "phone_recorder_barred": str(barred) if barred else None,
         "cooling_off_hours": ticket.cooling_off_hours,
         "request_carried_contact_details": clean_claims is not None,
     }
@@ -425,6 +435,23 @@ async def open_ticket(
 # ------------------------------------------------------------------ verification
 
 
+def refuse_phone_recorder(ticket: PayBankChangeTicket, actor: Actor, step: str) -> None:
+    """The person who recorded the number to call cannot verify the change on it (M-04).
+    Raised as a permission denial, so it is audited (``pairly_core.identity``)."""
+    if ticket.phone_set_by is not None and ticket.phone_set_by == actor.id:
+        raise SegregationOfDutiesError(
+            f"the person who recorded the phone number on file cannot {step}: "
+            "someone else calls it",
+            denial=Denial(
+                actor=actor,
+                permission=BANK_CHANGE_VERIFY,
+                reason="phone_recorder_cannot_verify",
+                resource_type=TICKET_ENTITY,
+                resource_id=str(ticket.id),
+            ),
+        )
+
+
 async def record_call(
     session: AsyncSession,
     actor: Actor,
@@ -448,6 +475,7 @@ async def record_call(
                 actor=actor, permission=BANK_CHANGE_VERIFY, reason="segregation_of_duties"
             ),
         )
+    refuse_phone_recorder(ticket, actor, "verify it")
     now = datetime.now(UTC)
     by = By.of(actor)
     number = verify_phone_of(ticket)
@@ -583,6 +611,8 @@ async def approve_bank_change(session: AsyncSession, call: FinalActionCall) -> M
         raise ExecutorRefusedError("dual_approval_missing")
     if ticket.verified_by is None or ticket.verification_call_id is None:
         raise ExecutorRefusedError("not_verified")
+    if ticket.phone_set_by is not None and ticket.verified_by == ticket.phone_set_by:
+        raise ExecutorRefusedError("verifier_recorded_phone")
 
     now = datetime.now(UTC)
     by = By.system()
@@ -642,6 +672,8 @@ async def activate(session: AsyncSession, ticket: PayBankChangeTicket, *, now: d
         raise ActivationRefusedError("dual_approval_missing")
     if {str(p) for p in preparers(ticket)} & set(ticket.approver_ids):
         raise ActivationRefusedError("requester_or_verifier_approved")
+    if ticket.phone_set_by is not None and ticket.verified_by == ticket.phone_set_by:
+        raise ActivationRefusedError("verifier_recorded_phone")
     vendor = await get_vendor(session, ticket.vendor_id, lock=True)
     proposed = await _account(session, ticket.proposed_account_id)
     if (

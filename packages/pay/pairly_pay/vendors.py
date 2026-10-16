@@ -16,6 +16,7 @@
 * ``risk_profile`` (brief 4.1.5): record age, recent bank changes, a recent change of
   the phone number on file, the hold, and payment history (a placeholder until the
   payment work package records payments).
+* ``phone_recorder_barred``: who may not verify a change on the number on file (M-04).
 """
 
 from __future__ import annotations
@@ -291,11 +292,15 @@ def seal_contacts(vendor: PayVendor, contacts: list[dict[str, Any]]) -> None:
     )
 
 
-def set_phone(vendor: PayVendor, phone: str | None, now: datetime) -> bool:
-    """Store the number on file and its blind index. Returns whether it changed."""
+def set_phone(
+    vendor: PayVendor, phone: str | None, now: datetime, *, set_by: uuid.UUID | None
+) -> bool:
+    """Store the number on file, its blind index and who recorded it (``set_by``, the
+    person; ``None`` when no staff member did). Returns whether it changed."""
     new_bidx = blind_index("phone", phone, vendor.org_id) if phone else None
     if new_bidx == vendor.phone_bidx and (phone is None) == (vendor.phone_on_file is None):
         return False
+    vendor.phone_set_by = set_by if phone else None
     vendor.phone_on_file = (
         seal(PayVendor, "phone_on_file", phone, org_id=vendor.org_id, row_id=vendor.id)  # type: ignore[assignment]
         if phone
@@ -380,7 +385,12 @@ async def create_vendor(
         activated_at=now if status is VendorStatus.ACTIVE else None,
     )
     seal_contacts(vendor, data.contacts)
-    set_phone(vendor, data.phone_on_file, now)
+    set_phone(
+        vendor,
+        data.phone_on_file,
+        now,
+        set_by=by.user_id if source is VendorSource.STAFF else None,
+    )
     vendor.phone_changed_at = None  # the first number is not a change
     session.add(vendor)
     await session.flush()
@@ -477,6 +487,29 @@ async def settings_of(session: AsyncSession) -> Settings:
     if row is None:
         return Settings()
     return Settings(row.cooling_off_hours, row.phone_change_window_days)
+
+
+# ------------------------------------------------------------------ the phone recorder
+
+
+def phone_recorder_barred(
+    vendor: PayVendor,
+    *,
+    has_verified_account: bool,
+    now: datetime,
+    window: timedelta,
+) -> uuid.UUID | None:
+    """The person who may not verify a bank-detail change on the number on file (security
+    review 2026-10, M-04): whoever recorded it, while their change is within the phone-
+    change window, or while the vendor has no verified (active) account yet, the number
+    then being one they entered for a new vendor. ``None``: nobody is barred."""
+    if vendor.phone_set_by is None or vendor.phone_on_file is None:
+        return None
+    if not has_verified_account:
+        return vendor.phone_set_by
+    if vendor.phone_changed_at is not None and now - vendor.phone_changed_at <= window:
+        return vendor.phone_set_by
+    return None
 
 
 # ------------------------------------------------------------------ risk profile

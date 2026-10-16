@@ -301,7 +301,7 @@ async def update(
             raise ConflictError(
                 "the phone number on file cannot change while a bank change is open"
             )
-        phone_changed = set_phone(vendor, phone, now)
+        phone_changed = set_phone(vendor, phone, now, set_by=actor.id)
         if phone_changed:
             changed.append("phone_on_file")
     vendor.updated_at = now

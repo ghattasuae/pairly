@@ -261,6 +261,11 @@ class PayVendor(Base, OrgScoped):
         String(64), nullable=True, info=blind_index_info("phone", "phone_on_file")
     )
     phone_changed_at: Mapped[datetime | None] = _ts()
+    # The person who recorded the number on file (created the vendor with it, or last
+    # changed it): never the one who verifies a bank-detail change on it while the
+    # change is recent or the vendor has no verified account yet (``pay_0019``, security
+    # review 2026-10, M-04). NULL when no staff member recorded it.
+    phone_set_by: Mapped[uuid.UUID | None] = _user_fk()
     # Domains invoices and emails from this vendor normally come from.
     email_domains: Mapped[list[str]] = _jsonb_list()
     category: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -404,6 +409,11 @@ class PayBankChangeTicket(Base, OrgScoped):
     phone_recently_changed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
+    # The person who recorded the number to call, when that bars them from verifying
+    # this change: they changed it within the phone-change window, or recorded it for a
+    # vendor without a verified account (``pay_0019``, M-04). Checked when the call is
+    # recorded and again in the final action and the activation.
+    phone_set_by: Mapped[uuid.UUID | None] = _user_fk()
     cooling_off_hours: Mapped[int] = mapped_column(Integer, nullable=False)
     verified_by: Mapped[uuid.UUID | None] = _user_fk()
     verified_at: Mapped[datetime | None] = _ts()

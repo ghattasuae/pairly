@@ -13,7 +13,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | M-01 | Medium | Insider approval abuse | A delegation kept its seat after the delegator lost the role or left; the executor checked only the delegate | Fixed, `23d7670` |
 | M-02 | Medium | API key leakage, elevation | An API key kept every scope after its creator was moved to another role or removed | Fixed, `9690234` |
 | M-03 | Medium | BEC, insider | Bank details a staff member enters on a new vendor are active at once, with no second person | Open, proposed fix below |
-| M-04 | Medium | BEC, insider | The person who changed a vendor's phone number on file (staff) may then record the call back on that number | Open, proposed fix below |
+| M-04 | Medium | BEC, insider | The person who changed a vendor's phone number on file (staff) may then record the call back on that number | Fixed |
 | M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Open, proposed fix below |
 | L-01 | Low | Recent change: response reuse | Reuse could pick a live decision replay (`replay_of`) once the original left the window | Fixed, `0e09c1f` |
 | L-02 | Low | Supply chain | CI ran `uv sync` without `--locked` | Fixed, `1b9ec47` |
@@ -72,11 +72,13 @@ No critical finding. Nothing found in: prompt injection reaching a model input o
 
 **Proposed fix.** Create staff-entered bank details as `proposed` and activate them through the same ticket (call back plus dual approval), or at least require a second person with `pay.vendor.write` to confirm a new vendor before its first invoice can be approved.
 
-### M-04 The phone changer can verify on the new number (open)
+### M-04 The phone changer can verify on the new number (fixed)
 
 A clerk may `PATCH` a vendor's phone number on file (no ticket open) and then record the call back of a ticket the vendor or the system opened, on that number. The flag `phone_recently_changed` shows it, and two approvers who are neither requester nor verifier are still needed.
 
-**Proposed fix.** Store who last changed the number (`phone_changed_by`) and refuse `record_call` by that person while the change is within the window; better, make a staff phone change itself need a second person.
+**Fix.** The vendor records who set its number on file (`pay_vendors.phone_set_by`, migration `pay_0019`): the person who created the vendor with it or last changed it (NULL for a number nobody on the staff entered). A ticket snapshots, at opening, the person that bars from verifying (`pay_bank_change_tickets.phone_set_by`): whoever changed the number within the phone-change window, or recorded it while the vendor has no verified account (a new vendor's number). `record_call` and `start-approval` refuse that person (403 `segregation_of_duties`, a permission denial, so `core.authz.denied` is audited with the ticket and `phone_recorder_cannot_verify`); the ticket view gives them no verify or start button. The final action (`verifier_recorded_phone`) and the activation refuse a ticket whose verifier recorded the number, whatever the rows say (fail closed).
+
+**Tests.** `apps/api/tests/test_pay_bank_changes.py`: `test_the_phone_changer_cannot_verify_on_the_new_number` (refused and audited, another person verifies, the final action and the activation refuse a forged verifier), `test_the_phone_changer_may_verify_once_the_window_has_passed`, `test_whoever_recorded_a_new_vendors_number_never_verifies_its_first_account`.
 
 ### M-05 Onboarding call-back number comes from the onboarding form (open)
 
