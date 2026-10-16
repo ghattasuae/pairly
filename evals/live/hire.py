@@ -336,7 +336,10 @@ async def suite_extraction(
         "documents": sorted(outputs),
         "extraction_model_accuracy": model_extraction(cases),
         "rubric_agreement": rubric_agreement(cases),
-        "evidence_validity": evidence_metrics(cases),
+        "evidence_validity": {
+            **evidence_metrics(cases),
+            "measured_on": "live model scoring results (this run)",
+        },
         "usage": meter.summary(),
         "seconds": round(time.monotonic() - started, 1),
     }

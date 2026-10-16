@@ -99,12 +99,13 @@ def section(hire: dict[str, Any], pay: dict[str, Any]) -> str:
         BEGIN,
         "## Live baseline (`python -m evals.live`)",
         "",
-        "First measurement of the model-dependent metrics with a real model (Anthropic, "
-        "small tier first with escalation, as in production). Synthetic data only; labels "
-        "are rule-based, not human judgments. Recorded responses (`evals/recordings/`) make "
-        "a second run free. These numbers do not gate: `hire.json` keeps "
+        "The model-dependent metrics measured with a real model (Anthropic, small tier "
+        "first with escalation, and response reuse for identical requests, as in "
+        "production). Synthetic data only; labels are rule-based, not human judgments. "
+        "Recorded responses (`evals/recordings/*_live.jsonl.xz`, committed) make a second "
+        "run free on any machine. These numbers do not gate: `hire.json` keeps "
         "`pending_live_run` and `thresholds.yaml` is unchanged until the founder sets "
-        "thresholds.",
+        "thresholds; the Brief target column is what the founder decides against.",
         "",
         f"- Date (UTC): {dates[0] if dates else 'not run'}"
         + (f" to {dates[-1]}" if len(dates) > 1 else ""),
@@ -174,27 +175,65 @@ def section(hire: dict[str, Any], pay: dict[str, Any]) -> str:
         d = fair["model_score_delta"]
         lines += [
             _row(
-                "Fairness: max overall score change per pair",
+                "Fairness: max overall score change per pair (all pairs, run 1)",
                 _fmt(d["max_delta"]),
                 f"{d['pairs']} pairs",
                 fair,
                 "below a set threshold; " + NO_TARGET,
             ),
             _row(
-                "Fairness: mean overall score change per pair",
+                "Fairness: mean overall score change per pair (all pairs, run 1)",
                 _fmt(d["mean_delta"]),
                 f"{d['pairs']} pairs",
                 fair,
                 NO_TARGET,
             ),
             _row(
-                "Fairness: pairs with any score change",
+                "Fairness: pairs with any score change (all pairs, run 1)",
                 _fmt(d["pairs_with_any_change"]),
                 f"{d['pairs']} pairs",
                 fair,
                 NO_TARGET,
             ),
         ]
+        same = d.get("input_identical")
+        if same:
+            lines += [
+                _row(
+                    "Fairness, input-identical pairs: max score change",
+                    _fmt(same["max_delta"]),
+                    f"{same['pairs']} pairs",
+                    fair,
+                    "0 by construction (response reuse); below a set threshold",
+                ),
+            ]
+        diff = d.get("input_different")
+        if diff:
+            lines += [
+                _row(
+                    f"Fairness, input-different pairs: max change of the mean of "
+                    f"{diff['runs_per_cv']} runs",
+                    _fmt(diff["max_delta_of_means"]),
+                    f"{diff['pairs']} pairs",
+                    fair,
+                    "below a set threshold; " + NO_TARGET,
+                ),
+                _row(
+                    "Fairness, input-different pairs: model noise (max spread of one CV "
+                    "over its runs)",
+                    _fmt(diff["max_noise"]),
+                    f"{2 * diff['pairs']} CVs x {diff['runs_per_cv']} runs",
+                    fair,
+                    NO_TARGET,
+                ),
+                _row(
+                    "Fairness, input-different pairs: change above the noise",
+                    _fmt(diff["pairs_delta_above_noise"]),
+                    f"{diff['pairs']} pairs",
+                    fair,
+                    NO_TARGET,
+                ),
+            ]
     inj = suites["hire-injection"]
     if inj:
         lines += [
@@ -287,13 +326,32 @@ def section(hire: dict[str, Any], pay: dict[str, Any]) -> str:
             "eval subset plus the demo trio (`synth.pay.recordings.subset_specs`). Ready "
             f"without a person: {a['extraction_ready']} of {a['invoices']}."
         )
+    if ext:
+        agr = ext["rubric_agreement"]
+        low = sorted(agr["per_criterion"].items(), key=lambda kv: kv[1]["exact"])[:3]
+        lines.append(
+            "- Rubric agreement, lowest exact agreement per criterion: "
+            + ", ".join(f"`{k}` {_fmt(v['exact'])} (n {v['n']})" for k, v in low)
+            + f". Model's own score before no-evidence-no-credit: exact "
+            f"{_fmt(agr['model_exact_agreement'])}, within one {_fmt(agr['model_within_one'])}."
+        )
+        rejected = ext["evidence_validity"].get("rejected_quotes", {})
+        if rejected:
+            lines.append(
+                "- Evidence quotes the model gave that were rejected: "
+                + ", ".join(f"{n} {k}" for k, n in sorted(rejected.items()))
+                + " (no credit for them; every accepted quote is valid)."
+            )
     if fair:
         d = fair["model_score_delta"]
+        reused = fair["usage"].get("calls_reused", 0)
         lines.append(
             f"- Fairness: {d['pairs_with_byte_identical_scoring_input']} of {d['pairs']} pairs "
-            "sent the scoring model byte-identical input; the largest change on those was "
-            f"{_fmt(d['max_delta_byte_identical_input'])} points, so changes there are the "
-            "model's own run-to-run variation, not the swapped attribute."
+            "sent the scoring model byte-identical input; with response reuse they get the "
+            f"same answer ({reused} calls reused), largest change "
+            f"{_fmt(d['max_delta_byte_identical_input'])}. The other pairs differ in what "
+            "the model reads; their change is reported next to the model's own run-to-run "
+            "spread."
         )
     if inj and inj.get("classifier_unavailable"):
         lines.append(

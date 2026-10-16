@@ -38,9 +38,9 @@ Numbers come only from result files committed in `evals/results/`, exactly as wr
 
 | Metric | Value | Over | Run | Source |
 |---|---|---|---|---|
-| Invoice header field accuracy, percent (live run) | 81.5 | 356 fields | complete | `pay_live.json` `extraction.accuracy.header_field_accuracy_pct` |
-| Invoice line-item field accuracy, percent (live run) | 97.6 | 576 fields | complete | `pay_live.json` `extraction.accuracy.line_item_field_accuracy_pct` |
-| Invoice total accuracy, percent (live run) | 85.3 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.total_accuracy_pct` |
-| Invoice VAT accuracy, percent (live run) | 79.4 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.vat_accuracy_pct` |
-| Invoices ready without a person, percent (live run) | 17.6 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.extraction_ready_pct` |
-| Mean cost per invoice in USD (live run) | 0.009237 | 34 invoices | complete | `pay_live.json` `extraction.usage.cost_usd_per_document.mean` |
+| Invoice header field accuracy, percent (live run) | 97.2 | 356 fields | complete | `pay_live.json` `extraction.accuracy.header_field_accuracy_pct` |
+| Invoice line-item field accuracy, percent (live run) | 98.8 | 576 fields | complete | `pay_live.json` `extraction.accuracy.line_item_field_accuracy_pct` |
+| Invoice total accuracy, percent (live run) | 100.0 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.total_accuracy_pct` |
+| Invoice VAT accuracy, percent (live run) | 88.2 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.vat_accuracy_pct` |
+| Invoices ready without a person, percent (live run) | 73.5 | 34 invoices | complete | `pay_live.json` `extraction.accuracy.extraction_ready_pct` |
+| Mean cost per invoice in USD (live run) | 0.009158 | 34 invoices | complete | `pay_live.json` `extraction.usage.cost_usd_per_document.mean` |

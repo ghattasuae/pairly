@@ -40,8 +40,8 @@ Numbers come only from result files committed in `evals/results/`, exactly as wr
 |---|---|---|---|---|
 | Attack payloads reaching the scoring model without the classifier | 5 | 5 paraphrased payloads |  | `hire.json` `injection.scoring_input_payload_leaks.classifier_scope_without_classifier.leaks` |
 | Payload leaks with the classifier (recorded run) | pending a live run |  |  | `hire.json` `injection.scoring_input_payload_leaks.classifier_scope` |
-| Classifier recall, payload removed (live run) | 0.6 | 5 attacks | complete | `hire_live.json` `injection.recall_payload_removed` |
-| Paraphrased payloads still in the model input (live run) | 2 | 5 payloads | complete | `hire_live.json` `injection.payloads_left_in_model_input` |
+| Classifier recall, payload removed (live run) | 1.0 | 5 attacks | complete | `hire_live.json` `injection.recall_payload_removed` |
+| Paraphrased payloads still in the model input (live run) | 0 | 5 payloads | complete | `hire_live.json` `injection.payloads_left_in_model_input` |
 | Classifier false-positive rate on clean CVs (live run) | 0.0 | 20 clean CVs | complete | `hire_live.json` `injection.false_positive_rate` |
 
 * Attack payloads reaching the scoring model without the classifier: Shows what the classifier must catch.
