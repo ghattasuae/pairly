@@ -12,6 +12,13 @@ provider, an in-memory call store backed by a recordings file, and a hard cost c
   (JSON lines) at once, with what it measured: tokens, cost, latency, model. A crash or
   the cost cap never loses a paid response. At the end of the run the file is folded
   into the committed, xz-compressed ``<product>_live.jsonl.xz``.
+* Pruning (``prune_recordings``, run by ``python -m evals.live compress``): a reworded
+  prompt or schema changes every request hash, so the answers to the earlier wording
+  are never asked for again. The suites are replayed offline (``OfflineProvider``: no
+  model is ever called) to learn every request hash they ask for now, and the entries
+  whose hash none of them asks for are dropped. Entries that still match stay. What the
+  dropped entries cost is kept in ``<product>_live.pruned.json`` (counts only), so the
+  report's total live spend stays what was really spent.
 * Response reuse (the production router's, on by default): a request already
   answered for another document reuses the first recorded answer (``reused_from``, no
   cost), so byte-identical model input (a fairness pair) gets identical output, as in
@@ -115,6 +122,13 @@ def read_recording_lines(path: Path) -> list[str]:
     return [line for line in dict.fromkeys(lines) if line.strip()]
 
 
+def _write_compressed(compressed: Path, lines: Sequence[str]) -> None:
+    data = ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
+    tmp = compressed.with_name(compressed.name + ".tmp")
+    tmp.write_bytes(lzma.compress(data, format=lzma.FORMAT_XZ, check=lzma.CHECK_CRC64, preset=9))
+    tmp.replace(compressed)
+
+
 def compress_recordings(path: Path) -> Path | None:
     """Fold the plain recordings file into the compressed one (deterministic xz: same
     lines, same bytes) and remove the plain file. Returns the compressed file, or
@@ -122,13 +136,93 @@ def compress_recordings(path: Path) -> Path | None:
     plain, compressed = recording_files(path)
     if not plain.is_file():
         return None
-    lines = read_recording_lines(path)
-    data = ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
-    tmp = compressed.with_name(compressed.name + ".tmp")
-    tmp.write_bytes(lzma.compress(data, format=lzma.FORMAT_XZ, check=lzma.CHECK_CRC64, preset=9))
-    tmp.replace(compressed)
+    _write_compressed(compressed, read_recording_lines(path))
     plain.unlink()
     return compressed
+
+
+PRUNED_FORMAT: Final = "pairly.live-eval-pruned"
+
+
+def pruned_file(path: Path) -> Path:
+    """``<product>_live.pruned.json`` next to the recordings: what pruning dropped."""
+    return recording_files(path)[0].with_suffix(".pruned.json")
+
+
+def read_pruned(path: Path) -> tuple[int, int]:
+    """(entries, cost in micros) of every entry pruning ever dropped from ``path``."""
+    ledger = pruned_file(path)
+    if not ledger.is_file():
+        return 0, 0
+    data = json.loads(ledger.read_text(encoding="utf-8"))
+    if data.get("format") != PRUNED_FORMAT:
+        return 0, 0
+    return int(data.get("entries", 0)), int(data.get("cost_micros", 0))
+
+
+def _entry(line: str) -> dict[str, Any] | None:
+    """A well-formed recording line, parsed (None for any other line)."""
+    try:
+        item = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(item, dict) or item.get("format") != RECORDING_FORMAT:
+        return None
+    entry = item.get("entry")
+    if not isinstance(entry, dict) or not _check_entry(entry):
+        return None
+    return item
+
+
+@dataclass(frozen=True, slots=True)
+class PruneResult:
+    path: Path | None
+    kept: int
+    dropped: int
+
+
+def prune_recordings(path: Path, current: set[str]) -> PruneResult:
+    """Fold the plain file in (as ``compress_recordings``) and drop every entry whose
+    request hash is not in ``current`` (the hashes the suites ask for now). Lines that
+    are not a well-formed entry are left as they are (loading refuses them anyway).
+    Writes the compressed file only when something changed."""
+    plain, compressed = recording_files(path)
+    lines = read_recording_lines(path)
+    kept: list[str] = []
+    dropped = 0
+    dropped_micros = 0
+    for line in lines:
+        item = _entry(line)
+        if item is not None and item["entry"]["request_hash"] not in current:
+            dropped += 1
+            measured = item.get("measured")
+            if isinstance(measured, dict):
+                dropped_micros += int(measured.get("cost_micros", 0) or 0)
+            continue
+        kept.append(line)
+    if not dropped and not plain.is_file():
+        return PruneResult(None, len(kept), 0)
+    if dropped:
+        entries, micros = read_pruned(path)
+        ledger = pruned_file(path)
+        tmp = ledger.with_name(ledger.name + ".tmp")
+        tmp.write_text(
+            json.dumps(
+                {
+                    "format": PRUNED_FORMAT,
+                    "entries": entries + dropped,
+                    "cost_micros": micros + dropped_micros,
+                },
+                indent=1,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        tmp.replace(ledger)
+    _write_compressed(compressed, kept)
+    plain.unlink(missing_ok=True)
+    return PruneResult(compressed, len(kept), dropped)
 
 
 class LiveSetupError(RuntimeError):
@@ -229,9 +323,16 @@ class LiveCallStore:
 
     def load(self) -> None:
         for line in read_recording_lines(self.path):
-            item = json.loads(line)
-            entry = item.get("entry", {})
-            if item.get("format") != RECORDING_FORMAT or not _check_entry(entry):
+            try:
+                item = json.loads(line)
+            except ValueError:
+                item = None
+            entry = item.get("entry", {}) if isinstance(item, dict) else {}
+            if (
+                not isinstance(item, dict)
+                or item.get("format") != RECORDING_FORMAT
+                or not _check_entry(entry)
+            ):
                 self.refused += 1
                 continue
             stored = _stored(uuid.uuid4(), entry)
@@ -350,6 +451,17 @@ class ModelIdProvider:
         return response
 
 
+class OfflineProvider:
+    """Stands in for Anthropic when only recordings may answer: never available, so the
+    router skips it and no request ever leaves the process."""
+
+    name = "anthropic"
+    available = False
+
+    async def generate(self, request: ProviderRequest) -> ProviderResponse:
+        raise LiveSetupError("offline: no model is called")  # pragma: no cover
+
+
 class LiveRouter(ModelRouter):
     """``ModelRouter`` in live mode that replays a per-document recording first.
 
@@ -363,8 +475,11 @@ class LiveRouter(ModelRouter):
     store: LiveCallStore
     anthropic: ModelIdProvider
     allow_reuse: bool = True
+    # Every request hash the run asked for (pruning keeps the recordings of these).
+    seen: set[str]
 
     async def _attempt_reuse(self, **kwargs: Any) -> Any:
+        self.seen.add(kwargs["candidate"].request_hash)
         if not self.allow_reuse:
             return None
         found = self.store.first_recording(kwargs["candidate"].request_hash)
@@ -374,6 +489,7 @@ class LiveRouter(ModelRouter):
 
     async def _attempt_live(self, **kwargs: Any) -> Any:
         candidate = kwargs["candidate"]
+        self.seen.add(candidate.request_hash)
         recording = self.store.find_scoped(candidate.request_hash)
         if recording is not None:
             return await self._replay_recording(
@@ -430,6 +546,7 @@ def build_live_router(
     )
     router.store = store
     router.anthropic = wrapped
+    router.seen = set()
     return router, store, budget
 
 

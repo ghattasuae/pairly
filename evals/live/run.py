@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Command line of the live evals (``python -m evals.live``)."""
+"""Command line of the live evals (``python -m evals.live``).
+
+``compress`` folds each product's plain recordings file into the committed xz one and
+drops the entries no suite asks for any more (``harness.prune_recordings``): every suite
+of the product is replayed offline (no model call, recordings only), with response
+reuse on and off, to learn the request hashes it asks for now. If any suite cannot be
+replayed, nothing is dropped for that product.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +15,7 @@ import argparse
 import asyncio
 import datetime as dt
 import subprocess
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any, Final
 
@@ -21,11 +28,15 @@ from evals.live.harness import (
     LiveRouter,
     LiveSetupError,
     Meter,
+    OfflineProvider,
     build_live_router,
     compress_recordings,
     live_settings,
     merge_result,
+    prune_recordings,
 )
+from pairly_core.llm.prompt_registry import Root
+from pairly_core.llm.settings import LLMSettings, ModelMode
 
 Suite = Callable[
     [LiveRouter, LiveCallStore, CapBudget, Meter, int | None], Awaitable[dict[str, Any]]
@@ -98,6 +109,71 @@ async def _run(suite: Suite, product: str, args: argparse.Namespace) -> dict[str
     return result
 
 
+async def current_request_hashes(
+    product: str,
+    recordings: Path,
+    suites: Mapping[str, tuple[Suite, str]] | None = None,
+    prompt_roots: Iterable[Root] | None = None,
+) -> set[str]:
+    """Every request hash the product's suites ask for now, learnt by replaying them
+    offline from ``recordings``: the provider is never available, so a request without
+    a recording is skipped, never sent. Raises when a suite fails."""
+    if prompt_roots is None:
+        from evals.live.hire import PROMPT_ROOTS
+
+        prompt_roots = PROMPT_ROOTS if product == "hire" else ()
+    roots = list(prompt_roots)
+    seen: set[str] = set()
+    for _, (suite, owner) in sorted((suites or _suites()).items()):
+        if owner != product:
+            continue
+        for reuse in (True, False):
+            settings = LLMSettings(
+                model_mode=ModelMode.LIVE, llm_max_retries=0, llm_reuse_responses=reuse
+            )
+            router, store, budget = build_live_router(
+                settings,
+                recordings=recordings,
+                max_cost_usd=1e9,
+                prompt_roots=roots,
+                provider=OfflineProvider(),
+            )
+            await suite(router, store, budget, Meter(store, budget, every=0), None)
+            seen |= router.seen
+    return seen
+
+
+def compress(
+    products: list[str],
+    recordings: Path | None,
+    suites: Mapping[str, tuple[Suite, str]] | None = None,
+    prompt_roots: Iterable[Root] | None = None,
+) -> int:
+    """``python -m evals.live compress``: prune and compress each product's recordings."""
+    rc = 0
+    for product in products:
+        path = recordings or RECORDINGS_DIR / f"{product}_live.jsonl.xz"
+        try:
+            current = asyncio.run(current_request_hashes(product, path, suites, prompt_roots))
+        except Exception as exc:  # kept whole: never drop on a partial picture
+            print(f"{product}: not pruned, a suite could not be replayed ({type(exc).__name__})")
+            done = compress_recordings(path)
+            print(f"{product}: {_shown(done) if done else 'nothing to compress'}")
+            rc = 1
+            continue
+        result = prune_recordings(path, current)
+        where = _shown(result.path) if result.path else "unchanged"
+        print(
+            f"{product}: {where}, kept {result.kept}, dropped {result.dropped} "
+            "stale entries (no current request asks for them)"
+        )
+    return rc
+
+
+def _shown(path: Path) -> str:
+    return str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else path.name
+
+
 def main(argv: list[str] | None = None) -> int:
     suites = _suites()
     parser = argparse.ArgumentParser(prog="python -m evals.live")
@@ -109,11 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
     if args.suite == "compress":
-        for product in sorted({p for _, p in suites.values()}):
-            path = args.recordings or RECORDINGS_DIR / f"{product}_live.jsonl.xz"
-            done = compress_recordings(path)
-            print(f"{product}: {done.relative_to(ROOT) if done else 'nothing to compress'}")
-        return 0
+        return compress(sorted({p for _, p in suites.values()}), args.recordings)
     if args.suite == "report":
         from evals.live.report import write_live_report
 

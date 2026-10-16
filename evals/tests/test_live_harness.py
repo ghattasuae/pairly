@@ -23,10 +23,13 @@ from evals.live.harness import (
     compress_recordings,
     live_settings,
     percentile,
+    prune_recordings,
+    read_pruned,
     read_recording_lines,
     run_docs,
     run_status,
 )
+from evals.live.run import compress
 from pairly_core.llm.catalog import Usage
 from pairly_core.llm.errors import BudgetExceeded
 from pairly_core.llm.providers.fake import FakeProvider, FakeReply
@@ -297,3 +300,99 @@ def test_recordings_are_read_from_xz_and_plain_and_compress_deterministically(
     copy = compress_recordings(again)
     assert copy is not None
     assert copy.read_bytes() == compressed.read_bytes()
+
+
+def test_compress_drops_entries_no_current_request_asks_for(
+    prompts: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A rerun under a new wording leaves the first wording's answers behind: compress
+    replays the suite offline, keeps what it still asks for and drops the rest."""
+    recordings = tmp_path / "probe_live.jsonl.xz"
+    fake = FakeProvider("anthropic")
+    fake.script(HAIKU, _reply("ok", 0.9))
+
+    async def record(scope: str, wording: str) -> None:
+        router, store, _ = build_live_router(
+            _settings(),
+            recordings=recordings,
+            max_cost_usd=1.0,
+            prompt_roots=[prompts],
+            provider=fake,
+        )
+        store.scope = scope
+        await router.complete(
+            task=TASK, inputs={"x": scope, "w": wording}, schema=Probe, org_id=ORG
+        )
+
+    for scope in ("doc-a", "doc-b"):
+        asyncio.run(record(scope, "first"))
+        asyncio.run(record(scope, "second"))
+    plain = recordings.with_suffix("")
+    plain.write_text(plain.read_text(encoding="utf-8") + "not a recording\n", encoding="utf-8")
+    assert len(read_recording_lines(recordings)) == 5
+    calls = len(fake.requests)
+
+    async def suite(router: Any, store: Any, budget: Any, meter: Any, limit: Any) -> dict[str, Any]:
+        for scope in ("doc-a", "doc-b"):
+            meter.begin(scope)
+            await router.complete(
+                task=TASK, inputs={"x": scope, "w": "second"}, schema=Probe, org_id=ORG
+            )
+            meter.end(scope)
+        return {}
+
+    suites = {"probe-x": (suite, "probe")}
+    assert compress(["probe"], recordings, suites, [prompts]) == 0
+    assert "probe: probe_live.jsonl.xz, kept 3, dropped 2 stale entries" in capsys.readouterr().out
+    assert len(fake.requests) == calls  # offline: no model was asked
+    # What the dropped answers cost stays counted (the report's total live spend).
+    assert read_pruned(recordings) == (2, 2 * 1500)
+    assert not plain.exists()
+    lines = read_recording_lines(recordings)
+    assert "not a recording" in lines  # not an entry: left as it is
+    kept = [json.loads(line)["entry"]["request"]["inputs"] for line in lines[:-1]]
+    assert sorted(i["x"] for i in kept) == ["doc-a", "doc-b"]
+    assert {i["w"] for i in kept} == {"second"}
+    # Again: nothing stale left, the file is not rewritten.
+    before = recordings.read_bytes()
+    assert compress(["probe"], recordings, suites, [prompts]) == 0
+    assert "unchanged, kept 3, dropped 0" in capsys.readouterr().out
+    assert recordings.read_bytes() == before
+    assert read_pruned(recordings) == (2, 2 * 1500)
+
+    # A suite that cannot be replayed drops nothing.
+    async def broken(*_: Any) -> dict[str, Any]:
+        raise RuntimeError("cannot replay")
+
+    asyncio.run(record("doc-c", "first"))
+    assert compress(["probe"], recordings, {"probe-x": (broken, "probe")}, [prompts]) == 1
+    assert "not pruned" in capsys.readouterr().out
+    assert len(read_recording_lines(recordings)) == 4
+
+
+def test_prune_keeps_matching_entries_and_reports_the_count(prompts: Path, tmp_path: Path) -> None:
+    recordings = tmp_path / "rec_live.jsonl"
+    fake = FakeProvider("anthropic")
+    fake.script(HAIKU, _reply("ok", 0.9))
+
+    async def record(x: int) -> str:
+        router, store, _ = build_live_router(
+            _settings(),
+            recordings=recordings,
+            max_cost_usd=1.0,
+            prompt_roots=[prompts],
+            provider=fake,
+        )
+        store.scope = f"doc-{x}"
+        result = await router.complete(task=TASK, inputs={"x": x}, schema=Probe, org_id=ORG)
+        return result.request_hash
+
+    hashes = [asyncio.run(record(x)) for x in (1, 2, 3)]
+    result = prune_recordings(recordings, {hashes[0], hashes[2]})
+    assert (result.kept, result.dropped) == (2, 1)
+    assert result.path == recordings.with_name("rec_live.jsonl.xz")
+    assert not recordings.exists()
+    left = [json.loads(line)["entry"]["request_hash"] for line in read_recording_lines(recordings)]
+    assert left == [hashes[0], hashes[2]]
+    assert prune_recordings(recordings, set(hashes)) == prune_recordings(recordings, set(hashes))
+    assert prune_recordings(recordings, set(hashes)).path is None  # nothing to change

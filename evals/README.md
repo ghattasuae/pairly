@@ -114,6 +114,13 @@ uv run python -m evals.live report   # the "Live baseline" section of report.md
   hand; both forms are read). A later run, on any machine, replays a recording of the
   same request for the same document instead of calling the model, so it is free
   (replayed calls report their recorded cost and latency).
+- `python -m evals.live compress` also prunes: it replays every suite offline (no model
+  is called) to learn the requests they ask for now and drops the recordings no current
+  request asks for (a reworded prompt, rubric or schema leaves the earlier answers
+  behind), printing how many it kept and dropped. If a suite cannot be replayed nothing
+  is dropped. What the dropped entries cost stays counted in
+  `evals/recordings/<product>_live.pruned.json`, so the total live spend in the report
+  does not shrink.
 - Response reuse (`PAIRLY_LLM_REUSE_RESPONSES`, on by default, as in production): a
   request already answered for another document reuses that answer at no cost
   (`reused_from`). Set it to `false` in the run's environment to measure without it.
