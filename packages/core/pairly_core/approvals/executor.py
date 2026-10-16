@@ -107,6 +107,7 @@ async def _decisions_valid(
     excluded = excluded_users(approval)
     seen: dict[uuid.UUID, uuid.UUID] = {}  # person -> step
     approvers: list[uuid.UUID] = []
+    principals: list[uuid.UUID] = []
     for step in steps:
         on_step = [d for d in decisions if d.step_id == step.id]
         if not step_complete(step, decisions):
@@ -145,9 +146,14 @@ async def _decisions_valid(
             elif d.actor_user_id not in step.assignee_ids:
                 raise ExecutorRefusedError("decider_not_assigned")
             approvers.append(d.actor_user_id)
+            if d.on_behalf_of is not None:
+                principals.append(d.on_behalf_of)
 
-    current = await member_permissions(session, registry, approvers)
-    for person in approvers:
+    # Everyone whose seat counted still holds the permission: the person who decided
+    # and, for a delegate, the approver they stood in for (a delegation never outlives
+    # its holder's role; security review 2026-10, M-01).
+    current = await member_permissions(session, registry, [*approvers, *principals])
+    for person in (*approvers, *principals):
         if approval.permission not in current.get(person, frozenset()):
             raise ExecutorRefusedError("approver_lost_permission")
     return tuple(dict.fromkeys(approvers))

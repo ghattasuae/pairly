@@ -614,6 +614,16 @@ async def _seat_for(
         d.delegator_id for d in delegations if d.delegator_id not in decided_principals
     ]
     if open_principals:
+        # A delegation lends a seat, never more than its holder has: a delegator who
+        # left the organisation has no seat to lend (the executor also re-checks that
+        # every principal still holds the permission; security review 2026-10, M-01).
+        members = set(
+            await session.scalars(
+                select(Membership.user_id).where(Membership.user_id.in_(open_principals))
+            )
+        )
+        open_principals = [p for p in open_principals if p in members]
+    if open_principals:
         principal = open_principals[0]
         return _Seat(principal=principal, on_behalf_of=principal, via_escalation=False)
     if actor.id in step.escalation_ids:
