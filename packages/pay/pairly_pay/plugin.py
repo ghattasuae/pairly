@@ -32,6 +32,8 @@ attributes):
                       suggestion, ``pairly_pay.coding``) and ``pay_exception_note`` (the
                       optional personal paragraph of a drafted message,
                       ``pairly_pay.exceptions``).
+* ``document_intake`` the batch API makes an invoice of each submitted document and starts
+  its intake run (``pairly_pay.batch_intake``).
 * ``scheduled_jobs``  ``pay_bank_change_activation``, every 5 minutes: new details go
                       live once their cooling-off period is over.
                       ``pay_invoice_intake_start``, every minute: start reading received
@@ -53,6 +55,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+from pairly_core.batches.intake import DocumentIntake
 from pairly_core.jobs.registry import JobSpec
 from pairly_core.rbac import PermissionSpec
 from pairly_core.workflow.spec import ApprovalType, GraphSpec
@@ -64,6 +67,7 @@ from pairly_pay.approvals import GRAPH as APPROVAL_GRAPH
 from pairly_pay.approvals import INVOICE_RULES_V1, approve_invoice
 from pairly_pay.approvals import VERSION as APPROVAL_GRAPH_VERSION
 from pairly_pay.bank_changes import FINAL_ACTION, approve_bank_change
+from pairly_pay.batch_intake import DOCUMENT_INTAKE
 from pairly_pay.graph import APPROVAL_TYPE, GRAPH, VERSION, build_graph
 from pairly_pay.inbound_drop import DROP_JOB
 from pairly_pay.invoice_graph import GRAPH as INVOICE_GRAPH
@@ -215,6 +219,8 @@ class PayPlugin:
     migrations_dir: Path = Path(__file__).resolve().parent / "migrations"
     prompt_roots: tuple[Path, ...] = (Path(__file__).resolve().parent / "prompts",)
     scheduled_jobs: tuple[JobSpec, ...] = SCHEDULED_JOBS
+    # The batch API turns each submitted document into an invoice (pairly_pay.batch_intake).
+    document_intake: DocumentIntake = field(default=DOCUMENT_INTAKE)
 
     def api_router(self) -> APIRouter:
         return api_router()

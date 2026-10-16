@@ -11,6 +11,7 @@ from pairly_core.approvals.models import (
     ApprovalStep,
 )
 from pairly_core.audit_anchor.models import AuditDenialLimit, AuditVerification
+from pairly_core.batches.models import DocumentBatch, DocumentBatchItem
 from pairly_core.decisions.models import Appeal, ComplianceExport, DecisionRecord, DecisionReplay
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
 from pairly_core.flags.models import FeatureFlag
@@ -57,6 +58,8 @@ __all__ = [
     "DecisionRecord",
     "DecisionReplay",
     "Document",
+    "DocumentBatch",
+    "DocumentBatchItem",
     "Extraction",
     "ExtractionCorrection",
     "ExtractionField",

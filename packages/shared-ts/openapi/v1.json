@@ -1044,6 +1044,191 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "BatchItemOut": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "source",
+          "url",
+          "filename",
+          "status",
+          "reason",
+          "document_id",
+          "entity_type",
+          "entity_id",
+          "completed_at"
+        ],
+        "title": "BatchItemOut",
+        "type": "object"
+      },
+      "BatchOut": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_count": {
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BatchItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workflow": {
+            "title": "Workflow",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workflow",
+          "status",
+          "item_count",
+          "metadata",
+          "counts",
+          "items",
+          "created_at",
+          "completed_at"
+        ],
+        "title": "BatchOut",
+        "type": "object"
+      },
       "ConnectIn": {
         "properties": {
           "token": {
@@ -28262,7 +28447,8 @@
             "type": "string"
           },
           "entity_type": {
-            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$",
             "title": "Entity Type",
             "type": "string"
           },
@@ -31226,6 +31412,49 @@
         ]
       }
     },
+    "/v1/batches/{batch_id}": {
+      "get": {
+        "operationId": "read_batch_v1_batches__batch_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Batch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Batch",
+        "tags": [
+          "batches"
+        ]
+      }
+    },
     "/v1/compliance/export": {
       "post": {
         "operationId": "export_v1_compliance_export_post",
@@ -31729,6 +31958,61 @@
         "summary": "Upload Document",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/v1/documents/batch": {
+      "post": {
+        "operationId": "submit_batch_v1_documents_batch_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workflow",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "title": "Workflow",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Malformed body, too many items or an unsafe URL"
+          },
+          "413": {
+            "description": "The body is larger than the batch allows"
+          },
+          "415": {
+            "description": "Neither multipart/form-data nor application/json"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Over the documents-per-minute limit"
+          }
+        },
+        "summary": "Submit Batch",
+        "tags": [
+          "batches"
         ]
       }
     },
@@ -46195,7 +46479,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$",
                   "type": "string"
                 },
                 {

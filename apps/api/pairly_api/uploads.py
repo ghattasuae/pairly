@@ -32,7 +32,7 @@ from pairly_api.problems import problem_response
 from pairly_core.errors import BadRequestError, ServiceUnavailableError
 from pairly_core.ingestion.models import Document
 from pairly_core.ingestion.queue import SCAN_JOB, JobQueue
-from pairly_core.ingestion.service import RejectReason, SpooledFile, SpoolWriter
+from pairly_core.ingestion.service import RejectReason, SpooledFile, SpoolWriter, TooLargeError
 from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import ObjectStore
 
@@ -278,3 +278,173 @@ def rejected_response(request: Request, reason: RejectReason, workflow: str) -> 
 async def enqueue_scan(queue: JobQueue, org_id: uuid.UUID, document_id: uuid.UUID) -> None:
     # After the commit. A lost enqueue is recovered by the worker's sweeper.
     await queue.enqueue(SCAN_JOB, org_id=org_id, document_id=document_id, key="0")
+
+
+# ------------------------------------------------------------------ batch multipart
+
+
+@dataclass(frozen=True, slots=True)
+class ReceivedPart:
+    """One ``file`` part of a batch: spooled, or ``None`` when it passed the size limit."""
+
+    file: SpooledFile | None
+    filename: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReceivedBatch:
+    parts: list[ReceivedPart]
+    fields: dict[str, str]
+
+
+class _BatchReceiver:
+    """Callbacks for a batch body: up to ``max_files`` ``file`` parts, each spooled to
+    its own private file within ``max_bytes`` (a larger one is dropped and reported as
+    too large, the others still count), plus the text fields in ``text_fields``."""
+
+    def __init__(
+        self,
+        tmp: Path,
+        max_bytes: int,
+        max_files: int,
+        text_fields: frozenset[str],
+        max_field_bytes: int,
+    ) -> None:
+        self.tmp = tmp
+        self.max_bytes = max_bytes
+        self.max_files = max_files
+        self.text_fields = text_fields
+        self.max_field_bytes = max_field_bytes
+        self.parts: list[tuple[SpoolWriter | None, str | None, bool]] = []
+        self.fields: dict[str, bytearray] = {}
+        self._count = 0
+        self._headers: dict[bytes, bytes] = {}
+        self._field = b""
+        self._value = b""
+        self._writer: SpoolWriter | None = None
+        self._name: str | None = None
+        self._in_file = False
+        self._too_large = False
+        self._text: bytearray | None = None
+        self._field_bytes = 0
+
+    def callbacks(self) -> dict[str, Callable[..., None]]:
+        return {
+            "on_part_begin": self._part_begin,
+            "on_header_field": self._header_field,
+            "on_header_value": self._header_value,
+            "on_header_end": self._header_end,
+            "on_headers_finished": self._headers_finished,
+            "on_part_data": self._part_data,
+            "on_part_end": self._part_end,
+        }
+
+    def _part_begin(self) -> None:
+        self._count += 1
+        if self._count > self.max_files + len(self.text_fields) + 2:
+            raise BadRequestError("too many form parts")
+        self._headers = {}
+        self._in_file = False
+        self._text = None
+
+    def _header_field(self, data: bytes, start: int, end: int) -> None:
+        self._field += data[start:end]
+
+    def _header_value(self, data: bytes, start: int, end: int) -> None:
+        self._value += data[start:end]
+
+    def _header_end(self) -> None:
+        self._headers[self._field.lower()] = self._value
+        self._field = self._value = b""
+
+    def _headers_finished(self) -> None:
+        _, params = parse_options_header(self._headers.get(b"content-disposition", b""))
+        name = params.get(b"name", b"").decode("utf-8", errors="replace")
+        if name != FILE_FIELD:
+            if name in self.text_fields and b"filename" not in params:
+                if name in self.fields:
+                    raise BadRequestError(f"send the '{name}' field once")
+                self._text = self.fields[name] = bytearray()
+            return
+        if len(self.parts) >= self.max_files:
+            raise BadRequestError(f"a batch has at most {self.max_files} files")
+        raw_name = params.get(b"filename")
+        self._name = raw_name.decode("utf-8", errors="replace") if raw_name else None
+        self._writer = SpoolWriter(self.tmp, max_bytes=self.max_bytes)
+        self._too_large = False
+        self._in_file = True
+
+    def _part_data(self, data: bytes, start: int, end: int) -> None:
+        if self._in_file:
+            if self._writer is None:
+                return  # already too large: skip the rest of this part
+            try:
+                self._writer.write(data[start:end])
+            except TooLargeError:
+                self._writer.abort()
+                self._writer = None
+                self._too_large = True
+            return
+        self._field_bytes += end - start
+        if self._field_bytes > self.max_field_bytes:
+            raise BadRequestError("form fields too large")
+        if self._text is not None:
+            self._text += data[start:end]
+
+    def _part_end(self) -> None:
+        if self._in_file:
+            self.parts.append((self._writer, self._name, self._too_large))
+            self._writer = None
+        self._in_file = False
+        self._text = None
+
+    def abort(self) -> None:
+        if self._writer is not None:
+            self._writer.abort()
+        for writer, _, _ in self.parts:
+            if writer is not None:
+                writer.abort()
+
+
+async def receive_batch(
+    request: Request,
+    tmp: Path,
+    *,
+    max_bytes: int,
+    max_files: int,
+    timeout: float,
+    text_fields: frozenset[str],
+    max_field_bytes: int,
+) -> ReceivedBatch:
+    """Stream a multipart batch body into private spool files (see ``_BatchReceiver``)."""
+    content_type = request.headers.get("content-type", "")
+    media, params = parse_options_header(content_type)
+    boundary = params.get(b"boundary")
+    if media != b"multipart/form-data" or not boundary or len(boundary) > 200:
+        raise UnsupportedBodyError()
+    receiver = _BatchReceiver(tmp, max_bytes, max_files, text_fields, max_field_bytes)
+    parser = MultipartParser(boundary, receiver.callbacks())  # type: ignore[arg-type]
+    try:
+        async with asyncio.timeout(timeout):
+            async for chunk in request.stream():
+                parser.write(chunk)
+        parser.finalize()
+    except TimeoutError:
+        receiver.abort()
+        raise BadRequestError("upload took too long") from None
+    except MultipartParseError:
+        receiver.abort()
+        raise BadRequestError("malformed multipart body") from None
+    except BaseException:
+        receiver.abort()
+        raise
+    try:
+        fields = {name: bytes(value).decode("utf-8") for name, value in receiver.fields.items()}
+    except UnicodeDecodeError:
+        receiver.abort()
+        raise BadRequestError("form fields must be UTF-8 text") from None
+    parts = [
+        ReceivedPart(file=None if too_large or writer is None else writer.finish(), filename=name)
+        for writer, name, too_large in receiver.parts
+    ]
+    return ReceivedBatch(parts=parts, fields=fields)

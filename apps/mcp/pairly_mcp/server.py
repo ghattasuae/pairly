@@ -443,7 +443,7 @@ def build_server(api: PairlyApi) -> MCPServer[Any]:
     @server.tool(
         description=(
             "Propose an action or leave a note for a person to decide. entity_type is "
-            "for example 'approval', 'pay_invoice' or 'hire_application'; action (optional) "
+            "for example 'approval', 'pay.invoice' or 'hire.application'; action (optional) "
             "is what you suggest, for example 'approve', 'reject', 'hold' or "
             "'request_changes'. This only records the proposal: it never approves, "
             "decides, pays or deletes. A person reviews it in Pairly and decides."

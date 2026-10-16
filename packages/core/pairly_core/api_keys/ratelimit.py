@@ -48,9 +48,9 @@ class RateLimiter:
         self._max_keys = max_keys
         self._clock = clock
 
-    def check(self, key: str, per_minute: int) -> None:
-        """Take one request from ``key``'s bucket or raise ``RateLimitedError``."""
-        if per_minute < 1:
+    def check(self, key: str, per_minute: int, cost: int = 1) -> None:
+        """Take ``cost`` requests from ``key``'s bucket or raise ``RateLimitedError``."""
+        if per_minute < 1 or cost < 1 or cost > per_minute:
             raise RateLimitedError(60)
         now = self._clock()
         rate = per_minute / 60.0
@@ -65,6 +65,6 @@ class RateLimiter:
             elapsed = max(now - bucket.updated, 0.0)
             bucket.tokens = min(float(per_minute), bucket.tokens + elapsed * rate)
             bucket.updated = now
-        if bucket.tokens < 1.0:
-            raise RateLimitedError(max(1, math.ceil((1.0 - bucket.tokens) / rate)))
-        bucket.tokens -= 1.0
+        if bucket.tokens < cost:
+            raise RateLimitedError(max(1, math.ceil((cost - bucket.tokens) / rate)))
+        bucket.tokens -= cost

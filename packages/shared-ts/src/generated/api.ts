@@ -393,6 +393,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/batches/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Batch */
+        get: operations["read_batch_v1_batches__batch_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/compliance/export": {
         parameters: {
             query?: never;
@@ -591,6 +608,23 @@ export type paths = {
         get: operations["get_content_url_v1_documents__document_id__content_url_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documents/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Batch */
+        post: operations["submit_batch_v1_documents_batch_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6045,6 +6079,65 @@ export type components = {
             items: components["schemas"]["AuditEventOut"][];
             /** Next Cursor */
             next_cursor: string | null;
+        };
+        /** BatchItemOut */
+        BatchItemOut: {
+            /** Completed At */
+            completed_at: string | null;
+            /** Document Id */
+            document_id: string | null;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Entity Type */
+            entity_type: string | null;
+            /** Filename */
+            filename: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Reason */
+            reason: string | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Url */
+            url: string | null;
+        };
+        /** BatchOut */
+        BatchOut: {
+            /** Completed At */
+            completed_at: string | null;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Item Count */
+            item_count: number;
+            /** Items */
+            items: components["schemas"]["BatchItemOut"][];
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status: string;
+            /** Workflow */
+            workflow: string;
         };
         /** ConnectIn */
         ConnectIn: {
@@ -16350,6 +16443,37 @@ export interface operations {
             };
         };
     };
+    read_batch_v1_batches__batch_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_v1_compliance_export_post: {
         parameters: {
             query?: never;
@@ -16765,6 +16889,65 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    submit_batch_v1_documents_batch_post: {
+        parameters: {
+            query: {
+                workflow: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchOut"];
+                };
+            };
+            /** @description Malformed body, too many items or an unsafe URL */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The body is larger than the batch allows */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Neither multipart/form-data nor application/json */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Over the documents-per-minute limit */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

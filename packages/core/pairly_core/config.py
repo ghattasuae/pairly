@@ -92,6 +92,9 @@ class Settings(BaseSettings):
     # raise it), and the longest lifetime a new key may have.
     api_key_rate_limit_per_minute: int = Field(default=600, ge=1, le=100000)
     api_key_max_days: int = Field(default=365, ge=1, le=3650)
+    # Batch API (M6): documents per minute per caller (API key or person), on top of the
+    # request rate limit; a batch of 50 counts 50.
+    batch_items_per_minute: int = Field(default=300, ge=1, le=100000)
 
     @field_validator("auth_algorithms", "cors_origins", mode="before")
     @classmethod

@@ -229,26 +229,27 @@ async def test_proposals_are_validated_listed_and_audited(
     auth = {"Authorization": f"Bearer {key}"}
     note = await api.client.post(
         "/v1/proposals",
-        json={"entity_type": "pay_invoice", "entity_id": "PAY-0001", "body": "Vendor called."},
+        json={"entity_type": "pay.invoice", "entity_id": "PAY-0001", "body": "Vendor called."},
         headers=auth,
     )
     assert note.status_code == 201, note.text
     assert note.json()["kind"] == "note"
     assert note.json()["proposed_by_type"] == "api_key"
     bad = [
-        {"entity_type": "pay_invoice", "entity_id": "x", "kind": "action", "body": "b"},
-        {"entity_type": "pay_invoice", "entity_id": "x", "action": "approve", "body": "b"},
+        {"entity_type": "pay.invoice", "entity_id": "x", "kind": "action", "body": "b"},
+        {"entity_type": "pay.invoice", "entity_id": "x", "action": "approve", "body": "b"},
         {"entity_type": "Pay Invoice", "entity_id": "x", "body": "b"},
-        {"entity_type": "pay_invoice", "entity_id": "a/b", "body": "b"},
-        {"entity_type": "pay_invoice", "entity_id": "x", "body": "   "},
+        {"entity_type": "pay..invoice", "entity_id": "x", "body": "b"},
+        {"entity_type": "pay.invoice", "entity_id": "a/b", "body": "b"},
+        {"entity_type": "pay.invoice", "entity_id": "x", "body": "   "},
         {"entity_type": "approval", "entity_id": "not-a-uuid", "body": "b"},
-        {"entity_type": "pay_invoice", "entity_id": "x", "body": "b", "workflow": "nope"},
+        {"entity_type": "pay.invoice", "entity_id": "x", "body": "b", "workflow": "nope"},
     ]
     for body in bad:
         refused = await api.client.post("/v1/proposals", json=body, headers=auth)
         assert refused.status_code in {400, 422}, (body, refused.text)
     listed = await api.client.get(
-        "/v1/proposals", params={"entity_type": "pay_invoice"}, headers=auth
+        "/v1/proposals", params={"entity_type": "pay.invoice"}, headers=auth
     )
     assert [p["entity_id"] for p in listed.json()["items"]] == ["PAY-0001"]
     async with owner_engine.begin() as conn:
@@ -278,7 +279,7 @@ async def test_proposing_needs_the_scope(api: Api, world: dict[str, Any]) -> Non
     key = await api.key(org, ["pay.invoice.read"])
     refused = await api.client.post(
         "/v1/proposals",
-        json={"entity_type": "pay_invoice", "entity_id": "PAY-1", "body": "hello"},
+        json={"entity_type": "pay.invoice", "entity_id": "PAY-1", "body": "hello"},
         headers={"Authorization": f"Bearer {key}"},
     )
     assert refused.status_code == 403

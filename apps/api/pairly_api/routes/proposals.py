@@ -33,8 +33,14 @@ router = APIRouter(prefix="/proposals", tags=["proposals"])
 Ident = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")]
 
 
+EntityType = Annotated[
+    str, Field(max_length=64, pattern=r"^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$")
+]
+
+
 class ProposalIn(BaseModel):
-    entity_type: Ident
+    # What the proposal is about: "approval", "pay.invoice", "hire.application", ...
+    entity_type: EntityType
     entity_id: Annotated[str, Field(min_length=1, max_length=128)]
     kind: ProposalKind = ProposalKind.NOTE
     # For an action proposal: what a person should consider doing, for example
@@ -104,7 +110,9 @@ async def propose(
 async def proposals(
     actor: CurrentActor,
     session: OrgSession,
-    entity_type: Annotated[str | None, Query(pattern=r"^[a-z][a-z0-9_]{0,63}$")] = None,
+    entity_type: Annotated[
+        str | None, Query(max_length=64, pattern=r"^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$")
+    ] = None,
     entity_id: Annotated[str | None, Query(max_length=128)] = None,
     workflow: Annotated[str | None, Query(pattern=r"^[a-z][a-z0-9_]{0,31}$")] = None,
     cursor: Annotated[str | None, Query(max_length=256)] = None,

@@ -15,6 +15,8 @@ Optional attributes, read with ``getattr`` so a plugin only declares what it use
 
 * ``webhook_events``, ``feature_flags``, ``search_sources``, ``retention_rules``,
   ``scheduled_jobs``: see the module that builds each registry.
+* ``document_intake``: a ``pairly_core.batches.intake.DocumentIntake``; the batch API
+  turns each document submitted to the workflow into its entity and starts its run.
 * ``api_router``: a callable with no arguments returning a FastAPI ``APIRouter``. The
   API mounts it under ``/v1/<plugin id>`` (``plugin_routers``). It is a callable so
   that processes without an HTTP API (the worker) never import the routes.

@@ -25,7 +25,11 @@ class Proposal(Base, OrgScoped, Timestamped):
         CheckConstraint(
             "action IS NULL OR action ~ '^[a-z][a-z0-9_]{0,63}$'", name="action_format"
         ),
-        CheckConstraint("entity_type ~ '^[a-z][a-z0-9_]{0,63}$'", name="entity_type_format"),
+        CheckConstraint(
+            "entity_type ~ '^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$' "
+            "AND char_length(entity_type) <= 64",
+            name="entity_type_format",
+        ),
         CheckConstraint("char_length(entity_id) BETWEEN 1 AND 128", name="entity_id_length"),
         CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="body_length"),
         CheckConstraint(

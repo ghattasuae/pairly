@@ -36,7 +36,7 @@ from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError, RoleRegist
 PROPOSAL_CREATED: Final = "core.proposal.created"
 APPROVAL_ENTITY: Final = "approval"
 MAX_BODY: Final = 4000
-_ENTITY_RE: Final = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+_ENTITY_RE: Final = re.compile(r"^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$")
 _ACTION_RE: Final = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 _ENTITY_ID_RE: Final = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _PROPOSERS: Final = frozenset({ActorKind.USER, ActorKind.AGENT, ActorKind.API_KEY})
@@ -68,8 +68,8 @@ async def create_proposal(
     authorize(actor, PROPOSAL_PROPOSE)
     if actor.kind not in _PROPOSERS:
         raise PermissionDeniedError("only a person, the agent or an API key can propose")
-    if not _ENTITY_RE.fullmatch(entity_type):
-        raise BadRequestError("entity_type must be a lowercase identifier")
+    if len(entity_type) > 64 or not _ENTITY_RE.fullmatch(entity_type):
+        raise BadRequestError("entity_type must be a lowercase name such as pay.invoice")
     if not _ENTITY_ID_RE.fullmatch(entity_id):
         raise BadRequestError("entity_id must be 1 to 128 letters, digits or ._:-")
     text = body.strip()

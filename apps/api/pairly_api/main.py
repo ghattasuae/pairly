@@ -43,6 +43,7 @@ from pairly_api.routes import (
     approval_links,
     approvals,
     audit,
+    batches,
     compliance,
     decisions,
     dev_objects,
@@ -64,9 +65,11 @@ from pairly_api.routes import documents as document_routes
 from pairly_api.routes import extractions as extraction_routes
 from pairly_api.telemetry import configure_tracing, instrument_app
 from pairly_api.uploads import DocumentServices
+from pairly_core.api_keys.ratelimit import RateLimiter
 from pairly_core.api_keys.tokens import init_api_key_pepper
 from pairly_core.approvals.hooks import NO_HOOKS, ApprovalHooks
 from pairly_core.auth import TokenVerifier
+from pairly_core.batches.intake import build_intake_registry
 from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
@@ -271,12 +274,16 @@ def create_app(
     app.state.webhook_settings = webhook_settings
     app.state.search_registry = build_search_registry(workflow_plugins)
     app.state.retention_registry = build_retention_registry(workflow_plugins)
+    app.state.intake_registry = build_intake_registry(workflow_plugins)
+    app.state.batch_limiter = RateLimiter()
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(me.router)
     v1.include_router(audit.router)
     v1.include_router(invitations.router)
     v1.include_router(members.router)
+    # Before the documents router: /documents/batch is not a document id.
+    v1.include_router(batches.router)
     v1.include_router(document_routes.router)
     v1.include_router(extraction_routes.router)
     v1.include_router(approvals.router)

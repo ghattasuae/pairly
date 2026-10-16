@@ -58,7 +58,9 @@ def upgrade() -> None:
             "action IS NULL OR action ~ '^[a-z][a-z0-9_]{0,63}$'", name="ck_proposals_action_format"
         ),
         sa.CheckConstraint(
-            "entity_type ~ '^[a-z][a-z0-9_]{0,63}$'", name="ck_proposals_entity_type_format"
+            "entity_type ~ '^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*){0,3}$' "
+            "AND char_length(entity_type) <= 64",
+            name="ck_proposals_entity_type_format",
         ),
         sa.CheckConstraint(
             "char_length(entity_id) BETWEEN 1 AND 128", name="ck_proposals_entity_id_length"

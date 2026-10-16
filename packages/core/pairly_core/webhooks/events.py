@@ -41,6 +41,7 @@ MAX_DATA_BYTES: Final = 64 * 1024
 APPROVAL_DECIDED: Final = "approval.decided"
 DOCUMENT_RECEIVED: Final = "document.received"
 DECISION_RECORDED: Final = "decision.recorded"
+BATCH_COMPLETED: Final = "batch.completed"
 
 
 class EventRegistryError(ValueError):
@@ -61,6 +62,7 @@ CORE_EVENTS: tuple[EventType, ...] = (
     EventType(APPROVAL_DECIDED, "A person decided an approval step"),
     EventType(DOCUMENT_RECEIVED, "A new document was received (upload, email or API)"),
     EventType(DECISION_RECORDED, "A decision record was written"),
+    EventType(BATCH_COMPLETED, "Every document of a batch submission has an outcome"),
 )
 
 
