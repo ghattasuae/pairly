@@ -37,7 +37,7 @@ from pairly_core.db import TenantError, current_org, current_portal_subject
 from pairly_core.errors import ConflictError
 from pairly_core.ingestion.models import Document, DocumentSource, DocumentStatus
 from pairly_core.ingestion.settings import IntakePolicy
-from pairly_core.ingestion.sniff import SNIFF_BYTES, sniff
+from pairly_core.ingestion.sniff import SNIFF_BYTES, ZIP, active_content, sniff
 from pairly_core.ingestion.storage import ObjectStore, blob_key
 from pairly_core.rbac import Actor
 from pairly_core.webhooks.events import DOCUMENT_RECEIVED, publish_event
@@ -68,6 +68,9 @@ class RejectReason(StrEnum):
     TOO_LARGE = "too_large"
     EMPTY = "empty"
     TYPE_NOT_ALLOWED = "type_not_allowed"
+    # A Word document with macros, ActiveX or a relationship outside the package (a
+    # remote attached template, an external image or object): ``sniff.active_content``.
+    ACTIVE_CONTENT = "active_content"
     TOO_MANY_ATTACHMENTS = "too_many_attachments"
 
 
@@ -247,6 +250,13 @@ async def ingest_spooled(
         reason = RejectReason.TOO_LARGE
     elif sniffed not in policy.allowed_types:
         reason = RejectReason.TYPE_NOT_ALLOWED
+    # A would-be DOCX refused for what it carries says why (fail closed: it is never a
+    # DOCX, whatever the policy allows).
+    active: str | None = None
+    if reason in {None, RejectReason.TYPE_NOT_ALLOWED} and sniffed == ZIP and media_type is None:
+        active = active_content(spooled.path)
+    if active is not None:
+        reason = RejectReason.ACTIVE_CONTENT
     if reason is not None:
         await record_rejection(
             session,
@@ -257,6 +267,7 @@ async def ingest_spooled(
             media_type=sniffed,
             size=spooled.size,
             sha256=spooled.sha256,
+            detail=active,
         )
         return IngestOutcome("rejected", reason=reason, media_type=sniffed)
 
@@ -377,9 +388,13 @@ async def record_rejection(
     media_type: str | None = None,
     size: int | None = None,
     sha256: str | None = None,
+    detail: str | None = None,
 ) -> None:
-    """Audit an intake refusal. No row and no stored bytes exist for it."""
+    """Audit an intake refusal. No row and no stored bytes exist for it. ``detail``
+    names what made a document active content (``sniff.active_content``)."""
     payload: dict[str, Any] = {"source": source.value, "reason": reason.value}
+    if detail is not None:
+        payload["detail"] = detail
     if media_type is not None:
         payload["media_type"] = media_type
     if size is not None:

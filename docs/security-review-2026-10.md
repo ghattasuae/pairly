@@ -26,7 +26,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | L-09 | Low | Information disclosure | A public application whose CV has the same bytes as another candidate's is linked to that candidate's document row | Open, proposed fix below |
 | L-10 | Low | BEC | Vendor portal contacts (people and emails) change directly; AP messages go to those addresses | Open, proposed fix below |
 | L-11 | Low | Supply chain | The vendored Redoc checksum is checked by a test, not by `make api-docs` | Fixed |
-| L-12 | Low | Malicious documents | A DOCX with an external attached template (remote template injection) is accepted | Open, proposed fix below |
+| L-12 | Low | Malicious documents | A DOCX with an external attached template (remote template injection) is accepted | Fixed |
 
 No critical finding. Nothing found in: prompt injection reaching a model input or an action, data exfiltration through the model, approval link replay, approval races, portal token forgery and cross-portal reads, webhook signatures and SSRF, RLS coverage, and the label-plus-value table evidence.
 
@@ -97,7 +97,7 @@ A vendor invited to onboard enters its bank details and its phone number on the 
 * **L-09.** Dedupe at intake (`uq_documents_org_id_workflow_sha256`) links a second applicant with byte-identical CV bytes to the first applicant's document row, so the second candidate's portal shows the first one's original file name, and erasing either affects both. Proposed fix: dedupe the stored blob only and give each submission its own `documents` row.
 * **L-10.** A mailbox attacker in the portal can add a contact email; AP messages are sent to an address a person picks and approves, never automatically. Proposed fix: mark contacts added through the portal as new for 30 days in the recipient picker.
 * **L-11 (fixed).** `scripts/build_api_docs.py` embeds the vendored Redoc bundle without checking its SHA-256; only `scripts/tests/test_build_api_docs.py` did. The build now reads the bundle through `read_bundle`, which compares its SHA-256 with the recorded `REDOC_SHA256` before anything is written and stops `make api-docs` (non-zero exit, `BundleChecksumError`) on any other bundle. Test: `scripts/tests/test_build_api_docs.py::test_a_changed_bundle_stops_the_build_before_anything_is_written`.
-* **L-12.** A DOCX whose `word/_rels/settings.xml.rels` names an external `attachedTemplate` is accepted. Pairly never opens it in Word, but a person downloading it might. Proposed fix: refuse packages with `TargetMode="External"` template relationships, like L-04.
+* **L-12 (fixed).** A DOCX whose `word/_rels/settings.xml.rels` names an external `attachedTemplate` was accepted. Pairly never opens it in Word, but a person downloading it might. `pairly_core.ingestion.sniff.active_content` now reads every relationships part (size capped, defusedxml, an unreadable one fails closed) and a package with any `TargetMode="External"` relationship sniffs as ZIP, like L-04: a remote attached template, an external image, frame, OLE object or subdocument. The one exception is a hyperlink, which Word never follows by itself (CVs carry profile links). Intake refuses it with its own reason (`RejectReason.ACTIVE_CONTENT`, 415 with a title that names it; the audit event's `detail` says `macros`, `external_template`, `external_relationship` or `unreadable_relationships`). Tests: `packages/core/tests/doc_tests/test_ingestion_unit.py` (`test_a_docx_with_a_remote_template_or_external_part_is_not_a_docx`, `test_hyperlinks_and_internal_relationships_leave_a_docx`) and `apps/api/tests/test_documents.py::test_a_docx_with_a_remote_template_is_refused_with_its_reason`.
 
 ## Threat by threat
 
@@ -111,7 +111,7 @@ Model input is built from the request's organisation only: retrieval, few-shot e
 
 ### Malicious documents
 
-H-02 and L-04 fixed, L-12 open. Read the sniffer, the sandbox limits (CPU, memory, output, wall clock), the DOCX entry and size caps and DTD refusal, defusedxml for every XML format, PDF JavaScript and embedded files reported, the image pixel cap, and the render page cap and time budget. Every intake path uses the same sniffing and policy.
+H-02, L-04 and L-12 fixed. Read the sniffer, the sandbox limits (CPU, memory, output, wall clock), the DOCX entry and size caps and DTD refusal, defusedxml for every XML format, PDF JavaScript and embedded files reported, the image pixel cap, and the render page cap and time budget. Every intake path uses the same sniffing and policy.
 
 ### BEC and vendor impersonation
 

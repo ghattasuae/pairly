@@ -121,6 +121,60 @@ def test_a_docx_that_carries_macros_or_activex_is_not_a_docx(tmp_path: Path, par
     assert _sniff_bytes(tmp_path, fx.docx_with_part("word/media/extra.png")) == sn.DOCX
 
 
+def test_a_docx_with_a_remote_template_or_external_part_is_not_a_docx(tmp_path: Path) -> None:
+    """Security review 2026-10 (L-12): a relationship outside the package (a remote
+    attached template, an external image, frame or OLE object) makes a plain DOCX a ZIP,
+    which every intake policy refuses; ``active_content`` names why."""
+    template = tmp_path / "template.docx"
+    template.write_bytes(fx.docx_with_remote_template())
+    assert sn.sniff(template.read_bytes()[: sn.SNIFF_BYTES], template) == sn.ZIP
+    assert sn.active_content(template) == sn.EXTERNAL_TEMPLATE
+    # Any case of the target mode, any relationships part.
+    for name, rel in [
+        ("word/_rels/header7.xml.rels", ("image", "https://x.example.invalid/p.png", "External")),
+        ("word/_rels/footer7.xml.rels", ("oleObject", "file:///c:/x.bin", "external")),
+        ("word/_rels/webSettings.xml.rels", ("frame", "https://x.example.invalid/", "EXTERNAL")),
+        ("_rels/extra.rels", ("subDocument", "\\\\host\\share\\d.docx", "External")),
+    ]:
+        path = tmp_path / "external.docx"
+        path.write_bytes(fx.docx_with_part(name, fx.rels_xml(rel)))
+        assert sn.sniff(path.read_bytes()[: sn.SNIFF_BYTES], path) == sn.ZIP, name
+        assert sn.active_content(path) == sn.EXTERNAL_RELATIONSHIP, name
+    # A relationships part that cannot be read fails closed.
+    broken = tmp_path / "broken.docx"
+    broken.write_bytes(fx.docx_with_part("word/_rels/odd.xml.rels", b"<Relationships"))
+    assert sn.active_content(broken) == sn.UNREADABLE_RELATIONSHIPS
+    assert _sniff_bytes(tmp_path, broken.read_bytes()) == sn.ZIP
+    # Macros keep their own name.
+    macros = tmp_path / "macros.docx"
+    macros.write_bytes(fx.docx_with_part("word/vbaProject.bin"))
+    assert sn.active_content(macros) == sn.MACROS
+
+
+def test_hyperlinks_and_internal_relationships_leave_a_docx(tmp_path: Path) -> None:
+    """A hyperlink is the one external relationship kept (Word never follows it by
+    itself; CVs carry profile links); targets inside the package are always fine."""
+    path = tmp_path / "links.docx"
+    path.write_bytes(
+        fx.docx_with_part(
+            "word/_rels/footnotes.xml.rels",
+            fx.rels_xml(
+                ("hyperlink", "https://www.example.com/in/someone", "External"),
+                ("image", "media/image1.png", None),
+                ("image", "media/image2.png", "Internal"),
+            ),
+        )
+    )
+    assert sn.sniff(path.read_bytes()[: sn.SNIFF_BYTES], path) == sn.DOCX
+    assert sn.active_content(path) is None
+    plain = tmp_path / "plain.docx"
+    plain.write_bytes(fx.tricky_docx())
+    assert sn.active_content(plain) is None
+    zipped = tmp_path / "plain.zip"
+    zipped.write_bytes(fx.plain_zip())
+    assert sn.active_content(zipped) is None
+
+
 def test_extension_for() -> None:
     assert sn.extension_for(sn.PDF) == ".pdf"
     assert sn.extension_for("application/x-unknown") == ".bin"

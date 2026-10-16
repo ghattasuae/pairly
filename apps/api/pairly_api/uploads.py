@@ -261,6 +261,13 @@ REJECT_STATUS = {
     RejectReason.TOO_LARGE: (413, "payload_too_large", "File too large"),
     RejectReason.TYPE_NOT_ALLOWED: (415, "unsupported_media_type", "File type not allowed"),
     RejectReason.EMPTY: (400, "empty_file", "File is empty"),
+    # The same code as any refused type (clients already handle it), with the reason.
+    RejectReason.ACTIVE_CONTENT: (
+        415,
+        "unsupported_media_type",
+        "Documents with macros or links to outside content (such as a remote template) "
+        "are not accepted",
+    ),
 }
 
 

@@ -248,6 +248,32 @@ def docx_with_part(name: str, content: bytes = b"synthetic") -> bytes:
     return out.getvalue()
 
 
+_RELS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+_OFFICE_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+
+def rels_xml(*relationships: tuple[str, str, str | None]) -> bytes:
+    """A relationships part: ``(type suffix, target, target mode)`` per relationship."""
+    rows = "".join(
+        f'<Relationship Id="rId{n}" Type="{_OFFICE_REL}/{kind}" Target="{target}"'
+        + (f' TargetMode="{mode}"' if mode else "")
+        + "/>"
+        for n, (kind, target, mode) in enumerate(relationships, start=1)
+    )
+    return (
+        f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        f'<Relationships xmlns="{_RELS_NS}">{rows}</Relationships>'
+    ).encode()
+
+
+def docx_with_remote_template(url: str = "https://templates.example.invalid/t.dotm") -> bytes:
+    """Remote template injection: ``settings.xml`` relationships name an external
+    ``attachedTemplate`` that Word fetches when the document opens."""
+    return docx_with_part(
+        "word/_rels/settings.xml.rels", rels_xml(("attachedTemplate", url, "External"))
+    )
+
+
 def plain_zip() -> bytes:
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w") as dst:

@@ -306,6 +306,63 @@ async def test_type_and_size_limits(
     assert actions.count("core.document.rejected") == 4
 
 
+def _docx_with_remote_template() -> bytes:
+    import zipfile
+
+    import docx  # type: ignore[import-untyped]
+
+    buf = io.BytesIO()
+    document = docx.Document()
+    document.add_paragraph("Synthetic CV")
+    document.save(buf)
+    rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+        'relationships/attachedTemplate" Target="https://templates.example.invalid/t.dotm" '
+        'TargetMode="External"/></Relationships>'
+    )
+    out = io.BytesIO()
+    with (
+        zipfile.ZipFile(io.BytesIO(buf.getvalue())) as src,
+        zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst,
+    ):
+        for item in src.infolist():
+            dst.writestr(item, src.read(item.filename))
+        dst.writestr("word/_rels/settings.xml.rels", rels)
+    return out.getvalue()
+
+
+async def test_a_docx_with_a_remote_template_is_refused_with_its_reason(
+    live: Live, orgs: TwoTenants, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10 (L-12): refused at intake like macros, nothing stored,
+    and the problem and the audit event say why."""
+    b = orgs.b
+    refused = await live.upload(
+        b.subject, b.org_id, _docx_with_remote_template(), filename="cv.docx"
+    )
+    assert refused.status_code == 415
+    problem = refused.json()
+    assert problem["code"] == "unsupported_media_type"
+    assert "remote template" in problem["title"]
+    assert await document_rows(owner_engine, b.org_id) == []
+    assert live.store.puts == 0
+    async with owner_engine.begin() as conn:
+        await _in_org(conn, b.org_id)
+        payload = (
+            await conn.execute(
+                text(
+                    "SELECT payload FROM audit_events WHERE action = 'core.document.rejected' "
+                    "ORDER BY seq DESC LIMIT 1"
+                )
+            )
+        ).scalar_one()
+    assert payload["reason"] == "active_content"
+    assert payload["detail"] == "external_template"
+    assert payload["media_type"] == "application/zip"
+
+
 async def test_malformed_requests(live: Live, orgs: TwoTenants) -> None:
     b = orgs.b
     auth = live.auth(b.subject, b.org_id)
