@@ -138,7 +138,7 @@ async def guardrails(ctx: SectionContext) -> Section:
             Stat("guardrail_errors", float(errors)),
             *(Stat(f"finding_{kind}", float(n)) for kind, n in sorted(by_type.items())),
         ],
-        source="hire_screenings.review_reasons",
+        source="hire_screening_review_reasons",
         note=None if rows else "no_data",
     )
 

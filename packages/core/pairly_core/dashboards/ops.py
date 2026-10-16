@@ -223,7 +223,7 @@ async def _tenants(session: AsyncSession, now: datetime) -> tuple[Section, Secti
             Stat("storage_bytes", float(stored), Unit.BYTES),
             Stat("documents", float(documents)),
         ],
-        source="documents.size_bytes",
+        source="documents_size_bytes",
     )
     usage = Section(
         key="tenant_usage",

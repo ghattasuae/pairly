@@ -101,6 +101,11 @@ class Settings(BaseSettings):
     # dashboard (aggregates only). Unset: nobody does (the routes answer 404).
     system_org_id: uuid.UUID | None = None
 
+    @field_validator("system_org_id", mode="before")
+    @classmethod
+    def _empty_is_unset(cls, value: Any) -> Any:
+        return None if isinstance(value, str) and not value.strip() else value
+
     @field_validator("auth_algorithms", "cors_origins", mode="before")
     @classmethod
     def _csv_list(cls, value: Any) -> Any:

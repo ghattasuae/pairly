@@ -177,6 +177,10 @@ local_app_env() {
   if [ -n "${PAIRLY_INTAKE_POLICIES:-}" ]; then
     LOCAL_ENV+=("PAIRLY_INTAKE_POLICIES=$PAIRLY_INTAKE_POLICIES")
   fi
+  # Platform operations: the organisation whose admins see GET /v1/ops/dashboard.
+  if [ -n "${PAIRLY_SYSTEM_ORG_ID:-}" ]; then
+    LOCAL_ENV+=("PAIRLY_SYSTEM_ORG_ID=$PAIRLY_SYSTEM_ORG_ID")
+  fi
   LOCAL_DOCUMENT_ORIGIN="$origin"
 }
 

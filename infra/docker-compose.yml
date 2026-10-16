@@ -94,6 +94,8 @@ x-app-env: &app-env
   PAIRLY_AUTH_ISSUER: ${PAIRLY_AUTH_ISSUER:-http://localhost:3100}
   PAIRLY_AUTH_AUDIENCE: ${PAIRLY_AUTH_AUDIENCE:-http://localhost:3100}
   PAIRLY_CORS_ORIGINS: ${PAIRLY_CORS_ORIGINS:-http://localhost:3100}
+  # Platform operations: the organisation whose admins see GET /v1/ops/dashboard.
+  PAIRLY_SYSTEM_ORG_ID: ${PAIRLY_SYSTEM_ORG_ID:-}
   <<: *crypto-env
   PAIRLY_SIGNED_LINK_SECRET: ${PAIRLY_SIGNED_LINK_SECRET:?missing}
   # Audit anchors (WP1.10b). The public key only: the signing key goes to the worker.

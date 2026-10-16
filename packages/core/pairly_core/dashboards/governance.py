@@ -109,7 +109,7 @@ async def _usage(session: AsyncSession, now: datetime) -> Section:
 
 def _evals_section(summary: EvalSummary) -> Section:
     if not summary.available:
-        return Section(key="evals", count=None, note=summary.reason, source="evals/results")
+        return Section(key="evals", count=None, note=summary.reason, source="eval_result_files")
     items: list[Item] = []
     for f in summary.files:
         counts = f.counts()
@@ -159,7 +159,7 @@ def _evals_section(summary: EvalSummary) -> Section:
                 float(sum(1 for f in summary.files for v in f.verdicts if v.status == "PENDING")),
             ),
         ],
-        source="evals/results",
+        source="eval_result_files",
         note=None if summary.files else "no_data",
     )
 

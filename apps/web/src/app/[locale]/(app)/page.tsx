@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PayRoleDashboard } from "@/components/home/pay-dashboards";
 import { RoleDashboard } from "@/components/home/role-dashboards";
+import { SystemRoleDashboard } from "@/components/home/system-dashboards";
 import { ActionNeeded } from "@/components/states/action-needed";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
@@ -26,6 +27,14 @@ import {
   type PayDashboardKey,
 } from "@/lib/pay/dashboards";
 import { resolveViewer } from "@/lib/provisioning";
+import {
+  quietlyAbsent,
+  SYSTEM_DASHBOARD_PATHS,
+  systemActionTotal,
+  systemDashboardsFor,
+  type SystemDashboard,
+  type SystemDashboardKey,
+} from "@/lib/system-dashboards";
 import { formatRole, type Lookup } from "@/lib/role-label";
 import { secondFactorNeed } from "@/lib/viewer-state";
 
@@ -55,9 +64,14 @@ export default async function HomePage({ params }: Props) {
   // Pay's dashboards (brief 5.1 items 8 to 10) come with Hire's, by role.
   const payKeys: PayDashboardKey[] =
     viewer.status === "ready" && !need ? payDashboardsFor(viewer.me.roles, viewer.me.permissions) : [];
-  const [loaded, payLoaded] = await Promise.all([
+  // The shared and system boards (brief 5.1 items 12 to 15): auditor, admin, AI
+  // governance and, for admins of the system organisation, platform operations.
+  const sysKeys: SystemDashboardKey[] =
+    viewer.status === "ready" && !need ? systemDashboardsFor(viewer.me.roles, viewer.me.permissions) : [];
+  const [loaded, payLoaded, sysLoaded] = await Promise.all([
     Promise.all(keys.map((key) => callApi((api) => api.GET(DASHBOARD_PATHS[key])))),
     Promise.all(payKeys.map((key) => callApi((api) => api.GET(PAY_DASHBOARD_PATHS[key])))),
+    Promise.all(sysKeys.map((key) => callApi((api) => api.GET(SYSTEM_DASHBOARD_PATHS[key])))),
   ]);
   const boards: { key: DashboardKey; data: Dashboard }[] = [];
   keys.forEach((key, index) => {
@@ -69,8 +83,15 @@ export default async function HomePage({ params }: Props) {
     const result = payLoaded[index];
     if (result?.ok) payBoards.push({ key, data: result.data });
   });
-  const failed = loaded.some((result) => !result.ok) || payLoaded.some((result) => !result.ok);
-  const shown = boards.length + payBoards.length;
+  const sysBoards: { key: SystemDashboardKey; data: SystemDashboard }[] = [];
+  let sysFailed = false;
+  sysKeys.forEach((key, index) => {
+    const result = sysLoaded[index];
+    if (result?.ok) sysBoards.push({ key, data: result.data });
+    else if (result && !quietlyAbsent(key, result.status)) sysFailed = true;
+  });
+  const failed = loaded.some((result) => !result.ok) || payLoaded.some((result) => !result.ok) || sysFailed;
+  const shown = boards.length + payBoards.length + sysBoards.length;
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
@@ -94,7 +115,7 @@ export default async function HomePage({ params }: Props) {
           {shown === 0 && (
             <div className="rise" style={{ "--rise-index": 1 } as React.CSSProperties}>
               <ActionNeeded count={0} />
-              {!need && keys.length === 0 && payKeys.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{t("noDashboards")}</p>}
+              {!need && keys.length === 0 && payKeys.length === 0 && sysKeys.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{t("noDashboards")}</p>}
             </div>
           )}
           {failed && (
@@ -105,7 +126,11 @@ export default async function HomePage({ params }: Props) {
           {shown > 0 && (
             <p
               className="sr-only"
-              data-action-total={actionTotal(boards.map((b) => b.data)) + payActionTotal(payBoards.map((b) => b.data))}
+              data-action-total={
+                actionTotal(boards.map((b) => b.data)) +
+                payActionTotal(payBoards.map((b) => b.data)) +
+                systemActionTotal(sysBoards.map((b) => b.data))
+              }
             >
               {t("actionNeeded")}
             </p>
@@ -118,6 +143,15 @@ export default async function HomePage({ params }: Props) {
           {payBoards.map((board, index) => (
             <div key={`pay-${board.key}`} className="rise" style={{ "--rise-index": boards.length + index + 1 } as React.CSSProperties}>
               <PayRoleDashboard dashboard={board.key} data={board.data} />
+            </div>
+          ))}
+          {sysBoards.map((board, index) => (
+            <div
+              key={`sys-${board.key}`}
+              className="rise"
+              style={{ "--rise-index": boards.length + payBoards.length + index + 1 } as React.CSSProperties}
+            >
+              <SystemRoleDashboard dashboard={board.key} data={board.data} />
             </div>
           ))}
         </>
