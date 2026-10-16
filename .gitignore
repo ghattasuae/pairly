@@ -42,6 +42,8 @@ test-results/
 # Evals output (the committed report lives at evals/report.md)
 evals/.promptfoo/
 evals/output/
+# Live eval responses being recorded (folded into the committed *_live.jsonl.xz)
+evals/recordings/*_live.jsonl
 
 # Editors and OS
 .DS_Store

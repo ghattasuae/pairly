@@ -10,7 +10,8 @@ provider, an in-memory call store backed by a recordings file, and a hard cost c
   same suite costs nothing.
 * Every live attempt that returns a model output is appended to the recordings file
   (JSON lines) at once, with what it measured: tokens, cost, latency, model. A crash or
-  the cost cap never loses a paid response.
+  the cost cap never loses a paid response. At the end of the run the file is folded
+  into the committed, xz-compressed ``<product>_live.jsonl.xz``.
 * Response reuse (the production router's, on by default): a request already
   answered for another document reuses the first recorded answer (``reused_from``, no
   cost), so byte-identical model input (a fairness pair) gets identical output, as in
@@ -26,6 +27,7 @@ provider, an in-memory call store backed by a recordings file, and a hard cost c
 from __future__ import annotations
 
 import json
+import lzma
 import math
 import os
 import statistics
@@ -82,6 +84,51 @@ _MEASURED: Final = (
     "latency_ms",
     "retries",
 )
+
+
+# ------------------------------------------------------------------ recordings files
+#
+# Committed recordings are xz-compressed (``<product>_live.jsonl.xz``); a run appends
+# each new response to the plain ``<product>_live.jsonl`` next to it at once (crash
+# safe), and ``compress_recordings`` folds that file into the compressed one at the
+# end of the run. Both forms are read.
+
+XZ_SUFFIX: Final = ".xz"
+
+
+def recording_files(path: Path) -> tuple[Path, Path]:
+    """(plain, compressed) for a recordings path given in either form."""
+    if path.suffix == XZ_SUFFIX:
+        return path.with_suffix(""), path
+    return path, path.with_name(path.name + XZ_SUFFIX)
+
+
+def read_recording_lines(path: Path) -> list[str]:
+    """Every non-blank line of the compressed then the plain recordings file, once
+    each, in order."""
+    plain, compressed = recording_files(path)
+    lines: list[str] = []
+    if compressed.is_file():
+        lines += lzma.decompress(compressed.read_bytes()).decode("utf-8").splitlines()
+    if plain.is_file():
+        lines += plain.read_text(encoding="utf-8").splitlines()
+    return [line for line in dict.fromkeys(lines) if line.strip()]
+
+
+def compress_recordings(path: Path) -> Path | None:
+    """Fold the plain recordings file into the compressed one (deterministic xz: same
+    lines, same bytes) and remove the plain file. Returns the compressed file, or
+    ``None`` when there is nothing to compress."""
+    plain, compressed = recording_files(path)
+    if not plain.is_file():
+        return None
+    lines = read_recording_lines(path)
+    data = ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
+    tmp = compressed.with_name(compressed.name + ".tmp")
+    tmp.write_bytes(lzma.compress(data, format=lzma.FORMAT_XZ, check=lzma.CHECK_CRC64, preset=9))
+    tmp.replace(compressed)
+    plain.unlink()
+    return compressed
 
 
 class LiveSetupError(RuntimeError):
@@ -176,12 +223,12 @@ class LiveCallStore:
     loaded: int = 0
     refused: int = 0
 
+    def __post_init__(self) -> None:
+        # Responses are appended to the plain file; the compressed one is read only.
+        self.path = recording_files(self.path)[0]
+
     def load(self) -> None:
-        if not self.path.is_file():
-            return
-        for line in self.path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
+        for line in read_recording_lines(self.path):
             item = json.loads(line)
             entry = item.get("entry", {})
             if item.get("format") != RECORDING_FORMAT or not _check_entry(entry):

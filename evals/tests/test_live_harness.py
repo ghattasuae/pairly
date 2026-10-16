@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import lzma
 import uuid
 from pathlib import Path
 from typing import Any
@@ -19,8 +20,10 @@ from evals.live.harness import (
     LiveSetupError,
     Meter,
     build_live_router,
+    compress_recordings,
     live_settings,
     percentile,
+    read_recording_lines,
     run_docs,
     run_status,
 )
@@ -253,3 +256,44 @@ def test_percentile_is_a_measured_value() -> None:
     assert percentile([5.0, 1.0, 3.0], 0.5) == 3.0
     assert percentile([float(i) for i in range(1, 101)], 0.95) == 95.0
     assert uuid.UUID(int=0) == ORG
+
+
+def test_recordings_are_read_from_xz_and_plain_and_compress_deterministically(
+    prompts: Path, tmp_path: Path
+) -> None:
+    plain = tmp_path / "rec_live.jsonl"
+    fake = FakeProvider("anthropic")
+    fake.script(HAIKU, _reply("ok", 0.9))
+
+    async def call(scope: str, x: int) -> None:
+        router, store, _ = build_live_router(
+            _settings(),
+            recordings=plain.with_name(plain.name + ".xz"),
+            max_cost_usd=1.0,
+            prompt_roots=[prompts],
+            provider=fake,
+        )
+        assert store.path == plain  # new responses go to the plain file
+        store.scope = scope
+        await router.complete(task=TASK, inputs={"x": x}, schema=Probe, org_id=ORG)
+
+    asyncio.run(call("doc-a", 1))
+    compressed = compress_recordings(plain)
+    assert compressed == plain.with_name("rec_live.jsonl.xz")
+    assert not plain.exists()
+    first_bytes = compressed.read_bytes()
+    assert lzma.decompress(first_bytes).decode().count("\n") == 1
+    asyncio.run(call("doc-a", 1))  # replayed from the xz file: no new call
+    assert len(fake.requests) == 1
+    assert not plain.exists()
+    asyncio.run(call("doc-b", 2))  # a new request: appended to the plain file
+    assert len(read_recording_lines(plain)) == 2
+    assert compress_recordings(plain) is not None
+    assert len(read_recording_lines(compressed)) == 2
+    assert compress_recordings(plain) is None  # nothing left to fold in
+    # Same lines, same bytes.
+    again = tmp_path / "copy_live.jsonl"
+    again.write_text(lzma.decompress(compressed.read_bytes()).decode(), encoding="utf-8")
+    copy = compress_recordings(again)
+    assert copy is not None
+    assert copy.read_bytes() == compressed.read_bytes()

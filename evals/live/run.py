@@ -22,6 +22,7 @@ from evals.live.harness import (
     LiveSetupError,
     Meter,
     build_live_router,
+    compress_recordings,
     live_settings,
     merge_result,
 )
@@ -62,7 +63,7 @@ async def _run(suite: Suite, product: str, args: argparse.Namespace) -> dict[str
     from evals.live.hire import PROMPT_ROOTS
 
     settings = live_settings()
-    recordings: Path = args.recordings or RECORDINGS_DIR / f"{product}_live.jsonl"
+    recordings: Path = args.recordings or RECORDINGS_DIR / f"{product}_live.jsonl.xz"
     router, store, budget = build_live_router(
         settings,
         recordings=recordings,
@@ -75,7 +76,10 @@ async def _run(suite: Suite, product: str, args: argparse.Namespace) -> dict[str
         flush=True,
     )
     meter = Meter(store, budget, every=args.every)
-    result = await suite(router, store, budget, meter, args.limit)
+    try:
+        result = await suite(router, store, budget, meter, args.limit)
+    finally:
+        compress_recordings(recordings)
     result["run"] = {
         "suite": args.suite,
         "date": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -97,13 +101,19 @@ async def _run(suite: Suite, product: str, args: argparse.Namespace) -> dict[str
 def main(argv: list[str] | None = None) -> int:
     suites = _suites()
     parser = argparse.ArgumentParser(prog="python -m evals.live")
-    parser.add_argument("suite", choices=[*suites, "report"])
+    parser.add_argument("suite", choices=[*suites, "report", "compress"])
     parser.add_argument("--max-cost-usd", type=float, default=DEFAULT_MAX_COST_USD)
     parser.add_argument("--limit", type=int, default=None, help="first N documents only")
     parser.add_argument("--every", type=int, default=5, help="print the spend every N documents")
     parser.add_argument("--recordings", type=Path, default=None)
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
+    if args.suite == "compress":
+        for product in sorted({p for _, p in suites.values()}):
+            path = args.recordings or RECORDINGS_DIR / f"{product}_live.jsonl.xz"
+            done = compress_recordings(path)
+            print(f"{product}: {done.relative_to(ROOT) if done else 'nothing to compress'}")
+        return 0
     if args.suite == "report":
         from evals.live.report import write_live_report
 

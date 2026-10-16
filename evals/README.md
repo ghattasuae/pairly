@@ -97,7 +97,10 @@ uv run python -m evals.live report   # the "Live baseline" section of report.md
 - `hire-extraction`: the regular PDF and DOCX CVs (fixed shuffled order) through the
   screening pipeline: model CV field extraction accuracy, rubric agreement with the
   synthetic labels, evidence validity. `hire-fairness`: the 60 counterfactual pairs, the
-  model's score change per pair (each CV screened on its own). `hire-injection`: the
+  model's score change per pair (each CV screened on its own, with the production
+  router's response reuse), reported apart for pairs with byte-identical scoring input
+  (delta 0 expected) and input-different pairs (each CV screened 3 times with reuse off,
+  the delta next to the model's own run-to-run spread). `hire-injection`: the
   classifier pass on the 5 paraphrased attacks and 20 clean CVs. `pay-extraction`: the
   31-invoice eval subset of `synth/pay/recordings.py`, field, line, total and VAT accuracy.
 - `--max-cost-usd` (default 5) is a hard cap: the router's budget refuses a request
@@ -105,9 +108,15 @@ uv run python -m evals.live report   # the "Live baseline" section of report.md
   measurement) and the result is marked `partial`. `--every N` prints the spend every N
   documents; `--limit N` runs the first N documents.
 - Every live response is appended at once to `evals/recordings/<product>_live.jsonl`
-  with its tokens, cost, latency and the model id the API answered with. A later run
-  replays a recording of the same request for the same document instead of calling the
-  model, so it is free (replayed calls report their recorded cost and latency).
+  with its tokens, cost, latency and the model id the API answered with; at the end of
+  the run that file is folded into the committed, xz-compressed
+  `evals/recordings/<product>_live.jsonl.xz` (`python -m evals.live compress` does it by
+  hand; both forms are read). A later run, on any machine, replays a recording of the
+  same request for the same document instead of calling the model, so it is free
+  (replayed calls report their recorded cost and latency).
+- Response reuse (`PAIRLY_LLM_REUSE_RESPONSES`, on by default, as in production): a
+  request already answered for another document reuses that answer at no cost
+  (`reused_from`). Set it to `false` in the run's environment to measure without it.
 - Results: `results/hire_live.json` and `results/pay_live.json`, one key per suite,
   with the sample size, status (`complete` or `partial`), models, tokens, cost and
   latency p50/p95. A metric not fully measured is partial with its sample size, never
