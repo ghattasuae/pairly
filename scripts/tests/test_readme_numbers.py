@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -50,3 +51,23 @@ def test_values_come_from_the_sources() -> None:
 
 def test_no_em_dash_in_the_section() -> None:
     assert "—" not in readme_numbers.section()
+
+
+def test_the_repository_stats_are_generated_and_name_their_commit() -> None:
+    readme = readme_numbers.README.read_text(encoding="utf-8")
+    start = readme.index(readme_numbers.STATS_BEGIN)
+    block = readme[start : readme.index(readme_numbers.STATS_END)]
+    commit = re.search(r"at commit `([0-9a-f]{7,})`", block)
+    assert commit is not None
+    readme_numbers._git("cat-file", "-e", f"{commit.group(1)}^{{commit}}")
+    # Every row the generator makes today is in the block (the values move with each
+    # commit; rerun the script to refresh them).
+    for what, _ in readme_numbers.stats():
+        assert f"| {what} | " in block
+
+
+def test_readme_links_point_at_files_that_exist() -> None:
+    readme = readme_numbers.README.read_text(encoding="utf-8")
+    for link in re.findall(r"\]\(([^)#]+)\)", readme):
+        if not link.startswith("http"):
+            assert (ROOT / link).exists(), link
