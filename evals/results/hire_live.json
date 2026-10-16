@@ -1373,8 +1373,8 @@
   "usage": {
    "documents": 84,
    "calls": 252,
-   "calls_live_this_run": 36,
-   "calls_replayed_from_recordings": 139,
+   "calls_live_this_run": 4,
+   "calls_replayed_from_recordings": 171,
    "calls_reused": 77,
    "models": {
     "claude-haiku-4-5-20251001": 252
@@ -1387,27 +1387,27 @@
    },
    "provider_errors": {},
    "escalated_calls": 0,
-   "input_tokens": 484127,
-   "output_tokens": 135941,
-   "cost_usd_measured": 1.163832,
-   "cost_usd_spent_this_run": 0.255264,
+   "input_tokens": 484555,
+   "output_tokens": 136075,
+   "cost_usd_measured": 1.16493,
+   "cost_usd_spent_this_run": 0.02405,
    "cost_usd_spent_on_documents_cut_by_cap": 0.0,
    "cost_usd_per_document": {
-    "mean": 0.013855,
+    "mean": 0.013868,
     "p50": 0.014997,
     "p95": 0.023177
    },
    "latency_per_call": {
     "n": 252,
     "p50_ms": 1459.0,
-    "p95_ms": 19539.0,
-    "mean_ms": 6352.8
+    "p95_ms": 29634.0,
+    "mean_ms": 6470.6
    },
    "latency_per_document": {
     "n": 84,
     "p50_ms": 15508.0,
-    "p95_ms": 56572.0,
-    "mean_ms": 19058.4
+    "p95_ms": 56822.0,
+    "mean_ms": 19411.7
    },
    "per_task": {
     "core_extract": {
@@ -1445,30 +1445,30 @@
      "models": {
       "claude-haiku-4-5-20251001": 84
      },
-     "input_tokens": 75185,
-     "output_tokens": 18881,
-     "cost_usd_measured": 0.16959,
+     "input_tokens": 75613,
+     "output_tokens": 19015,
+     "cost_usd_measured": 0.170688,
      "latency": {
       "n": 84,
       "p50_ms": 0.0,
-      "p95_ms": 8512.0,
-      "mean_ms": 3126.6
+      "p95_ms": 9159.0,
+      "mean_ms": 3479.9
      }
     }
    },
    "latency_note": "Model call latency as measured when the call was made live (a replayed call reports its recording's latency). Per document: the sum of its calls, made one after the other."
   },
-  "seconds": 343.2,
+  "seconds": 76.0,
   "run": {
    "suite": "hire-fairness",
-   "date": "2026-10-16T12:16:13Z",
-   "commit": "c69be99",
+   "date": "2026-10-16T14:31:59Z",
+   "commit": "9557e0b",
    "mode": "live",
-   "max_cost_usd": 3.0,
-   "spent_usd": 0.255264,
+   "max_cost_usd": 2.0,
+   "spent_usd": 0.02405,
    "limit": null,
-   "recordings": "evals/recordings/hire_live.jsonl",
-   "recordings_loaded": 922,
+   "recordings": "evals/recordings/hire_live.jsonl.xz",
+   "recordings_loaded": 934,
    "catalog": "packages/core/pairly_core/llm/data/models.yaml",
    "prices": "packages/core/pairly_core/llm/data/prices.yaml"
   }

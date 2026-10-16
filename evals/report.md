@@ -90,9 +90,9 @@ Recall per expected finding, misses and false positives by code are in `evals/re
 
 The model-dependent metrics measured with a real model (Anthropic, small tier first with escalation, and response reuse for identical requests, as in production). Synthetic data only; labels are rule-based, not human judgments. Recorded responses (`evals/recordings/*_live.jsonl.xz`, committed) make a second run free on any machine. These numbers do not gate: `hire.json` keeps `pending_live_run` and `thresholds.yaml` is unchanged until the founder sets thresholds; the Brief target column is what the founder decides against.
 
-- Date (UTC): 2026-10-16T12:16:13Z to 2026-10-16T13:31:28Z
+- Date (UTC): 2026-10-16T12:19:59Z to 2026-10-16T14:31:59Z
 - Models answering (API model id, calls used per suite, replays included): `claude-haiku-4-5-20251001` (933), `claude-sonnet-5-5` (2)
-- Total spent on live calls (from the recordings, smoke runs included): 8.0170 USD over 1170 calls
+- Total spent on live calls (from the recordings, smoke runs included): 8.0411 USD over 1174 calls
 - Status per suite: hire-extraction complete, hire-fairness complete, hire-injection complete, pay-extraction complete
 
 | Metric | Value | n | Status | Brief target | Models (calls) | Tokens in / out | Cost USD | Latency per doc p50 / p95 ms |
@@ -103,13 +103,13 @@ The model-dependent metrics measured with a real model (Anthropic, small tier fi
 | Overall score mean abs error (0 to 100) | 7.409 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
 | Evidence validity | 1 | 2991 quotes | complete | 100% | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
 | Cost per CV, mean USD | 0.0205 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
-| Fairness: max overall score change per pair (all pairs, run 1) | 7.5 | 60 pairs | complete | below a set threshold; none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness: mean overall score change per pair (all pairs, run 1) | 0.125 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness: pairs with any score change (all pairs, run 1) | 1 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness, input-identical pairs: max score change | 0 | 56 pairs | complete | 0 by construction (response reuse); below a set threshold | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness, input-different pairs: max change of the mean of 3 runs | 2.5 | 4 pairs | complete | below a set threshold; none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness, input-different pairs: model noise (max spread of one CV over its runs) | 7.5 | 8 CVs x 3 runs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
-| Fairness, input-different pairs: change above the noise | 0 | 4 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
+| Fairness: max overall score change per pair (all pairs, run 1) | 7.5 | 60 pairs | complete | below a set threshold; none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness: mean overall score change per pair (all pairs, run 1) | 0.125 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness: pairs with any score change (all pairs, run 1) | 1 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness, input-identical pairs: max score change | 0 | 56 pairs | complete | 0 by construction (response reuse); below a set threshold | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness, input-different pairs: max change of the mean of 3 runs | 2.5 | 4 pairs | complete | below a set threshold; none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness, input-different pairs: model noise (max spread of one CV over its runs) | 7.5 | 8 CVs x 3 runs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
+| Fairness, input-different pairs: change above the noise | 0 | 4 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484555 / 136075 | 1.1649 | 15508 / 56822 |
 | Classifier recall (payload removed) | 1 | 5 attacks | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (25) | 63073 / 578 | 0.0660 | 1536 / 39738 |
 | Classifier false-positive rate | 0 | 20 clean CVs | complete | 2% (guardrails gate, all detectors) | claude-haiku-4-5-20251001 (25) | 63073 / 578 | 0.0660 | 1536 / 39738 |
 | Eval subset only: header / line / total / VAT accuracy | 97.5% / 98.6% / 100% / 87.1% | 31 invoices | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (34) | 104077 / 41456 | 0.3114 | 9722 / 52781 |
