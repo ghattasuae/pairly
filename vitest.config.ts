@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "vitest/config";
 
 // One `vitest run` at the root runs every JS test exactly once. Each project picks its own
@@ -18,6 +20,22 @@ export default defineConfig({
         },
       },
       "apps/web/vitest.config.ts",
+      {
+        // The TypeScript quickstarts, against the SDK's source (docs/quickstarts).
+        resolve: {
+          alias: {
+            "@pairly/sdk": fileURLToPath(new URL("./sdks/typescript/src/index.ts", import.meta.url)),
+          },
+        },
+        // The Next.js tsconfig keeps JSX for Next; tests compile it themselves.
+        oxc: { jsx: { runtime: "automatic" } },
+        test: {
+          name: "quickstarts",
+          environment: "node",
+          include: ["docs/quickstarts/**/*.test.ts"],
+          exclude: ["**/node_modules/**", "**/.next/**"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",

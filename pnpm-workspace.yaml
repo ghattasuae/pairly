@@ -4,3 +4,6 @@ packages:
   - apps/web
   - packages/shared-ts
   - sdks/typescript
+  # The TypeScript quickstarts (docs/quickstarts), so their smoke test runs in CI.
+  - docs/quickstarts/express
+  - docs/quickstarts/nextjs
