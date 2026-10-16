@@ -55,11 +55,12 @@ across each counterfactual pair, deterministic aggregation, attack payloads reac
 the scoring model, claim checks, knockout routing, deterministic stage timings, and that
 the committed demo recordings are current.
 
-Reported as `pending_live_run` until a run with a model key exists, never estimated:
-model extraction accuracy, rubric scoring agreement with the synthetic labels (the
-scripted answers are made from those labels, so agreement on them means nothing), model
-score changes across fairness pairs, the classifier's share of injection detection,
-model latency and cost per CV.
+Reported here as `pending_live_run`, never estimated: model extraction accuracy, rubric
+scoring agreement with the synthetic labels (the scripted answers are made from those
+labels, so agreement on them means nothing), model score changes across fairness pairs,
+the classifier's share of injection detection, model latency and cost per CV. They are
+measured with a real model by `python -m evals.live` (below), in separate result files
+that do not gate until the founder sets their thresholds.
 
 Options: `--count`, `--seed`, `--limit N` (first N documents), `--include-scans`,
 `--out`, `--report`.
@@ -76,3 +77,38 @@ deterministic rule set is). Writes `results/pay.json` and the Pay section of
 `report.md`: duplicate recall and precision, bank-mismatch recall (gate 1.0),
 lookalike-domain recall, arithmetic and VAT error recall, injection catch rate, false
 positives on clean invoices, recall per expected finding and check errors.
+
+## `python -m evals.live`
+
+The model-dependent metrics, measured with a real model. Needs the Anthropic key (read
+by the settings loader from the environment or `.env`) and `PAIRLY_MODEL_MODE=live` in
+the environment of the run only (`.env` keeps `recorded`):
+
+```
+PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-extraction --max-cost-usd 8
+PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-fairness --max-cost-usd 5
+PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-injection --max-cost-usd 1
+PAIRLY_MODEL_MODE=live uv run python -m evals.live pay-extraction --max-cost-usd 5
+uv run python -m evals.live report   # the "Live baseline" section of report.md
+```
+
+- The production `ModelRouter` with the real Anthropic provider: each prompt starts at
+  its tier (small) and escalates on invalid output or low confidence, as in production.
+- `hire-extraction`: the regular PDF and DOCX CVs (fixed shuffled order) through the
+  screening pipeline: model CV field extraction accuracy, rubric agreement with the
+  synthetic labels, evidence validity. `hire-fairness`: the 60 counterfactual pairs, the
+  model's score change per pair (each CV screened on its own). `hire-injection`: the
+  classifier pass on the 5 paraphrased attacks and 20 clean CVs. `pay-extraction`: the
+  31-invoice eval subset of `synth/pay/recordings.py`, field, line, total and VAT accuracy.
+- `--max-cost-usd` (default 5) is a hard cap: the router's budget refuses a request
+  whose worst case could pass it, the run stops after that document (dropped from the
+  measurement) and the result is marked `partial`. `--every N` prints the spend every N
+  documents; `--limit N` runs the first N documents.
+- Every live response is appended at once to `evals/recordings/<product>_live.jsonl`
+  with its tokens, cost, latency and the model id the API answered with. A later run
+  replays a recording of the same request for the same document instead of calling the
+  model, so it is free (replayed calls report their recorded cost and latency).
+- Results: `results/hire_live.json` and `results/pay_live.json`, one key per suite,
+  with the sample size, status (`complete` or `partial`), models, tokens, cost and
+  latency p50/p95. A metric not fully measured is partial with its sample size, never
+  estimated.
