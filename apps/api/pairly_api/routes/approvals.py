@@ -3,7 +3,9 @@
 """Unified approval inbox, decisions, delegations, approval rules and workflow runs.
 
 * ``GET  /v1/approvals``                   inbox (only workflows where the actor holds
-                                             the approval type's decision permission)
+                                             the approval type's decision permission; an
+                                             API key with ``core.approval.read`` reads
+                                             its creator's inbox, never deciding)
 * ``GET  /v1/approvals/{id}``              one approval: context, payload, chain, history
                                              (as the workflow's view filter shows them,
                                              ``pairly_core.approvals.views``; the hash is
@@ -47,6 +49,7 @@ from pairly_core.approvals.service import (
     create_delegation,
     decide,
     get_detail,
+    inbox_viewer,
     list_delegations,
     list_inbox,
     revoke_delegation,
@@ -54,7 +57,7 @@ from pairly_core.approvals.service import (
 from pairly_core.approvals.views import approval_view
 from pairly_core.audit import actor_ref
 from pairly_core.errors import BadRequestError, NotFoundError, ServiceUnavailableError
-from pairly_core.identity import CurrentActor, OrgSession
+from pairly_core.identity import Context, CurrentActor, OrgSession
 from pairly_core.policy_versions import (
     PolicyError,
     PublishedPolicy,
@@ -259,6 +262,7 @@ def decision_out(outcome: DecisionOutcome) -> DecisionOut:
 async def inbox(
     actor: CurrentActor,
     session: OrgSession,
+    ctx: Context,
     workflow: Annotated[str | None, Query(pattern=r"^[a-z][a-z0-9_]{0,31}$")] = None,
     status: ApprovalStatus | None = None,
     sla: Literal["on_track", "due_soon", "overdue"] | None = None,
@@ -266,9 +270,10 @@ async def inbox(
     cursor: Annotated[str | None, Query(max_length=256)] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> InboxOut:
+    # An API key with core.approval.read sees its creator's inbox, read only.
     page = await list_inbox(
         session,
-        actor,
+        await inbox_viewer(session, ctx.registry, actor),
         workflow=workflow,
         status=status,
         sla=sla,
@@ -284,9 +289,9 @@ async def inbox(
 
 @router.get("/approvals/{approval_id}", response_model=ApprovalDetailOut)
 async def detail(
-    approval_id: uuid.UUID, actor: CurrentActor, session: OrgSession
+    approval_id: uuid.UUID, actor: CurrentActor, session: OrgSession, ctx: Context
 ) -> ApprovalDetailOut:
-    found = await get_detail(session, actor, approval_id)
+    found = await get_detail(session, await inbox_viewer(session, ctx.registry, actor), approval_id)
     approval = found.approval
     active = found.steps[approval.current_step] if approval.current_step is not None else None
     shown = await approval_view(session, approval)

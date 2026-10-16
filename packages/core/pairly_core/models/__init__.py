@@ -30,6 +30,7 @@ from pairly_core.models.portal import PortalGuardRule
 from pairly_core.models.tenancy import Invitation, Membership, Organisation, Role, User
 from pairly_core.notifications.models import Notification, NotificationPreference, Template
 from pairly_core.policy.models import PolicyDocument, RuleResult
+from pairly_core.proposals.models import Proposal
 from pairly_core.retention.models import RetentionReport
 from pairly_core.retrieval.models import SearchChunk
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
@@ -78,6 +79,7 @@ __all__ = [
     "PolicyDocument",
     "PolicyVersion",
     "PortalGuardRule",
+    "Proposal",
     "RetentionReport",
     "RiskAssessment",
     "RiskSignalRow",

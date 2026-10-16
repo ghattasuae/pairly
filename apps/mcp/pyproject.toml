@@ -3,16 +3,20 @@
 
 [project]
 name = "pairly-mcp"
-version = "0.0.0"
-description = "Pairly MCP server exposing read and propose tools."
+version = "0.1.0"
+description = "Pairly MCP server: read and propose tools over the Pairly API. People decide."
 readme = "README.md"
 license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Proofly Technology" }]
-dependencies = ["pairly-core"]
+# No engine import: every tool goes through the HTTP API, so the API's RBAC applies.
+dependencies = [
+    "httpx>=0.28",
+    "mcp>=2.3,<3",
+]
 
-[tool.uv.sources]
-pairly-core = { workspace = true }
+[project.scripts]
+pairly-mcp = "pairly_mcp.server:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]

@@ -984,6 +984,50 @@ def decider_permissions(actor: Actor) -> list[str]:
     return sorted(p for p in actor.permissions if p.rsplit(".", 1)[1] == "approve")
 
 
+INBOX_READ = "core.approval.read"
+
+
+async def inbox_viewer(session: AsyncSession, registry: RoleRegistry, actor: Actor) -> Actor:
+    """Whose inbox ``actor`` reads (``GET /v1/approvals`` and ``/v1/approvals/{id}``).
+
+    A person or the agent reads their own. An API key holding ``core.approval.read``
+    reads the inbox of the person who created it (a personal key, for example for the
+    MCP server: "which approvals are waiting for me?"), read only:
+
+    * the permissions are the creator's approve permissions as of now (a creator who
+      left or lost the role sees nothing through the key any more);
+    * the returned actor stays an ``api_key`` actor, so ``authorize`` refuses it every
+      approve or decide permission, ``decide`` refuses it outright and ``can_decide`` is
+      always false. It is only ever used to filter what is shown.
+    """
+    if actor.kind is not ActorKind.API_KEY:
+        return actor
+    authorize(actor, INBOX_READ)
+    from pairly_core.api_keys.models import ApiKey
+    from pairly_core.models import User
+
+    creator = await session.scalar(select(ApiKey.created_by).where(ApiKey.id == actor.id))
+    if creator is None:
+        raise PermissionDeniedError("this API key has no owner")
+    user = await session.scalar(select(User).where(User.id == creator))
+    rows = (
+        await session.execute(
+            select(Role.key, Membership.workflow)
+            .join(Role, Role.id == Membership.role_id)
+            .where(Membership.user_id == creator, Membership.org_id == actor.org_id)
+        )
+    ).all()
+    grants = tuple(RoleGrant(role=r.key, workflow=r.workflow) for r in rows)
+    held = registry.resolve(grants) if user is not None else frozenset()
+    return Actor(
+        kind=ActorKind.API_KEY,
+        id=creator,
+        org_id=actor.org_id,
+        grants=(),
+        permissions=frozenset(p for p in held if p.rsplit(".", 1)[1] == "approve"),
+    )
+
+
 async def list_inbox(
     session: AsyncSession,
     actor: Actor,

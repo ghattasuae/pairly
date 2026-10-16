@@ -5472,6 +5472,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposals */
+        get: operations["proposals_v1_proposals_get"];
+        put?: never;
+        /** Propose */
+        post: operations["propose_v1_proposals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/retention/report": {
         parameters: {
             query?: never;
@@ -15034,6 +15052,62 @@ export type components = {
             values: {
                 [key: string]: unknown;
             };
+        };
+        /** ProposalIn */
+        ProposalIn: {
+            /** Action */
+            action?: string | null;
+            /** Body */
+            body: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Entity Type */
+            entity_type: string;
+            /** @default note */
+            kind: components["schemas"]["ProposalKind"];
+            /** Workflow */
+            workflow?: string | null;
+        };
+        /**
+         * ProposalKind
+         * @enum {string}
+         */
+        ProposalKind: "note" | "action";
+        /** ProposalList */
+        ProposalList: {
+            /** Items */
+            items: components["schemas"]["ProposalOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ProposalOut */
+        ProposalOut: {
+            /** Action */
+            action: string | null;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Entity Type */
+            entity_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Proposed By Id */
+            proposed_by_id: string;
+            /** Proposed By Type */
+            proposed_by_type: string;
+            /** Workflow */
+            workflow: string | null;
         };
         /** PublishIn */
         PublishIn: {
@@ -26673,6 +26747,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchHitOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposals_v1_proposals_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                entity_id?: string | null;
+                entity_type?: string | null;
+                limit?: number;
+                workflow?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_v1_proposals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalOut"];
                 };
             };
             /** @description Validation Error */

@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Pairly MCP server. Read and propose tools arrive in M6."""
+"""Pairly MCP server: read and propose tools over the Pairly API (``pairly-mcp``).
 
-__version__ = "0.0.0"
+Run it with ``make mcp`` or ``uv run pairly-mcp`` (stdio). See ``apps/mcp/README.md``.
+"""
+
+__version__ = "0.1.0"
