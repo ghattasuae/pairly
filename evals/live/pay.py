@@ -27,7 +27,7 @@ from evals.live.harness import (
 from pairly_core.extraction.engine import ExtractionResult, extract
 from pairly_pay.invoice_schema import PayInvoice
 from synth.pay.dataset import DocSpec, build
-from synth.pay.recordings import Item, _expected, materialise, subset_specs
+from synth.pay.recordings import Item, _expected, demo_specs, materialise, subset_specs
 
 
 def _pct(a: int, b: int) -> float | None:
@@ -110,6 +110,9 @@ async def suite_pay_extraction(
     started = time.monotonic()
     outputs, errors, cut, stopped = await run_docs(specs, meter, budget, one)
     measured = [(items[k], v) for k, v in outputs.items()]
+    # The subset takes the demo trio last (two of them are attack invoices): the eval
+    # subset proper is everything before it.
+    demo = {s.record.id for s in demo_specs(ds)}
     return {
         "status": run_status(
             stopped_by_cap=stopped, measured=len(measured), planned=len(specs), errors=len(errors)
@@ -122,6 +125,9 @@ async def suite_pay_extraction(
         "errors": errors,
         "documents": sorted(outputs),
         "accuracy": score(measured),
+        "accuracy_eval_subset_without_demo_trio": score(
+            [(i, r) for i, r in measured if i.id not in demo]
+        ),
         "usage": meter.summary(),
         "seconds": round(time.monotonic() - started, 1),
     }
