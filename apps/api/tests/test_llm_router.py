@@ -517,6 +517,46 @@ async def test_reuse_never_crosses_orgs_or_reuses_a_replay(
     assert cross is None
 
 
+async def test_recorded_mode_never_serves_a_decision_replay(
+    llm_engine: AsyncEngine,
+    owner_engine: AsyncEngine,
+    prompts: PromptRegistry,
+    clean_llm: TwoTenants,
+) -> None:
+    """Security review 2026-10 (L-06): a live replay of a recorded call stores a newer
+    row with the same request hash and another answer. Recorded mode still serves the
+    provider's answer, never the replay, on the real table."""
+    a = clean_llm.a.org_id
+    router, provider = make_router(llm_engine, prompts)
+    provider.script(HAIKU, GOOD, {"label": "receipt", "confidence": 0.95})
+    first = await router.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=a)
+    replayed = await router.replay(first.call_id, org_id=a, schema=Answer, task=TASK, live=True)
+    assert not replayed.matches
+    rows = await _rows(
+        llm_engine, a, "SELECT id, replay_of FROM model_calls ORDER BY created_at, id"
+    )
+    assert [r.replay_of for r in rows] == [None, first.call_id]
+
+    async with _session(llm_engine, a) as s, s.begin():
+        found = await DatabaseCallStore().find_recording(s, first.request_hash)
+    assert found is not None
+    assert found.id == first.call_id
+    recorded, offline = make_router(llm_engine, prompts, mode=ModelMode.RECORDED)
+    hit = await recorded.complete(task=TASK, inputs=INPUTS, schema=Answer, org_id=a)
+    assert hit.value == Answer.model_validate(GOOD)
+    assert offline.requests == []
+
+    # A hash whose only row is a replay has no recording at all.
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :org, true)"), {"org": str(a)})
+        await conn.execute(
+            text("UPDATE model_calls SET request_hash = :h WHERE replay_of IS NOT NULL"),
+            {"h": "f" * 64},
+        )
+    async with _session(llm_engine, a) as s, s.begin():
+        assert await DatabaseCallStore().find_recording(s, "f" * 64) is None
+
+
 async def test_bundle_round_trip_between_orgs(
     llm_engine: AsyncEngine, prompts: PromptRegistry, clean_llm: TwoTenants
 ) -> None:

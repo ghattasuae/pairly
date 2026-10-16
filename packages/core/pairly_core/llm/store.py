@@ -120,11 +120,16 @@ class DatabaseCallStore:
         return call_id
 
     async def find_recording(self, session: AsyncSession, request_hash: str) -> StoredCall | None:
+        """The newest answer to ``request_hash`` that recorded mode may serve. Never a
+        decision replay (``replay_of``): a replay is a check of an earlier call, not a
+        provider answer, as ``find_reusable`` and the bundle export already hold
+        (security review 2026-10, L-06)."""
         row = await session.scalar(
             select(ModelCall)
             .where(
                 ModelCall.request_hash == request_hash,
                 ModelCall.status.in_([s.value for s in OUTPUT_STATUSES]),
+                ModelCall.replay_of.is_(None),
             )
             .order_by(ModelCall.created_at.desc(), ModelCall.id)
             .limit(1)

@@ -265,7 +265,11 @@ class _Store:
     async def find_recording(self, session: AsyncSession, request_hash: str) -> StoredCall | None:
         statuses = {s.value for s in OUTPUT_STATUSES}
         for row in reversed(self.rows):
-            if row["request_hash"] == request_hash and row["status"] in statuses:
+            if (
+                row["request_hash"] == request_hash
+                and row["status"] in statuses
+                and row.get("replay_of") is None
+            ):
                 return self._stored(row)
         return None
 
