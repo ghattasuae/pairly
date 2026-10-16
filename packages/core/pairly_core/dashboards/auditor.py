@@ -7,8 +7,9 @@
 * **Audit log**: events in all, in the last 7 days, the denials of the last 7 days and
   the latest events, with the search page and the export as entry points.
 * **Integrity**: the chain checked now (``verify_with_anchors``, as ``GET
-  /v1/audit/verify``) when it is short enough to check inline, else the latest stored
-  verification; and the anchored heads (``GET /v1/audit/anchors``).
+  /v1/audit/verify``) when it has at most ``INLINE_VERIFY_MAX`` events, else the latest
+  stored verification; failed nightly checks; and the anchored heads (``GET
+  /v1/audit/anchors``).
 * **Approvals history**: decisions of the last 30 days by outcome, the latest ones.
 * **Overrides**: human records that superseded an AI record, with whether a reason was
   recorded. The reason itself is personal data (encrypted, redacted in the compliance
@@ -59,6 +60,9 @@ from pairly_core.rbac import Actor
 HISTORY_DAYS: Final = 30
 RECENT_DAYS: Final = 7
 LIST: Final = 10
+# Home loads this board often: a longer chain shows its latest stored verification and
+# the nightly checks instead of being recomputed on every visit.
+INLINE_VERIFY_MAX: Final = 5_000
 
 
 async def _audit_log(session: AsyncSession, now: datetime) -> Section:
@@ -140,7 +144,7 @@ async def _integrity(
     items: list[Item] = []
     broken = False
     source: str
-    if length <= large_chain_events:
+    if length <= min(large_chain_events, INLINE_VERIFY_MAX):
         loader = None
         if heads is not None:
             known = anchor_map(heads)

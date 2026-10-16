@@ -107,6 +107,18 @@ async def test_auditor_dashboard(pay_api: PayApi, world: PayWorld, other: PayWor
     refused = await api.call("GET", f"{BASE}/auditor", world, "clerk")
     assert refused.status_code == 403
 
+    # A chain too long to check on every visit shows the latest stored verification
+    # (none yet here: said, not assumed fine).
+    services = api.app.state.decision_services
+    api.app.state.decision_services = dataclasses.replace(services, large_chain_events=0)
+    try:
+        stored = await api.ok("GET", f"{BASE}/auditor", world, "auditor", otp=False)
+    finally:
+        api.app.state.decision_services = services
+    integrity = _section(stored, "integrity")
+    assert integrity["source"] == "latest_stored_verification"
+    assert (integrity["count"], integrity["note"], integrity["items"]) == (None, "no_data", [])
+
 
 # ------------------------------------------------------------------ admin
 
@@ -318,8 +330,24 @@ async def test_ops_dashboard_is_for_the_system_organisation_only(
         # An admin of any other organisation: the route does not exist for them.
         assert (await api.call("GET", "/v1/ops/dashboard", other, "admin")).status_code == 404
         assert (await api.call("GET", "/v1/ops/jobs", other, "admin")).status_code == 404
-        # In the system organisation, only admins.
+        # In the system organisation, only admins, and only people: not an API key, even
+        # one an admin gave this scope.
+        assert (
+            await api.call("GET", "/v1/ops/dashboard", world, "admin", otp=False)
+        ).status_code == 200
         assert (await api.call("GET", "/v1/ops/dashboard", world, "auditor")).status_code == 403
+        created = await api.ok(
+            "POST",
+            "/v1/api-keys",
+            world,
+            "admin",
+            status=201,
+            json={"name": "ops", "scopes": ["core.platform.read"]},
+        )
+        keyed = await api.client.get(
+            "/v1/ops/dashboard", headers={"Authorization": f"Bearer {created['key']}"}
+        )
+        assert keyed.status_code == 404
     finally:
         _system(api, None)
     assert board["board"] == "platform_ops"

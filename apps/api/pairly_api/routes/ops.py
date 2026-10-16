@@ -6,12 +6,13 @@
   errors and latency, storage, per-tenant usage, schedules (``pairly_core.dashboards.ops``)
 * ``GET /v1/ops/jobs``       recent ``job_runs`` (``recent_runs``), optionally one job
 
-Who: an admin (``core.platform.read``) of the deployment's system organisation,
-``PAIRLY_SYSTEM_ORG_ID``. Anyone else, an admin of any other organisation included,
-gets 404, as when the setting is unset: the routes do not exist for them. This is
-simpler than a ``platform_operator`` role: a role lives inside an organisation, and the
-granting rules would have to stop every tenant admin from handing out a cross-tenant
-power; a setting only whoever runs the deployment can change has no such hole.
+Who: a person who is an admin (``core.platform.read``) of the deployment's system
+organisation, ``PAIRLY_SYSTEM_ORG_ID``. Anyone else, an admin of any other organisation
+and any API key included, gets 404, as when the setting is unset: the routes do not
+exist for them. This is simpler than a ``platform_operator`` role: a role lives inside
+an organisation, and the granting rules would have to stop every tenant admin from
+handing out a cross-tenant power; a setting only whoever runs the deployment can change
+has no such hole.
 
 Everything returned is numbers, statuses, job names and organisation ids and slugs:
 never tenant content.
@@ -39,7 +40,7 @@ from pairly_core.identity import Context, OrgSession
 from pairly_core.ingestion.storage import blob_key
 from pairly_core.jobs.registry import JOB_NAME_RE, JobRegistry
 from pairly_core.jobs.runs import recent_runs
-from pairly_core.rbac import Actor, require
+from pairly_core.rbac import Actor, ActorKind, require
 
 log = structlog.get_logger(__name__)
 
@@ -51,7 +52,8 @@ _PROBE_KEY = blob_key(uuid.UUID(int=0), "0" * 64)
 
 def platform_actor(actor: Annotated[Actor, Depends(require(PLATFORM_READ))], ctx: Context) -> Actor:
     system = ctx.settings.system_org_id
-    if system is None or actor.org_id != system:
+    # People only: an API key (even one with this scope) never reads across tenants.
+    if system is None or actor.org_id != system or actor.kind is not ActorKind.USER:
         raise NotFoundError("not found")
     return actor
 
