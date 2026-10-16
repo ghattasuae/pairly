@@ -513,8 +513,81 @@ APPEAL_ESCALATED: Final = (
     ),
 )
 
+# Retention's first deletion (``pairly_core.retention.notice``): sent once per
+# organisation and rule to the people who may change retention, a full preview before
+# the first subject of the rule may be deleted. Counts and a date only, never a name.
+_RETENTION_VARS: Final = {
+    "count": _v("integer", 72),
+    "subject_type": _v("string", "hire.candidate"),
+    "deletes_on": _v("datetime", "2026-10-23T09:00:00+00:00"),
+    "review_url": _v("url", "https://app.pairly.example/settings/retention", required=False),
+}
+_SHORT_RETENTION_VARS: Final = {
+    k: _RETENTION_VARS[k] for k in ("count", "subject_type", "deletes_on")
+}
+_WHAT_EN: Final = (
+    "{% if subject_type == 'hire.candidate' %}closed candidate records"
+    "{% elif subject_type == 'pay.vendor' %}vendor records{% else %}records{% endif %}"
+)
+_WHAT_AR: Final = (
+    "{% if subject_type == 'hire.candidate' %}سجلات مرشحين مغلقة"
+    "{% elif subject_type == 'pay.vendor' %}سجلات موردين{% else %}سجلات{% endif %}"
+)
+RETENTION_FIRST_DELETION: Final = (
+    DefaultTemplate(
+        key="core.retention.first_deletion",
+        channel="email",
+        locale="en",
+        category="retention",
+        subject="Retention will start deleting {{ count }} " + _WHAT_EN + " on {{ deletes_on }}",
+        body=(
+            "Retention will start deleting {{ count }} " + _WHAT_EN + " on {{ deletes_on }}. "
+            "Review the list or pause.\n\n"
+            "This is the first deletion under your organisation's retention settings. "
+            "Nothing is deleted before that date. On the Retention settings page you can "
+            "see every record on the list, place a legal hold on one, or pause the rule."
+            "{% if review_url %}\n\nReview the list: {{ review_url }}{% endif %}"
+        ),
+        variables=_RETENTION_VARS,
+    ),
+    DefaultTemplate(
+        key="core.retention.first_deletion",
+        channel="email",
+        locale="ar",
+        category="retention",
+        subject="سيبدأ الاحتفاظ بحذف {{ count }} من " + _WHAT_AR + " في {{ deletes_on }}",
+        body=(
+            "سيبدأ الاحتفاظ بحذف {{ count }} من " + _WHAT_AR + " في {{ deletes_on }}. "
+            "راجع القائمة أو أوقف القاعدة مؤقتا.\n\n"
+            "هذا أول حذف بموجب إعدادات الاحتفاظ في مؤسستك. لن يحذف شيء قبل ذلك التاريخ. "
+            "في صفحة إعدادات الاحتفاظ يمكنك رؤية كل سجل في القائمة أو وضع حجز قانوني عليه "
+            "أو إيقاف القاعدة مؤقتا."
+            "{% if review_url %}\n\nراجع القائمة: {{ review_url }}{% endif %}"
+        ),
+        variables=_RETENTION_VARS,
+    ),
+    DefaultTemplate(
+        key="core.retention.first_deletion",
+        channel="in_app",
+        locale="en",
+        category="retention",
+        subject="Retention will start deleting {{ count }} " + _WHAT_EN + " on {{ deletes_on }}",
+        body="Review the list or pause.",
+        variables=_SHORT_RETENTION_VARS,
+    ),
+    DefaultTemplate(
+        key="core.retention.first_deletion",
+        channel="in_app",
+        locale="ar",
+        category="retention",
+        subject="سيبدأ الاحتفاظ بحذف {{ count }} من " + _WHAT_AR + " في {{ deletes_on }}",
+        body="راجع القائمة أو أوقف القاعدة مؤقتا.",
+        variables=_SHORT_RETENTION_VARS,
+    ),
+)
+
 # Seeded by migration 0011. Later defaults are seeded by their own migration (0014 for
-# APPEAL_ESCALATED) and listed in ALL_SYSTEM_TEMPLATES.
+# APPEAL_ESCALATED, 0031 for RETENTION_FIRST_DELETION) and listed in ALL_SYSTEM_TEMPLATES.
 SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *APPROVAL_REQUESTED,
     *APPROVAL_ESCALATED,
@@ -523,4 +596,8 @@ SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *DIGEST,
     *SENSITIVE,
 )
-ALL_SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (*SYSTEM_TEMPLATES, *APPEAL_ESCALATED)
+ALL_SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
+    *SYSTEM_TEMPLATES,
+    *APPEAL_ESCALATED,
+    *RETENTION_FIRST_DELETION,
+)

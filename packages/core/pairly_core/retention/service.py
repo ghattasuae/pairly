@@ -32,10 +32,25 @@ sessions (RLS applies everywhere):
 A rule that is off lists nothing and deletes nothing; turning it on starts a new
 seven-day preview. A legal hold (``place_hold``) moves the subject's list rows to
 ``held`` in the same transaction; releasing it lists them again with a fresh preview.
+
+**First deletion.** Before a subjects rule deletes anything for the first time in an
+organisation, the plan sends its admins an urgent notice (``pairly_core.retention.
+notice``: "Retention will start deleting N ... on <date>. Review the list or pause.")
+and records it on ``retention_rule_controls``, once per organisation and rule. Every
+listed subject of the rule is then kept at least a whole preview after the notice, so
+the date it names holds. Until a notice is recorded (no admin could be told) the rule
+deletes nothing.
+
+**Pause.** An admin pauses a rule (``pause_rule``, audited): the list stays visible and
+keeps being refreshed, but nothing of the rule is deleted (each deletion checks the
+pause in its own transaction, so a pause stops a run already going). Subjects whose
+database part was already erased still get their stored files removed. Resuming
+(``resume_rule``) starts a new seven-day preview for every listed subject.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -61,10 +76,12 @@ from pairly_core.retention.models import (
     RetentionHold,
     RetentionOrgSetting,
     RetentionReport,
+    RetentionRuleControl,
     RetentionRuleSetting,
     RetentionScheduleItem,
     ScheduleStatus,
 )
+from pairly_core.retention.notice import RetentionNotifier, default_notifier
 from pairly_core.retention.rules import (
     MAX_DAYS,
     DeleteMode,
@@ -83,6 +100,9 @@ SUBJECT_DELETED: Final = "core.retention.subject_deleted"
 ERASE_FAILED: Final = "core.retention.erase_failed"
 HOLD_PLACED: Final = "core.retention.hold_placed"
 HOLD_RELEASED: Final = "core.retention.hold_released"
+RULE_PAUSED: Final = "core.retention.rule_paused"
+RULE_RESUMED: Final = "core.retention.rule_resumed"
+FIRST_NOTICE: Final = "core.retention.first_notice_sent"
 RULE_ENTITY: Final = "retention_rule"
 HOLD_ENTITY: Final = "retention_hold"
 MAX_REASON: Final = 2000
@@ -115,10 +135,21 @@ class RuleState:
     days: int
     customised: bool
     period_value: int | None = None
+    paused_at: datetime | None = None
+    notice_sent_at: datetime | None = None
+
+    @property
+    def paused(self) -> bool:
+        return self.paused_at is not None
+
+
+async def _controls(session: AsyncSession) -> dict[str, RetentionRuleControl]:
+    return {c.rule: c for c in await session.scalars(select(RetentionRuleControl))}
 
 
 async def rule_states(session: AsyncSession, registry: RetentionRegistry) -> list[RuleState]:
     saved = {s.rule: s for s in await session.scalars(select(RetentionRuleSetting))}
+    controls = await _controls(session)
     states: list[RuleState] = []
     for rule in registry.rules:
         row = saved.get(rule.key)
@@ -127,6 +158,7 @@ async def rule_states(session: AsyncSession, registry: RetentionRegistry) -> lis
         if not rule.configurable_days:
             days = rule.days
         period_value = await rule.period.get(session) if rule.period is not None else None
+        control = controls.get(rule.key)
         states.append(
             RuleState(
                 rule=rule,
@@ -134,6 +166,8 @@ async def rule_states(session: AsyncSession, registry: RetentionRegistry) -> lis
                 days=days,
                 customised=row is not None,
                 period_value=period_value,
+                paused_at=control.paused_at if control is not None else None,
+                notice_sent_at=control.notice_sent_at if control is not None else None,
             )
         )
     return states
@@ -254,6 +288,116 @@ async def update_settings(
             entity_id=org,
             payload={"rules": audit_changes, "daily_cap": cap_change},
         )
+
+
+# ------------------------------------------------------------------ pause
+
+
+async def _control_for_update(session: AsyncSession, rule_key: str) -> RetentionRuleControl:
+    """The rule's control row, locked (created when missing)."""
+    org = _org(session)
+    await session.execute(
+        text(
+            "INSERT INTO retention_rule_controls (org_id, rule) VALUES (:org, :rule) "
+            "ON CONFLICT (org_id, rule) DO NOTHING"
+        ),
+        {"org": org, "rule": rule_key},
+    )
+    row = await session.scalar(
+        select(RetentionRuleControl)
+        .where(RetentionRuleControl.rule == rule_key)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    assert row is not None  # noqa: S101 (inserted above, same tenant)
+    return row
+
+
+def _pausable(registry: RetentionRegistry, rule_key: str) -> RetentionRule:
+    rule = registry.get(rule_key)
+    if rule is None:
+        raise NotFoundError(f"unknown retention rule {rule_key!r}")
+    if rule.mode is DeleteMode.REPORT:
+        raise BadRequestError(f"{rule_key!r} only reports; there is nothing to pause")
+    return rule
+
+
+async def pause_rule(
+    session: AsyncSession, actor: Actor, registry: RetentionRegistry, rule_key: str
+) -> None:
+    """Stop a rule deleting anything until a person resumes it. Its list stays."""
+    rule = _pausable(registry, rule_key)
+    row = await _control_for_update(session, rule.key)
+    if row.paused_at is not None:
+        raise ConflictError("this rule is already paused")
+    now = await _now(session)
+    row.paused_at = now
+    row.paused_by = actor.id
+    row.updated_at = now
+    listed = await session.scalar(
+        select(func.count()).where(
+            RetentionScheduleItem.rule == rule.key,
+            RetentionScheduleItem.status == ScheduleStatus.SCHEDULED.value,
+        )
+    )
+    await session.flush()
+    await audit_actor_action(
+        session,
+        actor,
+        RULE_PAUSED,
+        entity_type=RULE_ENTITY,
+        entity_id=rule.key,
+        payload={"rule": rule.key, "listed": int(listed or 0)},
+    )
+
+
+async def resume_rule(
+    session: AsyncSession, actor: Actor, registry: RetentionRegistry, rule_key: str
+) -> None:
+    """End a pause. Every listed subject of the rule gets a new seven-day preview."""
+    rule = _pausable(registry, rule_key)
+    row = await _control_for_update(session, rule.key)
+    if row.paused_at is None:
+        raise ConflictError("this rule is not paused")
+    now = await _now(session)
+    paused_at = row.paused_at
+    row.paused_at = None
+    row.paused_by = None
+    row.updated_at = now
+    relisted = await session.execute(
+        update(RetentionScheduleItem)
+        .where(
+            RetentionScheduleItem.rule == rule.key,
+            RetentionScheduleItem.status == ScheduleStatus.SCHEDULED.value,
+        )
+        .values(listed_at=now, delete_after=now + PREVIEW, updated_at=now)
+        .execution_options(synchronize_session=False)
+    )
+    await session.flush()
+    await audit_actor_action(
+        session,
+        actor,
+        RULE_RESUMED,
+        entity_type=RULE_ENTITY,
+        entity_id=rule.key,
+        payload={
+            "rule": rule.key,
+            "paused_at": paused_at.isoformat(),
+            "relisted": int(getattr(relisted, "rowcount", 0) or 0),
+            "delete_after": (now + PREVIEW).isoformat(),
+        },
+    )
+
+
+async def _paused(session: AsyncSession, rule_key: str) -> bool:
+    """Whether the rule is paused, read under a share lock so a pause committing at the
+    same time waits for this deletion's transaction or stops it."""
+    paused_at = await session.scalar(
+        select(RetentionRuleControl.paused_at)
+        .where(RetentionRuleControl.rule == rule_key)
+        .with_for_update(read=True)
+    )
+    return paused_at is not None
 
 
 # ------------------------------------------------------------------ legal holds
@@ -484,22 +628,122 @@ async def _plan_subjects(session: AsyncSession, state: RuleState, now: datetime)
     )
 
 
+async def _first_notice(
+    session: AsyncSession,
+    state: RuleState,
+    notifier: RetentionNotifier,
+    now: datetime,
+) -> bool:
+    """Before a subjects rule's first deletion: keep every listed subject a whole
+    preview past now, tell the admins, record it. Rolled back (to a savepoint) and
+    retried next run when no admin could be told. True when the notice is recorded."""
+    rule = state.rule
+    subjects = rule.subjects
+    assert subjects is not None  # noqa: S101
+    try:
+        async with session.begin_nested():
+            row = await _control_for_update(session, rule.key)
+            if row.notice_sent_at is not None:
+                return True
+            await session.execute(
+                update(RetentionScheduleItem)
+                .where(
+                    RetentionScheduleItem.rule == rule.key,
+                    RetentionScheduleItem.status == ScheduleStatus.SCHEDULED.value,
+                    RetentionScheduleItem.delete_after < now + PREVIEW,
+                )
+                .values(delete_after=now + PREVIEW, updated_at=now)
+                .execution_options(synchronize_session=False)
+            )
+            dates = list(
+                await session.scalars(
+                    select(RetentionScheduleItem.delete_after).where(
+                        RetentionScheduleItem.rule == rule.key,
+                        RetentionScheduleItem.status == ScheduleStatus.SCHEDULED.value,
+                    )
+                )
+            )
+            if not dates:
+                return False
+            deletes_on = min(dates)
+            told = await notifier(
+                session,
+                rule=rule.key,
+                workflow=rule.workflow,
+                subject_type=subjects.subject_type,
+                count=len(dates),
+                deletes_on=deletes_on,
+            )
+            if not told:
+                raise _NoAdminToldError
+            row.notice_sent_at = now
+            row.notice_count = len(dates)
+            row.notice_deletes_on = deletes_on
+            row.updated_at = now
+            await session.flush()
+            await append_audit(
+                session,
+                action=FIRST_NOTICE,
+                actor_type=ActorType.SYSTEM,
+                actor_id=SYSTEM_ACTOR,
+                entity_type=RULE_ENTITY,
+                entity_id=rule.key,
+                workflow=rule.workflow,
+                payload={
+                    "rule": rule.key,
+                    "count": len(dates),
+                    "deletes_on": deletes_on.isoformat(),
+                    "admins_told": told,
+                },
+            )
+            return True
+    except _NoAdminToldError:
+        log.error("retention_notice_unsent", rule=rule.key)
+        return False
+
+
+class _NoAdminToldError(Exception):
+    """No admin got the first-deletion notice (the savepoint rolls back)."""
+
+
 async def plan_org(
     session: AsyncSession,
     registry: RetentionRegistry,
     *,
     run_id: uuid.UUID,
     now: datetime | None = None,
+    notifier: RetentionNotifier | None = None,
 ) -> list[RuleCount]:
     """Count each rule's due rows or subjects, refresh the preview list and record a
-    report row per rule (in the caller's transaction). Deletes nothing."""
+    report row per rule (in the caller's transaction). Deletes nothing. With a
+    ``notifier``, a subjects rule about to delete for the first time sends its notice."""
     org = _org(session)
     now = now or await _now(session)
     counts: list[RuleCount] = []
     for state in await rule_states(session, registry):
         rule = state.rule
         if rule.mode is DeleteMode.SUBJECTS:
-            counts.append(await _plan_subjects(session, state, now))
+            count = await _plan_subjects(session, state, now)
+            if (
+                notifier is not None
+                and state.enabled
+                and not state.paused
+                and state.notice_sent_at is None
+                and count.would_delete
+            ):
+                await _first_notice(session, state, notifier, now)
+                count = dataclasses.replace(
+                    count,
+                    scheduled_for=await session.scalar(
+                        select(func.min(RetentionScheduleItem.delete_after)).where(
+                            RetentionScheduleItem.rule == rule.key,
+                            RetentionScheduleItem.status == ScheduleStatus.SCHEDULED.value,
+                        )
+                    ),
+                )
+            if state.paused:
+                count = dataclasses.replace(count, scheduled_for=None)
+            counts.append(count)
             continue
         count = await session.scalar(
             select(func.count())
@@ -509,7 +753,9 @@ async def plan_org(
         )
         n = int(count or 0)
         scheduled_for = (
-            now + PREVIEW if n and state.enabled and rule.mode is DeleteMode.ROWS else None
+            now + PREVIEW
+            if n and state.enabled and not state.paused and rule.mode is DeleteMode.ROWS
+            else None
         )
         counts.append(
             RuleCount(
@@ -579,6 +825,8 @@ async def delete_rows(session: AsyncSession, state: RuleState, now: datetime) ->
     the caller's transaction, audited with a decision record. Returns how many."""
     rule = state.rule
     org = _org(session)
+    if await _paused(session, rule.key):
+        return 0
     result = await session.execute(
         delete(rule.model)
         .where(rule.model.org_id == org, *rule.due(now - PREVIEW, state.days))
@@ -668,7 +916,7 @@ async def _erase_one(
     session: AsyncSession, state: RuleState, item_id: uuid.UUID, due: set[uuid.UUID]
 ) -> str:
     """The database part of one subject, all or nothing (its own transaction). Returns
-    ``erased``, ``held``, ``skipped`` or raises (rolled back)."""
+    ``erased``, ``held``, ``paused``, ``skipped`` or raises (rolled back)."""
     rule = state.rule
     subjects = rule.subjects
     assert subjects is not None  # noqa: S101
@@ -681,6 +929,8 @@ async def _erase_one(
         now = await _now(session)
         if item is None or item.status != ScheduleStatus.SCHEDULED.value or item.delete_after > now:
             return "skipped"
+        if await _paused(session, rule.key):
+            return "paused"
         if item.subject_id in await held_subjects(session, item.subject_type):
             item.status = ScheduleStatus.HELD.value
             item.updated_at = now
@@ -808,6 +1058,8 @@ async def delete_subjects(
             result.failed += 1
             await _record_failure(session, state, item_id, f"erase_failed:{type(exc).__name__}")
             continue
+        if outcome == "paused":
+            break
         if outcome == "held":
             result.held += 1
             continue
@@ -857,16 +1109,23 @@ async def run_org(
     run_id: uuid.UUID,
     store: ObjectStore | None,
     delete_data: bool = True,
+    notifier: RetentionNotifier | None = None,
 ) -> tuple[list[RuleCount], dict[str, int], int]:
     """Plan, then (``delete_data``) delete for one organisation. Returns the counts, what
-    each rule deleted and how many subjects failed."""
+    each rule deleted and how many subjects failed. A paused rule deletes nothing; a
+    subjects rule whose first-deletion notice is not recorded erases no one (it only
+    finishes the stored files of subjects already erased)."""
     deleted: dict[str, int] = {}
     failed = 0
     session = sessionmaker()
     set_tenant(session, org_id, None)
+    if delete_data and notifier is None:
+        notifier = default_notifier()
     async with session:
         async with session.begin():
-            counts = await plan_org(session, registry, run_id=run_id)
+            counts = await plan_org(
+                session, registry, run_id=run_id, notifier=notifier if delete_data else None
+            )
             states = await rule_states(session, registry)
             now = await _now(session)
             budget = await daily_cap(session) - await erased_today(session, now)
@@ -876,12 +1135,17 @@ async def run_org(
                     continue
                 try:
                     if state.rule.mode is DeleteMode.ROWS:
+                        if state.paused:
+                            continue
                         async with session.begin():
                             n = await delete_rows(session, state, await _now(session))
                     else:
-                        res, budget = await delete_subjects(
-                            session, state, store, budget=max(budget, 0)
+                        may_erase = not state.paused and state.notice_sent_at is not None
+                        res, left = await delete_subjects(
+                            session, state, store, budget=max(budget, 0) if may_erase else 0
                         )
+                        if may_erase:
+                            budget = left
                         n = res.erased
                         failed += res.failed
                 except Exception as exc:
@@ -921,6 +1185,7 @@ async def run_retention(
     store: ObjectStore | None = None,
     run_id: uuid.UUID | None = None,
     delete_data: bool = True,
+    notifier: RetentionNotifier | None = None,
 ) -> RunSummary:
     """The daily job over every organisation; one failing organisation never stops the
     others."""
@@ -935,6 +1200,7 @@ async def run_retention(
                 run_id=summary.run_id,
                 store=store,
                 delete_data=delete_data,
+                notifier=notifier,
             )
         except Exception as exc:
             summary.errors += 1

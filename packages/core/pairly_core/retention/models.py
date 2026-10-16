@@ -15,6 +15,8 @@
   then its deletion.
 * ``retention_holds`` (0030): a legal hold on a candidate or a vendor. While it stands no
   rule deletes anything about the subject. The reason is encrypted.
+* ``retention_rule_controls`` (0031): per organisation and rule, a pause (who, when)
+  and the first-deletion notice sent to the admins (once, when, how many, for which day).
 """
 
 from __future__ import annotations
@@ -199,3 +201,37 @@ class RetentionHold(Base, OrgScoped):
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
     )
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RetentionRuleControl(Base, OrgScoped):
+    """A rule's pause and its first-deletion notice. Kept apart from the settings so a
+    notice or a pause never turns a default rule into a customised one."""
+
+    __tablename__ = "retention_rule_controls"
+    __table_args__ = (
+        UniqueConstraint("org_id", "rule", name="uq_retention_rule_controls_org_rule"),
+        CheckConstraint("(paused_at IS NULL) = (paused_by IS NULL)", name="paused_by_person"),
+        CheckConstraint(
+            "(notice_sent_at IS NULL) = (notice_deletes_on IS NULL)", name="notice_complete"
+        ),
+        CheckConstraint("notice_count IS NULL OR notice_count >= 0", name="notice_count_valid"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()")
+    )
+    rule: Mapped[str] = mapped_column(String(100), nullable=False)
+    paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    paused_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    # The first-deletion notice: sent once, with how many subjects and the first day any
+    # of them may be deleted (no deletion of the rule runs before it was sent).
+    notice_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    notice_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    notice_deletes_on: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

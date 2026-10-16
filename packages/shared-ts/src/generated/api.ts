@@ -5699,6 +5699,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/retention/rules/{rule}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Pause */
+        post: operations["post_pause_v1_retention_rules__rule__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/retention/rules/{rule}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Resume */
+        post: operations["post_resume_v1_retention_rules__rule__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/retention/schedule": {
         parameters: {
             query?: never;
@@ -15651,10 +15685,19 @@ export type components = {
             description: string;
             /** Enabled */
             enabled: boolean;
+            /** First Notice At */
+            first_notice_at?: string | null;
             /** Key */
             key: string;
             /** Mode */
             mode: string;
+            /**
+             * Paused
+             * @default false
+             */
+            paused: boolean;
+            /** Paused At */
+            paused_at?: string | null;
             period: components["schemas"]["RetentionPeriodOut"] | null;
             /** Workflow */
             workflow: string;
@@ -27825,6 +27868,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RuleOut"][];
+                };
+            };
+        };
+    };
+    post_pause_v1_retention_rules__rule__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_resume_v1_retention_rules__rule__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -54,6 +54,7 @@ export const updateRetentionRule = unavailable;
 export const setRetentionCap = unavailable;
 export const placeRetentionHold = unavailable;
 export const releaseRetentionHold = unavailable;
+export const setRetentionPaused = unavailable;
 export const setRecruiters = unavailable;
 export const setWebhookActive = unavailable;
 export const switchOrganization = unavailable;

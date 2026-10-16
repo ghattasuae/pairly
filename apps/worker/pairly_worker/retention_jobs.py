@@ -7,7 +7,8 @@ makes due (the seven-day preview list and a report row per rule), then deletes w
 the organisation's settings say to delete: technical rows due for a whole preview, and
 listed subjects whose preview ended, up to the daily cap, never one under a legal hold
 (``pairly_core.retention.service``). The stored files of erased subjects go through the
-worker's object store.
+worker's object store. Before a subjects rule's first deletion its admins get an urgent
+notice (``pairly_core.retention.notice``) with the worker's role registry and web address.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ from typing import Any
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from pairly_core.rbac import RoleRegistry
+from pairly_core.retention.notice import AdminRetentionNotifier, default_notifier
 from pairly_core.retention.rules import RetentionRegistry
 from pairly_core.retention.service import run_retention
 
@@ -33,7 +36,15 @@ async def retention_run(ctx: dict[str, Any]) -> dict[str, Any]:
     runtime = ctx.get("runtime")
     services = getattr(runtime, "services", None)
     store = getattr(services, "store", None)
-    summary = await run_retention(sessionmaker, registry, store=store)
+    roles = ctx.get("registry")
+    transports = ctx.get("transports")
+    settings = getattr(transports, "settings", None)
+    notifier = (
+        AdminRetentionNotifier(registry=roles, web_url=settings.web_url)
+        if isinstance(roles, RoleRegistry) and settings is not None
+        else default_notifier()
+    )
+    summary = await run_retention(sessionmaker, registry, store=store, notifier=notifier)
     result = summary.as_dict()
     log.info("retention_run_finished", **result)
     return result

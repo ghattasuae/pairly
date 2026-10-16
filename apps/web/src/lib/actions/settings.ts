@@ -21,6 +21,7 @@ import type {
   Flag,
   PolicyDocument,
   RetentionHold,
+  RetentionScheduleItem,
   RetentionSettings,
   RuleSetVersion,
   WebhookDelivery,
@@ -268,4 +269,22 @@ export async function releaseRetentionHold(id: string): Promise<ActionResult<{ h
     api.POST("/v1/retention/holds/{hold_id}/release", { params: { path: { hold_id: id } } }),
   );
   return toAction(result, (hold) => ({ hold }));
+}
+
+/**
+ * Pause a retention rule (nothing of it is deleted until resumed), or resume it: every
+ * listed subject then gets a new seven-day preview, so the list comes back with it.
+ */
+export async function setRetentionPaused(
+  rule: string,
+  paused: boolean,
+): Promise<ActionResult<{ settings: RetentionSettings; schedule: RetentionScheduleItem[] | null }>> {
+  if (!ruleKey.safeParse(rule).success || typeof paused !== "boolean") return invalid;
+  const params = { path: { rule } };
+  const result = paused
+    ? await callApi((api) => api.POST("/v1/retention/rules/{rule}/pause", { params }))
+    : await callApi((api) => api.POST("/v1/retention/rules/{rule}/resume", { params }));
+  if (!result.ok) return { ok: false, code: result.code };
+  const schedule = await callApi((api) => api.GET("/v1/retention/schedule"));
+  return { ok: true, settings: result.data, schedule: schedule.ok ? schedule.data : null };
 }

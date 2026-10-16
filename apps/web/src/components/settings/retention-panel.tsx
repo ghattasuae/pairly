@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { Loader2, Lock, LockOpen } from "lucide-react";
+import { Loader2, Lock, LockOpen, Pause, Play } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
@@ -16,6 +16,7 @@ import {
   placeRetentionHold,
   releaseRetentionHold,
   setRetentionCap,
+  setRetentionPaused,
   updateRetentionRule,
 } from "@/lib/actions/settings";
 import type { ActionResult } from "@/lib/action-result";
@@ -36,7 +37,9 @@ const KNOWN_RULES = new Set([
 /**
  * Retention settings and the deletion preview. Each rule is on or off with its period;
  * every subject a rule makes due is listed here for seven days before it may be deleted,
- * with the date, and an admin can place a legal hold that keeps it until released.
+ * with the date, and an admin can place a legal hold that keeps it until released, or
+ * pause a whole rule (nothing of it is deleted until resumed; resuming starts a new
+ * preview).
  */
 export function RetentionPanel({
   initial,
@@ -48,6 +51,7 @@ export function RetentionPanel({
   setCap = setRetentionCap,
   hold = placeRetentionHold,
   release = releaseRetentionHold,
+  pause = setRetentionPaused,
 }: {
   initial: RetentionSettings;
   schedule: RetentionScheduleItem[];
@@ -58,6 +62,7 @@ export function RetentionPanel({
   setCap?: typeof setRetentionCap;
   hold?: typeof placeRetentionHold;
   release?: typeof releaseRetentionHold;
+  pause?: typeof setRetentionPaused;
 }) {
   const t = useTranslations("RetentionSettings");
   const locale = useLocale();
@@ -100,6 +105,17 @@ export function RetentionPanel({
       if (change.enabled === false) setSchedule((all) => all.filter((i) => i.rule !== rule.key));
     });
 
+  const togglePause = (rule: RetentionRuleSetting) =>
+    run<{ settings: RetentionSettings; schedule: RetentionScheduleItem[] | null }>(
+      rule.key,
+      () => pause(rule.key, !rule.paused),
+      ({ settings: next, schedule: listed }) => {
+        setSettings(next);
+        if (listed) setSchedule(listed);
+      },
+    );
+  const pausedRules = new Set(settings.rules.filter((r) => r.paused).map((r) => r.key));
+
   const periodLabel = (rule: RetentionRuleSetting) =>
     rule.period
       ? t(rule.period.unit === "months" ? "periodMonths" : "periodDays", { count: rule.period.value })
@@ -125,6 +141,11 @@ export function RetentionPanel({
                   <p className="font-medium">{ruleName(rule.key)}</p>
                   <p className="text-sm text-muted-foreground">{t(`mode.${rule.mode}` as "mode.rows")}</p>
                   <p className="text-xs text-muted-foreground">{t("keeps", { period: periodLabel(rule) })}</p>
+                  {rule.paused && rule.paused_at && (
+                    <p className="text-sm" data-paused-note>
+                      {t("pausedNote", { date: date(rule.paused_at), days: settings.preview_days })}
+                    </p>
+                  )}
                   {editable && (
                     <form
                       className="flex flex-wrap items-center gap-2 pt-1"
@@ -156,6 +177,19 @@ export function RetentionPanel({
                 </div>
                 <div className="flex items-center gap-3">
                   {busy === rule.key && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden />}
+                  {rule.paused && <Badge variant="outline">{t("paused")}</Badge>}
+                  {canManage && rule.enabled && rule.mode !== "report" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy !== null}
+                      onClick={() => void togglePause(rule)}
+                      aria-label={t(rule.paused ? "resumeLabel" : "pauseLabel", { rule: ruleName(rule.key) })}
+                    >
+                      {rule.paused ? <Play aria-hidden /> : <Pause aria-hidden />}
+                      {rule.paused ? t("resume") : t("pause")}
+                    </Button>
+                  )}
                   <span className="text-xs text-muted-foreground">{rule.enabled ? t("on") : t("off")}</span>
                   <Switch
                     checked={rule.enabled}
@@ -230,7 +264,9 @@ export function RetentionPanel({
                         ? t("heldNote")
                         : item.status === "erasing"
                           ? t("erasingNote")
-                          : t("scheduledFor", { date: date(item.delete_after) })}
+                          : pausedRules.has(item.rule)
+                            ? t("pausedItem")
+                            : t("scheduledFor", { date: date(item.delete_after) })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

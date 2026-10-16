@@ -29293,6 +29293,18 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "first_notice_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Notice At"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -29300,6 +29312,23 @@
           "mode": {
             "title": "Mode",
             "type": "string"
+          },
+          "paused": {
+            "default": false,
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "paused_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paused At"
           },
           "period": {
             "anyOf": [
@@ -48025,6 +48054,96 @@
           }
         },
         "summary": "Rules",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/v1/retention/rules/{rule}/pause": {
+      "post": {
+        "operationId": "post_pause_v1_retention_rules__rule__pause_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_.]+$",
+              "title": "Rule",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Pause",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/v1/retention/rules/{rule}/resume": {
+      "post": {
+        "operationId": "post_resume_v1_retention_rules__rule__resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_.]+$",
+              "title": "Rule",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Resume",
         "tags": [
           "retention"
         ]

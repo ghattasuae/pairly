@@ -68,6 +68,11 @@ CATEGORIES: Final[Mapping[str, CategoryPolicy]] = {
     "data_requests": CategoryPolicy(
         True, frozenset({"email", "in_app"}), always_urgent=True, configurable=False
     ),
+    # Retention is about to delete records for the first time: the admins hear of it a
+    # whole preview ahead, at once, and cannot switch it off.
+    "retention": CategoryPolicy(
+        True, frozenset({"email", "in_app"}), always_urgent=True, configurable=False
+    ),
     # Alerts about money at risk (a bank-detail change an invoice check opened): every
     # channel, at once, and never switched off.
     "urgent": CategoryPolicy(True, _ALL, always_urgent=True, configurable=False),

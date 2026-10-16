@@ -16,6 +16,7 @@ vi.mock("@/lib/actions/settings", () => ({
   setRetentionCap: vi.fn(),
   placeRetentionHold: vi.fn(),
   releaseRetentionHold: vi.fn(),
+  setRetentionPaused: vi.fn(),
   createApiKey: vi.fn(),
   revokeApiKey: vi.fn(),
   setFlag: vi.fn(),
@@ -43,6 +44,9 @@ const SETTINGS: RetentionSettings = {
       configurable_days: false,
       customised: false,
       period: { unit: "months", value: 12, default: 12, minimum: 1, maximum: 120 },
+      paused: false,
+      paused_at: null,
+      first_notice_at: "2026-10-16T02:15:00Z",
     },
     {
       key: "inbound_events.seen",
@@ -56,6 +60,9 @@ const SETTINGS: RetentionSettings = {
       configurable_days: true,
       customised: false,
       period: null,
+      paused: false,
+      paused_at: null,
+      first_notice_at: null,
     },
   ],
 };
@@ -122,11 +129,33 @@ describe("RetentionPanel", () => {
     expect(await screen.findByText("Nothing is scheduled for deletion.")).toBeInTheDocument();
   });
 
+  it("pauses a rule in one click and resumes it with a new preview", async () => {
+    const paused = {
+      ...SETTINGS,
+      rules: SETTINGS.rules.map((r) => (r.key === "hire.candidates.closed" ? { ...r, paused: true, paused_at: "2026-10-17T08:00:00Z" } : r)),
+    };
+    const relisted = { ...ITEM, listed_at: "2026-10-20T08:00:00Z", delete_after: "2026-10-27T08:00:00Z" };
+    const pause = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, settings: paused, schedule: [ITEM] })
+      .mockResolvedValueOnce({ ok: true, settings: SETTINGS, schedule: [relisted] });
+    renderWithIntl(<RetentionPanel initial={SETTINGS} schedule={[ITEM]} holds={[]} canManage totpEnabled pause={pause} />);
+    await userEvent.click(screen.getByRole("button", { name: "Pause Rejected and withdrawn candidates" }));
+    expect(pause).toHaveBeenCalledWith("hire.candidates.closed", true);
+    expect(await screen.findByText(/Paused since Oct 17, 2026\. Nothing of this rule is deleted/)).toBeInTheDocument();
+    const row = screen.getByText("APP-7Q2K9").closest("li") as HTMLElement;
+    expect(within(row).getByText("Not deleted while its rule is paused.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Resume Rejected and withdrawn candidates" }));
+    expect(pause).toHaveBeenLastCalledWith("hire.candidates.closed", false);
+    expect(await screen.findByText("Scheduled for deletion on Oct 27, 2026")).toBeInTheDocument();
+  });
+
   it("is read only without the manage permission, in Arabic too", () => {
     renderWithIntl(<RetentionPanel initial={SETTINGS} schedule={[ITEM]} holds={[{ ...HOLD, reason: null }]} canManage={false} totpEnabled={false} />, "ar");
     expect(screen.getByText("المرشحون المرفوضون والمنسحبون")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "ضع تجميدًا قانونيًا" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "إنهاء التجميد" })).not.toBeInTheDocument();
     for (const toggle of screen.getAllByRole("switch")) expect(toggle).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /إيقاف .* مؤقتا/ })).not.toBeInTheDocument();
   });
 });

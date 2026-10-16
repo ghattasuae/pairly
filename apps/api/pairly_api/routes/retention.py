@@ -20,6 +20,9 @@ Change (``core.retention.manage``: admins, second factor), all audited:
 * ``POST /v1/retention/holds``     ``{"subject_type", "subject_id", "reason"}``: a legal
   hold on a candidate (``hire.candidate``) or a vendor (``pay.vendor``)
 * ``POST /v1/retention/holds/{id}/release``
+* ``POST /v1/retention/rules/{rule}/pause``   stop a rule deleting anything (its list
+  stays); ``POST /v1/retention/rules/{rule}/resume`` ends the pause and starts a new
+  seven-day preview for every listed subject. Both answer the settings.
 """
 
 from __future__ import annotations
@@ -28,7 +31,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Path, Request
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from pairly_core.crypto.types import unseal
@@ -42,8 +45,10 @@ from pairly_core.retention.service import (
     daily_cap,
     holds,
     latest_report,
+    pause_rule,
     place_hold,
     release_hold,
+    resume_rule,
     rule_states,
     schedule,
     update_settings,
@@ -109,6 +114,11 @@ class RetentionRuleSettingOut(BaseModel):
     configurable_days: bool
     customised: bool
     period: RetentionPeriodOut | None
+    # Paused: nothing of the rule is deleted until a person resumes it.
+    paused: bool = False
+    paused_at: datetime | None = None
+    # When the admins were told of the rule's first deletion (subjects rules), if yet.
+    first_notice_at: datetime | None = None
 
 
 class RetentionSettingsOut(BaseModel):
@@ -207,6 +217,9 @@ async def _settings(session: OrgSession, registry: RetentionRegistry) -> Retenti
                 )
                 if hook is not None
                 else None,
+                paused=s.paused,
+                paused_at=s.paused_at,
+                first_notice_at=s.notice_sent_at,
             )
         )
     return RetentionSettingsOut(
@@ -229,6 +242,25 @@ async def rules(actor: ReadActor, registry: Registry) -> list[RuleOut]:
         )
         for r in registry.rules
     ]
+
+
+RuleKey = Annotated[str, Path(min_length=1, max_length=100, pattern=r"^[a-z0-9_.]+$")]
+
+
+@router.post("/rules/{rule}/pause", response_model=RetentionSettingsOut)
+async def post_pause(
+    rule: RuleKey, actor: ManageActor, session: OrgSession, registry: Registry
+) -> RetentionSettingsOut:
+    await pause_rule(session, actor, registry, rule)
+    return await _settings(session, registry)
+
+
+@router.post("/rules/{rule}/resume", response_model=RetentionSettingsOut)
+async def post_resume(
+    rule: RuleKey, actor: ManageActor, session: OrgSession, registry: Registry
+) -> RetentionSettingsOut:
+    await resume_rule(session, actor, registry, rule)
+    return await _settings(session, registry)
 
 
 @router.get("/report", response_model=ReportOut)

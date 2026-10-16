@@ -37,6 +37,7 @@ from pairly_core.retention.models import (
     RetentionHold,
     RetentionOrgSetting,
     RetentionReport,
+    RetentionRuleControl,
     RetentionRuleSetting,
     RetentionScheduleItem,
 )
@@ -94,6 +95,7 @@ __all__ = [
     "RetentionHold",
     "RetentionOrgSetting",
     "RetentionReport",
+    "RetentionRuleControl",
     "RetentionRuleSetting",
     "RetentionScheduleItem",
     "RiskAssessment",
