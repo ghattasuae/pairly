@@ -385,10 +385,11 @@ async def _vendor_ids(
 async def seed_vendors(
     api: PayApi, sessionmaker: async_sessionmaker[AsyncSession], ds: Dataset
 ) -> tuple[dict[str, uuid.UUID], list[str]]:
-    """The synthetic vendors by synth id, created by the AP clerk where missing. Their
-    bank details go through the change workflow like any new vendor's (security review
-    2026-10, M-03): the admin calls the number on file, two people approve, and no
-    cooling-off applies while the demo is seeded."""
+    """The synthetic vendors by synth id, created by the admin where missing. Their bank
+    details go through the change workflow like any new vendor's (security review
+    2026-10, M-03): the AP clerk (who holds the verify permission and neither created
+    the vendor nor recorded its number) calls the number on file, two people approve,
+    and no cooling-off applies while the demo is seeded."""
     known = await _vendor_ids(sessionmaker, api.org_id)
     created: list[uuid.UUID] = []
     await api.ok("PUT", "/v1/pay/settings", ADMIN, json={"cooling_off_hours": 0})
@@ -397,7 +398,7 @@ async def seed_vendors(
             if vendor.legal_name in known:
                 continue
             body = await api.ok(
-                "POST", "/v1/pay/vendors", CLERK, status=201, json=_vendor_body(vendor)
+                "POST", "/v1/pay/vendors", ADMIN, status=201, json=_vendor_body(vendor)
             )
             created.append(uuid.UUID(str(body["id"])))
             await _verify_new_vendor(api, sessionmaker, str(body["open_ticket_id"]))
@@ -427,13 +428,13 @@ async def seed_vendors(
 async def _verify_new_vendor(
     api: PayApi, sessionmaker: async_sessionmaker[AsyncSession], ticket_id: str
 ) -> None:
-    """A new vendor's bank details: verified by the admin (not the clerk who entered
+    """A new vendor's bank details: verified by the AP clerk (not the admin who entered
     them) on the number on file, then approved by two people."""
     path = f"/v1/pay/bank-changes/{ticket_id}"
     current = await api.ok(
         "POST",
         f"{path}/calls",
-        ADMIN,
+        CLERK,
         json={
             "result": "confirmed",
             "notes": "Called the number on the trade licence; the vendor confirmed.",

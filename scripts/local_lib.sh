@@ -206,6 +206,8 @@ local_owner_env() {
     "PAIRLY_KEK_1=$PAIRLY_KEK_1"
     "PAIRLY_KEK_2=${PAIRLY_KEK_2:-}"
     "PAIRLY_BLIND_INDEX_KEY=$PAIRLY_BLIND_INDEX_KEY"
+    # `make sandbox` (pairly-admin sandbox create) hashes the test key it prints.
+    "PAIRLY_API_KEY_PEPPER=$PAIRLY_API_KEY_PEPPER"
   )
 }
 

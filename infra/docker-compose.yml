@@ -357,6 +357,8 @@ services:
       <<: *crypto-env
       # For `make bootstrap-org` (pairly-admin), which prints an invite link to the web app.
       PAIRLY_PUBLIC_WEB_URL: ${PAIRLY_PUBLIC_WEB_URL:-http://localhost:3100}
+      # For `make sandbox` (pairly-admin sandbox create), which hashes the key it prints.
+      PAIRLY_API_KEY_PEPPER: ${PAIRLY_API_KEY_PEPPER:?missing}
     depends_on:
       postgres:
         condition: service_healthy
