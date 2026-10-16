@@ -8,6 +8,7 @@ import asyncio
 import json
 import uuid
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import BaseModel, Field
@@ -57,8 +58,8 @@ def prompts(tmp_path: Path) -> Path:
     return root
 
 
-def _settings() -> LLMSettings:
-    return LLMSettings(model_mode=ModelMode.LIVE, llm_max_retries=0)
+def _settings(*, reuse: bool = True) -> LLMSettings:
+    return LLMSettings(model_mode=ModelMode.LIVE, llm_max_retries=0, llm_reuse_responses=reuse)
 
 
 def _reply(label: str, confidence: float) -> FakeReply:
@@ -96,7 +97,7 @@ def test_escalates_records_and_replays_per_document(prompts: Path, tmp_path: Pat
 
     async def first() -> tuple[str, str]:
         router, store, budget = build_live_router(
-            _settings(),
+            _settings(reuse=False),
             recordings=recordings,
             max_cost_usd=1.0,
             prompt_roots=[prompts],
@@ -119,7 +120,7 @@ def test_escalates_records_and_replays_per_document(prompts: Path, tmp_path: Pat
 
     async def second() -> int:
         router, store, budget = build_live_router(
-            _settings(),
+            _settings(reuse=False),
             recordings=recordings,
             max_cost_usd=1.0,
             prompt_roots=[prompts],
@@ -139,6 +140,45 @@ def test_escalates_records_and_replays_per_document(prompts: Path, tmp_path: Pat
 
     assert asyncio.run(second()) == 0
     assert len(fake.requests) == 4  # the second run made no call
+
+
+def test_reuse_gives_another_document_the_same_answer_for_free(
+    prompts: Path, tmp_path: Path
+) -> None:
+    recordings = tmp_path / "rec.jsonl"
+    fake = FakeProvider("anthropic")
+    fake.script(HAIKU, _reply("unsure", 0.2))
+    fake.script(SONNET, _reply("sure", 0.9))
+
+    async def run(scopes: list[str]) -> list[list[dict[str, Any]]]:
+        router, store, budget = build_live_router(
+            _settings(),
+            recordings=recordings,
+            max_cost_usd=1.0,
+            prompt_roots=[prompts],
+            provider=fake,
+        )
+        meter = Meter(store, budget, every=0)
+        out = []
+        for scope in scopes:
+            meter.begin(scope)
+            result = await router.complete(task=TASK, inputs={"x": 1}, schema=Probe, org_id=ORG)
+            assert result.value.label == "sure"
+            out.append(meter.end(scope))
+        return out
+
+    a, b = asyncio.run(run(["doc-a", "doc-b"]))
+    assert len(fake.requests) == 2  # doc-b reused both tiers of doc-a's answer
+    assert [c["reused"] for c in a] == [False, False]
+    assert [c["reused"] for c in b] == [True, True]
+    assert sum(c["cost_micros"] for c in b) == 0
+    assert len(recordings.read_text(encoding="utf-8").splitlines()) == 2  # reuses not recorded
+    # Next run: doc-a replays its own recording (recorded cost), doc-b reuses it again.
+    a2, b2 = asyncio.run(run(["doc-a", "doc-b"]))
+    assert len(fake.requests) == 2
+    assert [c["replayed"] for c in a2] == [True, True]
+    assert sum(c["cost_micros"] for c in a2) == 4500
+    assert [c["reused"] for c in b2] == [True, True]
 
 
 def test_an_edited_recording_is_refused(prompts: Path, tmp_path: Path) -> None:

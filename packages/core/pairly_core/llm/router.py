@@ -27,6 +27,12 @@ response; ``recorded`` only replays stored responses, and raises ``RecordingMiss
 (a ``ModelUnavailable``) when none matches. A recorded response is validated again
 exactly like a live one, so recorded runs make the same routing decisions.
 
+Reuse (live mode, on by default): before a provider request, the organisation's first
+live answer to the same request hash within ``PAIRLY_LLM_REUSE_TTL_DAYS`` is reused:
+validated again, stored as a new row with ``reused_from`` set, no model request and no
+cost. Identical input then gives identical output. ``PAIRLY_LLM_REUSE_RESPONSES=false``
+turns it off.
+
 Budget: before each provider request the worst-case cost is reserved against the
 org's monthly budget (see ``pairly_core.llm.budget``); ``BudgetExceeded`` stops the
 whole chain (fail closed).
@@ -35,6 +41,7 @@ whole chain (fail closed).
 from __future__ import annotations
 
 import asyncio
+import datetime as dt
 import json
 import time
 import uuid
@@ -79,7 +86,13 @@ from pairly_core.llm.resilience import (
     call_with_retry,
 )
 from pairly_core.llm.settings import LLMSettings, ModelMode
-from pairly_core.llm.store import RAW_TEXT_KEY, CallStore, DatabaseCallStore, StoredCall
+from pairly_core.llm.store import (
+    RAW_TEXT_KEY,
+    CallStore,
+    DatabaseCallStore,
+    ReusableCallStore,
+    StoredCall,
+)
 from pairly_core.llm.tracing import (
     GenerationRecord,
     NoopTracer,
@@ -457,6 +470,65 @@ class ModelRouter:
             )
             return _Outcome("missing", info)
         return await self._replay_recording(org_id, recording, row, schema, task, inputs)
+
+    async def _attempt_reuse(
+        self,
+        *,
+        org_id: uuid.UUID,
+        candidate: _Candidate,
+        row: Callable[..., dict[str, Any]],
+        schema: type[BaseModel],
+        task: TaskSpec,
+        inputs: Mapping[str, Any],
+    ) -> _Outcome | None:
+        """Live mode: the organisation's earlier answer to this exact request, validated
+        again like a new one and stored as a row that names it (``reused_from``), with
+        no model request, no cost and no budget reservation. ``None`` when reuse is off,
+        the store cannot look answers up, or there is none within the TTL."""
+        if (
+            self.mode is not ModelMode.LIVE
+            or not self.settings.llm_reuse_responses
+            or not isinstance(self._calls, ReusableCallStore)
+        ):
+            return None
+        since = dt.datetime.now(dt.UTC) - dt.timedelta(days=self.settings.llm_reuse_ttl_days)
+        async with self._session(org_id) as session, session.begin():
+            original = await self._calls.find_reusable(
+                session, candidate.request_hash, org_id=org_id, since=since
+            )
+        if original is None or original.request_hash != candidate.request_hash:
+            return None
+        evaluation = self._evaluate(
+            original.response,
+            complete=original.output_complete,
+            stop_reason=original.stop_reason,
+            schema=schema,
+            task=task,
+        )
+        values = row(
+            mode=self.mode.value,
+            status=evaluation.status,
+            response=evaluation.response,
+            output_complete=original.output_complete,
+            stop_reason=original.stop_reason,
+            error_kind=evaluation.error_kind,
+            confidence=evaluation.confidence,
+            cost_micros=0,
+            latency_ms=0,
+            reused_from=original.id,
+        )
+        call_id = await self._store(org_id, values)
+        self._trace(values, call_id, inputs)
+        info = AttemptInfo(
+            candidate.provider,
+            candidate.entry.model,
+            candidate.tier,
+            evaluation.status.value,
+            call_id=call_id,
+            error_kind=evaluation.error_kind,
+        )
+        kind = "accepted" if evaluation.status is CallStatus.OK else "rejected"
+        return _Outcome(kind, info, evaluation)
 
     async def _attempt_live(
         self,
@@ -874,7 +946,15 @@ class ModelRouter:
                             inputs=clean_inputs,
                         )
                     else:
-                        outcome = await self._attempt_live(
+                        reused = await self._attempt_reuse(
+                            org_id=org_id,
+                            candidate=candidate,
+                            row=row,
+                            schema=schema,
+                            task=task,
+                            inputs=clean_inputs,
+                        )
+                        outcome = reused or await self._attempt_live(
                             org_id=org_id,
                             candidate=candidate,
                             row=row,

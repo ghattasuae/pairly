@@ -68,6 +68,14 @@ class LLMSettings(BaseSettings):
     llm_breaker_failure_threshold: int = Field(default=5, ge=1, le=100)
     llm_breaker_reset_seconds: float = Field(default=30.0, gt=0, le=3600)
 
+    # Live mode: a request whose hash this organisation already had answered (same
+    # prompt, model, inputs, schema and settings) reuses that answer instead of calling
+    # the model again, so identical input gives identical output and costs nothing.
+    # The row says which call it reused (``model_calls.reused_from``). Off with
+    # ``false``; answers older than the TTL (days) are not reused.
+    llm_reuse_responses: bool = True
+    llm_reuse_ttl_days: int = Field(default=30, ge=1, le=3650)
+
     # Caps on what one call may store (request inputs and model output, UTF-8 bytes).
     llm_max_request_bytes: int = Field(default=1_048_576, ge=1024, le=16_777_216)
     llm_max_response_bytes: int = Field(default=262_144, ge=1024, le=4_194_304)

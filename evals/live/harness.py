@@ -7,12 +7,14 @@ provider, an in-memory call store backed by a recordings file, and a hard cost c
   next tier on invalid output or low confidence (``ModelRouter``, unchanged). Only one
   thing is added (``LiveRouter``): before a live attempt, a recording of the same
   request for the same document (``scope``) is replayed instead, so a second run of the
-  same suite costs nothing. Recordings are per document on purpose: two documents with
-  byte-identical model input (a fairness pair) still get one model call each, as in
-  production.
+  same suite costs nothing.
 * Every live attempt that returns a model output is appended to the recordings file
   (JSON lines) at once, with what it measured: tokens, cost, latency, model. A crash or
   the cost cap never loses a paid response.
+* Response reuse (the production router's, on by default): a request already
+  answered for another document reuses the first recorded answer (``reused_from``, no
+  cost), so byte-identical model input (a fairness pair) gets identical output, as in
+  production. ``PAIRLY_LLM_REUSE_RESPONSES=false`` measures without it.
 * ``CapBudget`` is the router's budget: before each request the router reserves the
   worst-case cost, and the reservation is refused once the run's spend plus that worst
   case would pass ``--max-cost-usd``. The run then stops after the current document,
@@ -168,6 +170,8 @@ class LiveCallStore:
     scope: str = ""
     rows: list[dict[str, Any]] = field(default_factory=list)
     recordings: dict[tuple[str, str], StoredCall] = field(default_factory=dict)
+    # The first recording of each request hash, any document (live mode reuse).
+    first: dict[str, tuple[str, StoredCall]] = field(default_factory=dict)
     measured: dict[uuid.UUID, dict[str, Any]] = field(default_factory=dict)
     loaded: int = 0
     refused: int = 0
@@ -185,6 +189,7 @@ class LiveCallStore:
                 continue
             stored = _stored(uuid.uuid4(), entry)
             self.recordings[(str(item["scope"]), entry["request_hash"])] = stored
+            self.first.setdefault(entry["request_hash"], (str(item["scope"]), stored))
             self.measured[stored.id] = {
                 "model_returned": item.get("model_returned"),
                 **{k: int(item["measured"].get(k, 0)) for k in _MEASURED},
@@ -196,7 +201,11 @@ class LiveCallStore:
         assert isinstance(call_id, uuid.UUID)  # noqa: S101
         row = {**values, "scope": self.scope}
         self.rows.append(row)
-        if row["mode"] == ModelMode.LIVE.value and row["status"] in _OUTPUT:
+        if (
+            row["mode"] == ModelMode.LIVE.value
+            and row["status"] in _OUTPUT
+            and row.get("reused_from") is None
+        ):
             self._record(row)
         return call_id
 
@@ -212,6 +221,7 @@ class LiveCallStore:
         }
         stored = _stored(row["id"], entry)
         self.recordings[(str(row["scope"]), str(entry["request_hash"]))] = stored
+        self.first.setdefault(str(entry["request_hash"]), (str(row["scope"]), stored))
         self.measured[stored.id] = {"model_returned": row.get("model_returned"), **item["measured"]}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as fh:
@@ -224,6 +234,19 @@ class LiveCallStore:
 
     async def find_recording(self, session: AsyncSession, request_hash: str) -> StoredCall | None:
         return self.find_scoped(request_hash)
+
+    def first_recording(self, request_hash: str) -> tuple[str, StoredCall] | None:
+        """The first recorded answer to ``request_hash`` (any document) and its scope."""
+        return self.first.get(request_hash)
+
+    async def find_reusable(
+        self, session: AsyncSession, request_hash: str, *, org_id: uuid.UUID, since: Any
+    ) -> StoredCall | None:
+        """Live mode reuse: the first recorded answer to ``request_hash``, whichever
+        document it was recorded for (one organisation, ``ORG``). Recordings carry no
+        date, so the TTL does not apply here."""
+        found = self.first.get(request_hash)
+        return found[1] if found is not None else None
 
     async def get(self, session: AsyncSession, call_id: uuid.UUID) -> StoredCall | None:
         for row in self.rows:
@@ -281,10 +304,26 @@ class ModelIdProvider:
 
 
 class LiveRouter(ModelRouter):
-    """``ModelRouter`` in live mode that replays a per-document recording first."""
+    """``ModelRouter`` in live mode that replays a per-document recording first.
+
+    With response reuse on (``PAIRLY_LLM_REUSE_RESPONSES``, the production default), a
+    request already answered for another document reuses that answer, exactly as the
+    production router reuses an organisation's earlier answer: no call, no cost, the
+    row names the call (``reused_from``). The document's own recording still replays
+    as a replay (its recorded cost and latency). ``allow_reuse`` turns reuse off for
+    one stretch of a run (repeat sampling)."""
 
     store: LiveCallStore
     anthropic: ModelIdProvider
+    allow_reuse: bool = True
+
+    async def _attempt_reuse(self, **kwargs: Any) -> Any:
+        if not self.allow_reuse:
+            return None
+        found = self.store.first_recording(kwargs["candidate"].request_hash)
+        if found is None or found[0] == self.store.scope:
+            return None  # nothing to reuse, or this document's own answer (a replay)
+        return await super()._attempt_reuse(**kwargs)
 
     async def _attempt_live(self, **kwargs: Any) -> Any:
         candidate = kwargs["candidate"]
@@ -407,9 +446,12 @@ class Meter:
 
     def _call(self, row: Mapping[str, Any]) -> dict[str, Any]:
         replayed = bool(row.get("from_recording"))
+        reused = row.get("reused_from") is not None
         source = self.store.measured.get(row["source_call_id"]) if replayed else None
-        measured = source or {k: int(row.get(k) or 0) for k in _MEASURED}
+        # A reused answer costs nothing and takes no model time, as in production.
+        measured = source or {k: 0 if reused else int(row.get(k) or 0) for k in _MEASURED}
         return {
+            "reused": reused,
             "task": row["task"],
             "tier": row["tier"],
             "model": row["model"],
@@ -437,8 +479,9 @@ class Meter:
         return {
             "documents": len(chosen),
             "calls": len(calls),
-            "calls_live_this_run": sum(1 for c in calls if not c["replayed"]),
+            "calls_live_this_run": sum(1 for c in calls if not c["replayed"] and not c["reused"]),
             "calls_replayed_from_recordings": sum(1 for c in calls if c["replayed"]),
+            "calls_reused": sum(1 for c in calls if c["reused"]),
             "models": dict(Counter(c["model"] for c in answered)),
             "models_returned_by_api": dict(
                 Counter(str(c["model_returned"]) for c in answered if c["model_returned"])
@@ -487,17 +530,23 @@ DocRunner = Callable[[Any], Coroutine[Any, Any, Any]]
 
 
 async def run_docs(
-    docs: Sequence[Any], meter: Meter, budget: CapBudget, one: DocRunner
+    docs: Sequence[Any],
+    meter: Meter,
+    budget: CapBudget,
+    one: DocRunner,
+    *,
+    scope: Callable[[Any], str] | None = None,
 ) -> tuple[dict[str, Any], list[str], list[str], bool]:
     """Run ``one`` per document until done or the cap is reached. Returns the outputs by
-    document id, the errors, the documents cut by the cap and whether it stopped early."""
+    scope (the document id unless ``scope`` names it, e.g. a repeat run), the errors,
+    the scopes cut by the cap and whether it stopped early."""
     outputs: dict[str, Any] = {}
     errors: list[str] = []
     cut: list[str] = []
     for spec in docs:
         if budget.exhausted:
             break
-        doc_id = spec.record.id
+        doc_id = scope(spec) if scope is not None else spec.record.id
         meter.begin(doc_id)
         try:
             out = await one(spec)

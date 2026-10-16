@@ -10,14 +10,17 @@ storage later without touching the router.
 
 A "recording" for a request hash is the newest row with that hash that holds a model
 output (status ``ok``, ``invalid_output`` or ``low_confidence``). Replaying it gives the
-router exactly what the model said, which it validates again from scratch.
+router exactly what the model said, which it validates again from scratch. In live mode
+the router may also reuse the organisation's first live answer to the same request
+(``find_reusable``); the new row then names it in ``reused_from``.
 """
 
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Any, Protocol
+from datetime import datetime
+from typing import Any, Protocol, runtime_checkable
 
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +30,8 @@ from pairly_core.llm.types import CallStatus
 from pairly_core.models.llm import ModelCall
 
 OUTPUT_STATUSES = (CallStatus.OK, CallStatus.INVALID_OUTPUT, CallStatus.LOW_CONFIDENCE)
+# Rows that hold a real model response (``recorded`` rows are replays).
+REUSABLE_MODES = ("live", "record")
 # A response that is not valid JSON is stored under this key, so the raw text can be
 # replayed (and rejected again) exactly.
 RAW_TEXT_KEY = "__pairly_raw_text__"
@@ -88,6 +93,15 @@ def seal_call_values(values: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+@runtime_checkable
+class ReusableCallStore(Protocol):
+    """A store that can find an earlier live answer to reuse (live mode)."""
+
+    async def find_reusable(
+        self, session: AsyncSession, request_hash: str, *, org_id: uuid.UUID, since: datetime
+    ) -> StoredCall | None: ...
+
+
 class CallStore(Protocol):
     async def insert(self, session: AsyncSession, values: dict[str, Any]) -> uuid.UUID: ...
 
@@ -113,6 +127,32 @@ class DatabaseCallStore:
                 ModelCall.status.in_([s.value for s in OUTPUT_STATUSES]),
             )
             .order_by(ModelCall.created_at.desc(), ModelCall.id)
+            .limit(1)
+        )
+        return StoredCall.from_row(row) if row is not None else None
+
+    async def find_reusable(
+        self, session: AsyncSession, request_hash: str, *, org_id: uuid.UUID, since: datetime
+    ) -> StoredCall | None:
+        """The organisation's first live answer to ``request_hash`` since ``since``: a
+        real model response (live or record mode, not a replay or a reuse itself), not
+        erased. The first one, so every later identical request gets the same answer.
+        Row Level Security scopes the query to the session's organisation; ``org_id``
+        is checked as well."""
+        row = await session.scalar(
+            select(ModelCall)
+            .where(
+                ModelCall.org_id == org_id,
+                ModelCall.request_hash == request_hash,
+                ModelCall.mode.in_(REUSABLE_MODES),
+                ModelCall.status.in_([s.value for s in OUTPUT_STATUSES]),
+                ModelCall.from_recording.is_(False),
+                ModelCall.reused_from.is_(None),
+                ModelCall.erased_at.is_(None),
+                ModelCall.response.is_not(None),
+                ModelCall.created_at >= since,
+            )
+            .order_by(ModelCall.created_at, ModelCall.id)
             .limit(1)
         )
         return StoredCall.from_row(row) if row is not None else None

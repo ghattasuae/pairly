@@ -84,6 +84,9 @@ class ModelCall(Base, OrgScoped):
     from_recording: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     source_call_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     replay_of: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    # Live mode: the call whose answer this row reused (same org and request hash, no
+    # model request made; ``pairly_core.llm.router``). NULL for every other row.
+    reused_from: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     provider_request_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     actor_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     workflow: Mapped[str | None] = mapped_column(String(32), nullable=True)
