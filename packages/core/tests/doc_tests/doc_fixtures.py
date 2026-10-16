@@ -236,6 +236,18 @@ def docm_like() -> bytes:
     return out.getvalue()
 
 
+def docx_with_part(name: str, content: bytes = b"synthetic") -> bytes:
+    """A package that declares a plain DOCX main part but also carries ``name``."""
+    data = tricky_docx()
+    src = zipfile.ZipFile(io.BytesIO(data))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            dst.writestr(item, src.read(item.filename))
+        dst.writestr(name, content)
+    return out.getvalue()
+
+
 def plain_zip() -> bytes:
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w") as dst:

@@ -87,6 +87,10 @@ def _sniff_zip(path: Path) -> str:
             names = {info.filename for info in infos}
             if "[Content_Types].xml" not in names or "word/document.xml" not in names:
                 return ZIP
+            if any(_active_content(name) for name in names):
+                # Macro or ActiveX parts in a package that says it is a plain .docx:
+                # never a DOCX, so every intake policy refuses it.
+                return ZIP
             info = archive.getinfo("[Content_Types].xml")
             if info.file_size > _MAX_CONTENT_TYPES_BYTES:
                 return ZIP
@@ -107,6 +111,14 @@ def _sniff_zip(path: Path) -> str:
         ):
             return DOCX
     return ZIP
+
+
+def _active_content(name: str) -> bool:
+    """A package part that carries code: a VBA project (``vbaProject.bin``, its
+    ``vbaData.xml``) or an ActiveX control (``word/activeX/``)."""
+    lower = name.lower()
+    base = lower.rsplit("/", 1)[-1]
+    return base in {"vbaproject.bin", "vbadata.xml"} or lower.startswith("word/activex/")
 
 
 def extension_for(media_type: str) -> str:

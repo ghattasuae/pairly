@@ -109,6 +109,18 @@ def test_sniff_office_packages(tmp_path: Path) -> None:
     assert sn.sniff(fx.tricky_docx()[:64]) == sn.ZIP
 
 
+@pytest.mark.parametrize(
+    "part",
+    ["word/vbaProject.bin", "word/vbaData.xml", "word/activeX/activeX1.xml", "VBAPROJECT.BIN"],
+)
+def test_a_docx_that_carries_macros_or_activex_is_not_a_docx(tmp_path: Path, part: str) -> None:
+    """Security review 2026-10 (L-04): a package that keeps the plain DOCX content type
+    but carries a VBA project or ActiveX parts is refused like a .docm."""
+    assert _sniff_bytes(tmp_path, fx.docx_with_part(part)) == sn.ZIP
+    # Other extra parts (an embedded image) leave it a DOCX.
+    assert _sniff_bytes(tmp_path, fx.docx_with_part("word/media/extra.png")) == sn.DOCX
+
+
 def test_extension_for() -> None:
     assert sn.extension_for(sn.PDF) == ".pdf"
     assert sn.extension_for("application/x-unknown") == ".bin"
