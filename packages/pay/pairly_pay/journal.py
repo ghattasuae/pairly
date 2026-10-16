@@ -4,7 +4,7 @@
 lines, one balanced entry each (Xero, QuickBooks and Zoho formats come later).
 
 **Invoice entries** (journal ``AP_INVOICE``, dated the approval day) for invoices
-approved in the period (never credit notes; a rejected invoice was never approved):
+approved in the period (a rejected invoice was never approved):
 
 * one debit per invoice line at its net amount, on the line's GL account and cost
   centre (``pay_invoice_line_codings``), with the line's tax code (``VAT5`` for 5%,
@@ -17,6 +17,14 @@ or line amounts that do not match the subtotal), the entry falls back to one exp
 debit of the approved amount less VAT, on the invoice's GL account when every line is
 coded with that one account, else on ``SUSPENSE`` for a person to reclass. Never dropped,
 never guessed into a coded account.
+
+**Credit note entries** (journal ``AP_CREDIT``, dated the day it was applied) for credit
+notes applied to an invoice in the period: the invoice entry of the credit note, reversed.
+A debit of its total on ``AP_CONTROL`` (the payables it takes off the invoice it reduces),
+a credit of its VAT on ``VAT_INPUT`` and credits of its net lines on their coded accounts,
+with the same fallback to one line (the single coded account or ``SUSPENSE``). Its VAT
+amounts are negative, so a VAT report sums them as written. A credit note that was
+received but not applied is not an accounting event yet and is left out.
 
 **Payment entries** (journal ``AP_PAYMENT``, dated the day it was marked paid) for run
 items marked paid in the period: a debit on ``AP_CONTROL`` of what the payment settled
@@ -63,6 +71,7 @@ BANK: Final = "BANK"
 DISCOUNT_RECEIVED: Final = "DISCOUNT_RECEIVED"
 SUSPENSE: Final = "SUSPENSE"
 INVOICE_JOURNAL: Final = "AP_INVOICE"
+CREDIT_JOURNAL: Final = "AP_CREDIT"
 PAYMENT_JOURNAL: Final = "AP_PAYMENT"
 MAX_ENTRIES: Final = 20_000
 APPROVED_STATES: Final = (
@@ -160,7 +169,12 @@ def _check(lines: Sequence[JournalLine]) -> None:
         raise UnbalancedEntryError(f"entry {lines[0].entry} debits {debit} credits {credit}")
 
 
-def invoice_entry(entry: int, f: InvoiceFact) -> list[JournalLine]:
+def invoice_entry(
+    entry: int, f: InvoiceFact, *, journal: str = INVOICE_JOURNAL, reverse: bool = False
+) -> list[JournalLine]:
+    """The balanced entry of an invoice; ``reverse`` swaps every debit and credit and
+    negates the VAT amounts (a credit note)."""
+
     def q(value: Decimal) -> Decimal:
         return to_minor_unit(value, f.currency)
 
@@ -168,17 +182,21 @@ def invoice_entry(entry: int, f: InvoiceFact) -> list[JournalLine]:
     expense = total - vat
 
     def line(account: str, debit: Decimal, credit: Decimal, **kw: object) -> JournalLine:
+        vat_amount: Decimal | None = kw.get("vat_amount")  # type: ignore[assignment]
+        if reverse:
+            debit, credit = credit, debit
+            vat_amount = -vat_amount if vat_amount else vat_amount
         return JournalLine(
             entry=entry,
             day=f.day,
-            journal=INVOICE_JOURNAL,
+            journal=journal,
             account=account,
             cost_centre=kw.get("cost_centre"),  # type: ignore[arg-type]
             debit=debit,
             credit=credit,
             currency=f.currency,
             tax_code=kw.get("tax_code"),  # type: ignore[arg-type]
-            vat_amount=kw.get("vat_amount"),  # type: ignore[arg-type]
+            vat_amount=vat_amount,
             vendor=f.vendor_name,
             reference=f.reference,
             document_id=f.document_id,
@@ -224,6 +242,11 @@ def invoice_entry(entry: int, f: InvoiceFact) -> list[JournalLine]:
     return out
 
 
+def credit_entry(entry: int, f: InvoiceFact) -> list[JournalLine]:
+    """The entry of an applied credit note: its invoice entry reversed."""
+    return invoice_entry(entry, f, journal=CREDIT_JOURNAL, reverse=True)
+
+
 def payment_entry(entry: int, f: PaymentFact) -> list[JournalLine]:
     amount = to_minor_unit(f.amount, f.currency)
     discount = to_minor_unit(f.discount, f.currency)
@@ -253,14 +276,19 @@ def payment_entry(entry: int, f: PaymentFact) -> list[JournalLine]:
 
 
 def build_journal(
-    invoices: Iterable[InvoiceFact], payments: Iterable[PaymentFact]
+    invoices: Iterable[InvoiceFact],
+    payments: Iterable[PaymentFact],
+    credits: Iterable[InvoiceFact] = (),
 ) -> list[JournalLine]:
-    """Invoice entries then payment entries, each by date then reference."""
+    """Invoice, then credit note, then payment entries, each by date then reference."""
     out: list[JournalLine] = []
     entry = 0
     for f in sorted(invoices, key=lambda x: (x.day, x.reference)):
         entry += 1
         out += invoice_entry(entry, f)
+    for c in sorted(credits, key=lambda x: (x.day, x.reference)):
+        entry += 1
+        out += credit_entry(entry, c)
     for p in sorted(payments, key=lambda x: (x.day, x.reference)):
         entry += 1
         out += payment_entry(entry, p)
@@ -309,26 +337,37 @@ def _bounds(period: Period) -> tuple[datetime, datetime]:
     return start, datetime.combine(period.end + timedelta(days=1), time.min, tzinfo=UTC)
 
 
-async def invoice_facts(session: AsyncSession, period: Period) -> list[InvoiceFact]:
+async def _facts(session: AsyncSession, period: Period, *, credit_notes: bool) -> list[InvoiceFact]:
     start, end = _bounds(period)
+    if credit_notes:
+        day_column = PayInvoice.credit_applied_at
+        where = (
+            PayInvoice.document_type == DocumentType.CREDIT_NOTE.value,
+            PayInvoice.status == InvoiceStatus.APPLIED.value,
+        )
+    else:
+        day_column = PayInvoice.approved_at
+        where = (
+            PayInvoice.document_type == DocumentType.INVOICE.value,
+            PayInvoice.status.in_(APPROVED_STATES),
+        )
     rows = await session.execute(
         select(PayInvoice, PayVendor.legal_name)
         .outerjoin(PayVendor, PayVendor.id == PayInvoice.vendor_id)
-        .where(
-            PayInvoice.document_type == DocumentType.INVOICE.value,
-            PayInvoice.status.in_(APPROVED_STATES),
-            PayInvoice.approved_at >= start,
-            PayInvoice.approved_at < end,
-        )
-        .order_by(PayInvoice.approved_at, PayInvoice.id)
+        .where(*where, day_column >= start, day_column < end)
+        .order_by(day_column, PayInvoice.id)
         .limit(MAX_ENTRIES)
     )
     out: list[InvoiceFact] = []
     for inv, vendor in rows.all():
-        currency = inv.approved_currency or inv.currency
-        total = inv.approved_amount if inv.approved_amount is not None else inv.total
-        if not currency or total is None or inv.approved_at is None:
-            continue  # an approval always carries both (approvals.py)
+        if credit_notes:
+            currency, total, when = inv.currency, inv.total, inv.credit_applied_at
+        else:
+            currency = inv.approved_currency or inv.currency
+            total = inv.approved_amount if inv.approved_amount is not None else inv.total
+            when = inv.approved_at
+        if not currency or total is None or when is None:
+            continue  # an approval (or an application) always carries both
         codings = {
             c.line_index: c
             for c in await session.scalars(
@@ -344,7 +383,7 @@ async def invoice_facts(session: AsyncSession, period: Period) -> list[InvoiceFa
                 document_id=inv.document_id,
                 vendor_name=vendor or inv.vendor_name,
                 currency=currency,
-                day=inv.approved_at.astimezone(UTC).date(),
+                day=when.astimezone(UTC).date(),
                 total=total,
                 vat=inv.vat_amount or ZERO,
                 subtotal=inv.subtotal,
@@ -361,6 +400,16 @@ async def invoice_facts(session: AsyncSession, period: Period) -> list[InvoiceFa
             )
         )
     return out
+
+
+async def invoice_facts(session: AsyncSession, period: Period) -> list[InvoiceFact]:
+    """Invoices approved in the period."""
+    return await _facts(session, period, credit_notes=False)
+
+
+async def credit_facts(session: AsyncSession, period: Period) -> list[InvoiceFact]:
+    """Credit notes applied to an invoice in the period."""
+    return await _facts(session, period, credit_notes=True)
 
 
 async def payment_facts(session: AsyncSession, period: Period) -> list[PaymentFact]:
@@ -393,4 +442,8 @@ async def payment_facts(session: AsyncSession, period: Period) -> list[PaymentFa
 
 
 async def journal_lines(session: AsyncSession, period: Period) -> list[JournalLine]:
-    return build_journal(await invoice_facts(session, period), await payment_facts(session, period))
+    return build_journal(
+        await invoice_facts(session, period),
+        await payment_facts(session, period),
+        await credit_facts(session, period),
+    )

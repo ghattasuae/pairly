@@ -23,6 +23,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import re
 import uuid
@@ -562,6 +564,30 @@ async def test_credit_note_through_intake_reduces_what_is_paid(
     }
     assert approved[invoice_id]["status"] == "approved"
     assert approved[invoice_id]["expected_payment_date"] is not None
+
+    # The journal: the applied credit note is the invoice entry reversed, balanced, and the
+    # payables it takes off are what it reduced the payment by.
+    period = datetime.now(UTC).strftime("%Y-%m")
+    exported = await flow.call(
+        "POST", "/v1/pay/journal/export", fworld, "finance", json={"period": period}
+    )
+    assert exported.status_code == 200, exported.text
+    rows = list(csv.DictReader(io.StringIO(exported.content.decode("utf-8"))))
+    debit: dict[str, Decimal] = {}
+    credit_side: dict[str, Decimal] = {}
+    for r in rows:
+        debit[r["entry"]] = debit.get(r["entry"], Decimal(0)) + Decimal(r["debit"])
+        credit_side[r["entry"]] = credit_side.get(r["entry"], Decimal(0)) + Decimal(r["credit"])
+    assert debit == credit_side
+    credit_rows = [r for r in rows if r["journal"] == "AP_CREDIT"]
+    assert {r["reference"] for r in credit_rows} == {staff_view["reference"]}
+    (payable,) = [r for r in credit_rows if r["account_code"] == "AP_CONTROL"]
+    assert Decimal(payable["debit"]) == credit_total
+    assert Decimal(payable["credit"]) == 0
+    assert all(Decimal(r["debit"]) == 0 for r in credit_rows if r is not payable)
+    invoice_rows = [r for r in rows if r["journal"] == "AP_INVOICE"]
+    (owed,) = [r for r in invoice_rows if r["account_code"] == "AP_CONTROL"]
+    assert Decimal(owed["credit"]) == invoice_total
 
 
 async def test_portal_invoice_keeps_its_vendor_and_duplicates_are_one(

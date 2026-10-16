@@ -14,6 +14,7 @@ from decimal import Decimal
 from pairly_pay.journal import (
     AP_CONTROL,
     BANK,
+    CREDIT_JOURNAL,
     DISCOUNT_RECEIVED,
     SUSPENSE,
     VAT_INPUT,
@@ -136,6 +137,59 @@ def test_payments_settle_payables_with_bank_and_discount() -> None:
         "entry", "date", "journal", "account_code", "cost_centre", "debit", "credit",
         "currency", "tax_code", "vat_amount", "vendor", "reference", "document_id",
     ]  # fmt: skip
+
+
+def test_a_credit_note_reverses_its_invoice_entry_and_balances() -> None:
+    credit = _invoice(
+        "210.00",
+        "10.00",
+        [_coded("6100", "120.00", vat="6.00"), _coded("6200", "80.00", vat="4.00", cc="CC-OPS")],
+    )
+    lines = build_journal([], [], [credit])
+    _balanced(lines)
+    assert {x.journal for x in lines} == {CREDIT_JOURNAL}
+    got = [(x.account, x.cost_centre, x.debit, x.credit, x.tax_code, x.vat_amount) for x in lines]
+    assert got == [
+        ("6100", "CC-IT", D(0), D("120.00"), "VAT5", D("-6.00")),
+        ("6200", "CC-OPS", D(0), D("80.00"), "VAT5", D("-4.00")),
+        (VAT_INPUT, None, D(0), D("10.00"), "VAT", D("-10.00")),
+        (AP_CONTROL, None, D("210.00"), D(0), None, None),
+    ]  # fmt: skip
+    rows = list(csv.DictReader(io.StringIO(to_csv(lines).decode("utf-8"))))
+    assert [r["vat_amount"] for r in rows] == ["-6.00", "-4.00", "-10.00", ""]
+
+
+def test_an_uncoded_credit_note_falls_back_to_suspense_reversed() -> None:
+    credit = _invoice("105.00", "5.00", [_coded(None, "100.00")])
+    lines = build_journal([], [], [credit])
+    _balanced(lines)
+    assert [(x.account, x.debit, x.credit) for x in lines] == [
+        (SUSPENSE, D(0), D("100.00")),
+        (VAT_INPUT, D(0), D("5.00")),
+        (AP_CONTROL, D("105.00"), D(0)),
+    ]
+
+
+def test_invoice_credit_and_payment_clear_the_payable() -> None:
+    inv = _invoice("1050.00", "50.00", [_coded("6100", "1000.00", vat="50.00")])
+    credit = _invoice("210.00", "10.00", [_coded("6100", "200.00", vat="10.00")])
+    pay = PaymentFact(
+        uuid.uuid4(), "INV-ABC123", inv.document_id, None, "AED", DAY, D("840.00"), D(0)
+    )
+    lines = build_journal([inv], [pay], [credit])
+    _balanced(lines)
+    # Entries in order: invoice, credit note, payment.
+    assert [x.journal for x in lines if x.account == AP_CONTROL] == [
+        "AP_INVOICE",
+        CREDIT_JOURNAL,
+        "AP_PAYMENT",
+    ]
+    payable = [x.credit - x.debit for x in lines if x.account == AP_CONTROL]
+    assert sum(payable, D(0)) == 0
+    expense = sum((x.debit - x.credit for x in lines if x.account == "6100"), D(0))
+    assert expense == D("800.00")
+    vat = sum((x.debit - x.credit for x in lines if x.account == VAT_INPUT), D(0))
+    assert vat == D("40.00")
 
 
 def test_tax_codes() -> None:
