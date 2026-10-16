@@ -26,8 +26,10 @@ How it works: ``blind(guarded, sources, config)`` runs on the guardrails' saniti
 text (``GuardedInput``: hidden text and instructions already removed) and replaces
 each hidden span with a placeholder such as ``[name]``. ``BlindedInput`` keeps an
 offset map from its text to the sanitised text, so evidence is still located in the
-original CV through the guardrails' own map. A quote that touches a placeholder maps
-to nothing, so blind-redacted text can never be evidence (no credit).
+original CV through the guardrails' own map. A range that touches a placeholder maps
+to nothing, so blind-redacted text can never be evidence. When the model quotes a
+line with a placeholder in it ("BSc Accounting, [university], 2019"), only the visible
+parts around the placeholder are located and credited (``visible_ranges``).
 
 Deterministic and conservative: it would rather hide a word too many (a company named
 after the candidate's family name) than leave a protected marker in. The evals
@@ -197,6 +199,19 @@ class BlindedInput:
         if covered != end - start or len(pieces) != 1:
             return None
         return pieces[0]
+
+    def visible_ranges(self, start: int, end: int) -> list[tuple[int, int]]:
+        """The parts of blinded ``[start, end)`` that are not placeholders, in order
+        (blinded offsets). Placeholder text is never part of any range."""
+        if not 0 <= start < end <= len(self.text):
+            return []
+        out: list[tuple[int, int]] = []
+        for seg in self._segments:
+            lo = max(start, seg.blinded_start)
+            hi = min(end, seg.blinded_start + seg.length)
+            if lo < hi:
+                out.append((lo, hi))
+        return out
 
     def to_original(self, start: int, end: int) -> tuple[int, int] | None:
         sanitized = self.to_sanitized(start, end)

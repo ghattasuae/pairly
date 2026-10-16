@@ -247,6 +247,46 @@ def test_no_evidence_no_credit_for_hidden_redacted_and_invented_quotes() -> None
     assert result.overall == overall_score(rubric, result.scores)
 
 
+def test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_only() -> None:
+    doc_id = "fair-01-base"
+    spec = specs()[doc_id]
+    doc = parsed(doc_id)
+    blinded = blinded_for(doc_id)
+    institution = spec.record.ground_truth.education[0].institution
+    line = spec.text.by_ref("edu:0")[0].text
+    assert institution in line
+    assert institution not in blinded.text
+    copied = " ".join(line.replace(institution, "[university]").split())
+    before, after = (" ".join(p.split()).strip(" ,") for p in line.split(institution, 1))
+    rubric = screening_rubric(job_by_id(spec.record.labels[0].job_id))
+    ids = [c.id for c in rubric.criteria]
+    result = credit(
+        _output(
+            {
+                ids[0]: (3, [copied]),
+                ids[1]: (2, ["[university]"]),
+                ids[2]: (2, [f"{before}, [university], invented text"]),
+            }
+        ),
+        rubric,
+        doc,
+        blinded,
+    )
+    by_id = {c.criterion_id: c for c in result.criteria}
+    first = by_id[ids[0]]
+    assert first.score == 3
+    assert not first.rejected
+    quotes = [" ".join(e.quote.split()) for e in first.evidence]
+    assert quotes == [before, after]
+    for e in first.evidence:
+        assert institution not in doc.text[e.start : e.end]
+        assert " ".join(doc.text[e.start : e.end].split()) in quotes
+    # A placeholder alone, or visible parts that are not contiguous text: no credit.
+    for cid in ids[1:3]:
+        assert by_id[cid].score == 0, cid
+        assert "no_evidence" in by_id[cid].flags
+
+
 def test_demo_hidden_text_cv_is_scored_as_if_the_hidden_line_were_not_there() -> None:
     """``make demo``'s hidden white text CV: the guardrails flag and remove the line, no
     model input (sanitised or blinded, CV parse or scoring request) holds it, and the

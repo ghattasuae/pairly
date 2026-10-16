@@ -7,8 +7,10 @@
 * every quote must be found in the text the model read (``model_input``: the blinded,
   sanitised CV) and map back to one contiguous range of the original CV whose text
   matches it (``pairly_core.extraction.evidence.EvidenceLocator``). A quote of hidden
-  text, of an instruction the guardrails removed, or touching a blind placeholder is
-  not in that text or does not map back, so it is rejected;
+  text or of an instruction the guardrails removed is not in that text or does not map
+  back, so it is rejected. A quote that copies a blind placeholder ("BSc Accounting,
+  [university], 2019") is credited with its visible parts only, each located on its
+  own; the hidden text never becomes evidence;
 * a score above 0 with no accepted quote is credited 0 (``no_evidence``);
 * the "why not higher" text is checked as plain text (no markup, links or protected
   attributes, ``pairly_core.guardrails.validation.HIRING_POLICY``); anything else is
@@ -176,25 +178,26 @@ def credit(
         rejected: list[Rejected] = []
         seen: set[tuple[int, int]] = set()
         for quote in answer.evidence:
-            located = locator.locate(quote)
-            if located is None:
+            parts = locator.locate_visible(quote)
+            if not parts:
                 rejected.append(Rejected(quote, "not_found"))
                 continue
-            if (located.start, located.end) in seen:
-                continue
-            seen.add((located.start, located.end))
-            first = located.spans[0]
-            accepted.append(
-                Evidence(
-                    quote=" ".join(s.quote for s in located.spans),
-                    start=located.start,
-                    end=located.end,
-                    page=first.page,
-                    bboxes=tuple(
-                        b.model_dump(mode="json") for s in located.spans for b in s.bboxes
-                    ),
+            for located in parts:
+                if (located.start, located.end) in seen:
+                    continue
+                seen.add((located.start, located.end))
+                first = located.spans[0]
+                accepted.append(
+                    Evidence(
+                        quote=" ".join(s.quote for s in located.spans),
+                        start=located.start,
+                        end=located.end,
+                        page=first.page,
+                        bboxes=tuple(
+                            b.model_dump(mode="json") for s in located.spans for b in s.bboxes
+                        ),
+                    )
                 )
-            )
         flags: list[str] = []
         score = answer.score
         confidence = answer.confidence

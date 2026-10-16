@@ -69,6 +69,13 @@ class SanitizedInput(Protocol):
     def to_original(self, start: int, end: int) -> tuple[int, int] | None: ...
 
 
+@runtime_checkable
+class PartlyHiddenInput(SanitizedInput, Protocol):
+    """A model input with hidden parts (placeholders) that never map back."""
+
+    def visible_ranges(self, start: int, end: int) -> list[tuple[int, int]]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class Normalized:
     """A normalised string and, for each of its characters, the source index."""
@@ -192,6 +199,50 @@ class EvidenceLocator:
                 return located
         return None
 
+    def locate_visible(self, quote: str | None) -> tuple[Located, ...]:
+        """``locate``, or for a quote that runs over hidden text (a blind placeholder
+        the model copied), each visible part of it on its own.
+
+        The whole quote must still be found, contiguous, in the model's text. Hidden
+        text is never located: only the ranges the input reports as visible are mapped
+        back, each trimmed of edge punctuation and checked against the original. A part
+        with fewer than two letters or digits is dropped."""
+        whole = self.locate(quote)
+        if whole is not None:
+            return (whole,)
+        if (
+            quote is None
+            or not quote.strip()
+            or len(quote) > MAX_QUOTE_CHARS
+            or not isinstance(self._sanitized, PartlyHiddenInput)
+        ):
+            return ()
+        model_text = self._sanitized.text
+        for wraps in WRAP_VARIANTS:
+            found = find_normalized(self._norm(wraps), quote, wraps)
+            if found is None:
+                continue
+            parts: list[Located] = []
+            for lo, hi in self._sanitized.visible_ranges(*found):
+                lo, hi = _trim(model_text, lo, hi)
+                if sum(ch.isalnum() for ch in model_text[lo:hi]) < 2:
+                    continue
+                mapped = self._sanitized.to_original(lo, hi)
+                if mapped is None:
+                    continue
+                start, end = mapped
+                if not 0 <= start < end <= len(self._original):
+                    continue
+                if (
+                    normalize(self._original[start:end], wraps).text
+                    != normalize(model_text[lo:hi], wraps).text
+                ):
+                    continue
+                parts.append(Located(start, end, tuple(self._spans(start, end))))
+            if parts:
+                return tuple(parts)
+        return ()
+
     def _locate(self, quote: str, wraps: Wraps) -> Located | None:
         found = find_normalized(self._norm(wraps), quote, wraps)
         if found is None:
@@ -235,6 +286,19 @@ class EvidenceLocator:
             self._boxes[page_index] = items
         hits = [box for (s, e, box) in items if s < hi and e > lo]
         return _merge_lines(hits)
+
+
+def _trim(text: str, lo: int, hi: int) -> tuple[int, int]:
+    """``[lo, hi)`` without whitespace or punctuation at either end."""
+
+    def edge(ch: str) -> bool:
+        return ch.isspace() or unicodedata.category(ch).startswith("P") or ch in _ZERO_WIDTH
+
+    while lo < hi and edge(text[lo]):
+        lo += 1
+    while hi > lo and edge(text[hi - 1]):
+        hi -= 1
+    return lo, hi
 
 
 def _placed(
