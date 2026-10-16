@@ -20,6 +20,7 @@ import { extractLink, OUTBOX_DIR, toReachableUrl } from "./mail";
 import { AUTH_STATE_DIR } from "./report";
 import { makeArgs, REPO_ROOT } from "./stack";
 import { totpFresh } from "./totp";
+import { demoViewport } from "./viewport";
 
 // From scripts/demo_pay.py (PEOPLE) and scripts/demo_seed.py (the admin).
 export const PAY_PEOPLE = {
@@ -146,7 +147,7 @@ export async function asPay(
   const context = await browser.newContext({
     storageState: payState(who),
     colorScheme: options.theme ?? "light",
-    viewport: options.viewport ?? { width: 1440, height: 1000 },
+    viewport: options.viewport ?? demoViewport(),
     ...(options.touch ? { hasTouch: true, isMobile: true } : {}),
   });
   return { context, page: await context.newPage() };

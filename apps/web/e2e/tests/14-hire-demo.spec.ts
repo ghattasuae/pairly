@@ -9,6 +9,7 @@ import { expect, test, type Browser, type BrowserContext, type Page } from "@pla
 import { extractLink, OUTBOX_DIR, toReachableUrl } from "../utils/mail";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
 import { totpFresh } from "../utils/totp";
+import { demoViewport } from "../utils/viewport";
 
 // The six-step Hire demo (BRIEF 10.1) on a stack seeded by `make demo` (org "demo",
 // scripts/demo_seed.py), against the running native stack (`make demo`; LOCAL_WEB_PORT
@@ -142,7 +143,7 @@ async function turnOnTotp(browser: Browser, state: string): Promise<void> {
 }
 
 async function as(browser: Browser, state: string): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({ storageState: state, viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ storageState: state, viewport: demoViewport() });
   return { context, page: await context.newPage() };
 }
 
@@ -292,7 +293,7 @@ test("4. shortlist, the personalised email, the candidate books, a meeting link"
 
   const link = mail.text.match(/https?:\/\/\S+\/en\/schedule#hs1\.\S+/)?.[0] ?? "";
   expect(link, mail.text).not.toBe("");
-  const visitor = await browser.newContext({ timezoneId: "Asia/Dubai", viewport: { width: 1280, height: 900 } });
+  const visitor = await browser.newContext({ timezoneId: "Asia/Dubai", viewport: demoViewport({ width: 1280, height: 900 }) });
   const candidate = await visitor.newPage();
   await candidate.goto(toReachableUrl(link));
   await expect(candidate.getByRole("heading", { name: "Choose your interview time" })).toBeVisible({ timeout: 20_000 });
@@ -315,7 +316,7 @@ test("5. the candidate portal from an emailed link shows the interview", async (
     (m) => m.to.some((to) => to.toLowerCase() === candidateEmail.toLowerCase()) && /\/en\/portal\/login#pl1\./.test(m.text),
   );
   const link = mail.text.match(/https?:\/\/\S+\/en\/portal\/login#pl1\.\S+/)?.[0] ?? "";
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ viewport: demoViewport({ width: 1280, height: 900 }) });
   const page = await context.newPage();
   await page.goto(toReachableUrl(link));
   await page.waitForURL(/\/en\/portal$/, { timeout: 30_000 });
