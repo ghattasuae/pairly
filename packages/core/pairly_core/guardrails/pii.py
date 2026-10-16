@@ -22,6 +22,11 @@ It is tuned to over-redact rather than leak: a log line loses a number it did no
 before a person's data reaches a log store. ``redact`` recurses into mappings, lists
 and tuples (keys are kept). It is the default ``Redactor`` of the model router (LangFuse
 inputs and outputs) and backs ``redact_log_event``, a structlog processor.
+
+``redact_counted`` also returns how many values it masked. The log processor and the
+LangFuse tracer add that number to the organisation's tally
+(``pairly_core.guardrails.redaction_counts``), so the AI governance board shows how much
+personal data was kept out of logs and traces. Only the number is kept, never the text.
 """
 
 from __future__ import annotations
@@ -122,24 +127,45 @@ class PiiRedactor:
                 add("NAME", m.start(), m.end())
         return sorted(found, key=lambda m: m.start)
 
-    def redact_text(self, text: str) -> str:
+    def _redact_text(self, text: str) -> tuple[str, int]:
+        matches = self.find(text)
+        if not matches:
+            return text, 0
         out: list[str] = []
         position = 0
-        for match in self.find(text):
+        for match in matches:
             out.append(text[position : match.start])
             out.append(f"[{match.kind}]")
             position = match.end
         out.append(text[position:])
-        return "".join(out)
+        return "".join(out), len(matches)
+
+    def redact_text(self, text: str) -> str:
+        return self._redact_text(text)[0]
+
+    def redact_counted(self, value: Any) -> tuple[Any, int]:
+        """``redact(value)`` and the number of values it masked."""
+        if isinstance(value, str):
+            return self._redact_text(value)
+        if isinstance(value, Mapping):
+            total = 0
+            mapped: dict[Any, Any] = {}
+            for k, v in value.items():
+                mapped[k], n = self.redact_counted(v)
+                total += n
+            return mapped, total
+        if isinstance(value, list | tuple):
+            total = 0
+            items: list[Any] = []
+            for v in value:
+                item, n = self.redact_counted(v)
+                items.append(item)
+                total += n
+            return items, total
+        return value, 0
 
     def redact(self, value: Any) -> Any:
-        if isinstance(value, str):
-            return self.redact_text(value)
-        if isinstance(value, Mapping):
-            return {k: self.redact(v) for k, v in value.items()}
-        if isinstance(value, list | tuple):
-            return [self.redact(v) for v in value]
-        return value
+        return self.redact_counted(value)[0]
 
 
 # Structured log fields that never hold personal data and must stay searchable.
@@ -172,10 +198,18 @@ def redact_log_event(
 ) -> MutableMapping[str, Any]:
     """structlog processor: redact PII in every value except ``SAFE_LOG_KEYS``.
 
-    Put it after ``format_exc_info`` so exception text is redacted too.
+    Put it after ``format_exc_info`` so exception text is redacted too. What it masks is
+    counted for the event's ``org_id`` (bound per request), when there is one.
     """
+    masked = 0
     for key, value in list(event_dict.items()):
         if key in SAFE_LOG_KEYS or key.startswith("_"):
             continue
-        event_dict[key] = _DEFAULT.redact(value)
+        event_dict[key], n = _DEFAULT.redact_counted(value)
+        masked += n
+    if masked:
+        # Imported here: the tally module needs the database layer, this one does not.
+        from pairly_core.guardrails.redaction_counts import TALLY
+
+        TALLY.add(event_dict.get("org_id"), masked)
     return event_dict

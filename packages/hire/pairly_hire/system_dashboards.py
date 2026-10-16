@@ -9,7 +9,11 @@
   fairness runs (the counterfactual runner) and the calibration agreement of the jobs
   people labelled.
 
-Counts and ids only: no candidate's name, CV or answer is shown here.
+Counts and ids only: no candidate's name, CV or answer is shown here. The guardrail and
+calibration sections need ``hire.governance.read`` (admins, recruiters and auditors),
+not ``hire.analytics.read``: an auditor sees the numbers without the analytics pages.
+Without ``hire.analytics.read`` a calibration row names the job by its id (an unopened
+job's title can be confidential) and links nowhere.
 """
 
 from __future__ import annotations
@@ -28,12 +32,13 @@ from pairly_core.dashboards.model import (
     SectionContext,
     Stat,
     Unit,
+    may,
     section,
 )
 from pairly_hire.analytics import calibration
 from pairly_hire.analytics.models import HireCalibrationLabel, HireFairnessRun
 from pairly_hire.models import HireJob
-from pairly_hire.permissions import ANALYTICS_READ, BIAS_READ, SETTINGS_MANAGE
+from pairly_hire.permissions import ANALYTICS_READ, BIAS_READ, GOVERNANCE_READ, SETTINGS_MANAGE
 from pairly_hire.portal.models import DataRequestStatus, HireDataRequest
 from pairly_hire.portal.notices import SLA_DAYS
 from pairly_hire.screening.models import HireScreening
@@ -184,6 +189,7 @@ async def calibration_agreement(ctx: SectionContext) -> Section:
             .limit(CALIBRATION_JOBS)
         )
     ).all()
+    analytics = may(ctx.actor, ANALYTICS_READ)
     titles = (
         {
             j.id: j.title
@@ -191,7 +197,7 @@ async def calibration_agreement(ctx: SectionContext) -> Section:
                 select(HireJob).where(HireJob.id.in_([job_id for job_id, _ in jobs]))
             )
         }
-        if jobs
+        if jobs and analytics
         else {}
     )
     items = []
@@ -203,7 +209,7 @@ async def calibration_agreement(ctx: SectionContext) -> Section:
                 kind="calibration",
                 id=str(job_id),
                 label=titles.get(job_id, str(job_id)),
-                href=f"/hire/calibration?job_id={job_id}",
+                href=f"/hire/calibration?job_id={job_id}" if analytics else None,
                 at=labelled_at,
                 detail={
                     "labels": report.labels,
@@ -214,17 +220,18 @@ async def calibration_agreement(ctx: SectionContext) -> Section:
                 },
             )
         )
+    link = "/hire/calibration" if analytics else None
     return Section(
         key="calibration",
         count=len(items),
-        href="/hire/calibration",
+        href=link,
         items=items,
         stats=[
             Stat(
                 "low_agreement_criteria",
                 float(sum(int(i.detail["low_agreement"] or 0) for i in items)),
                 Unit.COUNT,
-                href="/hire/calibration",
+                href=link,
             )
         ],
         source="hire_calibration_labels",
@@ -235,8 +242,11 @@ async def calibration_agreement(ctx: SectionContext) -> Section:
 DASHBOARD_SECTIONS: Final[tuple[DashboardSectionSpec, ...]] = (
     DashboardSectionSpec(Board.ADMIN, "data_requests", SETTINGS_MANAGE, data_requests, action=True),
     DashboardSectionSpec(Board.ADMIN, "calendar_integrations", SETTINGS_MANAGE, integrations),
-    DashboardSectionSpec(Board.AI_GOVERNANCE, "guardrails_hire", ANALYTICS_READ, guardrails),
+    # Counts only, so auditors see them too (hire.governance.read).
+    DashboardSectionSpec(Board.AI_GOVERNANCE, "guardrails_hire", GOVERNANCE_READ, guardrails),
     # The fairness runs page also opens to the bias report's readers (auditors).
     DashboardSectionSpec(Board.AI_GOVERNANCE, "fairness_runs", BIAS_READ, fairness),
-    DashboardSectionSpec(Board.AI_GOVERNANCE, "calibration", ANALYTICS_READ, calibration_agreement),
+    DashboardSectionSpec(
+        Board.AI_GOVERNANCE, "calibration", GOVERNANCE_READ, calibration_agreement
+    ),
 )

@@ -60,9 +60,9 @@ function governance(): SystemDashboard {
         count: null,
         href: null,
         items: [],
-        stats: [{ key: "pii_redactions", value: null, unit: "count", href: null, text: null, n: null }],
-        source: null,
-        note: "not_recorded",
+        stats: [{ key: "pii_redactions", value: null, unit: "count", href: null, text: null, n: 0 }],
+        source: "pii_redaction_counts",
+        note: "no_data",
         workflow: null,
       },
       {
@@ -92,7 +92,7 @@ describe("SystemRoleDashboard", () => {
     expect(within(live).getByText("No data")).toBeInTheDocument();
     const pii = document.querySelector('[data-sys-section="pii_redactions"]') as HTMLElement;
     expect(pii.querySelector('[data-sys-count="none"]')).not.toBeNull();
-    expect(within(pii).getByText(/no count of it is kept/)).toBeInTheDocument();
+    expect(within(pii).getByText("No data yet.")).toBeInTheDocument();
     expect(within(pii).queryByText("0")).toBeNull();
     const overrides = document.querySelector('[data-sys-stat="override_rate_hire"]') as HTMLElement;
     expect(overrides.textContent).toContain("25%");

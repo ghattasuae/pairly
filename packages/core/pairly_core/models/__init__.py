@@ -15,6 +15,7 @@ from pairly_core.batches.models import DocumentBatch, DocumentBatchItem
 from pairly_core.decisions.models import Appeal, ComplianceExport, DecisionRecord, DecisionReplay
 from pairly_core.extraction.models import Extraction, ExtractionCorrection, ExtractionField
 from pairly_core.flags.models import FeatureFlag
+from pairly_core.guardrails.redaction_counts import PiiRedactionCount
 from pairly_core.idempotency import IdempotencyRecord
 from pairly_core.ingestion.models import Document, InboundAddress, InboundEmail
 from pairly_core.integrations.models import (
@@ -79,6 +80,7 @@ __all__ = [
     "NotificationPreference",
     "OrgLLMBudget",
     "Organisation",
+    "PiiRedactionCount",
     "PolicyDocument",
     "PolicyVersion",
     "PortalGuardRule",

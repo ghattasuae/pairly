@@ -29,6 +29,7 @@ from pairly_core.dashboards.model import (
     build_section_registry,
 )
 from pairly_core.db import create_sessionmaker
+from pairly_core.guardrails.redaction_counts import RedactionTally, flush
 from pairly_core.jobs.runs import finish_run, start_run
 from pairly_core.plugins import discover_plugins
 
@@ -280,18 +281,52 @@ async def test_ai_governance_dashboard(
     assert stats["gate_recorded"]["text"] == "fail"  # b.json is missing
     assert stats["gate_live"]["text"] == "fail"
     assert "eval_gate_failing" in {s["key"] for s in board["action"]}
-    # Nothing measured is shown as a number: PII redactions are not counted anywhere.
+    # Nothing counted yet is shown as no data, never as zero.
     pii = _section(board, "pii_redactions")
-    assert (pii["count"], pii["note"], pii["stats"][0]["value"]) == (None, "not_recorded", None)
+    assert (pii["count"], pii["note"], pii["stats"][0]["value"]) == (None, "no_data", None)
     assert _section(board, "model_usage")["note"] == "no_data"
     assert board["links"] == [{"key": "model_cards", "href": "docs/model-cards/"}]
-    # The auditor sees it too (core and the fairness runs, not Hire analytics).
-    assert {"evals", "fairness_runs"} <= _keys(auditor)
-    assert "calibration" not in _keys(auditor)
+    # The auditor sees it too, Hire's guardrail and calibration counts included (they
+    # need hire.governance.read, not hire.analytics.read), with no link to the
+    # analytics pages and no job title.
+    assert {"evals", "fairness_runs", "guardrails_hire", "calibration"} <= _keys(auditor)
+    assert {"guardrails_pay", "pii_redactions"} <= _keys(auditor)
+    calibration = _section(auditor, "calibration")
+    assert calibration["href"] is None
+    assert all(i["href"] is None and i["label"] == i["id"] for i in calibration["items"])
+    assert all(t["href"] is None for t in calibration["stats"])
+    assert _section(board, "calibration")["href"] == "/hire/calibration"
     # Others do not; another organisation's board is its own.
     assert (await api.call("GET", f"{BASE}/ai-governance", world, "clerk")).status_code == 403
     theirs = await api.ok("GET", f"{BASE}/ai-governance", other, "admin")
     assert theirs["board"] == "ai_governance"
+
+
+async def test_ai_governance_counts_pii_redactions(
+    pay_api: PayApi, world: PayWorld, other: PayWorld
+) -> None:
+    api = pay_api
+    sessionmaker = api.app.state.pairly.sessionmaker
+    tally = RedactionTally()
+    tally.add(world.org_id, 3)
+    tally.add(str(world.org_id), 4)
+    tally.add(None, 9)  # a platform log: no organisation, not counted
+    result = await flush(sessionmaker, tally)
+    assert (result.rows, result.redactions, result.failed_orgs) == (1, 7, 0)
+    tally.add(world.org_id, 2)  # a second flush adds to the day's row
+    assert (await flush(sessionmaker, tally)).redactions == 2
+    assert tally.pending() == 0
+
+    for role, otp in (("admin", True), ("auditor", False)):
+        board = await api.ok("GET", f"{BASE}/ai-governance", world, role, otp=otp)
+        pii = _section(board, "pii_redactions")
+        assert (pii["count"], pii["note"], pii["source"]) == (9, None, "pii_redaction_counts")
+        assert (pii["stats"][0]["value"], pii["stats"][0]["n"]) == (9.0, 1)
+    # Another organisation's count is its own (Row Level Security).
+    theirs = _section(
+        await api.ok("GET", f"{BASE}/ai-governance", other, "admin"), "pii_redactions"
+    )
+    assert (theirs["count"], theirs["note"]) == (None, "no_data")
 
 
 async def test_ai_governance_without_eval_files(

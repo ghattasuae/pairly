@@ -39,6 +39,7 @@ from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
 from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.flags.registry import build_flag_registry, install_flag_registry
+from pairly_core.guardrails import redaction_counts
 from pairly_core.ingestion.queue import PARSE_JOB, SCAN_JOB, job_dumps, job_loads
 from pairly_core.integrations.slack.transport import HttpSlackTransport
 from pairly_core.jobs.registry import (
@@ -198,6 +199,7 @@ async def startup(ctx: dict[str, Any]) -> None:
         raise
     ctx["registry"] = registry
     ctx["runtime"] = runtime
+    ctx["redaction_flusher"] = redaction_counts.start_flusher(sessionmaker)
     log.info("worker_startup", env=config.env.value)
 
 
@@ -207,6 +209,8 @@ async def shutdown(ctx: dict[str, Any]) -> None:
         close = getattr(transport, "aclose", None)
         if close is not None:
             await close()
+    # This process's count of personal data redacted from its logs and traces.
+    await redaction_counts.stop_flusher(ctx.pop("redaction_flusher", None), ctx.get("sessionmaker"))
     sender = ctx.pop("webhook_sender", None)
     if sender is not None:
         await sender.aclose()

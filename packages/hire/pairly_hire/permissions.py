@@ -102,6 +102,7 @@ CHECKLIST_READ: Final = "hire.checklist.read"
 CHECKLIST_WRITE: Final = "hire.checklist.write"
 SURVEY_READ: Final = "hire.survey.read"
 ANALYTICS_READ: Final = "hire.analytics.read"
+GOVERNANCE_READ: Final = "hire.governance.read"
 BIAS_READ: Final = "hire.bias.read"
 BIAS_EXPORT: Final = "hire.bias.export"
 FAIRNESS_RUN: Final = "hire.fairness.run"
@@ -259,6 +260,12 @@ PERMISSIONS: Final[tuple[PermissionSpec, ...]] = (
         ANALYTICS_READ,
         "View hiring analytics, fairness test results and calibration agreement",
         frozenset({R.ADMIN, R.RECRUITER}),
+    ),
+    PermissionSpec(
+        GOVERNANCE_READ,
+        "View AI governance counts: guardrail findings on CVs and calibration agreement"
+        " (numbers only, no candidate data)",
+        frozenset({R.ADMIN, R.RECRUITER, R.AUDITOR}),
     ),
     PermissionSpec(
         BIAS_READ,

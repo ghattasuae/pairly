@@ -4538,7 +4538,7 @@
       "override_rate_hire": "معدل التجاوز، التوظيف",
       "override_rate_pay": "معدل التجاوز، المدفوعات",
       "override_rate_expense": "معدل التجاوز، المصروفات",
-      "pii_redactions": "حالات الحجب المحسوبة",
+      "pii_redactions": "حالات الحجب، آخر 30 يومًا",
       "queue_depth": "مهام في قائمة الانتظار",
       "job_failures_recent": "إخفاقات في التشغيلات الأخيرة",
       "deliveries_pending": "معلّقة",
@@ -4705,8 +4705,7 @@
       "over_threshold": "تجاوز الإنفاق حد التنبيه.",
       "no_report_yet": "لا يوجد تقرير تجريبي بعد.",
       "no_evals_directory": "لا توجد نتائج تقييم هنا (مجلد التقييمات غير موجود على هذا الخادم).",
-      "no_thresholds": "ملف حدود التقييم مفقود.",
-      "not_recorded": "تُحجب البيانات الشخصية من السجلات والتتبعات، لكن لا يُحتفظ بعددها."
+      "no_thresholds": "ملف حدود التقييم مفقود."
     },
     "value": {
       "pass": "نجح",
@@ -4730,6 +4729,7 @@
       "hire_screening_review_reasons": "أسباب مراجعة الفرز",
       "hire_fairness_runs": "اختبارات الإنصاف",
       "hire_calibration_labels": "تصنيفات المعايرة",
+      "pii_redaction_counts": "أعداد حجب البيانات الشخصية",
       "pay_invoice_guardrail_reports": "تقارير الحماية للفواتير",
       "none": "غير متاح"
     },

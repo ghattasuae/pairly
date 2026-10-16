@@ -4538,7 +4538,7 @@
       "override_rate_hire": "Override rate, Hire",
       "override_rate_pay": "Override rate, Pay",
       "override_rate_expense": "Override rate, expenses",
-      "pii_redactions": "Redactions counted",
+      "pii_redactions": "Redactions, last 30 days",
       "queue_depth": "Jobs waiting in the queue",
       "job_failures_recent": "Failures in recent runs",
       "deliveries_pending": "Pending",
@@ -4705,8 +4705,7 @@
       "over_threshold": "Spend has passed the alert threshold.",
       "no_report_yet": "No dry-run report yet.",
       "no_evals_directory": "No eval results here (the evals folder is not on this server).",
-      "no_thresholds": "The eval thresholds file is missing.",
-      "not_recorded": "Personal data is redacted from logs and traces, but no count of it is kept."
+      "no_thresholds": "The eval thresholds file is missing."
     },
     "value": {
       "pass": "Pass",
@@ -4730,6 +4729,7 @@
       "hire_screening_review_reasons": "screening review reasons",
       "hire_fairness_runs": "fairness test runs",
       "hire_calibration_labels": "calibration labels",
+      "pii_redaction_counts": "personal data redaction counts",
       "pay_invoice_guardrail_reports": "invoice guardrail reports",
       "none": "not available"
     },

@@ -23,6 +23,7 @@ the scanner and parse settings when ingestion is configured).
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import AsyncIterator, Callable, Iterable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
@@ -79,6 +80,7 @@ from pairly_core.dashboards.model import build_section_registry
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
 from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.flags.registry import build_flag_registry, install_flag_registry
+from pairly_core.guardrails import redaction_counts
 from pairly_core.identity import ORG_HEADER, AppContext
 from pairly_core.integrations.slack.transport import HttpSlackTransport, SlackTransport
 from pairly_core.jobs.registry import build_job_registry
@@ -163,6 +165,8 @@ def _lifespan(
         verifier = TokenVerifier.from_settings(settings)
         owned_services = False
         owned_decisions = False
+        flusher: asyncio.Task[None] | None = None
+        sessionmaker: async_sessionmaker[AsyncSession] | None = None
         try:
             if getattr(app.state, "documents", None) is None:
                 app.state.documents = await _document_services(settings)
@@ -193,9 +197,12 @@ def _lifespan(
             )
             await runtime.check()
             app.state.workflow_runtime = runtime
+            # This process's count of personal data redacted from its logs and traces.
+            flusher = redaction_counts.start_flusher(sessionmaker)
             log.info("startup", env=settings.env.value, permissions=len(registry.permissions))
             yield
         finally:
+            await redaction_counts.stop_flusher(flusher, sessionmaker)
             services = getattr(app.state, "documents", None)
             close = getattr(getattr(services, "queue", None), "aclose", None)
             if owned_services and close is not None:

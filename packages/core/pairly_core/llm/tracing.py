@@ -8,7 +8,9 @@ a ``Redactor`` first. The router and ``build_router`` default to
 IBANs, Luhn-checked card numbers, Emirates ID, passport numbers, known names).
 ``RegexRedactor`` below is the older minimal redactor, kept for callers that pass it.
 LangFuse also gets the redactor as its ``mask`` function, a second layer for anything
-the SDK captures on its own.
+the SDK captures on its own. What the first layer masks is counted per organisation
+(``pairly_core.guardrails.redaction_counts``); the second layer is not counted, since it
+only sees text that was already redacted.
 
 OpenTelemetry spans carry ids, model names, token counts and cost only, never inputs
 or outputs.
@@ -127,13 +129,25 @@ class LangfuseTracer:
         )
         return cls(client, redactor)
 
+    def _redact(self, value: Any, org_id: str) -> Any:
+        counted = getattr(self._redactor, "redact_counted", None)
+        if counted is None:
+            return self._redactor.redact(value)
+        redacted, n = counted(value)
+        if n:
+            # Counted for the AI governance board (numbers only).
+            from pairly_core.guardrails.redaction_counts import TALLY
+
+            TALLY.add(org_id, n)
+        return redacted
+
     def record_generation(self, record: GenerationRecord) -> None:
         try:
             generation = self._client.start_observation(
                 name=record.name,
                 as_type="generation",
                 model=record.model,
-                input=self._redactor.redact(record.input),
+                input=self._redact(record.input, record.org_id),
                 metadata={
                     "chain_id": record.chain_id,
                     "call_id": record.call_id,
@@ -151,7 +165,7 @@ class LangfuseTracer:
                 level="DEFAULT" if record.status == "ok" else "WARNING",
             )
             generation.update(
-                output=self._redactor.redact(record.output),
+                output=self._redact(record.output, record.org_id),
                 usage_details={
                     "input": record.input_tokens,
                     "output": record.output_tokens,

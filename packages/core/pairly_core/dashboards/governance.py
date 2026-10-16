@@ -13,9 +13,10 @@
   superseded (the human override rate).
 * **Versions in production**: the model and prompt versions the calls of the last 30
   days used, with where their model cards live (``docs/model-cards/``).
-* **Guardrails**: PII redaction in logs and traces is not counted anywhere, so it says
-  so; the workflows add their injection and hidden-text findings, and Hire its fairness
-  runs (the counterfactual runner) and calibration agreement.
+* **Guardrails**: how many personal data values were redacted from logs and traces in
+  the last 30 days (``pairly_core.guardrails.redaction_counts``); the workflows add
+  their injection and hidden-text findings, and Hire its fairness runs (the
+  counterfactual runner) and calibration agreement (counts only, auditors included).
 """
 
 from __future__ import annotations
@@ -46,6 +47,7 @@ from pairly_core.dashboards.model import (
 )
 from pairly_core.decisions.models import HUMAN_KINDS, DecisionRecord
 from pairly_core.decisions.scope import read_scope
+from pairly_core.guardrails.redaction_counts import summary as redaction_summary
 from pairly_core.models import ModelCall
 from pairly_core.rbac import Actor
 
@@ -265,14 +267,17 @@ async def _versions(session: AsyncSession, now: datetime) -> Section:
     )
 
 
-def _redactions() -> Section:
-    # The router and the log processors redact personal data before anything is logged
-    # or traced, but no count of it is kept: say so rather than show a number.
+async def _redactions(session: AsyncSession, now: datetime) -> Section:
+    # The log processors and the LangFuse tracer redact personal data before anything is
+    # logged or traced; each process counts what it masked and flushes the count here.
+    got = await redaction_summary(session, now=now, days=USAGE_DAYS)
+    total = got.total if got.days else None  # no row yet: no data, not zero
     return Section(
         key="pii_redactions",
-        count=None,
-        stats=[Stat("pii_redactions", None)],
-        note="not_recorded",
+        count=total,
+        stats=[Stat("pii_redactions", None if total is None else float(total), n=got.days)],
+        source="pii_redaction_counts",
+        note=None if got.days else "no_data",
     )
 
 
@@ -316,7 +321,7 @@ async def governance_dashboard(
             budget,
             await _overrides(session, actor, now),
             await _versions(session, now),
-            _redactions(),
+            await _redactions(session, now),
             *extra,
         ],
         links=[Link("model_cards", MODEL_CARDS)],
