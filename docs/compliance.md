@@ -24,7 +24,7 @@ Where a feature lives in code, the module is named, so a reviewer can check it. 
 | Model cards, risk register, oversight | One card per AI component, with eval numbers generated from result files | [model-cards/](model-cards/README.md) |
 | Data requests | Candidates ask for an export, deletion or human review from the portal; admins see them with their deadline | `pairly_hire.portal`, `pairly_hire.api.candidate_requests` |
 | Erasure | A person confirms a deletion request; personal data goes, the decision trail stays | `pairly_hire.erasure` |
-| Retention rules | Rules per table; rejected applications after the organisation's retention period. Runs as a dry run today: it counts, never deletes | `pairly_core.retention`, `pairly_hire.retention` |
+| Retention rules | Rules per table or per person, each on or off with its period per organisation; rejected and withdrawn candidates erased after 12 months by default. Deletes automatically after a seven-day preview list, never under a legal hold, within a daily cap, each deletion audited and recorded as a decision | `pairly_core.retention`, `pairly_hire.retention` |
 | Encryption and blind indexes | Personal fields encrypted per organisation, table, column and row; search by keyed hash | `pairly_core.crypto` |
 | PII kept out of logs and traces | Redaction in every log line and trace, with a count per organisation per day on the AI governance board | `pairly_core.guardrails.pii`, `pairly_core.guardrails.redaction_counts` |
 
@@ -68,7 +68,7 @@ Conformity assessment, registration, post-market monitoring and the quality mana
 | Lawful basis and consent records | Each application stores the notice version accepted, the time and the language; talent pool consent is separate and ends on erasure |
 | Data minimisation | Drafting prompts get no personal data; the scoring model reads blinded text; audit payloads hold ids, not content; MCP and webhook payloads carry ids and states |
 | Purpose limitation | Self-identification answers are read only as counts for the bias report, enforced by import contracts |
-| Storage limitation (retention) | Retention rules per table, configurable per organisation for rejected applications; dry run today, so deletion is not automatic yet |
+| Storage limitation (retention) | Retention rules configurable per organisation (on or off, period, daily cap), automatic deletion after a seven-day preview, legal holds on candidates and vendors |
 | Access and portability | Candidate data export from the portal |
 | Erasure | Candidate deletion requests, confirmed by a person, that remove personal data and keep only the trail |
 | Security of processing | Encryption of personal fields, blind indexes, Row Level Security, the portal guard, signed links, a second factor for commitments |
@@ -78,7 +78,7 @@ Conformity assessment, registration, post-market monitoring and the quality mana
 
 ## Known gaps
 
-* Retention runs as a dry run: it reports, it does not delete.
+* Retention deletes automatically only under rules an admin can switch off; there is no retention rule yet for vendors or invoices (a legal hold can already name a vendor).
 * Vendor contacts cannot file an appeal from the vendor portal; staff file it for them.
 * Metrics that need a live model (model accuracy, rubric agreement, model fairness, classifier recall) are pending in the committed eval results until a live run is committed. See [evals.md](evals.md).
 * Cross-border transfer rules, records of processing, data protection impact assessments and the employer's own policies are outside the software.

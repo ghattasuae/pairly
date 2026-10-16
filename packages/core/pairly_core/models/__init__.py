@@ -33,7 +33,13 @@ from pairly_core.models.tenancy import Invitation, Membership, Organisation, Rol
 from pairly_core.notifications.models import Notification, NotificationPreference, Template
 from pairly_core.policy.models import PolicyDocument, RuleResult
 from pairly_core.proposals.models import Proposal
-from pairly_core.retention.models import RetentionReport
+from pairly_core.retention.models import (
+    RetentionHold,
+    RetentionOrgSetting,
+    RetentionReport,
+    RetentionRuleSetting,
+    RetentionScheduleItem,
+)
 from pairly_core.retrieval.models import SearchChunk
 from pairly_core.risk.models import RiskAssessment, RiskSignalRow
 from pairly_core.webhooks.models import (
@@ -85,7 +91,11 @@ __all__ = [
     "PolicyVersion",
     "PortalGuardRule",
     "Proposal",
+    "RetentionHold",
+    "RetentionOrgSetting",
     "RetentionReport",
+    "RetentionRuleSetting",
+    "RetentionScheduleItem",
     "RiskAssessment",
     "RiskSignalRow",
     "Role",

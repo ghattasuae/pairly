@@ -320,6 +320,10 @@
       "calendar": {
         "title": "Calendar",
         "body": "Connect your calendar and choose when you can interview."
+      },
+      "retention": {
+        "title": "Retention",
+        "body": "How long data is kept, what is scheduled for deletion and when, and legal holds."
       }
     }
   },
@@ -1005,6 +1009,64 @@
     "reset": "Use the default",
     "toggle": "Turn {key} on or off",
     "saved": "{key} saved"
+  },
+  "RetentionSettings": {
+    "readOnly": "You can see the retention settings and the preview. Only admins can change them.",
+    "saved": "Saved",
+    "rulesTitle": "Rules",
+    "rulesIntro": "Each rule deletes data automatically once its period has passed. Nothing is deleted before it has been listed below for {days} days.",
+    "rule": {
+      "hire_candidates_closed": "Rejected and withdrawn candidates",
+      "hire_checklist_documents": "Pre-employment checklist files",
+      "idempotency_keys_expired": "Expired request keys",
+      "inbound_events_seen": "Processed provider event ids",
+      "retention_reports_old": "Earlier retention reports",
+      "webhook_deliveries_finished": "Finished webhook deliveries",
+      "webhook_outbox_dispatched": "Sent webhook events"
+    },
+    "mode": {
+      "subjects": "Each person is erased like a deletion request. Ids, outcomes and the decision trail stay.",
+      "rows": "Technical records are deleted.",
+      "report": "Counted only. The hiring team's own setting removes these files."
+    },
+    "keeps": "Kept for {period}",
+    "periodMonths": "{count, plural, one {# month} other {# months}}",
+    "periodDays": "{count, plural, one {# day} other {# days}}",
+    "months": "Months",
+    "days": "Days",
+    "savePeriod": "Save the period",
+    "on": "On",
+    "off": "Off",
+    "toggle": "Turn {rule} on or off",
+    "capLabel": "Most people deleted a day",
+    "capHint": "Anything over this waits for the next day.",
+    "saveCap": "Save the limit",
+    "previewTitle": "Scheduled for deletion",
+    "previewIntro": "Everything a rule makes due is listed here {days} days before it may be deleted. Place a legal hold to keep someone.",
+    "previewEmpty": "Nothing is scheduled for deletion.",
+    "subject": {
+      "candidate": "Candidate",
+      "vendor": "Vendor",
+      "other": "Record"
+    },
+    "dueSince": "due since {date}",
+    "scheduledFor": "Scheduled for deletion on {date}",
+    "heldNote": "Kept by a legal hold. It is not deleted while the hold stands.",
+    "erasingNote": "Erased. The stored files are being removed.",
+    "status": {
+      "scheduled": "Scheduled",
+      "held": "Held",
+      "erasing": "Erasing",
+      "deleted": "Deleted"
+    },
+    "hold": "Place a legal hold",
+    "holdReason": "Why must {subject} be kept?",
+    "placeHold": "Place the hold",
+    "cancel": "Cancel",
+    "holdsTitle": "Legal holds",
+    "holdsEmpty": "No legal hold is in force.",
+    "heldSince": "Held since {date}",
+    "release": "Release"
   },
   "ApiKeysSettings": {
     "createTitle": "Create a key",

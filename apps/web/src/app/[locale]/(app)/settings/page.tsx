@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
-import { BellRing, CalendarClock, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
+import { Archive, BellRing, CalendarClock, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -31,6 +31,7 @@ const ICONS = {
   apiKeys: <KeyRound aria-hidden />,
   webhooks: <Webhook aria-hidden />,
   policies: <ScrollText aria-hidden />,
+  retention: <Archive aria-hidden />,
 } as const;
 
 /** Settings: personal pages for everyone, organisation pages for who holds their permission. */

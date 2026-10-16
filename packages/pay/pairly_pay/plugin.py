@@ -225,6 +225,9 @@ class PayPlugin:
     document_intake: DocumentIntake = field(default=DOCUMENT_INTAKE)
     # Pay's parts of the auditor and AI governance dashboards (pairly_pay.system_dashboards).
     dashboard_sections: tuple[DashboardSectionSpec, ...] = DASHBOARD_SECTIONS
+    # A legal hold can name a vendor (``pairly_core.retention``): no retention rule may
+    # delete anything about it while the hold stands.
+    retention_hold_subjects: tuple[str, ...] = ("pay.vendor",)
 
     def api_router(self) -> APIRouter:
         return api_router()

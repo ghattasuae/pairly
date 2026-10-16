@@ -65,7 +65,7 @@ from pairly_hire.permissions import CANDIDATE_DECIDE
 from pairly_hire.pipeline.models import HireStageMove
 from pairly_hire.pipeline.records import AppRecord, ensure_entry, load_record
 from pairly_hire.pipeline.stages import HIRED, REJECTED, WITHDRAWN, Stage
-from pairly_hire.retention import retention_until
+from pairly_hire.retention_dates import retention_until
 from pairly_hire.reveal import reveal_identity, stage_source
 
 WORKFLOW: Final = "hire"

@@ -26,7 +26,7 @@ from pairly_core.rbac import (
     authorize,
     build_registry,
 )
-from pairly_core.retention.rules import build_retention_registry
+from pairly_core.retention.rules import DeleteMode, build_retention_registry
 from pairly_hire import permissions as P  # noqa: N812
 from pairly_hire.demo import BACKEND, DEMO_JOBS
 from pairly_hire.drafting import JobDescriptionDraft
@@ -152,8 +152,12 @@ def test_retention_until_adds_calendar_months() -> None:
     assert retention_until(start, 1) == datetime(2026, 2, 28, 12, tzinfo=UTC)
     assert retention_until(start, 12) == datetime(2027, 1, 31, 12, tzinfo=UTC)
     rule = next(r for r in plugin.retention_rules if r.key == RULE_KEY)
-    assert rule.days == 0
-    assert rule.column == "retention_until"
+    # Candidates go one by one through the erasure; the period is Hire's months setting.
+    assert rule.mode is DeleteMode.SUBJECTS
+    assert rule.subjects is not None
+    assert rule.subjects.subject_type == "hire.candidate"
+    assert rule.period is not None
+    assert (rule.period.unit, rule.period.default) == ("months", 12)
 
 
 # ------------------------------------------------------------------ rubric

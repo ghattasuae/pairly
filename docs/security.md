@@ -167,14 +167,14 @@ Retention:
 
 | What | Rule |
 |---|---|
-| Rejected applications | Deletable after the organisation's retention period (`pairly_hire.retention`, set in Hire settings) |
+| Rejected and withdrawn candidates | Erased after the organisation's retention period, default 12 months (`pairly_hire.retention`, set in the retention settings or Hire settings) |
 | Pre-employment checklist files | Deletable after their retention following hire (`pairly_hire.retention`) |
 | Idempotency keys, webhook outbox and deliveries, inbound event ids, old retention reports | Core rules in `pairly_core.retention.rules` |
 | Job run history | Pruned per job by `job_run_start` (`pairly_core.jobs.runs`) |
 | Erased candidates | Personal data removed at once on a person's request; ids, hashes and outcomes stay ([ADR 0015](adr/0015-erasure-keeps-the-trail.md)) |
 | Audit events and decision records | Kept; never edited |
 
-Retention runs as a dry run today: the `retention_dry_run` job counts what each rule would delete and never deletes. Candidate erasure is the only deletion, and only by a person.
+Retention deletes automatically under each organisation's settings (`retention_run`, daily): each rule is on or off with its period (rejected and withdrawn candidates: 12 months by default), every subject is listed for seven days before it may be deleted, a legal hold on a candidate or a vendor blocks deletion, at most 200 subjects a day per organisation by default, and each deletion is audited and recorded as a decision with the system actor. Candidates go through the same erasure as a deletion request (one transaction, then the stored files with retries); technical rows are deleted once they have been due for the whole preview. Otherwise candidate erasure happens only by a person.
 
 ## Tenant isolation
 

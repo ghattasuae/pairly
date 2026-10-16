@@ -37,6 +37,11 @@ export type Preferences = S["PreferencesOut"];
 export type PreferencesInput = S["PreferencesIn"];
 
 export type Flag = S["FlagOut"];
+export type RetentionSettings = S["RetentionSettingsOut"];
+export type RetentionRuleSetting = S["RetentionRuleSettingOut"];
+export type RetentionScheduleItem = S["RetentionScheduleItemOut"];
+export type RetentionHold = S["RetentionHoldOut"];
+export type RetentionReport = S["ReportOut"];
 export type ApiKey = S["ApiKeyOut"];
 export type ApiKeyCreated = S["ApiKeyCreatedOut"];
 export type WebhookEndpoint = S["EndpointOut"];

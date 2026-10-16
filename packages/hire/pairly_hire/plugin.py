@@ -25,8 +25,9 @@ Declared on one object (``pairly_core.plugins.WorkflowPlugin`` plus optional att
 * ``prompt_roots``  the versioned prompts ``hire_jd_draft``, ``hire_rubric_draft``,
                    ``hire_cv_score``, ``hire_message_draft``, the interview and
                    reference prompts and ``hire_rubric_clarify`` (calibration).
-* ``retention_rules``  ``hire.applications.rejected`` (dry run, per-organisation months)
-                   and ``hire.checklist.documents`` (checklist files after hire).
+* ``retention_rules``  ``hire.candidates.closed`` (rejected and withdrawn candidates
+                   erased after the organisation's months, default 12) and
+                   ``hire.checklist.documents`` (checklist files after hire, counted).
 * ``search_sources``  ``hire_candidate`` (talent rediscovery, consent and retention).
 * ``dashboard_sections``  Hire's parts of the admin and AI governance dashboards
                    (``system_dashboards``: data requests, calendar integrations,

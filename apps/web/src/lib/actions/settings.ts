@@ -20,6 +20,8 @@ import type {
   DryRun,
   Flag,
   PolicyDocument,
+  RetentionHold,
+  RetentionSettings,
   RuleSetVersion,
   WebhookDelivery,
   WebhookEndpoint,
@@ -210,4 +212,60 @@ export async function dryRunRuleSet(input: z.infer<typeof dryRunSchema>): Promis
     }),
   );
   return toAction(result, (data) => ({ result: data }));
+}
+
+// ------------------------------------------------------------------ retention
+
+const ruleKey = z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){0,3}$/).max(100);
+const ruleChange = z
+  .object({
+    rule: ruleKey,
+    enabled: z.boolean().optional(),
+    days: z.number().int().min(0).max(36500).optional(),
+    period: z.number().int().min(0).max(36500).optional(),
+  })
+  .strict();
+
+/** Switch a retention rule on or off, or change its period (`core.retention.manage`). */
+export async function updateRetentionRule(
+  change: z.infer<typeof ruleChange>,
+): Promise<ActionResult<{ settings: RetentionSettings }>> {
+  const parsed = ruleChange.safeParse(change);
+  if (!parsed.success) return invalid;
+  const { rule, enabled, days, period } = parsed.data;
+  const body = { rule, enabled: enabled ?? null, days: days ?? null, period: period ?? null };
+  const result = await callApi((api) => api.PUT("/v1/retention/settings", { body: { rules: [body] } }));
+  return toAction(result, (settings) => ({ settings }));
+}
+
+/** The most subjects deleted a day (`core.retention.manage`). */
+export async function setRetentionCap(cap: number): Promise<ActionResult<{ settings: RetentionSettings }>> {
+  if (!z.number().int().min(1).max(10000).safeParse(cap).success) return invalid;
+  const result = await callApi((api) => api.PUT("/v1/retention/settings", { body: { daily_cap: cap } }));
+  return toAction(result, (settings) => ({ settings }));
+}
+
+const holdSchema = z.object({
+  subjectType: z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/).max(64),
+  subjectId: z.uuid(),
+  reason: z.string().trim().min(1).max(2000),
+});
+
+/** A legal hold on a candidate or a vendor: nothing about them is deleted while it stands. */
+export async function placeRetentionHold(input: z.infer<typeof holdSchema>): Promise<ActionResult<{ hold: RetentionHold }>> {
+  const parsed = holdSchema.safeParse(input);
+  if (!parsed.success) return invalid;
+  const { subjectType, subjectId, reason } = parsed.data;
+  const result = await callApi((api) =>
+    api.POST("/v1/retention/holds", { body: { subject_type: subjectType, subject_id: subjectId, reason } }),
+  );
+  return toAction(result, (hold) => ({ hold }));
+}
+
+export async function releaseRetentionHold(id: string): Promise<ActionResult<{ hold: RetentionHold }>> {
+  if (!z.uuid().safeParse(id).success) return invalid;
+  const result = await callApi((api) =>
+    api.POST("/v1/retention/holds/{hold_id}/release", { params: { path: { hold_id: id } } }),
+  );
+  return toAction(result, (hold) => ({ hold }));
 }

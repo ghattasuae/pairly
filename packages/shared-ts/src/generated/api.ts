@@ -5630,6 +5630,41 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/retention/holds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Holds */
+        get: operations["get_holds_v1_retention_holds_get"];
+        put?: never;
+        /** Post Hold */
+        post: operations["post_hold_v1_retention_holds_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/retention/holds/{hold_id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Release */
+        post: operations["post_release_v1_retention_holds__hold_id__release_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/retention/report": {
         parameters: {
             query?: never;
@@ -5657,6 +5692,41 @@ export type paths = {
         /** Rules */
         get: operations["rules_v1_retention_rules_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/retention/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Schedule */
+        get: operations["get_schedule_v1_retention_schedule_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/retention/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_v1_retention_settings_get"];
+        /** Put Settings */
+        put: operations["put_settings_v1_retention_settings_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -15456,6 +15526,8 @@ export type components = {
             created_at: string | null;
             /** Dry Run */
             dry_run: boolean;
+            /** Preview Days */
+            preview_days: number;
             /** Rules */
             rules: components["schemas"]["ReportRowOut"][];
             /** Run Id */
@@ -15468,8 +15540,14 @@ export type components = {
              * Format: date-time
              */
             cutoff: string;
+            /** Deleted */
+            deleted: number;
+            /** Enabled */
+            enabled: boolean;
             /** Rule */
             rule: string;
+            /** Scheduled For */
+            scheduled_for: string | null;
             /** Would Delete */
             would_delete: number;
         };
@@ -15489,6 +15567,163 @@ export type components = {
             /** Outcome Text */
             outcome_text: string;
         };
+        /** RetentionHoldIn */
+        RetentionHoldIn: {
+            /** Reason */
+            reason: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+        };
+        /** RetentionHoldOut */
+        RetentionHoldOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Placed At
+             * Format: date-time
+             */
+            placed_at: string;
+            /**
+             * Placed By
+             * Format: uuid
+             */
+            placed_by: string;
+            /** Reason */
+            reason: string | null;
+            /** Released At */
+            released_at: string | null;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+        };
+        /** RetentionPeriodOut */
+        RetentionPeriodOut: {
+            /** Default */
+            default: number;
+            /** Maximum */
+            maximum: number;
+            /** Minimum */
+            minimum: number;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "months" | "days";
+            /** Value */
+            value: number;
+        };
+        /** RetentionRuleChangeIn */
+        RetentionRuleChangeIn: {
+            /** Days */
+            days?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Period */
+            period?: number | null;
+            /** Rule */
+            rule: string;
+        };
+        /** RetentionRuleSettingOut */
+        RetentionRuleSettingOut: {
+            /** Configurable Days */
+            configurable_days: boolean;
+            /** Customised */
+            customised: boolean;
+            /** Days */
+            days: number;
+            /** Default Days */
+            default_days: number;
+            /** Default Enabled */
+            default_enabled: boolean;
+            /** Description */
+            description: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Key */
+            key: string;
+            /** Mode */
+            mode: string;
+            period: components["schemas"]["RetentionPeriodOut"] | null;
+            /** Workflow */
+            workflow: string;
+        };
+        /** RetentionScheduleItemOut */
+        RetentionScheduleItemOut: {
+            /** Attempts */
+            attempts: number;
+            /** Decision Id */
+            decision_id: string | null;
+            /**
+             * Delete After
+             * Format: date-time
+             */
+            delete_after: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Error */
+            error: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string | null;
+            /**
+             * Listed At
+             * Format: date-time
+             */
+            listed_at: string;
+            /** Rule */
+            rule: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "scheduled" | "held" | "erasing" | "deleted";
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+        };
+        /** RetentionSettingsIn */
+        RetentionSettingsIn: {
+            /** Daily Cap */
+            daily_cap?: number | null;
+            /** Rules */
+            rules?: components["schemas"]["RetentionRuleChangeIn"][];
+        };
+        /** RetentionSettingsOut */
+        RetentionSettingsOut: {
+            /** Daily Cap */
+            daily_cap: number;
+            /** Hold Subjects */
+            hold_subjects: string[];
+            /** Preview Days */
+            preview_days: number;
+            /** Rules */
+            rules: components["schemas"]["RetentionRuleSettingOut"][];
+        };
         /** RoleOut */
         RoleOut: {
             /** Role */
@@ -15504,6 +15739,10 @@ export type components = {
             description: string;
             /** Key */
             key: string;
+            /** Mode */
+            mode: string;
+            /** Workflow */
+            workflow: string;
         };
         /** RuleResultOut */
         RuleResultOut: {
@@ -27466,6 +27705,90 @@ export interface operations {
             };
         };
     };
+    get_holds_v1_retention_holds_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionHoldOut"][];
+                };
+            };
+        };
+    };
+    post_hold_v1_retention_holds_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetentionHoldIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionHoldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_release_v1_retention_holds__hold_id__release_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionHoldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     report_v1_retention_report_get: {
         parameters: {
             query?: never;
@@ -27502,6 +27825,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RuleOut"][];
+                };
+            };
+        };
+    };
+    get_schedule_v1_retention_schedule_get: {
+        parameters: {
+            query?: {
+                include_done?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionScheduleItemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_v1_retention_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionSettingsOut"];
+                };
+            };
+        };
+    };
+    put_settings_v1_retention_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetentionSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -48,7 +48,7 @@ from pairly_core.jobs.registry import (
     NIGHTLY_AUDIT_VERIFY,
     NOTIFICATION_DELIVERY,
     NOTIFICATION_DIGEST,
-    RETENTION_DRY_RUN,
+    RETENTION_RUN,
     SWEEP_DOCUMENTS,
     WORKFLOW_RESUME_RECONCILE,
     JobContext,
@@ -86,7 +86,7 @@ from pairly_worker.jobs import verify_audit_chains
 from pairly_worker.logs import configure_logging
 from pairly_worker.notification_jobs import deliver_notifications, send_digests
 from pairly_worker.retention_jobs import REGISTRY as RETENTION_REGISTRY
-from pairly_worker.retention_jobs import retention_dry_run
+from pairly_worker.retention_jobs import retention_run
 from pairly_worker.webhook_jobs import deliver_webhooks, setup_webhooks
 from pairly_worker.workflow_jobs import escalate_overdue_approvals, resume_decided_runs
 
@@ -97,7 +97,7 @@ SWEEP_JOB = SWEEP_DOCUMENTS
 APPROVAL_SLA_JOB = APPROVAL_SLA_ESCALATION
 WORKFLOW_RESUME_JOB = WORKFLOW_RESUME_RECONCILE
 WEBHOOK_JOB = DELIVER_WEBHOOKS
-RETENTION_JOB = RETENTION_DRY_RUN
+RETENTION_JOB = RETENTION_RUN
 NOTIFICATION_DELIVERY_JOB = NOTIFICATION_DELIVERY
 NOTIFICATION_DIGEST_JOB = NOTIFICATION_DIGEST
 
@@ -325,9 +325,10 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 unique=True,
                 timeout=300,
             ),
-            # Retention: counts only (dry run), never deletes.
+            # Retention: list what is due, delete what was listed a week ago (the
+            # organisation's settings, daily cap and legal holds apply).
             cron(
-                _job(jobs, RETENTION_JOB, retention_dry_run),
+                _job(jobs, RETENTION_JOB, retention_run),
                 name=RETENTION_JOB,
                 hour=2,
                 minute=15,

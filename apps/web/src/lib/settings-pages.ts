@@ -13,7 +13,8 @@ export type SettingsKey =
   | "flags"
   | "apiKeys"
   | "webhooks"
-  | "policies";
+  | "policies"
+  | "retention";
 
 export interface SettingsPageLink {
   key: SettingsKey;
@@ -30,6 +31,7 @@ export const SETTINGS_PAGES: readonly SettingsPageLink[] = [
   { key: "flags", href: "/settings/flags", visible: (p) => p.includes("core.flags.read") },
   { key: "apiKeys", href: "/settings/api-keys", visible: (p) => p.includes("core.api_keys.manage") },
   { key: "webhooks", href: "/settings/webhooks", visible: (p) => p.includes("core.webhooks.read") },
+  { key: "retention", href: "/settings/retention", visible: (p) => p.includes("core.retention.read") },
 ];
 
 export function canSee(key: SettingsKey, permissions: readonly string[]): boolean {

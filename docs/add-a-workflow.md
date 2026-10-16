@@ -121,7 +121,7 @@ class ExpensePlugin:
         return router
 ```
 
-Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `prompt_roots` (section 11), `document_intake` (section 13), `dashboard_sections` (section 14), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace. The full table is in [architecture.md](architecture.md#the-plugin-contract).
+Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `prompt_roots` (section 11), `document_intake` (section 13), `dashboard_sections` (section 14), `feature_flags`, `search_sources`, `retention_rules`, `retention_hold_subjects`. Each registry checks that names stay inside your namespace. The full table is in [architecture.md](architecture.md#the-plugin-contract).
 
 ## 3. Permissions
 

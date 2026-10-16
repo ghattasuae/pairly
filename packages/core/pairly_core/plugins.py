@@ -14,7 +14,8 @@ LangGraph graphs; each ``GraphSpec`` carries its approval types and final action
 Optional attributes, read with ``getattr`` so a plugin only declares what it uses:
 
 * ``webhook_events``, ``feature_flags``, ``search_sources``, ``retention_rules``,
-  ``scheduled_jobs``: see the module that builds each registry.
+  ``retention_hold_subjects``, ``scheduled_jobs``: see the module that builds each
+  registry.
 * ``document_intake``: a ``pairly_core.batches.intake.DocumentIntake``; the batch API
   turns each document submitted to the workflow into its entity and starts its run.
 * ``api_router``: a callable with no arguments returning a FastAPI ``APIRouter``. The

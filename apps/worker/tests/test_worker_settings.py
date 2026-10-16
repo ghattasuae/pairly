@@ -157,7 +157,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         assert (jobs[name].minute, jobs[name].unique) == ({0, 15, 30, 45}, True)
     # Each cron coroutine is wrapped to record its runs in job_runs.
     assert all(getattr(job.coroutine, "__wrapped__", None) is not None for job in jobs.values())
-    # The retention dry run is daily at 02:15 UTC, one at a time.
+    # The retention run is daily at 02:15 UTC, one at a time.
     retention = jobs[RETENTION_JOB]
     assert (retention.hour, retention.minute, retention.unique) == (2, 15, True)
     # Webhook delivery runs every minute, one at a time.
@@ -212,4 +212,4 @@ def test_lazy_module_attribute(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_undeclared_jobs_are_refused() -> None:
     with pytest.raises(JobRegistryError, match="unknown job"):
-        worker_main._job(build_job_registry(), "not_declared", worker_main.retention_dry_run)
+        worker_main._job(build_job_registry(), "not_declared", worker_main.retention_run)

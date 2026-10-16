@@ -33,7 +33,7 @@ NIGHTLY_AUDIT_VERIFY: Final = "nightly_audit_verify"
 APPROVAL_SLA_ESCALATION: Final = "approval_sla_escalation"
 WORKFLOW_RESUME_RECONCILE: Final = "workflow_resume_reconcile"
 DELIVER_WEBHOOKS: Final = "deliver_webhooks"
-RETENTION_DRY_RUN: Final = "retention_dry_run"
+RETENTION_RUN: Final = "retention_run"
 NOTIFICATION_DELIVERY: Final = "notification_delivery"
 NOTIFICATION_DIGEST: Final = "notification_digest"
 AUDIT_ANCHOR_NIGHTLY: Final = "audit_anchor_nightly"
@@ -115,8 +115,8 @@ CORE_JOBS: tuple[JobSpec, ...] = (
         "every minute, and at worker start",
     ),
     JobSpec(
-        RETENTION_DRY_RUN,
-        "Count what each retention rule would delete (never deletes)",
+        RETENTION_RUN,
+        "List what each retention rule makes due, then delete what was listed a week ago",
         "daily at 02:15 UTC",
     ),
     JobSpec(

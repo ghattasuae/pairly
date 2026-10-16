@@ -2,11 +2,15 @@
 # Copyright (c) 2026 Proofly Technology
 """Erasing a candidate's personal data, after their deletion request (brief 6.9).
 
-Only ever a person's action: an admin with ``hire.settings.manage`` (second factor)
-opens the candidate's open deletion request and confirms it with a written reason
-(``POST /v1/hire/data-requests/{id}/erase``). Nothing starts an erasure on a schedule or
-from an agent (hard rule 1: people delete data, agents never do); the scheduled job
-``hire_erasure_objects`` only finishes one a person started.
+Started by a person or by the organisation's retention settings, never by an agent
+(hard rule 1). A person: an admin with ``hire.settings.manage`` (second factor) opens the
+candidate's open deletion request and confirms it with a written reason
+(``POST /v1/hire/data-requests/{id}/erase``); the scheduled job ``hire_erasure_objects``
+only finishes one a person started. Retention: the rule ``hire.candidates.closed``
+(``pairly_hire.retention``), which an admin switches on or off, erases rejected and
+withdrawn candidates after the organisation's period, each listed for seven days first,
+never one under a legal hold (``erase_candidate`` then ``delete_candidate_objects``,
+``pairly_core.retention.service``).
 
 Everything that names or describes the candidate goes. What stays is what the audit and
 decision trail legally needs: ids, references, hashes, timestamps and outcomes (stages,
@@ -982,6 +986,55 @@ async def _keys_to_delete(session: AsyncSession, docs: Iterable[Document]) -> li
     return sorted(keys)
 
 
+@dataclass(frozen=True, slots=True)
+class ObjectsRemoved:
+    """What ``delete_candidate_objects`` removed, or why it could not (``error``)."""
+
+    error: str | None
+    documents: int = 0
+    checklist_files: int = 0
+
+
+async def delete_candidate_objects(
+    session: AsyncSession, store: ObjectStore | None, candidate_id: uuid.UUID
+) -> ObjectsRemoved:
+    """Step 2 for one erased candidate, after step 1 committed: delete their stored files
+    (original bytes, parsed text, checklist files) and mark them gone, in the caller's
+    transaction. On a store failure nothing is marked and ``error`` says why (the caller
+    keeps the erasure open and tries again)."""
+    docs = await _pending_documents(session, candidate_id)
+    checklist = list(
+        await session.scalars(
+            select(HireChecklistItem)
+            .where(
+                HireChecklistItem.candidate_id == candidate_id,
+                HireChecklistItem.object_key.is_not(None),
+            )
+            .with_for_update()
+        )
+    )
+    if (docs or checklist) and store is None:
+        return ObjectsRemoved(STORE_UNAVAILABLE)
+    if (docs or checklist) and store is not None:
+        try:
+            for key in await _keys_to_delete(session, docs):
+                await store.delete(key)
+            for item in checklist:
+                assert item.object_key is not None  # noqa: S101 (selected so)
+                await store.delete(item.object_key)
+        except (StorageError, ValueError):
+            return ObjectsRemoved(STORE_FAILED)
+    now = datetime.now(UTC)
+    for doc in docs:
+        doc.objects_erased_at = now
+        doc.parse_result_key = None
+    for item in checklist:
+        item.object_key = None
+        item.purged_at = item.purged_at or now
+    await session.flush()
+    return ObjectsRemoved(None, documents=len(docs), checklist_files=len(checklist))
+
+
 async def finish_erasure(
     session: AsyncSession,
     store: ObjectStore | None,
@@ -1000,33 +1053,11 @@ async def finish_erasure(
         raise NotFoundError("request not found")
     if row.status != DataRequestStatus.OPEN.value or row.erasure_started_at is None:
         raise ConflictError("this request has no erasure in progress")
-    docs = await _pending_documents(session, row.candidate_id)
-    checklist = list(
-        await session.scalars(
-            select(HireChecklistItem)
-            .where(
-                HireChecklistItem.candidate_id == row.candidate_id,
-                HireChecklistItem.object_key.is_not(None),
-            )
-            .with_for_update()
-        )
-    )
-    error: str | None = None
-    if (docs or checklist) and store is None:
-        error = STORE_UNAVAILABLE
-    elif (docs or checklist) and store is not None:
-        try:
-            for key in await _keys_to_delete(session, docs):
-                await store.delete(key)
-            for item in checklist:
-                assert item.object_key is not None  # noqa: S101 (selected so)
-                await store.delete(item.object_key)
-        except (StorageError, ValueError):
-            error = STORE_FAILED
+    removed = await delete_candidate_objects(session, store, row.candidate_id)
     now = datetime.now(UTC)
     row.erasure_attempts += 1
-    if error is not None:
-        row.erasure_error = error
+    if removed.error is not None:
+        row.erasure_error = removed.error
         await session.flush()
         await append_audit(
             session,
@@ -1036,16 +1067,10 @@ async def finish_erasure(
             entity_type=ENTITY,
             entity_id=row.id,
             workflow=WORKFLOW,
-            payload={"error": error, "attempts": row.erasure_attempts},
+            payload={"error": removed.error, "attempts": row.erasure_attempts},
         )
         await session.refresh(row)
         return row
-    for doc in docs:
-        doc.objects_erased_at = now
-        doc.parse_result_key = None
-    for item in checklist:
-        item.object_key = None
-        item.purged_at = item.purged_at or now
     row.erasure_error = None
     row.status = DataRequestStatus.COMPLETED.value
     row.handled_at = now
@@ -1060,8 +1085,8 @@ async def finish_erasure(
         workflow=WORKFLOW,
         payload={
             "candidate_id": str(row.candidate_id),
-            "documents_removed": len(docs),
-            "checklist_files_removed": len(checklist),
+            "documents_removed": removed.documents,
+            "checklist_files_removed": removed.checklist_files,
             "attempts": row.erasure_attempts,
             "reason_given": row.outcome is not None,
         },

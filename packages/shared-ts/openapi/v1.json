@@ -28960,6 +28960,10 @@
             "title": "Dry Run",
             "type": "boolean"
           },
+          "preview_days": {
+            "title": "Preview Days",
+            "type": "integer"
+          },
           "rules": {
             "items": {
               "$ref": "#/components/schemas/ReportRowOut"
@@ -28984,6 +28988,7 @@
           "run_id",
           "created_at",
           "dry_run",
+          "preview_days",
           "rules"
         ],
         "title": "ReportOut",
@@ -28996,9 +29001,29 @@
             "title": "Cutoff",
             "type": "string"
           },
+          "deleted": {
+            "title": "Deleted",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
           "rule": {
             "title": "Rule",
             "type": "string"
+          },
+          "scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled For"
           },
           "would_delete": {
             "title": "Would Delete",
@@ -29008,7 +29033,10 @@
         "required": [
           "rule",
           "cutoff",
-          "would_delete"
+          "would_delete",
+          "scheduled_for",
+          "enabled",
+          "deleted"
         ],
         "title": "ReportRowOut",
         "type": "object"
@@ -29054,6 +29082,431 @@
         "title": "ResolveIn",
         "type": "object"
       },
+      "RetentionHoldIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "subject_id": {
+            "format": "uuid",
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_type": {
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Subject Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject_type",
+          "subject_id",
+          "reason"
+        ],
+        "title": "RetentionHoldIn",
+        "type": "object"
+      },
+      "RetentionHoldOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "placed_at": {
+            "format": "date-time",
+            "title": "Placed At",
+            "type": "string"
+          },
+          "placed_by": {
+            "format": "uuid",
+            "title": "Placed By",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "released_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released At"
+          },
+          "subject_id": {
+            "format": "uuid",
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_type": {
+            "title": "Subject Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subject_type",
+          "subject_id",
+          "placed_by",
+          "placed_at",
+          "released_at",
+          "reason"
+        ],
+        "title": "RetentionHoldOut",
+        "type": "object"
+      },
+      "RetentionPeriodOut": {
+        "properties": {
+          "default": {
+            "title": "Default",
+            "type": "integer"
+          },
+          "maximum": {
+            "title": "Maximum",
+            "type": "integer"
+          },
+          "minimum": {
+            "title": "Minimum",
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "months",
+              "days"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "unit",
+          "value",
+          "default",
+          "minimum",
+          "maximum"
+        ],
+        "title": "RetentionPeriodOut",
+        "type": "object"
+      },
+      "RetentionRuleChangeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "maximum": 36500,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "maximum": 36500,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "rule": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Rule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule"
+        ],
+        "title": "RetentionRuleChangeIn",
+        "type": "object"
+      },
+      "RetentionRuleSettingOut": {
+        "properties": {
+          "configurable_days": {
+            "title": "Configurable Days",
+            "type": "boolean"
+          },
+          "customised": {
+            "title": "Customised",
+            "type": "boolean"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "default_days": {
+            "title": "Default Days",
+            "type": "integer"
+          },
+          "default_enabled": {
+            "title": "Default Enabled",
+            "type": "boolean"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetentionPeriodOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workflow": {
+            "title": "Workflow",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "description",
+          "mode",
+          "workflow",
+          "enabled",
+          "default_enabled",
+          "days",
+          "default_days",
+          "configurable_days",
+          "customised",
+          "period"
+        ],
+        "title": "RetentionRuleSettingOut",
+        "type": "object"
+      },
+      "RetentionScheduleItemOut": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Id"
+          },
+          "delete_after": {
+            "format": "date-time",
+            "title": "Delete After",
+            "type": "string"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "listed_at": {
+            "format": "date-time",
+            "title": "Listed At",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "held",
+              "erasing",
+              "deleted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject_id": {
+            "format": "uuid",
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_type": {
+            "title": "Subject Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rule",
+          "subject_type",
+          "subject_id",
+          "label",
+          "due_at",
+          "listed_at",
+          "delete_after",
+          "status",
+          "attempts",
+          "error",
+          "decision_id",
+          "deleted_at"
+        ],
+        "title": "RetentionScheduleItemOut",
+        "type": "object"
+      },
+      "RetentionSettingsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "daily_cap": {
+            "anyOf": [
+              {
+                "maximum": 10000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Cap"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RetentionRuleChangeIn"
+            },
+            "maxItems": 100,
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "title": "RetentionSettingsIn",
+        "type": "object"
+      },
+      "RetentionSettingsOut": {
+        "properties": {
+          "daily_cap": {
+            "title": "Daily Cap",
+            "type": "integer"
+          },
+          "hold_subjects": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hold Subjects",
+            "type": "array"
+          },
+          "preview_days": {
+            "title": "Preview Days",
+            "type": "integer"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RetentionRuleSettingOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "daily_cap",
+          "preview_days",
+          "hold_subjects",
+          "rules"
+        ],
+        "title": "RetentionSettingsOut",
+        "type": "object"
+      },
       "RoleOut": {
         "properties": {
           "role": {
@@ -29092,12 +29545,22 @@
           "key": {
             "title": "Key",
             "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "workflow": {
+            "title": "Workflow",
+            "type": "string"
           }
         },
         "required": [
           "key",
           "description",
-          "days"
+          "days",
+          "mode",
+          "workflow"
         ],
         "title": "RuleOut",
         "type": "object"
@@ -47414,6 +47877,113 @@
         ]
       }
     },
+    "/v1/retention/holds": {
+      "get": {
+        "operationId": "get_holds_v1_retention_holds_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RetentionHoldOut"
+                  },
+                  "title": "Response Get Holds V1 Retention Holds Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Holds",
+        "tags": [
+          "retention"
+        ]
+      },
+      "post": {
+        "operationId": "post_hold_v1_retention_holds_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionHoldIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionHoldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Hold",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/v1/retention/holds/{hold_id}/release": {
+      "post": {
+        "operationId": "post_release_v1_retention_holds__hold_id__release_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "hold_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Hold Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionHoldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Release",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
     "/v1/retention/report": {
       "get": {
         "operationId": "report_v1_retention_report_get",
@@ -47455,6 +48025,113 @@
           }
         },
         "summary": "Rules",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/v1/retention/schedule": {
+      "get": {
+        "operationId": "get_schedule_v1_retention_schedule_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_done",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Done",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RetentionScheduleItemOut"
+                  },
+                  "title": "Response Get Schedule V1 Retention Schedule Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Schedule",
+        "tags": [
+          "retention"
+        ]
+      }
+    },
+    "/v1/retention/settings": {
+      "get": {
+        "operationId": "get_settings_v1_retention_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "retention"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_v1_retention_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
         "tags": [
           "retention"
         ]
