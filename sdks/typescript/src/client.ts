@@ -2,8 +2,9 @@
 // Copyright (c) 2026 Proofly Technology
 
 /**
- * `Pairly`: the TypeScript client. Typed by the OpenAPI types in `@pairly/shared-ts`
- * (through `openapi-fetch`), with one-call helpers on top.
+ * `Pairly`: the TypeScript client. Typed by the OpenAPI types (`src/generated/api.ts`,
+ * copied from `@pairly/shared-ts` at build time, so the package has no workspace
+ * dependency) through `openapi-fetch`, with one-call helpers on top.
  *
  * ```ts
  * import { Pairly } from "@pairly/sdk";
@@ -19,7 +20,7 @@
  */
 
 import createClient, { type Client } from "openapi-fetch";
-import type { components, paths } from "@pairly/shared-ts";
+import type { components, paths } from "./generated/api.js";
 
 import { BatchTimeoutError } from "./errors.js";
 import {

@@ -52,3 +52,6 @@ evals/output/
 
 # Claude Code agent worktrees and local settings
 .claude/
+
+# @pairly/sdk: the generated API types, copied from packages/shared-ts at build time
+sdks/typescript/src/generated/

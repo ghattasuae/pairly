@@ -224,9 +224,6 @@ importers:
 
   sdks/typescript:
     dependencies:
-      '@pairly/shared-ts':
-        specifier: workspace:*
-        version: link:../../packages/shared-ts
       openapi-fetch:
         specifier: ^0.17.0
         version: 0.17.0

@@ -161,6 +161,9 @@ jobs:
       - name: vitest (workspace packages)
         run: pnpm -r --if-present test
 
+      - name: "@pairly/sdk installs and imports on its own (packed tarball, fresh project)"
+        run: pnpm --filter @pairly/sdk pack:check
+
       - name: Storybook build and smoke render of every story
         run: |
           pnpm --filter @pairly/web exec playwright install --with-deps chromium

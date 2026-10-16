@@ -29,11 +29,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json"
+    "build": "node scripts/sync-types.mjs && node scripts/build.mjs",
+    "typecheck": "node scripts/sync-types.mjs && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
+    "pack:check": "node scripts/pack-check.mjs"
   },
   "dependencies": {
-    "@pairly/shared-ts": "workspace:*",
     "openapi-fetch": "^0.17.0"
   }
 }

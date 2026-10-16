@@ -1,7 +1,8 @@
 # @pairly/sdk (TypeScript SDK)
 
 TypeScript client for the Pairly API: human-approved AI for hiring and accounts payable.
-Typed from the OpenAPI spec (`@pairly/shared-ts` through `openapi-fetch`), retries with
+Typed from the OpenAPI spec (types generated in `@pairly/shared-ts`, copied into the package
+at build time, through `openapi-fetch`), retries with
 backoff, pagination, idempotency keys and webhook verification. ESM and CommonJS
 builds; Node 20+, Deno, Bun and edge runtimes (Web Crypto and `fetch` only, no Node
 APIs). Version 0.1.0, AGPL-3.0-only (commercial license available, see `LICENSING.md`).
@@ -122,5 +123,12 @@ pnpm --filter @pairly/sdk build      # dist/esm and dist/cjs, each with .d.ts
 pnpm vitest run --project libs       # the SDK's tests
 ```
 
-Before publishing to npm, `@pairly/shared-ts` (the generated types this package's
-declarations import) must be published too, or its types inlined.
+The generated API types are copied from `packages/shared-ts` into `src/generated/`
+(gitignored) before every build and typecheck (`scripts/sync-types.mjs`), so the package
+has no workspace dependency: its only dependency is `openapi-fetch`.
+
+```sh
+pnpm --filter @pairly/sdk pack:check   # build, pack, install the tarball in a fresh
+                                       # temp project, import it (ESM, CommonJS, types)
+PAIRLY_PACK_DIR=/some/dir pnpm --filter @pairly/sdk pack:check   # temp project there
+```
