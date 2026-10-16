@@ -5126,6 +5126,27 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/vendor-portal/invoices/{invoice_id}/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask For Review
+         * @description A human review of a decision about the vendor's own invoice: an appeal with the
+         *     vendor as the requester, audited, with the Pay admins told of its deadline.
+         */
+        post: operations["ask_for_review_v1_pay_vendor_portal_invoices__invoice_id__appeals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pay/vendor-portal/invoices/{invoice_id}/messages": {
         parameters: {
             query?: never;
@@ -13666,6 +13687,37 @@ export type components = {
             /** Swift */
             swift: string | null;
         };
+        /** PayPortalAppealIn */
+        PayPortalAppealIn: {
+            /** Decision Id */
+            decision_id: string;
+            /** Reason */
+            reason: string;
+        };
+        /** PayPortalAppealOut */
+        PayPortalAppealOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Outcome */
+            outcome: string | null;
+            /** Reference */
+            reference: string;
+            /**
+             * Sla Due At
+             * Format: date-time
+             */
+            sla_due_at: string;
+            /** Status */
+            status: string;
+        };
         /** PayPortalBankChangeIn */
         PayPortalBankChangeIn: {
             /** Account Name */
@@ -13700,6 +13752,24 @@ export type components = {
             contacts?: components["schemas"]["PayContactIn"][] | null;
             /** Phone On File */
             phone_on_file?: string | null;
+        };
+        /** PayPortalDecisionOut */
+        PayPortalDecisionOut: {
+            appeal: components["schemas"]["PayPortalAppealOut"] | null;
+            /** Can Appeal */
+            can_appeal: boolean;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /** Decision Id */
+            decision_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "duplicate_flag" | "rejection" | "bank_change";
         };
         /** PayPortalDetailsOut */
         PayPortalDetailsOut: {
@@ -13745,6 +13815,8 @@ export type components = {
             credit_total: string;
             /** Currency */
             currency: string | null;
+            /** Decisions */
+            decisions: components["schemas"]["PayPortalDecisionOut"][];
             /** Document Type */
             document_type: string;
             /** Due Date */
@@ -26228,6 +26300,55 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PayPortalInvoiceDetailOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_for_review_v1_pay_vendor_portal_invoices__invoice_id__appeals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPortalAppealIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPortalInvoiceDetailOut"];
+                };
+            };
+            /** @description Not a decision about this invoice the vendor may appeal */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The vendor already asked for a review of this decision */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

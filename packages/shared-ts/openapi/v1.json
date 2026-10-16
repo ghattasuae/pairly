@@ -23543,6 +23543,77 @@
         "title": "PayPortalAccountOut",
         "type": "object"
       },
+      "PayPortalAppealIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "reason"
+        ],
+        "title": "PayPortalAppealIn",
+        "type": "object"
+      },
+      "PayPortalAppealOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "sla_due_at": {
+            "format": "date-time",
+            "title": "Sla Due At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "outcome",
+          "sla_due_at",
+          "created_at"
+        ],
+        "title": "PayPortalAppealOut",
+        "type": "object"
+      },
       "PayPortalBankChangeIn": {
         "additionalProperties": false,
         "properties": {
@@ -23694,6 +23765,51 @@
           }
         },
         "title": "PayPortalContactsIn",
+        "type": "object"
+      },
+      "PayPortalDecisionOut": {
+        "properties": {
+          "appeal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayPortalAppealOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "can_appeal": {
+            "title": "Can Appeal",
+            "type": "boolean"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "duplicate_flag",
+              "rejection",
+              "bank_change"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "kind",
+          "decided_at",
+          "can_appeal",
+          "appeal"
+        ],
+        "title": "PayPortalDecisionOut",
         "type": "object"
       },
       "PayPortalDetailsOut": {
@@ -23868,6 +23984,13 @@
             ],
             "title": "Currency"
           },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/PayPortalDecisionOut"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
           "document_type": {
             "title": "Document Type",
             "type": "string"
@@ -23998,7 +24121,8 @@
           "payment_reference",
           "can_message",
           "messages",
-          "thread"
+          "thread",
+          "decisions"
         ],
         "title": "PayPortalInvoiceDetailOut",
         "type": "object"
@@ -45547,6 +45671,66 @@
           }
         },
         "summary": "Get Invoice",
+        "tags": [
+          "pay-vendor-portal"
+        ]
+      }
+    },
+    "/v1/pay/vendor-portal/invoices/{invoice_id}/appeals": {
+      "post": {
+        "description": "A human review of a decision about the vendor's own invoice: an appeal with the\nvendor as the requester, audited, with the Pay admins told of its deadline.",
+        "operationId": "ask_for_review_v1_pay_vendor_portal_invoices__invoice_id__appeals_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPortalAppealIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPortalInvoiceDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not a decision about this invoice the vendor may appeal"
+          },
+          "409": {
+            "description": "The vendor already asked for a review of this decision"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask For Review",
         "tags": [
           "pay-vendor-portal"
         ]

@@ -13,6 +13,10 @@ shared rows (``org_id`` NULL); an organisation customises them by saving its own
 vendor's contact asks for new bank details in the vendor portal (no invoice involved).
 Migration ``pay_0014`` stores it.
 
+``pay.vendor_portal.appeal`` tells the Pay admins that a vendor's contact asked for a
+human review of a decision about its invoice, with the appeal's deadline. Migration
+``pay_0018`` stores it.
+
 Only the last four characters of the account number ever appear in the message.
 
 Copy style: short plain sentences, never an em dash.
@@ -213,5 +217,85 @@ PORTAL_ALERT_TEMPLATES: Final = (
             "اتصال تحقق وموافقتين."
         ),
         variables=_PORTAL_SHORT,
+    ),
+)
+
+# A vendor's contact asked, in the vendor portal, for a person to review a decision about
+# one of its invoices (a duplicate flag, a rejection, a bank-detail change step). Sent to
+# the organisation's Pay admins with the deadline of the appeal (its SLA), category
+# ``data_requests`` (always urgent, never switched off), like a candidate's request for a
+# human review. Migration ``pay_0018`` stores it. Ids and references only, never the
+# vendor's words.
+VENDOR_APPEAL: Final = "pay.vendor_portal.appeal"
+APPEAL_CATEGORY: Final = "data_requests"
+APPEAL_VARIABLES: Final = {
+    "vendor": _v("string", "Gulf Office Supplies LLC"),
+    "invoice_reference": _v("string", "INV-7Q2K9D"),
+    "appeal_ref": _v("string", "APL-3F2A9C1D"),
+    "decision": _v("string", "rejection"),
+    "due_at": _v("string", "2026-10-30"),
+    "appeal_url": _v("url", "https://app.pairly.example/decisions/sample", required=False),
+}
+_APPEAL_SHORT: Final = {k: APPEAL_VARIABLES[k] for k in APPEAL_VARIABLES if k != "appeal_url"}
+_DECISION_EN: Final = (
+    '{% if decision == "duplicate_flag" %}the duplicate flag on invoice '
+    '{{ invoice_reference }}{% elif decision == "rejection" %}the rejection of invoice '
+    "{{ invoice_reference }}{% else %}a bank-detail change step linked to invoice "
+    "{{ invoice_reference }}{% endif %}"
+)
+_DECISION_AR: Final = (
+    '{% if decision == "duplicate_flag" %}علامة التكرار على الفاتورة '
+    '{{ invoice_reference }}{% elif decision == "rejection" %}رفض الفاتورة '
+    "{{ invoice_reference }}{% else %}خطوة في تغيير البيانات البنكية مرتبطة بالفاتورة "
+    "{{ invoice_reference }}{% endif %}"
+)
+_APPEAL_EN_BODY: Final = (
+    "{{ vendor }} asked in the vendor portal for a person to review "
+    + _DECISION_EN
+    + ".\n\nAppeal {{ appeal_ref }}. Write the outcome by {{ due_at }}."
+)
+_APPEAL_AR_BODY: Final = (
+    "طلب {{ vendor }} عبر بوابة الموردين أن يراجع شخص "
+    + _DECISION_AR
+    + ".\n\nالطعن {{ appeal_ref }}. اكتب القرار قبل {{ due_at }}."
+)
+
+APPEAL_TEMPLATES: Final = (
+    DefaultTemplate(
+        key=VENDOR_APPEAL,
+        channel="email",
+        locale="en",
+        category=APPEAL_CATEGORY,
+        subject="Vendor appeal {{ appeal_ref }}: {{ vendor }} asked for a human review",
+        body=_APPEAL_EN_BODY
+        + "{% if appeal_url %}\n\nOpen the decision: {{ appeal_url }}{% endif %}",
+        variables=APPEAL_VARIABLES,
+    ),
+    DefaultTemplate(
+        key=VENDOR_APPEAL,
+        channel="email",
+        locale="ar",
+        category=APPEAL_CATEGORY,
+        subject="طعن من مورد {{ appeal_ref }}: طلب {{ vendor }} مراجعة بشرية",
+        body=_APPEAL_AR_BODY + "{% if appeal_url %}\n\nافتح القرار: {{ appeal_url }}{% endif %}",
+        variables=APPEAL_VARIABLES,
+    ),
+    DefaultTemplate(
+        key=VENDOR_APPEAL,
+        channel="in_app",
+        locale="en",
+        category=APPEAL_CATEGORY,
+        subject="{{ vendor }} asked for a human review",
+        body=_APPEAL_EN_BODY,
+        variables=_APPEAL_SHORT,
+    ),
+    DefaultTemplate(
+        key=VENDOR_APPEAL,
+        channel="in_app",
+        locale="ar",
+        category=APPEAL_CATEGORY,
+        subject="طلب {{ vendor }} مراجعة بشرية",
+        body=_APPEAL_AR_BODY,
+        variables=_APPEAL_SHORT,
     ),
 )

@@ -73,7 +73,11 @@ PORTAL_READ: Final = "pay.vendor_portal.read"
 PORTAL_SUBMIT: Final = "pay.vendor_portal.submit"
 PORTAL_UPDATE: Final = "pay.vendor_portal.update"
 PORTAL_MESSAGE: Final = "pay.vendor_portal.message"
-PORTAL_PERMISSIONS: Final = frozenset({PORTAL_READ, PORTAL_SUBMIT, PORTAL_UPDATE, PORTAL_MESSAGE})
+# A human review of a decision about the vendor's own invoice (``pairly_pay.portal.appeals``).
+APPEAL_CREATE: Final = "pay.appeal.create"
+PORTAL_PERMISSIONS: Final = frozenset(
+    {PORTAL_READ, PORTAL_SUBMIT, PORTAL_UPDATE, PORTAL_MESSAGE, APPEAL_CREATE}
+)
 CLOSED_VENDOR: Final = frozenset({VendorStatus.REJECTED.value, VendorStatus.ARCHIVED.value})
 INVALID: Final = "this link is not valid any more: ask for a new one"
 

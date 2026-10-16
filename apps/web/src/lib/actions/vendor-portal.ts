@@ -78,6 +78,23 @@ export async function writeToAccountsPayable(
   return result.ok ? { ok: true, invoice: result.data } : fail(result);
 }
 
+/** Ask a person to review a decision about one of the vendor's own invoices (an appeal). */
+export async function askForHumanReview(
+  invoiceId: string,
+  decisionId: string,
+  reason: string,
+): Promise<ActionResult<{ invoice: VendorPortalInvoiceDetail }>> {
+  const parsed = z
+    .object({ id: uuid, decisionId: z.string().regex(/^dec_[0-9A-Z]{26}$/), reason: z.string().trim().min(1).max(4000) })
+    .safeParse({ id: invoiceId, decisionId, reason });
+  if (!parsed.success) return bad;
+  const result = await vendorPortalCall<VendorPortalInvoiceDetail>(`/v1/pay/vendor-portal/invoices/${parsed.data.id}/appeals`, {
+    method: "POST",
+    body: { decision_id: parsed.data.decisionId, reason: parsed.data.reason },
+  });
+  return result.ok ? { ok: true, invoice: result.data } : fail(result);
+}
+
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(120),
   role: z.string().trim().max(80).nullable(),

@@ -4,7 +4,13 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { VendorPortalDetails, VendorPortalInvoice, VendorPortalInvoiceDetail, VendorPortalMe } from "@/lib/vendor-portal/types";
+import type {
+  VendorPortalDecision,
+  VendorPortalDetails,
+  VendorPortalInvoice,
+  VendorPortalInvoiceDetail,
+  VendorPortalMe,
+} from "@/lib/vendor-portal/types";
 import { orgFromVendorToken, stepViews } from "@/lib/vendor-portal/types";
 
 import { renderWithIntl } from "../../../test/intl";
@@ -18,6 +24,7 @@ vi.mock("@/lib/actions/vendor-portal", () => ({
   signOutOfVendorPortal: vi.fn(),
   loadVendorInvoices: vi.fn(),
   writeToAccountsPayable: vi.fn(),
+  askForHumanReview: vi.fn(),
   updateVendorContacts: vi.fn(),
   requestBankDetailChange: vi.fn(),
 }));
@@ -162,6 +169,7 @@ describe("vendor invoice detail", () => {
     const detail: VendorPortalInvoiceDetail = {
       ...invoice(),
       thread: [{ id: "m1", from_vendor: false, author: "", text: "It is in the next run.", at: "2026-10-01T10:00:00Z" }],
+      decisions: [],
     };
     const write = vi.fn().mockResolvedValue({
       ok: true,
@@ -173,6 +181,70 @@ describe("vendor invoice detail", () => {
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(write).toHaveBeenCalledWith(INVOICE_ID, "Thank you.");
     expect(await screen.findByText("Thank you.")).toBeInTheDocument();
+  });
+});
+
+describe("vendor invoice review requests", () => {
+  const DECISION = "dec_01JABCDEFGHJKMNPQRSTVWXYZ0";
+  const row: VendorPortalDecision = { decision_id: DECISION, kind: "rejection", decided_at: "2026-10-02T09:00:00Z", can_appeal: true, appeal: null };
+  const rejected: VendorPortalInvoiceDetail = { ...invoice({ status: "rejected" }), thread: [], decisions: [row] };
+
+  it("asks a person to review a rejection and shows the deadline", async () => {
+    const ask = vi.fn().mockResolvedValue({
+      ok: true,
+      invoice: {
+        ...rejected,
+        decisions: [
+          {
+            ...row,
+            can_appeal: false,
+            appeal: {
+              id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              reference: "APL-3F2A9C1D",
+              status: "open",
+              outcome: null,
+              sla_due_at: "2026-10-16T09:00:00Z",
+              created_at: "2026-10-02T10:00:00Z",
+            },
+          },
+        ],
+      },
+    });
+    renderWithIntl(<VendorInvoiceDetail invoice={rejected} ask={ask} />);
+    expect(screen.getByText("Invoice rejected")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Ask for a review" }));
+    await userEvent.type(screen.getByLabelText(/looked at again/), "We sent it once only.");
+    await userEvent.click(screen.getByRole("button", { name: "Send the request" }));
+    expect(ask).toHaveBeenCalledWith(INVOICE_ID, DECISION, "We sent it once only.");
+    expect(await screen.findByText(/Review APL-3F2A9C1D asked/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ask for a review" })).not.toBeInTheDocument();
+  });
+
+  it("shows a resolved review in Arabic and nothing when there is no decision to review", () => {
+    const resolved: VendorPortalInvoiceDetail = {
+      ...rejected,
+      decisions: [
+        {
+          ...row,
+          kind: "duplicate_flag",
+          can_appeal: false,
+          appeal: {
+            id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            reference: "APL-3F2A9C1D",
+            status: "resolved",
+            outcome: "overturned",
+            sla_due_at: "2026-10-16T09:00:00Z",
+            created_at: "2026-10-02T10:00:00Z",
+          },
+        },
+      ],
+    };
+    const { unmount } = renderWithIntl(<VendorInvoiceDetail invoice={resolved} />, "ar");
+    expect(screen.getByText("عُلّمت كفاتورة مكررة محتملة")).toBeInTheDocument();
+    expect(screen.getByText(/تم تغيير القرار/)).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<VendorInvoiceDetail invoice={{ ...rejected, decisions: [] }} />);
+    expect(screen.queryByText("Ask for a human review")).not.toBeInTheDocument();
   });
 });
 

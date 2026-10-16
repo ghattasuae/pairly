@@ -383,10 +383,19 @@ def _portal_actor(kind: ActorKind, *permissions: str) -> Actor:
 
 
 def test_a_vendor_portal_actor_only_ever_acts_in_its_vendor_portal() -> None:
-    held = ("pay.vendor_portal.read", "pay.invoice.read", "hire.portal.read", "core.audit.read")
+    held = (
+        "pay.vendor_portal.read",
+        "pay.appeal.create",
+        "pay.invoice.read",
+        "pay.appeal.decide",
+        "hire.portal.read",
+        "core.appeal.create",
+        "core.audit.read",
+    )
     vendor = _portal_actor(ActorKind.VENDOR, *held)
     authorize(vendor, "pay.vendor_portal.read")
-    for permission in held[1:]:
+    authorize(vendor, "pay.appeal.create")  # a human review of its own decisions
+    for permission in held[2:]:
         with pytest.raises(PermissionDeniedError) as denied:
             authorize(vendor, permission)
         assert denied.value.denial is not None

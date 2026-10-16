@@ -9,25 +9,29 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/form-controls";
 import { Link } from "@/i18n/navigation";
-import { writeToAccountsPayable } from "@/lib/actions/vendor-portal";
+import { askForHumanReview, writeToAccountsPayable } from "@/lib/actions/vendor-portal";
 import type { VendorPortalInvoiceDetail } from "@/lib/vendor-portal/types";
 
 import { InvoiceSteps } from "./invoice-steps";
+import { VendorInvoiceDecisions } from "./vendor-invoice-decisions";
 import { money } from "./money";
 
 const KNOWN_ERRORS = new Set(["not_signed_in", "rate_limited", "conflict", "invalid_input"]);
 
 /**
  * One invoice or credit note in the vendor portal: where it stands with the date of each
- * step, the amounts and dates, and the messages with accounts payable about it (write
- * here; AP answers here and by email).
+ * step, the amounts and dates, the decisions about it the vendor may ask a person to
+ * review, and the messages with accounts payable about it (write here; AP answers here
+ * and by email).
  */
 export function VendorInvoiceDetail({
   invoice: initial,
   write = writeToAccountsPayable,
+  ask = askForHumanReview,
 }: {
   invoice: VendorPortalInvoiceDetail;
   write?: typeof writeToAccountsPayable;
+  ask?: typeof askForHumanReview;
 }) {
   const t = useTranslations("VendorPortal");
   const format = useFormatter();
@@ -103,6 +107,8 @@ export function VendorInvoiceDetail({
             ))}
         </dl>
       </section>
+
+      <VendorInvoiceDecisions invoice={invoice} onChange={setInvoice} ask={ask} />
 
       <section aria-labelledby={`${ids}-messages`} className="space-y-3">
         <h2 id={`${ids}-messages`} className="font-display text-xl">

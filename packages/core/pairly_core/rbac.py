@@ -366,7 +366,7 @@ class ActorKind(StrEnum):
     CANDIDATE = "candidate"
     # A vendor's contact signed in to a workflow's vendor portal (Pairly Pay, a magic
     # link). Never produced by the staff authentication; may only hold a workflow's
-    # ``vendor_portal`` permissions (``VENDOR_ALLOWED_RESOURCES``).
+    # ``vendor_portal`` and ``appeal.create`` permissions (``VENDOR_ALLOWED_RESOURCES``).
     VENDOR = "vendor"
 
 
@@ -385,15 +385,17 @@ def candidate_may_hold(permission: str) -> bool:
 
 
 # What a vendor portal actor may ever be allowed to do: its own vendor portal
-# (``<workflow>.vendor_portal.*``), nothing of a candidate's portal or of staff.
+# (``<workflow>.vendor_portal.*``) and a human review of a decision about its own
+# invoices (``<workflow>.appeal.create``), nothing of a candidate's portal or of staff.
 VENDOR_ALLOWED_RESOURCES = frozenset({"vendor_portal"})
+VENDOR_ALLOWED_EXACT = frozenset({("appeal", "create")})
 
 
 def vendor_may_hold(permission: str) -> bool:
     parts = permission.split(".")
     if len(parts) != 3 or parts[0] == CORE_NAMESPACE:
         return False
-    return parts[1] in VENDOR_ALLOWED_RESOURCES
+    return parts[1] in VENDOR_ALLOWED_RESOURCES or (parts[1], parts[2]) in VENDOR_ALLOWED_EXACT
 
 
 def api_key_may_hold(permission: str) -> bool:

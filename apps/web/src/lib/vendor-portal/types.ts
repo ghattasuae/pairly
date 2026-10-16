@@ -14,6 +14,7 @@ export type VendorPortalMe = S["PayPortalMeOut"];
 export type VendorPortalInvoice = S["PayPortalInvoiceOut"];
 export type VendorPortalInvoiceDetail = S["PayPortalInvoiceDetailOut"];
 export type VendorPortalMessage = S["PayPortalMessageOut"];
+export type VendorPortalDecision = S["PayPortalDecisionOut"];
 export type VendorPortalDetails = S["PayPortalDetailsOut"];
 export type VendorPortalRequest = S["PayPortalRequestOut"];
 export type VendorPortalContact = S["PayPortalContactOut"];

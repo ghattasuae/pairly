@@ -4256,6 +4256,28 @@
       "send": "Send",
       "sent": "Sent. Accounts payable will answer here."
     },
+    "review": {
+      "title": "Ask for a human review",
+      "intro": "If you think one of these decisions about your invoice is wrong, you can ask a person at the company to review it. They answer in writing.",
+      "kind": {
+        "duplicate_flag": "Flagged as a possible duplicate",
+        "rejection": "Invoice rejected",
+        "bank_change": "Bank detail change: payments held or the change stopped"
+      },
+      "decidedOn": "Decided on {date}",
+      "ask": "Ask for a review",
+      "reasonLabel": "Tell us why this decision should be looked at again",
+      "send": "Send the request",
+      "cancel": "Cancel",
+      "sent": "Sent. A person will review it and answer in writing.",
+      "asked": "Review {reference} asked. A person answers by {date}.",
+      "outcome": {
+        "upheld": "Review {reference}: the decision stands.",
+        "overturned": "Review {reference}: the decision was changed.",
+        "partially_overturned": "Review {reference}: the decision was partly changed."
+      },
+      "notFound": "This decision cannot be reviewed from here. Please write to accounts payable."
+    },
     "help": {
       "received": "We have your document and are reading it.",
       "in_review": "Accounts payable is checking the invoice and sending it for approval.",

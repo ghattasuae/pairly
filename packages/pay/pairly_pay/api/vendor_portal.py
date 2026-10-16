@@ -25,13 +25,18 @@ minute per contact; writes have their own limits):
 * ``POST /vendor-portal/sign-out``                 ends the session
 * ``GET  /vendor-portal/invoices``                 invoices and credit notes with status,
   dates and expected payment dates
-* ``GET  /vendor-portal/invoices/{id}``            one, with its messages
+* ``GET  /vendor-portal/invoices/{id}``            one, with its messages and the
+  decisions about it the vendor may ask a person to review (``decisions``)
 * ``POST /vendor-portal/invoices``                 multipart ``file`` plus
   ``document_type`` (``invoice`` or ``credit_note``) and, for a credit note,
   ``credit_for`` (one of the vendor's unpaid invoices): through Pay intake (source
   ``vendor_portal``), the same checks as any invoice. 20 per hour.
 * ``POST /vendor-portal/invoices/{id}/messages``   ``{"text"}``: to accounts payable.
   30 per hour.
+* ``POST /vendor-portal/invoices/{id}/appeals``    ``{"decision_id", "reason"}``: a
+  human review of one of those decisions (a duplicate flag, a rejection, a bank-detail
+  change step), as an appeal with the vendor as the requester; the Pay admins are told
+  with its deadline (``pairly_pay.portal.appeals``). Once per decision; 10 per day.
 * ``GET  /vendor-portal/details``                  the verified details (bank account
   masked) and the open change requests
 * ``PUT  /vendor-portal/details/contacts``         the people at the vendor, changed
@@ -89,7 +94,7 @@ from pairly_pay.intake import pay_policy
 from pairly_pay.invoice_start import start_after_intake
 from pairly_pay.invoices import create_invoice
 from pairly_pay.models import DocumentType, InvoiceSource, PayVendor
-from pairly_pay.portal import auth, service
+from pairly_pay.portal import appeals, auth, service
 from pairly_pay.portal.contacts import contact_email, contact_name
 from pairly_pay.portal.models import ContactStatus, PayPortalContact
 from pairly_pay.portal.templates import LOGIN_LINK
@@ -112,6 +117,7 @@ LIMITS: Final = {
     "message": (30, 3600.0),
     "update": (10, 3600.0),
     "bank": (5, 86400.0),
+    "appeal": (10, 86400.0),
 }
 UPLOAD_FIELDS: Final = frozenset({"document_type", "credit_for"})
 
@@ -222,8 +228,33 @@ class PayPortalMessageOut(BaseModel):
     at: datetime
 
 
+class PayPortalAppealOut(BaseModel):
+    id: uuid.UUID
+    reference: str
+    status: str
+    outcome: str | None
+    sla_due_at: datetime
+    created_at: datetime
+
+
+class PayPortalDecisionOut(BaseModel):
+    decision_id: str
+    kind: Literal["duplicate_flag", "rejection", "bank_change"]
+    decided_at: datetime
+    can_appeal: bool
+    appeal: PayPortalAppealOut | None
+
+
 class PayPortalInvoiceDetailOut(PayPortalInvoiceOut):
     thread: list[PayPortalMessageOut]
+    decisions: list[PayPortalDecisionOut]
+
+
+class PayPortalAppealIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision_id: Annotated[str, StringConstraints(min_length=1, max_length=64)]
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
 
 
 class PayPortalSubmittedOut(BaseModel):
@@ -378,8 +409,31 @@ async def _detail(
 ) -> PayPortalInvoiceDetailOut:
     item = await service.invoice(session, identity, invoice_id)
     messages = await service.thread(session, identity, invoice_id)
+    row = await service.own_invoice(session, identity, invoice_id)
+    decisions = await appeals.decisions(session, identity, row)
     return PayPortalInvoiceDetailOut(
-        **_invoice_out(item), thread=[_message_out(m) for m in messages]
+        **_invoice_out(item),
+        thread=[_message_out(m) for m in messages],
+        decisions=[_decision_out(d) for d in decisions],
+    )
+
+
+def _decision_out(d: appeals.PortalDecision) -> PayPortalDecisionOut:
+    return PayPortalDecisionOut(
+        decision_id=d.decision_id,
+        kind=d.kind.value,
+        decided_at=d.decided_at,
+        can_appeal=d.can_appeal,
+        appeal=PayPortalAppealOut(
+            id=d.appeal.id,
+            reference=d.appeal.reference,
+            status=d.appeal.status,
+            outcome=d.appeal.outcome,
+            sla_due_at=d.appeal.sla_due_at,
+            created_at=d.appeal.created_at,
+        )
+        if d.appeal is not None
+        else None,
     )
 
 
@@ -635,6 +689,32 @@ async def write_message(
     authorize(identity.actor(), auth.PORTAL_MESSAGE)
     _hit(request, "message", str(identity.contact_id))
     await service.post_message(session, identity, invoice_id, body.text)
+    detail = await _detail(session, identity, invoice_id)
+    return _no_store(detail.model_dump(mode="json"), 201)
+
+
+@router.post(
+    "/invoices/{invoice_id}/appeals",
+    status_code=201,
+    response_model=PayPortalInvoiceDetailOut,
+    responses={
+        404: {"description": "Not a decision about this invoice the vendor may appeal"},
+        409: {"description": "The vendor already asked for a review of this decision"},
+    },
+)
+async def ask_for_review(
+    invoice_id: uuid.UUID,
+    body: PayPortalAppealIn,
+    request: Request,
+    identity: Portal,
+    session: RequestSession,
+) -> JSONResponse:
+    """A human review of a decision about the vendor's own invoice: an appeal with the
+    vendor as the requester, audited, with the Pay admins told of its deadline."""
+    authorize(identity.actor(), auth.APPEAL_CREATE)
+    _hit(request, "appeal", str(identity.vendor_id))
+    row = await service.own_invoice(session, identity, invoice_id)
+    await appeals.appeal(session, identity, row, body.decision_id, body.reason)
     detail = await _detail(session, identity, invoice_id)
     return _no_store(detail.model_dump(mode="json"), 201)
 
