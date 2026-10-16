@@ -68,7 +68,8 @@ ORDER BY r.doc, a.created_at, r.app
 def _organisations(conn: sa.Connection) -> list[uuid.UUID]:
     conn.execute(sa.text("SELECT set_config('app.crypto_org_scan', 'on', true)"))
     try:
-        return [uuid.UUID(str(o)) for o in conn.execute(sa.text("SELECT id FROM organisations"))]
+        rows = conn.execute(sa.text("SELECT id FROM organisations")).scalars()
+        return [uuid.UUID(str(o)) for o in rows]
     finally:
         conn.execute(sa.text("SELECT set_config('app.crypto_org_scan', '', true)"))
 

@@ -591,7 +591,10 @@ async def test_the_migration_gives_each_application_its_own_row(
     async with owner_engine.begin() as conn:
         copies = await conn.run_sync(lambda c: migration.split_shared(c, [world.org_id]))
     assert copies == 1
+    # Again, over every organisation as the upgrade runs it: nothing left to split here.
     async with owner_engine.begin() as conn:
+        orgs = await conn.run_sync(migration._organisations)
+        assert world.org_id in orgs
         again = await conn.run_sync(lambda c: migration.split_shared(c, [world.org_id]))
     assert again == 0
     (moved,) = await owner_rows(
