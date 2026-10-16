@@ -1,0 +1,26 @@
+meta {
+  name: Talent pool search
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/hire/rediscovery/search
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:json {
+  {
+    "query": "python data engineer",
+    "limit": 10
+  }
+}
+
+docs {
+  Only candidates who agreed to be found again.
+}

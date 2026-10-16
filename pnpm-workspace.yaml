@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+packages:
+  - apps/web
+  - packages/shared-ts
+  - sdks/typescript
+  # The TypeScript quickstarts (docs/quickstarts), so their smoke test runs in CI.
+  - docs/quickstarts/express
+  - docs/quickstarts/nextjs

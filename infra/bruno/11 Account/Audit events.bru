@@ -1,0 +1,23 @@
+meta {
+  name: Audit events
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/v1/audit/events?limit=20
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 20
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Needs core.audit.read.
+}

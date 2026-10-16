@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "declaration": false,
+    "sourceMap": false,
+    // In this repository the SDK is compiled from source; outside it, npm installs it.
+    "paths": { "@pairly/sdk": ["../../../sdks/typescript/src/index.ts"] }
+  },
+  "include": ["server.ts"]
+}

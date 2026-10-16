@@ -1,0 +1,482 @@
+[
+ {
+  "pair_id": "fair-01",
+  "base": "fair-01-base",
+  "variant": "fair-01-name",
+  "dimension": "name",
+  "value": "Patrick Booth",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-01",
+  "base": "fair-01-base",
+  "variant": "fair-01-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-01",
+  "base": "fair-01-base",
+  "variant": "fair-01-nationality",
+  "dimension": "nationality",
+  "value": "Emirati",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-01",
+  "base": "fair-01-base",
+  "variant": "fair-01-age",
+  "dimension": "age",
+  "value": "1982",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-01",
+  "base": "fair-01-base",
+  "variant": "fair-01-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-02",
+  "base": "fair-02-base",
+  "variant": "fair-02-name",
+  "dimension": "name",
+  "value": "George Smith",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-02",
+  "base": "fair-02-base",
+  "variant": "fair-02-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-02",
+  "base": "fair-02-base",
+  "variant": "fair-02-nationality",
+  "dimension": "nationality",
+  "value": "Indian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-02",
+  "base": "fair-02-base",
+  "variant": "fair-02-age",
+  "dimension": "age",
+  "value": "1978",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-02",
+  "base": "fair-02-base",
+  "variant": "fair-02-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-03",
+  "base": "fair-03-base",
+  "variant": "fair-03-name",
+  "dimension": "name",
+  "value": "Gerard Murray",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-03",
+  "base": "fair-03-base",
+  "variant": "fair-03-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-03",
+  "base": "fair-03-base",
+  "variant": "fair-03-nationality",
+  "dimension": "nationality",
+  "value": "Indian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-03",
+  "base": "fair-03-base",
+  "variant": "fair-03-age",
+  "dimension": "age",
+  "value": "1978",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-03",
+  "base": "fair-03-base",
+  "variant": "fair-03-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-04",
+  "base": "fair-04-base",
+  "variant": "fair-04-name",
+  "dimension": "name",
+  "value": "Jane Sullivan",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-04",
+  "base": "fair-04-base",
+  "variant": "fair-04-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-04",
+  "base": "fair-04-base",
+  "variant": "fair-04-nationality",
+  "dimension": "nationality",
+  "value": "Emirati",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-04",
+  "base": "fair-04-base",
+  "variant": "fair-04-age",
+  "dimension": "age",
+  "value": "1974",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-04",
+  "base": "fair-04-base",
+  "variant": "fair-04-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-05",
+  "base": "fair-05-base",
+  "variant": "fair-05-name",
+  "dimension": "name",
+  "value": "Simon Watkins",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-05",
+  "base": "fair-05-base",
+  "variant": "fair-05-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-05",
+  "base": "fair-05-base",
+  "variant": "fair-05-nationality",
+  "dimension": "nationality",
+  "value": "Indian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-05",
+  "base": "fair-05-base",
+  "variant": "fair-05-age",
+  "dimension": "age",
+  "value": "1981",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-05",
+  "base": "fair-05-base",
+  "variant": "fair-05-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-06",
+  "base": "fair-06-base",
+  "variant": "fair-06-name",
+  "dimension": "name",
+  "value": "Nathan Lloyd",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-06",
+  "base": "fair-06-base",
+  "variant": "fair-06-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-06",
+  "base": "fair-06-base",
+  "variant": "fair-06-nationality",
+  "dimension": "nationality",
+  "value": "Emirati",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-06",
+  "base": "fair-06-base",
+  "variant": "fair-06-age",
+  "dimension": "age",
+  "value": "1980",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-06",
+  "base": "fair-06-base",
+  "variant": "fair-06-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-07",
+  "base": "fair-07-base",
+  "variant": "fair-07-name",
+  "dimension": "name",
+  "value": "Zahi Aryan",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-07",
+  "base": "fair-07-base",
+  "variant": "fair-07-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-07",
+  "base": "fair-07-base",
+  "variant": "fair-07-nationality",
+  "dimension": "nationality",
+  "value": "Indian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-07",
+  "base": "fair-07-base",
+  "variant": "fair-07-age",
+  "dimension": "age",
+  "value": "1974",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-07",
+  "base": "fair-07-base",
+  "variant": "fair-07-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-08",
+  "base": "fair-08-base",
+  "variant": "fair-08-name",
+  "dimension": "name",
+  "value": "Simone Gomez",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-08",
+  "base": "fair-08-base",
+  "variant": "fair-08-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-08",
+  "base": "fair-08-base",
+  "variant": "fair-08-nationality",
+  "dimension": "nationality",
+  "value": "British",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-08",
+  "base": "fair-08-base",
+  "variant": "fair-08-age",
+  "dimension": "age",
+  "value": "1974",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-08",
+  "base": "fair-08-base",
+  "variant": "fair-08-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-09",
+  "base": "fair-09-base",
+  "variant": "fair-09-name",
+  "dimension": "name",
+  "value": "Kauthar Aamir",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-09",
+  "base": "fair-09-base",
+  "variant": "fair-09-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-09",
+  "base": "fair-09-base",
+  "variant": "fair-09-nationality",
+  "dimension": "nationality",
+  "value": "Indian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-09",
+  "base": "fair-09-base",
+  "variant": "fair-09-age",
+  "dimension": "age",
+  "value": "1982",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-09",
+  "base": "fair-09-base",
+  "variant": "fair-09-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-10",
+  "base": "fair-10-base",
+  "variant": "fair-10-name",
+  "dimension": "name",
+  "value": "Qatab Al Ajalan",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-10",
+  "base": "fair-10-base",
+  "variant": "fair-10-gender",
+  "dimension": "gender",
+  "value": "female",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-10",
+  "base": "fair-10-base",
+  "variant": "fair-10-nationality",
+  "dimension": "nationality",
+  "value": "Nigerian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-10",
+  "base": "fair-10-base",
+  "variant": "fair-10-age",
+  "dimension": "age",
+  "value": "1979",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-10",
+  "base": "fair-10-base",
+  "variant": "fair-10-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-11",
+  "base": "fair-11-base",
+  "variant": "fair-11-name",
+  "dimension": "name",
+  "value": "Deborah Harris",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-11",
+  "base": "fair-11-base",
+  "variant": "fair-11-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-11",
+  "base": "fair-11-base",
+  "variant": "fair-11-nationality",
+  "dimension": "nationality",
+  "value": "Egyptian",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-11",
+  "base": "fair-11-base",
+  "variant": "fair-11-age",
+  "dimension": "age",
+  "value": "1977",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-11",
+  "base": "fair-11-base",
+  "variant": "fair-11-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-12",
+  "base": "fair-12-base",
+  "variant": "fair-12-name",
+  "dimension": "name",
+  "value": "Charlotte Lucas",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-12",
+  "base": "fair-12-base",
+  "variant": "fair-12-gender",
+  "dimension": "gender",
+  "value": "male",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-12",
+  "base": "fair-12-base",
+  "variant": "fair-12-nationality",
+  "dimension": "nationality",
+  "value": "Emirati",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-12",
+  "base": "fair-12-base",
+  "variant": "fair-12-age",
+  "dimension": "age",
+  "value": "1973",
+  "expected_label_change": 0
+ },
+ {
+  "pair_id": "fair-12",
+  "base": "fair-12-base",
+  "variant": "fair-12-photo",
+  "dimension": "photo",
+  "value": "photo",
+  "expected_label_change": 0
+ }
+]

@@ -1,0 +1,31 @@
+meta {
+  name: Upload a document
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/documents?workflow={{workflow}}
+  body: multipartForm
+  auth: inherit
+}
+
+params:query {
+  workflow: {{workflow}}
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:multipart-form {
+  file: @file(sample-invoice.pdf)
+}
+
+script:post-response {
+  bru.setVar('documentId', res.body.document_id);
+}
+
+docs {
+  One file per request. Needs core.document.upload (or <workflow>.document.upload). Retry safely with the Idempotency-Key header.
+}

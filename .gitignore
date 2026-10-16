@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+# Native local stack (scripts/local_*.sh): database, queue, objects, mail, logs
+.local/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# JS
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.pnpm-store/
+.turbo/
+storybook-static/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Evals output (the committed report lives at evals/report.md)
+evals/.promptfoo/
+evals/output/
+# Live eval responses being recorded (folded into the committed *_live.jsonl.xz)
+evals/recordings/*_live.jsonl
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Claude Code agent worktrees and local settings
+.claude/
+
+# @pairly/sdk: the generated API types, copied from packages/shared-ts at build time
+sdks/typescript/src/generated/
+
+# Playwright run artifact, regenerated on every run
+apps/web/e2e/report.json

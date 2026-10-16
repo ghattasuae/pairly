@@ -1,0 +1,15 @@
+meta {
+  name: Get an approval
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/approvals/{{approvalId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  Context, payload (masked while blind), chain and history. can_decide is always false for a key.
+}

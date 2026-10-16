@@ -1,0 +1,574 @@
+{
+ "what": "Structural checks of recorded outputs (scripted answers and, where a task has any, live recordings): schema validity, banned content, em dashes, the component's own deterministic check, references back to the input, sizes and measured cost. They are structural checks, not quality judgments: scripted answers are not model output.",
+ "components": {
+  "jd-drafting": {
+   "title": "Job description drafting",
+   "task": "hire_jd_draft",
+   "prompt_version": "v1",
+   "schema": "JobDescriptionDraft",
+   "sources": [
+    "packages/hire/pairly_hire/data/recordings.json"
+   ],
+   "recorded_outputs": 3,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1473,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "inclusive_language",
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 222.7,
+     "max": 240
+    },
+    "response_chars": {
+     "mean": 1828.0,
+     "max": 2112
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "rubric-drafting": {
+   "title": "Rubric drafting",
+   "task": "hire_rubric_draft",
+   "prompt_version": "v1",
+   "schema": "Rubric",
+   "sources": [
+    "packages/hire/pairly_hire/data/recordings.json"
+   ],
+   "recorded_outputs": 3,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1642,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": null,
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 3,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 692.7,
+     "max": 811
+    },
+    "response_chars": {
+     "mean": 1235.3,
+     "max": 1691
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "interview-kits": {
+   "title": "Interview kits",
+   "task": "hire_interview_kit",
+   "prompt_version": "v1",
+   "schema": "KitItemDraft",
+   "sources": [
+    "packages/hire/pairly_hire/data/interview_recordings.json",
+    "synth/hire/recordings/hire_interviews.json"
+   ],
+   "recorded_outputs": 230,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1947,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 230,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 230,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 230,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "kit_check",
+    "rate": 1.0,
+    "n": 230,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 230,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 408.6,
+     "max": 496
+    },
+    "response_chars": {
+     "mean": 393.8,
+     "max": 566
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "debrief-summary": {
+   "title": "Debrief summary",
+   "task": "hire_debrief_summary",
+   "prompt_version": "v1",
+   "schema": "DebriefDraft",
+   "sources": [
+    "synth/hire/recordings/hire_interviews.json"
+   ],
+   "recorded_outputs": 2,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1965,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "debrief_check",
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "schema_current": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 680.5,
+     "max": 683
+    },
+    "response_chars": {
+     "mean": 728.0,
+     "max": 750
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "reference-summary": {
+   "title": "Reference summary",
+   "task": "hire_reference_summary",
+   "prompt_version": "v1",
+   "schema": "ReferenceDraft",
+   "sources": [
+    "synth/hire/recordings/hire_references.json"
+   ],
+   "recorded_outputs": 2,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1848,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "reference_check",
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 2,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 803.0,
+     "max": 804
+    },
+    "response_chars": {
+     "mean": 489.0,
+     "max": 495
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "message-personalisation": {
+   "title": "Message personalisation",
+   "task": "hire_message_draft",
+   "prompt_version": "v1",
+   "schema": "MessageDraft",
+   "sources": [
+    "packages/hire/pairly_hire/data/messaging_recordings.json"
+   ],
+   "recorded_outputs": 48,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1788,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 48,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 48,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 48,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "no_invented_facts",
+    "rate": 1.0,
+    "n": 48,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 48,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 179.7,
+     "max": 197
+    },
+    "response_chars": {
+     "mean": 126.8,
+     "max": 173
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "injection-span-classifier": {
+   "title": "Guardrail injection classifier (suspicious spans)",
+   "task": "guardrails_injection_classify",
+   "prompt_version": "v1",
+   "schema": "InjectionVerdicts",
+   "sources": [],
+   "recorded_outputs": 0,
+   "provenance": null,
+   "prompt_file_chars": 970,
+   "status": "no_recordings",
+   "why": "No committed recording or scripted answer of this task: nothing to check without a model call."
+  },
+  "policy-rag-check": {
+   "title": "Policy check against documents (RAG)",
+   "task": "core_policy_check",
+   "prompt_version": "v1",
+   "schema": "PolicyCheckOutput",
+   "sources": [],
+   "recorded_outputs": 0,
+   "provenance": null,
+   "prompt_file_chars": 1882,
+   "status": "no_recordings",
+   "why": "No committed recording or scripted answer of this task: nothing to check without a model call."
+  },
+  "gl-coding-suggestion": {
+   "title": "GL coding suggestion",
+   "task": "pay_coding_suggest",
+   "prompt_version": "v1",
+   "schema": "ModelCoding",
+   "sources": [
+    "packages/pay/pairly_pay/data/ai_recordings.json"
+   ],
+   "recorded_outputs": 12,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1112,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "codes_from_the_lists",
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": {
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "schema_current": {
+    "rate": 1.0,
+    "n": 12,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 940.1,
+     "max": 947
+    },
+    "response_chars": {
+     "mean": 88.2,
+     "max": 99
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "rubric-clarification": {
+   "title": "Rubric clarification",
+   "task": "hire_rubric_clarify",
+   "prompt_version": "v1",
+   "schema": "RubricClarification",
+   "sources": [
+    "packages/hire/pairly_hire/data/calibration_recordings.json"
+   ],
+   "recorded_outputs": 42,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1232,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 42,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 42,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 42,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "clarification_check",
+    "rate": 1.0,
+    "n": 42,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 42,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 563.5,
+     "max": 612
+    },
+    "response_chars": {
+     "mean": 306.8,
+     "max": 338
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  },
+  "exception-note": {
+   "title": "Exception note",
+   "task": "pay_exception_note",
+   "prompt_version": "v1",
+   "schema": "ExceptionNote",
+   "sources": [
+    "packages/pay/pairly_pay/data/ai_recordings.json"
+   ],
+   "recorded_outputs": 18,
+   "provenance": "scripted answers",
+   "prompt_file_chars": 1249,
+   "status": "measured",
+   "schema_valid": {
+    "rate": 1.0,
+    "n": 18,
+    "failed": 0,
+    "failures": []
+   },
+   "banned_content_free": {
+    "rate": 1.0,
+    "n": 18,
+    "failed": 0,
+    "failures": []
+   },
+   "em_dash_free": {
+    "rate": 1.0,
+    "n": 18,
+    "failed": 0,
+    "failures": []
+   },
+   "product_check": {
+    "name": "note_check",
+    "rate": 1.0,
+    "n": 18,
+    "failed": 0,
+    "failures": []
+   },
+   "references_exist": null,
+   "schema_current": {
+    "rate": 1.0,
+    "n": 18,
+    "failed": 0,
+    "failures": []
+   },
+   "size": {
+    "request_chars": {
+     "mean": 133.0,
+     "max": 155
+    },
+    "response_chars": {
+     "mean": 84.3,
+     "max": 95
+    }
+   },
+   "cost": {
+    "status": "not_measured",
+    "why": "No live recording of this task: scripted answers have no tokens or cost."
+   }
+  }
+ },
+ "summary": {
+  "components": 11,
+  "measured": 9,
+  "no_recordings": [
+   "injection-span-classifier",
+   "policy-rag-check"
+  ],
+  "recorded_outputs": 360
+ }
+}

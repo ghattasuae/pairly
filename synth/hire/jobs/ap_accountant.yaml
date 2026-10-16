@@ -1,0 +1,129 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+# Synthetic sample job (WP2.1). `rubric` is a Pairly Hire rubric (pairly_hire.rubric), the
+# same YAML a recruiter locks. `label_guide` is synthetic-data only: what each score 0 to
+# 4 means for the rule-based labeler (synth/hire/labels.py). The overall score is the
+# weighted mean as a percentage, computed in code, never by a model.
+id: ap_accountant
+title: Accounts Payable Accountant
+title_ar: محاسب حسابات دائنة
+family: accounts_payable
+seniority: mid
+location: Abu Dhabi, United Arab Emirates
+employment_type: full_time
+summary: 'Process supplier invoices end to end: matching, VAT checks, vendor reconciliations and
+  weekly payment runs in the ERP.'
+rubric_version: 1
+rubric:
+  schema_version: 1
+  job_title: Accounts Payable Accountant
+  must_haves:
+  - id: ap_experience
+    name: Accounts payable experience
+    description: Years in accounts payable; general accounting counts at half weight.
+    evidence: Job entries with an accounts payable or accounting title and dates.
+    weight: 6
+  - id: invoice_matching
+    name: Invoice processing and matching
+    description: Processes supplier invoices and matches them to purchase orders and receipts.
+    evidence: Achievement lines about invoice processing or three-way matching.
+    weight: 4
+  - id: erp_systems
+    name: ERP systems
+    description: Daily work in SAP, Oracle Fusion or Microsoft Dynamics.
+    evidence: Achievement lines that name the ERP used.
+    weight: 3
+  - id: uae_vat
+    name: UAE VAT
+    description: Checks tax invoices and prepares VAT workings or returns.
+    evidence: Achievement lines about VAT.
+    weight: 3
+  nice_to_haves:
+  - id: reconciliation_close
+    name: Reconciliations and close
+    description: Vendor or bank reconciliations and month-end close.
+    evidence: Achievement lines about reconciliations or the month-end close.
+    weight: 2
+  - id: accounting_qualification
+    name: Accounting qualification
+    description: A professional accounting certificate or an accounting degree.
+    evidence: The certification or education entry.
+    weight: 1
+  - id: arabic_language
+    name: Arabic
+    description: Can work in Arabic with vendors and authorities.
+    evidence: The languages section.
+    weight: 1
+  knockout_questions:
+  - id: right_to_work_uae
+    question: Do you have the right to work in the UAE without a new visa sponsorship?
+    question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
+    expected_answer: 'yes'
+    reason: The role cannot sponsor a new visa.
+  - id: accounting_degree
+    question: Do you hold a degree in accounting, finance or commerce?
+    question_ar: هل تحمل شهادة في المحاسبة أو التمويل أو التجارة؟
+    expected_answer: 'yes'
+    reason: The role needs a formal accounting qualification.
+label_guide:
+  ap_experience:
+    name_ar: الخبرة في الحسابات الدائنة
+    anchors:
+    - No accounts payable or accounting role.
+    - Less than 1 year.
+    - 1 to 3 years.
+    - 3 to 5 years.
+    - 5 years or more.
+  invoice_matching:
+    name_ar: معالجة الفواتير ومطابقتها
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  erp_systems:
+    name_ar: أنظمة تخطيط موارد المؤسسات
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  uae_vat:
+    name_ar: ضريبة القيمة المضافة في الإمارات
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  reconciliation_close:
+    name_ar: التسويات والإقفال
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  accounting_qualification:
+    name_ar: مؤهل محاسبي
+    anchors:
+    - 'None of the below: no ACCA, CMA or CPA, and no degree or diploma in accounting,
+      finance, commerce, economics or business administration. A degree in any other
+      field (marketing, mathematics, engineering) scores 0.'
+    - A diploma, not a degree, in accounting, finance, commerce, economics or business
+      administration.
+    - A degree (bachelor's, master's or MBA) in finance, commerce, economics or business
+      administration. Only these four fields count as related.
+    - A degree in accounting itself, for example a BSc or MSc in Accounting. No
+      certificate is needed for this score.
+    - ACCA, CMA or CPA listed as a certification.
+  arabic_language:
+    name_ar: اللغة العربية
+    anchors:
+    - Not listed.
+    - Basic.
+    - Conversational.
+    - Professional.
+    - Fluent or native.

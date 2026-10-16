@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves a drafted message about an invoice exception, version 1 (brief 4.5.4):
+# one approver or finance controller who did not write it (the engine makes the
+# submitter a preparer, so they never approve their own message).
+schema: pairly.approval_rules/v1
+approval_type: pay.message
+sla_hours: 24
+warn_hours: 4
+chains:
+  - name: review
+    steps:
+      - {name: reviewer, mode: any_of, roles: [approver, finance_controller]}

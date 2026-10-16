@@ -1,0 +1,24 @@
+meta {
+  name: Approvals waiting for me
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/approvals?assigned_to_me=true&status=pending
+  body: none
+  auth: inherit
+}
+
+params:query {
+  assigned_to_me: true
+  status: pending
+}
+
+script:post-response {
+  if (res.body.items && res.body.items[0]) bru.setVar('approvalId', res.body.items[0].id);
+}
+
+docs {
+  A key with core.approval.read reads its creator's inbox, read only. Page with next_cursor.
+}

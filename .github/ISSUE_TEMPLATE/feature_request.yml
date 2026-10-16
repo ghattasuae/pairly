@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+name: Feature request
+description: Suggest an improvement or a new feature.
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the suggestion. Tell us about the problem first, then your idea for solving it.
+
+        **Use synthetic data only** in examples.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Core engine
+        - Pairly Hire
+        - Pairly Pay
+        - Web app
+        - API or SDK
+        - MCP server
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your idea
+      description: How could Pairly solve it?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: textarea
+    id: oversight
+    attributes:
+      label: Human oversight
+      description: >-
+        Pairly agents propose and humans decide. If your idea involves an AI action,
+        describe who approves it.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true

@@ -1,0 +1,2741 @@
+{
+ "vendors": [
+  {
+   "id": "VEN-001",
+   "legal_name": "Seltus IT Solutions LLC",
+   "legal_name_ar": "سلتس لحلول تقنية المعلومات ذ.م.م",
+   "trade_name": "Seltus",
+   "country": "AE",
+   "trade_licence": "AUH-9826064",
+   "trn": "198427401849981",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 1101, Palm Grove Building",
+    "line2": "Al Reem Island",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "387696"
+   },
+   "contacts": [
+    {
+     "name": "Omar Nasser",
+     "role": "Sales",
+     "email": "omar.nasser@seltus.example",
+     "phone": "+971 4 370 3516"
+    },
+    {
+     "name": "Fatima Nasser",
+     "role": "Finance Manager",
+     "email": "fatima.nasser@seltus.example",
+     "phone": "+971 2 215 7263"
+    }
+   ],
+   "phone_on_file": "+971 2 861 1629",
+   "bank": {
+    "account_name": "Seltus IT Solutions LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE989177554197634471715",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "seltus.example"
+   ],
+   "sender_addresses": [
+    "billing@seltus.example",
+    "accounts@seltus.example"
+   ],
+   "category": "it_hardware",
+   "template": {
+    "layout": "bilingual",
+    "font": "Helvetica",
+    "accent": "#2d2d2d",
+    "numbering": "{YYYY}{N4}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 60,
+    "currency": "AED",
+    "language": "bilingual",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Mizanto 4.3"
+   },
+   "po_based": true,
+   "since": "2024-04-04",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-002",
+   "legal_name": "Sorqova Software LLC",
+   "legal_name_ar": "سرقفا للبرمجيات ذ.م.م",
+   "trade_name": "Sorqova",
+   "country": "AE",
+   "trade_licence": "SHJ-8532412",
+   "trn": "194269801469384",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 2903, Sidra Tower",
+    "line2": "Industrial Area 6",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "249616"
+   },
+   "contacts": [
+    {
+     "name": "Yousef Okafor",
+     "role": "Billing",
+     "email": "yousef.okafor@sorqova.example",
+     "phone": "+971 6 602 6818"
+    },
+    {
+     "name": "Omar Novak",
+     "role": "Finance Manager",
+     "email": "omar.novak@sorqova.example",
+     "phone": "+971 4 708 2596"
+    }
+   ],
+   "phone_on_file": "+971 6 294 6553",
+   "bank": {
+    "account_name": "Sorqova Software LLC",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE899632441391898392015",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "sorqova.example"
+   ],
+   "sender_addresses": [
+    "billing@sorqova.example",
+    "accounts@sorqova.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "rtl",
+    "font": "Helvetica",
+    "accent": "#a04a00",
+    "numbering": "{YYYY}{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 30,
+    "currency": "USD",
+    "language": "ar",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Fatorix 5.4"
+   },
+   "po_based": false,
+   "since": "2024-07-24",
+   "typical_subtotal": [
+    "40000.00",
+    "180000.00"
+   ]
+  },
+  {
+   "id": "VEN-003",
+   "legal_name": "Moniro Office Supplies Trading LLC",
+   "legal_name_ar": "منرو لتجارة اللوازم المكتبية ذ.م.م",
+   "trade_name": "Moniro",
+   "country": "AE",
+   "trade_licence": "DXB-2264605",
+   "trn": "198112919328818",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 514, Ghaf Building",
+    "line2": "Deira, Port Saeed",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "236277"
+   },
+   "contacts": [
+    {
+     "name": "Mariam Pillai",
+     "role": "Accounts Receivable",
+     "email": "mariam.pillai@moniro.example",
+     "phone": "+971 7 836 3797"
+    },
+    {
+     "name": "Hassan Saleh",
+     "role": "Finance Manager",
+     "email": "hassan.saleh@moniro.example",
+     "phone": "+971 6 667 6045"
+    }
+   ],
+   "phone_on_file": "+971 4 357 2714",
+   "bank": {
+    "account_name": "Moniro Office Supplies Trading LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE339341836972423733392",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "moniro.example"
+   ],
+   "sender_addresses": [
+    "billing@moniro.example",
+    "accounts@moniro.example"
+   ],
+   "category": "office_supplies",
+   "template": {
+    "layout": "band",
+    "font": "Courier",
+    "accent": "#2d2d2d",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": false,
+    "logo": "none",
+    "producer": "Fatorix 3.6"
+   },
+   "po_based": true,
+   "since": "2023-12-22",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-004",
+   "legal_name": "Malviro Facilities Management LLC",
+   "legal_name_ar": "ملفرو لإدارة المرافق ذ.م.م",
+   "trade_name": "Malviro",
+   "country": "AE",
+   "trade_licence": "DXB-7615146",
+   "trn": "197190388275772",
+   "tax_id": null,
+   "address": {
+    "line1": "Shop 516, Nakheel Garden Tower",
+    "line2": "Dubai Investments Park",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "268003"
+   },
+   "contacts": [
+    {
+     "name": "Rahul Saleh",
+     "role": "Operations",
+     "email": "rahul.saleh@malviro.example",
+     "phone": "+971 6 462 4259"
+    },
+    {
+     "name": "Thomas Okafor",
+     "role": "Billing",
+     "email": "thomas.okafor@malviro.example",
+     "phone": "+971 2 858 1569"
+    }
+   ],
+   "phone_on_file": "+971 2 747 3079",
+   "bank": {
+    "account_name": "Malviro Facilities Management LLC",
+    "bank_name": "Rimal Bank of Commerce (synthetic)",
+    "iban": "AE959553320806856332470",
+    "bic": "XQRBAEAS",
+    "country": "AE"
+   },
+   "email_domains": [
+    "malviro.example"
+   ],
+   "sender_addresses": [
+    "billing@malviro.example",
+    "accounts@malviro.example"
+   ],
+   "category": "facilities",
+   "template": {
+    "layout": "compact",
+    "font": "Courier",
+    "accent": "#3c5a14",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 15,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 70,
+     "scan": 20,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "none",
+    "producer": "Fatorix 2.7"
+   },
+   "po_based": true,
+   "since": "2024-12-29",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-005",
+   "legal_name": "Tuxiro Logistics LLC",
+   "legal_name_ar": "تكسرو للخدمات اللوجستية ذ.م.م",
+   "trade_name": "Tuxiro",
+   "country": "AE",
+   "trade_licence": "SHJ-3075550",
+   "trn": "198711477180458",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 3315, Yasmin Business Centre",
+    "line2": "Al Majaz 2",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "426707"
+   },
+   "contacts": [
+    {
+     "name": "Rahul Saleh",
+     "role": "Sales",
+     "email": "rahul.saleh@tuxiro.example",
+     "phone": "+971 2 683 8420"
+    },
+    {
+     "name": "Priya Qureshi",
+     "role": "Accounts Receivable",
+     "email": "priya.qureshi@tuxiro.example",
+     "phone": "+971 2 220 4597"
+    }
+   ],
+   "phone_on_file": "+971 6 580 8789",
+   "bank": {
+    "account_name": "Tuxiro Logistics LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE659171035202744578712",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "tuxiro.example"
+   ],
+   "sender_addresses": [
+    "billing@tuxiro.example",
+    "accounts@tuxiro.example"
+   ],
+   "category": "logistics",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#a04a00",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 0,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Fatorix 7.8"
+   },
+   "po_based": true,
+   "since": "2025-04-28",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-006",
+   "legal_name": "Miltar Catering Services LLC",
+   "legal_name_ar": "ملتر لخدمات التموين ذ.م.م",
+   "trade_name": "Miltar",
+   "country": "AE",
+   "trade_licence": "AJM-3196107",
+   "trn": "197345082539084",
+   "tax_id": null,
+   "address": {
+    "line1": "Shop 2116, Palm Grove House",
+    "line2": "Al Jurf Industrial 1",
+    "city": "Ajman",
+    "region": "Ajman",
+    "country": "AE",
+    "po_box": "217366"
+   },
+   "contacts": [
+    {
+     "name": "Elena Darwish",
+     "role": "Sales",
+     "email": "elena.darwish@miltar.example",
+     "phone": "+971 7 378 1341"
+    },
+    {
+     "name": "Elena Brennan",
+     "role": "Accounts Receivable",
+     "email": "elena.brennan@miltar.example",
+     "phone": "+971 7 384 7275"
+    }
+   ],
+   "phone_on_file": "+971 7 858 5707",
+   "bank": {
+    "account_name": "Miltar Catering Services LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE869340904990924247986",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "miltar.example"
+   ],
+   "sender_addresses": [
+    "billing@miltar.example",
+    "accounts@miltar.example"
+   ],
+   "category": "catering",
+   "template": {
+    "layout": "grid",
+    "font": "Times-Roman",
+    "accent": "#a04a00",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 70,
+     "scan": 20,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Qaydra 4.2"
+   },
+   "po_based": false,
+   "since": "2023-11-02",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-007",
+   "legal_name": "Rultar Management Consultancy LLC",
+   "legal_name_ar": "رلتر للاستشارات الإدارية ذ.م.م",
+   "trade_name": "Rultar",
+   "country": "AE",
+   "trade_licence": "DXB-8012126",
+   "trn": "196843200541452",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 3215, Lulu House",
+    "line2": "Business Bay",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "398978"
+   },
+   "contacts": [
+    {
+     "name": "Imran Darwish",
+     "role": "Finance Manager",
+     "email": "imran.darwish@rultar.example",
+     "phone": "+971 6 383 3286"
+    },
+    {
+     "name": "Noura Saleh",
+     "role": "Accounts Receivable",
+     "email": "noura.saleh@rultar.example",
+     "phone": "+971 2 215 9545"
+    }
+   ],
+   "phone_on_file": "+971 6 458 2848",
+   "bank": {
+    "account_name": "Rultar Management Consultancy LLC",
+    "bank_name": "Rimal Bank of Commerce (synthetic)",
+    "iban": "AE059558034588265644395",
+    "bic": "XQRBAEAS",
+    "country": "AE"
+   },
+   "email_domains": [
+    "rultar.example"
+   ],
+   "sender_addresses": [
+    "billing@rultar.example",
+    "accounts@rultar.example"
+   ],
+   "category": "consulting",
+   "template": {
+    "layout": "bilingual",
+    "font": "Times-Roman",
+    "accent": "#7a1c2c",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 45,
+    "currency": "AED",
+    "language": "bilingual",
+    "formats": {
+     "pdf": 70,
+     "scan": 20,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Accuvane 8.0"
+   },
+   "po_based": false,
+   "since": "2025-01-02",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-008",
+   "legal_name": "Kolvova Advertising LLC",
+   "legal_name_ar": "كلففا للدعاية والإعلان ذ.م.م",
+   "trade_name": "Kolvova",
+   "country": "AE",
+   "trade_licence": "AJM-6995363",
+   "trn": "198179456879758",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 3110, Reem Building",
+    "line2": "Al Jurf Industrial 1",
+    "city": "Ajman",
+    "region": "Ajman",
+    "country": "AE",
+    "po_box": "396248"
+   },
+   "contacts": [
+    {
+     "name": "Aisha Fernandes",
+     "role": "Sales",
+     "email": "aisha.fernandes@kolvova.example",
+     "phone": "+971 4 714 3327"
+    },
+    {
+     "name": "Aisha Mansour",
+     "role": "Billing",
+     "email": "aisha.mansour@kolvova.example",
+     "phone": "+971 7 849 7542"
+    }
+   ],
+   "phone_on_file": "+971 7 596 9485",
+   "bank": {
+    "account_name": "Kolvova Advertising LLC",
+    "bank_name": "Noora National Bank (synthetic)",
+    "iban": "AE689262174073287244547",
+    "bic": "XQNNAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "kolvova.example",
+    "kolvova-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@kolvova.example",
+    "accounts@kolvova.example"
+   ],
+   "category": "marketing",
+   "template": {
+    "layout": "band",
+    "font": "Courier",
+    "accent": "#1f3a68",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 15,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": false,
+    "logo": "square",
+    "producer": "Qaydra 6.4"
+   },
+   "po_based": true,
+   "since": "2024-11-14",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-009",
+   "legal_name": "Lerqino Building Materials Trading LLC",
+   "legal_name_ar": "لرقنو لتجارة مواد البناء ذ.م.م",
+   "trade_name": "Lerqino",
+   "country": "AE",
+   "trade_licence": "DXB-1846745",
+   "trn": "192186454317195",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 809, Sidra Warehouse",
+    "line2": "Business Bay",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "235829"
+   },
+   "contacts": [
+    {
+     "name": "Daniel Nasser",
+     "role": "Finance Manager",
+     "email": "daniel.nasser@lerqino.example",
+     "phone": "+971 2 421 1158"
+    },
+    {
+     "name": "Huda Okafor",
+     "role": "Sales",
+     "email": "huda.okafor@lerqino.example",
+     "phone": "+971 2 767 5772"
+    }
+   ],
+   "phone_on_file": "+971 6 868 8275",
+   "bank": {
+    "account_name": "Lerqino Building Materials Trading LLC",
+    "bank_name": "Qasr Investment Bank (synthetic)",
+    "iban": "AE859481861405787036441",
+    "bic": "XQQIAEAA",
+    "country": "AE"
+   },
+   "email_domains": [
+    "lerqino.example",
+    "lerqino-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@lerqino.example",
+    "accounts@lerqino.example"
+   ],
+   "category": "construction",
+   "template": {
+    "layout": "band",
+    "font": "Times-Roman",
+    "accent": "#3c5a14",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": false,
+    "logo": "bar",
+    "producer": "Billquill 2.7"
+   },
+   "po_based": true,
+   "since": "2024-04-07",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-010",
+   "legal_name": "Roxar Telecom Services LLC",
+   "legal_name_ar": "ركسر لخدمات الاتصالات ذ.م.م",
+   "trade_name": "Roxar",
+   "country": "AE",
+   "trade_licence": "SHJ-2449990",
+   "trn": "192484505424219",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 1219, Reem Building",
+    "line2": "Al Majaz 2",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "432680"
+   },
+   "contacts": [
+    {
+     "name": "Grace Darwish",
+     "role": "Finance Manager",
+     "email": "grace.darwish@roxar.example",
+     "phone": "+971 6 538 4764"
+    },
+    {
+     "name": "Mariam Pillai",
+     "role": "Billing",
+     "email": "mariam.pillai@roxar.example",
+     "phone": "+971 4 678 7830"
+    }
+   ],
+   "phone_on_file": "+971 6 643 9088",
+   "bank": {
+    "account_name": "Roxar Telecom Services LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE249178428856347331367",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "roxar.example",
+    "roxar-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@roxar.example",
+    "accounts@roxar.example"
+   ],
+   "category": "telecom",
+   "template": {
+    "layout": "classic",
+    "font": "Helvetica",
+    "accent": "#7a1c2c",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 0,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": false,
+    "logo": "square",
+    "producer": "Billquill 2.2"
+   },
+   "po_based": false,
+   "since": "2023-03-06",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-011",
+   "legal_name": "Niriro Printing Press LLC",
+   "legal_name_ar": "نررو للطباعة والنشر ذ.م.م",
+   "trade_name": "Niriro",
+   "country": "AE",
+   "trade_licence": "DXB-4742159",
+   "trn": "195680717386901",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 610, Ghaf House",
+    "line2": "Business Bay",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "393358"
+   },
+   "contacts": [
+    {
+     "name": "Rahul Mansour",
+     "role": "Billing",
+     "email": "rahul.mansour@niriro.example",
+     "phone": "+971 2 376 7532"
+    },
+    {
+     "name": "Aisha Pillai",
+     "role": "Sales",
+     "email": "aisha.pillai@niriro.example",
+     "phone": "+971 2 859 8370"
+    }
+   ],
+   "phone_on_file": "+971 7 714 6021",
+   "bank": {
+    "account_name": "Niriro Printing Press LLC",
+    "bank_name": "Noora National Bank (synthetic)",
+    "iban": "AE159260080301337474474",
+    "bic": "XQNNAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "niriro.example"
+   ],
+   "sender_addresses": [
+    "billing@niriro.example",
+    "accounts@niriro.example"
+   ],
+   "category": "printing",
+   "template": {
+    "layout": "rtl",
+    "font": "Times-Roman",
+    "accent": "#2d2d2d",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "ar",
+    "formats": {
+     "pdf": 45,
+     "scan": 40,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Qaydra 2.6"
+   },
+   "po_based": true,
+   "since": "2023-01-03",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-012",
+   "legal_name": "Boltar Security Services LLC",
+   "legal_name_ar": "بلتر لخدمات الأمن ذ.م.م",
+   "trade_name": "Boltar",
+   "country": "AE",
+   "trade_licence": "DXB-6473395",
+   "trn": "197714222288124",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 4212, Oryx Warehouse",
+    "line2": "Deira, Port Saeed",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "53336"
+   },
+   "contacts": [
+    {
+     "name": "Grace Okafor",
+     "role": "Finance Manager",
+     "email": "grace.okafor@boltar.example",
+     "phone": "+971 7 595 1442"
+    },
+    {
+     "name": "Sara Saleh",
+     "role": "Accounts Receivable",
+     "email": "sara.saleh@boltar.example",
+     "phone": "+971 2 861 6671"
+    }
+   ],
+   "phone_on_file": "+971 6 590 6865",
+   "bank": {
+    "account_name": "Boltar Security Services LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE279173198382846399516",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "boltar.example"
+   ],
+   "sender_addresses": [
+    "billing@boltar.example",
+    "accounts@boltar.example"
+   ],
+   "category": "security",
+   "template": {
+    "layout": "band",
+    "font": "Times-Roman",
+    "accent": "#3c5a14",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 60,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Mizanto 9.8"
+   },
+   "po_based": true,
+   "since": "2023-01-21",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-013",
+   "legal_name": "Movova IT Solutions LLC",
+   "legal_name_ar": "مففا لحلول تقنية المعلومات ذ.م.م",
+   "trade_name": "Movova",
+   "country": "AE",
+   "trade_licence": "AUH-7664336",
+   "trn": "192489563948229",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 3713, Falaj Building",
+    "line2": "Mussafah Industrial Area",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "113732"
+   },
+   "contacts": [
+    {
+     "name": "Karim Menon",
+     "role": "Billing",
+     "email": "karim.menon@movova.example",
+     "phone": "+971 4 244 5084"
+    },
+    {
+     "name": "Karim Qureshi",
+     "role": "Sales",
+     "email": "karim.qureshi@movova.example",
+     "phone": "+971 6 330 8183"
+    }
+   ],
+   "phone_on_file": "+971 2 442 5445",
+   "bank": {
+    "account_name": "Movova IT Solutions LLC",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE579639708082596998792",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "movova.example"
+   ],
+   "sender_addresses": [
+    "billing@movova.example",
+    "accounts@movova.example"
+   ],
+   "category": "it_hardware",
+   "template": {
+    "layout": "grid",
+    "font": "Courier",
+    "accent": "#3c5a14",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 45,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Accuvane 5.2"
+   },
+   "po_based": true,
+   "since": "2025-06-10",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-014",
+   "legal_name": "Kixar Software LLC",
+   "legal_name_ar": "ككسر للبرمجيات ذ.م.م",
+   "trade_name": "Kixar",
+   "country": "AE",
+   "trade_licence": "AUH-1071212",
+   "trn": "192833715972943",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 2411, Ghaf House",
+    "line2": "Mussafah Industrial Area",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "325326"
+   },
+   "contacts": [
+    {
+     "name": "Rahul Okafor",
+     "role": "Operations",
+     "email": "rahul.okafor@kixar.example",
+     "phone": "+971 2 822 1992"
+    },
+    {
+     "name": "Hassan Kowalski",
+     "role": "Finance Manager",
+     "email": "hassan.kowalski@kixar.example",
+     "phone": "+971 2 798 7152"
+    }
+   ],
+   "phone_on_file": "+971 6 573 3858",
+   "bank": {
+    "account_name": "Kixar Software LLC",
+    "bank_name": "Noora National Bank (synthetic)",
+    "iban": "AE699260670566929224814",
+    "bic": "XQNNAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "kixar.example"
+   ],
+   "sender_addresses": [
+    "billing@kixar.example",
+    "accounts@kixar.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "bilingual",
+    "font": "Helvetica",
+    "accent": "#1f3a68",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "bilingual",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Qaydra 8.5"
+   },
+   "po_based": false,
+   "since": "2024-10-08",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-015",
+   "legal_name": "Zarqeth Office Supplies Trading LLC",
+   "legal_name_ar": "زرقته لتجارة اللوازم المكتبية ذ.م.م",
+   "trade_name": "Zarqeth",
+   "country": "AE",
+   "trade_licence": "AUH-7367375",
+   "trn": "199620070536454",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 3916, Ghaf Tower",
+    "line2": "Al Reem Island",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "435095"
+   },
+   "contacts": [
+    {
+     "name": "Fatima Rahman",
+     "role": "Sales",
+     "email": "fatima.rahman@zarqeth.example",
+     "phone": "+971 7 348 8801"
+    },
+    {
+     "name": "Imran Nasser",
+     "role": "Operations",
+     "email": "imran.nasser@zarqeth.example",
+     "phone": "+971 2 721 8387"
+    }
+   ],
+   "phone_on_file": "+971 6 617 3029",
+   "bank": {
+    "account_name": "Zarqeth Office Supplies Trading LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE459344787357369009407",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "zarqeth.example",
+    "zarqeth-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@zarqeth.example",
+    "accounts@zarqeth.example"
+   ],
+   "category": "office_supplies",
+   "template": {
+    "layout": "compact",
+    "font": "Courier",
+    "accent": "#2d2d2d",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "none",
+    "producer": "Ledgrova 5.8"
+   },
+   "po_based": true,
+   "since": "2024-06-12",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-016",
+   "legal_name": "Juvus Facilities Management LLC",
+   "legal_name_ar": "جفس لإدارة المرافق ذ.م.م",
+   "trade_name": "Juvus",
+   "country": "AE",
+   "trade_licence": "SHJ-8784477",
+   "trn": "195273417307286",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 819, Nakheel Garden Plaza",
+    "line2": "Industrial Area 6",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "304209"
+   },
+   "contacts": [
+    {
+     "name": "Huda Kowalski",
+     "role": "Operations",
+     "email": "huda.kowalski@juvus.example",
+     "phone": "+971 6 773 1392"
+    },
+    {
+     "name": "Imran Menon",
+     "role": "Accounts Receivable",
+     "email": "imran.menon@juvus.example",
+     "phone": "+971 6 387 3381"
+    }
+   ],
+   "phone_on_file": "+971 4 262 4053",
+   "bank": {
+    "account_name": "Juvus Facilities Management LLC",
+    "bank_name": "Noora National Bank (synthetic)",
+    "iban": "AE929263533837572946624",
+    "bic": "XQNNAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "juvus.example",
+    "juvus-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@juvus.example",
+    "accounts@juvus.example"
+   ],
+   "category": "facilities",
+   "template": {
+    "layout": "rtl",
+    "font": "Times-Roman",
+    "accent": "#1f3a68",
+    "numbering": "{P}{N6}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 0,
+    "currency": "AED",
+    "language": "ar",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Billquill 2.5"
+   },
+   "po_based": true,
+   "since": "2024-08-09",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-017",
+   "legal_name": "Nermeth Logistics LLC",
+   "legal_name_ar": "نرمته للخدمات اللوجستية ذ.م.م",
+   "trade_name": "Nermeth",
+   "country": "AE",
+   "trade_licence": "DXB-5342831",
+   "trn": "196077434603401",
+   "tax_id": null,
+   "address": {
+    "line1": "Unit 605, Sidra Building",
+    "line2": "Business Bay",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "104949"
+   },
+   "contacts": [
+    {
+     "name": "Imran Fernandes",
+     "role": "Accounts Receivable",
+     "email": "imran.fernandes@nermeth.example",
+     "phone": "+971 7 892 4445"
+    },
+    {
+     "name": "Yousef Nasser",
+     "role": "Finance Manager",
+     "email": "yousef.nasser@nermeth.example",
+     "phone": "+971 2 846 5959"
+    }
+   ],
+   "phone_on_file": "+971 2 480 1159",
+   "bank": {
+    "account_name": "Nermeth Logistics LLC",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE099636489590105934461",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "nermeth.example"
+   ],
+   "sender_addresses": [
+    "billing@nermeth.example",
+    "accounts@nermeth.example"
+   ],
+   "category": "logistics",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#5b2a86",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 30,
+    "currency": "USD",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "none",
+    "producer": "Mizanto 7.4"
+   },
+   "po_based": false,
+   "since": "2023-10-27",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-018",
+   "legal_name": "Lerqen Catering Services FZE",
+   "legal_name_ar": "لرقين لخدمات التموين م.م.ح",
+   "trade_name": "Lerqen",
+   "country": "AE",
+   "trade_licence": "JAFZ-1860532",
+   "trn": "198524045176652",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 417, Lulu Building",
+    "line2": "Jebel Ali Free Zone",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "400232"
+   },
+   "contacts": [
+    {
+     "name": "Omar Menon",
+     "role": "Finance Manager",
+     "email": "omar.menon@lerqen.example",
+     "phone": "+971 2 529 5743"
+    },
+    {
+     "name": "Priya Rahman",
+     "role": "Billing",
+     "email": "priya.rahman@lerqen.example",
+     "phone": "+971 4 292 3561"
+    }
+   ],
+   "phone_on_file": "+971 4 818 2623",
+   "bank": {
+    "account_name": "Lerqen Catering Services FZE",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE409638439105725083724",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "lerqen.example"
+   ],
+   "sender_addresses": [
+    "billing@lerqen.example",
+    "accounts@lerqen.example"
+   ],
+   "category": "catering",
+   "template": {
+    "layout": "bilingual",
+    "font": "Helvetica",
+    "accent": "#7a1c2c",
+    "numbering": "{P}{N6}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 60,
+    "currency": "AED",
+    "language": "bilingual",
+    "formats": {
+     "pdf": 60,
+     "scan": 25,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Accuvane 4.6"
+   },
+   "po_based": true,
+   "since": "2024-10-03",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-019",
+   "legal_name": "Bondia Management Consultancy LLC",
+   "legal_name_ar": "بنديا للاستشارات الإدارية ذ.م.م",
+   "trade_name": "Bondia",
+   "country": "AE",
+   "trade_licence": "SHJ-1515231",
+   "trn": "195431131355810",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 4716, Palm Grove House",
+    "line2": "Industrial Area 6",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "199832"
+   },
+   "contacts": [
+    {
+     "name": "Imran Darwish",
+     "role": "Billing",
+     "email": "imran.darwish@bondia.example",
+     "phone": "+971 2 364 4365"
+    },
+    {
+     "name": "Fatima Darwish",
+     "role": "Sales",
+     "email": "fatima.darwish@bondia.example",
+     "phone": "+971 7 523 3603"
+    }
+   ],
+   "phone_on_file": "+971 6 360 4074",
+   "bank": {
+    "account_name": "Bondia Management Consultancy LLC",
+    "bank_name": "Rimal Bank of Commerce (synthetic)",
+    "iban": "AE759550999049054355622",
+    "bic": "XQRBAEAS",
+    "country": "AE"
+   },
+   "email_domains": [
+    "bondia.example",
+    "bondia-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@bondia.example",
+    "accounts@bondia.example"
+   ],
+   "category": "consulting",
+   "template": {
+    "layout": "rtl",
+    "font": "Times-Roman",
+    "accent": "#7a1c2c",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 60,
+    "currency": "AED",
+    "language": "ar",
+    "formats": {
+     "pdf": 45,
+     "scan": 40,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Accuvane 2.5"
+   },
+   "po_based": false,
+   "since": "2024-05-11",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-020",
+   "legal_name": "Fiziro Advertising FZE",
+   "legal_name_ar": "فزرو للدعاية والإعلان م.م.ح",
+   "trade_name": "Fiziro",
+   "country": "AE",
+   "trade_licence": "JAFZ-4804955",
+   "trn": "194855196004448",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 1104, Yasmin Plaza",
+    "line2": "Jebel Ali Free Zone",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "357903"
+   },
+   "contacts": [
+    {
+     "name": "Hassan Saleh",
+     "role": "Operations",
+     "email": "hassan.saleh@fiziro.example",
+     "phone": "+971 7 859 5714"
+    },
+    {
+     "name": "Fatima Qureshi",
+     "role": "Billing",
+     "email": "fatima.qureshi@fiziro.example",
+     "phone": "+971 6 520 8012"
+    }
+   ],
+   "phone_on_file": "+971 2 383 6106",
+   "bank": {
+    "account_name": "Fiziro Advertising FZE",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE549348456345135929494",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "fiziro.example"
+   ],
+   "sender_addresses": [
+    "billing@fiziro.example",
+    "accounts@fiziro.example"
+   ],
+   "category": "marketing",
+   "template": {
+    "layout": "rtl",
+    "font": "Helvetica",
+    "accent": "#a04a00",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "ar",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": false,
+    "logo": "bar",
+    "producer": "Mizanto 7.4"
+   },
+   "po_based": false,
+   "since": "2025-02-09",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-021",
+   "legal_name": "Ziskar Building Materials Trading LLC",
+   "legal_name_ar": "زسكر لتجارة مواد البناء ذ.م.م",
+   "trade_name": "Ziskar",
+   "country": "AE",
+   "trade_licence": "DXB-8010239",
+   "trn": "190892208525104",
+   "tax_id": null,
+   "address": {
+    "line1": "Shop 418, Yasmin Business Centre",
+    "line2": "Al Quoz Industrial Area 3",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "82632"
+   },
+   "contacts": [
+    {
+     "name": "Yousef Brennan",
+     "role": "Operations",
+     "email": "yousef.brennan@ziskar.example",
+     "phone": "+971 6 272 3212"
+    },
+    {
+     "name": "Karim Brennan",
+     "role": "Billing",
+     "email": "karim.brennan@ziskar.example",
+     "phone": "+971 4 628 9020"
+    }
+   ],
+   "phone_on_file": "+971 4 210 3299",
+   "bank": {
+    "account_name": "Ziskar Building Materials Trading LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE829172976502216796491",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "ziskar.example"
+   ],
+   "sender_addresses": [
+    "billing@ziskar.example",
+    "accounts@ziskar.example"
+   ],
+   "category": "construction",
+   "template": {
+    "layout": "compact",
+    "font": "Courier",
+    "accent": "#3c5a14",
+    "numbering": "{P}{N6}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 60,
+     "scan": 25,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Fatorix 8.3"
+   },
+   "po_based": true,
+   "since": "2024-05-04",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-022",
+   "legal_name": "Sesken Telecom Services LLC",
+   "legal_name_ar": "سسكين لخدمات الاتصالات ذ.م.م",
+   "trade_name": "Sesken",
+   "country": "AE",
+   "trade_licence": "DXB-9942468",
+   "trn": "196050261231769",
+   "tax_id": null,
+   "address": {
+    "line1": "Shop 1515, Yasmin Business Centre",
+    "line2": "Business Bay",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "445190"
+   },
+   "contacts": [
+    {
+     "name": "Omar Kowalski",
+     "role": "Operations",
+     "email": "omar.kowalski@sesken.example",
+     "phone": "+971 7 235 1979"
+    },
+    {
+     "name": "Karim Darwish",
+     "role": "Finance Manager",
+     "email": "karim.darwish@sesken.example",
+     "phone": "+971 2 826 5099"
+    }
+   ],
+   "phone_on_file": "+971 7 773 3644",
+   "bank": {
+    "account_name": "Sesken Telecom Services LLC",
+    "bank_name": "Qasr Investment Bank (synthetic)",
+    "iban": "AE409486767633345973034",
+    "bic": "XQQIAEAA",
+    "country": "AE"
+   },
+   "email_domains": [
+    "sesken.example"
+   ],
+   "sender_addresses": [
+    "billing@sesken.example",
+    "accounts@sesken.example"
+   ],
+   "category": "telecom",
+   "template": {
+    "layout": "band",
+    "font": "Helvetica",
+    "accent": "#00616a",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 70,
+     "scan": 20,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "none",
+    "producer": "Accuvane 8.7"
+   },
+   "po_based": false,
+   "since": "2024-12-11",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-023",
+   "legal_name": "Haltora Printing Press LLC",
+   "legal_name_ar": "هلترا للطباعة والنشر ذ.م.م",
+   "trade_name": "Haltora",
+   "country": "AE",
+   "trade_licence": "SHJ-9291948",
+   "trn": "194481077640130",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 518, Ghaf Tower",
+    "line2": "Al Majaz 2",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "472922"
+   },
+   "contacts": [
+    {
+     "name": "Sara Iyer",
+     "role": "Sales",
+     "email": "sara.iyer@haltora.example",
+     "phone": "+971 4 761 9350"
+    },
+    {
+     "name": "Mariam Rahman",
+     "role": "Billing",
+     "email": "mariam.rahman@haltora.example",
+     "phone": "+971 4 542 4364"
+    }
+   ],
+   "phone_on_file": "+971 4 669 4649",
+   "bank": {
+    "account_name": "Haltora Printing Press LLC",
+    "bank_name": "Noora National Bank (synthetic)",
+    "iban": "AE309264590105307845065",
+    "bic": "XQNNAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "haltora.example",
+    "haltora-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@haltora.example",
+    "accounts@haltora.example"
+   ],
+   "category": "printing",
+   "template": {
+    "layout": "rtl",
+    "font": "Helvetica",
+    "accent": "#7a1c2c",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 0,
+    "currency": "AED",
+    "language": "ar",
+    "formats": {
+     "pdf": 45,
+     "scan": 40,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Billquill 6.8"
+   },
+   "po_based": true,
+   "since": "2024-09-10",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-024",
+   "legal_name": "Rervia Security Services LLC",
+   "legal_name_ar": "ررفيا لخدمات الأمن ذ.م.م",
+   "trade_name": "Rervia",
+   "country": "AE",
+   "trade_licence": "AUH-3994443",
+   "trn": "190267588836529",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 4412, Falaj Business Centre",
+    "line2": "Al Reem Island",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "58452"
+   },
+   "contacts": [
+    {
+     "name": "Layla Brennan",
+     "role": "Operations",
+     "email": "layla.brennan@rervia.example",
+     "phone": "+971 2 306 5069"
+    },
+    {
+     "name": "Elena Saleh",
+     "role": "Finance Manager",
+     "email": "elena.saleh@rervia.example",
+     "phone": "+971 2 772 6515"
+    }
+   ],
+   "phone_on_file": "+971 4 880 2999",
+   "bank": {
+    "account_name": "Rervia Security Services LLC",
+    "bank_name": "Sahil Commercial Bank (synthetic)",
+    "iban": "AE869170827850904982683",
+    "bic": "XQSHAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "rervia.example",
+    "rervia-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@rervia.example",
+    "accounts@rervia.example"
+   ],
+   "category": "security",
+   "template": {
+    "layout": "compact",
+    "font": "Helvetica",
+    "accent": "#1f3a68",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "xml": 65,
+     "pdf": 30,
+     "scan": 5
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Accuvane 9.8"
+   },
+   "po_based": true,
+   "since": "2023-11-23",
+   "typical_subtotal": [
+    "40000.00",
+    "180000.00"
+   ]
+  },
+  {
+   "id": "VEN-025",
+   "legal_name": "Multova IT Solutions LLC",
+   "legal_name_ar": "ملتفا لحلول تقنية المعلومات ذ.م.م",
+   "trade_name": "Multova",
+   "country": "AE",
+   "trade_licence": "SHJ-9911681",
+   "trn": "190953531901796",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 3410, Lulu Business Centre",
+    "line2": "Industrial Area 6",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "123603"
+   },
+   "contacts": [
+    {
+     "name": "Karim Rahman",
+     "role": "Accounts Receivable",
+     "email": "karim.rahman@multova.example",
+     "phone": "+971 6 737 4911"
+    },
+    {
+     "name": "Sara Darwish",
+     "role": "Operations",
+     "email": "sara.darwish@multova.example",
+     "phone": "+971 4 339 5858"
+    }
+   ],
+   "phone_on_file": "+971 7 640 9523",
+   "bank": {
+    "account_name": "Multova IT Solutions LLC",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE349630908788819830576",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "multova.example"
+   ],
+   "sender_addresses": [
+    "billing@multova.example",
+    "accounts@multova.example"
+   ],
+   "category": "it_hardware",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#2d2d2d",
+    "numbering": "{P}{N6}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": true,
+    "logo": "circle",
+    "producer": "Qaydra 2.5"
+   },
+   "po_based": true,
+   "since": "2024-03-03",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-026",
+   "legal_name": "Zurveth Software FZE",
+   "legal_name_ar": "زرفته للبرمجيات م.م.ح",
+   "trade_name": "Zurveth",
+   "country": "AE",
+   "trade_licence": "JAFZ-4933085",
+   "trn": "195397658591823",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 713, Lulu Building",
+    "line2": "Jebel Ali Free Zone",
+    "city": "Dubai",
+    "region": "Dubai",
+    "country": "AE",
+    "po_box": "92011"
+   },
+   "contacts": [
+    {
+     "name": "Fatima Okafor",
+     "role": "Operations",
+     "email": "fatima.okafor@zurveth.example",
+     "phone": "+971 4 840 3577"
+    },
+    {
+     "name": "Hassan Saleh",
+     "role": "Sales",
+     "email": "hassan.saleh@zurveth.example",
+     "phone": "+971 4 503 8953"
+    }
+   ],
+   "phone_on_file": "+971 7 715 1093",
+   "bank": {
+    "account_name": "Zurveth Software FZE",
+    "bank_name": "Qasr Investment Bank (synthetic)",
+    "iban": "AE439480545019610806108",
+    "bic": "XQQIAEAA",
+    "country": "AE"
+   },
+   "email_domains": [
+    "zurveth.example"
+   ],
+   "sender_addresses": [
+    "billing@zurveth.example",
+    "accounts@zurveth.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "band",
+    "font": "Courier",
+    "accent": "#7a1c2c",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 15,
+    "currency": "USD",
+    "language": "en",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "none",
+    "producer": "Accuvane 4.7"
+   },
+   "po_based": false,
+   "since": "2023-04-10",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-027",
+   "legal_name": "Suskino Software Ltd",
+   "legal_name_ar": null,
+   "trade_name": "Suskino",
+   "country": "GB",
+   "trade_licence": "REG-GB-769312",
+   "trn": null,
+   "tax_id": "GB435536777",
+   "address": {
+    "line1": "40 Palm Grove Road",
+    "line2": "Unit 10",
+    "city": "Leeds",
+    "region": "West Yorkshire",
+    "country": "GB",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Daniel Silva",
+     "role": "Operations",
+     "email": "daniel.silva@suskino.example",
+     "phone": "+44 15 293 6595"
+    },
+    {
+     "name": "Mariam Kowalski",
+     "role": "Sales",
+     "email": "mariam.kowalski@suskino.example",
+     "phone": "+44 27 149 4011"
+    }
+   ],
+   "phone_on_file": "+44 19 173 7289",
+   "bank": {
+    "account_name": "Suskino Software Ltd",
+    "bank_name": "Ashgrove Mutual Bank (synthetic)",
+    "iban": "GB25XQAM99742229261293",
+    "bic": "XQAMGB2L",
+    "country": "GB"
+   },
+   "email_domains": [
+    "suskino.example"
+   ],
+   "sender_addresses": [
+    "billing@suskino.example",
+    "accounts@suskino.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "band",
+    "font": "Helvetica",
+    "accent": "#3c5a14",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 45,
+    "currency": "GBP",
+    "language": "en",
+    "formats": {
+     "pdf": 85,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Mizanto 4.5"
+   },
+   "po_based": false,
+   "since": "2023-10-13",
+   "typical_subtotal": [
+    "40000.00",
+    "180000.00"
+   ]
+  },
+  {
+   "id": "VEN-028",
+   "legal_name": "Mervino Software Ltd",
+   "legal_name_ar": null,
+   "trade_name": "Mervino",
+   "country": "GB",
+   "trade_licence": "REG-GB-289555",
+   "trn": null,
+   "tax_id": "GB329984689",
+   "address": {
+    "line1": "127 Lulu Road",
+    "line2": "Unit 8",
+    "city": "Leeds",
+    "region": "West Yorkshire",
+    "country": "GB",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Hassan Silva",
+     "role": "Finance Manager",
+     "email": "hassan.silva@mervino.example",
+     "phone": "+44 14 818 7046"
+    },
+    {
+     "name": "Huda Nasser",
+     "role": "Sales",
+     "email": "huda.nasser@mervino.example",
+     "phone": "+44 52 986 3945"
+    }
+   ],
+   "phone_on_file": "+44 47 634 8912",
+   "bank": {
+    "account_name": "Mervino Software Ltd",
+    "bank_name": "Ashgrove Mutual Bank (synthetic)",
+    "iban": "GB73XQAM99077081613343",
+    "bic": "XQAMGB2L",
+    "country": "GB"
+   },
+   "email_domains": [
+    "mervino.example",
+    "mervino-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@mervino.example",
+    "accounts@mervino.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#1f3a68",
+    "numbering": "{YYYY}{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 45,
+    "currency": "GBP",
+    "language": "en",
+    "formats": {
+     "pdf": 100
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Ledgrova 5.8"
+   },
+   "po_based": true,
+   "since": "2023-08-21",
+   "typical_subtotal": [
+    "40000.00",
+    "180000.00"
+   ]
+  },
+  {
+   "id": "VEN-029",
+   "legal_name": "Duntana IT Solutions GmbH",
+   "legal_name_ar": null,
+   "trade_name": "Duntana",
+   "country": "DE",
+   "trade_licence": "REG-DE-316085",
+   "trn": null,
+   "tax_id": "DE654098252",
+   "address": {
+    "line1": "103 Ghaf Road",
+    "line2": "Unit 2",
+    "city": "Hamburg",
+    "region": "Hamburg",
+    "country": "DE",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Aisha Nasser",
+     "role": "Billing",
+     "email": "aisha.nasser@duntana.example",
+     "phone": "+49 11 808 3931"
+    },
+    {
+     "name": "Noura Iyer",
+     "role": "Operations",
+     "email": "noura.iyer@duntana.example",
+     "phone": "+49 45 400 1007"
+    }
+   ],
+   "phone_on_file": "+49 42 948 6379",
+   "bank": {
+    "account_name": "Duntana IT Solutions GmbH",
+    "bank_name": "Lindauer Handelsbank (synthetic)",
+    "iban": "DE41990700117293159216",
+    "bic": "XQLHDEFF",
+    "country": "DE"
+   },
+   "email_domains": [
+    "duntana.example"
+   ],
+   "sender_addresses": [
+    "billing@duntana.example",
+    "accounts@duntana.example"
+   ],
+   "category": "it_hardware",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#5b2a86",
+    "numbering": "{P}-{N5}",
+    "date_format": "%d.%m.%Y",
+    "payment_terms_days": 30,
+    "currency": "EUR",
+    "language": "en",
+    "formats": {
+     "pdf": 100
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Ledgrova 9.7"
+   },
+   "po_based": true,
+   "since": "2024-08-09",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-030",
+   "legal_name": "Fezana Advertising GmbH",
+   "legal_name_ar": null,
+   "trade_name": "Fezana",
+   "country": "DE",
+   "trade_licence": "REG-DE-459167",
+   "trn": null,
+   "tax_id": "DE921757018",
+   "address": {
+    "line1": "133 Yasmin Road",
+    "line2": "Unit 26",
+    "city": "Stuttgart",
+    "region": "Baden-Wurttemberg",
+    "country": "DE",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Aisha Kowalski",
+     "role": "Operations",
+     "email": "aisha.kowalski@fezana.example",
+     "phone": "+49 44 256 1297"
+    },
+    {
+     "name": "Fatima Fernandes",
+     "role": "Accounts Receivable",
+     "email": "fatima.fernandes@fezana.example",
+     "phone": "+49 51 630 4392"
+    }
+   ],
+   "phone_on_file": "+49 67 439 5854",
+   "bank": {
+    "account_name": "Fezana Advertising GmbH",
+    "bank_name": "Lindauer Handelsbank (synthetic)",
+    "iban": "DE18990700112695871305",
+    "bic": "XQLHDEFF",
+    "country": "DE"
+   },
+   "email_domains": [
+    "fezana.example"
+   ],
+   "sender_addresses": [
+    "billing@fezana.example",
+    "accounts@fezana.example"
+   ],
+   "category": "marketing",
+   "template": {
+    "layout": "classic",
+    "font": "Courier",
+    "accent": "#a04a00",
+    "numbering": "{P}-{N5}",
+    "date_format": "%d.%m.%Y",
+    "payment_terms_days": 45,
+    "currency": "EUR",
+    "language": "en",
+    "formats": {
+     "pdf": 100
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Accuvane 9.0"
+   },
+   "po_based": false,
+   "since": "2025-06-08",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-031",
+   "legal_name": "Junova IT Solutions SARL",
+   "legal_name_ar": null,
+   "trade_name": "Junova",
+   "country": "FR",
+   "trade_licence": "REG-FR-231560",
+   "trn": null,
+   "tax_id": "FR770923485",
+   "address": {
+    "line1": "10 Reem Road",
+    "line2": "Unit 1",
+    "city": "Lyon",
+    "region": "Auvergne-Rhone-Alpes",
+    "country": "FR",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Yousef Haddad",
+     "role": "Sales",
+     "email": "yousef.haddad@junova.example",
+     "phone": "+33 99 582 1265"
+    },
+    {
+     "name": "Karim Silva",
+     "role": "Accounts Receivable",
+     "email": "karim.silva@junova.example",
+     "phone": "+33 87 858 8059"
+    }
+   ],
+   "phone_on_file": "+33 74 793 3247",
+   "bank": {
+    "account_name": "Junova IT Solutions SARL",
+    "bank_name": "Banque des Vignes (synthetic)",
+    "iban": "FR7699021032503241537362645",
+    "bic": "XQBVFRPP",
+    "country": "FR"
+   },
+   "email_domains": [
+    "junova.example"
+   ],
+   "sender_addresses": [
+    "billing@junova.example",
+    "accounts@junova.example"
+   ],
+   "category": "it_hardware",
+   "template": {
+    "layout": "band",
+    "font": "Times-Roman",
+    "accent": "#7a1c2c",
+    "numbering": "{P}/{YY}/{N4}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 45,
+    "currency": "EUR",
+    "language": "en",
+    "formats": {
+     "pdf": 85,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Billquill 4.2"
+   },
+   "po_based": true,
+   "since": "2023-03-30",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-032",
+   "legal_name": "Montino Software B.V.",
+   "legal_name_ar": null,
+   "trade_name": "Montino",
+   "country": "NL",
+   "trade_licence": "REG-NL-911060",
+   "trn": null,
+   "tax_id": "NL134732839",
+   "address": {
+    "line1": "11 Oryx Road",
+    "line2": "Unit 19",
+    "city": "Utrecht",
+    "region": "Utrecht",
+    "country": "NL",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Vikram Nasser",
+     "role": "Accounts Receivable",
+     "email": "vikram.nasser@montino.example",
+     "phone": "+31 44 657 7724"
+    },
+    {
+     "name": "Fatima Okafor",
+     "role": "Operations",
+     "email": "fatima.okafor@montino.example",
+     "phone": "+31 62 911 9915"
+    }
+   ],
+   "phone_on_file": "+31 68 826 3819",
+   "bank": {
+    "account_name": "Montino Software B.V.",
+    "bank_name": "Polder Zakenbank (synthetic)",
+    "iban": "NL51XQPZ1741620911",
+    "bic": "XQPZNL2A",
+    "country": "NL"
+   },
+   "email_domains": [
+    "montino.example"
+   ],
+   "sender_addresses": [
+    "billing@montino.example",
+    "accounts@montino.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "compact",
+    "font": "Helvetica",
+    "accent": "#7a1c2c",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 45,
+    "currency": "EUR",
+    "language": "en",
+    "formats": {
+     "pdf": 100
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Ledgrova 5.1"
+   },
+   "po_based": false,
+   "since": "2024-11-22",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "VEN-033",
+   "legal_name": "Qareth Software Co. Ltd",
+   "legal_name_ar": "قرته للبرمجيات",
+   "trade_name": "Qareth",
+   "country": "SA",
+   "trade_licence": "REG-SA-993240",
+   "trn": null,
+   "tax_id": "SA421832213",
+   "address": {
+    "line1": "151 Yasmin Road",
+    "line2": "Unit 25",
+    "city": "Riyadh",
+    "region": "Riyadh Province",
+    "country": "SA",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Omar Pillai",
+     "role": "Billing",
+     "email": "omar.pillai@qareth.example",
+     "phone": "+966 61 933 1149"
+    },
+    {
+     "name": "Hassan Darwish",
+     "role": "Operations",
+     "email": "hassan.darwish@qareth.example",
+     "phone": "+966 65 896 5797"
+    }
+   ],
+   "phone_on_file": "+966 74 134 7280",
+   "bank": {
+    "account_name": "Qareth Software Co. Ltd",
+    "bank_name": "Dana Saudi Bank (synthetic)",
+    "iban": "SA5197125953984091206700",
+    "bic": "XQDSSARI",
+    "country": "SA"
+   },
+   "email_domains": [
+    "qareth.example"
+   ],
+   "sender_addresses": [
+    "billing@qareth.example",
+    "accounts@qareth.example"
+   ],
+   "category": "software",
+   "template": {
+    "layout": "classic",
+    "font": "Times-Roman",
+    "accent": "#a04a00",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d/%m/%Y",
+    "payment_terms_days": 30,
+    "currency": "SAR",
+    "language": "en",
+    "formats": {
+     "pdf": 85,
+     "docx": 15
+    },
+    "prints_bank": true,
+    "logo": "bar",
+    "producer": "Qaydra 9.7"
+   },
+   "po_based": false,
+   "since": "2024-09-12",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "VEN-034",
+   "legal_name": "Fenia Advertising W.L.L.",
+   "legal_name_ar": "فنيا للدعاية والإعلان",
+   "trade_name": "Fenia",
+   "country": "BH",
+   "trade_licence": "REG-BH-989320",
+   "trn": null,
+   "tax_id": "BH956130307",
+   "address": {
+    "line1": "170 Sidra Road",
+    "line2": "Unit 20",
+    "city": "Manama",
+    "region": "Capital Governorate",
+    "country": "BH",
+    "po_box": null
+   },
+   "contacts": [
+    {
+     "name": "Grace Pillai",
+     "role": "Finance Manager",
+     "email": "grace.pillai@fenia.example",
+     "phone": "+973 92 933 3128"
+    },
+    {
+     "name": "Vikram Mansour",
+     "role": "Sales",
+     "email": "vikram.mansour@fenia.example",
+     "phone": "+973 72 683 5299"
+    }
+   ],
+   "phone_on_file": "+973 93 395 5284",
+   "bank": {
+    "account_name": "Fenia Advertising W.L.L.",
+    "bank_name": "Lulu Gulf Bank (synthetic)",
+    "iban": "BH22XQLG41495625196697",
+    "bic": "XQLGBHBM",
+    "country": "BH"
+   },
+   "email_domains": [
+    "fenia.example",
+    "fenia-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@fenia.example",
+    "accounts@fenia.example"
+   ],
+   "category": "marketing",
+   "template": {
+    "layout": "classic",
+    "font": "Times-Roman",
+    "accent": "#1f3a68",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 45,
+    "currency": "USD",
+    "language": "en",
+    "formats": {
+     "pdf": 85,
+     "docx": 15
+    },
+    "prints_bank": false,
+    "logo": "bar",
+    "producer": "Mizanto 5.5"
+   },
+   "po_based": false,
+   "since": "2023-06-28",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  }
+ ],
+ "unknown_vendors": [
+  {
+   "id": "UNK-001",
+   "legal_name": "Dirqar Logistics LLC",
+   "legal_name_ar": "درقر للخدمات اللوجستية ذ.م.م",
+   "trade_name": "Dirqar",
+   "country": "AE",
+   "trade_licence": "SHJ-3378989",
+   "trn": "196307116613813",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 4501, Oryx House",
+    "line2": "Al Majaz 2",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "280639"
+   },
+   "contacts": [
+    {
+     "name": "Layla Silva",
+     "role": "Billing",
+     "email": "layla.silva@dirqar.example",
+     "phone": "+971 2 203 2240"
+    },
+    {
+     "name": "Hassan Fernandes",
+     "role": "Accounts Receivable",
+     "email": "hassan.fernandes@dirqar.example",
+     "phone": "+971 2 558 6128"
+    }
+   ],
+   "phone_on_file": "+971 4 609 4991",
+   "bank": {
+    "account_name": "Dirqar Logistics LLC",
+    "bank_name": "Layan Digital Bank (synthetic)",
+    "iban": "AE509636204632642508738",
+    "bic": "XQLDAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "dirqar.example",
+    "dirqar-billing.example"
+   ],
+   "sender_addresses": [
+    "billing@dirqar.example",
+    "accounts@dirqar.example"
+   ],
+   "category": "logistics",
+   "template": {
+    "layout": "bilingual",
+    "font": "Helvetica",
+    "accent": "#1f3a68",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 30,
+    "currency": "USD",
+    "language": "bilingual",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Ledgrova 4.0"
+   },
+   "po_based": false,
+   "since": "2026-09-20",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "UNK-002",
+   "legal_name": "Nurmova Catering Services LLC",
+   "legal_name_ar": "نرمفا لخدمات التموين ذ.م.م",
+   "trade_name": "Nurmova",
+   "country": "AE",
+   "trade_licence": "AUH-7045512",
+   "trn": "192962014331900",
+   "tax_id": null,
+   "address": {
+    "line1": "Office 1907, Yasmin Building",
+    "line2": "Mussafah Industrial Area",
+    "city": "Abu Dhabi",
+    "region": "Abu Dhabi",
+    "country": "AE",
+    "po_box": "37694"
+   },
+   "contacts": [
+    {
+     "name": "Layla Brennan",
+     "role": "Billing",
+     "email": "layla.brennan@nurmova.example",
+     "phone": "+971 6 643 4056"
+    },
+    {
+     "name": "Sara Menon",
+     "role": "Finance Manager",
+     "email": "sara.menon@nurmova.example",
+     "phone": "+971 6 812 2259"
+    }
+   ],
+   "phone_on_file": "+971 7 466 3066",
+   "bank": {
+    "account_name": "Nurmova Catering Services LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE929346348840797064911",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "nurmova.example"
+   ],
+   "sender_addresses": [
+    "billing@nurmova.example",
+    "accounts@nurmova.example"
+   ],
+   "category": "catering",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#2d2d2d",
+    "numbering": "{N4}/{YY}",
+    "date_format": "%d-%m-%Y",
+    "payment_terms_days": 15,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Ledgrova 5.4"
+   },
+   "po_based": false,
+   "since": "2026-09-20",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  },
+  {
+   "id": "UNK-003",
+   "legal_name": "Voxus Management Consultancy LLC",
+   "legal_name_ar": "فكسس للاستشارات الإدارية ذ.م.م",
+   "trade_name": "Voxus",
+   "country": "AE",
+   "trade_licence": "SHJ-6900056",
+   "trn": "190415597894951",
+   "tax_id": null,
+   "address": {
+    "line1": "Warehouse 3918, Ghaf House",
+    "line2": "Industrial Area 6",
+    "city": "Sharjah",
+    "region": "Sharjah",
+    "country": "AE",
+    "po_box": "237641"
+   },
+   "contacts": [
+    {
+     "name": "Yousef Kowalski",
+     "role": "Finance Manager",
+     "email": "yousef.kowalski@voxus.example",
+     "phone": "+971 2 806 8511"
+    },
+    {
+     "name": "Noura Fernandes",
+     "role": "Operations",
+     "email": "noura.fernandes@voxus.example",
+     "phone": "+971 6 394 8111"
+    }
+   ],
+   "phone_on_file": "+971 7 858 2613",
+   "bank": {
+    "account_name": "Voxus Management Consultancy LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE109343772434110883745",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "voxus.example"
+   ],
+   "sender_addresses": [
+    "billing@voxus.example",
+    "accounts@voxus.example"
+   ],
+   "category": "consulting",
+   "template": {
+    "layout": "grid",
+    "font": "Helvetica",
+    "accent": "#3c5a14",
+    "numbering": "TI-{YY}{MM}-{N4}",
+    "date_format": "%Y-%m-%d",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 55,
+     "scan": 35,
+     "docx": 10
+    },
+    "prints_bank": false,
+    "logo": "circle",
+    "producer": "Billquill 7.9"
+   },
+   "po_based": false,
+   "since": "2026-09-20",
+   "typical_subtotal": [
+    "800.00",
+    "6000.00"
+   ]
+  },
+  {
+   "id": "UNK-004",
+   "legal_name": "Monino Advertising LLC",
+   "legal_name_ar": "مننو للدعاية والإعلان ذ.م.م",
+   "trade_name": "Monino",
+   "country": "AE",
+   "trade_licence": "AJM-6276020",
+   "trn": "194549710294063",
+   "tax_id": null,
+   "address": {
+    "line1": "Shop 2617, Oryx Business Centre",
+    "line2": "Al Jurf Industrial 1",
+    "city": "Ajman",
+    "region": "Ajman",
+    "country": "AE",
+    "po_box": "381633"
+   },
+   "contacts": [
+    {
+     "name": "Priya Menon",
+     "role": "Billing",
+     "email": "priya.menon@monino.example",
+     "phone": "+971 7 281 2414"
+    },
+    {
+     "name": "Yousef Qureshi",
+     "role": "Accounts Receivable",
+     "email": "yousef.qureshi@monino.example",
+     "phone": "+971 2 480 4550"
+    }
+   ],
+   "phone_on_file": "+971 2 285 5745",
+   "bank": {
+    "account_name": "Monino Advertising LLC",
+    "bank_name": "Marjan Islamic Bank (synthetic)",
+    "iban": "AE419345469876547253918",
+    "bic": "XQMIAEAD",
+    "country": "AE"
+   },
+   "email_domains": [
+    "monino.example"
+   ],
+   "sender_addresses": [
+    "billing@monino.example",
+    "accounts@monino.example"
+   ],
+   "category": "marketing",
+   "template": {
+    "layout": "classic",
+    "font": "Courier",
+    "accent": "#1f3a68",
+    "numbering": "INV-{YYYY}-{N5}",
+    "date_format": "%d %b %Y",
+    "payment_terms_days": 30,
+    "currency": "AED",
+    "language": "en",
+    "formats": {
+     "pdf": 80,
+     "scan": 15,
+     "xml": 5
+    },
+    "prints_bank": true,
+    "logo": "square",
+    "producer": "Qaydra 4.2"
+   },
+   "po_based": false,
+   "since": "2026-09-20",
+   "typical_subtotal": [
+    "6000.00",
+    "40000.00"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+[project]
+name = "pairly-mcp"
+version = "0.1.0"
+description = "Pairly MCP server: read and propose tools over the Pairly API. People decide."
+readme = "README.md"
+license = "AGPL-3.0-only"
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "Proofly Technology" }]
+# No engine import: every tool goes through the HTTP API, so the API's RBAC applies.
+dependencies = [
+    "httpx>=0.28",
+    "mcp>=2.3,<3",
+]
+
+[project.scripts]
+pairly-mcp = "pairly_mcp.server:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pairly_mcp"]

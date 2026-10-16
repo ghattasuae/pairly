@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves an offer before it can be sent to the candidate, version 1.
+# The hiring manager approves first, then HR (a recruiter or an admin). Above the
+# compensation threshold (the offer's annual total), finance approves too, after HR.
+# The person who submitted the offer can never approve it (segregation of duties,
+# enforced by the approval engine). A person decides; the AI never does.
+schema: pairly.approval_rules/v1
+approval_type: hire.offer
+sla_hours: 48
+warn_hours: 12
+escalation:
+  roles: [admin]
+chains:
+  - name: standard
+    when:
+      - {field: annual_total, op: lte, value: "600000"}
+    steps:
+      - {name: hiring_manager, mode: any_of, roles: [hiring_manager, admin]}
+      - {name: hr, mode: any_of, roles: [recruiter, admin]}
+  - name: above_threshold
+    steps:
+      - {name: hiring_manager, mode: any_of, roles: [hiring_manager, admin]}
+      - {name: hr, mode: any_of, roles: [recruiter, admin]}
+      - {name: finance, mode: any_of, roles: [finance_controller, admin]}

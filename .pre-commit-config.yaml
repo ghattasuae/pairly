@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+# Install with: make hooks   (runs `uv run pre-commit install`)
+default_install_hook_types: [pre-commit]
+# Third-party bundles kept byte for byte under their own license (checksummed in tests).
+exclude: ^infra/api-docs/vendor/
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: mypy-core
+        name: mypy (packages/core, strict)
+        entry: uv run mypy packages/core
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: no-em-dash
+        name: no em dashes in docs and UI text
+        entry: uv run python scripts/check_no_em_dash.py
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: spdx-headers
+        name: SPDX license headers
+        entry: uv run python scripts/spdx_headers.py --check
+        language: system
+        pass_filenames: false
+        always_run: true

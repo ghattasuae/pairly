@@ -1,0 +1,15 @@
+meta {
+  name: Get an invoice
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/pay/invoices/{{invoiceId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  Status, checks, blockers, approval and payment.
+}

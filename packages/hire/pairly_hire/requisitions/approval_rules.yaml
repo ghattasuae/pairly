@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves a requisition (a request for a new role), version 1.
+# HR (a recruiter or an admin) approves every requisition. Above the budget threshold,
+# finance approves too, after HR. The person who requested the role can never approve
+# it (segregation of duties, enforced by the approval engine). A person decides; the
+# AI never does.
+schema: pairly.approval_rules/v1
+approval_type: hire.requisition
+sla_hours: 72
+warn_hours: 24
+escalation:
+  roles: [admin]
+chains:
+  - name: standard
+    when:
+      - {field: budget, op: lte, value: "500000"}
+    steps:
+      - {name: hr, mode: any_of, roles: [recruiter, admin]}
+  - name: above_budget_threshold
+    steps:
+      - {name: hr, mode: any_of, roles: [recruiter, admin]}
+      - {name: finance, mode: any_of, roles: [finance_controller, admin]}

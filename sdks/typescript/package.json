@@ -1,0 +1,39 @@
+{
+  "name": "@pairly/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript client for the Pairly API: human-approved AI for hiring and accounts payable.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/sync-types.mjs && node scripts/build.mjs",
+    "typecheck": "node scripts/sync-types.mjs && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
+    "pack:check": "node scripts/pack-check.mjs"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  }
+}

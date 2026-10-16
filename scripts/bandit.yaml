@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Bandit settings for CI and `make ci-security`:
+#   uvx --from bandit==1.9.4 bandit -c scripts/bandit.yaml -r packages apps sdks/python scripts
+#
+# Ruff already runs the same rules (S) on every file with per-file ignores. Bandit runs
+# on top as a second, independent scanner over shipped code. Tests are excluded because
+# they assert and use fixed fake secrets on purpose.
+
+exclude_dirs:
+  - .venv
+  - node_modules
+  - tests
+  - apps/web
+  - packages/shared-ts
+  - sdks/typescript
+  - scripts/tests
+
+# No skips. Silence a single finding inline with `# nosec BXXX` plus a reason.
+skips: []

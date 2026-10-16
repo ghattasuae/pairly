@@ -1,0 +1,282 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Copyright (c) 2026 Proofly Technology */
+
+/*
+ * Pairly design tokens. Direction: "ledger and ink".
+ * Warm paper surfaces, deep teal ink for primary actions, one amber signal colour that
+ * means "this needs you". Hairline rules instead of heavy cards. Serif display type for
+ * headings, a quiet grotesque for UI text, IBM Plex Sans Arabic for Arabic.
+ *
+ * Every colour is a CSS variable, redefined for dark mode. Components use the semantic
+ * names (bg-background, text-muted-foreground, border-border, bg-signal ...), never raw
+ * colours. Layout uses logical properties only (ms/me, ps/pe, start/end) so RTL works.
+ */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  /* paper and ink */
+  --background: oklch(0.982 0.006 85);
+  --foreground: oklch(0.235 0.018 200);
+  --surface: oklch(0.995 0.003 85);
+  --surface-sunken: oklch(0.958 0.008 85);
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.995 0.003 85);
+  --popover-foreground: var(--foreground);
+
+  /* deep teal ink */
+  --primary: oklch(0.43 0.075 182);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.945 0.012 170);
+  --secondary-foreground: oklch(0.3 0.05 182);
+
+  --muted: oklch(0.948 0.008 85);
+  /* 0.45 keeps body-size muted text above 6:1 on every light surface (WCAG AA 4.5:1). */
+  --muted-foreground: oklch(0.45 0.016 200);
+  --accent: oklch(0.935 0.018 175);
+  --accent-foreground: oklch(0.27 0.045 182);
+
+  /* amber signal: "needs you" */
+  --signal: oklch(0.74 0.14 70);
+  --signal-foreground: oklch(0.27 0.06 60);
+  --signal-soft: oklch(0.955 0.04 80);
+
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.985 0.006 85);
+  --success: oklch(0.55 0.11 155);
+  /* Text versions of danger and success: 4.5:1 or more on paper, surface and their tints. */
+  --danger-ink: oklch(0.47 0.17 27);
+  --success-ink: oklch(0.44 0.1 155);
+
+  --border: oklch(0.89 0.01 85);
+  --rule: oklch(0.86 0.012 85);
+  --input: oklch(0.86 0.012 85);
+  --ring: oklch(0.55 0.1 182);
+
+  --sidebar: oklch(0.965 0.008 85);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-active: oklch(0.925 0.02 175);
+  --sidebar-border: var(--border);
+
+  --shadow-soft: 0 1px 0 oklch(0.2 0.02 200 / 0.04), 0 8px 24px -12px oklch(0.2 0.02 200 / 0.18);
+}
+
+.dark {
+  --background: oklch(0.185 0.012 205);
+  --foreground: oklch(0.93 0.008 85);
+  --surface: oklch(0.215 0.014 205);
+  --surface-sunken: oklch(0.165 0.011 205);
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.235 0.015 205);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.74 0.09 180);
+  --primary-foreground: oklch(0.18 0.03 200);
+  --secondary: oklch(0.27 0.02 190);
+  --secondary-foreground: oklch(0.9 0.02 175);
+
+  --muted: oklch(0.25 0.012 205);
+  --muted-foreground: oklch(0.72 0.014 200);
+  --accent: oklch(0.29 0.03 185);
+  --accent-foreground: oklch(0.93 0.02 175);
+
+  --signal: oklch(0.8 0.13 75);
+  --signal-foreground: oklch(0.22 0.05 60);
+  --signal-soft: oklch(0.29 0.05 70);
+
+  --destructive: oklch(0.68 0.17 25);
+  --destructive-foreground: oklch(0.18 0.03 25);
+  --success: oklch(0.72 0.12 155);
+  --danger-ink: oklch(0.76 0.14 25);
+  --success-ink: oklch(0.78 0.12 155);
+
+  --border: oklch(0.3 0.014 205);
+  --rule: oklch(0.33 0.016 205);
+  --input: oklch(0.34 0.016 205);
+  --ring: oklch(0.74 0.09 180);
+
+  --sidebar: oklch(0.165 0.011 205);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-active: oklch(0.27 0.03 185);
+  --sidebar-border: var(--border);
+
+  --shadow-soft: 0 1px 0 oklch(0 0 0 / 0.2), 0 12px 32px -16px oklch(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --font-sans: var(--font-ui), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif), var(--font-arabic), ui-serif, Georgia, serif;
+  --font-mono: var(--font-code), ui-monospace, SFMono-Regular, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-signal-soft: var(--signal-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-danger-ink: var(--danger-ink);
+  --color-success-ink: var(--success-ink);
+  --color-border: var(--border);
+  --color-rule: var(--rule);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-soft: var(--shadow-soft);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* Arabic: a little more line height, no letter spacing tricks. */
+  :lang(ar) body {
+    line-height: 1.7;
+  }
+
+  :lang(ar) .font-display {
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  /* One visible focus style everywhere (WCAG 2.2 focus appearance). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, transparent);
+  }
+}
+
+@layer components {
+  /* Ruled paper: faint horizontal lines, used behind the sign-in pages. */
+  .bg-ledger {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(to bottom, transparent calc(100% - 1px), color-mix(in oklch, var(--rule) 55%, transparent) 0),
+      radial-gradient(120% 80% at 100% 0%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 60%);
+    background-size:
+      100% 2rem,
+      100% 100%;
+  }
+
+  /* A link inside running text: always underlined, so it never relies on colour alone
+     (WCAG 1.4.1, axe link-in-text-block). Focus uses the global :focus-visible ring. */
+  .link-inline {
+    @apply text-primary underline decoration-1 underline-offset-4;
+  }
+
+  .link-inline:hover {
+    @apply decoration-2;
+  }
+
+  /* Small-caps label above sections. */
+  .eyebrow {
+    @apply text-[0.7rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase;
+  }
+
+  :lang(ar) .eyebrow {
+    @apply text-xs tracking-normal normal-case;
+  }
+
+  /* Document viewer: a guardrail finding is striped and dashed, never only a colour, so it
+     reads differently from an evidence highlight (solid, teal) in every theme. */
+  .highlight-guardrail {
+    border: 2px dashed var(--destructive);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--destructive) 28%, transparent) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  /* The highlight picked in the list: a thick ring that pulses once. */
+  .highlight-active {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    animation: highlight-pulse 900ms ease-out 1;
+  }
+
+  /* Staggered entrance for page sections. */
+  .rise {
+    animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--rise-index, 0) * 70ms);
+  }
+}
+
+/* Movement only, no fade: text is never rendered at partial opacity, so contrast holds
+   from the first frame (axe and real readers both see full-strength colour). */
+@keyframes rise {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes highlight-pulse {
+  0% {
+    outline-offset: 10px;
+  }
+  100% {
+    outline-offset: 2px;
+  }
+}
+
+/* Respect reduced motion everywhere, including library animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

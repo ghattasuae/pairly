@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Pay invoice rules, version 1: deterministic checks every invoice gets (published per
+# organisation the first time it is needed; an admin publishes a new version to change
+# them). The tenant's own spend policy documents are checked separately, through the
+# engine's policy search (pairly_pay.checks.policy).
+schema: pairly.rules/v1
+name: pay.invoice
+facts:
+  total: {type: decimal, optional: true}
+  currency: {type: string, optional: true}
+  invoice_date: {type: date, optional: true}
+  due_date: {type: date, optional: true}
+  vendor_category: {type: string, optional: true}
+  vendor_known: bool
+rules:
+  - id: total_positive
+    description:
+      en: The invoice total is more than zero
+      ar: إجمالي الفاتورة أكبر من صفر
+    when: "exists(total) and total <= 0"
+    outcome: fail
+    severity: high
+    reason:
+      en: "The invoice total is {total}, which cannot be paid."
+      ar: "إجمالي الفاتورة {total}، ولا يمكن دفعه."
+  - id: due_after_invoice_date
+    description:
+      en: The due date is not before the invoice date
+      ar: تاريخ الاستحقاق ليس قبل تاريخ الفاتورة
+    when: "exists(due_date) and exists(invoice_date) and due_date < invoice_date"
+    outcome: needs_review
+    severity: high
+    reason:
+      en: "The due date {due_date} is before the invoice date {invoice_date}."
+      ar: "تاريخ الاستحقاق {due_date} يسبق تاريخ الفاتورة {invoice_date}."
+  - id: invoice_date_not_future
+    description:
+      en: The invoice date is not in the future
+      ar: تاريخ الفاتورة ليس في المستقبل
+    when: "exists(invoice_date) and invoice_date > today() + days(1)"
+    outcome: needs_review
+    severity: high
+    reason:
+      en: "The invoice is dated {invoice_date}, in the future."
+      ar: "تاريخ الفاتورة {invoice_date} في المستقبل."
+  - id: invoice_not_stale
+    description:
+      en: The invoice is less than a year old
+      ar: عمر الفاتورة أقل من سنة
+    when: "exists(invoice_date) and invoice_date < today() - days(365)"
+    outcome: needs_review
+    severity: medium
+    reason:
+      en: "The invoice is dated {invoice_date}, more than a year ago."
+      ar: "تاريخ الفاتورة {invoice_date}، أي قبل أكثر من سنة."

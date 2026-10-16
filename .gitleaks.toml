@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# gitleaks settings, read by CI (`make ci-security`) and the pre-commit hook.
+# Default rules plus narrow allowlists for proven false positives. Each entry must say
+# why it is safe. Never allowlist a whole file or path to hide a real secret: rotate it.
+
+title = "Pairly gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Type annotations such as `key: Ed25519PrivateKey`: the 'secret' is a class name"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^(Ed25519|Ed448|X25519|RSA|EllipticCurve)(Private|Public)Key$''']
+
+[[allowlists]]
+description = """Synthetic SDK and MCP test fixtures, never real credentials: the fake API key \
+prefix pk_test_abcd1234_ (its secret part is built at run time as "A" * 43) and the \
+webhook test vector secret the TypeScript SDK test shares with the engine."""
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^pk_test_abcd1234_$''', '''^whsec_test_vector_secret_0123456789$''']
+
+[[allowlists]]
+description = """Proven false positives from the pre-release full-history scan (2026-10-17): the Slack \
+signing secret example copied from Slack's public docs, one synthetic 16-character test token, \
+environment variable NAMES (not values) such as PAIRLY_S3_ACCESS_KEY, and code lines where a \
+variable named *_key (object_key, parse_result_key) holds a storage path, never a credential."""
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = [
+  '''^8f742231b10e8888abcd99yyyzzz85a5$''',
+  '''^k3m7q2xv7hb4tnwe$''',
+  '''^PAIRLY_[A-Z0-9_]+$''',
+]
+
+[[allowlists]]
+description = "Storage key variables (object_key, parse_result_key) in code, matched on the line, never a credential"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''(object_key|parse_result_key)\s*,''']

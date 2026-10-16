@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves an expense note, version 1. Every note needs a person; the submitter is
+# never one of them (segregation of duties is enforced by the engine). Amounts are AED;
+# a note without an AED amount (not read, or another currency) takes the two step chain.
+schema: pairly.approval_rules/v1
+approval_type: expense.note
+sla_hours: 48
+warn_hours: 8
+escalation:
+  roles: [finance_controller]
+chains:
+  - name: under_500
+    when:
+      - {field: amount_aed, op: lt, value: "500"}
+    steps:
+      - {name: approver, mode: any_of, roles: [approver]}
+  - name: from_500
+    steps:
+      - {name: approver, mode: any_of, roles: [approver]}
+      - {name: finance, mode: any_of, roles: [finance_controller]}
