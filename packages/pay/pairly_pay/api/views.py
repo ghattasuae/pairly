@@ -11,6 +11,7 @@ it (they read the IBAN back to the vendor on the call; the verifier dials the nu
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import select
@@ -34,6 +35,8 @@ from pairly_pay.bank_changes import calls_of, open_ticket_of, verify_phone_of
 from pairly_pay.common import opened
 from pairly_pay.holds import is_sticky
 from pairly_pay.models import (
+    OPEN_TICKET_STATUSES,
+    AccountStatus,
     PayBankChangeTicket,
     PayVendor,
     PayVendorBankAccount,
@@ -80,6 +83,44 @@ def account_out(account: PayVendorBankAccount) -> PayBankAccountOut:
 async def vendor_summary(session: AsyncSession, vendor: PayVendor) -> PayVendorSummary:
     account = await active_account(session, vendor.id)
     ticket = await open_ticket_of(session, vendor.id)
+    return _summary(vendor, account, ticket.id if ticket else None)
+
+
+async def vendor_summaries(
+    session: AsyncSession, vendors: Sequence[PayVendor]
+) -> list[PayVendorSummary]:
+    """``vendor_summary`` for a page of vendors in two queries (active accounts, open
+    tickets), never two per vendor."""
+    ids = [v.id for v in vendors]
+    if not ids:
+        return []
+    accounts = {
+        a.vendor_id: a
+        for a in await session.scalars(
+            select(PayVendorBankAccount).where(
+                PayVendorBankAccount.vendor_id.in_(ids),
+                PayVendorBankAccount.status == AccountStatus.ACTIVE.value,
+            )
+        )
+    }
+    tickets = dict(
+        (
+            await session.execute(
+                select(PayBankChangeTicket.vendor_id, PayBankChangeTicket.id).where(
+                    PayBankChangeTicket.vendor_id.in_(ids),
+                    PayBankChangeTicket.status.in_([s.value for s in OPEN_TICKET_STATUSES]),
+                )
+            )
+        )
+        .tuples()
+        .all()
+    )
+    return [_summary(v, accounts.get(v.id), tickets.get(v.id)) for v in vendors]
+
+
+def _summary(
+    vendor: PayVendor, account: PayVendorBankAccount | None, ticket_id: uuid.UUID | None
+) -> PayVendorSummary:
     return PayVendorSummary(
         id=vendor.id,
         reference=vendor.reference,
@@ -92,7 +133,7 @@ async def vendor_summary(session: AsyncSession, vendor: PayVendor) -> PayVendorS
         payment_hold=vendor.payment_hold,
         hold_reason=vendor.hold_reason,
         iban_masked=masked_account(account) if account else None,
-        open_ticket_id=ticket.id if ticket else None,
+        open_ticket_id=ticket_id,
         review_reasons=list(vendor.review_reasons),
         created_at=vendor.created_at,
     )

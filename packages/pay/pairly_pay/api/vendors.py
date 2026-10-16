@@ -52,7 +52,7 @@ from pairly_pay.api.schemas import (
     PayVendorList,
     PayVendorPatchIn,
 )
-from pairly_pay.api.views import vendor_detail, vendor_summary
+from pairly_pay.api.views import vendor_detail, vendor_summaries
 from pairly_pay.bank_changes import open_ticket, open_ticket_of
 from pairly_pay.checks.service import load_settings
 from pairly_pay.checks.settings import parse_settings
@@ -151,7 +151,7 @@ async def list_vendors(
     if condition is not None:
         query = query.where(condition)
     rows = list(await session.scalars(query.limit(limit)))
-    return PayVendorList(items=[await vendor_summary(session, v) for v in rows])
+    return PayVendorList(items=await vendor_summaries(session, rows))
 
 
 @router.post("/vendors/check", response_model=PayVendorCheckOut)
