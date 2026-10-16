@@ -1,6 +1,6 @@
 # Add a workflow
 
-Draft. This guide builds a small third workflow, expense notes, and uses it to show every extension point. The finished code is in [`packages/expense`](../packages/expense). It is also the M1 acceptance workflow, so its end to end test ([`apps/api/tests/test_expense_acceptance.py`](../apps/api/tests/test_expense_acceptance.py)) proves each step below.
+This guide builds a small third workflow, expense notes, and uses it to show every extension point, end to end. The finished code is in [`packages/expense`](../packages/expense). It is also the M1 acceptance workflow, so its end to end test ([`apps/api/tests/test_expense_acceptance.py`](../apps/api/tests/test_expense_acceptance.py)) proves each step below.
 
 The point to prove: adding a workflow needs no change in the core engine. You write a Python package, register it under one entry point, ship your migrations in it, and the engine finds the rest at runtime. The few generic extension points this needed were added together with this example and are listed in [ADR 0009](adr/0009-generic-workflow-extension-points.md).
 
@@ -67,9 +67,37 @@ The entry point name must equal the plugin id, a lowercase identifier. Discovery
 
 Then add the package to the places that list workspace members (configuration, not engine code):
 
-* `pyproject.toml`: workspace members, sources, the root dependency list, ruff `known-first-party`, the import-linter `root_packages` and contracts (core never imports a workflow, workflows are independent, apps never import a workflow), and the strict mypy override if you want it (the expense package uses it).
+* `pyproject.toml`: workspace members, sources, the root dependency list, ruff `known-first-party`, the import-linter `root_packages` and contracts, and the strict mypy override if you want it (the expense package uses it).
 * `infra/docker/python.Dockerfile`: the two `COPY` lines, so the image installs it.
 * `Makefile` and `.github/workflows/ci.yml`: the mypy step.
+
+### The import-linter contracts
+
+The boundaries are checked on every `make lint` (`uv run lint-imports`). Add your package to each list:
+
+```toml
+[tool.importlinter]
+root_packages = ["pairly_core", "pairly_hire", "pairly_pay", "pairly_expense", ...]
+
+[[tool.importlinter.contracts]]
+name = "Core engine never imports a workflow or an app"
+type = "forbidden"
+source_modules = ["pairly_core"]
+forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_expense", "pairly_api", ...]
+
+[[tool.importlinter.contracts]]
+name = "Workflows are independent of each other"
+type = "independence"
+modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
+
+[[tool.importlinter.contracts]]
+name = "Apps discover workflows at runtime, never import them"
+type = "forbidden"
+source_modules = ["pairly_api", "pairly_worker", "pairly_mcp"]
+forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
+```
+
+The first proves the engine knows nothing about your workflow; the third proves the apps need no change for it. Your package may import `pairly_core` and, for its routes, `pairly_api` (upload plumbing, idempotency, problem responses). Add contracts of your own for rules inside your package (Hire has several that keep self-identification answers away from scoring).
 
 ## 2. The plugin object
 
@@ -93,7 +121,7 @@ class ExpensePlugin:
         return router
 ```
 
-Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `prompt_roots` (section 11), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace.
+Other optional attributes: `migrations_dir` (section 6), `scheduled_jobs` (section 9), `prompt_roots` (section 11), `document_intake` (section 13), `dashboard_sections` (section 14), `feature_flags`, `search_sources`, `retention_rules`. Each registry checks that names stay inside your namespace. The full table is in [architecture.md](architecture.md#the-plugin-contract).
 
 ## 3. Permissions
 
@@ -151,6 +179,17 @@ Always call `org_rls_statements`, which forces Row Level Security and grants the
 
 Then close the table to portal sessions: call `portal_guard_statements(table)` in the same migration, or add your own restrictive `<table>_portal_subject` policy if a portal of yours needs its rows. `apps/api/tests/test_portal_guard.py` fails for any org-scoped table without one. See [security notes](security.md#portal-sessions).
 
+The expense branch, as it stands:
+
+| Revision | What it does |
+|---|---|
+| `expense_0001_expense_notes` | The `expense_notes` table with RLS, and the system notification templates. Depends on core `0015` |
+| `expense_0002_stuck_notes` | `expense_stuck_note_org_ids`, a SECURITY DEFINER function that returns organisation ids only, for the sweeper (section 9) |
+| `expense_0003_closed_notes` | The `closed` status: a reviewer closed a note that needed review |
+| `expense_0004_portal_guard` | Closes `expense_notes` to portal sessions (it was created before the guard existed) |
+
+`make ci-test` and `make local-test` run `alembic upgrade heads` and `alembic check` on a fresh database, so a model and its migration that disagree fail the build.
+
 ## 7. The graph
 
 A graph is a LangGraph `StateGraph` that the runtime compiles with a tenant-bound checkpointer. Declare it with a `GraphSpec`:
@@ -168,12 +207,14 @@ GraphSpec(
 )
 ```
 
-The expense graph (`graph.py`):
+The expense graph (`graph.py`), drawn from the code in [graphs/expense_note.md](graphs/expense_note.md):
 
 ```
 ingest -> wait_parse -> guardrails -> sanitize -> extract -> rules -> risk -> propose -> wait
 wait -> execute | rejected | changes -> notify
 ```
+
+When you add or change a graph, run `make docs` (`uv run python -m scripts.export_graphs`): it draws every registered graph into `docs/graphs/` and into [architecture.md](architecture.md#workflow-graphs), and `scripts/tests/test_export_graphs.py` fails while the committed diagrams differ from the code.
 
 Patterns to copy:
 
@@ -203,9 +244,11 @@ The expense plugin uses one (`sweeper.py`, `expense_stuck_note_sweep`, every 5 m
 
 System templates are rows with `org_id` NULL, seeded by your migration like core's (`templates.py`, migration `expense_0001`). Templates use the locked down Jinja subset, English and Arabic. Declare webhook events in `webhook_events` (names start with your id) and publish them with `publish_event` in the same transaction as the change.
 
-## 11. Offline demo: recorded model responses
+## 11. Prompts, recordings and the offline demo
 
-Your own prompts: declare `prompt_roots` on the plugin (directories of `<task>/<version>.md` files, every task named `<plugin id>_...`). The model router loads them next to core's ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md)). Pairly Hire does this for its job description and rubric drafts (`packages/hire/pairly_hire/prompts`) and builds their recordings with `uv run python -m pairly_hire.recordings`.
+The expense workflow has no prompt of its own: `extract` runs the engine's `core_extract` prompt with the expense schema. When you need your own, declare `prompt_roots` on the plugin (directories of `<task>/<version>.md` files, every task named `<plugin id>_...`). The model router loads them next to core's ([ADR 0010](adr/0010-plugin-prompts-and-commitment-step-up.md)). Each file has front matter (task, version, starting tier, temperature 0, output schema) and a body sent as is. Never edit a published version: add `v2` and point your `TaskSpec` at it, so every call records which version it used. Pairly Hire does this for its drafts (`packages/hire/pairly_hire/prompts`) and builds their recordings with `uv run python -m pairly_hire.recordings`.
+
+Every AI component gets a model card. Add an entry for your prompt to `CARDS` in `scripts/model_cards.py` (purpose, inputs, outputs, oversight, limits, the `TaskSpec` it uses and the eval metrics that cover it), then run `make docs`. The prompt version, tiers and eval numbers are filled in by the generator; `scripts/tests/test_model_cards.py` fails while a card is stale.
 
 In `recorded` mode the router answers only from stored responses, keyed on the exact request (prompt, model, inputs, settings). `synth/expense` generates the synthetic receipts and, for each, the request `extract` will send and a scripted answer, and writes a recordings bundle. `pairly-admin seed expense-demo` imports it. If you change a prompt, the schema or a parser, run `uv run python -m synth.expense` again; a test fails when the files are out of date.
 
@@ -220,7 +263,49 @@ make demo-expense SLUG=acme
 
 The demo submitter has the built-in `employee` role: no core permission, and only the read, submit, create and upload permissions a workflow grants it.
 
-## 13. Tests to write
+## 13. Batch intake: `document_intake`
+
+The batch API (`POST /v1/documents/batch`) ingests, scans and parses every document submitted for a workflow. To also turn each one into your entity and start its run, declare a `DocumentIntake` (`pairly_core.batches.intake`). Pairly Pay does this for invoices (`pairly_pay.batch_intake`):
+
+```python
+async def handle(session: AsyncSession, actor: Actor, document: Document) -> IntakeResult:
+    authorize(actor, INVOICE_UPLOAD)
+    invoice, created = await create_invoice(session, document=document, ...)
+
+    async def start(runtime: WorkflowRuntime) -> None:
+        await start_after_intake(runtime, org_id, invoice_id, document_id)
+
+    return IntakeResult(entity_type="pay.invoice", entity_id=str(invoice.id),
+                        created=created, after_commit=start if created else None)
+
+DOCUMENT_INTAKE = DocumentIntake(permission=INVOICE_UPLOAD, handle=handle, policy=pay_policy)
+```
+
+* `permission` must be one of your own; the batch API checks it once per batch instead of the generic upload permission.
+* `handle` runs in the request's transaction; `after_commit` runs after the commit, never inside it.
+* `policy` replaces the default intake policy (types, size) for your documents.
+
+The expense workflow does not declare one: receipts come only through its own route, which carries the note text. Without an intake, batch-submitted documents are still ingested, scanned and parsed, and nothing more starts.
+
+## 14. Dashboard sections
+
+The shared boards (auditor, admin, AI governance) take sections from plugins. Declare them as `DashboardSectionSpec`s in `dashboard_sections` (`pairly_core.dashboards.model`):
+
+```python
+DASHBOARD_SECTIONS = (
+    DashboardSectionSpec(Board.AUDITOR, "bank_changes", BANK_CHANGE_READ, bank_changes),
+    DashboardSectionSpec(Board.AI_GOVERNANCE, "guardrails_pay", INVOICE_READ, guardrails),
+)
+```
+
+* Each section names a permission of your own; viewers without it do not get the section, and the rest of the board still loads.
+* The builder gets a `SectionContext` (a session bound to the viewer's organisation, the actor, the time) and returns a `Section` of counts, ids and app paths. Show numbers, not personal data. A value you do not have is `None` with a note (`no_data`), never zero.
+* A section that raises is shown as unavailable; it never breaks the board. Platform operations take no plugin sections.
+* `apps/api/tests/test_system_dashboards.py` checks every plugin section uses its own permission.
+
+The expense workflow declares none; Hire and Pay do (`pairly_hire.system_dashboards`, `pairly_pay.system_dashboards`).
+
+## 15. Tests to write
 
 * Unit: policies parse, the approval chain by amount, rule outcomes, which values count, the generated files are current (`packages/expense/tests`).
 * End to end on Postgres in recorded mode (`apps/api/tests/test_expense_acceptance.py`): the clean path through approval and the final action, hidden text that never reaches the model, approval from a signed email link, a two step chain with segregation of duties, and the fail closed paths.
@@ -228,15 +313,18 @@ The demo submitter has the built-in `employee` role: no core permission, and onl
 ## Checklist
 
 - [ ] Package with the `pairly.workflows` entry point; id equals the entry point name
-- [ ] Workspace, Dockerfile, import-linter, mypy and CI list the package
+- [ ] Workspace, Dockerfile, import-linter contracts, mypy and CI list the package
 - [ ] Permissions in your namespace; agents read only; approvals use an `approve` action
 - [ ] Extraction schema with thresholds; checks use only evidenced values
 - [ ] Policies as YAML, published as version 1 per organisation
 - [ ] Table with Row Level Security, and migrations as your own Alembic branch (`migrations_dir`)
 - [ ] Graph: guardrails before any model, a person before any final action, every failure goes to a person with its reason
+- [ ] `make docs` run: the graph diagram and a model card for each prompt of yours
 - [ ] Final action re-checks its own row
 - [ ] Routes audited; idempotent submissions
 - [ ] Templates and webhook events in your namespace
 - [ ] A job that sends anything stuck to a person
 - [ ] Recordings for the demo inputs; a seed
+- [ ] `document_intake` if batch-submitted documents should start your runs
+- [ ] Dashboard sections behind your own permissions, numbers only
 - [ ] Tests for the happy path, injection, approvals, SoD and fail closed paths
