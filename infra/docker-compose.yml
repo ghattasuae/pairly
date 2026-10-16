@@ -228,7 +228,7 @@ services:
   # Valkey (BSD-3-Clause), the Linux Foundation fork of Redis 7.2. Speaks the Redis
   # protocol, so arq and LangFuse use it unchanged. The service keeps the name `redis`.
   redis:
-    image: valkey/valkey:8.1.10-alpine
+    image: valkey/valkey:9.1.2-alpine
     <<: *hardening
     restart: unless-stopped
     user: valkey
@@ -263,7 +263,7 @@ services:
     # Chainguard's build (AGPL-3.0 MinIO, also used by the LangFuse self-host compose)
     # is only tagged `latest`, so it is pinned by digest. Bump the digest on purpose.
     # minio RELEASE.2026-09-22T19-25-18Z
-    image: cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
+    image: cgr.dev/chainguard/minio@sha256:c93745c56fccdaf0e5dcb88999a96a65a136428beb045ef5d546255a80d747a7
     <<: *hardening
     restart: unless-stopped
     command: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
@@ -289,7 +289,7 @@ services:
 
   # One-shot: buckets and least-privilege access keys. Exits 0 when done.
   minio-init:
-    image: cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
+    image: cgr.dev/chainguard/minio@sha256:c93745c56fccdaf0e5dcb88999a96a65a136428beb045ef5d546255a80d747a7
     <<: *hardening
     restart: "no"
     entrypoint: ["/bin/sh", "/pairly/minio-init.sh"]
@@ -317,7 +317,7 @@ services:
           memory: 192m
 
   mailpit:
-    image: axllent/mailpit:v1.31.4
+    image: axllent/mailpit:v1.31.5
     <<: *hardening
     restart: unless-stopped
     environment:
@@ -521,7 +521,7 @@ services:
   # ---------------------------------------------------------------- profile: observability
   clickhouse:
     profiles: ["observability"]
-    image: clickhouse/clickhouse-server:25.12.11.4
+    image: clickhouse/clickhouse-server:26.9.18.11
     <<: *hardening
     restart: unless-stopped
     user: "101:101"
@@ -550,7 +550,7 @@ services:
 
   langfuse-worker:
     profiles: ["observability"]
-    image: langfuse/langfuse-worker:4.53.0
+    image: langfuse/langfuse-worker:4.58.0
     <<: *hardening
     restart: unless-stopped
     environment:
@@ -569,7 +569,7 @@ services:
 
   langfuse-web:
     profiles: ["observability"]
-    image: langfuse/langfuse:4.53.0
+    image: langfuse/langfuse:4.58.0
     <<: *hardening
     restart: unless-stopped
     environment:
