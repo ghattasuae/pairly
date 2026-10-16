@@ -408,3 +408,132 @@ def test_a_plugin_intake_must_use_its_own_permission() -> None:
         build_intake_registry([Plugin("other", DocumentIntake("pay.invoice.upload", handle))])
     with pytest.raises(IntakeRegistryError, match="DocumentIntake"):
         build_intake_registry([Plugin("other", object())])
+
+
+# ------------------------------------------------------------------ the URL sweeper
+
+
+async def _stale_batch(
+    owner_engine: AsyncEngine, org: Org, *, minutes_ago: int, urls: int
+) -> uuid.UUID:
+    """A batch whose URL items stayed pending (the API process that fetched them died),
+    with one file item that already has its outcome."""
+    batch_id = uuid.uuid4()
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)})
+        await conn.execute(
+            text(
+                "INSERT INTO document_batches (id, org_id, workflow, status, item_count, "
+                "created_by_type, created_by_id, created_at) VALUES (:b, :o, 'pay', "
+                "'processing', :n, 'api_key', 'key-test', now() - make_interval(mins => :m))"
+            ),
+            {"b": batch_id, "o": org.id, "n": urls + 1, "m": minutes_ago},
+        )
+        await conn.execute(
+            text(
+                "INSERT INTO document_batch_items (org_id, batch_id, position, source, "
+                "filename, status, reason, completed_at) VALUES (:o, :b, 0, 'file', "
+                "'a.pdf', 'rejected', 'empty', now())"
+            ),
+            {"o": org.id, "b": batch_id},
+        )
+        for position in range(1, urls + 1):
+            await conn.execute(
+                text(
+                    "INSERT INTO document_batch_items (org_id, batch_id, position, source, "
+                    "url, status) VALUES (:o, :b, :p, 'url', :u, 'pending')"
+                ),
+                {"o": org.id, "b": batch_id, "p": position, "u": f"https://x.test/{position}"},
+            )
+    return batch_id
+
+
+async def test_the_sweeper_fails_url_items_left_pending_and_completes_the_batch(
+    api: Api, make_org: OrgFactory, owner_engine: AsyncEngine, app_engine: AsyncEngine
+) -> None:
+    from pairly_core.db import create_sessionmaker
+    from pairly_worker.batch_jobs import sweep_batch_urls
+
+    org, other = await make_org("admin"), await make_org("admin")
+    stale = await _stale_batch(owner_engine, org, minutes_ago=20, urls=2)
+    fresh = await _stale_batch(owner_engine, org, minutes_ago=1, urls=1)
+    foreign = await _stale_batch(owner_engine, other, minutes_ago=30, urls=1)
+
+    ctx = {"sessionmaker": create_sessionmaker(app_engine)}
+    summary = await sweep_batch_urls(ctx)
+    assert summary["errors"] == []
+    assert summary["items"] >= 3
+    assert summary["completed"] >= 2
+
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)})
+        items = (
+            await conn.execute(
+                text(
+                    "SELECT batch_id, position, status, reason FROM document_batch_items "
+                    "WHERE org_id = :o ORDER BY batch_id, position"
+                ),
+                {"o": org.id},
+            )
+        ).all()
+        batches = dict(
+            (
+                await conn.execute(
+                    text("SELECT id, status FROM document_batches WHERE org_id = :o"),
+                    {"o": org.id},
+                )
+            ).all()
+        )
+        audit = (
+            await conn.execute(
+                text(
+                    "SELECT entity_id, actor_type, actor_id, payload FROM audit_events "
+                    "WHERE org_id = :o AND action = 'core.batch.items_timed_out'"
+                ),
+                {"o": org.id},
+            )
+        ).all()
+    by_batch = {(r.batch_id, r.position): (r.status, r.reason) for r in items}
+    assert by_batch[(stale, 0)] == ("rejected", "empty")  # an outcome is never changed
+    assert by_batch[(stale, 1)] == by_batch[(stale, 2)] == ("failed", "timed_out")
+    assert by_batch[(fresh, 1)] == ("pending", None)  # still within the timeout
+    assert batches == {stale: "completed", fresh: "processing"}
+    assert [(a.entity_id, a.actor_type, a.actor_id) for a in audit] == [
+        (str(stale), "system", "pairly-worker.batch_url_sweep")
+    ]
+    assert audit[0].payload["items"] == 2
+    assert audit[0].payload["reason"] == "timed_out"
+    # The client hears about it: batch.completed with the timed_out outcomes.
+    events = await _events(owner_engine, org)
+    assert [e["batch_id"] for e in events] == [str(stale)]
+    assert events[0]["counts"]["failed"] == 2
+    # The other organisation's batch was handled in its own tenant, its own chain.
+    others = await _events(owner_engine, other)
+    assert [e["batch_id"] for e in others] == [str(foreign)]
+    # A second run finds nothing more of these.
+    again = await sweep_batch_urls(ctx)
+    assert again["errors"] == []
+    async with owner_engine.begin() as conn:
+        await conn.execute(text("SELECT set_config('app.org_id', :o, true)"), {"o": str(org.id)})
+        count = await conn.scalar(
+            text(
+                "SELECT count(*) FROM audit_events WHERE org_id = :o "
+                "AND action = 'core.batch.items_timed_out'"
+            ),
+            {"o": org.id},
+        )
+    assert count == 1
+
+
+async def test_the_app_role_cannot_list_stale_batches_of_other_tenants_directly(
+    app_engine: AsyncEngine, make_org: OrgFactory, owner_engine: AsyncEngine
+) -> None:
+    org = await make_org("admin")
+    await _stale_batch(owner_engine, org, minutes_ago=20, urls=1)
+    async with app_engine.begin() as conn:
+        # Without a tenant, RLS shows nothing; only the SECURITY DEFINER listing (ids) does.
+        assert await conn.scalar(text("SELECT count(*) FROM document_batch_items")) == 0
+        ids = (await conn.execute(text("SELECT batch_stale_org_ids(15)"))).scalars().all()
+        assert org.id in ids
+        with pytest.raises(Exception, match="minutes must be at least 1"):
+            await conn.execute(text("SELECT batch_stale_org_ids(0)"))

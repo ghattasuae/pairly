@@ -21,7 +21,9 @@ Files are taken in the request. URLs are fetched after the response, with SSRF
 protection (``pairly_core.ingestion.fetch``: https only, public addresses only, the
 checked address is the one connected to, no redirects, the size limit while reading).
 When every item has an outcome the batch is ``completed`` and the ``batch.completed``
-webhook event is written in that same transaction.
+webhook event is written in that same transaction. If this process stops while fetching,
+the worker's ``batch_url_sweep`` fails the URL items still pending 15 minutes after the
+batch was created (reason ``timed_out``) and completes the batch; submit them again.
 
 Rate limits: the per-key request limit applies as usual; on top, each caller (API key or
 person) may submit ``PAIRLY_BATCH_ITEMS_PER_MINUTE`` documents per minute (default

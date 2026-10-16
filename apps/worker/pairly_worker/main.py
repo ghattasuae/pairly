@@ -72,6 +72,7 @@ from pairly_core.workflow.checkpoint import TenantCheckpointer
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_core.workflow.services import GraphServices
 from pairly_worker import decision_jobs
+from pairly_worker.batch_jobs import BATCH_SWEEP_JOB, sweep_batch_urls
 from pairly_worker.config import WorkerConfig, load_worker_config
 from pairly_worker.documents import (
     parse_document_job,
@@ -329,6 +330,15 @@ def build_worker_settings(config: WorkerConfig | None = None) -> type:
                 run_at_startup=False,
                 unique=True,
                 timeout=1800,
+            ),
+            # Batch API: fail URL items whose fetching API process stopped.
+            cron(
+                _job(jobs, BATCH_SWEEP_JOB, sweep_batch_urls),
+                name=BATCH_SWEEP_JOB,
+                minute=set(range(2, 60, 5)),
+                run_at_startup=False,
+                unique=True,
+                timeout=240,
             ),
             # Decision records, appeals and audit hardening (WP1.10, WP1.10b).
             *decision_jobs.cron_jobs(config, lambda name, job: _job(jobs, name, job)),

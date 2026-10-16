@@ -40,6 +40,7 @@ AUDIT_ANCHOR_NIGHTLY: Final = "audit_anchor_nightly"
 APPEAL_SLA_ESCALATION: Final = "appeal_sla_escalation"
 AUDIT_DENIAL_FLUSH: Final = "audit_denial_flush"
 DECISION_JOBS_SWEEP: Final = "decision_jobs_sweep"
+BATCH_URL_SWEEP: Final = "batch_url_sweep"
 
 
 class JobRegistryError(ValueError):
@@ -147,6 +148,11 @@ CORE_JOBS: tuple[JobSpec, ...] = (
         DECISION_JOBS_SWEEP,
         "Run compliance exports and chain verifications whose job was lost",
         "every minute, and at worker start",
+    ),
+    JobSpec(
+        BATCH_URL_SWEEP,
+        "Fail batch URL items left pending 15 minutes after their batch (timed_out)",
+        "every 5 minutes",
     ),
 )
 

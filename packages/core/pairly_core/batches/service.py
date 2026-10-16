@@ -9,6 +9,13 @@
   event in the same transaction, exactly once (the lock serialises concurrent items).
 * ``get_batch`` reads a batch and its items (404 when RLS hides it). A person or key
   only reads the batches they created, unless they hold ``core.document.read``.
+* ``fail_stale_url_items`` (the worker's ``batch_url_sweep``): URL items still pending
+  ``STALE_AFTER_MINUTES`` after their batch was created are failed with the reason
+  ``timed_out``, one audit event per batch, and their batches complete. They are failed,
+  not retried: the URL was fetched by the API process under the submitter's authority
+  (person or API key), which the worker does not hold, and running the workflow intake
+  again as the system would act for someone who is no longer there. The client sees the
+  ``timed_out`` outcome in ``batch.completed`` and submits the URL again.
 """
 
 from __future__ import annotations
@@ -17,7 +24,7 @@ import json
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Any, Final
 
@@ -34,11 +41,16 @@ MAX_ITEMS: Final = 50
 MAX_METADATA_BYTES: Final = 4096
 BATCH_ENTITY: Final = "document_batch"
 SYSTEM_ACTOR: Final = "pairly.batches"
+SWEEPER_ACTOR: Final = "pairly-worker.batch_url_sweep"
+# Long past any batch's fetches (50 URLs, a few at a time, each with its own timeout).
+STALE_AFTER_MINUTES: Final = 15
+TIMED_OUT: Final = "timed_out"
 
 
 class BatchAction:
     CREATED: Final = "core.batch.created"
     COMPLETED: Final = "core.batch.completed"
+    ITEMS_TIMED_OUT: Final = "core.batch.items_timed_out"
 
 
 class ItemStatus(StrEnum):
@@ -251,3 +263,64 @@ async def get_batch(session: AsyncSession, actor: Actor, batch_id: uuid.UUID) ->
         )
     )
     return BatchView(batch=batch, items=items)
+
+
+@dataclass(frozen=True, slots=True)
+class SweepResult:
+    items: int
+    batches: int
+    completed: int
+
+
+async def fail_stale_url_items(
+    session: AsyncSession, *, older_than_minutes: int = STALE_AFTER_MINUTES
+) -> SweepResult:
+    """Fail the URL items of this session's organisation left pending too long.
+
+    Items another transaction holds (a fetch finishing right now) are skipped and
+    looked at again on the next run.
+    """
+    if older_than_minutes < 1:
+        raise ValueError("older_than_minutes must be at least 1")
+    cutoff = func.now() - timedelta(minutes=older_than_minutes)
+    stale = list(
+        await session.scalars(
+            select(DocumentBatchItem)
+            .join(DocumentBatch, DocumentBatch.id == DocumentBatchItem.batch_id)
+            .where(
+                DocumentBatchItem.status == ItemStatus.PENDING.value,
+                DocumentBatchItem.source == "url",
+                DocumentBatch.created_at < cutoff,
+            )
+            .order_by(DocumentBatchItem.batch_id, DocumentBatchItem.position)
+            .with_for_update(of=DocumentBatchItem, skip_locked=True)
+        )
+    )
+    by_batch: dict[uuid.UUID, list[DocumentBatchItem]] = {}
+    for item in stale:
+        by_batch.setdefault(item.batch_id, []).append(item)
+    completed = 0
+    for batch_id, items in by_batch.items():
+        workflow = await session.scalar(
+            select(DocumentBatch.workflow).where(DocumentBatch.id == batch_id)
+        )
+        for item in items:
+            await finish_item(session, item.id, ItemStatus.FAILED, reason=TIMED_OUT)
+        await append_audit(
+            session,
+            action=BatchAction.ITEMS_TIMED_OUT,
+            actor_type="system",
+            actor_id=SWEEPER_ACTOR,
+            entity_type=BATCH_ENTITY,
+            entity_id=batch_id,
+            workflow=workflow,
+            payload={
+                "items": len(items),
+                "positions": [i.position for i in items],
+                "reason": TIMED_OUT,
+                "older_than_minutes": older_than_minutes,
+            },
+        )
+        if await complete_if_done(session, batch_id):
+            completed += 1
+    return SweepResult(items=len(stale), batches=len(by_batch), completed=completed)

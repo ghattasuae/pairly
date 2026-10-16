@@ -17,6 +17,7 @@ import pairly_worker.main as worker_main
 from pairly_core.config import ConfigError
 from pairly_core.jobs.registry import JobRegistryError, build_job_registry
 from pairly_core.plugins import discover_plugins
+from pairly_worker.batch_jobs import BATCH_SWEEP_JOB
 from pairly_worker.config import load_worker_config
 from pairly_worker.decision_jobs import (
     ANCHOR_JOB,
@@ -128,6 +129,7 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
         DECISION_SWEEP_JOB,
         WEBHOOK_JOB,
         RETENTION_JOB,
+        BATCH_SWEEP_JOB,
     }
     plugin_jobs = {
         job.name
@@ -160,6 +162,10 @@ def test_settings_class(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (retention.hour, retention.minute, retention.unique) == (2, 15, True)
     # Webhook delivery runs every minute, one at a time.
     assert jobs[WEBHOOK_JOB].unique
+    assert (jobs[BATCH_SWEEP_JOB].minute, jobs[BATCH_SWEEP_JOB].unique) == (
+        set(range(2, 60, 5)),
+        True,
+    )
     assert jobs[WEBHOOK_JOB].second == 0
     assert jobs[WEBHOOK_JOB].minute is None
     cron_job = jobs[NIGHTLY_AUDIT_JOB]
