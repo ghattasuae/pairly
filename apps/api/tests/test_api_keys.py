@@ -251,6 +251,37 @@ async def test_key_permissions_are_its_scopes_only(api: Api, org: Org) -> None:
         assert response.status_code == 403, path
 
 
+async def test_a_key_never_outlives_its_creators_role(
+    api: Api, org: Org, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, M-02: an admin creates a key, is moved to a role without
+    one of its scopes and later leaves the organisation. The key follows them."""
+    key, created = await api.new_key(org, scopes=[READ, UPLOAD, "pay.document.read"])
+    uploaded = await api.upload(key, pdf_bytes("before"))
+    assert uploaded.status_code == 201, uploaded.text
+    document = f"/v1/documents/{uploaded.json()['document_id']}"
+    ((creator,),) = await owner_rows(
+        owner_engine, org.id, "SELECT created_by FROM api_keys WHERE id = :k", k=created["id"]
+    )
+    await owner_exec(
+        owner_engine,
+        org.id,
+        "UPDATE memberships SET role_id = (SELECT id FROM roles WHERE key = 'auditor' "
+        "AND org_id IS NULL) WHERE user_id = :u",
+        u=creator,
+    )
+    # An auditor reads documents but never uploads: the key keeps read only.
+    refused = await api.upload(key, pdf_bytes("demoted"))
+    assert refused.status_code == 403
+    read = await api.client.get(document, headers={"Authorization": f"Bearer {key}"})
+    assert read.status_code == 200, read.text
+
+    await owner_exec(owner_engine, org.id, "DELETE FROM memberships WHERE user_id = :u", u=creator)
+    gone = await api.client.get(document, headers={"Authorization": f"Bearer {key}"})
+    assert gone.status_code == 403
+    assert gone.json()["code"] == "api_key_creator_inactive"
+
+
 async def test_use_audit_and_tenant_isolation(
     api: Api, org: Org, owner_engine: AsyncEngine, make_org: OrgFactory
 ) -> None:

@@ -99,7 +99,7 @@ A key ends up in a log, a repository or a client.
 | Control | Code | Proof |
 |---|---|---|
 | Only a keyed hash of the secret is stored (HMAC with a server pepper); the secret is shown once | `pairly_core.api_keys.tokens.hash_secret`, `verify_secret` | `test_api_keys_unit.py` (`test_hash_binds_prefix_and_secret`, `test_pepper_fails_closed_without_echoing_the_value`) |
-| A key can only read, propose and upload; scopes cannot exceed the creator's permissions; keys expire and can be revoked | `pairly_core.api_keys.service.check_scopes`, `authenticate_api_key` | `apps/api/tests/test_api_keys.py` (`test_scope_rules`, `test_key_permissions_are_its_scopes_only`, `test_invalid_and_expired_keys`) |
+| A key can only read, propose and upload; scopes cannot exceed the creator's permissions, at creation and at every use (a key loses what its creator loses, and stops when they leave); keys expire and can be revoked | `pairly_core.api_keys.service.check_scopes`, `authenticate_api_key` | `apps/api/tests/test_api_keys.py` (`test_scope_rules`, `test_key_permissions_are_its_scopes_only`, `test_a_key_never_outlives_its_creators_role`, `test_invalid_and_expired_keys`) |
 | Per-key rate limit; every use is audited | `pairly_core.api_keys.ratelimit.RateLimiter` | `test_api_keys.py` (`test_rate_limit`, `test_use_audit_and_tenant_isolation`) |
 | Test keys (`pk_test_`) only work in sandbox organisations | `pairly_core.api_keys.service` | `test_api_keys.py` (`test_test_keys_need_a_sandbox`) |
 | Secret scanning in CI (gitleaks); no secret has a default, and startup fails when one is missing | `.github/workflows/ci.yml`, `pairly_core.config` | `make ci-security`, `packages/core/tests/test_config.py`, `scripts/tests/test_gen_dev_env.py` |

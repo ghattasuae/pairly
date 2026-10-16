@@ -28,7 +28,11 @@ Authentication (``authenticate_api_key``), for ``Authorization: Bearer pk_...``:
 6. Record ``last_used_at`` at most once a minute, in its own short transaction.
 
 The result is an ``api_key`` actor whose permissions are the key's scopes that the
-registry still knows and that an API key may hold.
+registry still knows, that an API key may hold, and that the person who created the
+key still holds in this organisation today. A key never outlives its creator's role:
+when the creator leaves or is moved to a role without a scope, the key loses that scope,
+and with none left it is refused (``ApiKeyCreatorInactiveError``, 403; security review
+2026-10, M-02).
 """
 
 from __future__ import annotations
@@ -61,11 +65,12 @@ from pairly_core.errors import (
     NotFoundError,
     UnauthenticatedError,
 )
-from pairly_core.models import Organisation
+from pairly_core.models import Membership, Organisation, Role
 from pairly_core.rbac import (
     Actor,
     ActorKind,
     PermissionDeniedError,
+    RoleGrant,
     RoleRegistry,
     api_key_may_hold,
 )
@@ -98,6 +103,11 @@ class ApiKeyExpiredError(UnauthenticatedError):
 class TestKeyNotAllowedError(ForbiddenError):
     code = "test_key_not_allowed"
     title = "Test API keys only work in sandbox organisations"
+
+
+class ApiKeyCreatorInactiveError(ForbiddenError):
+    code = "api_key_creator_inactive"
+    title = "The person who created this API key no longer holds any of its scopes"
 
 
 class LiveKeyInSandboxError(ForbiddenError):
@@ -234,6 +244,21 @@ def key_permissions(registry: RoleRegistry, scopes: Iterable[str]) -> frozenset[
     return frozenset(s for s in scopes if s in registry and api_key_may_hold(s))
 
 
+async def creator_permissions(
+    session: AsyncSession, registry: RoleRegistry, user_id: uuid.UUID
+) -> frozenset[str]:
+    """What the key's creator holds in the session's organisation today (nothing once
+    they are no longer a member)."""
+    rows = (
+        await session.execute(
+            select(Role.key, Membership.workflow)
+            .join(Role, Role.id == Membership.role_id)
+            .where(Membership.user_id == user_id)
+        )
+    ).all()
+    return registry.resolve(RoleGrant(role=r.key, workflow=r.workflow) for r in rows)
+
+
 async def authenticate_api_key(
     session: AsyncSession,
     registry: RoleRegistry,
@@ -274,6 +299,11 @@ async def authenticate_api_key(
         raise TestKeyNotAllowedError()
     if row.mode == KeyMode.LIVE.value and org.sandbox:
         raise LiveKeyInSandboxError()
+    permissions = key_permissions(registry, row.scopes) & await creator_permissions(
+        session, registry, row.created_by
+    )
+    if not permissions:
+        raise ApiKeyCreatorInactiveError("ask an admin for a new key")
     limiter.check(str(row.id), row.rate_limit_per_minute or default_rate_limit)
     if row.last_used_at is None or now - row.last_used_at >= LAST_USED_RESOLUTION:
         await session.execute(
@@ -295,5 +325,5 @@ async def authenticate_api_key(
         id=row.id,
         org_id=org_id,
         grants=(),
-        permissions=key_permissions(registry, row.scopes),
+        permissions=permissions,
     )
