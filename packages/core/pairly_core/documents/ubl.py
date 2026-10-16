@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""UBL 2.1 invoices, including the Peppol PINT AE profile: an ``EInvoiceParser``.
+"""UBL 2.1 invoices (Peppol BIS Billing 3.0, Peppol PINT AE): an ``EInvoiceParser``.
 
 A structured e-invoice needs no model: every value is read exactly as the XML states it
 (amounts stay the decimal strings they are, dates stay ISO). The parser produces:
@@ -64,13 +64,16 @@ INVOICE_NS: Final = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
 CAC: Final = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
 CBC: Final = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 PINT_AE_PREFIX: Final = "urn:peppol:pint:billing-1@ae-1"
+# Peppol BIS Billing 3.0 (EN 16931 compliant UBL).
+PEPPOL_BIS3: Final = "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"
 # PINT AE endpoint scheme of a UAE tax registration number.
 TRN_SCHEME: Final = "0235"
 
 _CONTROL = re.compile("[\\x00-\\x1f\\x7f\\u2028\\u2029]+")
 
 
-def _clean(text: str | None) -> str | None:
+def clean(text: str | None) -> str | None:
+    """One line of at most ``MAX_VALUE_CHARS``: no control characters or line breaks."""
     if text is None:
         return None
     value = unicodedata.normalize("NFC", _CONTROL.sub(" ", text))
@@ -95,14 +98,14 @@ def _text(node: Element | None, path: str) -> str | None:
     if node is None:
         return None
     found = node.find(_path(path))
-    return _clean(found.text) if found is not None else None
+    return clean(found.text) if found is not None else None
 
 
 def _find(node: Element | None, path: str) -> Element | None:
     return None if node is None else node.find(_path(path))
 
 
-class _Writer:
+class Writer:
     """Collects the readable lines and the structured values with their quotes."""
 
     def __init__(self) -> None:
@@ -122,7 +125,7 @@ def _supplier_trn(party: Element | None) -> str | None:
         return trn
     endpoint = _find(party, "cbc:EndpointID")
     if endpoint is not None and endpoint.get("schemeID") == TRN_SCHEME:
-        return _clean(endpoint.text)
+        return clean(endpoint.text)
     return None
 
 
@@ -143,15 +146,29 @@ def _vat_rate(root: Element) -> str | None:
     return next(iter(rates)) if len(rates) == 1 else None
 
 
+def _tax_amount(root: Element, currency: str | None) -> str | None:
+    """The VAT total in the document currency.
+
+    Peppol BIS 3 may carry a second ``cac:TaxTotal`` in the VAT accounting currency (no
+    subtotals): the one whose amount is in the document currency is the invoice's.
+    """
+    amounts = root.findall(_path("cac:TaxTotal/cbc:TaxAmount"))
+    for amount in amounts:
+        if currency is not None and amount.get("currencyID") == currency:
+            return clean(amount.text)
+    return clean(amounts[0].text) if amounts else None
+
+
 def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWarning]]:
     """The readable lines, the structured data and any warnings of one UBL invoice."""
-    out = _Writer()
+    out = Writer()
     warnings: list[ParseWarning] = []
     customization = _text(root, "cbc:CustomizationID")
     header: dict[str, Any] = {}
     supplier = _find(root, "cac:AccountingSupplierParty/cac:Party")
     customer = _find(root, "cac:AccountingCustomerParty/cac:Party")
     totals = _find(root, "cac:LegalMonetaryTotal")
+    currency = _text(root, "cbc:DocumentCurrencyCode")
     out.add("Document", "Invoice (UBL 2.1)")
     for key, label, value in (
         ("supplier_name", "Supplier", _party_name(supplier)),
@@ -162,7 +179,7 @@ def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWa
         ("invoice_date", "Invoice date", _text(root, "cbc:IssueDate")),
         ("due_date", "Due date", _text(root, "cbc:DueDate")),
         ("payment_terms", "Payment terms", _text(root, "cac:PaymentTerms/cbc:Note")),
-        ("currency", "Currency", _text(root, "cbc:DocumentCurrencyCode")),
+        ("currency", "Currency", currency),
         ("po_number", "Purchase order", _text(root, "cac:OrderReference/cbc:ID")),
         (
             "subtotal",
@@ -170,7 +187,7 @@ def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWa
             _text(totals, "cbc:TaxExclusiveAmount") or _text(totals, "cbc:LineExtensionAmount"),
         ),
         ("vat_rate", "VAT rate (percent)", _vat_rate(root)),
-        ("vat_amount", "VAT amount", _text(root, "cac:TaxTotal/cbc:TaxAmount")),
+        ("vat_amount", "VAT amount", _tax_amount(root, currency)),
         (
             "total",
             "Total payable",
@@ -221,13 +238,14 @@ def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWa
                 line[key] = {"value": value, "quote": quote}
         lines.append(line)
 
-    notes = [_clean(n.text) for n in root.findall(_path("cbc:Note"))]
+    notes = [clean(n.text) for n in root.findall(_path("cbc:Note"))]
     for note in [n for n in notes if n][:MAX_NOTES]:
         out.add("Note", note)
     data = {
         "format": UblInvoiceParser.format_id,
         "customization": customization,
         "pint_ae": bool(customization and customization.startswith(PINT_AE_PREFIX)),
+        "peppol_bis3": bool(customization and customization.startswith(PEPPOL_BIS3)),
         "header": header,
         "bank": bank,
         "lines": lines,
@@ -235,35 +253,53 @@ def read_invoice(root: Element) -> tuple[list[str], dict[str, Any], list[ParseWa
     return out.lines, data, warnings
 
 
+def read_xml(path: Path) -> bytes:
+    """The bytes of an XML file, refused above ``MAX_XML_BYTES``."""
+    with path.open("rb") as handle:
+        data = handle.read(MAX_XML_BYTES + 1)
+    if len(data) > MAX_XML_BYTES:
+        raise ParseError("too_large", "XML document too large")
+    return data
+
+
+def safe_root(data: bytes) -> Element:
+    """The root element, read with ``defusedxml``: a DTD, an entity declaration or an
+    external reference is refused (``unsafe_xml``), never resolved or fetched."""
+    if len(data) > MAX_XML_BYTES:
+        raise ParseError("too_large", "XML document too large")
+    try:
+        root: Element = SafeET.fromstring(
+            data, forbid_dtd=True, forbid_entities=True, forbid_external=True
+        )
+    except DefusedXmlException:
+        raise ParseError("unsafe_xml", "XML declares a DTD or entities") from None
+    except SafeET.ParseError:
+        raise ParseError("corrupt", "malformed XML") from None
+    return root
+
+
+def text_page(lines: list[str], number: int = 1) -> Page:
+    """A page holding the readable lines of a structured e-invoice (no layout)."""
+    blocks = [TextBlock(text=line, source="text", group=index) for index, line in enumerate(lines)]
+    return Page(
+        number=number, width=0.0, height=0.0, unit="pt", text="\n".join(lines), blocks=blocks
+    )
+
+
 class UblInvoiceParser:
-    """UBL 2.1 ``Invoice`` documents (Peppol BIS Billing, PINT AE)."""
+    """UBL 2.1 ``Invoice`` documents (Peppol BIS Billing 3.0, PINT AE)."""
 
     format_id = "ubl-2.1-invoice"
-    version = "1"
+    version = "2"
 
     def detect(self, root_tag: str, namespaces: dict[str, str]) -> bool:
         return root_tag == f"{{{INVOICE_NS}}}Invoice"
 
     def parse(self, path: Path, options: ParseOptions) -> NormalizedDocument:
-        with path.open("rb") as handle:
-            data = handle.read(MAX_XML_BYTES + 1)
-        if len(data) > MAX_XML_BYTES:
-            raise ParseError("too_large", "XML document too large")
-        try:
-            root = SafeET.fromstring(
-                data, forbid_dtd=True, forbid_entities=True, forbid_external=True
-            )
-        except DefusedXmlException:
-            raise ParseError("unsafe_xml", "XML declares a DTD or entities") from None
-        except SafeET.ParseError:
-            raise ParseError("corrupt", "malformed XML") from None
+        root = safe_root(read_xml(path))
         if root.tag != f"{{{INVOICE_NS}}}Invoice":
             raise ParseError("unsupported_einvoice_format", "not a UBL invoice")
         lines, structured, warnings = read_invoice(root)
-        text = "\n".join(lines)
-        blocks = [
-            TextBlock(text=line, source="text", group=index) for index, line in enumerate(lines)
-        ]
         metadata = {
             DATA_KEY: json.dumps(structured, ensure_ascii=False, sort_keys=True),
             "einvoice:customization": structured["customization"] or "",
@@ -271,7 +307,7 @@ class UblInvoiceParser:
         return NormalizedDocument(
             media_type=XML,
             parser=ParserInfo(name="ubl", version=self.version),
-            pages=[Page(number=1, width=0.0, height=0.0, unit="pt", text=text, blocks=blocks)],
+            pages=[text_page(lines)],
             metadata=metadata,
             warnings=warnings,
         )

@@ -3,7 +3,7 @@
 """``uv run python -m synth.pay``: the synthetic Pay dataset.
 
     python -m synth.pay generate --out <dir> [--count N] [--seed S]
-        Render every document into <dir> (invoices/, attacks/, emails/) and write
+        Render every document into <dir> (invoices/, attacks/, emails/, einvoices/) and write
         <dir>/index.json: every invoice with its file and ground truth, the vendors,
         purchase orders, receipts, matching cases and emails.
     python -m synth.pay manifests [--count N] [--seed S]
@@ -35,6 +35,7 @@ from pydantic import BaseModel
 from synth.pay.attacks import APPROVAL_THRESHOLD
 from synth.pay.banking import BANKS
 from synth.pay.dataset import DEFAULT_COUNT, DEFAULT_SEED, TOLERANCES, Dataset, build
+from synth.pay.einvoices import render_sample, samples
 from synth.pay.emails import render_email
 
 MANIFEST_DIR: Final = Path(__file__).resolve().parent / "manifests"
@@ -124,6 +125,7 @@ def manifests(count: int, seed: int) -> dict[Path, str]:
         MANIFEST_DIR / "goods_receipts.jsonl": _jsonl(ds.receipts),
         MANIFEST_DIR / "matching.jsonl": _jsonl(ds.cases),
         MANIFEST_DIR / "emails.jsonl": _jsonl(ds.emails),
+        MANIFEST_DIR / "einvoices.jsonl": _jsonl([sample for sample, _ in samples(ds)]),
         MANIFEST_DIR / "summary.json": json.dumps(summary, ensure_ascii=False, indent=1) + "\n",
     }
 
@@ -174,6 +176,14 @@ def generate(out: Path, count: int, seed: int) -> int:
         path.write_bytes(data)
         total += len(data)
         files += 1
+    einvoices = samples(ds)
+    for sample, spec in einvoices:
+        data = render_sample(sample, spec.doc)
+        path = out / sample.file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        total += len(data)
+        files += 1
     summary = stats(ds)
     index = {
         "count": count,
@@ -186,6 +196,7 @@ def generate(out: Path, count: int, seed: int) -> int:
         "goods_receipts": [r.model_dump(mode="json") for r in ds.receipts],
         "matching": [c.model_dump(mode="json") for c in ds.cases],
         "emails": [e.model_dump(mode="json") for e in ds.emails],
+        "einvoices": [sample.model_dump(mode="json") for sample, _ in einvoices],
     }
     (out / "index.json").write_text(
         json.dumps(index, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"

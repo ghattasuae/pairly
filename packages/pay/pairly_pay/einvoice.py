@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""Structured e-invoices (UBL 2.1, Peppol PINT AE) to Pay's invoice fields, no model.
+"""Structured e-invoices (UBL 2.1, Peppol BIS 3 and PINT AE; UN/CEFACT CII, also inside a
+Factur-X PDF) to Pay's invoice fields, no model.
 
-The engine's sandboxed e-invoice parser (``pairly_core.documents.ubl``) reads every value
-exactly as the XML states it and keeps it with its line of text. This module maps those
-values onto ``PayInvoice`` paths as answers with that line as the quote, and the engine
-(``extract_from_answers``) checks them exactly like a model's answers: the quote must be
-in the sanitized text, the value must parse and be backed by its quote. Confidence is 1:
-nothing was inferred. A value the XML does not carry is simply absent (for example the
-VAT amount of a line), never computed.
+The engine's sandboxed e-invoice parsers (``pairly_core.documents.ubl``, ``.cii``,
+``.facturx``) read every value exactly as the XML states it and keep it with its line of
+text. This module maps those values onto ``PayInvoice`` paths as answers with that line
+as the quote, and the engine (``extract_from_answers``) checks them exactly like a
+model's answers: the quote must be in the sanitized text, the value must parse and be
+backed by its quote. Confidence is 1: nothing was inferred. A value the XML does not
+carry is simply absent (for example the VAT amount of a line), never computed.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ from pairly_pay.invoice_schema import PayInvoice
 SOURCE: Final = "pay_einvoice"
 SOURCE_VERSION: Final = "v1"
 FORMAT_KEY: Final = "einvoice:format"
-SUPPORTED_FORMATS: Final = frozenset({"ubl-2.1-invoice"})
+SUPPORTED_FORMATS: Final = frozenset({"ubl-2.1-invoice", "un-cefact-cii"})
 
 # e-invoice header key -> PayInvoice path.
 HEADER: Final = {

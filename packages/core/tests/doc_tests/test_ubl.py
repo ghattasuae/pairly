@@ -51,7 +51,7 @@ def _parse(tmp_path: Path, data: bytes, name: str = "inv.xml") -> NormalizedDocu
 def test_registered_by_default() -> None:
     parser = default_registry().get(sn.XML)
     assert isinstance(parser, XmlParser)
-    assert parser.einvoices.formats == {"ubl-2.1-invoice"}
+    assert parser.einvoices.formats == {"ubl-2.1-invoice", "un-cefact-cii"}
 
 
 def test_every_synthetic_xml_invoice_is_read_exactly(tmp_path: Path) -> None:

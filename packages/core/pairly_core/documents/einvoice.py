@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
-"""XML documents: dispatch to a registered e-invoice parser (UBL, Peppol PINT AE).
+"""XML documents: dispatch to a registered e-invoice parser (UBL, CII).
 
-The default registry knows UBL 2.1 invoices, Peppol PINT AE included
-(``pairly_core.documents.ubl``). Any other XML fails parsing with
-``unsupported_einvoice_format`` and goes to the human queue. XML with a DTD or entity
-declarations is refused outright (XXE and billion-laughs guard).
+The default registry knows UBL 2.1 invoices, Peppol BIS Billing 3.0 and PINT AE included
+(``pairly_core.documents.ubl``), and UN/CEFACT CII invoices (``pairly_core.documents.cii``).
+Any other XML fails parsing with ``unsupported_einvoice_format`` and goes to the human
+queue. XML with a DTD or entity declarations is refused outright (XXE and billion-laughs
+guard).
 """
 
 from __future__ import annotations

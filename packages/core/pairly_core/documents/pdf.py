@@ -16,8 +16,9 @@ rendered pixels show no contrast (covered by a shape, clipped) carry
 ``Char.render_contrast``, and ``Page.render`` says whether the page was checked.
 
 Document level: the Info dictionary, raw XMP, and structural warnings for active
-content (JavaScript, open actions) and embedded files. Encrypted files open only with
-an empty user password; otherwise parsing fails with ``encrypted``.
+content (JavaScript, open actions) and embedded files. The CII invoice of a Factur-X or
+ZUGFeRD PDF is read (``documents.facturx``) and added as one more page. Encrypted files
+open only with an empty user password; otherwise parsing fails with ``encrypted``.
 
 No PyMuPDF (AGPL).
 """
@@ -32,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from pairly_core.documents.colors import to_hex
+from pairly_core.documents.facturx import Attachments, find_attachments, read_embedded
 from pairly_core.documents.model import (
     BBox,
     Char,
@@ -124,8 +126,14 @@ def _metadata_value(value: Any) -> str:
     return str(value)[:MAX_METADATA_VALUE]
 
 
-def _structure(path: Path, warnings: list[ParseWarning]) -> tuple[dict[str, str], bool]:
-    """pypdf pass: Info, XMP, active content, embedded files. Returns (metadata, encrypted)."""
+def _structure(
+    path: Path, warnings: list[ParseWarning]
+) -> tuple[dict[str, str], bool, Attachments]:
+    """pypdf pass: Info, XMP, active content, embedded files.
+
+    Returns (metadata, encrypted, attachments). A Factur-X attachment that is the only
+    embedded file is not an ``embedded_files`` warning: ``documents.facturx`` reads it.
+    """
     from pypdf import PdfReader
     from pypdf.errors import PdfReadError
 
@@ -147,6 +155,7 @@ def _structure(path: Path, warnings: list[ParseWarning]) -> tuple[dict[str, str]
         )
 
     metadata: dict[str, str] = {}
+    attachments = Attachments(names=())
     try:
         info: Any = reader.metadata or {}
         for key, value in info.items():
@@ -171,11 +180,18 @@ def _structure(path: Path, warnings: list[ParseWarning]) -> tuple[dict[str, str]
                 )
             )
         if "/EmbeddedFiles" in names:
-            warnings.append(ParseWarning(code="embedded_files", message="PDF has embedded files"))
+            try:
+                attachments = find_attachments(reader)
+            except Exception:
+                attachments = Attachments(names=("?",))
+            if not attachments.only_einvoice:
+                warnings.append(
+                    ParseWarning(code="embedded_files", message="PDF has embedded files")
+                )
     except Exception:
         warnings.append(ParseWarning(code="structure_error", message="unreadable document catalog"))
     metadata["pdf:pages"] = str(len(reader.pages))
-    return metadata, encrypted
+    return metadata, encrypted, attachments
 
 
 def _fills(page: Any, warnings: list[ParseWarning], number: int) -> list[Fill]:
@@ -201,7 +217,8 @@ class PdfParser:
     name = "pdf"
     # 2: renderer-based visibility check (Page.render, Char.render_contrast).
     # 3: own reading order (columns, right-to-left text, Char.offset).
-    version = "3"
+    # 4: the CII invoice of a Factur-X / ZUGFeRD PDF as one more page (documents.facturx).
+    version = "4"
     media_types = frozenset({PDF})
 
     def parse(self, path: Path, options: ParseOptions) -> NormalizedDocument:
@@ -210,7 +227,7 @@ class PdfParser:
 
         _install_render_mode_hook()
         warnings: list[ParseWarning] = []
-        metadata, encrypted = _structure(path, warnings)
+        metadata, encrypted, attachments = _structure(path, warnings)
         budget = [options.max_chars]
         pages: list[Page] = []
         renderer = PageRenderer(path, "" if encrypted else None, options)
@@ -256,6 +273,13 @@ class PdfParser:
             renderer.close()
         if pages and not any(p.text.strip() for p in pages):
             warnings.append(ParseWarning(code="no_text", message="no text found"))
+        einvoice, einvoice_metadata, einvoice_warnings = read_embedded(
+            attachments, "\n".join(p.text for p in pages), len(pages) + 1
+        )
+        warnings.extend(einvoice_warnings)
+        if einvoice is not None:
+            pages.append(einvoice)
+            metadata.update(einvoice_metadata)
         if budget[0] < 0:
             warnings.append(
                 ParseWarning(code="chars_truncated", message="character detail limit reached")

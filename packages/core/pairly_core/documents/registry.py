@@ -102,8 +102,9 @@ class ParserRegistry:
 
 @runtime_checkable
 class EInvoiceParser(Protocol):
-    """A structured e-invoice format. UBL 2.1 (with Peppol PINT AE) ships in
-    ``pairly_core.documents.ubl``; another format is one more class registered here."""
+    """A structured e-invoice format. UBL 2.1 (Peppol BIS Billing 3.0, PINT AE) ships in
+    ``pairly_core.documents.ubl`` and UN/CEFACT CII (Factur-X, ZUGFeRD) in
+    ``pairly_core.documents.cii``; another format is one more class registered here."""
 
     @property
     def format_id(self) -> str:
@@ -146,6 +147,7 @@ class EInvoiceRegistry:
 
 def default_registry(einvoices: EInvoiceRegistry | None = None) -> ParserRegistry:
     """Every built-in parser. Imports are local so the API never loads parser libraries."""
+    from pairly_core.documents.cii import CiiInvoiceParser
     from pairly_core.documents.docx import DocxParser
     from pairly_core.documents.einvoice import XmlParser
     from pairly_core.documents.ocr import ImageParser
@@ -159,6 +161,6 @@ def default_registry(einvoices: EInvoiceRegistry | None = None) -> ParserRegistr
             DocxParser(),
             ImageParser(),
             TextParser(),
-            XmlParser(einvoices or EInvoiceRegistry([UblInvoiceParser()])),
+            XmlParser(einvoices or EInvoiceRegistry([UblInvoiceParser(), CiiInvoiceParser()])),
         ]
     )

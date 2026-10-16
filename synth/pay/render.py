@@ -406,14 +406,22 @@ def _el(parent: ET.Element, tag: str, text: str | None = None, **attrs: str) -> 
     return el
 
 
-def render_xml(doc: InvoiceDoc) -> bytes:
+def render_xml(
+    doc: InvoiceDoc,
+    *,
+    customization: str = CUSTOMIZATION,
+    tax_currency: tuple[str, str] | None = None,
+) -> bytes:
+    """UBL 2.1. ``customization`` picks the profile (PINT AE by default, or Peppol BIS
+    Billing 3.0); ``tax_currency`` (code, VAT amount) adds the second ``cac:TaxTotal`` in
+    the VAT accounting currency that BIS 3 allows."""
     for prefix, uri in NS.items():
         ET.register_namespace(prefix, uri)
     truth = doc.truth
     vendor = doc.vendor
     cur = truth.currency
     root = ET.Element(f"{{{NS['']}}}Invoice")
-    _el(root, "cbc:CustomizationID", CUSTOMIZATION)
+    _el(root, "cbc:CustomizationID", customization)
     _el(root, "cbc:ProfileID", PROFILE)
     _el(root, "cbc:ID", truth.invoice_number)
     _el(root, "cbc:IssueDate", truth.invoice_date)
@@ -425,6 +433,8 @@ def render_xml(doc: InvoiceDoc) -> bytes:
         if h.mode == "xml_note":
             _el(root, "cbc:Note", h.text)
     _el(root, "cbc:DocumentCurrencyCode", cur)
+    if tax_currency is not None:
+        _el(root, "cbc:TaxCurrencyCode", tax_currency[0])
     if truth.po_number:
         _el(_el(root, "cac:OrderReference"), "cbc:ID", truth.po_number)
 
@@ -490,6 +500,9 @@ def render_xml(doc: InvoiceDoc) -> bytes:
         if cat == "O":
             _el(tcat, "cbc:TaxExemptionReason", "Reverse charge")
         _el(_el(tcat, "cac:TaxScheme"), "cbc:ID", "VAT")
+
+    if tax_currency is not None:
+        _el(_el(root, "cac:TaxTotal"), "cbc:TaxAmount", tax_currency[1], currencyID=tax_currency[0])
 
     totals = _el(root, "cac:LegalMonetaryTotal")
     _el(totals, "cbc:LineExtensionAmount", truth.subtotal, currencyID=cur)

@@ -32,6 +32,7 @@ only the generators and the manifests below (under 1 MB).
 | `manifests/goods_receipts.jsonl` | goods receipts (quantities received per PO line) |
 | `manifests/matching.jsonl` | matching cases: PO, invoices, receipts, expected result and exceptions |
 | `manifests/emails.jsonl` | inbound emails: sender, forwarded sender, attachments, invoices to extract, ignore flag |
+| `manifests/einvoices.jsonl` | e-invoice samples in more formats (CII, Factur-X, Peppol BIS 3) with the ground truth of the invoice each one renders |
 | `manifests/summary.json` | counts, tolerances, the approval threshold, the synthetic bank table |
 
 ## Vendors
@@ -62,6 +63,15 @@ name (PDF creator). The fake-invoice attacks break exactly these.
   (`Z`, international freight) and reverse charge for foreign vendors (`O`, 0%), in AED
   mostly, plus USD, EUR, GBP and SAR.
 * **Channels**: `email` (in an email under `emails/`), `upload` or `api`.
+
+## More e-invoice formats
+
+`synth/pay/einvoices.py` renders a few regular invoices again, with the same ground
+truth, in `einvoices/`: three UN/CEFACT CII D16B invoices (EN 16931 guideline, dates in
+format `102`), three Factur-X PDFs (the invoice's own digital PDF with that CII attached
+as `factur-x.xml`; not converted to PDF/A-3) and two Peppol BIS Billing 3.0 UBL invoices
+in a foreign currency, which also carry the VAT total in AED at a fixed, made-up rate (a
+second `cac:TaxTotal`). The first invoices by id that fit are taken; nothing is random.
 
 ## Ground truth
 

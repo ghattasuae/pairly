@@ -173,6 +173,38 @@ def test_einvoice_is_read_exactly_without_a_model() -> None:
         assert all(f.spans for f in result.fields if f.value is not None)
 
 
+@pytest.mark.parametrize("fmt", ["cii", "factur-x", "peppol-bis3"])
+def test_other_einvoice_formats_are_read_exactly_without_a_model(fmt: str) -> None:
+    from synth.pay.einvoices import render_sample, samples
+
+    chosen = [(s, spec) for s, spec in samples(dataset()) if s.format == fmt]
+    assert chosen
+    for sample, spec in chosen:
+        name = sample.file.rsplit("/", 1)[-1]
+        media = "application/pdf" if name.endswith(".pdf") else "application/xml"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / name
+            path.write_bytes(render_sample(sample, spec.doc))
+            doc = default_registry().get(media).parse(path, ParseOptions(ocr_languages="eng"))
+        report = scan_document(doc, context=ScanContext(filename=name))
+        guarded = GuardedInput.build(doc, report)
+        assert is_einvoice(doc), sample.id
+        result = read_einvoice(doc, guarded)
+        assert not result.needs_human, (sample.id, result.reasons)
+        assert result.model_call.model is None
+        data = result.data
+        assert data is not None
+        truth = sample.truth
+        assert data.invoice_number.value == truth.invoice_number
+        assert data.total.value == Decimal(truth.total)
+        assert data.vat_amount.value == Decimal(truth.vat_amount)
+        assert data.vendor_trn.value == truth.vendor_trn
+        assert [li.line_total.value for li in data.line_items] == [
+            Decimal(x.line_total) for x in truth.lines
+        ]
+        assert all(f.spans for f in result.fields if f.value is not None)
+
+
 def test_einvoice_with_an_injected_note_needs_a_person() -> None:
     attack = next(
         s

@@ -218,5 +218,6 @@ REVIEW_WARNINGS = frozenset(
         "no_text",
         "unsafe_xml",
         "lines_truncated",
+        "einvoice_mismatch",
     }
 )
