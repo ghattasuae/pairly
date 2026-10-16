@@ -8,8 +8,8 @@ By taking part, you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md). T
 
 You need:
 
-1. [uv](https://docs.astral.sh/uv/) for Python (Python 3.12).
-2. [pnpm](https://pnpm.io/) for JavaScript and TypeScript.
+1. [uv](https://docs.astral.sh/uv/) for Python. It installs Python 3.12 for you; never rely on the system Python.
+2. Node.js 22 with Corepack enabled (`corepack enable`), which provides [pnpm](https://pnpm.io/).
 3. Postgres 16 with pgvector, Valkey and Tesseract, installed natively, for the local
    stack (on macOS: Homebrew `postgresql@16`, `pgvector`, `valkey`, `tesseract`). Docker
    is not needed for development.
@@ -26,9 +26,28 @@ make local-test  # pytest against fresh local test databases, no Docker
 make local-down  # stop every native process
 ```
 
-Run `make help` to see every target. The native stack keeps all its data under `.local/`
-(gitignored); see `infra/README.md`. The Docker Compose stack (`make docker-dev`) is for
-CI and self-hosters.
+The native stack keeps all its data under `.local/` (gitignored), runs everything as
+plain local processes at low priority, and needs no containers; see `infra/README.md` and
+[ADR 0007](docs/adr/0007-native-local-stack.md). The Docker Compose stack
+(`make docker-dev`) is for CI and self-hosters.
+
+### Make targets you will use
+
+| Target | What it does |
+|---|---|
+| `make dev` / `make local-up` | Start the native stack (`.env` with random secrets is created on first run) |
+| `make demo` | The native stack plus a complete Hire, Pay and expense demo, offline in recorded model mode |
+| `make local-status`, `make local-logs SERVICE=api`, `make local-down` | Inspect and stop the native stack |
+| `make test` | Python tests with coverage, then JS tests |
+| `make local-test` | pytest against fresh local test databases (migrations and `alembic check` first) |
+| `make lint` | ruff, import-linter contracts, the em dash check, the translations check, eslint |
+| `make typecheck` | mypy (strict on the engine and the workflows) and tsc |
+| `make evals` | The eval suites and the threshold gate, offline |
+| `make docs` | Regenerate the workflow graph diagrams and the model cards |
+| `make api-docs` | The OpenAPI JSON and a static reference page |
+| `make ci-test`, `make ci-security`, `make ci-licenses`, `make ci-actionlint` | The CI checks, run locally |
+
+Run `make help` to see every target.
 
 ## Branches and pull requests
 
@@ -36,10 +55,17 @@ CI and self-hosters.
 2. Create a branch from `main`. Use a short name such as `fix/duplicate-invoice-check` or `feat/interview-kit`.
 3. Keep each pull request focused on one change.
 4. Add or update tests. If you change AI behaviour, run `make evals` and include the results.
-5. Run `make lint` and `make test` before you push.
-6. Open the pull request and fill in the checklist in the template.
-7. Sign the CLA when the bot asks. We cannot merge until it is signed.
-8. A maintainer reviews the change. CI must pass, including the eval thresholds.
+5. Run `make lint`, `make typecheck` and `make test` before you push. If you changed a graph, a prompt or an eval result, run `make docs` and commit what it changes.
+6. Record a significant decision as an ADR in `docs/adr/` and add it to the index.
+7. Open the pull request and fill in the checklist in the template.
+8. Sign the CLA when the bot asks. We cannot merge until it is signed.
+9. A maintainer reviews the change. CI must pass, including the eval thresholds.
+
+### Commit messages
+
+* The subject is one plain sentence in the imperative, without a prefix or a full stop: `Count PII redactions and open governance counts to auditors`.
+* Keep the subject short. Leave a blank line, then explain what changed and why in the body, wrapped at about 72 characters.
+* One logical change per commit. Tests and docs for the change go in the same commit.
 
 ## Rules for every change
 
@@ -78,7 +104,10 @@ This applies to UI text, emails, docs, comments meant for users, and the README:
 1. Plain, short sentences.
 2. No hype words.
 3. Never use em dashes. Use commas, colons or full stops instead.
-4. Do not invent numbers. Any metric in docs must come from a real eval run.
+4. Do not invent numbers. Any metric in docs must come from a real eval run: quote `evals/report.md` or `evals/results/`, and let `make docs` fill the model cards.
+5. Every user-facing string has an English and an Arabic version (`apps/web/messages/`); `make lint` checks both match.
+
+`make lint` runs the em dash check on every tracked doc and UI file (`scripts/check_no_em_dash.py`) and the translations check (`scripts/check_translations.py`).
 
 ## Contributor License Agreement (CLA)
 

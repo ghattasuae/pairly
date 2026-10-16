@@ -19,7 +19,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | disposable-email-domains (subset) | curated 2026-10 | CC0-1.0 | packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire apply form refuses |
 | Redoc (standalone bundle) | 2.5.4 | MIT; the bundle also carries React (MIT), DOMPurify (Apache-2.0 OR MPL-2.0) and other MIT and ISC code, see redoc.standalone.js.LICENSE.txt | infra/api-docs/vendor/redoc/, the API reference page make api-docs writes |
 
-## Python packages (137)
+## Python packages (150)
 
 | Name | Version | License |
 | --- | --- | --- |
@@ -33,7 +33,9 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | asgiref | 3.12.1 | BSD-3-Clause |
 | ast_serialize | 0.12.1 | MIT |
 | asyncpg | 0.31.0 | Apache-2.0 |
+| attrs | 26.1.0 | MIT |
 | backoff | 2.2.1 | MIT |
+| blinker | 1.9.0 | MIT License |
 | boto3 | 1.43.108 | Apache-2.0 |
 | botocore | 1.43.108 | Apache-2.0 |
 | certifi | 2026.7.22 | MPL-2.0 |
@@ -51,6 +53,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | Faker | 40.41.0 | MIT License |
 | fastapi | 0.142.2 | MIT |
 | filelock | 4.0.12 | MIT |
+| Flask | 3.1.3 | BSD-3-Clause |
 | googleapis-common-protos | 1.75.5 | Apache-2.0 |
 | greenlet | 3.5.6 | MIT AND PSF-2.0 |
 | grimp | 3.17 | BSD 2-Clause License |
@@ -65,11 +68,14 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | idna | 3.20 | BSD-3-Clause |
 | import-linter | 2.15 | BSD 2-Clause License |
 | iniconfig | 2.3.0 | MIT |
+| itsdangerous | 2.2.0 | BSD License |
 | Jinja2 | 3.1.6 | BSD License |
 | jiter | 0.17.0 | MIT |
 | jmespath | 1.1.0 | MIT |
 | jsonpatch | 1.33 | Modified BSD License |
 | jsonpointer | 3.1.1 | Modified BSD License |
+| jsonschema | 4.26.0 | MIT |
+| jsonschema-specifications | 2025.9.1 | MIT |
 | langchain-core | 1.6.7 | MIT |
 | langchain-protocol | 0.0.19 | MIT |
 | langfuse | 4.17.0 | MIT |
@@ -84,6 +90,8 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | Mako | 1.4.3 | MIT |
 | markdown-it-py | 4.2.0 | MIT License |
 | MarkupSafe | 3.0.4 | BSD-3-Clause |
+| mcp | 2.3.0 | MIT |
+| mcp-types | 2.3.0 | MIT |
 | mdurl | 0.1.2 | MIT License |
 | mypy | 2.4.0 | MIT |
 | mypy_extensions | 1.1.0 | MIT |
@@ -132,17 +140,21 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | python-docx | 1.2.0 | MIT |
 | python-dotenv | 1.2.4 | BSD-3-Clause |
 | python-multipart | 0.0.32 | Apache-2.0 |
+| pywin32 | 312 | PSF (from the registry) |
 | PyYAML | 6.0.3 | MIT |
 | redis | 5.3.1 | MIT |
+| referencing | 0.37.0 | MIT |
 | reportlab | 5.0.1 | BSD License |
 | requests | 2.34.2 | Apache-2.0 |
 | requests-toolbelt | 1.0.0 | Apache 2.0 |
 | rich | 15.0.0 | MIT |
+| rpds-py | 2026.9.1 | MIT |
 | ruff | 0.16.10 | MIT |
 | s3transfer | 0.19.2 | Apache License 2.0 |
 | six | 1.17.0 | MIT |
 | sniffio | 1.3.1 | MIT OR Apache-2.0 |
 | SQLAlchemy | 2.1.3 | MIT |
+| sse-starlette | 3.5.0 | BSD-3-Clause |
 | starlette | 1.7.0 | BSD-3-Clause |
 | structlog | 26.1.0 | MIT OR Apache-2.0 |
 | tenacity | 9.1.4 | Apache 2.0 |
@@ -157,11 +169,12 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | uvicorn | 0.54.0 | BSD-3-Clause |
 | virtualenv | 21.14.5 | MIT |
 | websockets | 16.1.1 | BSD-3-Clause |
+| Werkzeug | 3.1.9 | BSD-3-Clause |
 | wrapt | 2.5.0 | BSD-2-Clause |
 | xxhash | 4.0.1 | BSD-2-Clause |
 | zstandard | 0.25.0 | BSD-3-Clause |
 
-## JavaScript packages (736)
+## JavaScript packages (802)
 
 | Name | Version | License |
 | --- | --- | --- |
@@ -520,18 +533,27 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | @types/babel__generator | 7.27.0 | MIT |
 | @types/babel__template | 7.4.4 | MIT |
 | @types/babel__traverse | 7.28.0 | MIT |
+| @types/body-parser | 1.19.6 | MIT |
 | @types/chai | 5.2.3 | MIT |
+| @types/connect | 3.4.38 | MIT |
 | @types/deep-eql | 4.0.2 | MIT |
 | @types/doctrine | 0.0.9 | MIT |
 | @types/esrecurse | 4.3.1 | MIT |
 | @types/estree | 1.0.9 | MIT |
+| @types/express | 5.0.6 | MIT |
+| @types/express-serve-static-core | 5.1.3 | MIT |
+| @types/http-errors | 2.0.5 | MIT |
 | @types/json-schema | 7.0.15 | MIT |
 | @types/node | 22.20.5 | MIT |
 | @types/nodemailer | 8.0.2 | MIT |
 | @types/pg | 8.23.1 | MIT |
+| @types/qs | 6.15.1 | MIT |
+| @types/range-parser | 1.2.7 | MIT |
 | @types/react | 19.3.0 | MIT |
 | @types/react-dom | 19.3.0 | MIT |
 | @types/resolve | 1.20.6 | MIT |
+| @types/send | 1.2.1 | MIT |
+| @types/serve-static | 2.2.0 | MIT |
 | @typescript-eslint/eslint-plugin | 8.71.1 | MIT |
 | @typescript-eslint/parser | 8.71.1 | MIT |
 | @typescript-eslint/project-service | 8.71.1 | MIT |
@@ -553,6 +575,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | @vitest/spy | 5.0.3 | MIT |
 | @vitest/utils | 3.2.4 | MIT |
 | @webcontainer/env | 1.1.1 | MIT |
+| accepts | 2.0.0 | MIT |
 | acorn | 8.19.0 | MIT |
 | acorn-jsx | 5.3.2 | MIT |
 | agent-base | 7.1.4 | MIT |
@@ -575,12 +598,16 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | better-auth | 1.7.7 | MIT |
 | better-call | 1.4.0 | MIT |
 | bidi-js | 1.1.0 | MIT |
+| body-parser | 2.3.0 | MIT |
 | brace-expansion | 2.1.7 | MIT |
 | brace-expansion | 5.0.12 | MIT |
 | braces | 3.0.3 | MIT |
 | browserslist | 4.29.3 | MIT |
 | bundle-name | 4.1.1 | MIT |
+| bytes | 3.1.2 | MIT |
 | cacheable | 2.5.0 | MIT |
+| call-bind-apply-helpers | 1.0.2 | MIT |
+| call-bound | 1.0.4 | MIT |
 | caniuse-lite | 1.0.30001814 | CC-BY-4.0 |
 | chai | 5.3.3 | MIT |
 | chai | 6.3.0 | MIT |
@@ -591,8 +618,11 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | clsx | 2.1.1 | MIT |
 | cmdk | 1.1.1 | MIT |
 | colorette | 1.4.0 | MIT |
+| content-disposition | 2.0.1 | MIT |
 | content-type | 2.1.0 | MIT |
 | convert-source-map | 2.0.0 | MIT |
+| cookie | 0.7.2 | MIT |
+| cookie-signature | 1.2.2 | MIT |
 | cross-spawn | 7.0.6 | MIT |
 | css-tree | 3.2.1 | MIT |
 | css.escape | 1.5.1 | MIT |
@@ -608,20 +638,27 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | default-browser-id | 5.0.1 | MIT |
 | define-lazy-prop | 3.0.0 | MIT |
 | defu | 6.1.7 | MIT |
+| depd | 2.0.0 | MIT |
 | dequal | 2.0.3 | MIT |
 | detect-libc | 2.1.2 | Apache-2.0 |
 | detect-node-es | 1.1.0 | MIT |
 | doctrine | 3.0.0 | Apache-2.0 |
 | dom-accessibility-api | 0.5.16 | MIT |
 | dom-accessibility-api | 0.6.3 | MIT |
+| dunder-proto | 1.0.1 | MIT |
+| ee-first | 1.1.1 | MIT |
 | electron-to-chromium | 1.5.446 | ISC |
 | empathic | 2.1.0 | MIT |
+| encodeurl | 2.0.0 | MIT |
 | enhanced-resolve | 5.26.0 | MIT |
 | entities | 8.1.0 | BSD-2-Clause |
+| es-define-property | 1.0.1 | MIT |
 | es-errors | 1.3.0 | MIT |
 | es-module-lexer | 2.3.2 | MIT |
+| es-object-atoms | 1.1.2 | MIT |
 | esbuild | 0.28.2 | MIT |
 | escalade | 3.2.0 | MIT |
+| escape-html | 1.0.3 | MIT |
 | escape-string-regexp | 4.0.0 | MIT |
 | eslint | 10.12.0 | MIT |
 | eslint-plugin-react-hooks | 7.1.1 | MIT |
@@ -636,7 +673,9 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | estree-walker | 2.0.2 | MIT |
 | estree-walker | 3.0.3 | MIT |
 | esutils | 2.0.3 | BSD-2-Clause |
+| etag | 1.8.1 | MIT |
 | expect-type | 1.4.0 | Apache-2.0 |
+| express | 5.3.0 | MIT |
 | fast-deep-equal | 3.1.3 | MIT |
 | fast-glob | 3.3.1 | MIT |
 | fast-json-stable-stringify | 2.1.0 | MIT |
@@ -645,19 +684,26 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | fdir | 6.5.0 | MIT |
 | file-entry-cache | 11.1.5 | MIT |
 | fill-range | 7.1.1 | MIT |
+| finalhandler | 2.1.1 | MIT |
 | find-up | 5.0.0 | MIT |
 | flat-cache | 6.1.23 | MIT |
 | flatted | 3.4.4 | ISC |
+| forwarded | 0.2.0 | MIT |
+| fresh | 2.0.0 | MIT |
 | fsevents | 2.3.3 | MIT |
 | function-bind | 1.1.2 | MIT |
 | gensync | 1.0.0-beta.2 | MIT |
+| get-intrinsic | 1.3.0 | MIT |
 | get-nonce | 1.0.1 | MIT |
+| get-proto | 1.0.1 | MIT |
 | glob | 13.0.6 | BlueOak-1.0.0 |
 | glob-parent | 5.1.2 | ISC |
 | glob-parent | 6.0.2 | ISC |
 | globals | 17.13.0 | MIT |
 | globrex | 0.1.2 | MIT |
+| gopd | 1.2.0 | MIT |
 | graceful-fs | 4.2.11 | ISC |
+| has-symbols | 1.1.0 | MIT |
 | hashery | 1.5.1 | MIT |
 | hasown | 2.0.4 | MIT |
 | hermes-estree | 0.25.1 | MIT |
@@ -665,15 +711,19 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | hookified | 1.15.1 | MIT |
 | hookified | 2.2.0 | MIT |
 | html-encoding-sniffer | 7.0.0 | MIT |
+| http-errors | 2.0.1 | MIT |
 | https-proxy-agent | 7.0.6 | MIT |
 | iconv-lite | 0.4.24 | MIT |
+| iconv-lite | 0.7.3 | MIT |
 | icu-minify | 4.14.9 | MIT |
 | ignore | 5.3.2 | MIT |
 | ignore | 7.0.12 | MIT |
 | imurmurhash | 0.1.4 | MIT |
 | indent-string | 4.0.0 | MIT |
 | index-to-position | 1.2.0 | MIT |
+| inherits | 2.0.4 | ISC |
 | intl-messageformat | 11.2.15 | BSD-3-Clause |
+| ipaddr.js | 1.9.1 | MIT |
 | is-core-module | 2.17.0 | MIT |
 | is-docker | 3.0.0 | MIT |
 | is-extglob | 2.1.1 | MIT |
@@ -681,6 +731,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | is-inside-container | 1.0.0 | MIT |
 | is-number | 7.0.0 | MIT |
 | is-potential-custom-element-name | 1.0.1 | MIT |
+| is-promise | 4.0.0 | MIT |
 | is-wsl | 3.1.1 | MIT |
 | isexe | 2.0.0 | ISC |
 | jiti | 2.7.0 | MIT |
@@ -733,9 +784,14 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | magic-string | 0.30.21 | MIT |
 | magic-string | 1.4.3 | MIT |
 | magicast | 0.5.5 | MIT |
+| math-intrinsics | 1.1.0 | MIT |
 | mdn-data | 2.27.1 | CC0-1.0 |
+| media-typer | 1.1.1 | MIT |
+| merge-descriptors | 2.0.0 | MIT |
 | merge2 | 1.4.1 | MIT |
 | micromatch | 4.0.8 | MIT |
+| mime-db | 1.54.0 | MIT |
+| mime-types | 3.0.2 | MIT |
 | min-indent | 1.0.1 | MIT |
 | minimatch | 10.2.6 | BlueOak-1.0.0 |
 | minimatch | 5.1.9 | ISC |
@@ -756,7 +812,10 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | node-addon-api | 7.1.1 | MIT |
 | node-releases | 2.0.57 | MIT |
 | nodemailer | 10.0.15 | MIT-0 |
+| object-inspect | 1.13.4 | MIT |
 | obug | 2.2.1 | MIT |
+| on-finished | 2.4.1 | MIT |
+| once | 1.4.0 | ISC |
 | open | 10.2.0 | MIT |
 | openapi-fetch | 0.17.0 | MIT |
 | openapi-typescript | 7.13.0 | MIT |
@@ -768,10 +827,12 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | p-locate | 5.0.0 | MIT |
 | parse-json | 8.3.0 | MIT |
 | parse5 | 8.0.1 | MIT |
+| parseurl | 1.3.3 | MIT |
 | path-exists | 4.0.0 | MIT |
 | path-key | 3.1.1 | MIT |
 | path-parse | 1.0.7 | MIT |
 | path-scurry | 2.0.2 | BlueOak-1.0.0 |
+| path-to-regexp | 8.4.2 | MIT |
 | pathe | 2.0.3 | MIT |
 | pathval | 2.0.1 | MIT |
 | pdfjs-dist | 6.4.299 | Apache-2.0 |
@@ -799,10 +860,14 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | prelude-ls | 1.2.1 | MIT |
 | pretty-format | 27.5.1 | MIT |
 | probe-image-size | 7.4.0 | MIT |
+| proxy-addr | 2.0.8 | MIT |
 | punycode | 2.3.1 | MIT |
 | qified | 0.10.1 | MIT |
+| qs | 6.16.1 | BSD-3-Clause |
 | queue-microtask | 1.2.3 | MIT |
 | radix-ui | 1.7.0 | MIT |
+| range-parser | 1.3.0 | MIT |
+| raw-body | 3.0.2 | MIT |
 | react | 19.3.0 | MIT |
 | react-docgen | 8.0.4 | MIT |
 | react-docgen-typescript | 2.4.0 | MIT |
@@ -818,6 +883,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | reusify | 1.1.0 | MIT |
 | rolldown | 1.2.12 | MIT |
 | rou3 | 0.9.2 | MIT |
+| router | 2.2.0 | MIT |
 | run-applescript | 7.1.0 | MIT |
 | run-parallel | 1.2.0 | MIT |
 | safer-buffer | 2.1.2 | MIT |
@@ -826,14 +892,22 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | scheduler | 0.28.0 | MIT |
 | semver | 6.3.1 | ISC |
 | semver | 7.8.5 | ISC |
+| send | 1.2.1 | MIT |
+| serve-static | 2.2.1 | MIT |
 | server-only | 0.0.1 | MIT |
 | set-cookie-parser | 3.1.2 | MIT |
+| setprototypeof | 1.2.0 | ISC |
 | sharp | 0.35.5 | Apache-2.0 |
 | shebang-command | 2.0.0 | MIT |
 | shebang-regex | 3.0.0 | MIT |
+| side-channel | 1.1.1 | MIT |
+| side-channel-list | 1.0.1 | MIT |
+| side-channel-map | 1.0.1 | MIT |
+| side-channel-weakmap | 1.0.2 | MIT |
 | source-map | 0.6.1 | BSD-3-Clause |
 | source-map-js | 1.2.2 | BSD-3-Clause |
 | split2 | 4.2.0 | ISC |
+| statuses | 2.0.2 | MIT |
 | std-env | 4.3.0 | MIT |
 | storybook | 10.6.1 | MIT |
 | stream-parser | 0.3.1 | MIT |
@@ -856,6 +930,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | tldts | 7.4.16 | MIT |
 | tldts-core | 7.4.16 | MIT |
 | to-regex-range | 5.0.1 | MIT |
+| toidentifier | 1.0.1 | MIT |
 | tough-cookie | 6.0.2 | BSD-3-Clause |
 | tr46 | 7.0.0 | MIT |
 | ts-api-utils | 2.5.0 | MIT |
@@ -867,10 +942,12 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | tw-animate-css | 1.4.0 | MIT |
 | type-check | 0.4.0 | MIT |
 | type-fest | 4.41.0 | (MIT OR CC0-1.0) |
+| type-is | 2.1.0 | MIT |
 | typescript | 5.9.3 | Apache-2.0 |
 | typescript-eslint | 8.71.1 | MIT |
 | undici | 8.11.2 | MIT |
 | undici-types | 6.21.0 | MIT |
+| unpipe | 1.0.0 | MIT |
 | update-browserslist-db | 1.3.3 | MIT |
 | uqr | 0.1.3 | MIT |
 | uri-js | 4.4.1 | BSD-2-Clause |
@@ -879,6 +956,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | use-intl | 4.14.9 | MIT |
 | use-sidecar | 1.1.3 | MIT |
 | use-sync-external-store | 1.7.0 | MIT |
+| vary | 1.1.2 | MIT |
 | vite | 8.3.3 | MIT |
 | vite-plugin-storybook-nextjs | 10.6.1 | MIT |
 | vite-tsconfig-paths | 5.1.4 | MIT |
@@ -890,6 +968,7 @@ A license shown as UNKNOWN means the package did not publish license metadata, o
 | which | 2.0.2 | ISC |
 | why-is-node-running | 3.2.1 | MIT |
 | word-wrap | 1.2.5 | MIT |
+| wrappy | 1.0.2 | ISC |
 | ws | 8.22.0 | MIT |
 | wsl-utils | 0.1.0 | MIT |
 | xml-name-validator | 5.0.0 | Apache-2.0 |
