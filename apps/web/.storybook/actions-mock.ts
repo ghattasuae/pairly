@@ -200,3 +200,6 @@ export const loadVendorInvoices = unavailable;
 export const writeToAccountsPayable = unavailable;
 export const updateVendorContacts = unavailable;
 export const requestBankDetailChange = unavailable;
+export const updatePaymentTerms = unavailable;
+export const importStatement = unavailable;
+export const matchStatementsNow = unavailable;
