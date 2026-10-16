@@ -31976,6 +31976,56 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "metadata": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "urls": {
+                    "items": {
+                      "maxLength": 2048,
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "urls"
+                ],
+                "type": "object"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "Up to 50 files, each a 'file' part.",
+                    "items": {
+                      "format": "binary",
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "metadata": {
+                    "description": "A JSON object (4 KiB).",
+                    "type": "string"
+                  },
+                  "urls": {
+                    "description": "A JSON array of https URLs.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "202": {
             "content": {

@@ -393,11 +393,47 @@ async def _json_body(request: Request) -> BatchJsonIn:
 # ------------------------------------------------------------------ routes
 
 
+_BATCH_BODY: Final[dict[str, Any]] = {
+    "required": True,
+    "content": {
+        "multipart/form-data": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "array",
+                        "items": {"type": "string", "format": "binary"},
+                        "description": f"Up to {MAX_ITEMS} files, each a 'file' part.",
+                    },
+                    "urls": {"type": "string", "description": "A JSON array of https URLs."},
+                    "metadata": {"type": "string", "description": "A JSON object (4 KiB)."},
+                },
+            }
+        },
+        "application/json": {
+            "schema": {
+                "type": "object",
+                "required": ["urls"],
+                "properties": {
+                    "urls": {
+                        "type": "array",
+                        "items": {"type": "string", "maxLength": 2048},
+                        "maxItems": MAX_ITEMS,
+                    },
+                    "metadata": {"type": "object", "additionalProperties": True},
+                },
+            }
+        },
+    },
+}
+
+
 @router.post(
     "/documents/batch",
     status_code=202,
     response_model=BatchOut,
     dependencies=[Depends(idempotent, scope="function")],
+    openapi_extra={"requestBody": _BATCH_BODY},
     responses={
         400: {"description": "Malformed body, too many items or an unsafe URL"},
         413: {"description": "The body is larger than the batch allows"},

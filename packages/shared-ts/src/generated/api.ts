@@ -16901,7 +16901,24 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    metadata?: {
+                        [key: string]: unknown;
+                    };
+                    urls: string[];
+                };
+                "multipart/form-data": {
+                    /** @description Up to 50 files, each a 'file' part. */
+                    file?: string[];
+                    /** @description A JSON object (4 KiB). */
+                    metadata?: string;
+                    /** @description A JSON array of https URLs. */
+                    urls?: string;
+                };
+            };
+        };
         responses: {
             /** @description Successful Response */
             202: {

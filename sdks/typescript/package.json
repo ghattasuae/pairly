@@ -1,21 +1,39 @@
 {
   "name": "@pairly/sdk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "TypeScript client for the Pairly API.",
+  "description": "TypeScript client for the Pairly API: human-approved AI for hiring and accounts payable.",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     }
   },
-  "files": ["dist"],
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@pairly/shared-ts": "workspace:*",
+    "openapi-fetch": "^0.17.0"
   }
 }
