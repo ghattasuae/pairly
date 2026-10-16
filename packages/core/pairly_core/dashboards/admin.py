@@ -260,11 +260,15 @@ async def budget_section(
     session: AsyncSession, actor: Actor, inputs: AdminInputs, now: datetime
 ) -> tuple[Section, bool]:
     start = month_start(now)
-    spent, calls = (
+    # A reused answer (``reused_from`` set) is a row with no model request and zero
+    # cost: counted on its own so it is not read as spend.
+    spent, calls, reused = (
         await session.execute(
-            select(func.coalesce(func.sum(ModelCall.cost_micros), 0), func.count()).where(
-                ModelCall.created_at >= start
-            )
+            select(
+                func.coalesce(func.sum(ModelCall.cost_micros), 0),
+                func.count(),
+                func.count().filter(ModelCall.reused_from.is_not(None)),
+            ).where(ModelCall.created_at >= start)
         )
     ).one()
     custom = await session.scalar(
@@ -277,7 +281,9 @@ async def budget_section(
         key="budget",
         count=int(calls),
         stats=[
-            Stat("spent_this_month", int(spent) / MICROS, Unit.USD, n=int(calls)),
+            Stat("spent_this_month", int(spent) / MICROS, Unit.USD, n=int(calls) - int(reused)),
+            Stat("model_calls_this_month", float(calls)),
+            Stat("reused_calls_this_month", float(reused), n=int(calls)),
             Stat(
                 "monthly_budget",
                 limit / MICROS if limit is not None else None,

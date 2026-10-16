@@ -31,6 +31,7 @@ from pairly_core.dashboards.model import (
 from pairly_core.db import create_sessionmaker
 from pairly_core.guardrails.redaction_counts import RedactionTally, flush
 from pairly_core.jobs.runs import finish_run, start_run
+from pairly_core.llm.store import DatabaseCallStore
 from pairly_core.plugins import discover_plugins
 
 from .pay_support import PayApi, PayWorld, other, pay_api, world
@@ -300,6 +301,72 @@ async def test_ai_governance_dashboard(
     assert (await api.call("GET", f"{BASE}/ai-governance", world, "clerk")).status_code == 403
     theirs = await api.ok("GET", f"{BASE}/ai-governance", other, "admin")
     assert theirs["board"] == "ai_governance"
+
+
+def _call_row(world: PayWorld, **extra: Any) -> dict[str, Any]:
+    values: dict[str, Any] = {
+        "org_id": world.org_id,
+        "chain_id": uuid.uuid4(),
+        "attempt": 1,
+        "task": "pay_gl_coding",
+        "prompt_version": "1",
+        "prompt_hash": "a" * 64,
+        "provider": "anthropic",
+        "model": "claude-test",
+        "tier": "small",
+        "schema_name": "Coding",
+        "schema_hash": "b" * 64,
+        "request_hash": "c" * 64,
+        "mode": "live",
+        "status": "ok",
+        "request": {"inputs": {}, "settings": {}},
+        "response": {"ok": True},
+        "workflow": "pay",
+        "input_tokens": 100,
+        "output_tokens": 20,
+    }
+    values.update(extra)
+    return values
+
+
+async def test_reused_answers_are_counted_apart_from_spend(
+    pay_api: PayApi, world: PayWorld, other: PayWorld, tmp_path: Path
+) -> None:
+    """One paid call and one reused answer of it (``reused_from``, zero cost): both
+    boards count two calls, one reused, and the cost of the paid one only."""
+    api = pay_api
+    store = DatabaseCallStore()
+    session = await api.in_org(world)
+    async with session, session.begin():
+        original = await store.insert(session, _call_row(world, cost_micros=2500))
+        await store.insert(
+            session, _call_row(world, cost_micros=0, latency_ms=0, reused_from=original)
+        )
+    api.app.state.evals_dir = _evals_dir(tmp_path, live=False)
+    try:
+        governance = await api.ok("GET", f"{BASE}/ai-governance", world, "admin")
+    finally:
+        api.app.state.evals_dir = None
+    usage = _section(governance, "model_usage")
+    assert usage["count"] == 2
+    stats = {s["key"]: s for s in usage["stats"]}
+    assert stats["model_calls_30d"]["value"] == 2
+    assert (stats["reused_calls_30d"]["value"], stats["reused_calls_30d"]["n"]) == (1, 2)
+    assert (stats["model_cost_30d"]["value"], stats["model_cost_30d"]["n"]) == (0.0025, 1)
+    (item,) = usage["items"]
+    assert (item["detail"]["calls"], item["detail"]["reused"]) == (2, 1)
+    assert item["detail"]["cost_usd"] == 0.0025
+
+    admin = await api.ok("GET", f"{BASE}/admin", world, "admin")
+    budget = _section(admin, "budget")
+    got = {s["key"]: s for s in budget["stats"]}
+    assert (budget["count"], budget["note"]) == (2, None)
+    assert (got["spent_this_month"]["value"], got["spent_this_month"]["n"]) == (0.0025, 1)
+    assert got["model_calls_this_month"]["value"] == 2
+    assert got["reused_calls_this_month"]["value"] == 1
+    # Another organisation counts nothing of it.
+    theirs = _section(await api.ok("GET", f"{BASE}/admin", other, "admin"), "budget")
+    assert (theirs["count"], theirs["note"]) == (0, "no_data")
 
 
 async def test_ai_governance_counts_pii_redactions(

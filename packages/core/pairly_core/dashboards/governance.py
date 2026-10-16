@@ -4,7 +4,10 @@
 
 * **Action needed**: the eval gate failing, the budget past its alert threshold.
 * **Model usage**: model calls of the last 30 days by component (the router task) and
-  workflow: calls, cost, tokens, mean latency, how many came from recordings.
+  workflow: calls, cost, tokens, mean latency, how many came from recordings and how
+  many reused an earlier answer (``reused_from``: no model request, zero cost), so
+  reuse is visible and never read as spend. The section's stats split the 30 days
+  into calls, reused calls and cost.
 * **Cost and budget**: this month's cost against the monthly budget.
 * **Evals**: every result file the gate reads (recorded and, when there was one, live),
   each with its time and its PASS / FAIL / PENDING / INFO counts, and the failing
@@ -76,6 +79,7 @@ async def _usage(session: AsyncSession, now: datetime) -> Section:
                 func.avg(ModelCall.latency_ms),
                 func.count().filter(ModelCall.from_recording.is_(True)),
                 func.count().filter(ModelCall.status != "ok"),
+                func.count().filter(ModelCall.reused_from.is_not(None)),
             )
             .where(ModelCall.created_at >= since)
             .group_by(ModelCall.task, ModelCall.workflow)
@@ -83,9 +87,20 @@ async def _usage(session: AsyncSession, now: datetime) -> Section:
         )
     ).all()
     total = sum(int(r[2]) for r in rows)
+    reused_total = sum(int(r[8]) for r in rows)
+    cost_total = sum(int(r[3]) for r in rows)
     return Section(
         key="model_usage",
         count=total,
+        stats=(
+            [
+                Stat("model_calls_30d", float(total)),
+                Stat("reused_calls_30d", float(reused_total), n=total),
+                Stat("model_cost_30d", cost_total / MICROS, Unit.USD, n=total - reused_total),
+            ]
+            if rows
+            else []
+        ),
         items=[
             Item(
                 kind="component",
@@ -100,9 +115,10 @@ async def _usage(session: AsyncSession, now: datetime) -> Section:
                     "mean_latency_ms": round(float(latency), 1) if latency is not None else None,
                     "from_recording": int(recorded),
                     "not_ok": int(failed),
+                    "reused": int(reused),
                 },
             )
-            for task, workflow, calls, cost, tokens, latency, recorded, failed in rows[:20]
+            for task, workflow, calls, cost, tokens, latency, recorded, failed, reused in rows[:20]
         ],
         source="model_calls",
         note=None if rows else "no_data",
