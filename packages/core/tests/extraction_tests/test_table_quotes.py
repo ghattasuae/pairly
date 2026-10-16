@@ -10,6 +10,8 @@ reading order."""
 
 from __future__ import annotations
 
+from typing import Any
+
 from pairly_core.documents.model import BBox, Char, NormalizedDocument, Page, ParserInfo, Style
 from pairly_core.extraction.engine import FieldAnswer, extract_from_answers
 from pairly_core.extraction.evidence import EvidenceLocator
@@ -53,7 +55,10 @@ def _doc(with_boxes: bool = True) -> NormalizedDocument:
     )
 
 
-def _fields(doc: NormalizedDocument, answers: list[dict[str, object]]) -> dict[str, object]:
+Got = dict[str, tuple[Any, list[str], list[str]]]
+
+
+def _fields(doc: NormalizedDocument, answers: list[dict[str, Any]]) -> Got:
     result = extract_from_answers(
         doc,
         guarded(doc),
