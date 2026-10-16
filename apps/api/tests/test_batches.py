@@ -63,7 +63,7 @@ def remote(request: httpx.Request) -> httpx.Response:
     if request.url.path == "/moved.pdf":
         return httpx.Response(302, headers={"location": "http://169.254.169.254/"})
     if request.url.path in SERVED:
-        return httpx.Response(200, content=SERVED[request.url.path])
+        return httpx.Response(200, stream=httpx.ByteStream(SERVED[request.url.path]))
     return httpx.Response(404)
 
 

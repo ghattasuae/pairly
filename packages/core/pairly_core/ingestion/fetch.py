@@ -13,7 +13,13 @@ and TLS SNI keep the name, so the certificate is still verified). On top:
 * the body streams into a private spool file and stops at the workflow's size limit
   (``Content-Length`` over the limit is refused before reading);
 * only a 200 is accepted. The type is still sniffed from the bytes afterwards, by the
-  normal ingestion path, never taken from ``Content-Type``.
+  normal ingestion path, never taken from ``Content-Type``;
+* the body is never decompressed: the request asks for ``identity`` and a response with
+  any other ``Content-Encoding`` is refused before its body is read. httpx would
+  otherwise decode gzip, deflate and zstd (installed) a whole network chunk at a time,
+  and a few kilobytes of zstd expand to gigabytes in memory before the size limit sees
+  a single byte (a decompression bomb against the API process). The raw bytes are
+  what is counted and stored.
 
 Failures raise ``FetchError`` with a short reason code (stored on the batch item).
 """
@@ -96,7 +102,12 @@ class UrlFetcher:
             ip = await resolve_target(target, self._resolver, allow_private=self._allow_private)
         except UnsafeWebhookUrlError:
             raise FetchError("unsafe_url") from None
-        headers = {"Host": target.host_header, "User-Agent": USER_AGENT, "Accept": "*/*"}
+        headers = {
+            "Host": target.host_header,
+            "User-Agent": USER_AGENT,
+            "Accept": "*/*",
+            "Accept-Encoding": "identity",
+        }
         extensions: dict[str, Any] = {}
         if target.scheme == "https":
             extensions["sni_hostname"] = target.host
@@ -110,11 +121,14 @@ class UrlFetcher:
                         raise FetchError("redirect_not_followed")
                     if response.status_code != 200:
                         raise FetchError(f"http_{response.status_code}")
+                    encoding = response.headers.get("content-encoding", "identity")
+                    if encoding.strip().lower() not in ("", "identity"):
+                        raise FetchError("content_encoding_refused")
                     declared = response.headers.get("content-length")
                     if declared is not None and declared.isdigit() and int(declared) > max_bytes:
                         raise FetchError("too_large")
                     writer = SpoolWriter(directory, max_bytes=max_bytes)
-                    async for chunk in response.aiter_bytes():
+                    async for chunk in response.aiter_raw():
                         writer.write(chunk)
                     spooled = writer.finish()
                     writer = None
