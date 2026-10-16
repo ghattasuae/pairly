@@ -10,7 +10,9 @@ Rules:
   export or another final action. The creator must hold every scope (no escalation).
 * Every key expires (default 90 days, at most ``api_key_max_days``).
 * ``pk_test_`` keys can only be created in, and only authenticate against, sandbox
-  organisations (``organisations.sandbox``).
+  organisations (``organisations.sandbox``), and a sandbox organisation only has
+  ``pk_test_`` keys: a ``pk_live_`` key is never created in one and never works in
+  one (if an organisation becomes a sandbox, its live keys stop working).
 
 Authentication (``authenticate_api_key``), for ``Authorization: Bearer pk_...``:
 
@@ -20,7 +22,8 @@ Authentication (``authenticate_api_key``), for ``Authorization: Bearer pk_...``:
 3. Bind the session to that organisation (RLS) and load the key and the organisation.
 4. Check the secret's HMAC (constant time). Only then: an ``X-Pairly-Org`` header, if
    sent, must name the key's organisation (else 403); then revoked, expired, organisation
-   suspended, test key outside a sandbox. Each is refused (401 or 403).
+   suspended, test key outside a sandbox, live key inside one. Each is refused (401 or
+   403).
 5. Rate limit per key (429 with ``Retry-After``).
 6. Record ``last_used_at`` at most once a minute, in its own short transaction.
 
@@ -97,6 +100,11 @@ class TestKeyNotAllowedError(ForbiddenError):
     title = "Test API keys only work in sandbox organisations"
 
 
+class LiveKeyInSandboxError(ForbiddenError):
+    code = "live_key_in_sandbox"
+    title = "Sandbox organisations only use test API keys"
+
+
 @dataclass(frozen=True, slots=True)
 class CreatedKey:
     key: ApiKey
@@ -151,6 +159,8 @@ async def create_api_key(
         raise NotFoundError("organisation not found")
     if mode is KeyMode.TEST and not org.sandbox:
         raise TestKeyNotAllowedError("test keys can only be created in a sandbox organisation")
+    if mode is KeyMode.LIVE and org.sandbox:
+        raise LiveKeyInSandboxError("a sandbox organisation only gets test keys (mode test)")
     now = datetime.now(UTC)
     pepper = get_pepper()
     for _attempt in range(3):
@@ -262,6 +272,8 @@ async def authenticate_api_key(
         raise ForbiddenError("no access to this organisation")
     if row.mode == KeyMode.TEST.value and not org.sandbox:
         raise TestKeyNotAllowedError()
+    if row.mode == KeyMode.LIVE.value and org.sandbox:
+        raise LiveKeyInSandboxError()
     limiter.check(str(row.id), row.rate_limit_per_minute or default_rate_limit)
     if row.last_used_at is None or now - row.last_used_at >= LAST_USED_RESOLUTION:
         await session.execute(

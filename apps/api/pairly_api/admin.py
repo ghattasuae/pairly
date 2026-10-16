@@ -32,6 +32,12 @@ Seeds are idempotent; invitations they create are printed once as accept links:
 
     uv run pairly-admin seed expense-demo --org acme
 
+``sandbox create`` makes a sandbox organisation (``organisations.sandbox``: test keys
+only) with a little demo data, two pending Pay approvals and a decision record, and
+prints a ``pk_test_`` API key once (``pairly_api.sandbox``):
+
+    uv run pairly-admin sandbox create --name "Acme sandbox" [--slug s] [--admin-email e]
+
 ``crypto rotate`` re-wraps every encrypted field's data key with the current KEK
 (``PAIRLY_KEK_CURRENT``), in batches, one audited transaction per batch. It is
 resumable: rows already on the current KEK are skipped. ``--dry-run`` only counts what
@@ -303,6 +309,31 @@ def _parser() -> argparse.ArgumentParser:
     )
     seed.add_argument("--locale", choices=LOCALES, default="en", help="language of the links")
 
+    sandbox = commands.add_parser("sandbox", help="sandbox organisations and test keys")
+    sandbox_commands = sandbox.add_subparsers(dest="sandbox_command", required=True)
+    sandbox_create = sandbox_commands.add_parser(
+        "create", help="create a sandbox organisation with demo data and print a test key"
+    )
+    sandbox_create.add_argument("--name", default="Pairly sandbox", help="display name")
+    sandbox_create.add_argument("--slug", help="2 to 63 characters (default: sandbox-<random>)")
+    sandbox_create.add_argument(
+        "--admin-email", help="also invite this person as admin (prints the accept link once)"
+    )
+    sandbox_create.add_argument(
+        "--days", type=int, default=30, help="the test key's lifetime in days (default 30)"
+    )
+    sandbox_create.add_argument(
+        "--web-url",
+        type=_web_url,
+        default=os.environ.get(WEB_URL_ENV) or "http://localhost:3100",
+        help=f"public web app URL for links (default: ${WEB_URL_ENV} or localhost:3100)",
+    )
+    sandbox_create.add_argument(
+        "--api-url",
+        default=os.environ.get("PAIRLY_PUBLIC_API_URL") or "http://127.0.0.1:8000",
+        help="API URL to print in the MCP and SDK hints",
+    )
+
     crypto = commands.add_parser("crypto", help="application-level encryption keys")
     crypto_commands = crypto.add_subparsers(dest="crypto_command", required=True)
     crypto_rotate = crypto_commands.add_parser(
@@ -440,6 +471,47 @@ def _blind_index(args: argparse.Namespace, owner_url: str, current: str) -> int:
     return 1 if report.total_failed else 0
 
 
+def _sandbox(args: argparse.Namespace, owner_url: str) -> int:
+    from pairly_api.sandbox import create_sandbox, default_slug
+
+    if not 1 <= args.days <= 365:
+        print("pairly-admin: --days must be 1..365", file=sys.stderr)
+        return 2
+    slug = (args.slug or default_slug()).strip().lower()
+    try:
+        init_crypto()
+        made = asyncio.run(
+            create_sandbox(
+                owner_url, name=args.name, slug=slug, admin_email=args.admin_email, days=args.days
+            )
+        )
+    except CryptoConfigError as exc:
+        print(f"pairly-admin: {exc}", file=sys.stderr)
+        return 2
+    except PairlyError as exc:
+        print(f"pairly-admin: {exc.detail}", file=sys.stderr)
+        return 2
+    except IntegrityError:
+        print("pairly-admin: an organisation with this slug already exists", file=sys.stderr)
+        return 1
+    print(f"Sandbox organisation created: {args.name} ({made.slug})")
+    print(f"  id: {made.org_id}   sandbox: yes (test keys only)")
+    print(f"  demo data: {len(made.approval_ids)} pending Pay approvals for the sandbox owner")
+    if made.decision_id:
+        print(f"  decision record: {made.decision_id}")
+    print(f"Test API key ({made.key_prefix}, expires in {args.days} days).")
+    print("Shown once, keep it private:")
+    print(f"  {made.key}")
+    print(f"  scopes: {', '.join(made.scopes)}")
+    print("Try it:")
+    print(f"  curl -H 'Authorization: Bearer <key>' {args.api_url.rstrip('/')}/v1/approvals")
+    print(f"  PAIRLY_API_URL={args.api_url} PAIRLY_API_KEY=<key> make mcp")
+    if made.invitation_token:
+        print(f"Admin invitation for {args.admin_email} (shown once, keep it private):")
+        print(f"  {accept_link(args.web_url, 'en', made.invitation_token)}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     owner_url = os.environ.get(OWNER_URL_ENV)
@@ -454,6 +526,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _crypto(args, owner_url)
     if args.command == "seed":
         return _seed(args, owner_url)
+    if args.command == "sandbox":
+        return _sandbox(args, owner_url)
     try:
         result = asyncio.run(
             bootstrap(owner_url, name=args.name, slug=args.slug, admin_email=args.admin_email)

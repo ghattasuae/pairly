@@ -7,7 +7,8 @@
 * ``POST /v1/api-keys/{id}/revoke``      revoke (final)
 
 Scopes may only be read, propose and upload permissions the caller holds. ``mode`` is
-``live``, or ``test`` in a sandbox organisation only. Creation does not honour
+``live`` outside a sandbox and ``test`` inside one (a sandbox organisation only has test
+keys, and test keys only work in a sandbox). Creation does not honour
 ``Idempotency-Key`` on purpose: a replay would have to store the secret.
 """
 

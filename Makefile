@@ -49,7 +49,7 @@ endif
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
 .PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now inbound-drop
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
-.PHONY: mcp api-docs
+.PHONY: mcp api-docs sandbox
 
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
@@ -188,6 +188,10 @@ audit-anchor-now: ## Development only: sign and store every org's audit chain he
 	$(RUN_WORKER) python -m pairly_worker.run_now audit_anchor_nightly
 
 # ---------------------------------------------------------------- developer surface (M6)
+sandbox: ## Create a sandbox org with demo data and print a pk_test_ key (NAME, SLUG, ADMIN_EMAIL optional)
+	$(RUN_OWNER) pairly-admin sandbox create --name "$(or $(NAME),Pairly sandbox)" \
+		$(if $(SLUG),--slug "$(SLUG)",) $(if $(ADMIN_EMAIL),--admin-email "$(ADMIN_EMAIL)",)
+
 mcp: ## Run the Pairly MCP server on stdio (PAIRLY_API_KEY or PAIRLY_TOKEN+PAIRLY_ORG; apps/mcp/README.md)
 	@if [ -z "$$PAIRLY_API_KEY" ] && [ -z "$$PAIRLY_TOKEN" ]; then \
 		echo 'usage: PAIRLY_API_KEY=pk_test_... make mcp  (or PAIRLY_TOKEN=... PAIRLY_ORG=...)'; exit 2; fi

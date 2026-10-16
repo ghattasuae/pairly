@@ -45,7 +45,7 @@ example `http://localhost:3100`).
 
 ```sh
 make dev                                   # the native stack
-uv run --package pairly-api pairly-admin sandbox create --name "Demo"   # prints a pk_test_ key
+make sandbox NAME="Demo"                   # sandbox org with 2 pending approvals; prints a pk_test_ key
 PAIRLY_API_KEY=pk_test_... make mcp        # stdio server (Ctrl-C to stop)
 ```
 
