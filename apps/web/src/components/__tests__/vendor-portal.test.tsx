@@ -194,14 +194,14 @@ describe("vendor details", () => {
     expect(document.querySelector('[data-open-request="BCT-4M8T2X"]')).not.toBeNull();
   });
 
-  it("saves contacts and a new phone number directly", async () => {
-    const update = vi.fn().mockResolvedValue({ ok: true, details: { ...DETAILS, phone_masked: "•••• 100", phone_changed_at: "2026-10-14T10:00:00Z" } });
+  it("saves contacts directly and never offers to change the phone number on file", async () => {
+    const update = vi.fn().mockResolvedValue({ ok: true, details: DETAILS });
     renderWithIntl(<VendorDetails details={DETAILS} actions={{ update, requestChange: vi.fn() }} />);
-    await userEvent.type(screen.getByLabelText(/New phone number on file/), "+971 4 555 0100");
+    expect(screen.queryByLabelText(/phone number on file/i)).toBeNull();
+    expect(screen.getByText(/only they can change it/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Save contacts" }));
     expect(update).toHaveBeenCalledWith({
       contacts: [{ name: "Huda Rahman", role: "Accounts", email: "huda@gulf-office.example", phone: null }],
-      phoneOnFile: "+971 4 555 0100",
     });
     expect(await screen.findByText("Saved.")).toBeInTheDocument();
   });

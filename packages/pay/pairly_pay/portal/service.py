@@ -12,10 +12,12 @@ vendor id itself (a second layer), so a missing policy can never widen what is s
   date and the expected payment date (the payment run's date once scheduled).
 * Messages with accounts payable, threaded per invoice (``pay_messages``): what AP sent
   to the vendor (sent emails and portal replies) and what the vendor's contacts wrote.
-* Contact details (people and the phone number on file) change directly, audited. A new
-  phone number on file is recorded (``phone_changed_at``) and flags every bank-detail
-  change opened in the next days (``phone_recently_changed``); it cannot change while a
-  bank-detail change is open.
+* Contact details (the people at the vendor) change directly, audited. The phone number
+  on file never changes here: it is the number accounts payable calls back to confirm a
+  bank-detail change, so whoever holds a contact's mailbox (the usual foothold of a
+  business email compromise) must not be able to choose it. A portal request for a new
+  number is refused (``PhoneOnFileByApOnlyError``); accounts payable changes it after
+  confirming it with the vendor on the current number (security review 2026-10, H-01).
 * Bank details never change here: a request opens the locked change ticket of
   ``pairly_pay.bank_changes`` (source ``vendor_portal``), which holds payments until AP
   calls the number on file and two people approve.
@@ -38,10 +40,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.crypto.blind_index import blind_index
 from pairly_core.crypto.types import seal
-from pairly_core.errors import BadRequestError, ConflictError, NotFoundError
+from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from pairly_core.models import Organisation
 from pairly_pay.alerts import alert_portal_bank_change
-from pairly_pay.bank_changes import open_ticket, open_ticket_of
+from pairly_pay.bank_changes import open_ticket
 from pairly_pay.common import VENDOR_ENTITY, audit, clean_text, new_reference, opened
 from pairly_pay.models import (
     OPEN_TICKET_STATUSES,
@@ -71,7 +73,6 @@ from pairly_pay.vendors import (
     contacts_of,
     phone_of,
     seal_contacts,
-    set_phone,
 )
 
 MESSAGE_ENTITY: Final = "pay.message"
@@ -111,6 +112,20 @@ THREAD_OPEN_DAYS: Final = 90
 class PortalNotFoundError(NotFoundError):
     def __init__(self) -> None:
         super().__init__("not found")
+
+
+class PhoneOnFileByApOnlyError(ForbiddenError):
+    """The vendor portal asked for a new phone number on file. Only accounts payable
+    changes it: it is the out-of-band channel of every bank-detail change."""
+
+    code = "phone_on_file_by_ap_only"
+    title = "Only accounts payable can change the phone number on file"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ask accounts payable to change the phone number on file; they confirm it "
+            "with you on the current number first"
+        )
 
 
 # ------------------------------------------------------------------ who
@@ -594,31 +609,24 @@ class ContactsUpdate:
 async def update_contacts(
     session: AsyncSession, identity: PortalIdentity, update: ContactsUpdate
 ) -> Details:
-    """Change the vendor's people and phone number on file directly (audited, field
-    names only). A new number on file is recorded and flags later bank-detail changes;
-    it cannot change while one is open (AP must call the number on file then)."""
+    """Change the vendor's people directly (audited, field names only). A different
+    phone number on file is refused (``PhoneOnFileByApOnlyError``): the number AP calls
+    back on is never one the portal chose. Sending the current number is a no-op."""
     vendor = await vendor_row(session, identity, lock=True)
     now = datetime.now(UTC)
     changed: list[str] = []
+    if update.change_phone:
+        phone = check_phone(update.phone_on_file)
+        if phone is None:
+            raise BadRequestError("phone_format")
+        if blind_index("phone", phone, vendor.org_id) != vendor.phone_bidx:
+            raise PhoneOnFileByApOnlyError()
     if update.contacts is not None:
         if len(update.contacts) > MAX_CONTACTS:
             raise BadRequestError(f"at most {MAX_CONTACTS} contacts")
         if update.contacts != contacts_of(vendor):
             seal_contacts(vendor, update.contacts)
             changed.append("contacts")
-    phone_changed = False
-    if update.change_phone:
-        phone = check_phone(update.phone_on_file)
-        if phone is None:
-            raise BadRequestError("phone_format")
-        new_bidx = blind_index("phone", phone, vendor.org_id)
-        if new_bidx != vendor.phone_bidx and await open_ticket_of(session, vendor.id) is not None:
-            raise ConflictError(
-                "the phone number on file cannot change while a bank change is open"
-            )
-        phone_changed = set_phone(vendor, phone, now)
-        if phone_changed:
-            changed.append("phone_on_file")
     if changed:
         vendor.updated_at = now
         await session.flush()
@@ -628,11 +636,7 @@ async def update_contacts(
             "pay.vendor.updated",
             entity_type=VENDOR_ENTITY,
             entity_id=vendor.id,
-            payload={
-                "fields": changed,
-                "phone_on_file_changed": phone_changed,
-                "source": "vendor_portal",
-            },
+            payload={"fields": changed, "source": "vendor_portal"},
         )
     return await details(session, identity)
 

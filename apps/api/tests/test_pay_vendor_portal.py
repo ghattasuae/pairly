@@ -425,14 +425,10 @@ async def test_contact_update_is_audited_and_bank_change_is_only_a_request(
 
     contacts = [*before["contacts"], {"name": "Sara Nasser", "role": "Accounts", "email": None}]
     changed = await flow.client.put(
-        f"{PORTAL}/details/contacts",
-        json={"contacts": contacts, "phone_on_file": "+971 4 555 0199"},
-        headers=session,
+        f"{PORTAL}/details/contacts", json={"contacts": contacts}, headers=session
     )
     assert changed.status_code == 200, changed.text
     after = changed.json()
-    assert after["phone_changed_at"] is not None
-    assert after["phone_masked"].endswith("199")
     assert [c["name"] for c in after["contacts"]][-1] == "Sara Nasser"
     audit = await owner_rows(
         owner_engine,
@@ -442,8 +438,7 @@ async def test_contact_update_is_audited_and_bank_change_is_only_a_request(
         {"v": vendor_id},
     )
     assert audit[-1].actor_type == "vendor"
-    assert audit[-1].payload["fields"] == ["contacts", "phone_on_file"]
-    assert "+971" not in json.dumps(audit[-1].payload)  # field names only
+    assert audit[-1].payload["fields"] == ["contacts"]
 
     # Bank details: a request that holds payments, never applied.
     account_before = before["account"]["iban_masked"]
@@ -464,22 +459,70 @@ async def test_contact_update_is_audited_and_bank_change_is_only_a_request(
     (ticket,) = await owner_rows(
         owner_engine,
         fworld.org_id,
-        "SELECT status, source, phone_recently_changed, requested_by_type "
-        "FROM pay_bank_change_tickets WHERE vendor_id = :v",
+        "SELECT status, source, requested_by_type FROM pay_bank_change_tickets "
+        "WHERE vendor_id = :v",
         {"v": vendor_id},
     )
     assert ticket.source == "vendor_portal"
-    assert ticket.phone_recently_changed is True  # the number changed just before
     assert ticket.requested_by_type == "vendor"
     vendor = await flow.ok("GET", f"/v1/pay/vendors/{vendor_id}", fworld, "clerk")
     assert vendor["payment_hold"] is True
-    # A second request, and a new number while the change is open, are refused.
+    # A second request is refused.
     again = await flow.client.post(f"{PORTAL}/bank-change", json=new_bank, headers=session)
     assert again.status_code == 409
-    phone = await flow.client.put(
-        f"{PORTAL}/details/contacts", json={"phone_on_file": "+971 4 555 0100"}, headers=session
+
+
+async def test_the_portal_never_chooses_the_call_back_number(
+    flow: Flow, fworld: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, H-01. Business email compromise through the portal: the
+    attacker holds a vendor contact's mailbox, signs in with a magic link, sets the phone
+    number on file to their own, waits out the "recently changed" window and asks for new
+    bank details. Accounts payable would then confirm the change by calling the attacker.
+    The portal may not change the number on file at all."""
+    vendor_id = await make_vendor(flow, fworld, "inv-0001")
+    on_file = (await flow.ok("GET", f"/v1/pay/vendors/{vendor_id}", fworld, "clerk"))[
+        "phone_on_file"
+    ]
+    session = await _signed_in(flow, fworld, await _grant(flow, fworld, vendor_id))
+    refused = await flow.client.put(
+        f"{PORTAL}/details/contacts",
+        json={"phone_on_file": "+971 4 555 0199"},
+        headers=session,
     )
-    assert phone.status_code == 409
+    assert refused.status_code == 403, refused.text
+    assert refused.json()["code"] == "phone_on_file_by_ap_only"
+    # Contacts and a new number together: nothing is written.
+    mixed = await flow.client.put(
+        f"{PORTAL}/details/contacts",
+        json={
+            "contacts": [{"name": "Mallory", "role": None, "email": None}],
+            "phone_on_file": "+971 4 555 0199",
+        },
+        headers=session,
+    )
+    assert mixed.status_code == 403
+    details = (await flow.client.get(f"{PORTAL}/details", headers=session)).json()
+    assert details["phone_changed_at"] is None
+    assert "Mallory" not in [c["name"] for c in details["contacts"]]
+    # The current number again is accepted (no change, nothing flagged).
+    same = await flow.client.put(
+        f"{PORTAL}/details/contacts", json={"phone_on_file": on_file}, headers=session
+    )
+    assert same.status_code == 200, same.text
+    assert same.json()["phone_changed_at"] is None
+
+    asked = await flow.client.post(f"{PORTAL}/bank-change", json=other_bank(), headers=session)
+    assert asked.status_code == 201, asked.text
+    (ticket,) = await owner_rows(
+        owner_engine,
+        fworld.org_id,
+        "SELECT id, phone_recently_changed FROM pay_bank_change_tickets WHERE vendor_id = :v",
+        {"v": vendor_id},
+    )
+    assert ticket.phone_recently_changed is False
+    view = await flow.ok("GET", f"/v1/pay/bank-changes/{ticket.id}", fworld, "clerk2")
+    assert view["verification"]["phone_on_file"] == on_file
 
 
 # ------------------------------------------------------------------ submissions

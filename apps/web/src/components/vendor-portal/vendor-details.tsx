@@ -53,7 +53,6 @@ export function VendorDetails({
   const ids = useId();
   const [details, setDetails] = useState(initial);
   const [contacts, setContacts] = useState<ContactRow[]>(rows(initial));
-  const [phone, setPhone] = useState("");
   const [bank, setBank] = useState({ iban: "", accountName: "", bankName: "", swift: "", note: "" });
   const [busy, setBusy] = useState<null | "contacts" | "bank">(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -69,13 +68,11 @@ export function VendorDetails({
       contacts: contacts
         .filter((c) => c.name.trim())
         .map((c) => ({ name: c.name.trim(), role: c.role.trim() || null, email: c.email.trim() || null, phone: c.phone.trim() || null })),
-      phoneOnFile: phone.trim() || null,
     });
     setBusy(null);
-    if (!result.ok) return setError(result.code === "conflict" ? t("details.phoneLocked") : explain(result.code));
+    if (!result.ok) return setError(explain(result.code));
     setDetails(result.details);
     setContacts(rows(result.details));
-    setPhone("");
     setNotice(t("details.saved"));
   };
 
@@ -293,13 +290,7 @@ export function VendorDetails({
             <Plus aria-hidden />
             {t("details.add")}
           </Button>
-          <div className="space-y-1">
-            <label htmlFor={`${ids}-phone`} className="block text-sm font-medium">
-              {t("details.newPhone")}
-            </label>
-            <Input id={`${ids}-phone`} type="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <p className="text-xs text-muted-foreground">{t("details.phoneNote")}</p>
-          </div>
+          <p className="text-xs text-muted-foreground">{t("details.phoneNote")}</p>
           <Button type="submit" disabled={busy !== null}>
             {busy === "contacts" && <Loader2 className="animate-spin" aria-hidden />}
             {t("details.save")}

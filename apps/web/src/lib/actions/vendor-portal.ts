@@ -87,10 +87,9 @@ const contactSchema = z.object({
 
 export async function updateVendorContacts(input: {
   contacts: Array<z.infer<typeof contactSchema>>;
-  phoneOnFile: string | null;
 }): Promise<ActionResult<{ details: VendorPortalDetails }>> {
   const parsed = z
-    .object({ contacts: z.array(contactSchema).max(20), phoneOnFile: z.string().trim().min(5).max(40).nullable() })
+    .object({ contacts: z.array(contactSchema).max(20) })
     .safeParse(input);
   if (!parsed.success) return bad;
   const contacts = parsed.data.contacts.map((c) => ({
@@ -99,8 +98,8 @@ export async function updateVendorContacts(input: {
     email: c.email || null,
     phone: c.phone || null,
   }));
+  // The phone number on file is accounts payable's to change, never the portal's.
   const body: Record<string, unknown> = { contacts };
-  if (parsed.data.phoneOnFile) body.phone_on_file = parsed.data.phoneOnFile;
   const result = await vendorPortalCall<VendorPortalDetails>("/v1/pay/vendor-portal/details/contacts", { method: "PUT", body });
   return result.ok ? { ok: true, details: result.data } : fail(result);
 }

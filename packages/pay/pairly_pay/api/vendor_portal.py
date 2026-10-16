@@ -34,8 +34,9 @@ minute per contact; writes have their own limits):
   30 per hour.
 * ``GET  /vendor-portal/details``                  the verified details (bank account
   masked) and the open change requests
-* ``PUT  /vendor-portal/details/contacts``         people and the phone number on file,
-  changed directly and audited. 10 per hour.
+* ``PUT  /vendor-portal/details/contacts``         the people at the vendor, changed
+  directly and audited. 10 per hour. A different ``phone_on_file`` is refused (403
+  ``phone_on_file_by_ap_only``): only AP changes the number it calls back on.
 * ``POST /vendor-portal/bank-change``              new bank details: always a locked
   change request (payments held, call back on the number on file, two approvals), never
   applied here; the approvers and finance controllers get the same urgent alert as for

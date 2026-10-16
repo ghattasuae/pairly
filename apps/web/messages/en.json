@@ -4285,11 +4285,9 @@
       "phone": "Phone",
       "remove": "Remove",
       "add": "Add a contact",
-      "newPhone": "New phone number on file (optional)",
-      "phoneNote": "Accounts payable calls this number to confirm any change of bank details. A new number is recorded and makes the next bank detail change get a closer check.",
+      "phoneNote": "Accounts payable calls this number to confirm any change of bank details, so only they can change it. To use a new number, call accounts payable: they confirm it with you on the current number first.",
       "save": "Save contacts",
-      "saved": "Saved.",
-      "phoneLocked": "The phone number on file cannot change while a bank detail change is being checked."
+      "saved": "Saved."
     },
     "trn": {
       "none": "None",
