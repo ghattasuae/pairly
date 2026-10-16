@@ -45,14 +45,14 @@ Numbers come only from result files committed in `evals/results/`, exactly as wr
 | Rubric agreement (recorded run) | pending a live run |  |  | `hire.json` `rubric_agreement` |
 | Model score change across pairs | pending a live run |  |  | `hire.json` `fairness.model_score_delta` |
 | Model cost per CV | pending a live run |  |  | `hire.json` `latency_cost.model_cost_usd_per_cv` |
-| Rubric agreement with the synthetic labels, exact, final score (live run) | 0.6834 | 1794 criteria | complete | `hire_live.json` `extraction.rubric_agreement.final_exact_agreement` |
-| Rubric agreement with the synthetic labels, within one point (live run) | 0.9298 | 1794 criteria | complete | `hire_live.json` `extraction.rubric_agreement.final_within_one` |
-| Evidence validity (live run) | 1.0 | 2988 quotes | complete | `hire_live.json` `extraction.evidence_validity.rate` |
+| Rubric agreement with the synthetic labels, exact, final score (live run) | 0.6923 | 1794 criteria | complete | `hire_live.json` `extraction.rubric_agreement.final_exact_agreement` |
+| Rubric agreement with the synthetic labels, within one point (live run) | 0.9287 | 1794 criteria | complete | `hire_live.json` `extraction.rubric_agreement.final_within_one` |
+| Evidence validity (live run) | 1.0 | 2991 quotes | complete | `hire_live.json` `extraction.evidence_validity.rate` |
 | Largest overall score change per counterfactual pair, 0 to 100 (live run) | 7.5 | 60 pairs | complete | `hire_live.json` `fairness.model_score_delta.max_delta` |
 | Mean overall score change per counterfactual pair, 0 to 100 (live run) | 0.125 | 60 pairs | complete | `hire_live.json` `fairness.model_score_delta.mean_delta` |
 | Counterfactual pairs with any score change (live run) | 1 | 60 pairs | complete | `hire_live.json` `fairness.model_score_delta.pairs_with_any_change` |
 | Largest change on pairs with byte-identical scoring input (live run) | 0.0 | 56 pairs | complete | `hire_live.json` `fairness.model_score_delta.max_delta_byte_identical_input` |
-| Mean cost per CV in USD, screening (live run) | 0.020445 | 233 CVs | complete | `hire_live.json` `extraction.usage.cost_usd_per_document.mean` |
+| Mean cost per CV in USD, screening (live run) | 0.020525 | 233 CVs | complete | `hire_live.json` `extraction.usage.cost_usd_per_document.mean` |
 
 * Evidence validity (recorded run): Scripted answers: proves the evidence checks, not the model.
 * Largest overall score change across a pair, scripted answers: Tests the deterministic part (redaction, evidence, aggregation), not a model.

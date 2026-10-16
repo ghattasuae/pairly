@@ -358,24 +358,24 @@
    "cvs_scored": 233,
    "cvs_not_scored": {},
    "criteria": 1794,
-   "final_exact_agreement": 0.6834,
-   "final_within_one": 0.9298,
-   "final_mean_abs_error": 0.422,
+   "final_exact_agreement": 0.6923,
+   "final_within_one": 0.9287,
+   "final_mean_abs_error": 0.4147,
    "model_scores_missing": 6,
-   "model_exact_agreement": 0.6857,
-   "model_within_one": 0.9357,
-   "model_mean_abs_error": 0.4066,
-   "overall_mean_abs_error": 7.6019,
-   "overall_max_abs_error": 63.75,
+   "model_exact_agreement": 0.6952,
+   "model_within_one": 0.9351,
+   "model_mean_abs_error": 0.3977,
+   "overall_mean_abs_error": 7.4088,
+   "overall_max_abs_error": 62.5,
    "per_criterion": {
     "ap_accountant.accounting_qualification": {
      "n": 70,
-     "exact": 0.6571,
-     "within_one": 0.9429
+     "exact": 0.8714,
+     "within_one": 0.9143
     },
     "ap_accountant.ap_experience": {
      "n": 70,
-     "exact": 0.7714,
+     "exact": 0.7429,
      "within_one": 0.9857
     },
     "ap_accountant.arabic_language": {
@@ -385,23 +385,23 @@
     },
     "ap_accountant.erp_systems": {
      "n": 70,
-     "exact": 0.6714,
+     "exact": 0.7,
      "within_one": 0.9714
     },
     "ap_accountant.invoice_matching": {
      "n": 70,
-     "exact": 0.5571,
-     "within_one": 0.9
+     "exact": 0.5714,
+     "within_one": 0.9143
     },
     "ap_accountant.reconciliation_close": {
      "n": 70,
-     "exact": 0.8143,
+     "exact": 0.8,
      "within_one": 0.9857
     },
     "ap_accountant.uae_vat": {
      "n": 70,
-     "exact": 0.8286,
-     "within_one": 0.9857
+     "exact": 0.8429,
+     "within_one": 0.9714
     },
     "backend_engineer.backend_experience": {
      "n": 86,
@@ -485,46 +485,46 @@
     }
    },
    "confusion": {
-    "label 0 -> final 0": 366,
-    "label 0 -> final 1": 65,
+    "label 0 -> final 0": 369,
+    "label 0 -> final 1": 62,
     "label 0 -> final 2": 29,
     "label 0 -> final 3": 13,
     "label 0 -> final 4": 11,
     "label 1 -> final 0": 4,
-    "label 1 -> final 1": 74,
-    "label 1 -> final 2": 13,
-    "label 2 -> final 0": 16,
-    "label 2 -> final 1": 55,
-    "label 2 -> final 2": 243,
-    "label 2 -> final 3": 83,
+    "label 1 -> final 1": 73,
+    "label 1 -> final 2": 14,
+    "label 2 -> final 0": 17,
+    "label 2 -> final 1": 53,
+    "label 2 -> final 2": 246,
+    "label 2 -> final 3": 81,
     "label 2 -> final 4": 16,
-    "label 3 -> final 0": 3,
+    "label 3 -> final 0": 2,
     "label 3 -> final 1": 4,
-    "label 3 -> final 2": 89,
-    "label 3 -> final 3": 182,
-    "label 3 -> final 4": 63,
-    "label 4 -> final 0": 9,
+    "label 3 -> final 2": 79,
+    "label 3 -> final 3": 191,
+    "label 3 -> final 4": 65,
+    "label 4 -> final 0": 10,
     "label 4 -> final 1": 7,
-    "label 4 -> final 2": 18,
-    "label 4 -> final 3": 70,
-    "label 4 -> final 4": 361
+    "label 4 -> final 2": 19,
+    "label 4 -> final 3": 66,
+    "label 4 -> final 4": 363
    }
   },
   "evidence_validity": {
    "rate": 1.0,
-   "quotes": 2988,
-   "valid": 2988,
+   "quotes": 2991,
+   "valid": 2991,
    "invalid_examples": [],
    "rejected_quotes": {
-    "not_found": 21
+    "not_found": 23
    },
    "measured_on": "live model scoring results (this run)"
   },
   "usage": {
    "documents": 233,
    "calls": 701,
-   "calls_live_this_run": 0,
-   "calls_replayed_from_recordings": 701,
+   "calls_live_this_run": 72,
+   "calls_replayed_from_recordings": 629,
    "calls_reused": 0,
    "models": {
     "claude-haiku-4-5-20251001": 699,
@@ -540,27 +540,27 @@
    },
    "provider_errors": {},
    "escalated_calls": 2,
-   "input_tokens": 1993526,
-   "output_tokens": 549190,
-   "cost_usd_measured": 4.763592,
-   "cost_usd_spent_this_run": 0.0,
+   "input_tokens": 2001596,
+   "output_tokens": 550887,
+   "cost_usd_measured": 4.782247,
+   "cost_usd_spent_this_run": 0.486275,
    "cost_usd_spent_on_documents_cut_by_cap": 0.0,
    "cost_usd_per_document": {
-    "mean": 0.020445,
-    "p50": 0.020463,
+    "mean": 0.020525,
+    "p50": 0.020541,
     "p95": 0.025814
    },
    "latency_per_call": {
     "n": 701,
-    "p50_ms": 7641.0,
+    "p50_ms": 7772.0,
     "p95_ms": 25598.0,
-    "mean_ms": 9046.9
+    "mean_ms": 9161.8
    },
    "latency_per_document": {
     "n": 233,
-    "p50_ms": 22499.0,
-    "p95_ms": 61232.0,
-    "mean_ms": 27218.3
+    "p50_ms": 22400.0,
+    "p95_ms": 62839.0,
+    "mean_ms": 27564.1
    },
    "per_task": {
     "core_extract": {
@@ -599,30 +599,30 @@
       "claude-haiku-4-5-20251001": 233,
       "claude-sonnet-5-5": 2
      },
-     "input_tokens": 661711,
-     "output_tokens": 157687,
-     "cost_usd_measured": 1.474262,
+     "input_tokens": 669781,
+     "output_tokens": 159384,
+     "cost_usd_measured": 1.492917,
      "latency": {
       "n": 235,
-      "p50_ms": 7774.0,
+      "p50_ms": 7979.0,
       "p95_ms": 17913.0,
-      "mean_ms": 9681.2
+      "mean_ms": 10024.0
      }
     }
    },
    "latency_note": "Model call latency as measured when the call was made live (a replayed call reports its recording's latency). Per document: the sum of its calls, made one after the other."
   },
-  "seconds": 18.4,
+  "seconds": 879.9,
   "run": {
    "suite": "hire-extraction",
-   "date": "2026-10-16T12:21:51Z",
-   "commit": "3695392",
+   "date": "2026-10-16T13:31:28Z",
+   "commit": "cd8ce5b",
    "mode": "live",
-   "max_cost_usd": 0.2,
-   "spent_usd": 0.0,
+   "max_cost_usd": 1.5,
+   "spent_usd": 0.486275,
    "limit": null,
    "recordings": "evals/recordings/hire_live.jsonl.xz",
-   "recordings_loaded": 958,
+   "recordings_loaded": 1030,
    "catalog": "packages/core/pairly_core/llm/data/models.yaml",
    "prices": "packages/core/pairly_core/llm/data/prices.yaml"
   }

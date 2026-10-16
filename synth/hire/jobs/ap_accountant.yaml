@@ -109,11 +109,16 @@ label_guide:
   accounting_qualification:
     name_ar: مؤهل محاسبي
     anchors:
-    - None.
-    - Diploma in a related field.
-    - Degree in a related field.
-    - Degree in accounting.
-    - ACCA, CMA or CPA.
+    - 'None of the below: no ACCA, CMA or CPA, and no degree or diploma in accounting,
+      finance, commerce, economics or business administration. A degree in any other
+      field (marketing, mathematics, engineering) scores 0.'
+    - A diploma, not a degree, in accounting, finance, commerce, economics or business
+      administration.
+    - A degree (bachelor's, master's or MBA) in finance, commerce, economics or business
+      administration. Only these four fields count as related.
+    - A degree in accounting itself, for example a BSc or MSc in Accounting. No
+      certificate is needed for this score.
+    - ACCA, CMA or CPA listed as a certification.
   arabic_language:
     name_ar: اللغة العربية
     anchors:

@@ -37,14 +37,14 @@ Read from the committed result files: `guardrails_hire.json`, `hire.json`, `hire
 | Rubric scoring | Rubric agreement (recorded run) | pending a live run |  | `hire.json` |
 | Rubric scoring | Model score change across pairs | pending a live run |  | `hire.json` |
 | Rubric scoring | Model cost per CV | pending a live run |  | `hire.json` |
-| Rubric scoring | Rubric agreement with the synthetic labels, exact, final score (live run) | 0.6834 | 1794 criteria | `hire_live.json` |
-| Rubric scoring | Rubric agreement with the synthetic labels, within one point (live run) | 0.9298 | 1794 criteria | `hire_live.json` |
-| Rubric scoring | Evidence validity (live run) | 1.0 | 2988 quotes | `hire_live.json` |
+| Rubric scoring | Rubric agreement with the synthetic labels, exact, final score (live run) | 0.6923 | 1794 criteria | `hire_live.json` |
+| Rubric scoring | Rubric agreement with the synthetic labels, within one point (live run) | 0.9287 | 1794 criteria | `hire_live.json` |
+| Rubric scoring | Evidence validity (live run) | 1.0 | 2991 quotes | `hire_live.json` |
 | Rubric scoring | Largest overall score change per counterfactual pair, 0 to 100 (live run) | 7.5 | 60 pairs | `hire_live.json` |
 | Rubric scoring | Mean overall score change per counterfactual pair, 0 to 100 (live run) | 0.125 | 60 pairs | `hire_live.json` |
 | Rubric scoring | Counterfactual pairs with any score change (live run) | 1 | 60 pairs | `hire_live.json` |
 | Rubric scoring | Largest change on pairs with byte-identical scoring input (live run) | 0.0 | 56 pairs | `hire_live.json` |
-| Rubric scoring | Mean cost per CV in USD, screening (live run) | 0.020445 | 233 CVs | `hire_live.json` |
+| Rubric scoring | Mean cost per CV in USD, screening (live run) | 0.020525 | 233 CVs | `hire_live.json` |
 | Document injection classifier | Attack payloads reaching the scoring model without the classifier | 5 | 5 paraphrased payloads | `hire.json` |
 | Document injection classifier | Payload leaks with the classifier (recorded run) | pending a live run |  | `hire.json` |
 | Document injection classifier | Classifier recall, payload removed (live run) | 1.0 | 5 attacks | `hire_live.json` |

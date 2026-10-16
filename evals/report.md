@@ -90,19 +90,19 @@ Recall per expected finding, misses and false positives by code are in `evals/re
 
 The model-dependent metrics measured with a real model (Anthropic, small tier first with escalation, and response reuse for identical requests, as in production). Synthetic data only; labels are rule-based, not human judgments. Recorded responses (`evals/recordings/*_live.jsonl.xz`, committed) make a second run free on any machine. These numbers do not gate: `hire.json` keeps `pending_live_run` and `thresholds.yaml` is unchanged until the founder sets thresholds; the Brief target column is what the founder decides against.
 
-- Date (UTC): 2026-10-16T12:16:13Z to 2026-10-16T12:21:51Z
+- Date (UTC): 2026-10-16T12:16:13Z to 2026-10-16T13:31:28Z
 - Models answering (API model id, calls used per suite, replays included): `claude-haiku-4-5-20251001` (933), `claude-sonnet-5-5` (2)
-- Total spent on live calls (from the recordings, smoke runs included): 7.0415 USD over 1026 calls
+- Total spent on live calls (from the recordings, smoke runs included): 8.0170 USD over 1170 calls
 - Status per suite: hire-extraction complete, hire-fairness complete, hire-injection complete, pay-extraction complete
 
 | Metric | Value | n | Status | Brief target | Models (calls) | Tokens in / out | Cost USD | Latency per doc p50 / p95 ms |
 |---|---|---|---|---|---|---|---|---|
-| CV field extraction accuracy | 0.9831 | 233 CVs, 8365 values | complete | per field; none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
-| Rubric agreement, exact (final score) | 0.6834 | 1794 criteria, 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
-| Rubric agreement, within one point (final) | 0.9298 | 1794 criteria | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
-| Overall score mean abs error (0 to 100) | 7.602 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
-| Evidence validity | 1 | 2988 quotes | complete | 100% | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
-| Cost per CV, mean USD | 0.0204 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 1993526 / 549190 | 4.7636 | 22499 / 61232 |
+| CV field extraction accuracy | 0.9831 | 233 CVs, 8365 values | complete | per field; none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
+| Rubric agreement, exact (final score) | 0.6923 | 1794 criteria, 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
+| Rubric agreement, within one point (final) | 0.9287 | 1794 criteria | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
+| Overall score mean abs error (0 to 100) | 7.409 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
+| Evidence validity | 1 | 2991 quotes | complete | 100% | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
+| Cost per CV, mean USD | 0.0205 | 233 CVs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (699), claude-sonnet-5-5 (2) | 2001596 / 550887 | 4.7822 | 22400 / 62839 |
 | Fairness: max overall score change per pair (all pairs, run 1) | 7.5 | 60 pairs | complete | below a set threshold; none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
 | Fairness: mean overall score change per pair (all pairs, run 1) | 0.125 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
 | Fairness: pairs with any score change (all pairs, run 1) | 1 | 60 pairs | complete | none set (after first live baseline) | claude-haiku-4-5-20251001 (175) | 484127 / 135941 | 1.1638 | 15508 / 56572 |
@@ -122,7 +122,7 @@ The model-dependent metrics measured with a real model (Anthropic, small tier fi
 Tokens, cost and latency are per suite (every row of a suite shows the suite's totals). Latency per document is the sum of its model calls, made one after the other. Details per field, criterion, pair and document: `evals/results/hire_live.json`, `evals/results/pay_live.json`.
 
 - Pay rows other than "Eval subset only" cover 34 invoices: the eval subset plus the demo trio (`synth.pay.recordings.subset_specs`). Ready without a person: 25 of 34.
-- Rubric agreement, lowest exact agreement per criterion: `recruiter.high_volume` 0.2857 (n 77), `recruiter.ats_process` 0.4805 (n 77), `backend_engineer.cloud_containers` 0.4884 (n 86). Model's own score before no-evidence-no-credit: exact 0.6857, within one 0.9357.
-- Evidence quotes the model gave that were rejected: 21 not_found (no credit for them; every accepted quote is valid).
+- Rubric agreement, lowest exact agreement per criterion: `recruiter.high_volume` 0.2857 (n 77), `recruiter.ats_process` 0.4805 (n 77), `backend_engineer.cloud_containers` 0.4884 (n 86). Model's own score before no-evidence-no-credit: exact 0.6952, within one 0.9351.
+- Evidence quotes the model gave that were rejected: 23 not_found (no credit for them; every accepted quote is valid).
 - Fairness: 56 of 60 pairs sent the scoring model byte-identical input; with response reuse they get the same answer (77 calls reused), largest change 0. The other pairs differ in what the model reads; their change is reported next to the model's own run-to-run spread.
 <!-- END live -->
