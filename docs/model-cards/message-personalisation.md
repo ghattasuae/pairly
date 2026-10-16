@@ -34,4 +34,15 @@ A `MessageDraft`: `personal_note` and, for a rejection, `reason`.
 
 ## Evals
 
-No eval measures this component yet. The checks have unit tests.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 48 |  |  | `structural.json` `components.message-personalisation.recorded_outputs` |
+| Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 48 outputs |  | `structural.json` `components.message-personalisation.schema_valid.rate` |
+| Outputs free of banned content (structural, gated at 1.0) | 1.0 | 48 outputs |  | `structural.json` `components.message-personalisation.banned_content_free.rate` |
+| Outputs free of em dashes (structural) | 1.0 | 48 outputs |  | `structural.json` `components.message-personalisation.em_dash_free.rate` |
+| Outputs that pass the no-invented-facts check (structural) | 1.0 | 48 outputs |  | `structural.json` `components.message-personalisation.product_check.rate` |
+| Mean request size in characters (structural) | 179.7 | 48 outputs |  | `structural.json` `components.message-personalisation.size.request_chars.mean` |
+
+Structural checks only (`python -m evals.structural`), on the committed recordings: scripted answers, not model output. They say whether every recorded output fits the schema, holds no banned content or em dash, passes the component's own deterministic check and points only at its input. They are not quality judgments: how good a draft is needs a live model and people. The checks also have unit tests.

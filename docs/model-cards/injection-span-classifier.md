@@ -34,4 +34,10 @@ It can raise a low finding to medium (removed from model input, so a person revi
 
 ## Evals
 
-No eval measures this component yet.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 0 |  |  | `structural.json` `components.injection-span-classifier.recorded_outputs` |
+
+Structural checks (`python -m evals.structural`) found no committed recording or scripted answer of this task, so nothing about it is measured yet.

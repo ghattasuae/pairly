@@ -24,10 +24,21 @@ One card per AI component: what it is for, what it sees, what it returns, which 
 
 ## Eval numbers in the cards
 
-Read from the committed result files: `guardrails_hire.json`, `hire.json`, `hire_live.json`, `pay.json`, `pay_live.json`. A live result file that is not committed yet is reported as pending.
+Read from the committed result files: `guardrails_hire.json`, `hire.json`, `hire_live.json`, `pay.json`, `pay_live.json`, `structural.json`. A live result file that is not committed yet is reported as pending.
 
 | Component | Metric | Value | Over | Source file |
 |---|---|---|---|---|
+| Job description drafting | Recorded outputs checked (structural) | 3 |  | `structural.json` |
+| Job description drafting | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 3 outputs | `structural.json` |
+| Job description drafting | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 3 outputs | `structural.json` |
+| Job description drafting | Outputs free of em dashes (structural) | 1.0 | 3 outputs | `structural.json` |
+| Job description drafting | Outputs that pass the inclusive-language check (structural) | 1.0 | 3 outputs | `structural.json` |
+| Job description drafting | Mean request size in characters (structural) | 222.7 | 3 outputs | `structural.json` |
+| Rubric drafting | Recorded outputs checked (structural) | 3 |  | `structural.json` |
+| Rubric drafting | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 3 outputs | `structural.json` |
+| Rubric drafting | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 3 outputs | `structural.json` |
+| Rubric drafting | Outputs free of em dashes (structural) | 1.0 | 3 outputs | `structural.json` |
+| Rubric drafting | Mean request size in characters (structural) | 692.7 | 3 outputs | `structural.json` |
 | CV parsing | Extraction framework ceiling (answers scripted from the ground truth) | 0.9966 |  | `hire.json` |
 | CV parsing | Model CV field extraction accuracy (recorded run) | pending a live run |  | `hire.json` |
 | CV parsing | Model CV field extraction accuracy (live run) | 0.9831 | 8365 values | `hire_live.json` |
@@ -45,6 +56,32 @@ Read from the committed result files: `guardrails_hire.json`, `hire.json`, `hire
 | Rubric scoring | Counterfactual pairs with any score change (live run) | 1 | 60 pairs | `hire_live.json` |
 | Rubric scoring | Largest change on pairs with byte-identical scoring input (live run) | 0.0 | 56 pairs | `hire_live.json` |
 | Rubric scoring | Mean cost per CV in USD, screening (live run) | 0.020525 | 233 CVs | `hire_live.json` |
+| Interview kits | Recorded outputs checked (structural) | 230 |  | `structural.json` |
+| Interview kits | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 230 outputs | `structural.json` |
+| Interview kits | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 230 outputs | `structural.json` |
+| Interview kits | Outputs free of em dashes (structural) | 1.0 | 230 outputs | `structural.json` |
+| Interview kits | Outputs that pass the kit check (structural) | 1.0 | 230 outputs | `structural.json` |
+| Interview kits | Mean request size in characters (structural) | 408.6 | 230 outputs | `structural.json` |
+| Debrief summary | Recorded outputs checked (structural) | 2 |  | `structural.json` |
+| Debrief summary | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 2 outputs | `structural.json` |
+| Debrief summary | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 2 outputs | `structural.json` |
+| Debrief summary | Outputs free of em dashes (structural) | 1.0 | 2 outputs | `structural.json` |
+| Debrief summary | Outputs that pass the debrief check (structural) | 1.0 | 2 outputs | `structural.json` |
+| Debrief summary | Outputs that point only at their input (structural) | 1.0 | 2 outputs | `structural.json` |
+| Debrief summary | Mean request size in characters (structural) | 680.5 | 2 outputs | `structural.json` |
+| Reference summary | Recorded outputs checked (structural) | 2 |  | `structural.json` |
+| Reference summary | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 2 outputs | `structural.json` |
+| Reference summary | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 2 outputs | `structural.json` |
+| Reference summary | Outputs free of em dashes (structural) | 1.0 | 2 outputs | `structural.json` |
+| Reference summary | Outputs that pass the reference check (structural) | 1.0 | 2 outputs | `structural.json` |
+| Reference summary | Mean request size in characters (structural) | 803.0 | 2 outputs | `structural.json` |
+| Message personalisation | Recorded outputs checked (structural) | 48 |  | `structural.json` |
+| Message personalisation | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 48 outputs | `structural.json` |
+| Message personalisation | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 48 outputs | `structural.json` |
+| Message personalisation | Outputs free of em dashes (structural) | 1.0 | 48 outputs | `structural.json` |
+| Message personalisation | Outputs that pass the no-invented-facts check (structural) | 1.0 | 48 outputs | `structural.json` |
+| Message personalisation | Mean request size in characters (structural) | 179.7 | 48 outputs | `structural.json` |
+| Guardrail injection classifier (suspicious spans) | Recorded outputs checked (structural) | 0 |  | `structural.json` |
 | Document injection classifier | Attack payloads reaching the scoring model without the classifier | 5 | 5 paraphrased payloads | `hire.json` |
 | Document injection classifier | Payload leaks with the classifier (recorded run) | pending a live run |  | `hire.json` |
 | Document injection classifier | Classifier recall, payload removed (live run) | 1.0 | 5 attacks | `hire_live.json` |
@@ -56,3 +93,23 @@ Read from the committed result files: `guardrails_hire.json`, `hire.json`, `hire
 | Invoice extraction | Invoice VAT accuracy, percent (live run) | 88.2 | 34 invoices | `pay_live.json` |
 | Invoice extraction | Invoices ready without a person, percent (live run) | 73.5 | 34 invoices | `pay_live.json` |
 | Invoice extraction | Mean cost per invoice in USD (live run) | 0.009158 | 34 invoices | `pay_live.json` |
+| Policy check over the organisation's documents | Recorded outputs checked (structural) | 0 |  | `structural.json` |
+| GL coding suggestion | Recorded outputs checked (structural) | 12 |  | `structural.json` |
+| GL coding suggestion | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 12 outputs | `structural.json` |
+| GL coding suggestion | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 12 outputs | `structural.json` |
+| GL coding suggestion | Outputs free of em dashes (structural) | 1.0 | 12 outputs | `structural.json` |
+| GL coding suggestion | Outputs that pass the codes-from-the-lists check (structural) | 1.0 | 12 outputs | `structural.json` |
+| GL coding suggestion | Outputs that point only at their input (structural) | 1.0 | 12 outputs | `structural.json` |
+| GL coding suggestion | Mean request size in characters (structural) | 940.1 | 12 outputs | `structural.json` |
+| Exception message note | Recorded outputs checked (structural) | 18 |  | `structural.json` |
+| Exception message note | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 18 outputs | `structural.json` |
+| Exception message note | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 18 outputs | `structural.json` |
+| Exception message note | Outputs free of em dashes (structural) | 1.0 | 18 outputs | `structural.json` |
+| Exception message note | Outputs that pass the note check (structural) | 1.0 | 18 outputs | `structural.json` |
+| Exception message note | Mean request size in characters (structural) | 133.0 | 18 outputs | `structural.json` |
+| Rubric clarification | Recorded outputs checked (structural) | 42 |  | `structural.json` |
+| Rubric clarification | Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 42 outputs | `structural.json` |
+| Rubric clarification | Outputs free of banned content (structural, gated at 1.0) | 1.0 | 42 outputs | `structural.json` |
+| Rubric clarification | Outputs free of em dashes (structural) | 1.0 | 42 outputs | `structural.json` |
+| Rubric clarification | Outputs that pass the clarification check (structural) | 1.0 | 42 outputs | `structural.json` |
+| Rubric clarification | Mean request size in characters (structural) | 563.5 | 42 outputs | `structural.json` |

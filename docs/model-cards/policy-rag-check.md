@@ -34,4 +34,10 @@ No policy found is not a pass. Errors, low confidence and rejected quotes send t
 
 ## Evals
 
-No eval measures this component yet: the Pay eval runs the deterministic rule set, and the policy search needs a live model.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 0 |  |  | `structural.json` `components.policy-rag-check.recorded_outputs` |
+
+Structural checks (`python -m evals.structural`) found no committed recording or scripted answer of this task, so nothing about it is measured yet. The Pay eval runs the deterministic rule set, and the policy search needs a live model.

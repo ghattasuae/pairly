@@ -33,4 +33,15 @@ A suggestion never changes the rubric: a person edits it and locks a new version
 
 ## Evals
 
-No eval measures this component yet.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 42 |  |  | `structural.json` `components.rubric-clarification.recorded_outputs` |
+| Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 42 outputs |  | `structural.json` `components.rubric-clarification.schema_valid.rate` |
+| Outputs free of banned content (structural, gated at 1.0) | 1.0 | 42 outputs |  | `structural.json` `components.rubric-clarification.banned_content_free.rate` |
+| Outputs free of em dashes (structural) | 1.0 | 42 outputs |  | `structural.json` `components.rubric-clarification.em_dash_free.rate` |
+| Outputs that pass the clarification check (structural) | 1.0 | 42 outputs |  | `structural.json` `components.rubric-clarification.product_check.rate` |
+| Mean request size in characters (structural) | 563.5 | 42 outputs |  | `structural.json` `components.rubric-clarification.size.request_chars.mean` |
+
+Structural checks only (`python -m evals.structural`), on the committed recordings: scripted answers, not model output. They say whether every recorded output fits the schema, holds no banned content or em dash, passes the component's own deterministic check and points only at its input. They are not quality judgments: how good a draft is needs a live model and people.

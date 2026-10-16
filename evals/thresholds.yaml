@@ -228,3 +228,100 @@ metrics:
     path: matching.error_count
     max: 0
     why: Matching runs on every synthetic invoice.
+
+  # ---------------------------------------------------------------- structural checks
+  # The AI components no other eval covers, on their committed recordings (scripted
+  # answers, no model call; python -m evals.structural). Structural checks, not quality
+  # judgments. Schema validity and banned content are hard rules: 1.0 (2026-10-16).
+  # A component without any recording (the span classifier, the policy check) is in the
+  # file as no_recordings and is not gated until it has one.
+  - id: structural.jd_drafting.schema_valid
+    file: structural.json
+    path: components.jd-drafting.schema_valid.rate
+    min: 1.0
+    why: Every recorded job description drafting output fits its schema (JobDescriptionDraft).
+  - id: structural.jd_drafting.banned_content_free
+    file: structural.json
+    path: components.jd-drafting.banned_content_free.rate
+    min: 1.0
+    why: No recorded job description drafting output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.rubric_drafting.schema_valid
+    file: structural.json
+    path: components.rubric-drafting.schema_valid.rate
+    min: 1.0
+    why: Every recorded rubric drafting output fits its schema (Rubric).
+  - id: structural.rubric_drafting.banned_content_free
+    file: structural.json
+    path: components.rubric-drafting.banned_content_free.rate
+    min: 1.0
+    why: No recorded rubric drafting output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.interview_kits.schema_valid
+    file: structural.json
+    path: components.interview-kits.schema_valid.rate
+    min: 1.0
+    why: Every recorded interview kits output fits its schema (KitItemDraft).
+  - id: structural.interview_kits.banned_content_free
+    file: structural.json
+    path: components.interview-kits.banned_content_free.rate
+    min: 1.0
+    why: No recorded interview kits output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.debrief_summary.schema_valid
+    file: structural.json
+    path: components.debrief-summary.schema_valid.rate
+    min: 1.0
+    why: Every recorded debrief summary output fits its schema (DebriefDraft).
+  - id: structural.debrief_summary.banned_content_free
+    file: structural.json
+    path: components.debrief-summary.banned_content_free.rate
+    min: 1.0
+    why: No recorded debrief summary output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.reference_summary.schema_valid
+    file: structural.json
+    path: components.reference-summary.schema_valid.rate
+    min: 1.0
+    why: Every recorded reference summary output fits its schema (ReferenceDraft).
+  - id: structural.reference_summary.banned_content_free
+    file: structural.json
+    path: components.reference-summary.banned_content_free.rate
+    min: 1.0
+    why: No recorded reference summary output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.message_personalisation.schema_valid
+    file: structural.json
+    path: components.message-personalisation.schema_valid.rate
+    min: 1.0
+    why: Every recorded message personalisation output fits its schema (MessageDraft).
+  - id: structural.message_personalisation.banned_content_free
+    file: structural.json
+    path: components.message-personalisation.banned_content_free.rate
+    min: 1.0
+    why: No recorded message personalisation output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.gl_coding_suggestion.schema_valid
+    file: structural.json
+    path: components.gl-coding-suggestion.schema_valid.rate
+    min: 1.0
+    why: Every recorded gl coding suggestion output fits its schema (ModelCoding).
+  - id: structural.gl_coding_suggestion.banned_content_free
+    file: structural.json
+    path: components.gl-coding-suggestion.banned_content_free.rate
+    min: 1.0
+    why: No recorded gl coding suggestion output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.rubric_clarification.schema_valid
+    file: structural.json
+    path: components.rubric-clarification.schema_valid.rate
+    min: 1.0
+    why: Every recorded rubric clarification output fits its schema (RubricClarification).
+  - id: structural.rubric_clarification.banned_content_free
+    file: structural.json
+    path: components.rubric-clarification.banned_content_free.rate
+    min: 1.0
+    why: No recorded rubric clarification output holds banned content (markup, images, prompt leaks, claims of acting).
+  - id: structural.exception_note.schema_valid
+    file: structural.json
+    path: components.exception-note.schema_valid.rate
+    min: 1.0
+    why: Every recorded exception note output fits its schema (ExceptionNote).
+  - id: structural.exception_note.banned_content_free
+    file: structural.json
+    path: components.exception-note.banned_content_free.rate
+    min: 1.0
+    why: No recorded exception note output holds banned content (markup, images, prompt leaks, claims of acting).

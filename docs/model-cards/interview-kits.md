@@ -34,4 +34,15 @@ Interviewers choose what to ask. A draft that fails the checks (em dash, link, e
 
 ## Evals
 
-No eval measures this component yet.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 230 |  |  | `structural.json` `components.interview-kits.recorded_outputs` |
+| Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 230 outputs |  | `structural.json` `components.interview-kits.schema_valid.rate` |
+| Outputs free of banned content (structural, gated at 1.0) | 1.0 | 230 outputs |  | `structural.json` `components.interview-kits.banned_content_free.rate` |
+| Outputs free of em dashes (structural) | 1.0 | 230 outputs |  | `structural.json` `components.interview-kits.em_dash_free.rate` |
+| Outputs that pass the kit check (structural) | 1.0 | 230 outputs |  | `structural.json` `components.interview-kits.product_check.rate` |
+| Mean request size in characters (structural) | 408.6 | 230 outputs |  | `structural.json` `components.interview-kits.size.request_chars.mean` |
+
+Structural checks only (`python -m evals.structural`), on the committed recordings: scripted answers, not model output. They say whether every recorded output fits the schema, holds no banned content or em dash, passes the component's own deterministic check and points only at its input. They are not quality judgments: how good a draft is needs a live model and people.

@@ -87,6 +87,91 @@ class Card:
 
 HIRE_LIVE = "hire_live.json"
 PAY_LIVE = "pay_live.json"
+STRUCTURAL = "structural.json"
+STRUCTURAL_NOTE: Final = (
+    "Structural checks only (`python -m evals.structural`), on the committed recordings: "
+    "scripted answers, not model output. They say whether every recorded output fits the "
+    "schema, holds no banned content or em dash, passes the component's own deterministic "
+    "check and points only at its input. They are not quality judgments: how good a draft "
+    "is needs a live model and people."
+)
+STRUCTURAL_NONE: Final = (
+    "Structural checks (`python -m evals.structural`) found no committed recording or "
+    "scripted answer of this task, so nothing about it is measured yet."
+)
+
+
+def structural(
+    slug: str, check: str | None = None, *, references: bool = False
+) -> tuple[Metric, ...]:
+    """The structural metrics of one component (``evals/results/structural.json``)."""
+    base = f"components.{slug}"
+    n = f"{base}.recorded_outputs"
+    out = [
+        Metric("Recorded outputs checked (structural)", STRUCTURAL, n, n_unit=""),
+        Metric(
+            "Outputs that fit the schema (structural, gated at 1.0)",
+            STRUCTURAL,
+            f"{base}.schema_valid.rate",
+            n_path=n,
+            n_unit="outputs",
+        ),
+        Metric(
+            "Outputs free of banned content (structural, gated at 1.0)",
+            STRUCTURAL,
+            f"{base}.banned_content_free.rate",
+            n_path=n,
+            n_unit="outputs",
+        ),
+        Metric(
+            "Outputs free of em dashes (structural)",
+            STRUCTURAL,
+            f"{base}.em_dash_free.rate",
+            n_path=n,
+            n_unit="outputs",
+        ),
+    ]
+    if check is not None:
+        out.append(
+            Metric(
+                f"Outputs that pass {check} (structural)",
+                STRUCTURAL,
+                f"{base}.product_check.rate",
+                n_path=n,
+                n_unit="outputs",
+            )
+        )
+    if references:
+        out.append(
+            Metric(
+                "Outputs that point only at their input (structural)",
+                STRUCTURAL,
+                f"{base}.references_exist.rate",
+                n_path=n,
+                n_unit="outputs",
+            )
+        )
+    out.append(
+        Metric(
+            "Mean request size in characters (structural)",
+            STRUCTURAL,
+            f"{base}.size.request_chars.mean",
+            n_path=n,
+            n_unit="outputs",
+        )
+    )
+    return tuple(out)  # fmt: skip
+
+
+def structural_none(slug: str) -> tuple[Metric, ...]:
+    return (
+        Metric(
+            "Recorded outputs checked (structural)",
+            STRUCTURAL,
+            f"components.{slug}.recorded_outputs",
+        ),
+    )
+
 
 CARDS: Final[tuple[Card, ...]] = (
     Card(
@@ -115,7 +200,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "Without a model (no key, no recording, over budget) the recruiter writes "
             "the text; the route answers with a plain message.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("jd-drafting", "the inclusive-language check"),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="rubric-drafting",
@@ -138,7 +224,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "the AI disagree.",
             "The draft is not checked for job relatedness beyond what the person reviews.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("rubric-drafting"),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="cv-parsing",
@@ -344,7 +431,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "Sees labels, not evidence, so probes are general.",
             "Without a model the kit is the template kit.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("interview-kits", "the kit check"),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="debrief-summary",
@@ -377,7 +465,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "Only as good as the notes interviewers wrote.",
             "A refused or failed draft falls back to a template built from the numbers.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("debrief-summary", "the debrief check", references=True),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="reference-summary",
@@ -402,7 +491,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "Summaries can flatten nuance in a referee's wording.",
             "A refused or failed draft falls back to a deterministic template.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("reference-summary", "the reference check"),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="message-personalisation",
@@ -432,7 +522,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "English and Arabic only.",
             "A refused draft changes nothing; the person writes the text.",
         ),
-        eval_note="No eval measures this component yet. The checks have unit tests.",
+        metrics=structural("message-personalisation", "the no-invented-facts check"),
+        eval_note=STRUCTURAL_NOTE + " The checks also have unit tests.",
     ),
     Card(
         slug="injection-span-classifier",
@@ -456,7 +547,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "Available to workflows; no workflow turns it on today.",
             "Sees only what the detectors already found, so it cannot find new spans.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural_none("injection-span-classifier"),
+        eval_note=STRUCTURAL_NONE,
     ),
     Card(
         slug="document-injection-classifier",
@@ -638,9 +730,10 @@ CARDS: Final[tuple[Card, ...]] = (
             "Only as complete as the policy documents uploaded.",
             "Retrieval can miss a relevant excerpt.",
         ),
+        metrics=structural_none("policy-rag-check"),
         eval_note=(
-            "No eval measures this component yet: the Pay eval runs the deterministic "
-            "rule set, and the policy search needs a live model."
+            STRUCTURAL_NONE + " The Pay eval runs the deterministic rule set, and the "
+            "policy search needs a live model."
         ),
     ),
     Card(
@@ -668,7 +761,10 @@ CARDS: Final[tuple[Card, ...]] = (
             "Knows only the description, not the organisation's habits.",
             "Asked on request from the coding screen.",
         ),
-        eval_note="No eval measures this component yet.",
+        metrics=structural(
+            "gl-coding-suggestion", "the codes-from-the-lists check", references=True
+        ),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="exception-note",
@@ -695,7 +791,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "approves exactly that text. Never used for a bank mismatch."
         ),
         limits=("General wording only, by design.",),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("exception-note", "the note check"),
+        eval_note=STRUCTURAL_NOTE,
     ),
     Card(
         slug="rubric-clarification",
@@ -716,7 +813,8 @@ CARDS: Final[tuple[Card, ...]] = (
             "anchors is always shown too."
         ),
         limits=("Only as good as the labels people gave.",),
-        eval_note="No eval measures this component yet.",
+        metrics=structural("rubric-clarification", "the clarification check"),
+        eval_note=STRUCTURAL_NOTE,
     ),
 )
 

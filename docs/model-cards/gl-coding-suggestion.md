@@ -34,4 +34,16 @@ A suggestion only. History-based suggestions come first; the model one is never 
 
 ## Evals
 
-No eval measures this component yet.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 12 |  |  | `structural.json` `components.gl-coding-suggestion.recorded_outputs` |
+| Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.schema_valid.rate` |
+| Outputs free of banned content (structural, gated at 1.0) | 1.0 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.banned_content_free.rate` |
+| Outputs free of em dashes (structural) | 1.0 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.em_dash_free.rate` |
+| Outputs that pass the codes-from-the-lists check (structural) | 1.0 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.product_check.rate` |
+| Outputs that point only at their input (structural) | 1.0 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.references_exist.rate` |
+| Mean request size in characters (structural) | 940.1 | 12 outputs |  | `structural.json` `components.gl-coding-suggestion.size.request_chars.mean` |
+
+Structural checks only (`python -m evals.structural`), on the committed recordings: scripted answers, not model output. They say whether every recorded output fits the schema, holds no banned content or em dash, passes the component's own deterministic check and points only at its input. They are not quality judgments: how good a draft is needs a live model and people.

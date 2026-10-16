@@ -34,4 +34,16 @@ The hiring manager decides advance, hold or reject with a reason (`decide`, seco
 
 ## Evals
 
-No eval measures this component yet.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+
+| Metric | Value | Over | Run | Source |
+|---|---|---|---|---|
+| Recorded outputs checked (structural) | 2 |  |  | `structural.json` `components.debrief-summary.recorded_outputs` |
+| Outputs that fit the schema (structural, gated at 1.0) | 1.0 | 2 outputs |  | `structural.json` `components.debrief-summary.schema_valid.rate` |
+| Outputs free of banned content (structural, gated at 1.0) | 1.0 | 2 outputs |  | `structural.json` `components.debrief-summary.banned_content_free.rate` |
+| Outputs free of em dashes (structural) | 1.0 | 2 outputs |  | `structural.json` `components.debrief-summary.em_dash_free.rate` |
+| Outputs that pass the debrief check (structural) | 1.0 | 2 outputs |  | `structural.json` `components.debrief-summary.product_check.rate` |
+| Outputs that point only at their input (structural) | 1.0 | 2 outputs |  | `structural.json` `components.debrief-summary.references_exist.rate` |
+| Mean request size in characters (structural) | 680.5 | 2 outputs |  | `structural.json` `components.debrief-summary.size.request_chars.mean` |
+
+Structural checks only (`python -m evals.structural`), on the committed recordings: scripted answers, not model output. They say whether every recorded output fits the schema, holds no banned content or em dash, passes the component's own deterministic check and points only at its input. They are not quality judgments: how good a draft is needs a live model and people.
