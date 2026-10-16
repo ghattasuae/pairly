@@ -1,6 +1,6 @@
 # Security
 
-How Pairly protects its boundaries, threat by threat. Each control names the code that enforces it and the test that proves it. To report a vulnerability, see [SECURITY.md](../SECURITY.md). The architecture these controls live in is in [architecture.md](architecture.md).
+How Pairly protects its boundaries, threat by threat. Each control names the code that enforces it and the test that proves it. The latest review against this model is [security-review-2026-10.md](security-review-2026-10.md). To report a vulnerability, see [SECURITY.md](../SECURITY.md). The architecture these controls live in is in [architecture.md](architecture.md).
 
 Assets: candidates' and vendors' personal data, bank details, the decisions people take, the audit trail, and the organisation's money (Pairly never moves money, but its approved payment runs and bank files are what a bank acts on).
 
