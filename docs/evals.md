@@ -30,6 +30,7 @@ PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-extraction --max-cost-us
 PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-fairness --max-cost-usd <cap>
 PAIRLY_MODEL_MODE=live uv run python -m evals.live hire-injection --max-cost-usd <cap>
 PAIRLY_MODEL_MODE=live uv run python -m evals.live pay-extraction --max-cost-usd <cap>
+uv run python -m evals.live compress  # fold any leftover plain recordings into the .xz files
 uv run python -m evals.live report  # the "Live baseline" section of evals/report.md
 ```
 
@@ -62,7 +63,7 @@ The model router in `recorded` mode answers only from stored responses, keyed on
 
 * **Offline evals and demos** use scripted answers: `synth.hire.screening` and `synth.pay` write, for each synthetic document, the request the pipeline will send and an answer made from the ground truth. `evals.hire` records them as a bundle and replays the whole pipeline through it by request hash, which also proves the pipeline is deterministic (`replay_deterministic`).
 * **Demo recordings** (`pairly_hire.recordings`, `pairly_hire.messaging.recordings`, `pairly_hire.interviewing.recordings`, `pairly_hire.analytics.calibration_recordings`, `pairly_pay.ai_recordings`, `synth.expense`) are checked with `--check` by `make demo`, and the Hire eval reports whether they still answer every request (`recordings.current`).
-* **Live runs** append every live response to `evals/recordings/<product>_live.jsonl` with its tokens, cost, latency and the model id the API answered with. A later run replays a recording of the same request for the same document instead of calling the model, so a second run is free; replayed calls report their recorded cost and latency.
+* **Live runs** record every live response with its tokens, cost, latency and the model id the API answered with. The committed recordings are `evals/recordings/<product>_live.jsonl.xz` (deterministic xz: the same lines give the same bytes). During a run each new response is appended at once to the plain `evals/recordings/<product>_live.jsonl` next to it, so a crash loses nothing; that plain file is local and git-ignored. At the end of the run (also after a failure or an exhausted cap) the plain file is folded into the `.xz` file and removed. If a run was killed before that, `uv run python -m evals.live compress` does the folding; commit only the `.xz` files. Both forms are read, so a later run replays a recording of the same request for the same document instead of calling the model, and a second run is free; replayed calls report their recorded cost and latency.
 
 Changing a prompt, a schema or a parser changes the request hashes. Rebuild the recordings with the generator's command; a test fails while they are out of date.
 
