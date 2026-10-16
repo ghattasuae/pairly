@@ -62,11 +62,6 @@ function loadShared(): Shared {
 function saveShared(next: Shared): void {
   writeFileSync(sharedFile, JSON.stringify({ ...loadShared(), ...next }));
 }
-function shared(key: keyof Shared): string {
-  const value = loadShared()[key];
-  expect(value, `an earlier step found ${key}`).toBeTruthy();
-  return value!;
-}
 
 async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: path.join(SHOTS, name), fullPage: false });
