@@ -473,7 +473,7 @@ async def test_replay_against_the_database(
 async def test_reuse_never_crosses_orgs_or_reuses_a_replay(
     llm_engine: AsyncEngine, prompts: PromptRegistry, clean_llm: TwoTenants
 ) -> None:
-    """Security review 2026-10 (R-03): response reuse in live mode, on the real table."""
+    """Security review 2026-10 (L-01): response reuse in live mode, on the real table."""
     a, b = clean_llm.a.org_id, clean_llm.b.org_id
     router, provider = make_router(llm_engine, prompts, mode=ModelMode.LIVE)
     provider.script(HAIKU, GOOD, GOOD, {"label": "receipt", "confidence": 0.95})
