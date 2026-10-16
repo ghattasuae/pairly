@@ -45,7 +45,7 @@ jobs:
           path-to-document: https://github.com/ghattasuae/pairly/blob/main/CLA.md
           path-to-signatures: signatures/version1/cla.json
           branch: cla-signatures
-          allowlist: dependabot[bot],renovate[bot],github-actions[bot]
+          allowlist: dependabot*,renovate*,github-actions*
           lock-pullrequest-aftermerge: false
           custom-notsigned-prcomment: >-
             Thank you for your contribution. Pairly is open source (AGPL-3.0) with a commercial
