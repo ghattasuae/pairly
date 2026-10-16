@@ -4,9 +4,9 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability
-    # TODO: replace TODO-org once the GitHub organisation is decided.
-    url: https://github.com/TODO-org/pairly/security/advisories/new
+    # TODO: replace ghattasuae once the GitHub organisation is decided.
+    url: https://github.com/ghattasuae/pairly/security/advisories/new
     about: Please report security problems privately. Do not open a public issue. See SECURITY.md.
   - name: Licensing questions
-    url: https://github.com/TODO-org/pairly/blob/main/LICENSING.md
+    url: https://github.com/ghattasuae/pairly/blob/main/LICENSING.md
     about: Read the licensing FAQ first. For a commercial license, see COMMERCIAL-LICENSE.md.

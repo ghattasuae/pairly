@@ -57,3 +57,6 @@ evals/recordings/*_live.jsonl
 
 # @pairly/sdk: the generated API types, copied from packages/shared-ts at build time
 sdks/typescript/src/generated/
+
+# Playwright run artifact, regenerated on every run
+apps/web/e2e/report.json

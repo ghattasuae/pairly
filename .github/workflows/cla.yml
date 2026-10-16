@@ -7,7 +7,7 @@
 #
 # Before first use on GitHub:
 #   1. Create the `cla-signatures` branch (signatures are stored there, not on `main`).
-#   2. TODO: replace TODO-org in path-to-document once the GitHub organisation is decided.
+#   2. TODO: replace ghattasuae in path-to-document once the GitHub organisation is decided.
 #   3. TODO: legal review of CLA.md before the first external contribution.
 #
 # Security: pull_request_target runs with write access, so this workflow must never
@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          path-to-document: https://github.com/TODO-org/pairly/blob/main/CLA.md
+          path-to-document: https://github.com/ghattasuae/pairly/blob/main/CLA.md
           path-to-signatures: signatures/version1/cla.json
           branch: cla-signatures
           allowlist: dependabot[bot],renovate[bot],github-actions[bot]
@@ -50,7 +50,7 @@ jobs:
           custom-notsigned-prcomment: >-
             Thank you for your contribution. Pairly is open source (AGPL-3.0) with a commercial
             license option, so we ask every contributor to sign our
-            [Contributor License Agreement](https://github.com/TODO-org/pairly/blob/main/CLA.md)
+            [Contributor License Agreement](https://github.com/ghattasuae/pairly/blob/main/CLA.md)
             once. You keep your copyright. CONTRIBUTING.md explains why we need it.
             To sign, reply to this pull request with the sentence below.
           custom-pr-sign-comment: I have read the CLA Document and I hereby sign the CLA

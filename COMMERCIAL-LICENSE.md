@@ -45,7 +45,7 @@ There are no prices in this repository. Terms depend on how you plan to use Pair
 
 ## How to contact Proofly Technology
 
-Email: `TODO: contact email`
+Email: ghattas@mail.proofly.ae
 
 Please include:
 

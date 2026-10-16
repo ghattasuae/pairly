@@ -9,7 +9,7 @@ Please report privately. **Do not open a public issue, pull request or discussio
 Use one of these channels:
 
 1. **GitHub private vulnerability reporting** (preferred): go to the repository's **Security** tab and choose **Report a vulnerability**.
-2. **Email**: `TODO: security email`
+2. **Email**: ghattas@mail.proofly.ae
 
 Please include:
 
