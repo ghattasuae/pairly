@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026 Proofly Technology
 
-// Shared steps of the Pay demo specs (18-pay-demo, 19-pay-ux-budgets) on a stack seeded
+// Shared steps of the Pay demo specs (18-pay-demo, 19-pay-ux-budgets, 20-pay-a11y,
+// 21-pay-complete) on a stack seeded
 // by `make demo` (org "demo", scripts/demo_pay.py): the seeded Pay people, their
 // sessions (a magic link from the dev outbox, then two-step sign-in, which approvals,
 // call records and payment actions need), and the development inbound drop.
@@ -49,14 +50,14 @@ export function inboundDrop(file: string): string {
   });
 }
 
-interface Outboxed {
+export interface Outboxed {
   id: string;
   to: string[];
   html: string;
 }
 
 /** The newest outbox message sent at or after `since` (ms) that passes `match`. */
-async function newestMessage(match: (m: Outboxed) => boolean, since: number, timeoutMs = 30_000): Promise<Outboxed> {
+export async function newestMessage(match: (m: Outboxed) => boolean, since: number, timeoutMs = 30_000): Promise<Outboxed> {
   const deadline = Date.now() + timeoutMs;
   const index = path.join(OUTBOX_DIR, "index.jsonl");
   while (Date.now() < deadline) {
@@ -140,12 +141,20 @@ export async function signInPay(browser: Browser, who: PayPerson): Promise<void>
 export async function asPay(
   browser: Browser,
   who: PayPerson,
-  options: { viewport?: { width: number; height: number }; touch?: boolean } = {},
+  options: { viewport?: { width: number; height: number }; touch?: boolean; theme?: "light" | "dark" } = {},
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({
     storageState: payState(who),
+    colorScheme: options.theme ?? "light",
     viewport: options.viewport ?? { width: 1440, height: 1000 },
     ...(options.touch ? { hasTouch: true, isMobile: true } : {}),
   });
   return { context, page: await context.newPage() };
+}
+
+/** The vendor portal sign-in link of an outbox email (written as text, not a link). */
+export function portalLoginLink(html: string): string {
+  const found = /https?:\/\/[^\s<>"]*\/vendor-portal\/login#[A-Za-z0-9._~-]+/.exec(html);
+  if (!found) throw new Error(`no vendor portal sign-in link in the email:\n${html}`);
+  return toReachableUrl(found[0].replace(/&amp;/g, "&"));
 }
