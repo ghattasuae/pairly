@@ -49,7 +49,7 @@ endif
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
 .PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now inbound-drop
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
-.PHONY: mcp api-docs sandbox
+.PHONY: mcp api-docs sandbox docs
 
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
@@ -196,6 +196,10 @@ mcp: ## Run the Pairly MCP server on stdio (PAIRLY_API_KEY or PAIRLY_TOKEN+PAIRL
 	@if [ -z "$$PAIRLY_API_KEY" ] && [ -z "$$PAIRLY_TOKEN" ]; then \
 		echo 'usage: PAIRLY_API_KEY=pk_test_... make mcp  (or PAIRLY_TOKEN=... PAIRLY_ORG=...)'; exit 2; fi
 	@$(UV) run --quiet --package pairly-mcp pairly-mcp
+
+docs: ## Regenerate docs/graphs (from the graph code) and docs/model-cards (from committed eval results)
+	$(UV) run python -m scripts.export_graphs
+	$(UV) run python -m scripts.model_cards
 
 api-docs: ## Write the OpenAPI JSON and a static Redoc page to dist/api-docs (no network at run time)
 	$(UV) run python scripts/build_api_docs.py --out dist/api-docs
