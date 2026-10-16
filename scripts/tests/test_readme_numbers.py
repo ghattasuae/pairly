@@ -5,9 +5,28 @@ output exactly, and every value in it is read from the eval report or results.""
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
+from pathlib import Path
+from types import ModuleType
 
-from scripts import readme_numbers
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "readme_numbers", ROOT / "scripts" / "readme_numbers.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["readme_numbers"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+readme_numbers = _load()
 
 
 def test_readme_numbers_section_matches_the_generator() -> None:
