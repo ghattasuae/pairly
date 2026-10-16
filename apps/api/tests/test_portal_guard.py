@@ -282,10 +282,15 @@ async def test_a_vendor_portal_session_sees_no_core_row_but_its_own(
     async with session_db, session_db.begin():
         docs = (await session_db.execute(text("SELECT portal_subject FROM documents"))).all()
         actors = (
-            await session_db.execute(text("SELECT DISTINCT actor_type FROM decision_records"))
+            await session_db.execute(
+                text("SELECT DISTINCT actor_type, entity_type FROM decision_records")
+            )
         ).all()
     assert {r.portal_subject for r in docs} == {me}
-    assert {r.actor_type for r in actors} == {"vendor"}
+    # Its contacts' own steps, and the staff steps of its own bank-detail tickets (pay_0018;
+    # here the one its first details completed when it was created, M-03).
+    assert "vendor" in {r.actor_type for r in actors}
+    assert all(r.actor_type == "vendor" or r.entity_type == "pay.bank_change" for r in actors)
 
     # Writes outside the rules are refused by the database itself.
     await _refused(
