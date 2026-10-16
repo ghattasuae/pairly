@@ -1,6 +1,6 @@
 # ADR 0008: Workflow runtime, approvals and signed links (WP1.8)
 
-Status: proposed
+Status: accepted
 
 ## Context
 

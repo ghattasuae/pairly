@@ -13,7 +13,7 @@ Each major decision gets a short record in this folder, named `NNNN-title.md`. E
 | [0005](0005-hash-chained-audit-log.md) | A hash-chained, append-only audit log per organisation | accepted | 2026-10-07 |
 | [0006](0006-recorded-model-mode.md) | Recorded model mode for demos, tests and evals | accepted | 2026-10-07 |
 | [0007](0007-native-local-stack.md) | A native local stack for development, Docker for CI and self-hosting | accepted | 2026-10-08 |
-| [0008](0008-workflow-runtime-approvals-signed-links.md) | Workflow runtime, approvals and signed links | proposed | 2026-10-07 |
+| [0008](0008-workflow-runtime-approvals-signed-links.md) | Workflow runtime, approvals and signed links | accepted | 2026-10-07 |
 | [0009](0009-generic-workflow-extension-points.md) | Generic extension points for workflow plugins (includes per-plugin Alembic branches) | accepted | 2026-10-08 |
 | [0010](0010-plugin-prompts-and-commitment-step-up.md) | Plugin prompts, and a second factor for locking and publishing | accepted | 2026-10-09 |
 | [0011](0011-scheduling-in-the-engine-calendar-providers.md) | Scheduling math and calendar providers in the engine, interviews in Hire | accepted | 2026-10-09 |
