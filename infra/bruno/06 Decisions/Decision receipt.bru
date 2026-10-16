@@ -1,0 +1,15 @@
+meta {
+  name: Decision receipt
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/decisions/{{decisionId}}/receipt
+  body: none
+  auth: inherit
+}
+
+docs {
+  Inputs, versions, AI output with evidence, and the human action.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get a document
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/documents/{{documentId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  The document record (status: received, scanning, clean, parsed, ...).
+}

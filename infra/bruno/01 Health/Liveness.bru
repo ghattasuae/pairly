@@ -1,0 +1,15 @@
+meta {
+  name: Liveness
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/healthz
+  body: none
+  auth: none
+}
+
+docs {
+  No auth. 200 while the process runs.
+}

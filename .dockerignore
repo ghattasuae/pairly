@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Build context for infra/docker/*.Dockerfile is the repo root. Keep it small and
+# keep secrets out of every image.
+
+# Secrets
+.env
+.env.*
+!.env.example
+**/*.pem
+**/*.key
+
+# VCS and editors
+.git
+.github
+.idea
+.vscode
+**/.DS_Store
+
+# Python
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+.import_linter_cache
+.coverage
+.coverage.*
+htmlcov
+**/*.egg-info
+**/build
+**/dist
+
+# JS
+**/node_modules
+**/.next
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+**/storybook-static
+**/playwright-report
+**/test-results
+
+# Not needed inside any image
+docs
+evals
+synth
+infra/postgres
+infra/minio
+BRIEF.md
+**/tests

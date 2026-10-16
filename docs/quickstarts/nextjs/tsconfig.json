@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "allowJs": false,
+    "plugins": [{ "name": "next" }],
+    // In this repository the SDK is compiled from source; outside it, npm installs it.
+    "paths": { "@pairly/sdk": ["../../../sdks/typescript/src/index.ts"] }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "lib/**/*.ts"]
+}

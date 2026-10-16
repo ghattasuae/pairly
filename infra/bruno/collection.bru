@@ -1,0 +1,19 @@
+meta {
+  name: Pairly API
+}
+
+headers {
+  X-Pairly-Org: {{orgId}}
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Requests use the API key (apiKey) unless they say "person": those use a person's JWT (token) with orgId. People decide in Pairly; an API key can read, propose and upload, never approve.
+}

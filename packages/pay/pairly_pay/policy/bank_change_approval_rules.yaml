@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Who approves a verified bank-detail change, version 1: two different people (dual
+# control, brief 4.1.4). The engine never lets one person decide both steps, and the
+# requester and the verifier are preparers, so neither can approve at all. The final
+# action checks both again from the decision rows, whatever later versions of these
+# rules say: a version with one step can never activate new details.
+schema: pairly.approval_rules/v1
+approval_type: pay.bank_change
+sla_hours: 24
+warn_hours: 4
+escalation:
+  roles: [finance_controller]
+chains:
+  - name: dual_control
+    steps:
+      - {name: first_approval, mode: any_of, roles: [approver, finance_controller]}
+      - {name: second_approval, mode: any_of, roles: [approver, finance_controller]}

@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Expense policy, version 1 (published per organisation by the plugin's seed hook, or
+# the first time a note is checked). Admins publish later versions; every check records
+# the exact version it used. Facts come from the receipt extraction (pairly_expense.graph).
+schema: pairly.rules/v1
+name: expense.note
+facts:
+  amount: decimal
+  currency: string
+  category: string
+  is_weekend: bool
+  receipt_evidenced: bool
+rules:
+  - id: receipt_required
+    description:
+      en: Expenses over 200 AED need a receipt Pairly could read
+      ar: المصروفات التي تزيد على 200 درهم تحتاج إلى إيصال مقروء
+    when: "currency == 'AED' and amount > 200 and not receipt_evidenced"
+    outcome: fail
+    severity: high
+    reason:
+      en: "{amount} {currency} is over 200 AED and the receipt could not be read"
+      ar: "المبلغ {amount} {currency} يزيد على 200 درهم ولم تتم قراءة الإيصال"
+  - id: currency_aed
+    description:
+      en: Expenses are reimbursed in AED
+      ar: تُسدد المصروفات بالدرهم الإماراتي
+    when: "currency != 'AED'"
+    outcome: needs_review
+    severity: medium
+    reason:
+      en: "The receipt is in {currency}, so finance must convert it"
+      ar: "الإيصال بعملة {currency}، لذا يجب أن يحوله قسم المالية"
+  - id: meals_limit
+    description:
+      en: Meals over 300 AED need a closer look
+      ar: الوجبات التي تزيد على 300 درهم تحتاج إلى مراجعة
+    when: "category == 'meals' and amount > 300"
+    outcome: needs_review
+    severity: medium
+    reason:
+      en: "A meal of {amount} {currency} is over the 300 AED limit"
+      ar: "وجبة بمبلغ {amount} {currency} تتجاوز حد 300 درهم"
+  - id: office_supplies_limit
+    description:
+      en: Office supplies over 1,000 AED go through purchasing
+      ar: مستلزمات المكتب التي تزيد على 1,000 درهم تمر عبر المشتريات
+    when: "category == 'office_supplies' and amount > 1000"
+    outcome: needs_review
+    severity: medium
+    reason:
+      en: "Office supplies of {amount} {currency} are over the 1,000 AED limit"
+      ar: "مستلزمات مكتب بمبلغ {amount} {currency} تتجاوز حد 1,000 درهم"
+  - id: travel_limit
+    description:
+      en: Travel and lodging over 5,000 AED need a closer look
+      ar: السفر والإقامة بما يزيد على 5,000 درهم يحتاجان إلى مراجعة
+    when: "category in ['travel', 'lodging'] and amount > 5000"
+    outcome: needs_review
+    severity: medium
+    reason:
+      en: "Travel of {amount} {currency} is over the 5,000 AED limit"
+      ar: "سفر بمبلغ {amount} {currency} يتجاوز حد 5,000 درهم"
+  - id: weekend_review
+    description:
+      en: Weekend expenses need a closer look
+      ar: مصروفات عطلة نهاية الأسبوع تحتاج إلى مراجعة
+    when: "is_weekend"
+    outcome: needs_review
+    severity: low
+    reason:
+      en: "The receipt is dated on a weekend"
+      ar: "تاريخ الإيصال في عطلة نهاية الأسبوع"

@@ -1,0 +1,1644 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "UAE VAT invoices",
+          "description": "Knows what a valid UAE VAT invoice needs.",
+          "direction": "people_higher",
+          "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "0804a7b1d8c3cf68be91e240a0fa39b0e512b107e93419b764a085c72b241145",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For UAE VAT invoices, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Help desk tools",
+          "description": "Has used a help desk tool every day.",
+          "direction": "people_lower",
+          "evidence": "Names Zendesk, Freshdesk or a similar tool.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "10d1022d8d044b0cf26af7ceb49ae469cedd3bbc62c982f7a62dcea5a3689936",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Help desk tools, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Arabic",
+          "description": "Can work in Arabic.",
+          "direction": "people_higher",
+          "evidence": "Lists Arabic as a language they speak or write.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "1545acab1f7a5bd02a35a97e5ee0cda9fca902b00bb6ff72aa5aae42fa053bf8",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Clear written English",
+          "description": "Writes clear design documents and code reviews in English.",
+          "direction": "people_lower",
+          "evidence": "The CV and answers are clear; mentions design docs or reviews.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "19771ac45e5901f665323e55804d79b269b90992b2b9e118b56e321ad0bc9cef",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Clear written English, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "English and Arabic",
+          "description": "Works fluently in English and Arabic.",
+          "direction": "people_lower",
+          "evidence": "Lists both languages and support work in both.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "261c1f92de9a3b6840994db4e51b91debd86b7897ec81e892647f410f22cbf5c",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For English and Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Python backend services",
+          "description": "Has built and maintained backend services in Python for several years.",
+          "direction": "mixed",
+          "evidence": "Names Python services or APIs they built, with their role and how long.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "26f02911d9f03ce951ef5e595d6ae18110fa43f20edd587a3cd6c19bfd8d2cd8",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Python backend services, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "English and Arabic",
+          "description": "Works fluently in English and Arabic.",
+          "direction": "mixed",
+          "evidence": "Lists both languages and support work in both.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "294174559c34bf7d89f11d6a893da2b08cced23a1a03becf2c8e90f5b0a723b4",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For English and Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "PostgreSQL and SQL",
+          "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
+          "direction": "mixed",
+          "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "2a88253cf1428ef49331cca53dbeeb75fcec5446a0b0ad3210addb3c30ffd5ea",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For PostgreSQL and SQL, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "PostgreSQL and SQL",
+          "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
+          "direction": "people_higher",
+          "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "317ed0c58cef1e7521a56e0946bb393a8e7d1a460d553150add71e41e6af3bfc",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For PostgreSQL and SQL, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Event streaming",
+          "description": "Has used event streaming such as Kafka.",
+          "direction": "people_lower",
+          "evidence": "Mentions Kafka or a similar system in a project.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "3290b0362ae0c0106576e58c6de91b2deb280cf0e3524804b8e9575fa65bda7f",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Event streaming, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "UAE VAT invoices",
+          "description": "Knows what a valid UAE VAT invoice needs.",
+          "direction": "people_lower",
+          "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "43b54efc4562022572ca752d631b1a45d0e2b7d2418f20cd4a5a91d3e9fa27f2",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For UAE VAT invoices, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Kubernetes in production",
+          "description": "Has run services on Kubernetes in production.",
+          "direction": "people_lower",
+          "evidence": "Describes deploying or operating a production workload on Kubernetes.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "442a13b84adf3d6ed57caef64d00a2c1599d3116f7656b48b2d162f0d0d4cd0d",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Kubernetes in production, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "ERP system",
+          "description": "Has used an ERP system for payables.",
+          "direction": "people_lower",
+          "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "454e20aee8fa26a14c95b832a069dfca42018f370350451fe2403cb2bf7ee746",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For ERP system, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Kubernetes in production",
+          "description": "Has run services on Kubernetes in production.",
+          "direction": "mixed",
+          "evidence": "Describes deploying or operating a production workload on Kubernetes.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "45720e18899ff5532dcf3ba4b59a5ece466a7029a0e26f84b421778b1901d561",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Kubernetes in production, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Arabic",
+          "description": "Can work in Arabic.",
+          "direction": "people_lower",
+          "evidence": "Lists Arabic as a language they speak or write.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "478d4919df6e6205044ff39597a985e6fe93fbe4f1e073ec7f03dd4750558cf7",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Logistics",
+          "description": "Knows logistics or delivery operations.",
+          "direction": "mixed",
+          "evidence": "Mentions work in logistics, delivery or transport.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4ac040f71bb1404c2477bfa6410594d20f8dadce162b9b0adac4c0ef3f12113c",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Logistics, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Support team leadership",
+          "description": "Has led a customer support team.",
+          "direction": "people_higher",
+          "evidence": "Names a team they led, its size and what they improved.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4db7a9514285d34a1e29caaf75b8e9b58286e017a136f5df17ab7e5ab2198385",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Support team leadership, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "English and Arabic",
+          "description": "Works fluently in English and Arabic.",
+          "direction": "people_higher",
+          "evidence": "Lists both languages and support work in both.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4dd93aafaff787c6efe71163e34293e35c419f5f80a116336f3a2b4292b3d184",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For English and Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Logistics",
+          "description": "Knows logistics or delivery operations.",
+          "direction": "people_lower",
+          "evidence": "Mentions work in logistics, delivery or transport.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "4eddb18f02ece659a4ee54f32847b3901a6e72474afd61c1a10fe2501de6997d",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Logistics, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounting qualification",
+          "description": "Holds or studies for a recognised accounting qualification.",
+          "direction": "people_lower",
+          "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "50d9662738802ebb46c76d77abb99d915545d777fa9ad376a09339d222b19d9c",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Accounting qualification, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Help desk tools",
+          "description": "Has used a help desk tool every day.",
+          "direction": "mixed",
+          "evidence": "Names Zendesk, Freshdesk or a similar tool.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "539e1cf9b3a5e2a5c70a0996531194748b77598237063cbeca7901251467b1a4",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Help desk tools, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "UAE VAT invoices",
+          "description": "Knows what a valid UAE VAT invoice needs.",
+          "direction": "mixed",
+          "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "68fc5aa53caa77420cec131684ed843f7652f28e6357e5bcde0ae6e85ac49b38",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For UAE VAT invoices, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounts payable experience",
+          "description": "Has worked in accounts payable for about three years or more.",
+          "direction": "mixed",
+          "evidence": "Names AP roles with dates and the invoice work they did.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "6ae9a78ca25ab59f287a3b2b5c295afe65095fb9da4e83f572a8e6ebbc52f830",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Accounts payable experience, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Kubernetes in production",
+          "description": "Has run services on Kubernetes in production.",
+          "direction": "people_higher",
+          "evidence": "Describes deploying or operating a production workload on Kubernetes.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "771baa1027f9be4e0903f49e1d67783776377aa12023d0a7a5ccf7e0693e64fe",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Kubernetes in production, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounting qualification",
+          "description": "Holds or studies for a recognised accounting qualification.",
+          "direction": "mixed",
+          "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "84ae7f36c6aeeb294600fdb6d89c389a9bf38ccb705349803ca77ab538701002",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Accounting qualification, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Clear written English",
+          "description": "Writes clear design documents and code reviews in English.",
+          "direction": "mixed",
+          "evidence": "The CV and answers are clear; mentions design docs or reviews.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8901881ce8267fe6311143364c4cd55032e5e86307ab5d1b756b439b1681bb73",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Clear written English, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "ERP system",
+          "description": "Has used an ERP system for payables.",
+          "direction": "mixed",
+          "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8bd5f597f2698d72aec9bde899ed8e3c8798e99e6294657e6d7d8ff8d2ee68d8",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For ERP system, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Arabic",
+          "description": "Can work in Arabic.",
+          "direction": "mixed",
+          "evidence": "Lists Arabic as a language they speak or write.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "8f456d61101599248bb1565ea9ecd23a12b34e6ecec630b364c7102df2ea129b",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Arabic, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "ERP system",
+          "description": "Has used an ERP system for payables.",
+          "direction": "people_higher",
+          "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a106c407c3fe26674888fd47e3b5e8c9b3d034f1b9b706ca5add88dced1ebbf9",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For ERP system, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounts payable experience",
+          "description": "Has worked in accounts payable for about three years or more.",
+          "direction": "people_higher",
+          "evidence": "Names AP roles with dates and the invoice work they did.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "a376a1d24dad2e6359b4f34dcaad1eca9f8fd917cdd8d9fbe33288c17ed9ae5a",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Accounts payable experience, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Logistics",
+          "description": "Knows logistics or delivery operations.",
+          "direction": "people_higher",
+          "evidence": "Mentions work in logistics, delivery or transport.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ad800cad5671dfcef029849022b40b059e27d887c2abff8e5073d4950c10d72c",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Logistics, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Python backend services",
+          "description": "Has built and maintained backend services in Python for several years.",
+          "direction": "people_lower",
+          "evidence": "Names Python services or APIs they built, with their role and how long.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "bbc83ab5383f7ae7656741aefeabb6f628d1963eb9475517fd8818b5fda4269c",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Python backend services, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounting qualification",
+          "description": "Holds or studies for a recognised accounting qualification.",
+          "direction": "people_higher",
+          "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c3344c23c2bc147a76947c625b049fc613ffc974dd39a90a229f640c98342b73",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Accounting qualification, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Event streaming",
+          "description": "Has used event streaming such as Kafka.",
+          "direction": "mixed",
+          "evidence": "Mentions Kafka or a similar system in a project.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "c98b39b66558108bba2061ff2d90fddc12007f74f659894f291514921b6c706b",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Event streaming, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Help desk tools",
+          "description": "Has used a help desk tool every day.",
+          "direction": "people_higher",
+          "evidence": "Names Zendesk, Freshdesk or a similar tool.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "cd0c8749e94f7ee07ad9f9048c2f10f78abf415aa5e51ff3470906e4dfacd27d",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Help desk tools, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Support team leadership",
+          "description": "Has led a customer support team.",
+          "direction": "mixed",
+          "evidence": "Names a team they led, its size and what they improved.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "d816db1da0ea804d103c9fc51fd70116c371e305f9b877f10d6c9388f85f91aa",
+      "response": {
+        "suggestion": "People and the AI disagree in both directions here. For Support team leadership, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Python backend services",
+          "description": "Has built and maintained backend services in Python for several years.",
+          "direction": "people_higher",
+          "evidence": "Names Python services or APIs they built, with their role and how long.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "da27e55674e5cd88f402499455d2d103800fa0995661e5a50591d92c6ca55277",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Python backend services, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Event streaming",
+          "description": "Has used event streaming such as Kafka.",
+          "direction": "people_higher",
+          "evidence": "Mentions Kafka or a similar system in a project.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "dd1150b83a30cfac8cb1c733dc72d4c5fead0d281122db2e4529bff020a47375",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Event streaming, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Clear written English",
+          "description": "Writes clear design documents and code reviews in English.",
+          "direction": "people_higher",
+          "evidence": "The CV and answers are clear; mentions design docs or reviews.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "e07c7b086dd550088676c45ad6311dd69ddf923660ff7bbab67aa2a144475ba7",
+      "response": {
+        "suggestion": "People give more credit than the AI here, so the evidence description may leave out kinds of evidence people accept. For Clear written English, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Accounts payable experience",
+          "description": "Has worked in accounts payable for about three years or more.",
+          "direction": "people_lower",
+          "evidence": "Names AP roles with dates and the invoice work they did.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "ee8f703c15eb4a122001ce6d7cca3586c06586e31a7e82cff9b2229795df53a2",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Accounts payable experience, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "Support team leadership",
+          "description": "Has led a customer support team.",
+          "direction": "people_lower",
+          "evidence": "Names a team they led, its size and what they improved.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f2115afa9765b5459b417aac260641c9eb481b8d304172cde186de941b9d8b93",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For Support team leadership, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "34a41b6f7c4dee8ccc4ff565cc9664af3799574370568321c3d010f9cde70f17",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "anchors": [
+            "No evidence in the application.",
+            "Mentioned only, for example listed as a skill, with no example of using it.",
+            "Some evidence: one concrete example, or a short period of relevant work.",
+            "Good evidence: several concrete examples, or a solid period of relevant work.",
+            "Strong evidence: many concrete examples, or a long period of relevant work."
+          ],
+          "criterion": "PostgreSQL and SQL",
+          "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
+          "direction": "people_lower",
+          "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
+          "language": "en"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 1024,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "f540152c59d1c6e091fe0ce87763169c9d1338d2ee7ba7129fb5c2f5d349d490",
+      "response": {
+        "suggestion": "People give less credit than the AI here, so the anchors may credit a mention that people do not count as evidence. For PostgreSQL and SQL, write in the anchors for 2 and 3 which concrete examples count, such as a named project or a stated result, and say that a skill listed without an example earns at most 1."
+      },
+      "schema_hash": "670bb41e133abd0570e21761a8cd8b901e0dbf347ff6c73275651f83134cdf3f",
+      "schema_name": "RubricClarification",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_clarify",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}

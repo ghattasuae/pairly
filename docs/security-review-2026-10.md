@@ -1,0 +1,154 @@
+# Security review, October 2026 (M6 D1)
+
+A review of every threat in [security.md](security.md) (BRIEF 6 and 11): for each STRIDE threat the named control and its test were read, then attacked with a concrete attempt in a test, run against the test database only (never an external system, never a real model call). The three changes made just before the review (response reuse, blind-placeholder credit, label-plus-value table evidence) and the Row Level Security and portal guard were read again from scratch.
+
+Every high finding is fixed in code with a test. Medium and low findings are fixed when the fix was small and safe; the rest are listed with a proposed fix.
+
+## Findings
+
+| Id | Severity | Threat | Finding | Status |
+|---|---|---|---|---|
+| H-01 | High | BEC and vendor impersonation | The vendor portal could change the phone number on file, which is the call-back channel of every bank-detail change | Fixed, `d89a040` |
+| H-02 | High | Malicious documents (D), batch URL intake | The batch URL fetcher decompressed response bodies (gzip, deflate, zstd) before the size limit: a decompression bomb against the shared API process | Fixed, `daca502` |
+| M-01 | Medium | Insider approval abuse | A delegation kept its seat after the delegator lost the role or left; the executor checked only the delegate | Fixed, `23d7670` |
+| M-02 | Medium | API key leakage, elevation | An API key kept every scope after its creator was moved to another role or removed | Fixed, `9690234` |
+| M-03 | Medium | BEC, insider | Bank details a staff member enters on a new vendor are active at once, with no second person | Fixed |
+| M-04 | Medium | BEC, insider | The person who changed a vendor's phone number on file (staff) may then record the call back on that number | Fixed |
+| M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Fixed |
+| L-01 | Low | Recent change: response reuse | Reuse could pick a live decision replay (`replay_of`) once the original left the window | Fixed, `0e09c1f` |
+| L-02 | Low | Supply chain | CI ran `uv sync` without `--locked` | Fixed, `1b9ec47` |
+| L-03 | Low | API keys, portals, public forms (D) | Rate limits live in each API process's memory | Fixed |
+| L-04 | Low | Malicious documents | A package declaring the plain DOCX type but carrying a VBA project or ActiveX parts was accepted | Fixed, `e7c36fc` |
+| L-05 | Low | Recent change: blind-placeholder credit | A visible part of two letters or digits ("of", "20") counts as evidence | Fixed |
+| L-06 | Low | Recorded mode | `find_recording` serves the newest row of a hash, which can be a live decision replay | Fixed |
+| L-07 | Low | RLS, SECURITY DEFINER | `ops_tenant_usage` and `job_runs_recent` return more than ids and counts (slugs, job summaries) and the app role may call them; only the Python route limits them to platform operators | Accepted risk |
+| L-08 | Low | Repudiation | `job_run_start` and `job_run_finish` (SECURITY DEFINER) accept any job name or run id from the app role | Accepted risk |
+| L-09 | Low | Information disclosure | A public application whose CV has the same bytes as another candidate's is linked to that candidate's document row | Fixed |
+| L-10 | Low | BEC | Vendor portal contacts (people and emails) change directly; AP messages go to those addresses | Fixed |
+| L-11 | Low | Supply chain | The vendored Redoc checksum is checked by a test, not by `make api-docs` | Fixed |
+| L-12 | Low | Malicious documents | A DOCX with an external attached template (remote template injection) is accepted | Fixed |
+
+No critical finding. Nothing found in: prompt injection reaching a model input or an action, data exfiltration through the model, approval link replay, approval races, portal token forgery and cross-portal reads, webhook signatures and SSRF, RLS coverage, and the label-plus-value table evidence.
+
+## High
+
+### H-01 The vendor portal chose the call-back number (fixed)
+
+**Repro.** Someone holds a vendor contact's mailbox, the usual business email compromise foothold. They ask the vendor portal for a magic link, sign in, and `PUT /v1/pay/vendor-portal/details/contacts` with `{"phone_on_file": "<their number>"}`. The change was applied and only flagged bank-detail changes opened within the next 30 days (`phone_recently_changed`). They wait 31 days and `POST /vendor-portal/bank-change`. The ticket snapshots the number on file, which is now theirs: the AP clerk calls the attacker, records "confirmed", and the two approvers see a confirmed call. Every control of the bank-detail workflow then passes, and the new account is paid.
+
+**Fix.** The portal no longer changes the phone number on file (`pairly_pay.portal.service.update_contacts`, `PhoneOnFileByApOnlyError`, 403 `phone_on_file_by_ap_only`, nothing written); the current number again is a no-op. Only accounts payable changes it, and the portal page tells the vendor to call AP. People at the vendor changed directly (BRIEF 4.7.3) until L-10, which makes them accounts payable's to change too.
+
+**Test.** `apps/api/tests/test_pay_vendor_portal.py::test_the_portal_never_chooses_the_call_back_number`; the web component test checks the field is gone.
+
+### H-02 Decompression bomb through a batch URL (fixed)
+
+**Repro.** A tenant (any API key or person with a workflow's upload permission) creates a batch with a URL to a server it controls, which answers `200` with `Content-Encoding: zstd` and a body of a few kilobytes that decodes to gigabytes. httpx decodes a whole network chunk in one call (zstandard is installed), so the API process allocates the decoded bytes before the size limit sees one; the shared API process runs out of memory for every tenant. gzip and deflate behave the same within their ratio. Webhook delivery already read raw bytes; the fetcher did not.
+
+**Fix.** `pairly_core.ingestion.fetch.UrlFetcher` sends `Accept-Encoding: identity`, refuses any other `Content-Encoding` before reading the body (`content_encoding_refused`) and counts and stores raw bytes (`aiter_raw`).
+
+**Test.** `packages/core/tests/doc_tests/test_fetch_unit.py` (every encoding refused before a byte of the body is read; the limit counts raw bytes).
+
+## Medium
+
+### M-01 A delegation outlived its holder's role (fixed)
+
+**Repro.** `appr1` (an approver) delegates to `fc1`, who holds the approve permission but is not an approver of the step. `appr1` leaves the organisation. `fc1` still decided on `appr1`'s seat, and the executor accepted it because it checked the permission of the person who decided, not of the approver they stood in for. In Pay, a departing finance controller's delegation kept a plain approver able to complete finance steps.
+
+**Fix.** `decide` lends a delegated seat only while the delegator is still a member; the executor requires every principal of a delegated decision to still hold the permission (`approver_lost_permission`).
+
+**Tests.** `apps/api/tests/test_security_review.py` (`test_a_delegation_dies_with_the_delegators_role`, `test_the_executor_refuses_a_seat_whose_holder_lost_the_role`), with the attempts that found nothing: `test_the_submitter_cannot_approve_as_a_delegate`, `test_keys_and_agents_never_decide`, `test_two_approvers_racing_record_one_decision`.
+
+### M-02 An API key outlived its creator's role (fixed)
+
+**Repro.** An admin creates a key with read and upload scopes, is moved to auditor, then removed. The key kept every scope for up to a year (scopes were checked against the creator only at creation), including reading candidates' and vendors' data.
+
+**Fix.** `authenticate_api_key` intersects the key's scopes with what its creator holds today; a key with nothing left is refused (403 `api_key_creator_inactive`).
+
+**Test.** `apps/api/tests/test_api_keys.py::test_a_key_never_outlives_its_creators_role`.
+
+### M-03 Staff vendor creation activated bank details at once (fixed)
+
+`POST /v1/pay/vendors` with bank details made them the active account (documented: "the vendor is new, nothing was paid to it yet"). One insider could create a vendor that copies a real one under a slightly different name with their own IBAN; duplicate checks refuse the same TRN or IBAN and warn on similar names, but `acknowledge_similar` passes. Payment still needed an approved invoice and a finance controller for the run, so it took collusion or a careless approval.
+
+**Fix.** Bank details are never created active (`pairly_pay.vendors.create_vendor`, whoever enters them). Creating a vendor with bank details needs `pay.bank_change.create`, the phone number on file and `phone_source` (where the number comes from: trade licence, signed contract, earlier correspondence or an official registry, with a reference; 400 `callback_source_required` otherwise). The details then go through the existing bank-detail change workflow at once (`open_ticket`, source `staff`, requested by the creator): the vendor is held, someone who neither created the vendor nor recorded its number (M-04) calls that number, two other people approve, and the cooling-off applies. Until then the vendor has no verified account and cannot be paid: invoice approval, payment runs and the bank file export list `no_verified_account` as an explicit reason (`pairly_pay.payability`), besides the hold. The first-details ticket does not count as a "recent bank change request" in the risk profile (the `new_vendor` signal covers it). The web form asks for the source with the bank details. `make demo` puts its vendors through the same workflow.
+
+**Tests.** `apps/api/tests/test_pay_vendors.py`: `test_staff_bank_details_wait_for_a_second_person` (no source refused, a ticket and a hold, `no_verified_account`, the creator cannot verify, payable only after a second person and two approvals, no vendor with details without the bank-change permission) and `test_create_validate_encrypt_and_find_by_blind_index`; `test_pay_bank_changes.py::test_fewer_than_two_possible_approvers_fails_closed` (a new vendor's ticket fails closed too); the web `VendorForm` test. Every Pay suite now makes its vendors payable through this workflow (`pay_support.new_vendor`).
+
+### M-04 The phone changer can verify on the new number (fixed)
+
+A clerk may `PATCH` a vendor's phone number on file (no ticket open) and then record the call back of a ticket the vendor or the system opened, on that number. The flag `phone_recently_changed` shows it, and two approvers who are neither requester nor verifier are still needed.
+
+**Fix.** The vendor records who set its number on file (`pay_vendors.phone_set_by`, migration `pay_0019`): the person who created the vendor with it or last changed it (NULL for a number nobody on the staff entered). A ticket snapshots, at opening, the person that bars from verifying (`pay_bank_change_tickets.phone_set_by`): whoever changed the number within the phone-change window, or recorded it while the vendor has no verified account (a new vendor's number). `record_call` and `start-approval` refuse that person (403 `segregation_of_duties`, a permission denial, so `core.authz.denied` is audited with the ticket and `phone_recorder_cannot_verify`); the ticket view gives them no verify or start button. The final action (`verifier_recorded_phone`) and the activation refuse a ticket whose verifier recorded the number, whatever the rows say (fail closed).
+
+**Tests.** `apps/api/tests/test_pay_bank_changes.py`: `test_the_phone_changer_cannot_verify_on_the_new_number` (refused and audited, another person verifies, the final action and the activation refuse a forged verifier), `test_the_phone_changer_may_verify_once_the_window_has_passed`, `test_whoever_recorded_a_new_vendors_number_never_verifies_its_first_account`.
+
+### M-05 Onboarding call-back number comes from the onboarding form (fixed)
+
+A vendor invited to onboard enters its bank details and its phone number on the same form. Accepting the onboarding opened a ticket whose call back went to that number, so an attacker who intercepted the invitation verified their own details.
+
+**Fix.** The form's number is now only `pay_vendors.phone_claimed` (encrypted, migration `pay_0020`), never the number on file. Accepting an onboarding with bank details needs `callback` (400 `callback_source_required` without it): the number from an independent source, the kind of source (`trade_licence`, `signed_contract`, `prior_correspondence`, `official_registry`) and a free-text reference, all required. That number becomes the number on file, recorded by the clerk (so M-04 keeps them from verifying it); the ticket stores the source, the encrypted reference, who recorded it and whether it matched the form (`callback_*`), and the form's number goes into the ticket's request claims (kept for investigation, never shown or called). An onboarding ticket without a source (one opened before the fix) cannot be verified (409 `callback_source_missing`), approved or activated (`callback_source_missing` in the final action and the activation) until AP records the number on it (`POST /bank-changes/{id}/callback-number`, `pay.bank_change.create`). The web app asks for the three fields on acceptance and on such a ticket, and shows the source to the verifier.
+
+**Tests.** `apps/api/tests/test_pay_onboarding.py`: `test_invite_open_upload_submit_review_and_verify` (no acceptance without a complete source, the independent number is the one on file and the only one to call, the form's never appears, the recorder cannot verify), `test_an_onboarding_ticket_without_an_independent_number_is_never_verified` (refused, recorded on the ticket, verified by someone else, the final action refuses a ticket without a source); the web tests `pay-onboarding-accept.test.tsx` and `pay.test.tsx`.
+
+## Low
+
+* **L-01 (fixed).** `DatabaseCallStore.find_reusable` now also requires `replay_of IS NULL`. Test: `apps/api/tests/test_llm_router.py::test_reuse_never_crosses_orgs_or_reuses_a_replay`, which also checks on the real table that an identical request of another organisation reaches the model and never reuses.
+* **L-02 (fixed).** Every `uv sync` in `.github/workflows/ci.yml` uses `--locked`.
+* **L-03 (fixed).** API key, portal and public form limits were per process (`pairly_core.api_keys.ratelimit`, `TODO(M6)` there): with N API processes the effective limit was N times the setting. `pairly_core.ratelimit` adds a shared token bucket per key in Valkey (arq's connection; an atomic Lua script on the server's clock; keys hashed, so no address or IP sits in Valkey; a bucket expires once full again). Every limiter now counts each request in both the shared bucket and the in-process one and refuses when either refuses; while Valkey is down, slow (250 ms) or erroring, the local limiter alone decides and a 5 second breaker stops the retries, so a dead Valkey neither opens the limits nor slows every request. Covered: API keys and batch items (`SharedRateLimiter`), the candidate and vendor portals, magic links, the public apply flow, vendor onboarding, scorecard, reference, survey, scheduling and preference links (`SharedWindowLimiter`). Tests: `apps/api/tests/test_rate_limits.py` (two processes, one bucket; the stricter wins; Valkey down, slow and unreachable; hashed keys; on a real Valkey when `PAIRLY_TEST_REDIS_URL` is set) and `apps/api/tests/test_api_keys.py::test_the_rate_limit_holds_across_api_processes` (two apps, one key, one limit).
+* **L-04 (fixed).** `pairly_core.ingestion.sniff` treats a package with `vbaProject.bin`, `vbaData.xml` or `word/activeX/` parts as ZIP, so it is refused like a `.docm`. Test: `test_ingestion_unit.py::test_a_docx_that_carries_macros_or_activex_is_not_a_docx`.
+* **L-05 (fixed).** `EvidenceLocator.locate_visible` kept a visible part with two letters or digits ("of", or "20" cut from "2019"). Placeholder text itself was never evidence, so no protected marker leaked; the risk was a score above 0 with weak evidence. A visible part now counts only when it holds one real word (`_real_word`: a run of at least three letters or digits, any script) or is a complete number (`12`, `3.7`, `1,200`, `15%`, with no letter or digit right before or after it); anything shorter is dropped. Tests: `packages/core/tests/extraction_tests/test_evidence_visible.py` and `packages/hire/tests/test_screening_unit.py::test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_only` (two letters cut from a word and the start of a year earn nothing).
+* **L-06 (fixed).** Recorded mode replayed the newest row of a request hash with an output, which included a live decision replay, so a live replay changed what recorded runs returned. `DatabaseCallStore.find_recording` now requires `replay_of IS NULL`, as `find_reusable` and `pairly_core.llm.bundle` already did (the in-memory test stores do the same). Test: `apps/api/tests/test_llm_router.py::test_recorded_mode_never_serves_a_decision_replay`, on the real table (a hash whose only row is a replay has no recording).
+* **L-07 (accepted).** The two platform functions return organisation slugs and per-tenant counts, and job summaries, to any caller with the app role; `/v1/ops/*` returns 404 to everyone but people of the system organisation. Reaching them needs arbitrary SQL as the app role, and the data holds no tenant content. Revisit if the platform board gets more columns.
+* **L-08 (accepted).** Job run history can be started or finished by any code path with the app role. It is operational history, not the audit log (which is hash chained and anchored).
+* **L-09 (fixed).** Dedupe at intake (`uq_documents_org_id_workflow_sha256`) linked a second applicant with byte-identical CV bytes to the first applicant's document row, so the second candidate's portal showed the first one's original file name, and erasing either affected both. `documents` gains `dedupe` (migration `0033`): intake dedupe is now a partial unique index over the rows that take part in it, and `ingest_spooled(dedupe=False)` always stores its own row (the stored object stays one per organisation and hash). The public apply flow and the candidate portal upload use it, so every application has its own row with its own file name; no other upload links to such a row. The duplicate hint `cv_hash` compares SHA-256 instead of the row. Migration `hire_0022` splits the rows applications already shared: the earliest keeps it, each other application gets a copy without the first sender's file name, and its CV, files, document requests and screenings move to the copy. Erasure already keeps stored bytes another live row uses. Tests: `apps/api/tests/test_hire_apply.py` (`test_identical_cvs_of_two_candidates_never_share_a_document_row`: two rows over one object, the hint kept, a staff upload never linked, erasing one leaves the other; `test_the_migration_gives_each_application_its_own_row`).
+* **L-10 (fixed).** A mailbox attacker in the portal could add a contact email (or change one, or a contact's phone); AP messages are sent to an address a person picks and approves, never automatically, but from that list. The portal now only shows contacts: `pairly_pay.portal.service.update_contacts` refuses any different list (403 `contacts_by_ap_only`, nothing written), as it already refused a new number on file (H-01); the list on file again is a no-op. Accounts payable changes contacts on the vendor record. The portal page shows them read only and tells the vendor to ask AP. Tests: `apps/api/tests/test_pay_vendor_portal.py::test_the_portal_never_changes_contacts` (an added address, a swapped email or phone, a renamed or removed contact), and the web component test.
+* **L-11 (fixed).** `scripts/build_api_docs.py` embeds the vendored Redoc bundle without checking its SHA-256; only `scripts/tests/test_build_api_docs.py` did. The build now reads the bundle through `read_bundle`, which compares its SHA-256 with the recorded `REDOC_SHA256` before anything is written and stops `make api-docs` (non-zero exit, `BundleChecksumError`) on any other bundle. Test: `scripts/tests/test_build_api_docs.py::test_a_changed_bundle_stops_the_build_before_anything_is_written`.
+* **L-12 (fixed).** A DOCX whose `word/_rels/settings.xml.rels` names an external `attachedTemplate` was accepted. Pairly never opens it in Word, but a person downloading it might. `pairly_core.ingestion.sniff.active_content` now reads every relationships part (size capped, defusedxml, an unreadable one fails closed) and a package with any `TargetMode="External"` relationship sniffs as ZIP, like L-04: a remote attached template, an external image, frame, OLE object or subdocument. The one exception is a hyperlink, which Word never follows by itself (CVs carry profile links). Intake refuses it with its own reason (`RejectReason.ACTIVE_CONTENT`, 415 with a title that names it; the audit event's `detail` says `macros`, `external_template`, `external_relationship` or `unreadable_relationships`). Tests: `packages/core/tests/doc_tests/test_ingestion_unit.py` (`test_a_docx_with_a_remote_template_or_external_part_is_not_a_docx`, `test_hyperlinks_and_internal_relationships_leave_a_docx`) and `apps/api/tests/test_documents.py::test_a_docx_with_a_remote_template_is_refused_with_its_reason`.
+
+## Threat by threat
+
+### Prompt injection through documents
+
+Read `scan_document`, `sanitize_for_model`, `GuardedInput`, `quote_exists`, `resume_run` and `execute_final_action`. Every intake path (upload, API, batch URL, email, both portals, the public application form, policy documents, expense receipts, onboarding) stores through `ingest_spooled`, parses only after a clean scan in the sandbox, and builds model input from the guardrail report of that document. No model output triggers a final action: rule approval of an invoice (`rule_refusals`) needs low risk and `requires_human` false, which an injection finding never gives, and a payment run always needs a person. Existing attempts: `test_detectors.py`, `test_sanitize.py`, `test_expense_acceptance.py::test_hidden_text_is_flagged_and_a_person_still_decides`. No finding.
+
+### Data exfiltration through the model
+
+Model input is built from the request's organisation only: retrieval, few-shot examples and coding history run under Row Level Security, prompts are files sent without templating, and no secret is ever in an input. Response reuse filters on `org_id` and RLS; the new database test shows another organisation's byte-identical request reaches the model (L-01). No finding.
+
+### Malicious documents
+
+H-02, L-04 and L-12 fixed. Read the sniffer, the sandbox limits (CPU, memory, output, wall clock), the DOCX entry and size caps and DTD refusal, defusedxml for every XML format, PDF JavaScript and embedded files reported, the image pixel cap, and the render page cap and time budget. Every intake path uses the same sniffing and policy.
+
+### BEC and vendor impersonation
+
+H-01, M-03, M-04, M-05 and L-10 fixed. Paths that could change bank details: staff creation (ticket, M-03), onboarding acceptance (ticket on an independently sourced number, M-05), the portal (request only, H-01), an invoice (ticket and hold), an extraction correction (payment always goes to the vendor's active account, `approved_account_id` and `approved_bank_digest`, re-checked at the payment run), the API (keys cannot hold `write`). There is no vendor CSV import.
+
+### Insider approval abuse
+
+M-01 fixed. Self-approval through delegation, a key or an agent deciding, and racing approvers are refused (`test_security_review.py`); signed links are single use and bound to a person, a step, an action and a TOTP session (`test_approvals_api.py`).
+
+### Portal account abuse
+
+H-01 and L-10 fixed. Tokens bind organisation, row and subject into a SHA-256 digest compared in constant time, and the session is bound to the claimed subject before any lookup. Cross-candidate and cross-vendor reads through applications, messages, uploads, receipts, appeals and export are covered by `test_hire_portal.py` and `test_pay_vendor_portal.py`; the notification stream is staff only and filtered per recipient. No other finding.
+
+### API key leakage
+
+M-02 and L-03 fixed. Keys are stored as a keyed hash, test keys work only in sandboxes and live keys never there, the organisation header must match the key's, and a key never holds approve, decide, manage or export.
+
+### Webhook SSRF and signatures
+
+Numeric spellings of internal addresses are refused and the request goes to the checked address (`packages/core/tests/test_security_review_unit.py`); redirects are never followed; signatures are HMAC with a timestamp tolerance, compared in constant time. No finding.
+
+### Supply chain
+
+L-02 fixed, L-11 open. The license gate, `pnpm install --frozen-lockfile`, pinned actions and the Redoc checksum test are in place.
+
+### Recent changes
+
+* **Response reuse (`c69be99`).** Never crosses organisations (filter plus RLS, new database test). Erased rows are excluded and erasure also erases every row with the same request hash. Replays could be reused (L-01, fixed). Migration `0029` runs against a fresh database and `alembic check` passes.
+* **Blind-placeholder partial credit (`54a18b6`).** Only visible ranges are mapped back and each is checked against the original; placeholder text is never evidence. L-05 (a quality point) is fixed.
+* **Label-plus-value table evidence (`c1d4953`).** A line is used only when unique in the model's text, it holds the value, and the page layout puts it beside or under another line of the quote; it is located in the sanitised text, so hidden text never qualifies. Payment never uses the invoice's IBAN. No finding.
+
+### Row Level Security and the portal guard
+
+On the migrated database: every table with `org_id` has Row Level Security enabled and forced (the only tables without it are `alembic_version` and `portal_guard_rules`, which have no `org_id` and no app privilege). The 41 permissive policies keyed on scan settings (`app.ops_scan` and the like) apply to the owner role only, so the app role setting those variables gains nothing. SECURITY DEFINER functions: all set `search_path`; the ones returning more than ids or counts are `my_organisations` (the caller's own organisations), `hire_careers_org` (a public careers page's name), and the two platform functions (L-07). `erase_extraction_values` writes only in the caller's organisation. The portal guard test covers every org-scoped table.

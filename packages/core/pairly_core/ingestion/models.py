@@ -1,0 +1,247 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+"""Tables for ingested documents and inbound emails (migration ``0004``).
+
+``documents`` and ``inbound_emails`` are tenant tables (RLS forced, standard tenant
+policy). The application role may SELECT, INSERT and UPDATE; there is no DELETE grant
+(retention deletion is a later, audited job). ``inbound_addresses`` holds the hashed
+secret token of each organisation's per-workflow inbound address; the application role
+may only SELECT it (tokens are rotated with ``pairly-admin inbound rotate``).
+
+Document status moves forward only:
+
+    received -> scanning -> clean -> parsed
+                         |        -> parse_failed
+                         -> infected
+    (rejected is set by a person or a policy after intake; intake refusals never
+    create a row, they are audit events)
+
+``needs_review`` is the human queue flag. It is set whenever a check could not run or
+was not conclusive (scanner unreachable, parser crash or timeout, low OCR confidence,
+truncated output). A document is never treated as clean or parsed because a check
+failed to run.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+from enum import StrEnum
+from typing import Any
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    func,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
+
+from pairly_core.crypto.blind_index import blind_index_info
+from pairly_core.crypto.types import EncryptedString, Sealed
+from pairly_core.db import Base, OrgScoped, Timestamped
+
+_UUID_DEFAULT = text("gen_random_uuid()")
+
+
+class DocumentStatus(StrEnum):
+    RECEIVED = "received"
+    SCANNING = "scanning"
+    CLEAN = "clean"
+    INFECTED = "infected"
+    REJECTED = "rejected"
+    PARSED = "parsed"
+    PARSE_FAILED = "parse_failed"
+    # The person's data was erased (``erased_at``); the bytes are removed from the object
+    # store after the erasure commits (``objects_erased_at``). Only the hash, size and
+    # timestamps stay, for the audit trail.
+    ERASED = "erased"
+
+
+class DocumentSource(StrEnum):
+    UPLOAD = "upload"
+    EMAIL = "email"
+    API = "api"
+    FORM = "form"
+
+
+# States in which the original bytes passed a virus scan and may be handed out.
+CONTENT_AVAILABLE = frozenset(
+    {DocumentStatus.CLEAN, DocumentStatus.PARSED, DocumentStatus.PARSE_FAILED}
+)
+
+
+def _in(values: Any) -> str:
+    return ", ".join(f"'{v.value}'" for v in values)
+
+
+class InboundEmail(Base, OrgScoped, Timestamped):
+    """One received email, routed to one organisation and workflow."""
+
+    __tablename__ = "inbound_emails"
+    __table_args__ = (
+        UniqueConstraint("org_id", "message_id", name="uq_inbound_emails_org_id_message_id"),
+        CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
+        CheckConstraint("raw_sha256 ~ '^[0-9a-f]{64}$'", name="raw_sha256_format"),
+        CheckConstraint(
+            "sender_address_bidx IS NULL OR sender_address_bidx ~ '^[0-9a-f]{64}$'",
+            name="sender_address_bidx_format",
+        ),
+        Index("ix_inbound_emails_org_id_sender_address_bidx", "org_id", "sender_address_bidx"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=_UUID_DEFAULT
+    )
+    workflow: Mapped[str] = mapped_column(String(32), nullable=False)
+    # Message-ID header (or a synthetic one from the raw hash when missing).
+    message_id: Mapped[str] = mapped_column(String(998), nullable=False)
+    raw_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Business contact data: needed to reply with a receipt and to check sender domains.
+    # Encrypted (WP1.14, migration 0008); ``sender_address_bidx`` is its blind index
+    # (``blind_index("email", ...)``) for equality search and dedupe.
+    sender_address: Mapped[Sealed | None] = mapped_column(EncryptedString(), nullable=True)
+    sender_address_bidx: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, info=blind_index_info("email", "sender_address")
+    )
+    sender_domain: Mapped[str | None] = mapped_column(String(253), nullable=True)
+    subject: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Senders, subjects and dates of forwarded messages, oldest last.
+    forwarded_chain: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
+    # Bulk or automated mail hints (List-Unsubscribe, Precedence: bulk, Auto-Submitted).
+    is_bulk: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    attachment_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+
+
+class Document(Base, OrgScoped, Timestamped):
+    __tablename__ = "documents"
+    __table_args__ = (
+        # Dedupe is per workflow, among the rows that take part in it (``dedupe``); the
+        # stored object (keyed by org and hash) is shared by every row (migration 0033).
+        Index(
+            "uq_documents_org_id_workflow_sha256",
+            "org_id",
+            "workflow",
+            "sha256",
+            unique=True,
+            postgresql_where=text("dedupe"),
+        ),
+        CheckConstraint(f"status IN ({_in(DocumentStatus)})", name="status_valid"),
+        CheckConstraint(f"source IN ({_in(DocumentSource)})", name="source_valid"),
+        CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="sha256_format"),
+        CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
+        CheckConstraint("size_bytes >= 0", name="size_non_negative"),
+        Index("ix_documents_org_id_status", "org_id", "status"),
+        Index(
+            "ix_documents_needs_review",
+            "org_id",
+            "created_at",
+            postgresql_where=text("needs_review"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=_UUID_DEFAULT
+    )
+    workflow: Mapped[str] = mapped_column(String(32), nullable=False)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    # Sanitised, for display only. Never used to build a path or a storage key.
+    original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Sniffed from the bytes, never taken from the client.
+    media_type: Mapped[str] = mapped_column(String(127), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    # Whether later identical bytes in this workflow link to this row (intake dedupe).
+    # False for a submission that must keep its own row whatever else holds the same
+    # bytes: a candidate's CV or file belongs to one application, so no candidate sees
+    # another's file name or metadata, and erasing one leaves the other (security
+    # review 2026-10, L-09). The bytes in storage are shared either way.
+    dedupe: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=DocumentStatus.RECEIVED.value
+    )
+    status_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    needs_review: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    submitted_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    inbound_email_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("inbound_emails.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
+    # Virus scan.
+    scan_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    last_scan_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    scanned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    scan_engine: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    scan_signature: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Parsing.
+    parsed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parser: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    parser_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parse_result_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    parse_warnings: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
+    # The portal person (``kind:<uuid>``) who uploaded the file, or for whom it was
+    # received; NULL for staff files. Set by the database from ``app.portal_subject`` on
+    # a portal upload (migration 0022); a portal session only ever sees its own.
+    portal_subject: Mapped[str | None] = mapped_column(
+        String(80), nullable=True, server_default=text("app_portal_subject()")
+    )
+    # Erasure of the person's data (migration 0019).
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    objects_erased_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class InboundAddress(Base, OrgScoped, Timestamped):
+    """The secret token of one organisation's inbound address for one workflow.
+
+    The address is ``<workflow>+<org slug>.<token>@<domain>``. Only the SHA-256 of the
+    token is stored, so the address is shown once, when the token is (re)generated.
+    """
+
+    __tablename__ = "inbound_addresses"
+    __table_args__ = (
+        UniqueConstraint("org_id", "workflow", name="uq_inbound_addresses_org_id_workflow"),
+        CheckConstraint("workflow ~ '^[a-z][a-z0-9_]{0,31}$'", name="workflow_format"),
+        CheckConstraint("token_hash ~ '^[0-9a-f]{64}$'", name="token_hash_format"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, server_default=_UUID_DEFAULT
+    )
+    workflow: Mapped[str] = mapped_column(String(32), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    rotated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

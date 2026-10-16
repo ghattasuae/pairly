@@ -1,0 +1,237 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+# Workspace root. Not a package itself: it pulls in every member and the dev tools.
+[project]
+name = "pairly-workspace"
+version = "0.0.0"
+description = "Pairly AI monorepo workspace root."
+license = "AGPL-3.0-only"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "pairly-core",
+  "pairly-hire",
+  "pairly-pay",
+  "pairly-expense",
+  "pairly-api",
+  "pairly-worker",
+  "pairly-mcp",
+  "pairly",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.16,<0.17",
+  "mypy>=1.18",
+  "pytest>=8.4",
+  "pytest-cov>=7.0",
+  "import-linter>=2.5",
+  "pre-commit>=4.3",
+  "pytest-asyncio>=1.0",
+  "reportlab>=4.2",
+  "types-defusedxml>=0.7.0.20260504",
+  "types-pyyaml>=6.0",
+  "faker>=37",
+  "flask>=3.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "packages/core",
+  "packages/hire",
+  "packages/pay",
+  "packages/expense",
+  "apps/api",
+  "apps/worker",
+  "apps/mcp",
+  "sdks/python",
+]
+
+[tool.uv.sources]
+pairly-core = { workspace = true }
+pairly-hire = { workspace = true }
+pairly-pay = { workspace = true }
+pairly-expense = { workspace = true }
+pairly-api = { workspace = true }
+pairly-worker = { workspace = true }
+pairly-mcp = { workspace = true }
+pairly = { workspace = true }
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["node_modules", "apps/web", "packages/shared-ts", "sdks/typescript"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F",  # pycodestyle, pyflakes
+  "I",            # isort
+  "N",            # pep8-naming
+  "UP",           # pyupgrade
+  "B",            # bugbear
+  "S",            # bandit
+  "C4",           # comprehensions
+  "SIM",          # simplify
+  "PT",           # pytest style
+  "RUF",          # ruff-specific
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+# Synthetic data generators: seeded random is the point (reproducible test data).
+"synth/**" = ["S311"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+  "pairly_core", "pairly_hire", "pairly_pay", "pairly_expense",
+  "pairly_api", "pairly_worker", "pairly_mcp", "pairly",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ---------------------------------------------------------------- mypy
+# Normal checking everywhere; strict on packages/core (see override below).
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+warn_redundant_casts = true
+check_untyped_defs = true
+
+# "strict = true" is global-only in mypy, so the strict flag set is spelled out for core
+# (and for the expense example workflow, the model for new workflows, Pairly Hire,
+# Pairly Pay, the MCP server and the Python SDK).
+[[tool.mypy.overrides]]
+module = [
+  "pairly_core", "pairly_core.*", "pairly_expense", "pairly_expense.*",
+  "pairly_hire", "pairly_hire.*", "pairly_pay", "pairly_pay.*",
+  # The MCP server and the Python SDK (M6).
+  "pairly_mcp", "pairly_mcp.*", "pairly", "pairly.*",
+]
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["packages", "apps", "sdks/python", "scripts/tests", "evals/tests"]
+# The repository root, so tests can import the synthetic data generators (synth/).
+pythonpath = ["."]
+addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra"]
+xfail_strict = true
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# ---------------------------------------------------------------- coverage
+[tool.coverage.run]
+branch = true
+# SQLAlchemy async runs DB calls in greenlets; trace them too.
+concurrency = ["greenlet", "thread"]
+source = ["pairly_core"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_also = ["if TYPE_CHECKING:", "\\.\\.\\.$", "raise NotImplementedError"]
+fail_under = 85
+
+# ---------------------------------------------------------------- import-linter
+[tool.importlinter]
+root_packages = [
+  "pairly_core", "pairly_hire", "pairly_pay", "pairly_expense",
+  "pairly_api", "pairly_worker", "pairly_mcp",
+]
+
+[[tool.importlinter.contracts]]
+name = "Core engine never imports a workflow or an app"
+type = "forbidden"
+source_modules = ["pairly_core"]
+forbidden_modules = [
+  "pairly_hire", "pairly_pay", "pairly_expense", "pairly_api", "pairly_worker", "pairly_mcp",
+]
+
+[[tool.importlinter.contracts]]
+name = "Workflows are independent of each other"
+type = "independence"
+modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
+
+# Workflows plug in through the pairly.workflows entry point only: the API and the
+# worker never import one, so adding a workflow needs no change in them.
+[[tool.importlinter.contracts]]
+name = "Apps discover workflows at runtime, never import them"
+type = "forbidden"
+source_modules = ["pairly_api", "pairly_worker", "pairly_mcp"]
+forbidden_modules = ["pairly_hire", "pairly_pay", "pairly_expense"]
+
+# Voluntary self-identification answers are for bias reporting only (brief 3.2.1). The
+# code that screens and scores applications may never import them, nor the form builder
+# that knows their categories (packages/hire/tests/test_selfid_isolation.py checks it too).
+[[tool.importlinter.contracts]]
+name = "Hire scoring never sees self-identification"
+type = "forbidden"
+source_modules = ["pairly_hire.scoring", "pairly_hire.screening"]
+forbidden_modules = ["pairly_hire.selfid", "pairly_hire.forms", "pairly_hire.applying", "pairly_hire.api"]
+
+# The pipeline and messaging show and write about candidates; they never read the
+# self-identification answers either (WP2.5, WP2.7), not even the candidate's own
+# (``pairly_hire.selfid.export``, the portal's data export only).
+[[tool.importlinter.contracts]]
+name = "Hire pipeline and messaging never read self-identification answers"
+type = "forbidden"
+source_modules = ["pairly_hire.pipeline", "pairly_hire.messaging"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]
+
+# The candidate portal shows candidates their own data and never reaches into the staff
+# routes (WP2.9). Self-identification answers have exactly two readers: bias reporting
+# (``pairly_hire.api.reports``, aggregates) and the candidate's own data export, through
+# the one narrow function ``pairly_hire.selfid.export.subject_answers`` (only the
+# candidate's applications, Row Level Security by portal subject, hire_0004b). That edge
+# is the only one ignored here; the portal may not import the table any other way.
+# tests/test_selfid_isolation.py checks that the portal service is its only importer.
+[[tool.importlinter.contracts]]
+name = "Hire candidate portal reads self-identification only through the subject export"
+type = "forbidden"
+source_modules = ["pairly_hire.portal"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.api"]
+ignore_imports = ["pairly_hire.selfid.export -> pairly_hire.selfid.models"]
+
+# Hiring analytics compute from the pipeline and screening rows; only the bias report
+# (``pairly_hire.analytics.bias``) reaches self-identification, and only as counts per
+# group through ``pairly_hire.selfid.reporting`` (M3, brief 3.10).
+[[tool.importlinter.contracts]]
+name = "Hire analytics never read self-identification, except the bias report's counts"
+type = "forbidden"
+source_modules = [
+  "pairly_hire.analytics.facts", "pairly_hire.analytics.metrics", "pairly_hire.analytics.stats",
+  "pairly_hire.analytics.fairness", "pairly_hire.analytics.models",
+  "pairly_hire.analytics.calibration", "pairly_hire.analytics.calibration_recordings",
+]
+forbidden_modules = ["pairly_hire.selfid", "pairly_hire.api"]
+
+[[tool.importlinter.contracts]]
+name = "The bias report reads self-identification only as counts per group"
+type = "forbidden"
+source_modules = ["pairly_hire.analytics.bias"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]
+ignore_imports = ["pairly_hire.selfid.reporting -> pairly_hire.selfid.models"]
+
+# Scheduling shows candidates to interviewers (blind-safe); it never reads the
+# self-identification answers, and the service layer never imports routes (WP2.8).
+[[tool.importlinter.contracts]]
+name = "Hire scheduling never reads self-identification answers"
+type = "forbidden"
+source_modules = ["pairly_hire.scheduling"]
+forbidden_modules = ["pairly_hire.selfid.models", "pairly_hire.selfid.export", "pairly_hire.api"]

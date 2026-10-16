@@ -1,0 +1,30 @@
+meta {
+  name: Decide (person only)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/approvals/{{approvalId}}/decision
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:json {
+  {
+    "decision": "approve",
+    "reason": "Matches the PO."
+  }
+}
+
+docs {
+  People decide: this needs a person's JWT with a TOTP sign-in, never an API key (403). Idempotency-Key is required.
+}

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+
+name: Security vulnerability
+description: Do not report security problems here. This form explains where to report them.
+labels: ["security-redirect"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Please do not report security problems in a public issue
+
+        Public issues are visible to everyone, including attackers.
+
+        Report the problem privately instead:
+
+        1. Use GitHub private vulnerability reporting: open the **Security** tab of this repository and choose **Report a vulnerability**.
+        2. Or follow the other options in SECURITY.md.
+
+        SECURITY.md also explains what is in scope, our response targets and our safe harbour statement.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      description: This form cannot be used to report a vulnerability.
+      options:
+        - label: I understand that I must report security problems privately, as described in SECURITY.md, and I will close this form.
+          required: true

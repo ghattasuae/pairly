@@ -1,0 +1,19 @@
+meta {
+  name: Event types
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/webhooks/event-types
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Every event a webhook endpoint can subscribe to.
+}

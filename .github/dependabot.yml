@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Weekly, grouped dependency updates. Every update still goes through CI, including the
+# license gate (scripts/check_licenses.py) and the security scans, before it can merge.
+# Security updates are opened as soon as an advisory lands, outside this schedule.
+
+version: 2
+
+updates:
+  # Python: uv workspace (uv.lock). Dependabot's "uv" ecosystem updates uv.lock directly.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    commit-message:
+      prefix: "deps(python)"
+    groups:
+      python-dev-tools:
+        dependency-type: development
+      python-runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  # JavaScript: pnpm workspace (pnpm-lock.yaml). pnpm uses the npm ecosystem.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    open-pull-requests-limit: 5
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: "deps(js)"
+    groups:
+      js-dev-tools:
+        dependency-type: development
+        update-types: [minor, patch]
+      js-runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  # GitHub Actions: keeps the pinned commit SHAs (and their version comments) current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "deps(actions)"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # Base images in infra/docker/*.Dockerfile.
+  - package-ecosystem: docker
+    directories:
+      - /infra/docker
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: "deps(docker)"
+    groups:
+      docker-images:
+        patterns: ["*"]
+
+  # Third-party images in infra/docker-compose.yml (postgres, redis, mailpit and more).
+  - package-ecosystem: docker-compose
+    directory: /infra
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: "deps(compose)"
+    groups:
+      compose-images:
+        patterns: ["*"]

@@ -1,0 +1,36 @@
+meta {
+  name: Create an API key
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/api-keys
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:json {
+  {
+    "name": "bruno",
+    "scopes": [
+      "pay.invoice.read",
+      "core.approval.read",
+      "core.proposal.propose"
+    ],
+    "mode": "test",
+    "expires_in_days": 30
+  }
+}
+
+docs {
+  Scopes may only read, propose or upload. Sandbox organisations use mode test; the key is shown once.
+}

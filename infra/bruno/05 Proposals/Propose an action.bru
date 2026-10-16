@@ -1,0 +1,29 @@
+meta {
+  name: Propose an action
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/proposals
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:json {
+  {
+    "entity_type": "approval",
+    "entity_id": "{{approvalId}}",
+    "kind": "action",
+    "action": "approve",
+    "body": "The amount matches PO-1001."
+  }
+}
+
+docs {
+  Records a suggestion for a person; changes nothing. Needs core.proposal.propose.
+}

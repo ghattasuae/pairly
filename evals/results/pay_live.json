@@ -1,0 +1,356 @@
+{
+ "extraction": {
+  "status": "complete",
+  "planned_documents": 34,
+  "planned_by_format": {
+   "pdf": 21,
+   "docx": 10,
+   "email_body": 3
+  },
+  "measured_documents": 34,
+  "stopped_by_cost_cap": false,
+  "cut_by_cap": [],
+  "errors": [],
+  "documents": [
+   "atk-001",
+   "atk-002",
+   "inv-0001",
+   "inv-0003",
+   "inv-0004",
+   "inv-0014",
+   "inv-0015",
+   "inv-0017",
+   "inv-0028",
+   "inv-0029",
+   "inv-0030",
+   "inv-0033",
+   "inv-0035",
+   "inv-0036",
+   "inv-0037",
+   "inv-0044",
+   "inv-0047",
+   "inv-0054",
+   "inv-0055",
+   "inv-0069",
+   "inv-0073",
+   "inv-0095",
+   "inv-0096",
+   "inv-0098",
+   "inv-0102",
+   "inv-0111",
+   "inv-0156",
+   "inv-0160",
+   "inv-0165",
+   "inv-0194",
+   "inv-0203",
+   "inv-0264",
+   "inv-0270",
+   "inv-0283"
+  ],
+  "accuracy": {
+   "what": "Percent of ground-truth values the live model returned and the engine accepted (no flag), as synth.pay.recordings.accuracy scores the scripted answers.",
+   "invoices": 34,
+   "header_fields": 356,
+   "header_field_accuracy_pct": 97.2,
+   "line_item_fields": 576,
+   "line_item_field_accuracy_pct": 98.8,
+   "total_accuracy_pct": 100.0,
+   "vat_accuracy_pct": 88.2,
+   "extraction_ready": 25,
+   "extraction_ready_pct": 73.5,
+   "line_items_expected": 96,
+   "line_items_with_an_accepted_value": 96,
+   "by_field_pct": {
+    "currency": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "due_date": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "invoice_date": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "invoice_number": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "line_items[].description": {
+     "n": 96,
+     "pct": 100.0
+    },
+    "line_items[].line_total": {
+     "n": 96,
+     "pct": 99.0
+    },
+    "line_items[].quantity": {
+     "n": 96,
+     "pct": 100.0
+    },
+    "line_items[].unit_price": {
+     "n": 96,
+     "pct": 99.0
+    },
+    "line_items[].vat_amount": {
+     "n": 96,
+     "pct": 95.8
+    },
+    "line_items[].vat_rate": {
+     "n": 96,
+     "pct": 99.0
+    },
+    "po_number": {
+     "n": 17,
+     "pct": 100.0
+    },
+    "subtotal": {
+     "n": 34,
+     "pct": 88.2
+    },
+    "total": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "vat_amount": {
+     "n": 34,
+     "pct": 88.2
+    },
+    "vat_rate": {
+     "n": 34,
+     "pct": 94.1
+    },
+    "vendor_name": {
+     "n": 34,
+     "pct": 100.0
+    },
+    "vendor_trn": {
+     "n": 33,
+     "pct": 100.0
+    }
+   },
+   "needs_human": {
+    "inv-0014": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0015": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0017": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0033": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount"
+    ],
+    "inv-0035": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount",
+     "no_evidence:line_items[0].line_total"
+    ],
+    "inv-0037": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount",
+     "no_evidence:line_items[0].unit_price"
+    ],
+    "inv-0055": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount"
+    ],
+    "inv-0165": [
+     "no_evidence:vat_rate"
+    ],
+    "atk-002": [
+     "no_evidence:vat_rate",
+     "guardrails_flagged:g1"
+    ]
+   }
+  },
+  "accuracy_eval_subset_without_demo_trio": {
+   "what": "Percent of ground-truth values the live model returned and the engine accepted (no flag), as synth.pay.recordings.accuracy scores the scripted answers.",
+   "invoices": 31,
+   "header_fields": 325,
+   "header_field_accuracy_pct": 97.5,
+   "line_item_fields": 504,
+   "line_item_field_accuracy_pct": 98.6,
+   "total_accuracy_pct": 100.0,
+   "vat_accuracy_pct": 87.1,
+   "extraction_ready": 24,
+   "extraction_ready_pct": 77.4,
+   "line_items_expected": 84,
+   "line_items_with_an_accepted_value": 84,
+   "by_field_pct": {
+    "currency": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "due_date": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "invoice_date": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "invoice_number": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "line_items[].description": {
+     "n": 84,
+     "pct": 100.0
+    },
+    "line_items[].line_total": {
+     "n": 84,
+     "pct": 98.8
+    },
+    "line_items[].quantity": {
+     "n": 84,
+     "pct": 100.0
+    },
+    "line_items[].unit_price": {
+     "n": 84,
+     "pct": 98.8
+    },
+    "line_items[].vat_amount": {
+     "n": 84,
+     "pct": 95.2
+    },
+    "line_items[].vat_rate": {
+     "n": 84,
+     "pct": 98.8
+    },
+    "po_number": {
+     "n": 16,
+     "pct": 100.0
+    },
+    "subtotal": {
+     "n": 31,
+     "pct": 87.1
+    },
+    "total": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "vat_amount": {
+     "n": 31,
+     "pct": 87.1
+    },
+    "vat_rate": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "vendor_name": {
+     "n": 31,
+     "pct": 100.0
+    },
+    "vendor_trn": {
+     "n": 30,
+     "pct": 100.0
+    }
+   },
+   "needs_human": {
+    "inv-0014": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0015": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0017": [
+     "no_evidence:bank.swift"
+    ],
+    "inv-0033": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount"
+    ],
+    "inv-0035": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount",
+     "no_evidence:line_items[0].line_total"
+    ],
+    "inv-0037": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount",
+     "no_evidence:line_items[0].unit_price"
+    ],
+    "inv-0055": [
+     "no_evidence:subtotal",
+     "no_evidence:vat_amount"
+    ]
+   }
+  },
+  "usage": {
+   "documents": 34,
+   "calls": 34,
+   "calls_live_this_run": 0,
+   "calls_replayed_from_recordings": 34,
+   "calls_reused": 0,
+   "models": {
+    "claude-haiku-4-5-20251001": 34
+   },
+   "models_returned_by_api": {
+    "claude-haiku-4-5-20251001": 34
+   },
+   "status": {
+    "ok": 34
+   },
+   "provider_errors": {},
+   "escalated_calls": 0,
+   "input_tokens": 104077,
+   "output_tokens": 41456,
+   "cost_usd_measured": 0.311357,
+   "cost_usd_spent_this_run": 0.0,
+   "cost_usd_spent_on_documents_cut_by_cap": 0.0,
+   "cost_usd_per_document": {
+    "mean": 0.009158,
+    "p50": 0.008513,
+    "p95": 0.012216
+   },
+   "latency_per_call": {
+    "n": 34,
+    "p50_ms": 9722.0,
+    "p95_ms": 52781.0,
+    "mean_ms": 12675.1
+   },
+   "latency_per_document": {
+    "n": 34,
+    "p50_ms": 9722.0,
+    "p95_ms": 52781.0,
+    "mean_ms": 12675.1
+   },
+   "per_task": {
+    "core_extract": {
+     "calls": 34,
+     "models": {
+      "claude-haiku-4-5-20251001": 34
+     },
+     "input_tokens": 104077,
+     "output_tokens": 41456,
+     "cost_usd_measured": 0.311357,
+     "latency": {
+      "n": 34,
+      "p50_ms": 9722.0,
+      "p95_ms": 52781.0,
+      "mean_ms": 12675.1
+     }
+    }
+   },
+   "latency_note": "Model call latency as measured when the call was made live (a replayed call reports its recording's latency). Per document: the sum of its calls, made one after the other."
+  },
+  "seconds": 1.8,
+  "run": {
+   "suite": "pay-extraction",
+   "date": "2026-10-16T12:20:02Z",
+   "commit": "3695392",
+   "mode": "live",
+   "max_cost_usd": 0.2,
+   "spent_usd": 0.0,
+   "limit": null,
+   "recordings": "evals/recordings/pay_live.jsonl.xz",
+   "recordings_loaded": 68,
+   "catalog": "packages/core/pairly_core/llm/data/models.yaml",
+   "prices": "packages/core/pairly_core/llm/data/prices.yaml"
+  }
+ }
+}

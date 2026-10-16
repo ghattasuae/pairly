@@ -1,0 +1,20 @@
+meta {
+  name: List proposals
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/proposals?entity_type=approval&entity_id={{approvalId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  entity_type: approval
+  entity_id: {{approvalId}}
+}
+
+docs {
+  Needs core.proposal.read.
+}

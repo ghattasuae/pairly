@@ -1,0 +1,26 @@
+meta {
+  name: Search
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/search
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:json {
+  {
+    "query": "travel policy",
+    "limit": 5
+  }
+}
+
+docs {
+  Hybrid full-text and semantic search.
+}

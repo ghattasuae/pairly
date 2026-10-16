@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Reviewed exceptions for scripts/check_licenses.py (the CI license gate).
+#
+# A package whose license is denied (GPL, AGPL, SSPL, BUSL, Commons Clause) or unknown
+# fails the build unless it is listed here. A package under a "review" license (LGPL,
+# EPL) only warns; listing it here records the decision, and the warning goes away.
+# Every entry needs:
+#
+#   ecosystem  python or npm
+#   name       the package name (Python names are normalised: lower case, dashes). An
+#              npm name may end in `*` to cover the platform builds of one package.
+#   license    the exact license string the checker prints. If upstream changes its
+#              license, the entry stops matching and the package needs a new review.
+#   reason     why this is acceptable for AGPL-3.0 and for commercial relicensing.
+#
+# Keep this list short. Prefer replacing a dependency over adding an exception.
+#
+# Not dependencies, so not listed here: container images that run as separate
+# processes and talk to Pairly over the network or a socket. They are never linked into
+# or distributed inside Pairly code:
+#   - ClamAV (GPL-2.0), compose profile `scan`, reached over TCP (clamd protocol).
+#   - MinIO (AGPL-3.0), local S3-compatible storage, reached over HTTP (S3 API).
+#   - LangFuse, Postgres, Redis, Mailpit and ClickHouse images, same reasoning.
+# Pairly only ships its own images (infra/docker/*.Dockerfile); the license gate covers
+# everything installed into them.
+#
+# Example:
+#   - ecosystem: python
+#     name: some-package
+#     license: LicenseRef-Custom
+#     reason: What the license says, why it is compatible, who reviewed it and when.
+
+exceptions:
+  - ecosystem: npm
+    name: caniuse-lite
+    license: CC-BY-4.0
+    reason: >-
+      Browser support data tables, not code. Pulled in at build time by browserslist
+      (Next.js, PostCSS, Babel). CC BY 4.0 asks only for attribution, which NOTICE.md
+      gives. It adds no copyleft terms, so it fits AGPL-3.0 and commercial relicensing.
+      Reviewed 2026-10-07; confirm with legal before the first commercial license.
+  - ecosystem: python
+    name: pillow
+    license: MIT-CMU
+    reason: >-
+      Pillow (image decoding for OCR and pdfplumber) uses the MIT-CMU license, the
+      Historical Permission Notice and Disclaimer variant used by PIL since 1995. It is
+      permissive (keep the notice, no copyleft) and GPL compatible, so it fits AGPL-3.0
+      and commercial relicensing. The checker lists it as unknown only because the id is
+      not in its allow list. Reviewed 2026-10-07 (WP1.2).
+  - ecosystem: python
+    name: pypdfium2
+    license: BSD-3-Clause, Apache-2.0, dependency licenses
+    reason: >-
+      Python bindings (BSD-3-Clause or Apache-2.0) plus a bundled PDFium binary, pulled in
+      by pdfplumber. The bundled build licenses are PDFium (BSD-3-Clause), FreeType (FTL,
+      BSD style), ICU (Unicode license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT),
+      OpenJPEG (BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf
+      (MIT or Apache-2.0), LLVM libc (Apache-2.0 with LLVM exception) and CC-BY-4.0
+      documentation. All permissive with attribution only, no copyleft, so it fits AGPL-3.0
+      and commercial relicensing. NOTICE.md must carry the attributions. Reviewed
+      2026-10-07 (WP1.2). Not PyMuPDF (AGPL), which stays banned.
+  - ecosystem: python
+    name: psycopg
+    license: LGPL-3.0-only
+    reason: >-
+      PostgreSQL driver used by langgraph-checkpoint-postgres (the workflow checkpointer).
+      LGPL-3.0 allows use from software under any license when the library is used
+      unmodified and stays replaceable: Pairly imports it dynamically as a separate,
+      unmodified package installed from PyPI, never vendored or patched, so it fits
+      AGPL-3.0 and commercial relicensing. Source is public. Reviewed 2026-10-07 (WP1.14
+      CI hygiene); confirm with legal before the first commercial license.
+  - ecosystem: python
+    name: psycopg-binary
+    license: LGPL-3.0-only
+    reason: >-
+      Prebuilt C speedups for psycopg (with a bundled libpq under the PostgreSQL license).
+      Same reasoning as psycopg: an unmodified, separately installed shared library that
+      Python loads at run time and that a user can replace with their own build. No
+      Pairly code is linked into it. Reviewed 2026-10-07 (WP1.14 CI hygiene).
+  - ecosystem: python
+    name: psycopg-pool
+    license: LGPL-3.0-only
+    reason: >-
+      Connection pool for psycopg, pulled in by langgraph-checkpoint-postgres. Pure Python,
+      used unmodified and imported dynamically; replaceable. Same reasoning as psycopg.
+      Reviewed 2026-10-07 (WP1.14 CI hygiene).
+  - ecosystem: npm
+    name: "@img/sharp-libvips-*"
+    license: LGPL-3.0-or-later
+    reason: >-
+      Prebuilt libvips shared library (one package per platform, for example
+      darwin-arm64 or linux-x64) that the sharp image library loads at run time; used by
+      Next.js image optimisation in apps/web. It is distributed unmodified as a separate
+      dynamic library and can be replaced by the user's own libvips build, which LGPL-3.0
+      allows for software under any license, so it fits AGPL-3.0 and commercial
+      relicensing. Reviewed 2026-10-07 (WP1.14 CI hygiene).

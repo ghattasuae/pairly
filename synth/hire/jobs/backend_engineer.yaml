@@ -1,0 +1,138 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+# Synthetic sample job (WP2.1). `rubric` is a Pairly Hire rubric (pairly_hire.rubric), the
+# same YAML a recruiter locks. `label_guide` is synthetic-data only: what each score 0 to
+# 4 means for the rule-based labeler (synth/hire/labels.py). The overall score is the
+# weighted mean as a percentage, computed in code, never by a model.
+id: backend_engineer
+title: Backend Engineer
+title_ar: مهندس أنظمة خلفية
+family: backend
+seniority: senior
+location: Dubai, United Arab Emirates
+employment_type: full_time
+summary: Build and run the APIs and services behind a payments product. Python or Go, PostgreSQL,
+  containers on a public cloud.
+rubric_version: 1
+rubric:
+  schema_version: 1
+  job_title: Backend Engineer
+  must_haves:
+  - id: backend_experience
+    name: Backend engineering experience
+    description: Years spent building server-side software in a professional role.
+    evidence: Job entries with a backend title and dates; frontend and data roles count at half
+      weight.
+    weight: 6
+  - id: python_or_go
+    name: Python or Go in production
+    description: Has shipped production code in Python or Go.
+    evidence: An achievement line that shows Python or Go used in work, not only a skills list.
+    weight: 4
+  - id: databases_apis
+    name: Databases and APIs
+    description: Designs APIs and works with relational databases.
+    evidence: Achievement lines about REST or gRPC APIs or PostgreSQL.
+    weight: 3
+  nice_to_haves:
+  - id: cloud_containers
+    name: Containers and cloud
+    description: Runs services in containers on a public cloud.
+    evidence: Achievement lines about Docker, Kubernetes or AWS.
+    weight: 2
+  - id: distributed_systems
+    name: Distributed systems and design
+    description: Event pipelines, queues, design reviews of larger systems.
+    evidence: Achievement lines about Kafka, event pipelines or system design reviews.
+    weight: 2
+  - id: testing_quality
+    name: Testing and delivery
+    description: Automated tests and continuous delivery.
+    evidence: Achievement lines about unit tests or CI/CD.
+    weight: 1
+  - id: mentoring
+    name: Mentoring and technical leadership
+    description: Has mentored engineers or led technical work.
+    evidence: Achievement lines about mentoring, leading reviews or leading a team.
+    weight: 1
+  - id: cs_degree
+    name: Computing degree
+    description: A degree in computing, or a related technical field.
+    evidence: The education entry with degree and field.
+    weight: 1
+  knockout_questions:
+  - id: right_to_work_uae
+    question: Do you have the right to work in the UAE without a new visa sponsorship?
+    question_ar: هل لديك حق العمل في الإمارات دون الحاجة إلى كفالة تأشيرة جديدة؟
+    expected_answer: 'yes'
+    reason: The role cannot sponsor a new visa.
+  - id: start_within_60_days
+    question: Can you start within 60 days of an offer?
+    question_ar: هل يمكنك بدء العمل خلال 60 يوما من تاريخ العرض؟
+    expected_answer: 'yes'
+    reason: The team needs the hire in place within two months.
+label_guide:
+  backend_experience:
+    name_ar: الخبرة في هندسة الأنظمة الخلفية
+    anchors:
+    - No backend engineering role.
+    - Less than 1 year.
+    - 1 to 3 years.
+    - 3 to 5 years.
+    - 5 years or more.
+  python_or_go:
+    name_ar: استخدام Python أو Go في بيئة الإنتاج
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement shows it in use.
+    - Two achievements show it in use.
+    - Three or more achievements show it in use.
+  databases_apis:
+    name_ar: قواعد البيانات والواجهات البرمجية
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  cloud_containers:
+    name_ar: الحاويات والحوسبة السحابية
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  distributed_systems:
+    name_ar: الأنظمة الموزعة والتصميم
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  testing_quality:
+    name_ar: الاختبار والتسليم
+    anchors:
+    - No mention.
+    - Listed as a skill only.
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  mentoring:
+    name_ar: التوجيه والقيادة التقنية
+    anchors:
+    - No mention.
+    - Not used (no skills-list credit for leadership).
+    - One achievement.
+    - Two achievements.
+    - Three or more achievements.
+  cs_degree:
+    name_ar: شهادة في الحوسبة
+    anchors:
+    - No related degree.
+    - Diploma in a related field.
+    - Degree in a related technical field.
+    - Bachelor's degree in computing.
+    - Master's degree in computing.

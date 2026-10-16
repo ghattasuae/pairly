@@ -1,0 +1,380 @@
+{
+  "entries": [
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "2c5e292714a293997d03d70adb33fe5233cf2cf34572bbc01b2a04d9a0a1338f",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "brief": "Accounts payable specialist in Abu Dhabi, on site.\nNeeds 3 years of AP, UAE VAT invoices and an ERP like SAP or Oracle.\nAccounting qualification and Arabic are a plus. Salary hidden."
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "03c5e20c3303db545cc69e3999a84c76ca05d581cf7c24e45a8bcfd51a443643",
+      "response": {
+        "description_ar": "عن الوظيفة\nستعالج فواتير الموردين لمكاتبنا في أبوظبي وتتأكد من أن كل دفعة صحيحة ومعتمدة وفي موعدها.\n\nماذا ستفعل\n- تدقيق فواتير الموردين وترميزها.\n- مطابقة الفواتير مع أوامر الشراء والإيصالات.\n- تجهيز دفعات المدفوعات للاعتماد.\n\nما تحتاجه\n- خبرة 3 سنوات في الحسابات الدائنة.\n- معرفة جيدة بفواتير ضريبة القيمة المضافة في الإمارات.\n- خبرة في نظام تخطيط موارد مثل SAP أو Oracle.\n\nميزة إضافية\n- مؤهل محاسبي معترف به.\n- التحدث بالعربية.",
+        "description_en": "About the role\nYou will process supplier invoices for our offices in Abu Dhabi and make sure every payment is correct, approved and on time.\n\nWhat you will do\n- Check and code supplier invoices.\n- Match invoices to purchase orders and receipts.\n- Prepare payment runs for approval.\n- Answer supplier questions by email and phone.\n\nWhat you need\n- 3 years of experience in accounts payable.\n- Good knowledge of UAE VAT invoices.\n- Experience with an ERP system such as SAP or Oracle.\n\nNice to have\n- A recognised accounting qualification.\n- Spoken Arabic.",
+        "nice_to_have": [
+          "A recognised accounting qualification.",
+          "Spoken Arabic."
+        ],
+        "requirements": [
+          "3 years of experience in accounts payable.",
+          "Good knowledge of UAE VAT invoices.",
+          "Experience with an ERP system such as SAP or Oracle."
+        ],
+        "responsibilities": [
+          "Check and code supplier invoices.",
+          "Match invoices to purchase orders and receipts.",
+          "Prepare payment runs for approval.",
+          "Answer supplier questions by email and phone."
+        ],
+        "summary": "You will process supplier invoices and prepare payments. You will make sure every payment is correct and approved.",
+        "title": "Accounts Payable Specialist",
+        "title_ar": "أخصائي/ة حسابات دائنة"
+      },
+      "schema_hash": "1e05ecd41b193effa7aaa52cfcb9a20dc4482c03f4277bde30531d9e5bd9c218",
+      "schema_name": "JobDescriptionDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_jd_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "c094ca7edb30c1a3f2dd9b7421d3039ae3780f6a43251b7c671de57217989ae1",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "description": "About the role\nYou will lead a team of eight support agents who help drivers and customers by chat and phone. You can work from anywhere in the UAE.\n\nWhat you will do\n- Coach the team and plan shifts.\n- Handle complex cases and complaints.\n- Track response times and customer satisfaction.\n- Improve our help articles with the product team.\n\nWhat you need\n- Experience leading a customer support team.\n- Fluent English and Arabic, written and spoken.\n- Experience with a help desk tool such as Zendesk or Freshdesk.\n\nNice to have\n- Experience in logistics or delivery.",
+          "job_title": "Customer Support Lead"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "1078ad0c1cfb74037a5ba41aab4176a345393165de310c65254d24d3e755d8b6",
+      "response": {
+        "job_title": "Customer Support Lead",
+        "knockout_questions": [
+          {
+            "expected_answer": "yes",
+            "id": "based_in_uae",
+            "question": "Do you live in the UAE?",
+            "question_ar": "هل تقيم في الإمارات؟",
+            "reason": "The role is remote but must be done from within the UAE."
+          }
+        ],
+        "must_haves": [
+          {
+            "anchors": [],
+            "description": "Has led a customer support team.",
+            "evidence": "Names a team they led, its size and what they improved.",
+            "id": "team_leadership",
+            "name": "Support team leadership",
+            "weight": 9
+          },
+          {
+            "anchors": [],
+            "description": "Works fluently in English and Arabic.",
+            "evidence": "Lists both languages and support work in both.",
+            "id": "english_arabic",
+            "name": "English and Arabic",
+            "weight": 7
+          },
+          {
+            "anchors": [],
+            "description": "Has used a help desk tool every day.",
+            "evidence": "Names Zendesk, Freshdesk or a similar tool.",
+            "id": "help_desk",
+            "name": "Help desk tools",
+            "weight": 4
+          }
+        ],
+        "nice_to_haves": [
+          {
+            "anchors": [],
+            "description": "Knows logistics or delivery operations.",
+            "evidence": "Mentions work in logistics, delivery or transport.",
+            "id": "logistics",
+            "name": "Logistics",
+            "weight": 3
+          }
+        ],
+        "schema_version": 1
+      },
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
+      "schema_name": "Rubric",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "c094ca7edb30c1a3f2dd9b7421d3039ae3780f6a43251b7c671de57217989ae1",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "description": "About the role\nYou will build and run the services that plan deliveries for our customers across the UAE. You join a team of six engineers who own their services from design to production.\n\nWhat you will do\n- Design, build and test Python services and APIs.\n- Run services on Kubernetes and keep them healthy in production.\n- Review code and help teammates grow.\n- Work with product and operations to plan changes.\n\nWhat you need\n- 5 years of experience building backend services in Python.\n- Experience running services on Kubernetes in production.\n- Good knowledge of PostgreSQL and SQL.\n- Clear written English for design documents and reviews.\n\nNice to have\n- Experience with event streaming such as Kafka.\n- Spoken or written Arabic.",
+          "job_title": "Senior Backend Engineer"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "718b49d50737516aa4dd330407c2b1226a0bae235dcd59779cdabe3102958e27",
+      "response": {
+        "job_title": "Senior Backend Engineer",
+        "knockout_questions": [
+          {
+            "expected_answer": "yes",
+            "id": "right_to_work_uae",
+            "question": "Do you have the right to work in the UAE, or will you need a visa from us?",
+            "question_ar": "هل لديك حق العمل في الإمارات، أم ستحتاج إلى تأشيرة منا؟",
+            "reason": "We can sponsor visas for this role, but a person needs to plan it."
+          }
+        ],
+        "must_haves": [
+          {
+            "anchors": [],
+            "description": "Has built and maintained backend services in Python for several years.",
+            "evidence": "Names Python services or APIs they built, with their role and how long.",
+            "id": "python_backend",
+            "name": "Python backend services",
+            "weight": 9
+          },
+          {
+            "anchors": [],
+            "description": "Has run services on Kubernetes in production.",
+            "evidence": "Describes deploying or operating a production workload on Kubernetes.",
+            "id": "kubernetes_production",
+            "name": "Kubernetes in production",
+            "weight": 7
+          },
+          {
+            "anchors": [],
+            "description": "Designs schemas and writes efficient SQL for PostgreSQL.",
+            "evidence": "Mentions PostgreSQL work such as schema design, queries or tuning.",
+            "id": "postgresql",
+            "name": "PostgreSQL and SQL",
+            "weight": 6
+          },
+          {
+            "anchors": [],
+            "description": "Writes clear design documents and code reviews in English.",
+            "evidence": "The CV and answers are clear; mentions design docs or reviews.",
+            "id": "written_english",
+            "name": "Clear written English",
+            "weight": 4
+          }
+        ],
+        "nice_to_haves": [
+          {
+            "anchors": [],
+            "description": "Has used event streaming such as Kafka.",
+            "evidence": "Mentions Kafka or a similar system in a project.",
+            "id": "event_streaming",
+            "name": "Event streaming",
+            "weight": 3
+          },
+          {
+            "anchors": [],
+            "description": "Can work in Arabic.",
+            "evidence": "Lists Arabic as a language they speak or write.",
+            "id": "arabic",
+            "name": "Arabic",
+            "weight": 2
+          }
+        ],
+        "schema_version": 1
+      },
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
+      "schema_name": "Rubric",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "2c5e292714a293997d03d70adb33fe5233cf2cf34572bbc01b2a04d9a0a1338f",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "brief": "Senior backend engineer for the delivery planning team in Dubai, hybrid.\nMust have 5 years of Python backend work, Kubernetes in production and PostgreSQL.\nKafka and Arabic are a plus. Salary 30000 to 38000 AED a month, shown."
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "7bfb166dc37b9ec85f06d0769ac51e9df17f1acaf16d9aad23a11c02a671055c",
+      "response": {
+        "description_ar": "عن الوظيفة\nستبني وتشغل الخدمات التي تخطط عمليات التوصيل لعملائنا في الإمارات. ستنضم إلى فريق من ستة مهندسين يتولون خدماتهم من التصميم إلى التشغيل.\n\nماذا ستفعل\n- تصميم خدمات وواجهات برمجية بلغة Python وبناؤها واختبارها.\n- تشغيل الخدمات على Kubernetes والحفاظ على سلامتها.\n- مراجعة الشيفرة ومساعدة الزملاء على التطور.\n\nما تحتاجه\n- خبرة 5 سنوات في بناء خدمات خلفية بلغة Python.\n- خبرة في تشغيل خدمات على Kubernetes في بيئة الإنتاج.\n- معرفة جيدة بقواعد بيانات PostgreSQL ولغة SQL.\n\nميزة إضافية\n- خبرة في بث الأحداث مثل Kafka.\n- إجادة اللغة العربية.",
+        "description_en": "About the role\nYou will build and run the services that plan deliveries for our customers across the UAE. You join a team of six engineers who own their services from design to production.\n\nWhat you will do\n- Design, build and test Python services and APIs.\n- Run services on Kubernetes and keep them healthy in production.\n- Review code and help teammates grow.\n- Work with product and operations to plan changes.\n\nWhat you need\n- 5 years of experience building backend services in Python.\n- Experience running services on Kubernetes in production.\n- Good knowledge of PostgreSQL and SQL.\n- Clear written English for design documents and reviews.\n\nNice to have\n- Experience with event streaming such as Kafka.\n- Spoken or written Arabic.",
+        "nice_to_have": [
+          "Experience with event streaming such as Kafka.",
+          "Spoken or written Arabic."
+        ],
+        "requirements": [
+          "5 years of experience building backend services in Python.",
+          "Experience running services on Kubernetes in production.",
+          "Good knowledge of PostgreSQL and SQL.",
+          "Clear written English for design documents and reviews."
+        ],
+        "responsibilities": [
+          "Design, build and test Python services and APIs.",
+          "Run services on Kubernetes and keep them healthy in production.",
+          "Review code and help teammates grow.",
+          "Work with product and operations to plan changes."
+        ],
+        "summary": "You will build the Python services that plan our deliveries. You will run them on Kubernetes and own them in production.",
+        "title": "Senior Backend Engineer",
+        "title_ar": "مهندس/ة خلفيات أول"
+      },
+      "schema_hash": "1e05ecd41b193effa7aaa52cfcb9a20dc4482c03f4277bde30531d9e5bd9c218",
+      "schema_name": "JobDescriptionDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_jd_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "2c5e292714a293997d03d70adb33fe5233cf2cf34572bbc01b2a04d9a0a1338f",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "brief": "Customer support lead, remote within the UAE, leading 8 agents.\nMust have team lead experience, fluent English and Arabic, and a help desk tool.\nLogistics experience is a plus. Salary 18000 to 22000 AED a month, shown."
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "9bb28e5066491b80343898c917716203e51b47d17c16f1701ec1e9480ab9648b",
+      "response": {
+        "description_ar": "عن الوظيفة\nستقود فريقا من ثمانية موظفي دعم يساعدون السائقين والعملاء عبر المحادثة والهاتف. يمكنك العمل من أي مكان في الإمارات.\n\nماذا ستفعل\n- تدريب الفريق وتخطيط المناوبات.\n- التعامل مع الحالات المعقدة والشكاوى.\n- متابعة أوقات الرد ورضا العملاء.\n\nما تحتاجه\n- خبرة في قيادة فريق دعم عملاء.\n- إجادة العربية والإنجليزية كتابة وتحدثا.\n- خبرة في أداة مكتب مساعدة مثل Zendesk أو Freshdesk.\n\nميزة إضافية\n- خبرة في الخدمات اللوجستية أو التوصيل.",
+        "description_en": "About the role\nYou will lead a team of eight support agents who help drivers and customers by chat and phone. You can work from anywhere in the UAE.\n\nWhat you will do\n- Coach the team and plan shifts.\n- Handle complex cases and complaints.\n- Track response times and customer satisfaction.\n- Improve our help articles with the product team.\n\nWhat you need\n- Experience leading a customer support team.\n- Fluent English and Arabic, written and spoken.\n- Experience with a help desk tool such as Zendesk or Freshdesk.\n\nNice to have\n- Experience in logistics or delivery.",
+        "nice_to_have": [
+          "Experience in logistics or delivery."
+        ],
+        "requirements": [
+          "Experience leading a customer support team.",
+          "Fluent English and Arabic, written and spoken.",
+          "Experience with a help desk tool such as Zendesk or Freshdesk."
+        ],
+        "responsibilities": [
+          "Coach the team and plan shifts.",
+          "Handle complex cases and complaints.",
+          "Track response times and customer satisfaction.",
+          "Improve our help articles with the product team."
+        ],
+        "summary": "You will lead our support team and help drivers and customers. You will improve how fast and how well we answer.",
+        "title": "Customer Support Lead",
+        "title_ar": "قائد/ة فريق دعم العملاء"
+      },
+      "schema_hash": "1e05ecd41b193effa7aaa52cfcb9a20dc4482c03f4277bde30531d9e5bd9c218",
+      "schema_name": "JobDescriptionDraft",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_jd_draft",
+      "tier": "small"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "output_complete": true,
+      "prompt_hash": "c094ca7edb30c1a3f2dd9b7421d3039ae3780f6a43251b7c671de57217989ae1",
+      "prompt_version": "v1",
+      "provider": "anthropic",
+      "request": {
+        "inputs": {
+          "description": "About the role\nYou will process supplier invoices for our offices in Abu Dhabi and make sure every payment is correct, approved and on time.\n\nWhat you will do\n- Check and code supplier invoices.\n- Match invoices to purchase orders and receipts.\n- Prepare payment runs for approval.\n- Answer supplier questions by email and phone.\n\nWhat you need\n- 3 years of experience in accounts payable.\n- Good knowledge of UAE VAT invoices.\n- Experience with an ERP system such as SAP or Oracle.\n\nNice to have\n- A recognised accounting qualification.\n- Spoken Arabic.",
+          "job_title": "Accounts Payable Specialist"
+        },
+        "settings": {
+          "effort": null,
+          "max_output_tokens": 4096,
+          "temperature": 0.0,
+          "user_template": 1
+        }
+      },
+      "request_hash": "be0517799284e404408645abd8d4d1e5547101982350a850a15a3a3231c3f464",
+      "response": {
+        "job_title": "Accounts Payable Specialist",
+        "knockout_questions": [],
+        "must_haves": [
+          {
+            "anchors": [],
+            "description": "Has worked in accounts payable for about three years or more.",
+            "evidence": "Names AP roles with dates and the invoice work they did.",
+            "id": "ap_experience",
+            "name": "Accounts payable experience",
+            "weight": 8
+          },
+          {
+            "anchors": [],
+            "description": "Knows what a valid UAE VAT invoice needs.",
+            "evidence": "Mentions checking tax invoices, TRNs or VAT returns in the UAE.",
+            "id": "uae_vat",
+            "name": "UAE VAT invoices",
+            "weight": 7
+          },
+          {
+            "anchors": [],
+            "description": "Has used an ERP system for payables.",
+            "evidence": "Names SAP, Oracle or a similar ERP and what they did in it.",
+            "id": "erp",
+            "name": "ERP system",
+            "weight": 5
+          }
+        ],
+        "nice_to_haves": [
+          {
+            "anchors": [],
+            "description": "Holds or studies for a recognised accounting qualification.",
+            "evidence": "Lists a qualification such as ACCA, CMA or CPA.",
+            "id": "accounting_qualification",
+            "name": "Accounting qualification",
+            "weight": 3
+          }
+        ],
+        "schema_version": 1
+      },
+      "schema_hash": "7c7b06ca95faf869b3218f50aec3f8d85e77512afa264c570dddfadbf79db668",
+      "schema_name": "Rubric",
+      "status": "ok",
+      "stop_reason": "end_turn",
+      "task": "hire_rubric_draft",
+      "tier": "small"
+    }
+  ],
+  "format": "pairly.model-recordings",
+  "version": 1
+}
