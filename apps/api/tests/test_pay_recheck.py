@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from pairly_pay.checks import service as check_service
 
 from . import test_pay_invoices as base
-from .pay_support import PayWorld, audit_actions, other_bank, owner_rows, vendor_body
+from .pay_support import PayWorld, audit_actions, new_vendor, other_bank, owner_rows, vendor_body
 from .test_pay_invoices import Api, dataset, demo, vendor_index
 
 api = base.api
@@ -32,14 +32,7 @@ world = base.world
 async def _ready(api: Api, world: PayWorld) -> tuple[str, str]:
     truth = dataset().doc(demo("clean")).record.truth
     assert truth.vendor_id is not None
-    vendor = await api.ok(
-        "POST",
-        "/v1/pay/vendors",
-        world,
-        "clerk",
-        status=201,
-        json=vendor_body(vendor_index(truth.vendor_id)),
-    )
+    vendor = await new_vendor(api, world, vendor_body(vendor_index(truth.vendor_id)))
     created = await api.upload_doc(world, demo("clean"))
     detail = await api.invoice(world, created["id"])
     assert detail["status"] == "ready", detail["review_reasons"]
@@ -87,7 +80,7 @@ async def test_correct_the_iban_on_a_ready_invoice_opens_the_ticket_and_holds_th
         owner_engine,
         world.org_id,
         "SELECT id, status, source, requested_by_type FROM pay_bank_change_tickets "
-        "WHERE vendor_id = :v",
+        "WHERE vendor_id = :v AND status <> 'completed'",
         {"v": vendor_id},
     )
     assert [str(t.id) for t in tickets] == [ticket_id]
@@ -214,7 +207,7 @@ async def test_linking_another_vendor_reruns_the_checks(
     api: Api, world: PayWorld, owner_engine: AsyncEngine
 ) -> None:
     invoice_id, _ = await _ready(api, world)
-    other = await api.ok("POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(7))
+    other = await new_vendor(api, world, vendor_body(7))
     detail = await api.ok(
         "POST",
         f"/v1/pay/invoices/{invoice_id}/vendor",

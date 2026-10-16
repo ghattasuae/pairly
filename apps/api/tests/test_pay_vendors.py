@@ -15,20 +15,25 @@ from __future__ import annotations
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pairly_core.crypto.blind_index import blind_index
+from pairly_pay.models import PayVendor
+from pairly_pay.payability import vendor_blockers
 from pairly_pay.vendors import find_duplicates
 
 from .pay_support import (
     PayApi,
     PayWorld,
     audit_actions,
+    new_vendor,
     other,
     owner_rows,
     pay_api,
     synth_vendors,
     vendor_body,
+    verify_new_vendor,
     world,
 )
 
@@ -46,11 +51,15 @@ async def test_create_validate_encrypt_and_find_by_blind_index(
     assert created["status"] == "active"
     assert created["source"] == "staff"
     assert created["reference"].startswith("VEN-")
-    assert created["payment_hold"] is False
+    # Security review 2026-10, M-03: the details are not active at once; they wait in a
+    # change ticket and the vendor is held.
+    assert created["payment_hold"] is True
+    assert created["hold_reason"] == "bank_change"
+    assert created["open_ticket_id"] is not None
     iban = source["bank"]["iban"]
-    assert created["iban_masked"] == f"AE** **** {iban[-4:]}"
+    assert created["iban_masked"] is None
     (account,) = created["accounts"]
-    assert account["status"] == "active"
+    assert account["status"] == "proposed"
     assert account["bank_code"] == iban[4:7]
     assert account["account_name"] == source["bank"]["account_name"]
     assert created["trn_status"] == "not_verified"  # format only: no official source yet
@@ -85,6 +94,72 @@ async def test_create_validate_encrypt_and_find_by_blind_index(
         hints = await find_duplicates(session, world.org_id, legal_name="Unrelated", iban=typed)
     assert [(str(h.vendor_id), h.reasons) for h in hints] == [(created["id"], ("iban",))]
     assert "pay.vendor.created" in await audit_actions(owner_engine, world.org_id, created["id"])
+
+
+async def test_staff_bank_details_wait_for_a_second_person(
+    pay_api: PayApi, world: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, M-03: an insider creates a vendor that copies a real one
+    with their own IBAN. The details open a locked change ticket (hold, call back by
+    someone else on a number with a named independent source, dual approval), and the
+    vendor cannot be paid until it completes."""
+    api = pay_api
+    body = vendor_body(8)
+    # Without the number on file or its source: refused, nothing written.
+    for missing in ("phone_on_file", "phone_source"):
+        refused = await api.call(
+            "POST", "/v1/pay/vendors", world, "clerk", json={**body, missing: None}
+        )
+        assert refused.status_code == 400, (missing, refused.text)
+        assert refused.json()["code"] == "callback_source_required"
+    bad_source = await api.call(
+        "POST",
+        "/v1/pay/vendors",
+        world,
+        "clerk",
+        json={**body, "phone_source": {"source": "trade_licence", "reference": ""}},
+    )
+    assert bad_source.status_code == 422
+    listed = await api.ok("GET", f"/v1/pay/vendors?q={body['trn']}", world, "clerk")
+    assert listed["items"] == []
+
+    created = await api.ok("POST", "/v1/pay/vendors", world, "clerk", status=201, json=body)
+    ticket = await api.ok(
+        "GET", f"/v1/pay/bank-changes/{created['open_ticket_id']}", world, "finance"
+    )
+    assert ticket["source"] == "staff"
+    assert ticket["status"] == "awaiting_verification"
+    assert ticket["requester_user_id"] == str(world.id("clerk"))
+    assert ticket["previous_account"] is None
+    assert ticket["verification"]["callback"]["source"] == "trade_licence"
+    assert ticket["verification"]["callback"]["recorded_by"] == str(world.id("clerk"))
+    # Not payable: no verified account is an explicit reason.
+    async with await api.in_org(world) as session, session.begin():
+        vendor = await session.scalar(
+            select(PayVendor).where(PayVendor.id == uuid.UUID(created["id"]))
+        )
+        reasons = await vendor_blockers(session, vendor)
+    assert "no_verified_account" in reasons
+    assert "vendor_held:bank_change" in reasons
+    # The creator neither verifies nor approves.
+    mine = await api.call(
+        "POST",
+        f"/v1/pay/bank-changes/{ticket['id']}/calls",
+        world,
+        "clerk",
+        json={"result": "confirmed", "called_number_on_file": True},
+    )
+    assert mine.status_code == 403
+    done = await verify_new_vendor(api, world, created)
+    assert done["accounts"][0]["status"] == "active"
+    async with await api.in_org(world) as session, session.begin():
+        vendor = await session.scalar(
+            select(PayVendor).where(PayVendor.id == uuid.UUID(created["id"]))
+        )
+        assert await vendor_blockers(session, vendor) == []
+    # A person without the bank-change permission cannot create a vendor with details.
+    no_change = await api.call("POST", "/v1/pay/vendors", world, "approver", json=vendor_body(9))
+    assert no_change.status_code == 403
 
 
 async def test_validation_codes(pay_api: PayApi, world: PayWorld) -> None:
@@ -211,9 +286,7 @@ async def test_permissions_and_tenant_isolation(
 
 async def test_edit_records_a_phone_change(pay_api: PayApi, world: PayWorld) -> None:
     api = pay_api
-    created = await api.ok(
-        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(6)
-    )
+    created = await new_vendor(api, world, vendor_body(6))
     assert created["phone_changed_at"] is None
     edited = await api.ok(
         "PATCH",

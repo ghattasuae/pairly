@@ -224,7 +224,18 @@ async def test_only_the_vendors_own_decisions_can_be_appealed(
         for r in await rows(subject_a, "SELECT entity_id, kind FROM decision_records")
     }
     assert (invoice_a, "final_action") in seen_a
-    assert all(entity == invoice_a for entity, _ in seen_a)
+    # Besides the invoice: the staff steps of vendor A's own bank-detail tickets (the
+    # one its first details completed when it was created, M-03).
+    own_tickets = {
+        r.id
+        for r in await rows(
+            None,
+            "SELECT id::text AS id FROM pay_bank_change_tickets WHERE vendor_id = :v",
+            {"v": vendor_a},
+        )
+    }
+    assert own_tickets
+    assert all(entity == invoice_a or entity in own_tickets for entity, _ in seen_a)
     seen_b = await rows(subject_b, "SELECT entity_id FROM decision_records")
     assert invoice_a not in {r.entity_id for r in seen_b}
     # A candidate's portal session sees no vendor appeal.
@@ -253,7 +264,8 @@ async def test_a_bank_change_step_named_by_the_invoice_checks_can_be_appealed(
     (ticket,) = await owner_rows(
         owner_engine,
         fworld.org_id,
-        "SELECT id::text AS id FROM pay_bank_change_tickets WHERE vendor_id = :v",
+        "SELECT id::text AS id FROM pay_bank_change_tickets "
+        "WHERE vendor_id = :v AND status <> 'completed'",
         {"v": vendor_id},
     )
     # As the bank check records it when it joins the open ticket.

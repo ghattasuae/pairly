@@ -36,7 +36,7 @@ from pairly_pay.invoice_start import start_pending_org
 
 from . import test_pay_invoices as base
 from .notify_support import SLACK_SECRET, WEB_URL, notifications, text_of
-from .pay_support import PayWorld, audit_actions, owner_rows, vendor_body
+from .pay_support import PayWorld, audit_actions, new_vendor, owner_rows, vendor_body
 from .test_pay_invoices import Api, _address, _email, dataset, demo, vendor_index
 
 # The invoice tests' fixtures: the API with recorded extraction, and two organisations.
@@ -57,14 +57,7 @@ def _codes(detail: dict[str, Any], name: str) -> set[str]:
 async def _vendor_for(api: Api, world: PayWorld, doc_id: str, **overrides: Any) -> str:
     truth = dataset().doc(doc_id).record.truth
     assert truth.vendor_id is not None
-    created = await api.ok(
-        "POST",
-        "/v1/pay/vendors",
-        world,
-        "clerk",
-        status=201,
-        json=vendor_body(vendor_index(truth.vendor_id), **overrides),
-    )
+    created = await new_vendor(api, world, vendor_body(vendor_index(truth.vendor_id), **overrides))
     return str(created["id"])
 
 
@@ -106,7 +99,7 @@ async def test_bank_change_opens_a_ticket_and_holds_the_vendor(
         owner_engine,
         world.org_id,
         "SELECT id, status, source, requested_by_type FROM pay_bank_change_tickets "
-        "WHERE vendor_id = :v",
+        "WHERE vendor_id = :v AND status <> 'completed'",
         {"v": vendor_id},
     )
     assert [str(t.id) for t in tickets] == [ticket_id]
@@ -257,7 +250,14 @@ async def test_bank_change_alerts_the_approvers_and_finance(
 async def test_bank_mismatch_without_phone_holds_the_vendor_anyway(
     api: Api, world: PayWorld, owner_engine: AsyncEngine
 ) -> None:
-    vendor_id = await _vendor_for(api, world, demo("bank_change"), phone_on_file=None)
+    vendor_id = await _vendor_for(api, world, demo("bank_change"))
+    # A vendor without a number on file (one entered before numbers were required).
+    await owner_rows(
+        owner_engine,
+        world.org_id,
+        "UPDATE pay_vendors SET phone_on_file = NULL, phone_bidx = NULL WHERE id = :v",
+        {"v": vendor_id},
+    )
     invoice_id = await _run_email(api, world, owner_engine, "eml-0003")
     detail = await api.invoice(world, invoice_id)
     bank = _check(detail, "bank")

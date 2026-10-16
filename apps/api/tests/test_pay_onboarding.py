@@ -44,6 +44,7 @@ SESSION = "X-Pairly-Vendor-Session"
 def _form(index: int, **overrides: Any) -> dict[str, Any]:
     body = vendor_body(index)
     body.pop("acknowledge_similar", None)
+    body.pop("phone_source", None)
     return {**body, "confirm": True, **overrides}
 
 

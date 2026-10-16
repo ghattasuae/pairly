@@ -20,7 +20,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from . import test_pay_invoices as base
-from .pay_support import PayWorld, other_bank, owner_rows, vendor_body
+from .pay_support import PayWorld, new_vendor, other_bank, owner_rows, vendor_body
 from .test_pay_invoices import Api, dataset
 
 api = base.api
@@ -132,9 +132,7 @@ async def test_pay_analytics_on_a_hand_built_dataset(
 ) -> None:
     docs = [s.record.id for s in dataset().docs if s.record.format == "pdf"][:4]
     assert len(docs) == 4
-    vendor = await api.ok(
-        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(0)
-    )
+    vendor = await new_vendor(api, world, vendor_body(0))
     (account,) = await owner_rows(
         owner_engine,
         world.org_id,
@@ -245,9 +243,7 @@ async def test_cash_forecast_by_week_net_of_credits_with_review_apart(
     api: Api, world: PayWorld, other: PayWorld, owner_engine: AsyncEngine
 ) -> None:
     docs = [s.record.id for s in dataset().docs if s.record.format == "pdf"][:5]
-    vendor = await api.ok(
-        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(0)
-    )
+    vendor = await new_vendor(api, world, vendor_body(0))
     (account,) = await owner_rows(
         owner_engine,
         world.org_id,

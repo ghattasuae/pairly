@@ -8,7 +8,9 @@ database in the caller's transaction:
 * ``no_vendor`` / ``vendor_not_active``: no active vendor is linked;
 * ``vendor_held:<reason>``: the vendor's payments are on hold (``pairly_pay.holds``);
 * ``bank_change_open``: a bank-detail change ticket of the vendor is open;
-* ``no_bank_details``: the vendor has no active bank account on file;
+* ``no_bank_details``: the vendor has no bank account on file at all;
+* ``no_verified_account``: its only details are not verified yet (proposed, waiting for
+  their change ticket; security review 2026-10, M-03);
 * ``checks_stale`` / ``checks_failed`` / ``checks_missing`` (``pairly_pay.freshness``);
 * ``amount_missing``, ``currency_missing``: nothing to pay.
 
@@ -30,7 +32,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_pay.bank_changes import details_digest, details_match, open_ticket_of
 from pairly_pay.freshness import checks_problem
-from pairly_pay.models import PayInvoice, PayVendor, PayVendorBankAccount, VendorStatus
+from pairly_pay.models import (
+    AccountStatus,
+    PayInvoice,
+    PayVendor,
+    PayVendorBankAccount,
+    VendorStatus,
+)
 from pairly_pay.vendors import account_name_of, active_account, iban_of
 
 
@@ -70,7 +78,15 @@ async def vendor_blockers(session: AsyncSession, vendor: PayVendor | None) -> li
     if await open_ticket_of(session, vendor.id) is not None:
         out.append("bank_change_open")
     if await active_account(session, vendor.id) is None:
-        out.append("no_bank_details")
+        # Details that are not verified yet (a new vendor's, waiting for their ticket)
+        # are never paid (M-03): a reason of their own.
+        proposed = await session.scalar(
+            select(PayVendorBankAccount.id).where(
+                PayVendorBankAccount.vendor_id == vendor.id,
+                PayVendorBankAccount.status == AccountStatus.PROPOSED.value,
+            )
+        )
+        out.append("no_verified_account" if proposed is not None else "no_bank_details")
     return out
 
 

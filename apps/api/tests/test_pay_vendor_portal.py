@@ -495,7 +495,7 @@ async def test_bank_change_is_only_a_request(
         owner_engine,
         fworld.org_id,
         "SELECT status, source, requested_by_type FROM pay_bank_change_tickets "
-        "WHERE vendor_id = :v",
+        "WHERE vendor_id = :v AND status <> 'completed'",
         {"v": vendor_id},
     )
     assert ticket.source == "vendor_portal"
@@ -552,7 +552,8 @@ async def test_the_portal_never_chooses_the_call_back_number(
     (ticket,) = await owner_rows(
         owner_engine,
         fworld.org_id,
-        "SELECT id, phone_recently_changed FROM pay_bank_change_tickets WHERE vendor_id = :v",
+        "SELECT id, phone_recently_changed FROM pay_bank_change_tickets "
+        "WHERE vendor_id = :v AND status <> 'completed'",
         {"v": vendor_id},
     )
     assert ticket.phone_recently_changed is False
@@ -589,7 +590,10 @@ async def test_credit_note_through_intake_reduces_what_is_paid(
     assert {"arithmetic", "duplicates"} <= set(checks)
     tickets = await flow.ok("GET", "/v1/pay/bank-changes", fworld, "clerk")
     items = tickets["items"] if isinstance(tickets, dict) else tickets
-    assert [t for t in items if t.get("vendor_id") == vendor_id] == []
+    # (The vendor's own first details completed a ticket when it was created, M-03.)
+    assert [
+        t for t in items if t.get("vendor_id") == vendor_id and t.get("status") != "completed"
+    ] == []
     # Never sent for approval or paid.
     refused = await flow.call(
         "POST", f"/v1/pay/invoices/{credit_id}/submit", fworld, "clerk", json={"note": "x"}

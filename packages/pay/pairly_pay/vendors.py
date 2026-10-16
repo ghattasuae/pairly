@@ -9,10 +9,10 @@
   decrypted) or a similar name (``pairly_pay.dedupe``). Staff creation refuses the same
   TRN or IBAN outright, and a similar name unless the person says it is not a
   duplicate; an onboarding submission is kept with the hints for the AP review.
-* ``create_vendor``: the vendor row, its first bank account and the audit event. A
-  vendor a person creates gets its account ``active`` at once (no payment can have been
-  made yet); details a vendor sends through the onboarding form start ``proposed``
-  and only become active through a verified change ticket (``pairly_pay.bank_changes``).
+* ``create_vendor``: the vendor row, its first bank account and the audit event. Bank
+  details always start ``proposed``, whoever entered them, and only become active
+  through a verified change ticket (``pairly_pay.bank_changes``): a person creating a
+  vendor opens one at once (security review 2026-10, M-03).
   The phone number on that form is only ``phone_claimed``: the number on file is the
   one AP records from an independent source when it accepts the onboarding (M-05).
 * ``risk_profile`` (brief 4.1.5): record age, recent bank changes, a recent change of
@@ -404,8 +404,9 @@ async def create_vendor(
     await session.flush()
     account: PayVendorBankAccount | None = None
     if bank is not None:
-        initial = AccountStatus.ACTIVE if source is VendorSource.STAFF else AccountStatus.PROPOSED
-        account = new_account(vendor, bank, initial, by, now)
+        # Never active here, whoever entered them: only a verified change ticket
+        # activates details (M-03).
+        account = new_account(vendor, bank, AccountStatus.PROPOSED, by, now)
         session.add(account)
         await session.flush()
     await audit(
@@ -547,6 +548,9 @@ async def risk_profile(
             .where(
                 PayBankChangeTicket.vendor_id == vendor.id,
                 PayBankChangeTicket.created_at >= since,
+                # A change of details on file: the verification of a new vendor's first
+                # details (M-03, onboarding) is not one; ``new_vendor`` covers it.
+                PayBankChangeTicket.previous_account_id.is_not(None),
             )
             .group_by(PayBankChangeTicket.status)
         )

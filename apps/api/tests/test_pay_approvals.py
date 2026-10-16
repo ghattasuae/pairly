@@ -194,7 +194,12 @@ async def test_rules_route_by_department_category_and_risk(
     assert invoice_rules["active"]["version"] == 1
     assert "marketing_budget" in invoice_rules["active"]["content"]
     assert [v["version"] for v in invoice_rules["versions"]] == [1]
-    assert by_type["pay.bank_change"]["active"] is None
+    # The bank-change rules were never edited: in force are the defaults (they become a
+    # version the first time a change runs, here when the vendors were created, M-03).
+    bank_rules = by_type["pay.bank_change"]["active"]
+    assert (
+        bank_rules is None or bank_rules["content"] == by_type["pay.bank_change"]["default_content"]
+    )
     assert by_type["pay.payment_run"]["active"] is None
     assert "finance_controller" in by_type["pay.payment_run"]["default_content"]
     assert "dual_control" in by_type["pay.bank_change"]["default_content"]
@@ -388,8 +393,15 @@ async def test_approve_from_a_signed_email_link(
     flow: Flow, fworld: PayWorld, owner_engine: AsyncEngine
 ) -> None:
     invoice_id, _ = await ready_invoice(flow, fworld, CLEAN)
-    submitted = await submit(flow, fworld, invoice_id)
     fake = FakeEmailTransport()
+    # Deliver what came before (the new vendor's bank-detail approval, M-03) first.
+    await deliver_org(
+        create_sessionmaker(flow.engine),
+        fworld.org_id,
+        Transports(settings=notify_settings(), email=fake, slack=FakeSlackTransport()),
+    )
+    fake.sent.clear()
+    submitted = await submit(flow, fworld, invoice_id)
     await deliver_org(
         create_sessionmaker(flow.engine),
         fworld.org_id,
@@ -490,7 +502,7 @@ async def test_slack_approve_opens_the_web_confirmation_page(
         for r, c in await notifications(
             create_sessionmaker(flow.engine), fworld.org_id, channel="slack"
         )
-        if r.recipient_user_id == fworld.id("approver")
+        if r.recipient_user_id == fworld.id("approver") and approval_id in json.dumps(c)
     ]
     (actions,) = [b for b in content["blocks"] if b["type"] == "actions"]
     buttons = {e["action_id"]: e for e in actions["elements"]}

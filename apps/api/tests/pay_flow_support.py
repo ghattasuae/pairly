@@ -46,7 +46,7 @@ from pairly_pay.recordings import import_pay_recordings
 from .conftest import DbUrls, TokenFactory, make_settings
 from .hire_support import ingestion_settings
 from .notify_support import approval_hooks, notify_settings
-from .pay_support import PLUGINS, PayWorld, owner_rows, seed_pay_world, vendor_body
+from .pay_support import PLUGINS, PayWorld, new_vendor, owner_rows, seed_pay_world, vendor_body
 from .test_pay_invoices import MEDIA, blob, dataset, vendor_index
 
 FLOW_PEOPLE: dict[str, tuple[tuple[str, str | None], ...]] = {
@@ -204,14 +204,7 @@ async def make_vendor(
 ) -> str:
     truth = dataset().doc(doc_id).record.truth
     assert truth.vendor_id is not None
-    created = await flow.ok(
-        "POST",
-        "/v1/pay/vendors",
-        world,
-        "clerk",
-        status=201,
-        json=vendor_body(vendor_index(truth.vendor_id), **overrides),
-    )
+    created = await new_vendor(flow, world, vendor_body(vendor_index(truth.vendor_id), **overrides))
     if age_days and owner is not None:
         await owner_rows(
             owner,

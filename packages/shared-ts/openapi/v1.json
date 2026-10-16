@@ -17734,6 +17734,34 @@
         "title": "PayCallbackOut",
         "type": "object"
       },
+      "PayCallbackSourceIn": {
+        "additionalProperties": false,
+        "description": "Where AP took the call-back number from, independently of whoever asked for the\nbank details (security review 2026-10, M-05): the kind of source and a reference to\nit (a licence number and registry, the contract, the letter). Both required.",
+        "properties": {
+          "reference": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reference",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "trade_licence",
+              "signed_contract",
+              "prior_correspondence",
+              "official_registry"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "reference"
+        ],
+        "title": "PayCallbackSourceIn",
+        "type": "object"
+      },
       "PayCancelIn": {
         "additionalProperties": false,
         "properties": {
@@ -27553,6 +27581,16 @@
               }
             ],
             "title": "Phone On File"
+          },
+          "phone_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayCallbackSourceIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "trade_licence": {
             "anyOf": [

@@ -6,8 +6,10 @@
 * ``POST /vendors/check``                  validation and duplicate hints, no write
 * ``POST /vendors``                        create (``pay.vendor.write``). The same TRN or
   IBAN as another vendor is refused (409 ``vendor_duplicate``); a similar name is
-  refused unless ``acknowledge_similar``. Bank details a person enters are active at
-  once: the vendor is new, nothing was paid to it yet.
+  refused unless ``acknowledge_similar``. Bank details a person enters are never active
+  at once (security review 2026-10, M-03): they open a change ticket (needs
+  ``pay.bank_change.create``, the number on file and ``phone_source``), so the vendor is
+  held and unpayable until someone else calls that number and two people approve.
 * ``GET  /vendors/{id}``                   detail with accounts (masked), the risk
   profile, change tickets and, for a pending onboarding, the duplicate hints
 * ``PATCH /vendors/{id}``                  edit everything but the bank details (those
@@ -234,6 +236,18 @@ async def create(body: PayVendorIn, actor: CurrentActor, session: OrgSession) ->
         raise DuplicateVendorError("a vendor with the same TRN or IBAN already exists")
     if hints and not body.acknowledge_similar:
         raise DuplicateVendorError("a vendor with a similar name exists: check it first")
+    callback: Callback | None = None
+    if bank is not None:
+        # M-03: staff-entered bank details are never active at once. They open a change
+        # ticket like any other (hold, call back on an independently sourced number by
+        # someone else, dual approval, cooling-off).
+        authorize(actor, BANK_CHANGE_CREATE)
+        if phone is None or body.phone_source is None:
+            raise CallbackRequiredError(
+                "bank details for a new vendor need its phone number on file and where "
+                "it comes from (a trade licence, a signed contract, earlier "
+                "correspondence, an official registry) with a reference"
+            )
     vendor = await create_vendor(
         session,
         actor.org_id,
@@ -251,10 +265,24 @@ async def create(body: PayVendorIn, actor: CurrentActor, session: OrgSession) ->
             category=clean_text(body.category, 64) or None,
         ),
         by=By.of(actor),
-        bank=bank,
+        bank=None,
         source=VendorSource.STAFF,
         review_reasons=[f"similar_name:{h.reference}" for h in hints],
     )
+    if bank is not None:
+        assert body.phone_source is not None  # noqa: S101 (checked above)
+        callback = _record_callback_phone(
+            vendor, body.phone_source, actor, datetime.now(UTC), phone=phone
+        )
+        await open_ticket(
+            session,
+            vendor.id,
+            bank,
+            source=TicketSource.STAFF,
+            by=By.of(actor),
+            note="Bank details entered with the new vendor.",
+            callback=callback,
+        )
     return await vendor_detail(session, actor, vendor)
 
 

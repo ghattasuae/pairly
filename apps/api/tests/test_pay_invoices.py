@@ -64,6 +64,7 @@ from .pay_support import (
     PLUGINS,
     PayWorld,
     audit_actions,
+    new_vendor,
     owner_rows,
     retire_documents,
     seed_pay_world,
@@ -148,14 +149,7 @@ class Api:
         return await self.ok("GET", f"/v1/pay/invoices/{invoice_id}", world, name)
 
     async def vendor(self, world: PayWorld, synth_vendor_id: str) -> str:
-        created = await self.ok(
-            "POST",
-            "/v1/pay/vendors",
-            world,
-            "clerk",
-            status=201,
-            json=vendor_body(vendor_index(synth_vendor_id)),
-        )
+        created = await new_vendor(self, world, vendor_body(vendor_index(synth_vendor_id)))
         return str(created["id"])
 
 

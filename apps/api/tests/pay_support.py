@@ -242,6 +242,11 @@ def vendor_body(index: int = 0, **overrides: Any) -> dict[str, Any]:
             for c in v["contacts"]
         ],
         "phone_on_file": v["phone_on_file"],
+        # Where the number on file comes from (security review 2026-10, M-03).
+        "phone_source": {
+            "source": "trade_licence",
+            "reference": f"Trade licence {v['trade_licence']}",
+        },
         "email_domains": list(v["email_domains"]),
         "category": v["category"],
         "bank": {
@@ -284,3 +289,52 @@ def has_all(haystack: Sequence[str], *needles: str) -> bool:
 
 def iso(value: str) -> datetime:
     return datetime.fromisoformat(value)
+
+
+async def verify_new_vendor(
+    api: Any, world: PayWorld, vendor: dict[str, Any], *, verifier: str = "finance"
+) -> dict[str, Any]:
+    """Make a new vendor's staff-entered bank details active the way the product does
+    (security review 2026-10, M-03): the ticket that opened with the vendor is called
+    back by someone who neither entered the vendor nor recorded its number, and approved
+    by two people. No cooling-off (set on the ticket, so the world's settings stay).
+    ``api`` is any test client with ``client``, ``headers(world, name)``, ``ok`` and
+    ``engine``."""
+    ticket_id = vendor.get("open_ticket_id")
+    assert ticket_id, vendor
+    session = create_sessionmaker(api.engine)()
+    set_tenant(session, world.org_id, None)
+    async with session, session.begin():
+        await session.execute(
+            text("UPDATE pay_bank_change_tickets SET cooling_off_hours = 0 WHERE id = :t"),
+            {"t": ticket_id},
+        )
+    called = await api.client.post(
+        f"/v1/pay/bank-changes/{ticket_id}/calls",
+        json={
+            "result": "confirmed",
+            "notes": "Called the number on file.",
+            "called_number_on_file": True,
+        },
+        headers=api.headers(world, verifier),
+    )
+    assert called.status_code == 200, called.text
+    approval_id = called.json()["approval_id"]
+    assert approval_id, called.text
+    for who in ("approver", "approver2"):
+        decided = await api.client.post(
+            f"/v1/approvals/{approval_id}/decision",
+            json={"decision": "approve", "reason": "Checked the call record."},
+            headers={**api.headers(world, who), "Idempotency-Key": f"k-{uuid.uuid4().hex}"},
+        )
+        assert decided.status_code == 200, decided.text
+    done = await api.ok("GET", f"/v1/pay/vendors/{vendor['id']}", world, "clerk")
+    assert done["payment_hold"] is False, done
+    assert done["iban_masked"], done
+    return dict(done)
+
+
+async def new_vendor(api: Any, world: PayWorld, body: dict[str, Any]) -> dict[str, Any]:
+    """A vendor the AP clerk creates with bank details, verified and payable."""
+    created = await api.ok("POST", "/v1/pay/vendors", world, "clerk", status=201, json=body)
+    return await verify_new_vendor(api, world, dict(created))

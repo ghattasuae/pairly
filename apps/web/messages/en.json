@@ -3116,7 +3116,8 @@
         "iban": "same IBAN"
       },
       "noDuplicates": "No similar vendor found.",
-      "acknowledgeSimilar": "I checked the similar names and this is a different company."
+      "acknowledgeSimilar": "I checked the similar names and this is a different company.",
+      "bankVerified": "Bank details for a new vendor are never active at once. They wait in a change ticket, with payments held, until someone else calls the number on file and two people approve. Say where that number comes from."
     },
     "request": {
       "intro": "A change opens a locked ticket and holds every payment to this vendor until the change is verified by phone and approved by two people.",
@@ -3626,7 +3627,8 @@
       "payer_details_missing": "Add the paying account in the Pay settings first",
       "not_ready": "The invoice is not ready",
       "fully_credited": "Credit notes cover the whole invoice",
-      "discount_changed": "The early-payment discount changed since the proposal"
+      "discount_changed": "The early-payment discount changed since the proposal",
+      "no_verified_account": "The vendor's bank details are not verified yet"
     },
     "approval": {
       "title": "Approval and payment",

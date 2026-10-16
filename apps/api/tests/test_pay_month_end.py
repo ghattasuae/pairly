@@ -21,7 +21,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from .pay_flow_support import Flow, flow, fother, fworld
-from .pay_support import PayWorld, owner_rows, vendor_body
+from .pay_support import PayWorld, new_vendor, owner_rows, vendor_body
 from .test_pay_payment_runs import CLEAN, _approved
 
 __all__ = ["flow", "fother", "fworld"]  # fixtures
@@ -34,9 +34,7 @@ def _this_month() -> str:
 
 
 async def _po_with_receipt(flow: Flow, world: PayWorld) -> dict[str, Any]:
-    vendor = await flow.ok(
-        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(3)
-    )
+    vendor = await new_vendor(flow, world, vendor_body(3))
     po = await flow.ok(
         "POST",
         "/v1/pay/purchase-orders",

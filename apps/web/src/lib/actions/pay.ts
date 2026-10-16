@@ -74,7 +74,17 @@ const vendorFields = z.object({
   category: optional(64),
 });
 
-const vendorInput = vendorFields.extend({ bank: bankInput.optional() });
+const vendorInput = vendorFields.extend({
+  bank: bankInput.optional(),
+  // Where the number on file comes from: required with bank details (security review
+  // 2026-10, M-03), which then wait in a change ticket.
+  phone_source: z
+    .object({
+      source: z.enum(["trade_licence", "signed_contract", "prior_correspondence", "official_registry"]),
+      reference: z.string().trim().min(3).max(500),
+    })
+    .optional(),
+});
 
 export type PayBankInput = z.input<typeof bankInput>;
 export type PayVendorInput = z.input<typeof vendorInput>;

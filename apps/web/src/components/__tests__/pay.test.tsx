@@ -294,10 +294,16 @@ describe("VendorForm", () => {
     expect(await screen.findByText(/: similar name$/)).toBeInTheDocument();
     expect(screen.getByText("IBAN AE07 0331 2345 6789 0123 456 is valid (bank code 033).")).toBeInTheDocument();
     await user.click(screen.getByLabelText("I checked the similar names and this is a different company."));
+    // Bank details wait for a second person: the form asks where the number comes from.
+    expect(screen.getByText(/never active at once/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Phone number from that source")).toBeNull();
+    await user.selectOptions(screen.getByLabelText("Where it comes from"), "trade_licence");
+    await user.type(screen.getByLabelText("Reference"), "Licence 778899");
     await user.click(screen.getByRole("button", { name: "Create vendor" }));
     await waitFor(() => expect(created).toHaveBeenCalledWith("88888888-8888-4888-8888-888888888888"));
     const [input, acknowledged] = vi.mocked(pay.createVendor).mock.calls[0]!;
     expect(acknowledged).toBe(true);
+    expect(input.phone_source).toEqual({ source: "trade_licence", reference: "Licence 778899" });
     expect(input.bank?.iban).toBe(NEW_IBAN);
   });
 

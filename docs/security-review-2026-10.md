@@ -12,7 +12,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | H-02 | High | Malicious documents (D), batch URL intake | The batch URL fetcher decompressed response bodies (gzip, deflate, zstd) before the size limit: a decompression bomb against the shared API process | Fixed, `daca502` |
 | M-01 | Medium | Insider approval abuse | A delegation kept its seat after the delegator lost the role or left; the executor checked only the delegate | Fixed, `23d7670` |
 | M-02 | Medium | API key leakage, elevation | An API key kept every scope after its creator was moved to another role or removed | Fixed, `9690234` |
-| M-03 | Medium | BEC, insider | Bank details a staff member enters on a new vendor are active at once, with no second person | Open, proposed fix below |
+| M-03 | Medium | BEC, insider | Bank details a staff member enters on a new vendor are active at once, with no second person | Fixed |
 | M-04 | Medium | BEC, insider | The person who changed a vendor's phone number on file (staff) may then record the call back on that number | Fixed |
 | M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Fixed |
 | L-01 | Low | Recent change: response reuse | Reuse could pick a live decision replay (`replay_of`) once the original left the window | Fixed, `0e09c1f` |
@@ -66,11 +66,13 @@ No critical finding. Nothing found in: prompt injection reaching a model input o
 
 **Test.** `apps/api/tests/test_api_keys.py::test_a_key_never_outlives_its_creators_role`.
 
-### M-03 Staff vendor creation activates bank details at once (open)
+### M-03 Staff vendor creation activated bank details at once (fixed)
 
-`POST /v1/pay/vendors` with bank details makes them the active account (documented: "the vendor is new, nothing was paid to it yet"). One insider can create a vendor that copies a real one under a slightly different name with their own IBAN; duplicate checks refuse the same TRN or IBAN and warn on similar names, but `acknowledge_similar` passes. Payment still needs an approved invoice and a finance controller for the run, so it takes collusion or a careless approval.
+`POST /v1/pay/vendors` with bank details made them the active account (documented: "the vendor is new, nothing was paid to it yet"). One insider could create a vendor that copies a real one under a slightly different name with their own IBAN; duplicate checks refuse the same TRN or IBAN and warn on similar names, but `acknowledge_similar` passes. Payment still needed an approved invoice and a finance controller for the run, so it took collusion or a careless approval.
 
-**Proposed fix.** Create staff-entered bank details as `proposed` and activate them through the same ticket (call back plus dual approval), or at least require a second person with `pay.vendor.write` to confirm a new vendor before its first invoice can be approved.
+**Fix.** Bank details are never created active (`pairly_pay.vendors.create_vendor`, whoever enters them). Creating a vendor with bank details needs `pay.bank_change.create`, the phone number on file and `phone_source` (where the number comes from: trade licence, signed contract, earlier correspondence or an official registry, with a reference; 400 `callback_source_required` otherwise). The details then go through the existing bank-detail change workflow at once (`open_ticket`, source `staff`, requested by the creator): the vendor is held, someone who neither created the vendor nor recorded its number (M-04) calls that number, two other people approve, and the cooling-off applies. Until then the vendor has no verified account and cannot be paid: invoice approval, payment runs and the bank file export list `no_verified_account` as an explicit reason (`pairly_pay.payability`), besides the hold. The first-details ticket does not count as a "recent bank change request" in the risk profile (the `new_vendor` signal covers it). The web form asks for the source with the bank details. `make demo` puts its vendors through the same workflow.
+
+**Tests.** `apps/api/tests/test_pay_vendors.py`: `test_staff_bank_details_wait_for_a_second_person` (no source refused, a ticket and a hold, `no_verified_account`, the creator cannot verify, payable only after a second person and two approvals, no vendor with details without the bank-change permission) and `test_create_validate_encrypt_and_find_by_blind_index`; `test_pay_bank_changes.py::test_fewer_than_two_possible_approvers_fails_closed` (a new vendor's ticket fails closed too); the web `VendorForm` test. Every Pay suite now makes its vendors payable through this workflow (`pay_support.new_vendor`).
 
 ### M-04 The phone changer can verify on the new number (fixed)
 
@@ -119,7 +121,7 @@ H-02, L-04 and L-12 fixed. Read the sniffer, the sandbox limits (CPU, memory, ou
 
 ### BEC and vendor impersonation
 
-H-01 and L-10 fixed; M-03, M-04, M-05 open. Paths that could change bank details: staff creation (M-03), onboarding acceptance (ticket, M-05), the portal (request only, H-01), an invoice (ticket and hold), an extraction correction (payment always goes to the vendor's active account, `approved_account_id` and `approved_bank_digest`, re-checked at the payment run), the API (keys cannot hold `write`). There is no vendor CSV import.
+H-01, M-03, M-04, M-05 and L-10 fixed. Paths that could change bank details: staff creation (ticket, M-03), onboarding acceptance (ticket on an independently sourced number, M-05), the portal (request only, H-01), an invoice (ticket and hold), an extraction correction (payment always goes to the vendor's active account, `approved_account_id` and `approved_bank_digest`, re-checked at the payment run), the API (keys cannot hold `write`). There is no vendor CSV import.
 
 ### Insider approval abuse
 

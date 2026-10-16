@@ -344,6 +344,11 @@ def _vendor_body(vendor: Any) -> dict[str, Any]:
             for c in vendor.contacts
         ],
         "phone_on_file": vendor.phone_on_file,
+        # The number on file is taken from the vendor's trade licence (M-03).
+        "phone_source": {
+            "source": "trade_licence",
+            "reference": f"Trade licence {vendor.trade_licence or vendor.legal_name}",
+        },
         "email_domains": list(vendor.email_domains),
         "category": vendor.category,
         "bank": {
@@ -380,14 +385,26 @@ async def _vendor_ids(
 async def seed_vendors(
     api: PayApi, sessionmaker: async_sessionmaker[AsyncSession], ds: Dataset
 ) -> tuple[dict[str, uuid.UUID], list[str]]:
-    """The synthetic vendors by synth id, created by the AP clerk where missing."""
+    """The synthetic vendors by synth id, created by the AP clerk where missing. Their
+    bank details go through the change workflow like any new vendor's (security review
+    2026-10, M-03): the admin calls the number on file, two people approve, and no
+    cooling-off applies while the demo is seeded."""
     known = await _vendor_ids(sessionmaker, api.org_id)
     created: list[uuid.UUID] = []
-    for vendor in ds.vendors:
-        if vendor.legal_name in known:
-            continue
-        body = await api.ok("POST", "/v1/pay/vendors", CLERK, status=201, json=_vendor_body(vendor))
-        created.append(uuid.UUID(str(body["id"])))
+    await api.ok("PUT", "/v1/pay/settings", ADMIN, json={"cooling_off_hours": 0})
+    try:
+        for vendor in ds.vendors:
+            if vendor.legal_name in known:
+                continue
+            body = await api.ok(
+                "POST", "/v1/pay/vendors", CLERK, status=201, json=_vendor_body(vendor)
+            )
+            created.append(uuid.UUID(str(body["id"])))
+            await _verify_new_vendor(api, sessionmaker, str(body["open_ticket_id"]))
+    finally:
+        await api.ok(
+            "PUT", "/v1/pay/settings", ADMIN, json={"cooling_off_hours": DEFAULT_COOLING_OFF_HOURS}
+        )
     if created:
         # On file for a year: an established vendor, not a "new vendor" signal. (The
         # bank accounts stay as they are: their details are locked by the database.)
@@ -405,6 +422,30 @@ async def seed_vendors(
     if len(by_synth) != len(ds.vendors):
         raise SeedError("not every synthetic vendor is on file")
     return by_synth, [f"pay vendors: {len(created)} created, {len(by_synth)} on file"]
+
+
+async def _verify_new_vendor(
+    api: PayApi, sessionmaker: async_sessionmaker[AsyncSession], ticket_id: str
+) -> None:
+    """A new vendor's bank details: verified by the admin (not the clerk who entered
+    them) on the number on file, then approved by two people."""
+    path = f"/v1/pay/bank-changes/{ticket_id}"
+    current = await api.ok(
+        "POST",
+        f"{path}/calls",
+        ADMIN,
+        json={
+            "result": "confirmed",
+            "notes": "Called the number on the trade licence; the vendor confirmed.",
+            "called_number_on_file": True,
+        },
+    )
+    if not current.get("approval_id"):
+        raise SeedError(f"bank-detail change {ticket_id} did not start its approval")
+    await approve_all(api, sessionmaker, str(current["approval_id"]))
+    done = await api.ok("GET", path, ADMIN)
+    if done["status"] != "completed":
+        raise SeedError(f"bank-detail change {ticket_id} is {done['status']}")
 
 
 # ------------------------------------------------------------------ GL coding

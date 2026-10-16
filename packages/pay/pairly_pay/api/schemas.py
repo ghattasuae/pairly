@@ -77,7 +77,11 @@ class PayVendorFields(_In):
 
 
 class PayVendorIn(PayVendorFields):
+    # Never active at once: the details go through a change ticket (call back, dual
+    # approval, cooling-off; security review 2026-10, M-03), which needs the number on
+    # file and where it comes from (``phone_source``).
     bank: PayBankIn | None = None
+    phone_source: PayCallbackSourceIn | None = None
     # The person checked the similar names shown and this is a different company.
     acknowledge_similar: bool = False
 

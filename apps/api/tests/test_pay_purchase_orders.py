@@ -22,6 +22,7 @@ from .pay_support import (
     PayApi,
     PayWorld,
     audit_actions,
+    new_vendor,
     other,
     owner_rows,
     pay_api,
@@ -33,9 +34,7 @@ __all__ = ["other", "pay_api", "world"]  # fixtures
 
 
 async def _vendor(api: PayApi, world: PayWorld, index: int = 0) -> dict[str, Any]:
-    created = await api.ok(
-        "POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(index)
-    )
+    created = await new_vendor(api, world, vendor_body(index))
     assert isinstance(created, dict)
     return created
 

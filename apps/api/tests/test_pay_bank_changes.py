@@ -42,6 +42,7 @@ from .pay_support import (
     PayWorld,
     audit_actions,
     has_all,
+    new_vendor,
     other,
     other_bank,
     owner_rows,
@@ -57,9 +58,7 @@ REQUEST_PHONE = "+971 50 999 0000"
 
 
 async def _vendor(api: PayApi, world: PayWorld, index: int = 0) -> dict[str, Any]:
-    return dict(
-        await api.ok("POST", "/v1/pay/vendors", world, "clerk", status=201, json=vendor_body(index))
-    )
+    return await new_vendor(api, world, vendor_body(index))
 
 
 async def _open(
@@ -498,8 +497,11 @@ async def test_fewer_than_two_possible_approvers_fails_closed(
             "approver": (("approver", "pay"),),
         },
     )
-    vendor = await _vendor(api, small)
-    ticket = await _open(api, small, vendor)
+    # A new vendor's details (M-03): the ticket opens with the vendor.
+    vendor = await api.ok(
+        "POST", "/v1/pay/vendors", small, "clerk", status=201, json=vendor_body(0)
+    )
+    ticket = {"id": vendor["open_ticket_id"]}
     response = await _call(api, small, ticket, "confirmed")
     assert response.status_code == 200
     body = response.json()

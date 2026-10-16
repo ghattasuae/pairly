@@ -12014,6 +12014,21 @@ export type components = {
             /** Source */
             source: string;
         };
+        /**
+         * PayCallbackSourceIn
+         * @description Where AP took the call-back number from, independently of whoever asked for the
+         *     bank details (security review 2026-10, M-05): the kind of source and a reference to
+         *     it (a licence number and registry, the contract, the letter). Both required.
+         */
+        PayCallbackSourceIn: {
+            /** Reference */
+            reference: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "trade_licence" | "signed_contract" | "prior_correspondence" | "official_registry";
+        };
         /** PayCallIn */
         PayCallIn: {
             /** Called Number On File */
@@ -15152,6 +15167,7 @@ export type components = {
             legal_name_ar?: string | null;
             /** Phone On File */
             phone_on_file?: string | null;
+            phone_source?: components["schemas"]["PayCallbackSourceIn"] | null;
             /** Trade Licence */
             trade_licence?: string | null;
             /** Trade Name */

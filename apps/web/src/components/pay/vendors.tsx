@@ -17,6 +17,7 @@ import { checkVendor, createVendor, type PayVendorInput } from "@/lib/actions/pa
 import { COUNTRIES, groupIban } from "@/lib/pay/format";
 import type { PayVendorCheck, PayVendorSummary } from "@/lib/pay/types";
 
+import { CallbackSourceFields, type CallbackSourceName } from "./callback-source";
 import { ErrorText, HoldBadge, VendorStatusBadge } from "./common";
 
 interface FormState {
@@ -37,6 +38,8 @@ interface FormState {
   account_name: string;
   bank_name: string;
   swift: string;
+  phone_source: CallbackSourceName | "";
+  phone_reference: string;
 }
 
 const EMPTY: FormState = {
@@ -57,6 +60,8 @@ const EMPTY: FormState = {
   account_name: "",
   bank_name: "",
   swift: "",
+  phone_source: "",
+  phone_reference: "",
 };
 
 function toInput(f: FormState): PayVendorInput {
@@ -74,6 +79,7 @@ function toInput(f: FormState): PayVendorInput {
       : [],
     email_domains: f.email_domain ? [f.email_domain] : [],
     ...(f.iban ? { bank: { iban: f.iban, account_name: f.account_name, bank_name: f.bank_name, swift: f.swift } } : {}),
+    ...(f.iban && f.phone_source ? { phone_source: { source: f.phone_source, reference: f.phone_reference } } : {}),
   };
 }
 
@@ -219,6 +225,16 @@ export function VendorForm({ onCreated }: { onCreated: (id: string) => void }) {
           <p className="text-xs text-muted-foreground sm:col-span-2" dir="ltr">
             {groupIban(form.iban)}
           </p>
+        )}
+        {form.iban && (
+          <div className="space-y-3 sm:col-span-2" data-new-vendor-bank>
+            <p className="text-sm text-muted-foreground">{t("bankVerified")}</p>
+            <CallbackSourceFields
+              withPhone={false}
+              value={{ phone: form.phone_on_file, source: form.phone_source, reference: form.phone_reference }}
+              onChange={(v) => setForm((f) => ({ ...f, phone_source: v.source, phone_reference: v.reference }))}
+            />
+          </div>
         )}
       </fieldset>
       {check && <CheckResult check={check} />}

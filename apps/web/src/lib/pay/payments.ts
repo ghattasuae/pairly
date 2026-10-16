@@ -37,6 +37,7 @@ export const BLOCKER_CODES = [
   "vendor_held",
   "bank_change_open",
   "no_bank_details",
+  "no_verified_account",
   "checks_stale",
   "checks_failed",
   "checks_missing",
