@@ -36,7 +36,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pairly_core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError
 from pairly_core.identity import Context, CurrentActor, OrgSession, RequestSession
 from pairly_core.rbac import Actor, ActorKind, authorize
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.api.common import model_router
 from pairly_hire.interviewing import debrief as debriefs
 from pairly_hire.interviewing import kits, links, scorecards
@@ -527,14 +527,8 @@ _LIMITS = {"link": (30, 3600.0), "session": (600, 3600.0)}
 _NO_STORE = {"Cache-Control": "no-store"}
 
 
-def _hit(request: Request, kind: str, key: str) -> None:
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_scorecard_limiters", None
-    )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in _LIMITS.items()}
-        request.app.state.hire_scorecard_limiters = store
-    store[kind].hit(key)
+async def _hit(request: Request, kind: str, key: str) -> None:
+    await limiters(request, "hire_scorecard_limiters", _LIMITS, "hire.scorecards")[kind].hit(key)
 
 
 class HireScorecardTokenIn(BaseModel):
@@ -554,7 +548,7 @@ class HireScorecardLaterOut(BaseModel):
 
 async def scorecard_identity(request: Request, session: RequestSession) -> links.ScorecardIdentity:
     identity = await links.authenticate(session, request.headers.get(SESSION_HEADER))
-    _hit(request, "session", str(identity.session_id))
+    await _hit(request, "session", str(identity.session_id))
     return identity
 
 
@@ -565,7 +559,7 @@ ScorecardSession = Annotated[links.ScorecardIdentity, Depends(scorecard_identity
 async def open_scorecard(
     body: HireScorecardTokenIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "link", client_ip(request))
+    await _hit(request, "link", client_ip(request))
     opened = await links.open_session(session, body.token)
     out = HireScorecardSessionOut(session_token=opened.token, expires_at=opened.expires_at)
     return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)
@@ -576,7 +570,7 @@ async def later_from_link(
     body: HireScorecardTokenIn, request: Request, session: RequestSession
 ) -> JSONResponse:
     """The "remind me later" link of a reminder: one click, single use."""
-    _hit(request, "link", client_ip(request))
+    await _hit(request, "link", client_ip(request))
     link = await links.use_link(session, links.LATER_PREFIX, body.token)
     row = await scorecards.snooze(session, link.interview_id, link.user_id)
     assert row.snoozed_until is not None  # noqa: S101 (just set)

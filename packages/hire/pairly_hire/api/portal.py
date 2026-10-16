@@ -69,7 +69,7 @@ from pairly_core.ingestion.models import DocumentSource
 from pairly_core.ingestion.service import AuditBy, RejectReason, TooLargeError, ingest_spooled
 from pairly_core.models import Organisation
 from pairly_core.notifications.service import Recipient, notify
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.api.common import web_url
 from pairly_hire.api.scheduling import env as scheduling_env
 from pairly_hire.careers import CareersOrg, careers_org
@@ -100,25 +100,15 @@ LIMITS: Final = {
 }
 
 
-def _limiter(request: Request, kind: str) -> SlidingWindowLimiter:
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_portal_limiters", None
-    )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in LIMITS.items()}
-        request.app.state.hire_portal_limiters = store
-    return store[kind]
-
-
-def _hit(request: Request, kind: str, key: str) -> None:
-    _limiter(request, kind).hit(key)
+async def _hit(request: Request, kind: str, key: str) -> None:
+    await limiters(request, "hire_portal_limiters", LIMITS, "hire.portal")[kind].hit(key)
 
 
 async def portal_identity(request: Request, session: RequestSession) -> auth.PortalIdentity:
     """The candidate behind the ``X-Pairly-Portal-Session`` header (401 otherwise); the
     database session is bound to their organisation and to them (both RLS layers)."""
     identity = await auth.authenticate(session, request.headers.get(PORTAL_HEADER))
-    _hit(request, "read", str(identity.candidate_id))
+    await _hit(request, "read", str(identity.candidate_id))
     return identity
 
 
@@ -462,11 +452,11 @@ async def login_link(
     address: the request only hashes the address and schedules the sender, which looks
     the candidate up after the answer is sent (``send_login_link``)."""
     ip = client_ip(request)
-    _hit(request, "link_ip", ip)
+    await _hit(request, "link_ip", ip)
     email = normalize_email(body.email)
     if email is None:
         raise BadRequestError("please give a valid email address")
-    _hit(request, "link_email", f"{body.org}|{email}")
+    await _hit(request, "link_email", f"{body.org}|{email}")
     org = await _portal_org(session, body.org)
     if org is not None:
         job = LinkJob(
@@ -488,7 +478,7 @@ LINK_SENDER: list[Any] = [send_login_link]
 async def open_session(
     body: HirePortalTokenIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "session_ip", client_ip(request))
+    await _hit(request, "session_ip", client_ip(request))
     opened = await auth.open_session(session, body.token)
     out = HirePortalSessionOut(
         session_token=opened.token, expires_at=opened.expires_at, locale=opened.locale
@@ -547,7 +537,7 @@ async def withdraw(
     session: RequestSession,
 ) -> JSONResponse:
     del body  # ``confirm: true`` is required by the schema
-    _hit(request, "privacy", f"withdraw|{identity.candidate_id}")
+    await _hit(request, "privacy", f"withdraw|{identity.candidate_id}")
     await service.withdraw(session, identity, application_id)
     detail = await _detail(request, session, identity, application_id)
     return _no_store(detail.model_dump(mode="json"))
@@ -565,7 +555,7 @@ async def reply(
     identity: Portal,
     session: RequestSession,
 ) -> JSONResponse:
-    _hit(request, "reply", str(identity.candidate_id))
+    await _hit(request, "reply", str(identity.candidate_id))
     message = await service.reply(session, identity, application_id, body.text)
     return _no_store(_message_out(message).model_dump(mode="json"), 201)
 
@@ -582,7 +572,7 @@ async def upload_requested(
     session: RequestSession,
     background: BackgroundTasks,
 ) -> Any:
-    _hit(request, "upload", str(identity.candidate_id))
+    await _hit(request, "upload", str(identity.candidate_id))
     services = get_services(request)
     policy = services.settings.policy_for(WORKFLOW)
     row = await service.open_request(session, identity, request_id)
@@ -696,7 +686,7 @@ async def privacy(identity: Portal, session: RequestSession) -> JSONResponse:
 
 @router.get("/privacy/export")
 async def export(request: Request, identity: Portal, session: RequestSession) -> JSONResponse:
-    _hit(request, "privacy", f"export|{identity.candidate_id}")
+    await _hit(request, "privacy", f"export|{identity.candidate_id}")
     data = await service.export_data(session, identity)
     return JSONResponse(
         data,
@@ -711,7 +701,7 @@ async def export(request: Request, identity: Portal, session: RequestSession) ->
 async def deletion_request(
     body: HirePortalDeletionIn, request: Request, identity: Portal, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "privacy", f"delete|{identity.candidate_id}")
+    await _hit(request, "privacy", f"delete|{identity.candidate_id}")
     row, created = await service.request_deletion(session, identity, body.note)
     out = HirePortalDeletionOut(
         request=HirePortalDataRequestOut(
@@ -739,7 +729,7 @@ async def decision_receipt(
 async def appeal(
     body: HirePortalAppealIn, request: Request, identity: Portal, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "privacy", f"appeal|{identity.candidate_id}")
+    await _hit(request, "privacy", f"appeal|{identity.candidate_id}")
     view = await service.appeal(session, identity, body.decision_id, body.reason)
     out = HirePortalAppealOut(
         id=view.id,

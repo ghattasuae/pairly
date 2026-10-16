@@ -59,6 +59,7 @@ from pairly_core.ingestion.service import (
     record_rejection,
 )
 from pairly_core.models import Organisation
+from pairly_core.ratelimit import window_limiters
 from pairly_core.rbac import authorize
 from pairly_pay.api.schemas import (
     PayInviteCreatedOut,
@@ -108,7 +109,9 @@ _LIMITS: Final = {"open": (30, 3600.0), "session": (300, 3600.0), "files": (40, 
 
 
 class _Window:
-    """At most ``limit`` hits per key in any ``window`` seconds. Bounded memory."""
+    """At most ``limit`` hits per key in any ``window`` seconds, in this process. Bounded
+    memory. The routes use it as the local half of ``pairly_core.ratelimit``'s shared
+    limiter (``_hit``)."""
 
     def __init__(self, limit: int, window: float, max_keys: int = 50_000) -> None:
         self.limit, self.window, self.max_keys = limit, window, max_keys
@@ -157,12 +160,13 @@ def client_ip(request: Request) -> str:
     return peer or "unknown"
 
 
-def _hit(request: Request, kind: str, key: str) -> None:
-    store: dict[str, _Window] | None = getattr(request.app.state, "pay_onboarding_limiters", None)
-    if store is None:
-        store = {k: _Window(n, w) for k, (n, w) in _LIMITS.items()}
-        request.app.state.pay_onboarding_limiters = store
-    store[kind].hit(key)
+async def _hit(request: Request, kind: str, key: str) -> None:
+    """Shared limits (Valkey, with this process's window as the fallback; security
+    review 2026-10, L-03)."""
+    store = window_limiters(
+        request, "pay_onboarding_limiters", _LIMITS, "pay.onboarding", local=_Window
+    )
+    await store[kind].hit(key)
 
 
 # ------------------------------------------------------------------ the AP team
@@ -241,7 +245,7 @@ async def _vendor(
     request: Request, session: RequestSession
 ) -> tuple[VendorIdentity, PayVendorOnboardingSession]:
     identity, row = await authenticate(session, request.headers.get(SESSION_HEADER))
-    _hit(request, "session", str(identity.session_id))
+    await _hit(request, "session", str(identity.session_id))
     return identity, row
 
 
@@ -268,7 +272,7 @@ async def _page(
 
 @router.post("/public/vendor-onboarding/open", response_model=PayVendorSessionOut)
 async def open_link(body: PayTokenIn, request: Request, session: RequestSession) -> JSONResponse:
-    _hit(request, "open", client_ip(request))
+    await _hit(request, "open", client_ip(request))
     opened = await open_session(session, body.token)
     out = PayVendorSessionOut(session_token=opened.token, expires_at=opened.expires_at)
     return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)
@@ -285,7 +289,7 @@ async def page(request: Request, session: RequestSession) -> JSONResponse:
 )
 async def upload(request: Request, session: RequestSession, background: BackgroundTasks) -> Any:
     identity, row = await _vendor(request, session)
-    _hit(request, "files", str(identity.session_id))
+    await _hit(request, "files", str(identity.session_id))
     if len(row.document_ids) >= MAX_DOCUMENTS:
         raise ConflictError(f"at most {MAX_DOCUMENTS} documents")
     services = get_services(request)

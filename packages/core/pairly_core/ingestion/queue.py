@@ -58,6 +58,11 @@ class ArqJobQueue:
     def __init__(self, pool: Any) -> None:
         self._pool = pool
 
+    @property
+    def redis(self) -> Any:
+        """The arq pool (a ``redis.asyncio.Redis``), shared with the rate limits."""
+        return self._pool
+
     @classmethod
     async def connect(cls, redis_url: str) -> ArqJobQueue:
         from arq.connections import RedisSettings, create_pool

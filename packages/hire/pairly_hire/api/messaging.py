@@ -50,9 +50,10 @@ from pairly_core.identity import CurrentActor, OrgSession, RequestSession
 from pairly_core.llm.errors import ModelUnavailable
 from pairly_core.models import Organisation
 from pairly_core.notifications.templates import resolve_template
+from pairly_core.ratelimit import SharedWindowLimiter
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.api.common import model_router
 from pairly_hire.api.pipeline import links
 from pairly_hire.links import links_from_settings, read_prefs_token
@@ -635,18 +636,16 @@ async def put_messaging_settings(
 # ------------------------------------------------------------------ public preferences
 
 
-def _prefs_limiter(request: Request) -> SlidingWindowLimiter:
-    limiter = getattr(request.app.state, "hire_prefs_limiter", None)
-    if not isinstance(limiter, SlidingWindowLimiter):
-        limiter = SlidingWindowLimiter(*PREFS_LIMIT)
-        request.app.state.hire_prefs_limiter = limiter
-    return limiter
+def _prefs_limiter(request: Request) -> SharedWindowLimiter:
+    return limiters(request, "hire_prefs_limiter", {"prefs": PREFS_LIMIT}, "hire.messaging")[
+        "prefs"
+    ]
 
 
 async def _prefs_session(
     request: Request, session: AsyncSession, token: str
 ) -> tuple[uuid.UUID, uuid.UUID]:
-    _prefs_limiter(request).hit(client_ip(request))
+    await _prefs_limiter(request).hit(client_ip(request))
     config = links_from_settings(getattr(request.app.state, "notifications", None))
     if not config.secret:
         raise ServiceUnavailableError("preferences are not available here")

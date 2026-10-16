@@ -48,7 +48,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.api_keys.models import ApiKey
-from pairly_core.api_keys.ratelimit import RateLimiter
 from pairly_core.api_keys.tokens import (
     KeyMode,
     get_pepper,
@@ -66,6 +65,7 @@ from pairly_core.errors import (
     UnauthenticatedError,
 )
 from pairly_core.models import Membership, Organisation, Role
+from pairly_core.ratelimit import SharedRateLimiter
 from pairly_core.rbac import (
     Actor,
     ActorKind,
@@ -265,7 +265,7 @@ async def authenticate_api_key(
     token: str,
     *,
     org_header: uuid.UUID | None,
-    limiter: RateLimiter,
+    limiter: SharedRateLimiter,
     default_rate_limit: int,
 ) -> Actor:
     """The ``api_key`` actor for ``token``, with ``session`` bound to its organisation."""
@@ -304,7 +304,7 @@ async def authenticate_api_key(
     )
     if not permissions:
         raise ApiKeyCreatorInactiveError("ask an admin for a new key")
-    limiter.check(str(row.id), row.rate_limit_per_minute or default_rate_limit)
+    await limiter.check(str(row.id), row.rate_limit_per_minute or default_rate_limit)
     if row.last_used_at is None or now - row.last_used_at >= LAST_USED_RESOLUTION:
         await session.execute(
             update(ApiKey)

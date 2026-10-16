@@ -87,6 +87,7 @@ from pairly_core.ingestion.models import DocumentSource
 from pairly_core.ingestion.service import AuditBy, RejectReason, TooLargeError, ingest_spooled
 from pairly_core.models import Organisation
 from pairly_core.notifications.service import Recipient, notify
+from pairly_core.ratelimit import window_limiters
 from pairly_core.rbac import authorize
 from pairly_core.workflow.runtime import WorkflowRuntime
 from pairly_pay.api.onboarding import _Window, client_ip
@@ -127,14 +128,13 @@ UPLOAD_FIELDS: Final = frozenset({"document_type", "credit_for"})
 Runtime = Annotated[WorkflowRuntime, Depends(get_runtime)]
 
 
-def _hit(request: Request, kind: str, key: str) -> None:
-    store: dict[str, _Window] | None = getattr(
-        request.app.state, "pay_vendor_portal_limiters", None
+async def _hit(request: Request, kind: str, key: str) -> None:
+    """Shared limits (Valkey, with this process's window as the fallback; security
+    review 2026-10, L-03)."""
+    store = window_limiters(
+        request, "pay_vendor_portal_limiters", LIMITS, "pay.vendor_portal", local=_Window
     )
-    if store is None:
-        store = {k: _Window(n, w) for k, (n, w) in LIMITS.items()}
-        request.app.state.pay_vendor_portal_limiters = store
-    store[kind].hit(key)
+    await store[kind].hit(key)
 
 
 def web_url(request: Request) -> str:
@@ -149,7 +149,7 @@ async def portal_identity(request: Request, session: RequestSession) -> auth.Por
     """The contact behind the ``X-Pairly-Vendor-Portal`` header (401 otherwise); the
     database session is bound to their organisation and vendor (both RLS layers)."""
     identity = await auth.authenticate(session, request.headers.get(PORTAL_HEADER))
-    _hit(request, "read", str(identity.contact_id))
+    await _hit(request, "read", str(identity.contact_id))
     return identity
 
 
@@ -512,11 +512,11 @@ async def login_link(
     """The same answer, after the same work, whether or not the address has access: the
     request only checks the shape and schedules the sender, which looks the contact up
     after the answer is sent (``send_login_link``)."""
-    _hit(request, "link_ip", client_ip(request))
+    await _hit(request, "link_ip", client_ip(request))
     email = normalize_email(body.email)
     if email is None:
         raise BadRequestError("please give a valid email address")
-    _hit(request, "link_email", f"{body.org}|{email}")
+    await _hit(request, "link_email", f"{body.org}|{email}")
     org_id = auth.parse_hex_uuid(body.org)
     if org_id is not None:
         job = LinkJob(org_id=org_id, email=email, locale=body.locale, web_url=web_url(request))
@@ -528,7 +528,7 @@ async def login_link(
 async def open_session(
     body: PayPortalTokenIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "session_ip", client_ip(request))
+    await _hit(request, "session_ip", client_ip(request))
     opened = await auth.open_session(session, body.token)
     out = PayPortalSessionOut(
         session_token=opened.token, expires_at=opened.expires_at, locale=opened.locale
@@ -596,7 +596,7 @@ async def submit(
     background: BackgroundTasks,
 ) -> Any:
     authorize(identity.actor(), auth.PORTAL_SUBMIT)
-    _hit(request, "submit", str(identity.contact_id))
+    await _hit(request, "submit", str(identity.contact_id))
     services = get_services(request)
     policy = pay_policy(services.settings)
     by = AuditBy(identity.by.actor_type, identity.by.actor_id)
@@ -690,7 +690,7 @@ async def write_message(
     session: RequestSession,
 ) -> JSONResponse:
     authorize(identity.actor(), auth.PORTAL_MESSAGE)
-    _hit(request, "message", str(identity.contact_id))
+    await _hit(request, "message", str(identity.contact_id))
     await service.post_message(session, identity, invoice_id, body.text)
     detail = await _detail(session, identity, invoice_id)
     return _no_store(detail.model_dump(mode="json"), 201)
@@ -715,7 +715,7 @@ async def ask_for_review(
     """A human review of a decision about the vendor's own invoice: an appeal with the
     vendor as the requester, audited, with the Pay admins told of its deadline."""
     authorize(identity.actor(), auth.APPEAL_CREATE)
-    _hit(request, "appeal", str(identity.vendor_id))
+    await _hit(request, "appeal", str(identity.vendor_id))
     row = await service.own_invoice(session, identity, invoice_id)
     await appeals.appeal(session, identity, row, body.decision_id, body.reason)
     detail = await _detail(session, identity, invoice_id)
@@ -737,7 +737,7 @@ async def update_contacts(
     body: PayPortalContactsIn, request: Request, identity: Portal, session: RequestSession
 ) -> JSONResponse:
     authorize(identity.actor(), auth.PORTAL_UPDATE)
-    _hit(request, "update", str(identity.contact_id))
+    await _hit(request, "update", str(identity.contact_id))
     fields = body.model_fields_set
     update = service.ContactsUpdate(
         contacts=contacts_json(body.contacts) if body.contacts is not None else None,
@@ -755,7 +755,7 @@ async def bank_change(
     """New bank details are a request, never a change: a locked change ticket opens and
     the vendor's payments are held until AP verifies it by phone and two people approve."""
     authorize(identity.actor(), auth.PORTAL_UPDATE)
-    _hit(request, "bank", str(identity.vendor_id))
+    await _hit(request, "bank", str(identity.vendor_id))
     bank = check_bank(
         BankInput(
             iban=body.iban,

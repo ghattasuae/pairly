@@ -41,7 +41,6 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from pairly_core.api_keys.ratelimit import RateLimiter
 from pairly_core.api_keys.tokens import looks_like_api_key
 from pairly_core.audit import (
     INFO_REQUEST_ID,
@@ -62,6 +61,7 @@ from pairly_core.errors import (
     UnauthenticatedError,
 )
 from pairly_core.models import Membership, Organisation, Role, User
+from pairly_core.ratelimit import API_KEY_NAMESPACE, SharedRateLimiter
 from pairly_core.rbac import Actor, ActorKind, PermissionDeniedError, RoleGrant, RoleRegistry
 
 log = structlog.get_logger(__name__)
@@ -86,8 +86,11 @@ class AppContext:
     sessionmaker: async_sessionmaker[AsyncSession]
     verifier: TokenVerifier
     registry: RoleRegistry
-    # Per API key request rate limit (pairly_core.api_keys.ratelimit).
-    api_key_limiter: RateLimiter = field(default_factory=RateLimiter)
+    # Per API key request rate limit, shared by every API process through Valkey with
+    # this process's bucket as the fallback (pairly_core.ratelimit).
+    api_key_limiter: SharedRateLimiter = field(
+        default_factory=lambda: SharedRateLimiter(API_KEY_NAMESPACE)
+    )
 
 
 def get_context(request: Request) -> AppContext:

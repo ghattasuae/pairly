@@ -65,9 +65,10 @@ from pairly_core.errors import (
 )
 from pairly_core.identity import AppContext, Context, CurrentActor, OrgSession, RequestSession
 from pairly_core.integrations.calendar.base import CalendarError
+from pairly_core.ratelimit import SharedWindowLimiter
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.scheduling.availability import AvailabilityError, Interval, sociable, zone
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.api.common import web_url
 from pairly_hire.messaging.compose import Author
 from pairly_hire.models import HireJob
@@ -1148,21 +1149,15 @@ async def remove_zoom(actor: CurrentActor, session: OrgSession) -> HireCalendarI
 # ------------------------------------------------------------------ public (candidates)
 
 
-def _limiter(request: Request, kind: str) -> SlidingWindowLimiter:
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_schedule_limiters", None
-    )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in PUBLIC_LIMITS.items()}
-        request.app.state.hire_schedule_limiters = store
-    return store[kind]
+def _limiter(request: Request, kind: str) -> SharedWindowLimiter:
+    return limiters(request, "hire_schedule_limiters", PUBLIC_LIMITS, "hire.scheduling")[kind]
 
 
 async def _claimed(
     request: Request, session: AsyncSession, token: str, kind: str, *, lock: bool = False
 ) -> HireInterview:
     """The interview the token opens (409/410/404 otherwise; the session is bound)."""
-    _limiter(request, kind).hit(client_ip(request))
+    await _limiter(request, kind).hit(client_ip(request))
     secret = env(request).links.secret
     if not secret:
         raise ServiceUnavailableError("scheduling links are not available here")

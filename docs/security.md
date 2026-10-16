@@ -91,7 +91,7 @@ A candidate or vendor contact tries to see someone else's data, reuse a link, or
 | Magic links are single use, bound and expiring, and never work as a staff credential | `pairly_hire.portal`, `pairly_pay.portal` | `apps/api/tests/test_hire_portal.py` (`test_magic_link_signs_in_once_and_never_works_as_staff`), `test_pay_vendor_portal.py` (`test_magic_link_is_single_use_bound_and_never_a_staff_credential`) |
 | The sign-in answers known and unknown addresses the same way, so it does not reveal who applied | `pairly_hire.api.portal` | `test_hire_portal.py` (`test_login_link_answers_known_and_unknown_addresses_in_the_same_time`) |
 | Portal subjects and the portal guard (below) | `pairly_core.db.set_portal_subject`, migrations `0022`, `0023` | `apps/api/tests/test_portal_guard.py`, `test_hire_portal.py` (`test_candidates_never_reach_each_other`), `test_pay_vendor_portal.py` (`test_row_level_security_limits_a_portal_session_to_its_vendor`) |
-| Rate limits per address and per email, and a bot check, on public forms and portal sign-in requests | `pairly_hire.antispam`, `pairly_hire.api.portal`, `pairly_pay.api.vendor_portal` | `apps/api/tests/test_hire_apply.py` (`test_rate_limits_per_ip_and_per_email`, `test_consent_bot_check_and_disposable_email`) |
+| Rate limits per address and per email, and a bot check, on public forms and portal sign-in requests, shared by every API process (a token bucket in Valkey, the process's own window as the fallback, the stricter of the two wins) | `pairly_hire.antispam`, `pairly_hire.api.portal`, `pairly_pay.api.vendor_portal`, `pairly_core.ratelimit` | `apps/api/tests/test_hire_apply.py` (`test_rate_limits_per_ip_and_per_email`, `test_consent_bot_check_and_disposable_email`), `test_rate_limits.py` |
 
 ### API key leakage (S, I)
 
@@ -101,7 +101,7 @@ A key ends up in a log, a repository or a client.
 |---|---|---|
 | Only a keyed hash of the secret is stored (HMAC with a server pepper); the secret is shown once | `pairly_core.api_keys.tokens.hash_secret`, `verify_secret` | `test_api_keys_unit.py` (`test_hash_binds_prefix_and_secret`, `test_pepper_fails_closed_without_echoing_the_value`) |
 | A key can only read, propose and upload; scopes cannot exceed the creator's permissions, at creation and at every use (a key loses what its creator loses, and stops when they leave); keys expire and can be revoked | `pairly_core.api_keys.service.check_scopes`, `authenticate_api_key` | `apps/api/tests/test_api_keys.py` (`test_scope_rules`, `test_key_permissions_are_its_scopes_only`, `test_a_key_never_outlives_its_creators_role`, `test_invalid_and_expired_keys`) |
-| Per-key rate limit; every use is audited | `pairly_core.api_keys.ratelimit.RateLimiter` | `test_api_keys.py` (`test_rate_limit`, `test_use_audit_and_tenant_isolation`) |
+| Per-key rate limit, shared by every API process (Valkey, with the process's bucket as the fallback); every use is audited | `pairly_core.ratelimit.SharedRateLimiter`, `pairly_core.api_keys.ratelimit.RateLimiter` | `test_api_keys.py` (`test_rate_limit`, `test_the_rate_limit_holds_across_api_processes`, `test_use_audit_and_tenant_isolation`), `test_rate_limits.py` |
 | Test keys (`pk_test_`) only work in sandbox organisations | `pairly_core.api_keys.service` | `test_api_keys.py` (`test_test_keys_need_a_sandbox`) |
 | Secret scanning in CI (gitleaks); no secret has a default, and startup fails when one is missing | `.github/workflows/ci.yml`, `pairly_core.config` | `make ci-security`, `packages/core/tests/test_config.py`, `scripts/tests/test_gen_dev_env.py` |
 

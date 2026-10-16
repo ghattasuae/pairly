@@ -33,7 +33,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 from pairly_core.errors import ForbiddenError
 from pairly_core.identity import CurrentActor, OrgSession, RequestSession
 from pairly_core.rbac import Actor, ActorKind, authorize
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.api.interviewing import optional_router
 from pairly_hire.api.pipeline import links
 from pairly_hire.permissions import CANDIDATE_READ, REFERENCE_READ, REFERENCE_WRITE
@@ -55,14 +55,8 @@ def _user(actor: Actor) -> uuid.UUID:
     return actor.id
 
 
-def _hit(request: Request, kind: str, key: str) -> None:
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_reference_limiters", None
-    )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in _LIMITS.items()}
-        request.app.state.hire_reference_limiters = store
-    store[kind].hit(key)
+async def _hit(request: Request, kind: str, key: str) -> None:
+    await limiters(request, "hire_reference_limiters", _LIMITS, "hire.references")[kind].hit(key)
 
 
 # ------------------------------------------------------------------ the hiring team
@@ -290,7 +284,7 @@ async def referee_identity(
     request: Request, session: RequestSession
 ) -> referee_links.RefereeIdentity:
     identity = await referee_links.authenticate(session, request.headers.get(SESSION_HEADER))
-    _hit(request, "session", str(identity.session_id))
+    await _hit(request, "session", str(identity.session_id))
     return identity
 
 
@@ -317,7 +311,7 @@ async def _page(
 async def open_reference(
     body: HireRefereeTokenIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "link", client_ip(request))
+    await _hit(request, "link", client_ip(request))
     opened = await referee_links.open_session(session, body.token)
     out = HireRefereeSessionOut(session_token=opened.token, expires_at=opened.expires_at)
     return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)

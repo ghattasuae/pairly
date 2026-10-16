@@ -533,7 +533,7 @@ async def _answer(
     *,
     accept: bool,
 ) -> JSONResponse:
-    _hit(request, "reply", str(identity.candidate_id))
+    await _hit(request, "reply", str(identity.candidate_id))
     if body.confirm is not True:
         raise BadRequestError("confirm your answer")
     row = await _own_offer(session, identity, offer_id)

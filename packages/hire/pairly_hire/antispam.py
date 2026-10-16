@@ -10,9 +10,11 @@
   verifier the public apply routes answer 503 (fail closed).
 * ``is_disposable(email)``: the bundled disposable domain list
   (``data/disposable_domains.txt``, CC0), subdomains included.
-* ``SlidingWindowLimiter``: per IP request limits in process memory, bounded.
-  TODO(M6): a shared limiter in Valkey when the API runs replicated (the same note as
-  ``pairly_core.api_keys.ratelimit``). Per email limits are counted in the database
+* ``SlidingWindowLimiter``: per IP request limits in process memory, bounded. The
+  routes use it through ``limiters`` (``pairly_core.ratelimit.SharedWindowLimiter``):
+  every request also draws from a token bucket in Valkey shared by every API process,
+  and is refused when either refuses; with Valkey down the local window alone decides
+  (security review 2026-10, L-03). Per email limits are counted in the database
   (``pairly_hire.applying``), so they hold across processes.
 * ``client_ip(request)``: the socket peer, or the ``X-Pairly-Client-IP`` header when
   the peer is a trusted proxy (the web app's server, which sets it from the browser's
@@ -27,7 +29,7 @@ import math
 import os
 import time
 from collections import OrderedDict, deque
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from functools import cache
 from importlib.resources import files
 from typing import Final, Protocol, runtime_checkable
@@ -38,6 +40,7 @@ from fastapi import Request
 
 from pairly_core.config import Environment
 from pairly_core.errors import PairlyError, ServiceUnavailableError
+from pairly_core.ratelimit import SharedWindowLimiter, window_limiters
 
 log = structlog.get_logger("pairly_hire.antispam")
 
@@ -197,6 +200,15 @@ class SlidingWindowLimiter:
             retry = max(1, math.ceil(hits[0] + self.window - now))
             raise RateLimitedError(retry)
         hits.append(now)
+
+
+def limiters(
+    request: Request, attr: str, limits: Mapping[str, tuple[int, float]], namespace: str
+) -> dict[str, SharedWindowLimiter]:
+    """The shared limiters of one set of Hire routes (``await limiter.hit(key)``)."""
+    return window_limiters(
+        request, attr, limits, namespace, local=SlidingWindowLimiter, error=RateLimitedError
+    )
 
 
 # ------------------------------------------------------------------ client address

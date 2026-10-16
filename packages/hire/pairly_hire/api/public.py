@@ -66,7 +66,7 @@ from pairly_core.ingestion.service import (
     record_rejection,
 )
 from pairly_core.workflow.runtime import WorkflowRuntime
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip, verifier_for
+from pairly_hire.antispam import client_ip, limiters, verifier_for
 from pairly_hire.api.common import web_url
 from pairly_hire.applying import (
     SYSTEM_ACTOR,
@@ -116,20 +116,13 @@ def _notifications(request: Request) -> Any:
     return getattr(request.app.state, "notifications", None)
 
 
-def _limiter(request: Request, kind: str) -> SlidingWindowLimiter:
-    """Per-process limiters, one set per app (so each test app starts fresh)."""
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_limiters", None
-    )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in LIMITS.items()}
-        request.app.state.hire_limiters = store
-    return store[kind]
-
-
-def _limit(request: Request, kind: str, org_slug: str) -> str:
+async def _limit(request: Request, kind: str, org_slug: str) -> str:
+    """Shared limits (Valkey, with this process's window as the fallback), one set per
+    app (so each test app starts fresh)."""
     ip = client_ip(request)
-    _limiter(request, kind).hit(f"{ip}|{org_slug}" if kind != "read" else ip)
+    await limiters(request, "hire_limiters", LIMITS, "hire.public")[kind].hit(
+        f"{ip}|{org_slug}" if kind != "read" else ip
+    )
     return ip
 
 
@@ -301,7 +294,7 @@ class HireSubmitOut(BaseModel):
 
 @router.get("/{org_slug}", response_model=HireCareersOut)
 async def careers(org_slug: str, request: Request, session: RequestSession) -> Any:
-    _limit(request, "read", org_slug)
+    await _limit(request, "read", org_slug)
     org = await _bind(session, org_slug)
     locale = "ar" if request.query_params.get("locale") == "ar" else "en"
     jobs = await session.scalars(
@@ -331,7 +324,7 @@ async def _open_jobs(session: AsyncSession) -> list[HireJob]:
 
 @router.get("/{org_slug}/feed.json")
 async def feed_json(org_slug: str, request: Request, session: RequestSession) -> Any:
-    _limit(request, "read", org_slug)
+    await _limit(request, "read", org_slug)
     org = await _bind(session, org_slug)
     jobs = await _open_jobs(session)
     return _cached(json_feed(org, jobs, web_url(request), datetime.now(UTC)))
@@ -339,7 +332,7 @@ async def feed_json(org_slug: str, request: Request, session: RequestSession) ->
 
 @router.get("/{org_slug}/feed.xml", response_class=Response)
 async def feed_xml(org_slug: str, request: Request, session: RequestSession) -> Response:
-    _limit(request, "read", org_slug)
+    await _limit(request, "read", org_slug)
     org = await _bind(session, org_slug)
     jobs = await _open_jobs(session)
     return Response(
@@ -383,7 +376,7 @@ def _public_form(form: Any, knockouts: list[Any]) -> dict[str, Any]:
 async def job_detail(
     org_slug: str, job_slug: str, request: Request, session: RequestSession
 ) -> Any:
-    _limit(request, "read", org_slug)
+    await _limit(request, "read", org_slug)
     org = await _bind(session, org_slug)
     job = await _open_job(session, job_slug)
     form, _ = await current_form(session, job)
@@ -421,7 +414,7 @@ async def job_detail(
     response_model=HireApplyOut,
 )
 async def apply(org_slug: str, job_slug: str, request: Request, session: RequestSession) -> Any:
-    ip = _limit(request, "apply", org_slug)
+    ip = await _limit(request, "apply", org_slug)
     body = await _json_body(request, HireApplyIn, MAX_APPLY_BYTES)
     verifier = verifier_for(request, get_context(request).settings.env)
     org = await _bind(session, org_slug)
@@ -464,7 +457,7 @@ async def upload_file(
     session: RequestSession,
     background: BackgroundTasks,
 ) -> Any:
-    _limit(request, "files", org_slug)
+    await _limit(request, "files", org_slug)
     services = get_services(request)
     policy = services.settings.policy_for(WORKFLOW)
     org = await _bind(session, org_slug)
@@ -549,7 +542,7 @@ async def upload_file(
 async def submit(
     org_slug: str, request: Request, session: RequestSession, background: BackgroundTasks
 ) -> Any:
-    _limit(request, "submit", org_slug)
+    await _limit(request, "submit", org_slug)
     body = await _json_body(request, HireTokenIn, 1024)
     org = await _bind(session, org_slug)
     app = await application_for_token(session, body.token)

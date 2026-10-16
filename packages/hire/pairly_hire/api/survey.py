@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from pairly_core.identity import CurrentActor, OrgSession, RequestSession
 from pairly_core.rbac import authorize
-from pairly_hire.antispam import SlidingWindowLimiter, client_ip
+from pairly_hire.antispam import client_ip, limiters
 from pairly_hire.permissions import CANDIDATE_READ, SURVEY_READ
 from pairly_hire.survey import service
 
@@ -37,14 +37,10 @@ _LIMITS = {"view": (60, 3600.0), "answer": (20, 3600.0)}
 _NO_STORE = {"Cache-Control": "no-store"}
 
 
-def _hit(request: Request, kind: str) -> None:
-    store: dict[str, SlidingWindowLimiter] | None = getattr(
-        request.app.state, "hire_survey_limiters", None
+async def _hit(request: Request, kind: str) -> None:
+    await limiters(request, "hire_survey_limiters", _LIMITS, "hire.survey")[kind].hit(
+        client_ip(request)
     )
-    if store is None:
-        store = {k: SlidingWindowLimiter(n, w) for k, (n, w) in _LIMITS.items()}
-        request.app.state.hire_survey_limiters = store
-    store[kind].hit(client_ip(request))
 
 
 _Token = Annotated[str, StringConstraints(min_length=10, max_length=service.MAX_TOKEN)]
@@ -113,7 +109,7 @@ class HireSurveyNamedOut(BaseModel):
 async def view_survey(
     body: HireSurveyViewIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "view")
+    await _hit(request, "view")
     found = await service.open_form(session, body.token, body.locale)
     out = HireSurveyFormOut(
         company=found.company,
@@ -127,7 +123,7 @@ async def view_survey(
 async def answer_survey(
     body: HireSurveyAnswerIn, request: Request, session: RequestSession
 ) -> JSONResponse:
-    _hit(request, "answer")
+    await _hit(request, "answer")
     await service.answer(session, body.token, dict(body.answers), attach_name=body.attach_name)
     out = HireSurveyAnsweredOut(ok=True, named=body.attach_name)
     return JSONResponse(out.model_dump(mode="json"), headers=_NO_STORE)

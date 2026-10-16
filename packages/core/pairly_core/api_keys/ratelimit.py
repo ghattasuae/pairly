@@ -5,11 +5,11 @@
 Each key may burst up to its per-minute limit and refills at ``limit / 60`` requests per
 second. Over the limit the request gets 429 with ``Retry-After``.
 
-Scope: one limiter per API process. With several API processes the effective limit is
-``processes x limit`` (accepted for now). TODO(M6): a shared bucket in Valkey (an
-atomic Lua token bucket per key prefix) when the API runs replicated.
-The table is bounded (least recently used keys are dropped first), so many distinct keys
-cannot grow memory without limit.
+Scope: one limiter per API process. The routes use it as the local half of
+``pairly_core.ratelimit.SharedRateLimiter``, whose shared bucket in Valkey holds the
+limit across every API process (security review 2026-10, L-03); this one decides alone
+only while Valkey is down. The table is bounded (least recently used keys are dropped
+first), so many distinct keys cannot grow memory without limit.
 """
 
 from __future__ import annotations

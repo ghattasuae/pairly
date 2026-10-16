@@ -59,7 +59,6 @@ from pairly_api.uploads import (
     get_services,
     receive_batch,
 )
-from pairly_core.api_keys.ratelimit import RateLimiter
 from pairly_core.audit import actor_ref
 from pairly_core.batches.intake import DocumentIntake
 from pairly_core.batches.service import (
@@ -87,6 +86,7 @@ from pairly_core.ingestion.service import (
     record_rejection,
 )
 from pairly_core.ingestion.settings import IntakePolicy
+from pairly_core.ratelimit import BATCH_NAMESPACE, SharedRateLimiter, shared_buckets
 from pairly_core.rbac import Actor, ActorKind, authorize
 from pairly_core.webhooks.ssrf import UnsafeWebhookUrlError
 from pairly_core.workflow.runtime import WorkflowRuntime
@@ -175,11 +175,14 @@ def intake_registry(request: Request) -> dict[str, DocumentIntake]:
     return registry if isinstance(registry, dict) else {}
 
 
-def batch_limiter(request: Request) -> RateLimiter:
+def batch_limiter(request: Request) -> SharedRateLimiter:
+    """Batch items per actor a minute, shared by every API process (Valkey, with this
+    process's bucket as the fallback; security review 2026-10, L-03)."""
     limiter = getattr(request.app.state, "batch_limiter", None)
-    if not isinstance(limiter, RateLimiter):
-        limiter = RateLimiter()
+    if not isinstance(limiter, SharedRateLimiter):
+        limiter = SharedRateLimiter(BATCH_NAMESPACE)
         request.app.state.batch_limiter = limiter
+    limiter.buckets = shared_buckets(request)
     return limiter
 
 
@@ -515,7 +518,7 @@ async def submit_batch(
         if not 1 <= len(items) <= MAX_ITEMS:
             raise BadRequestError(f"a batch has 1 to {MAX_ITEMS} files or URLs")
         kind, ident = actor_ref(actor)
-        batch_limiter(request).check(
+        await batch_limiter(request).check(
             f"{kind.value}:{ident}", ctx.settings.batch_items_per_minute, cost=len(items)
         )
         view = await create_batch(session, actor, workflow=workflow, items=items, metadata=metadata)

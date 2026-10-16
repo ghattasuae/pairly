@@ -17,7 +17,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | M-05 | Medium | BEC | Vendor onboarding: the call-back number comes from the same form as the bank details | Open, proposed fix below |
 | L-01 | Low | Recent change: response reuse | Reuse could pick a live decision replay (`replay_of`) once the original left the window | Fixed, `0e09c1f` |
 | L-02 | Low | Supply chain | CI ran `uv sync` without `--locked` | Fixed, `1b9ec47` |
-| L-03 | Low | API keys, portals, public forms (D) | Rate limits live in each API process's memory | Open (known TODO) |
+| L-03 | Low | API keys, portals, public forms (D) | Rate limits live in each API process's memory | Fixed |
 | L-04 | Low | Malicious documents | A package declaring the plain DOCX type but carrying a VBA project or ActiveX parts was accepted | Fixed, `e7c36fc` |
 | L-05 | Low | Recent change: blind-placeholder credit | A visible part of two letters or digits ("of", "20") counts as evidence | Fixed |
 | L-06 | Low | Recorded mode | `find_recording` serves the newest row of a hash, which can be a live decision replay | Fixed |
@@ -88,7 +88,7 @@ A vendor invited to onboard enters its bank details and its phone number on the 
 
 * **L-01 (fixed).** `DatabaseCallStore.find_reusable` now also requires `replay_of IS NULL`. Test: `apps/api/tests/test_llm_router.py::test_reuse_never_crosses_orgs_or_reuses_a_replay`, which also checks on the real table that an identical request of another organisation reaches the model and never reuses.
 * **L-02 (fixed).** Every `uv sync` in `.github/workflows/ci.yml` uses `--locked`.
-* **L-03.** API key, portal and public form limits are per process (`pairly_core.api_keys.ratelimit`, `TODO(M6)` there): with N API processes the effective limit is N times the setting. Proposed fix: the Valkey token bucket the TODO describes, before the API runs replicated.
+* **L-03 (fixed).** API key, portal and public form limits were per process (`pairly_core.api_keys.ratelimit`, `TODO(M6)` there): with N API processes the effective limit was N times the setting. `pairly_core.ratelimit` adds a shared token bucket per key in Valkey (arq's connection; an atomic Lua script on the server's clock; keys hashed, so no address or IP sits in Valkey; a bucket expires once full again). Every limiter now counts each request in both the shared bucket and the in-process one and refuses when either refuses; while Valkey is down, slow (250 ms) or erroring, the local limiter alone decides and a 5 second breaker stops the retries, so a dead Valkey neither opens the limits nor slows every request. Covered: API keys and batch items (`SharedRateLimiter`), the candidate and vendor portals, magic links, the public apply flow, vendor onboarding, scorecard, reference, survey, scheduling and preference links (`SharedWindowLimiter`). Tests: `apps/api/tests/test_rate_limits.py` (two processes, one bucket; the stricter wins; Valkey down, slow and unreachable; hashed keys; on a real Valkey when `PAIRLY_TEST_REDIS_URL` is set) and `apps/api/tests/test_api_keys.py::test_the_rate_limit_holds_across_api_processes` (two apps, one key, one limit).
 * **L-04 (fixed).** `pairly_core.ingestion.sniff` treats a package with `vbaProject.bin`, `vbaData.xml` or `word/activeX/` parts as ZIP, so it is refused like a `.docm`. Test: `test_ingestion_unit.py::test_a_docx_that_carries_macros_or_activex_is_not_a_docx`.
 * **L-05 (fixed).** `EvidenceLocator.locate_visible` kept a visible part with two letters or digits ("of", or "20" cut from "2019"). Placeholder text itself was never evidence, so no protected marker leaked; the risk was a score above 0 with weak evidence. A visible part now counts only when it holds one real word (`_real_word`: a run of at least three letters or digits, any script) or is a complete number (`12`, `3.7`, `1,200`, `15%`, with no letter or digit right before or after it); anything shorter is dropped. Tests: `packages/core/tests/extraction_tests/test_evidence_visible.py` and `packages/hire/tests/test_screening_unit.py::test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_only` (two letters cut from a word and the start of a year earn nothing).
 * **L-06 (fixed).** Recorded mode replayed the newest row of a request hash with an output, which included a live decision replay, so a live replay changed what recorded runs returned. `DatabaseCallStore.find_recording` now requires `replay_of IS NULL`, as `find_reusable` and `pairly_core.llm.bundle` already did (the in-memory test stores do the same). Test: `apps/api/tests/test_llm_router.py::test_recorded_mode_never_serves_a_decision_replay`, on the real table (a hash whose only row is a replay has no recording).
@@ -127,7 +127,7 @@ H-01 and L-10 fixed. Tokens bind organisation, row and subject into a SHA-256 di
 
 ### API key leakage
 
-M-02 fixed, L-03 open. Keys are stored as a keyed hash, test keys work only in sandboxes and live keys never there, the organisation header must match the key's, and a key never holds approve, decide, manage or export.
+M-02 and L-03 fixed. Keys are stored as a keyed hash, test keys work only in sandboxes and live keys never there, the organisation header must match the key's, and a key never holds approve, decide, manage or export.
 
 ### Webhook SSRF and signatures
 

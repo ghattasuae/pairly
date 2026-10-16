@@ -31,10 +31,12 @@ from pairly_core.config import Environment
 from pairly_core.ingestion.queue import RecordingJobQueue
 from pairly_core.ingestion.settings import IngestionSettings
 from pairly_core.ingestion.storage import InMemoryObjectStore
+from pairly_core.ratelimit import API_KEY_NAMESPACE, SharedBuckets, SharedRateLimiter
 from pairly_pay.plugin import plugin as pay_plugin
 
 from .conftest import DbUrls, TokenFactory, make_settings
 from .policy_support import Org
+from .ratelimit_support import Clock, FakeValkey
 
 OTP = {"amr": ["otp"]}
 READ = "core.document.read"
@@ -407,6 +409,50 @@ async def test_rate_limit(api: Api, org: Org) -> None:
     assert limited.status_code == 429
     assert limited.json()["code"] == "rate_limited"
     assert int(limited.headers["retry-after"]) >= 1
+
+
+async def test_the_rate_limit_holds_across_api_processes(
+    api: Api, org: Org, migrated: DbUrls, tokens: TokenFactory, tmp_path: Path
+) -> None:
+    """Security review 2026-10, L-03: two API processes (two apps, each with its own
+    in-memory limiter) share one bucket per key in Valkey, so the key gets its limit
+    once, not once per process."""
+    clock = Clock()
+    shared = SharedBuckets(FakeValkey(clock), clock=clock)
+    api.app.state.pairly = dataclasses.replace(
+        api.app.state.pairly, api_key_limiter=SharedRateLimiter(API_KEY_NAMESPACE, buckets=shared)
+    )
+    services = DocumentServices(
+        settings=IngestionSettings(
+            env=Environment.TEST,
+            s3_bucket="test",
+            s3_access_key=SecretStr("test"),
+            s3_secret_key=SecretStr("test-secret"),
+            inbound_email_domain="inbound.pairly.localhost",
+        ),
+        store=InMemoryObjectStore(),
+        queue=RecordingJobQueue(),
+        tmp_dir=tmp_path,
+    )
+    other = create_app(make_settings(migrated.app), plugins=[pay_plugin], documents=services)
+    other.state.rate_buckets = shared
+    key, _ = await api.new_key(org, rate_limit_per_minute=3)
+    headers = {"Authorization": f"Bearer {key}"}
+    missing = f"/v1/documents/{uuid.uuid4()}"
+    async with other.router.lifespan_context(other):
+        assert other.state.pairly.api_key_limiter.buckets is shared
+        transport = httpx.ASGITransport(app=other)
+        async with httpx.AsyncClient(transport=transport, base_url="http://api.test") as second:
+            assert (await api.client.get(missing, headers=headers)).status_code == 404
+            assert (await second.get(missing, headers=headers)).status_code == 404
+            assert (await api.client.get(missing, headers=headers)).status_code == 404
+            # Each process saw at most two of the key's three a minute: the shared bucket
+            # refuses the fourth, in either process.
+            limited = await second.get(missing, headers=headers)
+            assert limited.status_code == 429, limited.text
+            assert limited.json()["code"] == "rate_limited"
+            assert int(limited.headers["retry-after"]) >= 1
+            assert (await api.client.get(missing, headers=headers)).status_code == 429
 
 
 # ------------------------------------------------------------------ Idempotency-Key
