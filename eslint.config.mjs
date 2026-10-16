@@ -20,6 +20,8 @@ export default defineConfig(
       "**/generated/**",
       // PDF.js worker and fonts copied from pdfjs-dist (apps/web/scripts/copy-pdfjs.mjs).
       "apps/web/public/pdfjs/**",
+      // The vendored Redoc bundle (make api-docs), third-party code kept byte for byte.
+      "infra/api-docs/vendor/**",
       ".venv/**",
     ],
   },
