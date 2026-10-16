@@ -12,12 +12,14 @@ vendor id itself (a second layer), so a missing policy can never widen what is s
   date and the expected payment date (the payment run's date once scheduled).
 * Messages with accounts payable, threaded per invoice (``pay_messages``): what AP sent
   to the vendor (sent emails and portal replies) and what the vendor's contacts wrote.
-* Contact details (the people at the vendor) change directly, audited. The phone number
-  on file never changes here: it is the number accounts payable calls back to confirm a
-  bank-detail change, so whoever holds a contact's mailbox (the usual foothold of a
-  business email compromise) must not be able to choose it. A portal request for a new
-  number is refused (``PhoneOnFileByApOnlyError``); accounts payable changes it after
-  confirming it with the vendor on the current number (security review 2026-10, H-01).
+* Contact details (the people at the vendor, their emails and phone numbers) are read
+  only here: accounts payable writes to those addresses, so whoever holds a contact's
+  mailbox (the usual foothold of a business email compromise) must not be able to add
+  or redirect one. A changed list is refused (``ContactsByApOnlyError``, nothing
+  written; security review 2026-10, L-10). The phone number on file never changes here
+  either: it is the number accounts payable calls back to confirm a bank-detail change.
+  A portal request for a new number is refused (``PhoneOnFileByApOnlyError``); accounts
+  payable changes it after confirming it with the vendor on the current number (H-01).
 * Bank details never change here: a request opens the locked change ticket of
   ``pairly_pay.bank_changes`` (source ``vendor_portal``), which holds payments until AP
   calls the number on file and two people approve.
@@ -44,7 +46,7 @@ from pairly_core.errors import BadRequestError, ConflictError, ForbiddenError, N
 from pairly_core.models import Organisation
 from pairly_pay.alerts import alert_portal_bank_change
 from pairly_pay.bank_changes import open_ticket
-from pairly_pay.common import VENDOR_ENTITY, audit, clean_text, new_reference, opened
+from pairly_pay.common import audit, clean_text, new_reference, opened
 from pairly_pay.models import (
     OPEN_TICKET_STATUSES,
     VISIBLE_TO_VENDOR,
@@ -72,7 +74,6 @@ from pairly_pay.vendors import (
     check_phone,
     contacts_of,
     phone_of,
-    seal_contacts,
 )
 
 MESSAGE_ENTITY: Final = "pay.message"
@@ -125,6 +126,19 @@ class PhoneOnFileByApOnlyError(ForbiddenError):
         super().__init__(
             "ask accounts payable to change the phone number on file; they confirm it "
             "with you on the current number first"
+        )
+
+
+class ContactsByApOnlyError(ForbiddenError):
+    """The vendor portal asked to add, remove or change a contact. Only accounts payable
+    changes them: AP messages go to those addresses (business email compromise)."""
+
+    code = "contacts_by_ap_only"
+    title = "Only accounts payable can change your contacts"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ask accounts payable to add or change a contact; they confirm it with you first"
         )
 
 
@@ -609,12 +623,12 @@ class ContactsUpdate:
 async def update_contacts(
     session: AsyncSession, identity: PortalIdentity, update: ContactsUpdate
 ) -> Details:
-    """Change the vendor's people directly (audited, field names only). A different
-    phone number on file is refused (``PhoneOnFileByApOnlyError``): the number AP calls
-    back on is never one the portal chose. Sending the current number is a no-op."""
-    vendor = await vendor_row(session, identity, lock=True)
-    now = datetime.now(UTC)
-    changed: list[str] = []
+    """Nothing the portal sends changes the vendor's contacts or its number on file.
+    A different contact list (a contact added, removed or with another email or phone)
+    is refused (``ContactsByApOnlyError``, L-10), and so is a different number on file
+    (``PhoneOnFileByApOnlyError``, H-01): accounts payable changes both. Sending what
+    is on file again is a no-op, so an older client still reads its details back."""
+    vendor = await vendor_row(session, identity)
     if update.change_phone:
         phone = check_phone(update.phone_on_file)
         if phone is None:
@@ -625,19 +639,7 @@ async def update_contacts(
         if len(update.contacts) > MAX_CONTACTS:
             raise BadRequestError(f"at most {MAX_CONTACTS} contacts")
         if update.contacts != contacts_of(vendor):
-            seal_contacts(vendor, update.contacts)
-            changed.append("contacts")
-    if changed:
-        vendor.updated_at = now
-        await session.flush()
-        await audit(
-            session,
-            identity.by,
-            "pay.vendor.updated",
-            entity_type=VENDOR_ENTITY,
-            entity_id=vendor.id,
-            payload={"fields": changed, "source": "vendor_portal"},
-        )
+            raise ContactsByApOnlyError()
     return await details(session, identity)
 
 

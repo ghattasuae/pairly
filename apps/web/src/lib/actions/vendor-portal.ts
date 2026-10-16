@@ -15,7 +15,6 @@ import { clearVendorPortalToken, setVendorPortalToken, vendorPortalCall } from "
 import {
   isVendorLoginToken,
   ORG_RE,
-  type VendorPortalDetails,
   type VendorPortalInvoice,
   type VendorPortalInvoiceDetail,
   type VendorPortalRequest,
@@ -93,32 +92,6 @@ export async function askForHumanReview(
     body: { decision_id: parsed.data.decisionId, reason: parsed.data.reason },
   });
   return result.ok ? { ok: true, invoice: result.data } : fail(result);
-}
-
-const contactSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  role: z.string().trim().max(80).nullable(),
-  email: z.string().trim().max(254).nullable(),
-  phone: z.string().trim().max(40).nullable(),
-});
-
-export async function updateVendorContacts(input: {
-  contacts: Array<z.infer<typeof contactSchema>>;
-}): Promise<ActionResult<{ details: VendorPortalDetails }>> {
-  const parsed = z
-    .object({ contacts: z.array(contactSchema).max(20) })
-    .safeParse(input);
-  if (!parsed.success) return bad;
-  const contacts = parsed.data.contacts.map((c) => ({
-    name: c.name,
-    role: c.role || null,
-    email: c.email || null,
-    phone: c.phone || null,
-  }));
-  // The phone number on file is accounts payable's to change, never the portal's.
-  const body: Record<string, unknown> = { contacts };
-  const result = await vendorPortalCall<VendorPortalDetails>("/v1/pay/vendor-portal/details/contacts", { method: "PUT", body });
-  return result.ok ? { ok: true, details: result.data } : fail(result);
 }
 
 export async function requestBankDetailChange(input: {

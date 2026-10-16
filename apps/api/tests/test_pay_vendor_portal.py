@@ -414,7 +414,59 @@ async def test_a_portal_bank_change_alerts_the_approvers_and_finance(
 # ------------------------------------------------------------------ details
 
 
-async def test_contact_update_is_audited_and_bank_change_is_only_a_request(
+async def test_the_portal_never_changes_contacts(
+    flow: Flow, fworld: PayWorld, owner_engine: AsyncEngine
+) -> None:
+    """Security review 2026-10, L-10. The mailbox attacker of H-01 signs in and adds their
+    own address as a contact (or swaps an existing contact's email or phone), so the
+    next message AP sends goes to them. The portal shows contacts and changes none."""
+    vendor_id = await make_vendor(flow, fworld, "inv-0001")
+    session = await _signed_in(flow, fworld, await _grant(flow, fworld, vendor_id))
+    before = (await flow.client.get(f"{PORTAL}/details", headers=session)).json()
+    assert before["contacts"]
+    first = before["contacts"][0]
+    attempts = [
+        [*before["contacts"], {"name": "Billing", "role": None, "email": "pay@attacker.example"}],
+        [{**first, "email": "pay@attacker.example"}, *before["contacts"][1:]],
+        [{**first, "phone": "+971 4 555 0199"}, *before["contacts"][1:]],
+        [{**first, "name": "Someone Else"}, *before["contacts"][1:]],
+        before["contacts"][1:],
+        [],
+    ]
+    for contacts in attempts:
+        refused = await flow.client.put(
+            f"{PORTAL}/details/contacts", json={"contacts": contacts}, headers=session
+        )
+        assert refused.status_code == 403, refused.text
+        assert refused.json()["code"] == "contacts_by_ap_only"
+    after = (await flow.client.get(f"{PORTAL}/details", headers=session)).json()
+    assert after["contacts"] == before["contacts"]
+    staff = await flow.ok("GET", f"/v1/pay/vendors/{vendor_id}", fworld, "clerk")
+    assert "pay@attacker.example" not in [c["email"] for c in staff["contacts"]]
+    # The list on file again changes nothing and writes nothing.
+    same = await flow.client.put(
+        f"{PORTAL}/details/contacts", json={"contacts": before["contacts"]}, headers=session
+    )
+    assert same.status_code == 200, same.text
+    assert same.json()["contacts"] == before["contacts"]
+    audit = await owner_rows(
+        owner_engine,
+        fworld.org_id,
+        "SELECT actor_type FROM audit_events WHERE entity_id = :v "
+        "AND action = 'pay.vendor.updated'",
+        {"v": vendor_id},
+    )
+    assert [r for r in audit if r.actor_type == "vendor"] == []
+    # Accounts payable still changes them.
+    added = [*staff["contacts"], {"name": "Sara Nasser", "role": "Accounts", "email": None}]
+    await flow.ok(
+        "PATCH", f"/v1/pay/vendors/{vendor_id}", fworld, "clerk", json={"contacts": added}
+    )
+    shown = (await flow.client.get(f"{PORTAL}/details", headers=session)).json()
+    assert [c["name"] for c in shown["contacts"]][-1] == "Sara Nasser"
+
+
+async def test_bank_change_is_only_a_request(
     flow: Flow, fworld: PayWorld, owner_engine: AsyncEngine
 ) -> None:
     vendor_id = await make_vendor(flow, fworld, "inv-0001")
@@ -422,23 +474,6 @@ async def test_contact_update_is_audited_and_bank_change_is_only_a_request(
     before = (await flow.client.get(f"{PORTAL}/details", headers=session)).json()
     assert before["phone_changed_at"] is None
     assert before["phone_masked"].startswith("••••")
-
-    contacts = [*before["contacts"], {"name": "Sara Nasser", "role": "Accounts", "email": None}]
-    changed = await flow.client.put(
-        f"{PORTAL}/details/contacts", json={"contacts": contacts}, headers=session
-    )
-    assert changed.status_code == 200, changed.text
-    after = changed.json()
-    assert [c["name"] for c in after["contacts"]][-1] == "Sara Nasser"
-    audit = await owner_rows(
-        owner_engine,
-        fworld.org_id,
-        "SELECT actor_type, payload FROM audit_events WHERE entity_id = :v "
-        "AND action = 'pay.vendor.updated'",
-        {"v": vendor_id},
-    )
-    assert audit[-1].actor_type == "vendor"
-    assert audit[-1].payload["fields"] == ["contacts"]
 
     # Bank details: a request that holds payments, never applied.
     account_before = before["account"]["iban_masked"]

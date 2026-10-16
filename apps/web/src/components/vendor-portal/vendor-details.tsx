@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { ArrowLeft, Landmark, Loader2, Plus, ShieldAlert, ShieldCheck, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Landmark, Loader2, ShieldAlert, ShieldCheck, Users } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import type * as React from "react";
 import { useId, useState } from "react";
@@ -12,33 +12,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
-import { requestBankDetailChange, updateVendorContacts } from "@/lib/actions/vendor-portal";
+import { requestBankDetailChange } from "@/lib/actions/vendor-portal";
 import type { VendorPortalDetails } from "@/lib/vendor-portal/types";
 
 const KNOWN_ERRORS = new Set(["not_signed_in", "rate_limited", "conflict", "invalid_input"]);
 
-interface ContactRow {
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-}
-
 export interface VendorDetailsActions {
-  update: typeof updateVendorContacts;
   requestChange: typeof requestBankDetailChange;
 }
 
-const DEFAULT_ACTIONS: VendorDetailsActions = { update: updateVendorContacts, requestChange: requestBankDetailChange };
-
-function rows(details: VendorPortalDetails): ContactRow[] {
-  return details.contacts.map((c) => ({ name: c.name, role: c.role ?? "", email: c.email ?? "", phone: c.phone ?? "" }));
-}
+const DEFAULT_ACTIONS: VendorDetailsActions = { requestChange: requestBankDetailChange };
 
 /**
  * The vendor's verified details (brief 5.1 item 11) as accounts payable keeps them, with
- * the bank account masked, the open change requests, contact details the vendor changes
- * directly, and a bank detail change, which is only ever a request: payments are held
+ * the bank account masked, the open change requests, the contacts (read only: accounts
+ * payable writes to those addresses, so only it changes them; security review 2026-10,
+ * L-10), and a bank detail change, which is only ever a request: payments are held
  * until accounts payable calls the number on file and two people approve.
  */
 export function VendorDetails({
@@ -52,29 +41,12 @@ export function VendorDetails({
   const format = useFormatter();
   const ids = useId();
   const [details, setDetails] = useState(initial);
-  const [contacts, setContacts] = useState<ContactRow[]>(rows(initial));
   const [bank, setBank] = useState({ iban: "", accountName: "", bankName: "", swift: "", note: "" });
-  const [busy, setBusy] = useState<null | "contacts" | "bank">(null);
+  const [busy, setBusy] = useState<null | "bank">(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const explain = (code: string) => t(`errors.${KNOWN_ERRORS.has(code) ? code : "generic"}` as "errors.generic");
   const address = Object.values(details.address ?? {}).filter(Boolean).join(", ");
-
-  const saveContacts = async () => {
-    setBusy("contacts");
-    setError(null);
-    setNotice(null);
-    const result = await actions.update({
-      contacts: contacts
-        .filter((c) => c.name.trim())
-        .map((c) => ({ name: c.name.trim(), role: c.role.trim() || null, email: c.email.trim() || null, phone: c.phone.trim() || null })),
-    });
-    setBusy(null);
-    if (!result.ok) return setError(explain(result.code));
-    setDetails(result.details);
-    setContacts(rows(result.details));
-    setNotice(t("details.saved"));
-  };
 
   const askChange = async () => {
     setBusy("bank");
@@ -239,63 +211,23 @@ export function VendorDetails({
           {t("details.contacts")}
         </h2>
         <p className="text-sm text-muted-foreground">{t("details.contactsIntro")}</p>
-        <form
-          className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void saveContacts();
-          }}
-          data-contacts-form
-        >
-          <ul className="space-y-3">
-            {contacts.map((c, index) => (
-              <li key={index} className="grid gap-2 rounded-xl border bg-surface p-4 sm:grid-cols-2" data-contact-row={index}>
-                {(
-                  [
-                    ["name", t("details.name"), "text", undefined],
-                    ["role", t("details.role"), "text", undefined],
-                    ["email", t("details.email"), "email", "ltr"],
-                    ["phone", t("details.phone"), "tel", "ltr"],
-                  ] as const
-                ).map(([key, label, type, dir]) => (
-                  <div key={key} className="space-y-1">
-                    <label htmlFor={`${ids}-c${index}-${key}`} className="block text-xs font-medium">
-                      {label}
-                    </label>
-                    <Input
-                      id={`${ids}-c${index}-${key}`}
-                      type={type}
-                      dir={dir}
-                      value={c[key]}
-                      onChange={(e) => setContacts((list) => list.map((row, i) => (i === index ? { ...row, [key]: e.target.value } : row)))}
-                    />
-                  </div>
-                ))}
-                <div className="sm:col-span-2">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setContacts((list) => list.filter((_, i) => i !== index))}>
-                    <Trash2 aria-hidden />
-                    {t("details.remove")}
-                  </Button>
-                </div>
+        {details.contacts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("details.noContacts")}</p>
+        ) : (
+          <ul className="space-y-3" data-contacts>
+            {details.contacts.map((c, index) => (
+              <li key={index} className="rounded-xl border bg-surface p-4 text-sm" data-contact-row={index}>
+                <dl className="grid gap-2 sm:grid-cols-2">
+                  {fact(t("details.name"), c.name)}
+                  {fact(t("details.role"), c.role)}
+                  {fact(t("details.email"), c.email ? <span dir="ltr">{c.email}</span> : null)}
+                  {fact(t("details.phone"), c.phone ? <span dir="ltr">{c.phone}</span> : null)}
+                </dl>
               </li>
             ))}
           </ul>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={contacts.length >= 20}
-            onClick={() => setContacts((list) => [...list, { name: "", role: "", email: "", phone: "" }])}
-          >
-            <Plus aria-hidden />
-            {t("details.add")}
-          </Button>
-          <p className="text-xs text-muted-foreground">{t("details.phoneNote")}</p>
-          <Button type="submit" disabled={busy !== null}>
-            {busy === "contacts" && <Loader2 className="animate-spin" aria-hidden />}
-            {t("details.save")}
-          </Button>
-        </form>
+        )}
+        <p className="text-xs text-muted-foreground">{t("details.phoneNote")}</p>
       </section>
     </div>
   );

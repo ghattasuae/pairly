@@ -39,9 +39,12 @@ minute per contact; writes have their own limits):
   with its deadline (``pairly_pay.portal.appeals``). Once per decision; 10 per day.
 * ``GET  /vendor-portal/details``                  the verified details (bank account
   masked) and the open change requests
-* ``PUT  /vendor-portal/details/contacts``         the people at the vendor, changed
-  directly and audited. 10 per hour. A different ``phone_on_file`` is refused (403
-  ``phone_on_file_by_ap_only``): only AP changes the number it calls back on.
+* ``PUT  /vendor-portal/details/contacts``         never changes anything: the people
+  at the vendor and the number on file are accounts payable's to change (AP writes to
+  those addresses and calls that number). A different contact list is refused (403
+  ``contacts_by_ap_only``, security review 2026-10, L-10), a different
+  ``phone_on_file`` too (403 ``phone_on_file_by_ap_only``, H-01); what is on file
+  already is a no-op that returns the details. 10 per hour.
 * ``POST /vendor-portal/bank-change``              new bank details: always a locked
   change request (payments held, call back on the number on file, two approvals), never
   applied here; the approvers and finance controllers get the same urgent alert as for

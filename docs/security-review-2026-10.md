@@ -24,7 +24,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | L-07 | Low | RLS, SECURITY DEFINER | `ops_tenant_usage` and `job_runs_recent` return more than ids and counts (slugs, job summaries) and the app role may call them; only the Python route limits them to platform operators | Accepted risk |
 | L-08 | Low | Repudiation | `job_run_start` and `job_run_finish` (SECURITY DEFINER) accept any job name or run id from the app role | Accepted risk |
 | L-09 | Low | Information disclosure | A public application whose CV has the same bytes as another candidate's is linked to that candidate's document row | Open, proposed fix below |
-| L-10 | Low | BEC | Vendor portal contacts (people and emails) change directly; AP messages go to those addresses | Open, proposed fix below |
+| L-10 | Low | BEC | Vendor portal contacts (people and emails) change directly; AP messages go to those addresses | Fixed |
 | L-11 | Low | Supply chain | The vendored Redoc checksum is checked by a test, not by `make api-docs` | Fixed |
 | L-12 | Low | Malicious documents | A DOCX with an external attached template (remote template injection) is accepted | Fixed |
 
@@ -36,7 +36,7 @@ No critical finding. Nothing found in: prompt injection reaching a model input o
 
 **Repro.** Someone holds a vendor contact's mailbox, the usual business email compromise foothold. They ask the vendor portal for a magic link, sign in, and `PUT /v1/pay/vendor-portal/details/contacts` with `{"phone_on_file": "<their number>"}`. The change was applied and only flagged bank-detail changes opened within the next 30 days (`phone_recently_changed`). They wait 31 days and `POST /vendor-portal/bank-change`. The ticket snapshots the number on file, which is now theirs: the AP clerk calls the attacker, records "confirmed", and the two approvers see a confirmed call. Every control of the bank-detail workflow then passes, and the new account is paid.
 
-**Fix.** The portal no longer changes the phone number on file (`pairly_pay.portal.service.update_contacts`, `PhoneOnFileByApOnlyError`, 403 `phone_on_file_by_ap_only`, nothing written); the current number again is a no-op. Only accounts payable changes it, and the portal page tells the vendor to call AP. People at the vendor still change directly (BRIEF 4.7.3).
+**Fix.** The portal no longer changes the phone number on file (`pairly_pay.portal.service.update_contacts`, `PhoneOnFileByApOnlyError`, 403 `phone_on_file_by_ap_only`, nothing written); the current number again is a no-op. Only accounts payable changes it, and the portal page tells the vendor to call AP. People at the vendor changed directly (BRIEF 4.7.3) until L-10, which makes them accounts payable's to change too.
 
 **Test.** `apps/api/tests/test_pay_vendor_portal.py::test_the_portal_never_chooses_the_call_back_number`; the web component test checks the field is gone.
 
@@ -95,7 +95,7 @@ A vendor invited to onboard enters its bank details and its phone number on the 
 * **L-07 (accepted).** The two platform functions return organisation slugs and per-tenant counts, and job summaries, to any caller with the app role; `/v1/ops/*` returns 404 to everyone but people of the system organisation. Reaching them needs arbitrary SQL as the app role, and the data holds no tenant content. Revisit if the platform board gets more columns.
 * **L-08 (accepted).** Job run history can be started or finished by any code path with the app role. It is operational history, not the audit log (which is hash chained and anchored).
 * **L-09.** Dedupe at intake (`uq_documents_org_id_workflow_sha256`) links a second applicant with byte-identical CV bytes to the first applicant's document row, so the second candidate's portal shows the first one's original file name, and erasing either affects both. Proposed fix: dedupe the stored blob only and give each submission its own `documents` row.
-* **L-10.** A mailbox attacker in the portal can add a contact email; AP messages are sent to an address a person picks and approves, never automatically. Proposed fix: mark contacts added through the portal as new for 30 days in the recipient picker.
+* **L-10 (fixed).** A mailbox attacker in the portal could add a contact email (or change one, or a contact's phone); AP messages are sent to an address a person picks and approves, never automatically, but from that list. The portal now only shows contacts: `pairly_pay.portal.service.update_contacts` refuses any different list (403 `contacts_by_ap_only`, nothing written), as it already refused a new number on file (H-01); the list on file again is a no-op. Accounts payable changes contacts on the vendor record. The portal page shows them read only and tells the vendor to ask AP. Tests: `apps/api/tests/test_pay_vendor_portal.py::test_the_portal_never_changes_contacts` (an added address, a swapped email or phone, a renamed or removed contact), and the web component test.
 * **L-11 (fixed).** `scripts/build_api_docs.py` embeds the vendored Redoc bundle without checking its SHA-256; only `scripts/tests/test_build_api_docs.py` did. The build now reads the bundle through `read_bundle`, which compares its SHA-256 with the recorded `REDOC_SHA256` before anything is written and stops `make api-docs` (non-zero exit, `BundleChecksumError`) on any other bundle. Test: `scripts/tests/test_build_api_docs.py::test_a_changed_bundle_stops_the_build_before_anything_is_written`.
 * **L-12 (fixed).** A DOCX whose `word/_rels/settings.xml.rels` names an external `attachedTemplate` was accepted. Pairly never opens it in Word, but a person downloading it might. `pairly_core.ingestion.sniff.active_content` now reads every relationships part (size capped, defusedxml, an unreadable one fails closed) and a package with any `TargetMode="External"` relationship sniffs as ZIP, like L-04: a remote attached template, an external image, frame, OLE object or subdocument. The one exception is a hyperlink, which Word never follows by itself (CVs carry profile links). Intake refuses it with its own reason (`RejectReason.ACTIVE_CONTENT`, 415 with a title that names it; the audit event's `detail` says `macros`, `external_template`, `external_relationship` or `unreadable_relationships`). Tests: `packages/core/tests/doc_tests/test_ingestion_unit.py` (`test_a_docx_with_a_remote_template_or_external_part_is_not_a_docx`, `test_hyperlinks_and_internal_relationships_leave_a_docx`) and `apps/api/tests/test_documents.py::test_a_docx_with_a_remote_template_is_refused_with_its_reason`.
 
@@ -115,7 +115,7 @@ H-02, L-04 and L-12 fixed. Read the sniffer, the sandbox limits (CPU, memory, ou
 
 ### BEC and vendor impersonation
 
-H-01 fixed; M-03, M-04, M-05 and L-10 open. Paths that could change bank details: staff creation (M-03), onboarding acceptance (ticket, M-05), the portal (request only, H-01), an invoice (ticket and hold), an extraction correction (payment always goes to the vendor's active account, `approved_account_id` and `approved_bank_digest`, re-checked at the payment run), the API (keys cannot hold `write`). There is no vendor CSV import.
+H-01 and L-10 fixed; M-03, M-04, M-05 open. Paths that could change bank details: staff creation (M-03), onboarding acceptance (ticket, M-05), the portal (request only, H-01), an invoice (ticket and hold), an extraction correction (payment always goes to the vendor's active account, `approved_account_id` and `approved_bank_digest`, re-checked at the payment run), the API (keys cannot hold `write`). There is no vendor CSV import.
 
 ### Insider approval abuse
 
@@ -123,7 +123,7 @@ M-01 fixed. Self-approval through delegation, a key or an agent deciding, and ra
 
 ### Portal account abuse
 
-H-01 fixed. Tokens bind organisation, row and subject into a SHA-256 digest compared in constant time, and the session is bound to the claimed subject before any lookup. Cross-candidate and cross-vendor reads through applications, messages, uploads, receipts, appeals and export are covered by `test_hire_portal.py` and `test_pay_vendor_portal.py`; the notification stream is staff only and filtered per recipient. No other finding.
+H-01 and L-10 fixed. Tokens bind organisation, row and subject into a SHA-256 digest compared in constant time, and the session is bound to the claimed subject before any lookup. Cross-candidate and cross-vendor reads through applications, messages, uploads, receipts, appeals and export are covered by `test_hire_portal.py` and `test_pay_vendor_portal.py`; the notification stream is staff only and filtered per recipient. No other finding.
 
 ### API key leakage
 

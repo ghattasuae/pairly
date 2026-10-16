@@ -25,7 +25,6 @@ vi.mock("@/lib/actions/vendor-portal", () => ({
   loadVendorInvoices: vi.fn(),
   writeToAccountsPayable: vi.fn(),
   askForHumanReview: vi.fn(),
-  updateVendorContacts: vi.fn(),
   requestBankDetailChange: vi.fn(),
 }));
 
@@ -254,7 +253,7 @@ describe("vendor details", () => {
       ok: true,
       request: { reference: "BCT-4M8T2X", status: "awaiting_verification", source: "vendor_portal", iban_last4: "0042", created_at: "2026-10-14T10:00:00Z" },
     });
-    renderWithIntl(<VendorDetails details={DETAILS} actions={{ update: vi.fn(), requestChange }} />);
+    renderWithIntl(<VendorDetails details={DETAILS} actions={{ requestChange }} />);
     expect(screen.getByText("AE•• •••• •••• 1715")).toBeInTheDocument();
     expect(document.querySelector("[data-bank-explanation]")?.textContent).toMatch(/never change here directly/);
     await userEvent.type(screen.getByLabelText("IBAN"), "AE070331234567890120042");
@@ -266,15 +265,19 @@ describe("vendor details", () => {
     expect(document.querySelector('[data-open-request="BCT-4M8T2X"]')).not.toBeNull();
   });
 
-  it("saves contacts directly and never offers to change the phone number on file", async () => {
-    const update = vi.fn().mockResolvedValue({ ok: true, details: DETAILS });
-    renderWithIntl(<VendorDetails details={DETAILS} actions={{ update, requestChange: vi.fn() }} />);
+  it("shows contacts read only and never offers to change them or the number on file", () => {
+    // Security review 2026-10, L-10: accounts payable writes to these addresses, so only
+    // accounts payable changes them.
+    renderWithIntl(<VendorDetails details={DETAILS} actions={{ requestChange: vi.fn() }} />);
+    const row = document.querySelector('[data-contact-row="0"]');
+    expect(row?.textContent).toContain("Huda Rahman");
+    expect(row?.textContent).toContain("huda@gulf-office.example");
+    expect(document.querySelector("[data-contacts-form]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save contacts" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add a contact" })).toBeNull();
+    expect(screen.queryByLabelText("Email")).toBeNull();
     expect(screen.queryByLabelText(/phone number on file/i)).toBeNull();
     expect(screen.getByText(/only they can change it/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Save contacts" }));
-    expect(update).toHaveBeenCalledWith({
-      contacts: [{ name: "Huda Rahman", role: "Accounts", email: "huda@gulf-office.example", phone: null }],
-    });
-    expect(await screen.findByText("Saved.")).toBeInTheDocument();
+    expect(screen.getByText(/To add or change a contact/)).toBeInTheDocument();
   });
 });

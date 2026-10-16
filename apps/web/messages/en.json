@@ -4369,16 +4369,13 @@
       "phoneOnFile": "Phone number on file",
       "hold": "Payments to your company are on hold while a change is checked. Accounts payable will call the number on file.",
       "contacts": "Contacts",
-      "contactsIntro": "Change your contacts here. Every change is recorded.",
+      "contactsIntro": "Accounts payable writes to these contacts, so only they change them. To add or change a contact, write to accounts payable or call them: they confirm it with you first.",
+      "noContacts": "No contacts on file yet.",
       "name": "Name",
       "role": "Role",
       "email": "Email",
       "phone": "Phone",
-      "remove": "Remove",
-      "add": "Add a contact",
-      "phoneNote": "Accounts payable calls this number to confirm any change of bank details, so only they can change it. To use a new number, call accounts payable: they confirm it with you on the current number first.",
-      "save": "Save contacts",
-      "saved": "Saved."
+      "phoneNote": "Accounts payable calls this number to confirm any change of bank details, so only they can change it. To use a new number, call accounts payable: they confirm it with you on the current number first."
     },
     "trn": {
       "none": "None",
