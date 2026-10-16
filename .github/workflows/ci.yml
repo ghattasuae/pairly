@@ -62,7 +62,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install
-        run: uv sync --all-packages
+        run: uv sync --all-packages --locked
 
       # OCR tests (pairly_core.documents.ocr) need the tesseract binary and language data.
       - name: Install Tesseract OCR
@@ -286,7 +286,7 @@ jobs:
 
       - name: Install
         run: |
-          uv sync --all-packages
+          uv sync --all-packages --locked
           pnpm install --frozen-lockfile --ignore-scripts
 
       - name: License check
@@ -313,7 +313,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install
-        run: uv sync --all-packages
+        run: uv sync --all-packages --locked
 
       - name: make evals
         run: make evals
