@@ -15,3 +15,11 @@ description = "Type annotations such as `key: Ed25519PrivateKey`: the 'secret' i
 targetRules = ["generic-api-key"]
 regexTarget = "secret"
 regexes = ['''^(Ed25519|Ed448|X25519|RSA|EllipticCurve)(Private|Public)Key$''']
+
+[[allowlists]]
+description = """Synthetic SDK and MCP test fixtures, never real credentials: the fake API key \
+prefix pk_test_abcd1234_ (its secret part is built at run time as "A" * 43) and the \
+webhook test vector secret the TypeScript SDK test shares with the engine."""
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^pk_test_abcd1234_$''', '''^whsec_test_vector_secret_0123456789$''']
