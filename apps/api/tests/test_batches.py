@@ -476,14 +476,10 @@ async def test_the_sweeper_fails_url_items_left_pending_and_completes_the_batch(
                 {"o": org.id},
             )
         ).all()
-        batches = dict(
-            (
-                await conn.execute(
-                    text("SELECT id, status FROM document_batches WHERE org_id = :o"),
-                    {"o": org.id},
-                )
-            ).all()
+        rows = await conn.execute(
+            text("SELECT id, status FROM document_batches WHERE org_id = :o"), {"o": org.id}
         )
+        batches: dict[uuid.UUID, str] = {r.id: r.status for r in rows}
         audit = (
             await conn.execute(
                 text(
