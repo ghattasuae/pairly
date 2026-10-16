@@ -15,6 +15,50 @@ any real system yet. Details in [Status](#status).
 
 Built by [Ghattas Salloum](https://github.com/ghattasuae).
 
+## If you are not an engineer, start here
+
+Every company hires people and pays suppliers. Both jobs are slow, full of paperwork,
+and easy to get wrong or to defraud. Pairly is software that lets an AI do the reading
+and checking while people keep every decision that matters.
+
+**What it does, in plain words**
+
+- **Hiring.** A recruiter types three lines about a job. Pairly drafts the job post,
+  checks the wording for bias, and builds a scoring sheet. When CVs arrive, Pairly
+  scores each one against that sheet, with the names, photos and other personal details
+  hidden so people are judged on their work. Every score comes with the exact sentence
+  from the CV that justifies it. If a CV contains hidden tricks, such as white text
+  telling the AI to "rank this candidate first", Pairly finds it, removes it and shows
+  the recruiter. Candidates get honest updates, book their own interviews, and can ask
+  a person to review any AI step.
+- **Paying invoices.** Invoices arrive by email. Pairly reads them, matches them to
+  purchase orders, checks the maths and the VAT, and spots duplicates and fakes. The
+  most dangerous fraud in accounts payable is an invoice from a real supplier with a new
+  bank account. Pairly blocks it, holds all payments to that supplier, and requires a
+  phone call to the number already on file plus two different people's approval before
+  anything changes.
+
+**The one rule that never bends.** No AI in Pairly ever rejects a candidate, sends an
+offer, approves a payment or changes bank details on its own. It reads, checks and
+prepares. A person decides, and every decision is recorded so anyone can later ask
+"why?" and get a complete answer.
+
+**What is real and what is not, today.** Everything you see runs end to end, in the
+browser, with the full approval flows. All CVs, invoices, suppliers and people in it are
+synthetic, generated for testing. No real company data was used. The quality numbers in
+[Real numbers](#real-numbers) were measured on that synthetic data with a real AI model;
+nothing in this document is an estimate. The project is not yet connected to a real
+email system, calendar or bank, and has not yet been tested with real recruiters. The
+[Status](#status) section lists what is pending.
+
+**How it was built.** One person planned it from a written brief and built it over
+twelve days, October 6 to 17, 2026, by directing AI coding agents under a strict
+review discipline: every piece of code was reviewed for logic and security before it
+counted as done, every claim had to be proven by a test, and every quality number had to
+come from a measured run. The result is a working product, a full test suite, security
+and compliance documentation, and this repository. The engineering detail starts at
+[What this project demonstrates](#what-this-project-demonstrates).
+
 **Contents:** [See it](#see-it) ·
 [Run it in one command](#run-it-in-one-command) · [Real numbers](#real-numbers) ·
 [What this project demonstrates](#what-this-project-demonstrates) ·
