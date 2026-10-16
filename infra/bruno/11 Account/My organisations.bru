@@ -1,0 +1,19 @@
+meta {
+  name: My organisations
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/me/orgs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  No X-Pairly-Org needed.
+}

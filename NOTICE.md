@@ -10,13 +10,14 @@ uv run python scripts/third_party_notices.py --fetch-missing -o NOTICE.md
 
 A license shown as UNKNOWN means the package did not publish license metadata, or it is not installed on this machine. Check it by hand before release.
 
-## Bundled components (3)
+## Bundled components (4)
 
 | Name | Version | License | Where |
 | --- | --- | --- | --- |
 | PDFium | 156.0.8076.0 | BSD-3-Clause; its bundled build also carries FreeType (FTL), ICU (Unicode license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT), OpenJPEG (BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf (MIT or Apache-2.0), LLVM libc (Apache-2.0 WITH LLVM-exception) | compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0) |
 | DejaVu Sans (subset) | 2.37 | Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain | packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in decision receipt PDFs |
 | disposable-email-domains (subset) | curated 2026-10 | CC0-1.0 | packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire apply form refuses |
+| Redoc (standalone bundle) | 2.5.4 | MIT; the bundle also carries React (MIT), DOMPurify (Apache-2.0 OR MPL-2.0) and other MIT and ISC code, see redoc.standalone.js.LICENSE.txt | infra/api-docs/vendor/redoc/, the API reference page make api-docs writes |
 
 ## Python packages (137)
 

@@ -1,0 +1,19 @@
+meta {
+  name: List invoices
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/pay/invoices?limit=20
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 20
+}
+
+docs {
+  Filter with status or q (reference, number, vendor).
+}

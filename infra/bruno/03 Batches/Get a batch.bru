@@ -1,0 +1,15 @@
+meta {
+  name: Get a batch
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/batches/{{batchId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  Each item: accepted, duplicate, rejected or failed, with the document and the workflow entity.
+}

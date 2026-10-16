@@ -18,7 +18,8 @@ script never fails because one package lacks metadata.
 
 Bundled components that are not packages of their own (PDFium inside the pypdfium2
 wheels, the DejaVu Sans subset embedded in decision receipts, the disposable email
-domain list of Pairly Hire) are listed in their own section (BUNDLED).
+domain list of Pairly Hire, the vendored Redoc bundle of ``make api-docs``) are listed in
+their own section (BUNDLED).
 """
 
 from __future__ import annotations
@@ -315,6 +316,13 @@ def bundled_components() -> list[Bundled]:
             "CC0-1.0",
             "packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire "
             "apply form refuses",
+        ),
+        Bundled(
+            "Redoc (standalone bundle)",
+            "2.5.4",
+            "MIT; the bundle also carries React (MIT), DOMPurify (Apache-2.0 OR MPL-2.0) and "
+            "other MIT and ISC code, see redoc.standalone.js.LICENSE.txt",
+            "infra/api-docs/vendor/redoc/, the API reference page make api-docs writes",
         ),
     ]
 

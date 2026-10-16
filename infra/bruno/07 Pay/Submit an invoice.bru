@@ -1,0 +1,27 @@
+meta {
+  name: Submit an invoice
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/pay/invoices
+  body: multipartForm
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:multipart-form {
+  file: @file(sample-invoice.pdf)
+}
+
+script:post-response {
+  bru.setVar('invoiceId', res.body.id);
+}
+
+docs {
+  202: the intake run reads and checks it. Needs pay.invoice.upload.
+}

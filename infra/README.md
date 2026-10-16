@@ -109,3 +109,11 @@ rotating `.env`, reset the data: `scripts/local_pg.sh reset` (native) or
 `minio/init.sh` creates the `pairly-documents` and `langfuse` buckets (private) and one
 access key per consumer, each limited to its own bucket. Root credentials are used only by
 that job.
+
+## API tooling
+
+- `bruno/` is a [Bruno](https://www.usebruno.com) collection of the main endpoints, with
+  `native` and `docker` environments (secrets stay local). See `bruno/README.md`.
+- `api-docs/vendor/redoc/` is the vendored Redoc bundle (MIT) that `make api-docs` embeds
+  in `dist/api-docs/index.html`, next to `dist/api-docs/openapi.json`. The page fetches
+  nothing at run time (its Content Security Policy forbids network access).

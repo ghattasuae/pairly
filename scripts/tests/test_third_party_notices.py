@@ -29,12 +29,13 @@ notices = _load()
 
 def test_bundled_components_are_listed() -> None:
     text = notices.render([], [], notices.bundled_components())
-    assert "## Bundled components (3)" in text
+    assert "## Bundled components (4)" in text
     assert "| PDFium |" in text
     assert "pypdfium2" in text
     assert "DejaVu Sans" in text
     assert "LICENSE_DEJAVU" in text
     assert "| disposable-email-domains (subset) | curated 2026-10 | CC0-1.0 |" in text
+    assert "| Redoc (standalone bundle) | 2.5.4 | MIT;" in text
 
 
 def test_lock_only_packages_are_listed_and_filled(tmp_path: Path) -> None:

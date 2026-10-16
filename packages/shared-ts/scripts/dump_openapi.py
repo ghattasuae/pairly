@@ -34,7 +34,8 @@ def _random_key() -> str:
 RANDOM_KEYS = ("PAIRLY_KEK_openapi", "PAIRLY_BLIND_INDEX_KEY", "PAIRLY_API_KEY_PEPPER")
 
 
-def main() -> None:
+def build_schema() -> dict[str, object]:
+    """The OpenAPI document of the API code (sets the placeholder settings first)."""
     for key, value in PLACEHOLDERS.items():
         os.environ[key] = value
     os.environ["PAIRLY_KEK_CURRENT"] = "openapi"
@@ -42,7 +43,12 @@ def main() -> None:
         os.environ[key] = _random_key()
     from pairly_api.main import create_app
 
-    schema = create_app().openapi()
+    schema: dict[str, object] = create_app().openapi()
+    return schema
+
+
+def main() -> None:
+    schema = build_schema()
     json.dump(schema, sys.stdout, indent=2, sort_keys=True, ensure_ascii=False)
     sys.stdout.write("\n")
 

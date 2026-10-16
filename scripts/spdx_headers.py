@@ -69,6 +69,8 @@ SKIP_DIR_PARTS = frozenset(
         ".pytest_cache",
         "generated",
         "__generated__",
+        # Third-party code kept verbatim under its own license (infra/api-docs/vendor).
+        "vendor",
     }
 )
 

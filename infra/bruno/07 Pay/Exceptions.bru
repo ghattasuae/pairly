@@ -1,0 +1,15 @@
+meta {
+  name: Exceptions
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/pay/exceptions
+  body: none
+  auth: inherit
+}
+
+docs {
+  Invoices waiting for a person, by category, with how to resolve each.
+}

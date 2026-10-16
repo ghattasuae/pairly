@@ -1,0 +1,32 @@
+meta {
+  name: Submit a batch of files
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/documents/batch?workflow={{workflow}}
+  body: multipartForm
+  auth: inherit
+}
+
+params:query {
+  workflow: {{workflow}}
+}
+
+headers {
+  Idempotency-Key: {{$guid}}
+}
+
+body:multipart-form {
+  file: @file(sample-invoice.pdf)
+  metadata: {"source": "bruno"}
+}
+
+script:post-response {
+  bru.setVar('batchId', res.body.id);
+}
+
+docs {
+  Repeat the file field for more files.
+}

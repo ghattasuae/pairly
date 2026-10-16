@@ -197,6 +197,9 @@ mcp: ## Run the Pairly MCP server on stdio (PAIRLY_API_KEY or PAIRLY_TOKEN+PAIRL
 		echo 'usage: PAIRLY_API_KEY=pk_test_... make mcp  (or PAIRLY_TOKEN=... PAIRLY_ORG=...)'; exit 2; fi
 	@$(UV) run --quiet --package pairly-mcp pairly-mcp
 
+api-docs: ## Write the OpenAPI JSON and a static Redoc page to dist/api-docs (no network at run time)
+	$(UV) run python scripts/build_api_docs.py --out dist/api-docs
+
 test: ## Run Python and JS tests
 	$(UV) run --frozen pytest --cov --cov-report=term-missing
 	$(PNPM) test

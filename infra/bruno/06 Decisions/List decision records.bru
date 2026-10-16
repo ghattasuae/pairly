@@ -1,0 +1,19 @@
+meta {
+  name: List decision records
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/decisions
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  if (Array.isArray(res.body) && res.body[0]) bru.setVar('decisionId', res.body[0].id);
+}
+
+docs {
+  The records you may read.
+}

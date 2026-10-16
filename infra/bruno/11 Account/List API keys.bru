@@ -1,0 +1,19 @@
+meta {
+  name: List API keys
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/api-keys
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Person only (core.api_keys.manage, TOTP).
+}
