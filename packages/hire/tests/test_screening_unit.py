@@ -266,6 +266,9 @@ def test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_onl
                 ids[0]: (3, [copied]),
                 ids[1]: (2, ["[university]"]),
                 ids[2]: (2, [f"{before}, [university], invented text"]),
+                # Security review 2026-10 (L-05): parts shorter than one real word.
+                ids[3]: (2, [f"{before[-2:]}, [university]"]),
+                ids[4]: (2, [f"[university], {after[:2]}"]),
             }
         ),
         rubric,
@@ -281,8 +284,12 @@ def test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_onl
     for e in first.evidence:
         assert institution not in doc.text[e.start : e.end]
         assert " ".join(doc.text[e.start : e.end].split()) in quotes
-    # A placeholder alone, or visible parts that are not contiguous text: no credit.
-    for cid in ids[1:3]:
+    # A placeholder alone, visible parts that are not contiguous text, or parts shorter
+    # than one real word (two letters cut from a word, the start of a year): no credit.
+    assert len(ids) > 4
+    assert before[-2:].isalpha()
+    assert after[:4].isdigit()
+    for cid in ids[1:5]:
         assert by_id[cid].score == 0, cid
         assert "no_evidence" in by_id[cid].flags
 

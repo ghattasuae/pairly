@@ -19,7 +19,7 @@ Every high finding is fixed in code with a test. Medium and low findings are fix
 | L-02 | Low | Supply chain | CI ran `uv sync` without `--locked` | Fixed, `1b9ec47` |
 | L-03 | Low | API keys, portals, public forms (D) | Rate limits live in each API process's memory | Open (known TODO) |
 | L-04 | Low | Malicious documents | A package declaring the plain DOCX type but carrying a VBA project or ActiveX parts was accepted | Fixed, `e7c36fc` |
-| L-05 | Low | Recent change: blind-placeholder credit | A visible part of two letters or digits ("of", "20") counts as evidence | Open, proposed fix below |
+| L-05 | Low | Recent change: blind-placeholder credit | A visible part of two letters or digits ("of", "20") counts as evidence | Fixed |
 | L-06 | Low | Recorded mode | `find_recording` serves the newest row of a hash, which can be a live decision replay | Open, proposed fix below |
 | L-07 | Low | RLS, SECURITY DEFINER | `ops_tenant_usage` and `job_runs_recent` return more than ids and counts (slugs, job summaries) and the app role may call them; only the Python route limits them to platform operators | Accepted risk |
 | L-08 | Low | Repudiation | `job_run_start` and `job_run_finish` (SECURITY DEFINER) accept any job name or run id from the app role | Accepted risk |
@@ -90,7 +90,7 @@ A vendor invited to onboard enters its bank details and its phone number on the 
 * **L-02 (fixed).** Every `uv sync` in `.github/workflows/ci.yml` uses `--locked`.
 * **L-03.** API key, portal and public form limits are per process (`pairly_core.api_keys.ratelimit`, `TODO(M6)` there): with N API processes the effective limit is N times the setting. Proposed fix: the Valkey token bucket the TODO describes, before the API runs replicated.
 * **L-04 (fixed).** `pairly_core.ingestion.sniff` treats a package with `vbaProject.bin`, `vbaData.xml` or `word/activeX/` parts as ZIP, so it is refused like a `.docm`. Test: `test_ingestion_unit.py::test_a_docx_that_carries_macros_or_activex_is_not_a_docx`.
-* **L-05.** `EvidenceLocator.locate_visible` keeps a visible part with two letters or digits, so a quote like "[university], 2019" earns credit through "2019" alone. Placeholder text itself is never evidence, so no protected marker leaks; the risk is a score above 0 with weak evidence. Proposed fix: require each kept part to hold a word of at least three letters, or at least half of the quote's visible characters.
+* **L-05 (fixed).** `EvidenceLocator.locate_visible` kept a visible part with two letters or digits ("of", or "20" cut from "2019"). Placeholder text itself was never evidence, so no protected marker leaked; the risk was a score above 0 with weak evidence. A visible part now counts only when it holds one real word (`_real_word`: a run of at least three letters or digits, any script) or is a complete number (`12`, `3.7`, `1,200`, `15%`, with no letter or digit right before or after it); anything shorter is dropped. Tests: `packages/core/tests/extraction_tests/test_evidence_visible.py` and `packages/hire/tests/test_screening_unit.py::test_a_quote_over_a_blind_placeholder_is_credited_with_its_visible_parts_only` (two letters cut from a word and the start of a year earn nothing).
 * **L-06.** Recorded mode replays the newest row of a request hash with an output, which includes a live decision replay. A live replay therefore changes what recorded runs return. Proposed fix: exclude `replay_of IS NOT NULL` in `find_recording`, as `pairly_core.llm.bundle` already does.
 * **L-07 (accepted).** The two platform functions return organisation slugs and per-tenant counts, and job summaries, to any caller with the app role; `/v1/ops/*` returns 404 to everyone but people of the system organisation. Reaching them needs arbitrary SQL as the app role, and the data holds no tenant content. Revisit if the platform board gets more columns.
 * **L-08 (accepted).** Job run history can be started or finished by any code path with the app role. It is operational history, not the audit log (which is hash chained and anchored).
@@ -140,7 +140,7 @@ L-02 fixed, L-11 open. The license gate, `pnpm install --frozen-lockfile`, pinne
 ### Recent changes
 
 * **Response reuse (`c69be99`).** Never crosses organisations (filter plus RLS, new database test). Erased rows are excluded and erasure also erases every row with the same request hash. Replays could be reused (L-01, fixed). Migration `0029` runs against a fresh database and `alembic check` passes.
-* **Blind-placeholder partial credit (`54a18b6`).** Only visible ranges are mapped back and each is checked against the original; placeholder text is never evidence. L-05 is a quality point.
+* **Blind-placeholder partial credit (`54a18b6`).** Only visible ranges are mapped back and each is checked against the original; placeholder text is never evidence. L-05 (a quality point) is fixed.
 * **Label-plus-value table evidence (`c1d4953`).** A line is used only when unique in the model's text, it holds the value, and the page layout puts it beside or under another line of the quote; it is located in the sanitised text, so hidden text never qualifies. Payment never uses the invoice's IBAN. No finding.
 
 ### Row Level Security and the portal guard

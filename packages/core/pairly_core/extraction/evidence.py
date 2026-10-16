@@ -31,7 +31,7 @@ import re
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol, runtime_checkable
+from typing import Final, Literal, Protocol, runtime_checkable
 
 from pairly_core.documents.model import BBox, NormalizedDocument, Page
 from pairly_core.extraction.types import SourceSpan
@@ -276,7 +276,9 @@ class EvidenceLocator:
         The whole quote must still be found, contiguous, in the model's text. Hidden
         text is never located: only the ranges the input reports as visible are mapped
         back, each trimmed of edge punctuation and checked against the original. A part
-        with fewer than two letters or digits is dropped."""
+        shorter than one real word is dropped (``_real_word``: a run of at least three
+        letters or digits, or a complete number; security review 2026-10, L-05), so
+        "of" or a cut "20" never earns credit."""
         whole = self.locate(quote)
         if whole is not None:
             return (whole,)
@@ -295,7 +297,7 @@ class EvidenceLocator:
             parts: list[Located] = []
             for lo, hi in self._sanitized.visible_ranges(*found):
                 lo, hi = _trim(model_text, lo, hi)
-                if sum(ch.isalnum() for ch in model_text[lo:hi]) < 2:
+                if not _real_word(model_text, lo, hi):
                     continue
                 located = self._at(lo, hi, wraps)
                 if located is not None:
@@ -366,6 +368,29 @@ def beside_or_below(label: Located, value: Located) -> bool:
         return True  # same row, value to the right
     gap = val.top - lab.bottom
     return columns > 0 and -0.25 * height <= gap <= 3 * height
+
+
+# A number written out whole: digits, with thousands or decimal separators, an optional
+# sign and percent sign ("20", "4.5", "1,200", "-3", "15%").
+_NUMBER = re.compile(r"[+-]?\d+(?:[.,]\d+)*%?")
+MIN_WORD_CHARS: Final = 3
+
+
+def _real_word(text: str, lo: int, hi: int) -> bool:
+    """Whether ``text[lo:hi]`` holds at least one real word: a run of at least
+    ``MIN_WORD_CHARS`` letters or digits, or is a complete number (the whole of it, not
+    cut by the edge of the visible part: no letter or digit right before or after)."""
+    part = text[lo:hi]
+    run = 0
+    for ch in part:
+        run = run + 1 if ch.isalnum() else 0
+        if run >= MIN_WORD_CHARS:
+            return True
+    if not part or _NUMBER.fullmatch(part) is None:
+        return False
+    before = text[lo - 1] if lo > 0 else ""
+    after = text[hi] if hi < len(text) else ""
+    return not before.isalnum() and not after.isalnum()
 
 
 def _trim(text: str, lo: int, hi: int) -> tuple[int, int]:
