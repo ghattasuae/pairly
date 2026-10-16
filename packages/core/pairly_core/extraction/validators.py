@@ -103,7 +103,16 @@ def trn_ae_valid(value: str) -> bool:
 def _register_builtin_shapes() -> None:
     from pairly_core.extraction.types import Iban, TrnAE
 
-    register_shape(Iban, "iban", _compact_upper, iban_valid, "IBAN (ISO 13616), e.g. AE07...")
+    # The model copies the IBAN as printed (spaces kept); parsing compacts it. Asked
+    # for a compact form, small models drop a digit of a 23-character UAE IBAN.
+    register_shape(
+        Iban,
+        "iban",
+        _compact_upper,
+        iban_valid,
+        "IBAN (ISO 13616), copied exactly as printed with its spaces, "
+        "e.g. AE07 0331 2345 6789 0123 456",
+    )
     register_shape(TrnAE, "trn_ae", _compact_upper, trn_ae_valid, "UAE TRN, 15 digits")
 
 

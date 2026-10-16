@@ -110,6 +110,13 @@ def test_shapes_iban_and_trn() -> None:
     trn = ValueSpec(FieldKind.SHAPE, Rule(), shape=shape_for(TrnAE))
     assert parse_value(trn, "100-1234-5670-0003") == "100123456700003"
     assert supported_by_quote(iban, IBAN, "IBAN: AE07 0331 2345 6789 0123 456")
+    # Spaces, tabs, hyphens and lower case are formatting; a dropped digit is not.
+    assert parse_value(iban, " AE07\t0331-2345 6789 0123 456 ") == IBAN
+    with pytest.raises(InvalidValue):
+        parse_value(iban, IBAN[:-1])  # the live failure: 22 characters of 23
+    shape = shape_for(Iban)
+    assert shape is not None
+    assert "as printed" in shape.description
 
 
 class Terms(StrEnum):

@@ -27,6 +27,7 @@ unit tests.
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -85,6 +86,8 @@ class Normalized:
 
 
 _LINE_BREAKS = frozenset("\n\r\x0b\x0c\x85\u2028\u2029")
+_LINE_RE = re.compile(r"[^\n\r\x0b\x0c\x85\u2028\u2029]+")
+_LINE_SPLIT = re.compile(r"[\n\r\x0b\x0c\x85\u2028\u2029]+")
 Wraps = Literal["space", "keep", "join"]
 WRAP_VARIANTS: tuple[Wraps, ...] = ("space", "keep", "join")
 
@@ -170,6 +173,7 @@ class EvidenceLocator:
         self._original = doc.text
         self._sanitized = sanitized
         self._norms: dict[Wraps, Normalized] = {}
+        self._lines: list[tuple[int, int, str]] | None = None
         starts: list[int] = []
         offset = 0
         for page in doc.pages:
@@ -199,6 +203,72 @@ class EvidenceLocator:
                 return located
         return None
 
+    def locate_lines(self, quote: str | None) -> tuple[Located, ...]:
+        """For a quote of several lines that is not in the text as a whole, each of its
+        lines that is (in order of the quote).
+
+        A table read row by row puts a label and its value on different lines, often
+        far apart ("Invoice No." ... "MAL/26/0854"), and the model quotes them as one
+        passage. The joined quote is no evidence; a line of it can be, but only where
+        its location is never a guess: it equals exactly one whole line of the model's
+        text, or it occurs exactly once in that text. The caller checks that the line
+        it uses holds the value and sits under or beside another line of the quote
+        (``beside_or_below``), so a value is never paired with an unrelated label."""
+        if quote is None or not quote.strip() or len(quote) > MAX_QUOTE_CHARS:
+            return ()
+        lines = [line for line in _LINE_SPLIT.split(quote) if line.strip()]
+        if len(lines) < 2 or self.locate(quote) is not None:
+            return ()
+        haystack = self._norm("space").text
+        out: list[Located] = []
+        for line in lines:
+            target = normalize(line).text
+            if not target:
+                continue
+            whole = [r for r in self._text_lines() if r[2] == target]
+            located: Located | None = None
+            if len(whole) == 1:
+                located = self._at(whole[0][0], whole[0][1], "space")
+            elif not whole:
+                first = haystack.find(target)
+                if first >= 0 and haystack.find(target, first + 1) < 0:
+                    located = self._locate(line, "space")
+            if located is not None:
+                out.append(located)
+        return tuple(out)
+
+    def _text_lines(self) -> list[tuple[int, int, str]]:
+        """Each non-blank line of the model's text: its range (trimmed) and its
+        normalised text."""
+        if self._lines is None:
+            text = self._sanitized.text
+            found: list[tuple[int, int, str]] = []
+            for match in _LINE_RE.finditer(text):
+                lo, hi = match.start(), match.end()
+                while lo < hi and text[lo].isspace():
+                    lo += 1
+                while hi > lo and text[hi - 1].isspace():
+                    hi -= 1
+                if lo < hi:
+                    found.append((lo, hi, normalize(text[lo:hi]).text))
+            self._lines = found
+        return self._lines
+
+    def _at(self, lo: int, hi: int, wraps: Wraps) -> Located | None:
+        """``Located`` for model-text ``[lo, hi)``, checked against the original."""
+        mapped = self._sanitized.to_original(lo, hi)
+        if mapped is None:
+            return None
+        start, end = mapped
+        if not 0 <= start < end <= len(self._original):
+            return None
+        if (
+            normalize(self._original[start:end], wraps).text
+            != normalize(self._sanitized.text[lo:hi], wraps).text
+        ):
+            return None
+        return Located(start, end, tuple(self._spans(start, end)))
+
     def locate_visible(self, quote: str | None) -> tuple[Located, ...]:
         """``locate``, or for a quote that runs over hidden text (a blind placeholder
         the model copied), each visible part of it on its own.
@@ -227,18 +297,9 @@ class EvidenceLocator:
                 lo, hi = _trim(model_text, lo, hi)
                 if sum(ch.isalnum() for ch in model_text[lo:hi]) < 2:
                     continue
-                mapped = self._sanitized.to_original(lo, hi)
-                if mapped is None:
-                    continue
-                start, end = mapped
-                if not 0 <= start < end <= len(self._original):
-                    continue
-                if (
-                    normalize(self._original[start:end], wraps).text
-                    != normalize(model_text[lo:hi], wraps).text
-                ):
-                    continue
-                parts.append(Located(start, end, tuple(self._spans(start, end))))
+                located = self._at(lo, hi, wraps)
+                if located is not None:
+                    parts.append(located)
             if parts:
                 return tuple(parts)
         return ()
@@ -288,6 +349,25 @@ class EvidenceLocator:
         return _merge_lines(hits)
 
 
+def beside_or_below(label: Located, value: Located) -> bool:
+    """True when the page layout puts ``value`` right of ``label`` on the same row, or
+    under it in the same column within three line heights (a form or table cell).
+    Without boxes (DOCX, plain text) nothing is associated."""
+    if len(label.spans) != 1 or len(value.spans) != 1:
+        return False
+    a, b = label.spans[0], value.spans[0]
+    if a.page != b.page or not a.bboxes or not b.bboxes or a.start == b.start:
+        return False
+    lab, val = a.bboxes[-1], b.bboxes[0]
+    height = max(min(lab.height, val.height), 1.0)
+    rows = min(lab.bottom, val.bottom) - max(lab.top, val.top)
+    columns = min(lab.x1, val.x1) - max(lab.x0, val.x0)
+    if rows >= 0.5 * height and val.x0 >= lab.x1 - 0.5 * height:
+        return True  # same row, value to the right
+    gap = val.top - lab.bottom
+    return columns > 0 and -0.25 * height <= gap <= 3 * height
+
+
 def _trim(text: str, lo: int, hi: int) -> tuple[int, int]:
     """``[lo, hi)`` without whitespace or punctuation at either end."""
 
@@ -320,6 +400,16 @@ def _placed(
 
 
 def _placed_boxes(page: Page) -> list[tuple[int, int, BBox]]:
+    # PDF characters know their offset in the page text: exact, whatever the reading
+    # order (words come in visual order, which differs from the text's order when the
+    # page is read column by column).
+    chars = sorted(
+        (c.offset, c.offset + len(c.text), c.bbox)
+        for c in page.chars
+        if c.offset is not None and c.text.strip() and not c.off_page
+    )
+    if chars:
+        return [(s, e, box) for s, e, box in chars]
     words = _placed(page.text, [(w.text, w.bbox) for w in page.words])
     if words:
         return words

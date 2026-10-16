@@ -31,7 +31,7 @@ import structlog
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from pairly_core.documents.model import REVIEW_WARNINGS, NormalizedDocument
-from pairly_core.extraction.evidence import EvidenceLocator
+from pairly_core.extraction.evidence import EvidenceLocator, Located, beside_or_below
 from pairly_core.extraction.guarded import GuardedInput, UnguardedInputError
 from pairly_core.extraction.schema import (
     PATH_RE,
@@ -47,7 +47,13 @@ from pairly_core.extraction.types import (
     SourceSpan,
     json_value,
 )
-from pairly_core.extraction.validators import InvalidValue, parse_value, supported_by_quote
+from pairly_core.extraction.validators import (
+    FieldKind,
+    InvalidValue,
+    norm_text,
+    parse_value,
+    supported_by_quote,
+)
 from pairly_core.llm.errors import ModelUnavailable
 from pairly_core.llm.router import ModelRouter
 from pairly_core.llm.types import CallContext, RouterResult, TaskSpec
@@ -166,6 +172,28 @@ class ExtractionResult[S: ExtractionModel]:
 # ------------------------------------------------------------------ the engine
 
 
+def _line_holds_value(leaf: LeafSpec, value: Any, line: str) -> bool:
+    """The value can be read from this one line. Stricter than ``supported_by_quote``
+    for choices: a choice must be written in the line (a label alone is no evidence)."""
+    if leaf.value.kind is FieldKind.ENUM:
+        return norm_text(str(value)) in norm_text(line)
+    return supported_by_quote(leaf.value, value, line)
+
+
+def _value_line(leaf: LeafSpec, value: Any, parts: Sequence[Located]) -> Located | None:
+    """A label and its value quoted together from different lines of a table: the
+    one line that holds the value is the evidence, when the page layout puts it under
+    or beside another line of the quote (its label). Never a guess: ``None`` unless
+    exactly one line qualifies."""
+    found = [
+        part
+        for part in parts
+        if _line_holds_value(leaf, value, " ".join(s.quote for s in part.spans))
+        and any(beside_or_below(other, part) for other in parts if other is not part)
+    ]
+    return found[0] if len(found) == 1 else None
+
+
 def _leaf_result(
     leaf: LeafSpec,
     path: str,
@@ -187,6 +215,8 @@ def _leaf_result(
         except InvalidValue:
             flags.append(FieldFlag.INVALID_VALUE)
         located = locator.locate(answer.quote)
+        if located is None and value is not None:
+            located = _value_line(leaf, value, locator.locate_lines(answer.quote))
         if located is None:
             flags.append(FieldFlag.NO_EVIDENCE)
         else:
