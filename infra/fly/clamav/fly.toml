@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Hosted demo virus scanner: ClamAV (GPL-2.0, a separate app, never linked into Pairly),
+# the same pinned image as the compose `scan` profile. Outside development the worker
+# accepts no fake scanner (pairly_core.ingestion.settings): without clamd every upload
+# waits for a person and the demo's CVs are never screened, so the demo needs it.
+#
+# Private only: a Flycast address and no public IP. The worker connects to
+# pairly-demo-clamav.flycast:3310.
+#
+#   fly deploy -c infra/fly/clamav/fly.toml --ha=false --no-public-ips --flycast
+
+app = "pairly-demo-clamav"
+primary_region = "fra"
+
+[build]
+  image = "clamav/clamav-debian:1.5.4"
+
+[[mounts]]
+  # Signature databases (a few hundred MB), kept across restarts.
+  source = "clamav_db"
+  destination = "/var/lib/clamav"
+
+[[services]]
+  internal_port = 3310
+  protocol = "tcp"
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 3310
+
+  [[services.tcp_checks]]
+    interval = "30s"
+    timeout = "10s"
+    # First start downloads the signature databases.
+    grace_period = "300s"
+
+[[vm]]
+  # clamd holds the signatures in memory (about 1.1 GB steady, more while reloading;
+  # the compose limit is 2560m after an OOM kill at 1536m).
+  size = "shared-cpu-2x"
+  memory = "4gb"

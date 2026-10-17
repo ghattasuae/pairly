@@ -117,3 +117,11 @@ that job.
 - `api-docs/vendor/redoc/` is the vendored Redoc bundle (MIT) that `make api-docs` embeds
   in `dist/api-docs/index.html`, next to `dist/api-docs/openapi.json`. The page fetches
   nothing at run time (its Content Security Policy forbids network access).
+
+## Hosted demo (Fly.io)
+
+`fly/` holds one `fly.toml` per app of the public demo (web, API, worker, Postgres with
+pgvector, ClamAV, and the ops app that migrates, seeds and resets it every night), plus
+`fly/db/Dockerfile`. The design, the cost estimate and the exact steps are in
+[docs/hosted-demo.md](../docs/hosted-demo.md). Nothing is deployed from this repository
+automatically.

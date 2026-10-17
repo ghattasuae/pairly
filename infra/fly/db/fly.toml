@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Hosted demo Postgres 16 with pgvector (docs/hosted-demo.md). One Machine with a volume,
+# private only: no [http_service] and no [[services]], so nothing is reachable from the
+# internet. The other demo apps connect over Fly's private network to
+# pairly-demo-db.internal:5432 (Postgres listens on every address, IPv6 included).
+#
+# Why not Fly Managed Postgres: its users are created by Fly with fixed role types
+# (Schema Admin, Writer, Reader) and Fly does not grant CREATEROLE, so the three
+# least-privilege roles of infra/postgres/init cannot be reproduced there. See the doc.
+#
+# Secrets (fly secrets import, from scripts/gen_dev_env.py --fly): POSTGRES_PASSWORD,
+# PAIRLY_OWNER_DB_PASSWORD, PAIRLY_APP_DB_PASSWORD, PAIRLY_AUTH_DB_PASSWORD (the init
+# script reads the last three once, on the first start).
+#
+#   fly deploy . --config infra/fly/db/fly.toml --dockerfile infra/fly/db/Dockerfile --ha=false
+
+app = "pairly-demo-db"
+primary_region = "fra"
+
+[build]
+  # Paths are from the repository root, the build context (run fly deploy from there).
+  dockerfile = "infra/fly/db/Dockerfile"
+
+[env]
+  POSTGRES_USER = "postgres"
+  POSTGRES_DB = "pairly"
+  POSTGRES_INITDB_ARGS = "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+  # A subfolder: the volume's root holds lost+found, which initdb refuses.
+  PGDATA = "/var/lib/postgresql/data/pgdata"
+  TZ = "UTC"
+  PGTZ = "UTC"
+
+[processes]
+  # The compose settings, sized for 512 MB.
+  db = "postgres -c shared_buffers=64MB -c effective_cache_size=160MB -c maintenance_work_mem=32MB -c work_mem=2MB -c max_connections=60 -c password_encryption=scram-sha-256"
+
+[[mounts]]
+  source = "pg_data"
+  destination = "/var/lib/postgresql/data"
+  processes = ["db"]
+
+[checks]
+  [checks.postgres]
+    type = "tcp"
+    port = 5432
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+
+[[restart]]
+  policy = "always"
+  processes = ["db"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["db"]
