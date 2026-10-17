@@ -17,14 +17,21 @@ package.json files under node_modules. Missing data is shown as UNKNOWN; the
 script never fails because one package lacks metadata.
 
 Bundled components that are not packages of their own (PDFium inside the pypdfium2
-wheels, the DejaVu Sans subset embedded in decision receipts, the disposable email
-domain list of Pairly Hire, the vendored Redoc bundle of ``make api-docs``) are listed in
-their own section (BUNDLED).
+wheels, the pdf.js worker and fonts the web app serves, the DejaVu Sans subset embedded
+in decision receipts, the disposable email domain list of Pairly Hire, the vendored
+Redoc bundle of ``make api-docs`` with React and DOMPurify inside it, the caniuse-lite
+data) are listed in their own section with links to their license texts.
+
+The script exits 1 and writes nothing when a known bundled asset (KNOWN_ASSETS) is
+shipped but missing from the output, when a linked license text does not exist, or
+when a committed asset that looks third party (a font, a vendored or minified bundle,
+OCR language data) is not covered by any bundled entry.
 """
 
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 import sys
@@ -40,7 +47,7 @@ UNKNOWN = "UNKNOWN"
 
 _NOT_INSTALLED = f"{UNKNOWN} (not installed here)"
 
-# Our own workspace packages are AGPL-3.0 and are not third-party components.
+# Our own workspace packages (dual licensed or Apache-2.0) are not third-party components.
 OWN_PREFIXES = ("pairly", "@pairly/")
 
 # A License field longer than this is usually the full license text, not a name.
@@ -275,12 +282,46 @@ def fill_from_registry(
     ]
 
 
+# ---------------------------------------------------------------- bundled components
+# Third-party code, fonts and data that ship inside Pairly or inside one of its
+# packages, rather than as a package of their own. Each entry links the license texts
+# a recipient must receive; texts that do not already sit next to the asset are kept
+# under LICENSES/third-party/.
+
+THIRD_PARTY = "LICENSES/third-party"
+REDOC_VERSION = "2.5.4"
+REDOC_DIR = "infra/api-docs/vendor/redoc"
+FONT_DIR = "packages/core/pairly_core/decisions/fonts"
+DISPOSABLE_DOMAINS = "packages/hire/pairly_hire/data/disposable_domains.txt"
+PDFJS_COPY_SCRIPT = "apps/web/scripts/copy-pdfjs.mjs"
+
+# Committed files that look like third-party assets. Every match must be covered by a
+# bundled entry (Bundled.covers), so a new font, vendored bundle or OCR language file
+# cannot slip in without a notice.
+ASSET_PATTERNS: tuple[str, ...] = (
+    "*.ttf",
+    "*.otf",
+    "*.woff",
+    "*.woff2",
+    "*.pfb",
+    "*.traineddata",
+    "*.min.js",
+    "*.wasm",
+    "*/vendor/*",
+)
+
+
 @dataclass(frozen=True)
 class Bundled:
+    key: str
     name: str
     version: str
     license: str
     where: str
+    # (label, target): a repository path relative to the root, or an https URL.
+    texts: tuple[tuple[str, str], ...] = ()
+    # Repository path patterns (fnmatch) of committed files this entry accounts for.
+    covers: tuple[str, ...] = ()
 
 
 def _pdfium_version() -> str:
@@ -291,40 +332,223 @@ def _pdfium_version() -> str:
     return str(PDFIUM_INFO)
 
 
-def bundled_components() -> list[Bundled]:
+def _locked_js_version(root: Path, name: str) -> str:
+    lockfile = root / "pnpm-lock.yaml"
+    if not lockfile.is_file():
+        return UNKNOWN
+    versions = sorted({v for n, v in pnpm_packages(lockfile) if n == name})
+    return ", ".join(versions) if versions else UNKNOWN
+
+
+def bundled_components(root: Path | None = None) -> list[Bundled]:
     """Third-party code and data shipped inside other packages or in this repository."""
+    root = root if root is not None else Path(__file__).resolve().parents[1]
+    pdfium_texts = (
+        *(
+            (label, f"{THIRD_PARTY}/pdfium/{file}")
+            for label, file in (
+                ("PDFium", "pdfium.txt"),
+                ("pdfium-binaries", "pdfium-binaries.txt"),
+                ("pypdfium2 (BSD-3-Clause)", "pypdfium2-BSD-3-Clause.txt"),
+                ("FreeType", "freetype.txt"),
+                ("ICU", "icu.txt"),
+                ("libjpeg-turbo", "libjpeg_turbo.md"),
+                ("libjpeg-turbo (IJG)", "libjpeg_turbo.ijg"),
+                ("lcms", "lcms.txt"),
+                ("OpenJPEG", "libopenjpeg.txt"),
+                ("libpng", "libpng.txt"),
+                ("zlib", "zlib.txt"),
+                ("abseil", "abseil.txt"),
+                ("Anti-Grain Geometry", "agg23.txt"),
+                ("fast_float", "fast_float.txt"),
+                ("simdutf", "simdutf.txt"),
+                ("LLVM libc", "llvm-libc.txt"),
+            )
+        ),
+        ("Apache-2.0", "LICENSES/Apache-2.0.txt"),
+        ("CC-BY-4.0", f"{THIRD_PARTY}/CC-BY-4.0.txt"),
+    )
     return [
         Bundled(
+            "pdfium",
             "PDFium",
             _pdfium_version(),
             "BSD-3-Clause; its bundled build also carries FreeType (FTL), ICU (Unicode "
             "license), libjpeg-turbo (IJG and BSD-3-Clause), lcms (MIT), OpenJPEG "
-            "(BSD-2-Clause), libpng, zlib, abseil (Apache-2.0), fast_float and simdutf (MIT "
-            "or Apache-2.0), LLVM libc (Apache-2.0 WITH LLVM-exception)",
-            "compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0)",
+            "(BSD-2-Clause), libpng, zlib, Anti-Grain Geometry, abseil (Apache-2.0), "
+            "fast_float and simdutf (MIT or Apache-2.0), LLVM libc (Apache-2.0 WITH "
+            "LLVM-exception)",
+            "compiled into the pypdfium2 wheels (pypdfium2 is BSD-3-Clause OR Apache-2.0, "
+            "its docs CC-BY-4.0); none of the bundled projects ships an Apache NOTICE file",
+            pdfium_texts,
         ),
         Bundled(
+            "pdfjs",
+            "pdf.js (pdfjs-dist worker and standard fonts)",
+            _locked_js_version(root, "pdfjs-dist"),
+            "Apache-2.0 (pdf.js ships no NOTICE file); standard fonts: Foxit fonts "
+            "(BSD-3-Clause, PDFium Authors), Liberation Sans (GPL-2.0 with a font "
+            "embedding exception)",
+            f"{PDFJS_COPY_SCRIPT} copies the worker, the fonts and their license files into "
+            "apps/web/public/pdfjs/ at build time; the web app serves them",
+            (
+                ("Apache-2.0", "LICENSES/Apache-2.0.txt"),
+                ("Foxit fonts", f"{THIRD_PARTY}/pdfjs/LICENSE_FOXIT.txt"),
+                ("Liberation fonts", f"{THIRD_PARTY}/pdfjs/LICENSE_LIBERATION.txt"),
+            ),
+        ),
+        Bundled(
+            "dejavu",
             "DejaVu Sans (subset)",
             "2.37",
             "Bitstream Vera Fonts License and Arev Fonts License; DejaVu changes public domain",
-            "packages/core/pairly_core/decisions/fonts/ (LICENSE_DEJAVU), embedded in "
-            "decision receipt PDFs",
+            f"{FONT_DIR}/, embedded in decision receipt PDFs",
+            (("Bitstream Vera and Arev licenses", f"{FONT_DIR}/LICENSE_DEJAVU"),),
+            (f"{FONT_DIR}/*",),
         ),
         Bundled(
+            "disposable-domains",
             "disposable-email-domains (subset)",
             "curated 2026-10",
             "CC0-1.0",
-            "packages/hire/pairly_hire/data/disposable_domains.txt, the domains the Hire "
-            "apply form refuses",
+            f"{DISPOSABLE_DOMAINS}, the domains the Hire apply form refuses",
+            (
+                ("CC0-1.0", "https://creativecommons.org/publicdomain/zero/1.0/legalcode"),
+                (
+                    "upstream",
+                    "https://github.com/disposable-email-domains/disposable-email-domains",
+                ),
+            ),
+            (DISPOSABLE_DOMAINS,),
         ),
         Bundled(
+            "redoc",
             "Redoc (standalone bundle)",
-            "2.5.4",
+            REDOC_VERSION,
             "MIT; the bundle also carries React (MIT), DOMPurify (Apache-2.0 OR MPL-2.0) and "
             "other MIT and ISC code, see redoc.standalone.js.LICENSE.txt",
-            "infra/api-docs/vendor/redoc/, the API reference page make api-docs writes",
+            f"{REDOC_DIR}/, the API reference page make api-docs writes",
+            (
+                ("MIT", f"{REDOC_DIR}/LICENSE"),
+                ("bundled notices", f"{REDOC_DIR}/redoc.standalone.js.LICENSE.txt"),
+            ),
+            (f"{REDOC_DIR}/*",),
+        ),
+        Bundled(
+            "react",
+            "React (inside the Redoc bundle)",
+            "as bundled by Redoc " + REDOC_VERSION,
+            "MIT",
+            f"{REDOC_DIR}/redoc.standalone.js",
+            (("MIT", f"{THIRD_PARTY}/react-MIT.txt"),),
+        ),
+        Bundled(
+            "dompurify",
+            "DOMPurify (inside the Redoc bundle)",
+            "3.4.13",
+            "Apache-2.0 OR MPL-2.0 (Pairly uses it under Apache-2.0; DOMPurify ships no "
+            "NOTICE file)",
+            f"{REDOC_DIR}/redoc.standalone.js",
+            (("Apache-2.0", "LICENSES/Apache-2.0.txt"),),
+        ),
+        Bundled(
+            "caniuse-lite",
+            "caniuse-lite (browser support data from caniuse.com)",
+            _locked_js_version(root, "caniuse-lite"),
+            "CC-BY-4.0, data by Alexis Deveria and the caniuse.com contributors",
+            "read at build time by browserslist (Next.js, PostCSS, Babel); attribution only",
+            (("CC-BY-4.0", f"{THIRD_PARTY}/CC-BY-4.0.txt"),),
         ),
     ]
+
+
+def _repo_files(root: Path) -> list[str]:
+    """Committed (and not ignored) files, relative to root; a plain walk outside git."""
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],  # noqa: S607
+            cwd=root,
+            check=True,
+            capture_output=True,
+        ).stdout
+        names = [name for name in out.decode("utf-8").split("\0") if name]
+        if names:
+            return names
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    skip = {".git", "node_modules", ".venv", "__pycache__"}
+    return [
+        p.relative_to(root).as_posix()
+        for p in root.rglob("*")
+        if p.is_file() and not skip.intersection(p.relative_to(root).parts)
+    ]
+
+
+def _bundle_mentions(root: Path, needle: str) -> bool:
+    notices_file = root / REDOC_DIR / "redoc.standalone.js.LICENSE.txt"
+    try:
+        return needle in notices_file.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+
+def _uv_locked(root: Path, name: str) -> bool:
+    return any(_norm(n) == name for n, _ in uv_lock_packages(root / "uv.lock"))
+
+
+def _js_locked(root: Path, name: str) -> bool:
+    lockfile = root / "pnpm-lock.yaml"
+    return lockfile.is_file() and any(n == name for n, _ in pnpm_packages(lockfile))
+
+
+# Known bundled assets: key -> how to tell that this repository ships it. When the
+# detector finds the asset, the generated NOTICE.md must list it.
+KNOWN_ASSETS: dict[str, Callable[[Path], bool]] = {
+    "redoc": lambda root: (root / REDOC_DIR / "redoc.standalone.js").is_file(),
+    "react": lambda root: _bundle_mentions(root, "@license React"),
+    "dompurify": lambda root: _bundle_mentions(root, "DOMPurify"),
+    "dejavu": lambda root: (root / FONT_DIR / "DejaVuSans.ttf").is_file(),
+    "disposable-domains": lambda root: (root / DISPOSABLE_DOMAINS).is_file(),
+    "pdfjs": lambda root: (root / PDFJS_COPY_SCRIPT).is_file() or _js_locked(root, "pdfjs-dist"),
+    "pdfium": lambda root: _uv_locked(root, "pypdfium2"),
+    "caniuse-lite": lambda root: _js_locked(root, "caniuse-lite"),
+}
+
+
+def validate(root: Path, bundled: list[Bundled], text: str) -> list[str]:
+    """Problems that must block NOTICE.md: a known asset missing, a license text missing,
+    or a committed third-party asset that no entry covers."""
+    problems: list[str] = []
+    by_key = {b.key: b for b in bundled}
+    for key, detect in KNOWN_ASSETS.items():
+        if not detect(root):
+            continue
+        entry = by_key.get(key)
+        if entry is None or f"| {_cell(entry.name)} |" not in text:
+            problems.append(f"bundled asset {key!r} is shipped but missing from the notices")
+    for entry in bundled:
+        if not entry.texts:
+            problems.append(f"{entry.name}: no license text linked")
+        for label, target in entry.texts:
+            if target.startswith("https://"):
+                continue
+            if not (root / target).is_file():
+                problems.append(f"{entry.name}: license text {label!r} not found at {target}")
+    covered = [pattern for entry in bundled for pattern in entry.covers]
+    for name in _repo_files(root):
+        if name.startswith(("LICENSES/", "node_modules/")) or "/node_modules/" in name:
+            continue
+        if not any(fnmatch.fnmatch(name, p) for p in ASSET_PATTERNS):
+            continue
+        if not any(fnmatch.fnmatch(name, p) for p in covered):
+            problems.append(f"{name}: third-party asset not listed in the bundled components")
+    return problems
+
+
+def _link(label: str, target: str) -> str:
+    return f"[{label}]({target.replace(' ', '%20')})"
 
 
 def _cell(value: str) -> str:
@@ -338,9 +562,14 @@ def table(components: list[Component]) -> str:
 
 
 def bundled_table(items: list[Bundled]) -> str:
-    rows = ["| Name | Version | License | Where |", "| --- | --- | --- | --- |"]
+    rows = [
+        "| Name | Version | License | License texts | Where |",
+        "| --- | --- | --- | --- | --- |",
+    ]
     rows += [
-        f"| {_cell(b.name)} | {_cell(b.version)} | {_cell(b.license)} | {_cell(b.where)} |"
+        f"| {_cell(b.name)} | {_cell(b.version)} | {_cell(b.license)} | "
+        f"{_cell(', '.join(_link(label, target) for label, target in b.texts))} | "
+        f"{_cell(b.where)} |"
         for b in items
     ]
     return "\n".join(rows)
@@ -352,7 +581,9 @@ def render(
     parts = [
         "# Third-party notices",
         "",
-        "Pairly AI is open source (AGPL-3.0) with a commercial license option. "
+        "Pairly AI is open source with a commercial license option: the server and the web "
+        "app are `AGPL-3.0-only OR LicenseRef-Proofly-Commercial`, the SDKs and the "
+        "quickstart examples are `Apache-2.0` (see LICENSING.md). "
         "It uses the third-party components listed below. Each one stays under its own license.",
         "",
         "This file is generated by `scripts/third_party_notices.py`. Do not edit it by hand. "
@@ -362,10 +593,18 @@ def render(
         "uv run python scripts/third_party_notices.py --fetch-missing -o NOTICE.md",
         "```",
         "",
+        "The script fails when a known bundled asset is missing from this file, when a "
+        "linked license text is missing, or when a committed font, vendored bundle or "
+        "similar asset is not listed below.",
+        "",
         "A license shown as UNKNOWN means the package did not publish license metadata, "
         "or it is not installed on this machine. Check it by hand before release.",
         "",
         f"## Bundled components ({len(bundled or [])})",
+        "",
+        "Code, fonts and data shipped inside Pairly or inside one of its packages. The "
+        "license texts these components require to be passed on are linked in each row; "
+        "texts that do not sit next to the component are in `LICENSES/third-party/`.",
         "",
         bundled_table(bundled or []),
         "",
@@ -408,7 +647,19 @@ def main(argv: list[str] | None = None) -> int:
         python = fill_from_registry(python, pypi_license)
         if js is not None:
             js = fill_from_registry(js)
-    text = render(python, js, bundled_components())
+    bundled = bundled_components(args.root)
+    text = render(python, js, bundled)
+    problems = validate(args.root, bundled, text)
+    if problems:
+        for problem in problems:
+            print(f"ERROR {problem}", file=sys.stderr)
+        print(
+            "Fix: add the asset to bundled_components() in scripts/third_party_notices.py "
+            "with its license texts (under LICENSES/third-party/ when they do not ship "
+            "next to it). Nothing was written.",
+            file=sys.stderr,
+        )
+        return 1
     if args.output:
         args.output.write_text(text, encoding="utf-8")
         print(f"wrote {args.output}", file=sys.stderr)
