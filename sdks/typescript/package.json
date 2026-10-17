@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "TypeScript client for the Pairly API: human-approved AI for hiring and accounts payable.",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -23,7 +23,9 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "engines": {
     "node": ">=20"

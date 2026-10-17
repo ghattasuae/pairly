@@ -1,0 +1,8 @@
+Pairly quickstart examples
+Copyright (c) 2026 Proofly Technology
+
+These examples are licensed under the Apache License, Version 2.0 (see LICENSE), so
+you can copy them into your own application under any license.
+
+The examples contain no third-party code. The frameworks they use (Express, FastAPI,
+Flask, Next.js) are installed separately and keep their own licenses.

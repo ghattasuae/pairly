@@ -83,3 +83,10 @@ Pairly's checks finish, each approval links to Pairly, and when you approve it t
 The examples are tested on every run of the test suites against a fake Pairly API
 (`scripts/tests/test_quickstarts.py`, `express/server.test.ts`, `nextjs/app.test.ts`)
 and type-checked with `pnpm typecheck`.
+
+## License
+
+The quickstart examples are licensed under Apache-2.0 (see [`LICENSE`](LICENSE) and
+[`NOTICE`](NOTICE)), like the SDKs, so you can copy them into your own application under
+any license. The Pairly server is AGPL-3.0-only OR LicenseRef-Proofly-Commercial; see
+[`LICENSING.md`](../../LICENSING.md).

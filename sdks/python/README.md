@@ -2,8 +2,9 @@
 
 Python client for the Pairly API: human-approved AI for hiring and accounts payable.
 Typed, sync and async, retries with backoff, pagination helpers, idempotency keys and
-webhook verification. Version 0.1.0, AGPL-3.0-only (commercial license available, see
-`LICENSING.md` at the repository root).
+webhook verification. Version 0.1.0, licensed under Apache-2.0 (see `LICENSE` and `NOTICE`), so you can
+embed it in software under any license. The Pairly server it talks to is
+AGPL-3.0-only OR LicenseRef-Proofly-Commercial; see `LICENSING.md` at the repository root.
 
 People decide in Pairly. An API key can read, propose and upload; it can never approve,
 reject, pay or delete.
