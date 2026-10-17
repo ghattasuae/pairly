@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Zoom meeting links with a Server-to-Server OAuth app of the organisation's own account.
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Open payables and the cash forecast on hand-built rows: applied credits are always
 subtracted, amounts are Decimal at the currency's minor unit, and every number lists

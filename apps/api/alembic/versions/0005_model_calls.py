@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Model router tables (WP1.7): model_calls, budget reservations, overrides and alerts.
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Worker enumeration for the batch URL sweeper (M6).
 

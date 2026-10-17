@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Database helpers that do not need a running Postgres (the real RLS tests live in
 apps/api/tests/test_tenant_isolation.py)."""

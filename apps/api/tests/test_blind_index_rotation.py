@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Blind index key rotation against a real Postgres: dual lookup during the rollout,
 the rewrite command (resumable, audited, compare-and-swap) and the admin CLI."""

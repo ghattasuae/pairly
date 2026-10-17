@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The synthetic Pay dataset (WP4.1): determinism, IBANs, TRNs, arithmetic, matching
 cases, attacks, emails and the committed manifests."""

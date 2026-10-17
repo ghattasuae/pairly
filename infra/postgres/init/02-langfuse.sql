@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-only
+-- SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 -- Copyright (c) 2026 Proofly Technology
 --
 -- Separate role and database for self-hosted LangFuse (compose profile `observability`).

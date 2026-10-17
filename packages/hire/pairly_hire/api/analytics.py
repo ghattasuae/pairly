@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Hiring analytics routes (M3, brief 3.10). HR and talent leads (recruiters) and admins,
 ``hire.analytics.read``.

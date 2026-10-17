@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # ruff: noqa: E501  (one sentence per line reads better than split strings)
 """Reviewer explanations for guardrail findings, in English and Arabic.

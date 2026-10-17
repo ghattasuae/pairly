@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Object storage behind a small interface: S3 compatible (MinIO), files (native
 development and tests, ``fs_storage``) or in memory.

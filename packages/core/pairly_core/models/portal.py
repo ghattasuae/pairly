@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The ``portal_guard_rules`` table (migrations 0022 and 0023): the narrow exceptions to
 the portal guard, per table and kind of portal person, each naming the commands it

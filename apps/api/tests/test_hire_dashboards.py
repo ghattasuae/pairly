@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Role dashboards (brief 5.1 items 1 to 7): who may open each, what each shows from
 existing records, that another organisation's records never show, and that a blind

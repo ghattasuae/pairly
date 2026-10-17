@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The "Real numbers" section of README.md is generated: it matches the generator's
 output exactly, and every value in it is read from the eval report or results."""

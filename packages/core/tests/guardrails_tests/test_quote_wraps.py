@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Classifier quotes over line wraps: the model reads a PDF line by line and joins a
 wrapped sentence with a space. The quote is still located (exact original span) when

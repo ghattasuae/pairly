@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """A stand-in for Valkey's side of ``pairly_core.ratelimit``: the token bucket script run
 in Python on a clock the test controls, with failures and delays on demand."""

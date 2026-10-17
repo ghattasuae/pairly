@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The exceptions queue without a database (``pairly_pay.exceptions``): categories from
 the stored checks and reasons, resolutions, SLA age, message templates, and the checks

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Documents on real Postgres: upload, dedupe, limits, RBAC on signed URLs, tenant
 isolation, scan and parse jobs (fail closed), inbound email and the sweeper.

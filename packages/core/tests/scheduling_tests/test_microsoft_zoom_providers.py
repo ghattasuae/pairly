@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Microsoft Graph and Zoom providers against a mocked HTTP transport (never the real
 services): request shapes, Teams and Zoom links, idempotency keys, errors and OAuth."""

@@ -1,0 +1,20 @@
+Proofly Technology Commercial License (LicenseRef-Proofly-Commercial)
+
+Copyright (c) 2026 Proofly Technology
+
+Files marked "SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial"
+are available under either of two licenses, at the licensee's choice:
+
+1. The GNU Affero General Public License, version 3 only (AGPL-3.0-only), in
+   LICENSES/AGPL-3.0-only.txt. Free for everyone.
+
+2. A commercial license from Proofly Technology. Its terms are set in a written
+   agreement signed with Proofly Technology. This file is not that agreement and
+   grants no rights on its own. Without a signed agreement, the AGPL-3.0-only option
+   is the only license that applies.
+
+The commercial license terms are available from Proofly Technology. See
+COMMERCIAL-LICENSE.md at the root of the repository for when a commercial license is
+useful, and contact:
+
+    ghattas@mail.proofly.ae

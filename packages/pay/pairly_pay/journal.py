@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The generic journal export: approved invoices and payments of a period as journal
 lines, one balanced entry each (Xero, QuickBooks and Zoho formats come later).

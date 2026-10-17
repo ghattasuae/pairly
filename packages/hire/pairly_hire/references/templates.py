@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # ruff: noqa: RUF001  (Arabic copy: letters ruff mistakes for Latin look-alikes)
 """The referee's email, English and Arabic: ``hire.referee.request`` version 1

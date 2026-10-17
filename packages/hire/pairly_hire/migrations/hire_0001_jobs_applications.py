@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Pairly Hire: jobs, rubric drafts, candidates, applications, self-identification,
 settings, the acknowledgement templates and the careers page lookup.

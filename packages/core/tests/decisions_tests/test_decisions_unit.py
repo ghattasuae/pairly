@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Decision records and audit hardening without a database: ids, exact encoding,
 right-to-left ordering, the redaction policy, receipts, anchor signatures and the

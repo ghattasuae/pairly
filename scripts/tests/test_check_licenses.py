@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Unit tests for the license gate classifier (scripts/check_licenses.py)."""
 
@@ -171,8 +171,14 @@ class _Dist:
 
 def test_python_packages_skips_own_and_normalises_names() -> None:
     dists = [
-        _Dist(_meta(Name="pairly-core", Version="0.0.0", License_Expression="AGPL-3.0-only")),
-        _Dist(_meta(Name="pairly", Version="0.0.0", License_Expression="AGPL-3.0-only")),
+        _Dist(
+            _meta(
+                Name="pairly-core",
+                Version="0.0.0",
+                License_Expression="AGPL-3.0-only OR LicenseRef-Proofly-Commercial",
+            )
+        ),
+        _Dist(_meta(Name="pairly", Version="0.0.0", License_Expression="Apache-2.0")),
         _Dist(_meta(Name="Some_Lib", Version="1.2", License_Expression="MIT")),
     ]
     packages = cl.python_packages(dists)
@@ -183,7 +189,11 @@ def test_npm_packages_flattens_and_skips_own() -> None:
     data = {
         "MIT": [
             {"name": "left-pad", "versions": ["1.0.0", "1.1.0"], "license": "MIT"},
-            {"name": "@pairly/web", "versions": ["0.0.0"], "license": "AGPL-3.0-only"},
+            {
+                "name": "@pairly/web",
+                "versions": ["0.0.0"],
+                "license": "(AGPL-3.0-only OR LicenseRef-Proofly-Commercial)",
+            },
         ],
         "Unknown": [{"name": "mystery", "versions": ["2.0.0"], "license": "Unknown"}],
         "(MIT OR CC0-1.0)": [{"name": "dual", "versions": ["3.0.0"]}],

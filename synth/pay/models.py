@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Pydantic models for the synthetic Pay data: vendors, invoice ground truth, purchase
 orders, goods receipts, matching cases, attack labels and inbound emails.

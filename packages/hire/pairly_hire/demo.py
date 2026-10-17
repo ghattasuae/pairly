@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # ruff: noqa: E501  (Arabic copy; long scripted demo text)
 """Demo jobs: synthetic briefs and the scripted model answers for them.

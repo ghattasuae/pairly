@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Renderer-based hidden-text check (WP2.4b): covered and clipped text, bounded cost,
 fail closed when a page is not checked."""

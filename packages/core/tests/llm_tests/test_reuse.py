@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Live mode response reuse: an identical request of the same organisation reuses the
 first live answer (same output, no model request, no cost), labelled ``reused_from``;

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Ingestion building blocks without a database: sniffing, names, spooling, limits,
 storage keys and stores, the job queue and document permissions."""

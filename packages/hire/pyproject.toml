@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 
 [project]
@@ -6,7 +6,7 @@ name = "pairly-hire"
 version = "0.0.0"
 description = "Pairly Hire workflow plugin."
 readme = "README.md"
-license = "AGPL-3.0-only"
+license = "AGPL-3.0-only OR LicenseRef-Proofly-Commercial"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Proofly Technology" }]
 dependencies = ["pairly-core", "pairly-api", "httpx>=0.28", "pyyaml>=6.0"]

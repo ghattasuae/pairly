@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 // Copyright (c) 2026 Proofly Technology
 
 // Read the mail the app under test just sent (magic links, invitations, approval emails),

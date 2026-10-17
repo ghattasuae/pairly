@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The debrief summary (brief 3.7.4, 5.3): when every scorecard of a stage is in, one
 page for the hiring manager: criteria, ratings, disagreements, open questions and the

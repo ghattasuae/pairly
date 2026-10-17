@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Pairly web app (Next.js App Router, Better Auth, next-intl).",
-  "license": "AGPL-3.0-only",
+  "license": "(AGPL-3.0-only OR LicenseRef-Proofly-Commercial)",
   "type": "module",
   "scripts": {
     "dev": "node scripts/copy-pdfjs.mjs && next dev --port 3100",

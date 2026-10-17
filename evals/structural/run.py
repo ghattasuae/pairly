@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Run the structural evals (see ``evals/structural/__init__.py``) and write
 ``evals/results/structural.json`` and the "Structural checks" section of the report."""

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 
 [project]
@@ -6,7 +6,7 @@ name = "pairly-mcp"
 version = "0.1.0"
 description = "Pairly MCP server: read and propose tools over the Pairly API. People decide."
 readme = "README.md"
-license = "AGPL-3.0-only"
+license = "AGPL-3.0-only OR LicenseRef-Proofly-Commercial"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Proofly Technology" }]
 # No engine import: every tool goes through the HTTP API, so the API's RBAC applies.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The candidate portal tables (migration ``hire_0004b``). Org scoped, RLS forced, and a
 restrictive policy keyed on the portal subject (``app.portal_subject``): a portal

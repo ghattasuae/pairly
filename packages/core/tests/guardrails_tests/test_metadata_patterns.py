@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Metadata and review-comment instructions: "rank above the others", the Arabic
 "ignore the evaluation criteria" family, and ordinary metadata that must stay clean."""

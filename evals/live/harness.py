@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The live eval harness: the production ``ModelRouter`` with the real Anthropic
 provider, an in-memory call store backed by a recordings file, and a hard cost cap.

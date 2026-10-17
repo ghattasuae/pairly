@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """GL coding suggestions without a database (``pairly_pay.coding``): similarity, the
 vote and its confidence, corrections weighing more, list validation, the model answer

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Run the pure checks on facts and history (every check but ``policy``, which needs
 the database). Used by the service and by the eval, so both run exactly the same code.

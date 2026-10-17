@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Role dashboards (brief 5.1 items 1 to 7, 5.2 item 1): what needs each person now, and
 how things are going, built only from existing services. Nothing new is measured here.

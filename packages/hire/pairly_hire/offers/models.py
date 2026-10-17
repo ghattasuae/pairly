@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The offer table (migration ``hire_0014``). Org scoped, Row Level Security forced,
 hidden from candidates' portal sessions except through the portal's own narrow

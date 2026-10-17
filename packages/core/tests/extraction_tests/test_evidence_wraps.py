@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Evidence quotes over PDF line wraps: whitespace runs, line breaks, soft hyphens and
 hyphenated words are tolerated; every other character must still match in order, and

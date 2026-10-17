@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Scheduling tables (migration ``hire_0005``). All org scoped, Row Level Security forced;
 the application role gets SELECT, INSERT and UPDATE, never DELETE.

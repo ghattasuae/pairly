@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Recorded responses for Pay's optional model help (a recordings bundle), so the demo
 works offline. **The answers are scripted, not model output.**

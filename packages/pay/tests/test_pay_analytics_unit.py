@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Pay analytics (brief 4.9) on a hand-built dataset: every number is what the rows say,
 links to the rows it counts, and "no data" is None, never 0."""

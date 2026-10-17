@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Fake or generated invoice signals (brief 4.4.6). Flags only: nothing is blocked or
 opened here; strong signals send the invoice to a person through the risk score.

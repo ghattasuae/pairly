@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 #
 # Python always runs through uv (Python 3.12, see .python-version). JS runs through pnpm.
@@ -215,10 +215,11 @@ evals: ## Run the eval suites (guardrails, Hire screening, Pay checks, structura
 	nice -n 10 $(UV) run python -m evals.structural
 	$(UV) run python -m evals.gate
 
-lint: ## Lint Python, import contracts and JS
+lint: ## Lint Python, import contracts, SPDX license headers (per-folder policy) and JS
 	$(UV) run ruff check .
 	$(UV) run ruff format --check .
 	$(UV) run lint-imports
+	$(UV) run python scripts/spdx_headers.py --check
 	$(UV) run python scripts/check_no_em_dash.py
 	$(UV) run python scripts/check_translations.py
 	$(PNPM) lint

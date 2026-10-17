@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 
 # Workspace root. Not a package itself: it pulls in every member and the dev tools.
@@ -6,7 +6,7 @@
 name = "pairly-workspace"
 version = "0.0.0"
 description = "Pairly AI monorepo workspace root."
-license = "AGPL-3.0-only"
+license = "AGPL-3.0-only OR LicenseRef-Proofly-Commercial"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "pairly-core",

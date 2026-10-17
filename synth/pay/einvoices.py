@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """More e-invoice formats: UN/CEFACT CII, Factur-X PDFs and Peppol BIS Billing 3.0.
 

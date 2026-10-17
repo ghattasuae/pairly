@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The invoice risk score (brief 4.4.9): every check as a risk signal, combined by the
 engine (``pairly_core.risk``) under the ``pay.invoice`` risk policy

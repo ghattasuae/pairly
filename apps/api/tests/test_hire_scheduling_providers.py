@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Scheduling with Microsoft 365 and Zoom against a mocked transport (never the real
 services): flags, the per person Microsoft connection with an encrypted refresh token,

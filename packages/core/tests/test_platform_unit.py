@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """WP1.12 without a database: flag, job, retention and search registries, job summaries,
 the ``tracked`` wrapper and PII redaction of search chunks."""

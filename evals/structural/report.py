@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The "Structural checks" section of ``evals/report.md``, generated from
 ``evals/results/structural.json``. Only the text between the markers is replaced; every

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pairly quickstart: human-approved AI in an Express app.",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "start": "node --experimental-strip-types server.ts",

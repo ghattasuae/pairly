@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Every finding code a review reason can carry (``check:<code>``) has a plain sentence in
 English and Arabic in the web app (``Pay.reasonCodes``), so the invoice view never falls
