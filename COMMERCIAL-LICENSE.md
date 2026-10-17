@@ -1,6 +1,6 @@
 # Commercial license
 
-Pairly AI is open source (AGPL-3.0) with a commercial license option.
+Pairly AI is open source (AGPL-3.0) with a commercial license option. The server and the web app carry the SPDX expression `AGPL-3.0-only OR LicenseRef-Proofly-Commercial`: you may use them under either license. The SDKs (`sdks/python`, `sdks/typescript`) and the quickstart examples (`docs/quickstarts`) are Apache-2.0 and never need a commercial license. See [LICENSING.md](LICENSING.md) for the split.
 
 This page explains the commercial option in plain language. It is not legal advice and it is not the license itself. The signed commercial agreement is what counts.
 
@@ -8,8 +8,10 @@ This page explains the commercial option in plain language. It is not legal advi
 
 Proofly Technology owns the copyright in Pairly AI and is the licensor for both options:
 
-1. The GNU Affero General Public License v3.0 (AGPL-3.0), in [LICENSE](LICENSE). Free for everyone.
-2. A commercial license, agreed in writing with Proofly Technology.
+1. The GNU Affero General Public License v3.0 (AGPL-3.0), in [LICENSE](LICENSE) and [LICENSES/AGPL-3.0-only.txt](LICENSES/AGPL-3.0-only.txt). Free for everyone.
+2. A commercial license, agreed in writing with Proofly Technology. Its SPDX name is `LicenseRef-Proofly-Commercial` ([LICENSES/LicenseRef-Proofly-Commercial.txt](LICENSES/LicenseRef-Proofly-Commercial.txt)).
+
+Proofly Technology also licenses the SDKs and the quickstart examples under the Apache License 2.0 ([LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt)).
 
 ## Commercial use is free under AGPL-3.0
 
@@ -24,6 +26,8 @@ You need a commercial license only if you want to do one of these things without
 1. **Keep your changes private.** Under AGPL-3.0, if you modify Pairly and let users interact with it over a network, or distribute it, you must offer those users the source of your modified version under AGPL-3.0. A commercial license lets you keep those changes private.
 2. **Embed Pairly in a closed-source product.** If you ship Pairly, or a large part of it, inside software you sell or distribute without releasing your own source under AGPL-3.0, you need a commercial license.
 3. **Offer Pairly as a service without AGPL-3.0 obligations.** If you run a modified Pairly as a hosted service for other organisations and do not want to publish your changes, you need a commercial license.
+
+None of these cases apply to the SDKs or the quickstart examples: Apache-2.0 already lets you embed them in closed-source software.
 
 If none of these apply to you, AGPL-3.0 already covers what you want to do. See [LICENSING.md](LICENSING.md) for common questions.
 

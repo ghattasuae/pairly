@@ -6,7 +6,7 @@ Version 0.1 (draft)
 
 Thank you for your interest in contributing to Pairly AI (the "Project"), which is owned and maintained by Proofly Technology ("Proofly").
 
-The Project is open source (AGPL-3.0) with a commercial license option. To offer both licenses, Proofly needs the right to license every contribution under both. This agreement gives Proofly that right. You keep the copyright in your contributions.
+The Project is open source (AGPL-3.0) with a commercial license option, and its SDKs and examples (the `sdks/` and `docs/quickstarts/` folders) are licensed under the Apache License 2.0. To offer these licenses, Proofly needs the right to license every contribution under all of them. This agreement gives Proofly that right. You keep the copyright in your contributions.
 
 Please read this agreement carefully. You accept it by posting the sign-off comment requested by the CLA bot on your pull request. It applies to all your past and future Contributions to the Project.
 
@@ -25,6 +25,10 @@ You keep all right, title and interest in Your Contributions. This agreement is 
 You grant Proofly, and recipients of software distributed by Proofly, a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable license to reproduce, prepare derivative works of, publicly display, publicly perform, distribute, and otherwise use Your Contributions and derivative works of them.
 
 This license includes the right for Proofly to **sublicense** these rights to others, and to **license or relicense** Your Contributions under any terms, including the GNU Affero General Public License v3.0 and proprietary commercial licenses.
+
+> **TODO: legal review.** The next sentence was added on 2026-10-17 so that contributions to the Apache-2.0 folders are covered. It must be reviewed with the rest of this agreement.
+
+Without limiting the previous paragraph, Proofly may license Your Contributions under the Apache License, Version 2.0, including Your Contributions to the Project's SDKs and examples and any of Your Contributions that Proofly includes in them.
 
 ## 4. Patent license
 
