@@ -43,11 +43,11 @@ htmlcov
 **/playwright-report
 **/test-results
 
-# Not needed inside any image
+# Not needed inside any image. synth/ and infra/postgres/ stay in the context: the
+# hosted demo builds copy them (python.Dockerfile target `demo`, infra/fly/db/Dockerfile);
+# every other image copies named folders only, so they never land there.
 docs
 evals
-synth
-infra/postgres
 infra/minio
 BRIEF.md
 **/tests

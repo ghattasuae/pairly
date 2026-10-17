@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Proofly Technology
+#
+# Hosted demo API (docs/hosted-demo.md): FastAPI from infra/docker/python.Dockerfile
+# (default target, the runtime image), as the application role pairly_app, so Row Level
+# Security applies. Public over HTTPS at https://pairly-demo-api.fly.dev (the web app
+# calls it there, and the demo seed applies through its public careers routes).
+#
+# One app per service, not process groups of one app: Fly secrets are per app and
+# reach every Machine of it, and the services do not get the same secrets (only the
+# worker holds the audit signing key, only pairly-demo-ops the owner role's password).
+#
+# Secrets (fly secrets import, from scripts/gen_dev_env.py --fly): PAIRLY_DATABASE_URL,
+# PAIRLY_KEK_1, PAIRLY_BLIND_INDEX_KEY, PAIRLY_API_KEY_PEPPER, PAIRLY_SIGNED_LINK_SECRET,
+# PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY; then by hand: PAIRLY_REDIS_URL (Upstash),
+# PAIRLY_S3_ACCESS_KEY and PAIRLY_S3_SECRET_KEY (Tigris).
+#
+#   fly deploy . --config infra/fly/api/fly.toml --dockerfile infra/docker/python.Dockerfile --ha=false
+
+app = "pairly-demo-api"
+primary_region = "fra"
+
+[build]
+  # From the repository root, the build context (run fly deploy from there).
+  dockerfile = "infra/docker/python.Dockerfile"
+
+[env]
+  PAIRLY_ENV = "staging"
+  PAIRLY_LOG_LEVEL = "INFO"
+  # Recorded model mode: answers come from the committed recordings, no API key, no spend.
+  PAIRLY_MODEL_MODE = "recorded"
+  PAIRLY_PUBLIC_API_URL = "https://pairly-demo-api.fly.dev"
+  PAIRLY_PUBLIC_WEB_URL = "https://pairly-demo-web.fly.dev"
+  PAIRLY_AUTH_JWKS_URL = "https://pairly-demo-web.fly.dev/api/auth/jwks"
+  PAIRLY_AUTH_ISSUER = "https://pairly-demo-web.fly.dev"
+  PAIRLY_AUTH_AUDIENCE = "https://pairly-demo-web.fly.dev"
+  PAIRLY_CORS_ORIGINS = "https://pairly-demo-web.fly.dev"
+  # Tigris (Fly's S3-compatible store). Path-style requests; one access key for both
+  # buckets (docs/hosted-demo.md, step 5).
+  PAIRLY_S3_ENDPOINT_URL = "https://fly.storage.tigris.dev"
+  PAIRLY_S3_PUBLIC_ENDPOINT_URL = "https://fly.storage.tigris.dev"
+  PAIRLY_S3_REGION = "auto"
+  PAIRLY_S3_BUCKET = "pairly-demo-documents"
+  PAIRLY_AUDIT_ANCHOR_BUCKET = "pairly-demo-anchors"
+  # Tigris documents no S3 Object Lock, so anchors keep two of their three write-once
+  # layers (conditional put, no delete in Pairly). The gap is in docs/hosted-demo.md.
+  PAIRLY_AUDIT_ANCHOR_LOCK_MODE = "none"
+  PAIRLY_CLAMAV_HOST = "pairly-demo-clamav.flycast"
+  PAIRLY_CLAMAV_PORT = "3310"
+  # Nothing is emailed from the demo: visitors sign in on /<locale>/demo.
+  PAIRLY_EMAIL_TRANSPORT = "fake"
+  PAIRLY_KEK_CURRENT = "1"
+  PAIRLY_BLIND_INDEX_KEY_CURRENT = "1"
+  PAIRLY_DEMO_PUBLIC_SIGNIN = "true"
+  PAIRLY_DEMO_ORG_SLUG = "demo"
+  # The web app only sends Cloudflare's documented test token (no Turnstile widget yet),
+  # so the API checks it with Cloudflare's documented always-pass test secret: a public
+  # test value, not a secret. The demo careers form has no real bot protection; the
+  # careers rate limits and the nightly reset still apply. See the doc.
+  PAIRLY_HIRE_TURNSTILE = "cloudflare"
+  PAIRLY_HIRE_TURNSTILE_SECRET = "1x0000000000000000000000000000000AA"
+  # Tighter limits for the demo deployment (it serves the demo organisation only).
+  PAIRLY_API_KEY_RATE_LIMIT_PER_MINUTE = "60"
+  PAIRLY_API_KEY_MAX_DAYS = "7"
+  PAIRLY_BATCH_ITEMS_PER_MINUTE = "20"
+  PAIRLY_MAX_UPLOAD_BYTES = "5242880"
+  PAIRLY_INTAKE_DEFAULT_MAX_BYTES = "5242880"
+  PAIRLY_SIGNED_URL_TTL_SECONDS = "60"
+  PAIRLY_PARSE_CONCURRENCY = "1"
+  PAIRLY_PARSE_MEMORY_MB = "512"
+  PAIRLY_OCR_LANGUAGES = "eng+ara"
+
+[processes]
+  api = "uvicorn pairly_api.main:app --host 0.0.0.0 --port 8000 --proxy-headers --no-server-header"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["api"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 40
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/readyz"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["api"]

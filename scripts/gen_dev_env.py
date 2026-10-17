@@ -7,6 +7,7 @@ Usage:
     uv run python scripts/gen_dev_env.py                   # writes .env if missing
     uv run python scripts/gen_dev_env.py --append-missing  # also updates an existing one
     uv run python scripts/gen_dev_env.py --env PATH        # custom target (used by tests)
+    uv run python scripts/gen_dev_env.py --fly DIR         # hosted demo secrets for Fly.io
 
 Rules:
 - An existing `.env` is never overwritten: no line in it is changed or removed. Without
@@ -19,6 +20,15 @@ Rules:
   public key is derived from the audit signing key, so the pair always matches).
 - Every other key keeps the value from `.env.example` (optional keys stay empty).
 - The file is created with mode 0600 and with O_EXCL, so a race cannot clobber a file.
+
+``--fly DIR`` (the hosted demo, docs/hosted-demo.md) writes one file per Fly app into
+DIR instead (``db.env``, ``api.env``, ``worker.env``, ``web.env``, ``ops.env``), each
+with only the secrets that app needs, as NAME=VALUE lines for
+``fly secrets import -a <app> < DIR/<file>``. Same rules: fresh values, mode 0600,
+O_EXCL, an existing file is never overwritten. It prints file and key names, never a
+value. The database passwords go into the URLs of the apps that use them, so the five
+files always match. Values Fly creates (the Upstash Redis URL, the Tigris keys) are not
+in them: the doc sets those by hand.
 
 Standard library only.
 """
@@ -315,6 +325,72 @@ def _update_existing(path: Path, *, append: bool) -> int:
     return _report(path, plan)
 
 
+# ---------------------------------------------------------------- hosted demo (--fly)
+FLY_APPS = ("db", "api", "worker", "web", "ops")
+FLY_DATABASE = "pairly"
+# Set by hand after `fly redis create` and `fly storage create` (docs/hosted-demo.md).
+FLY_FROM_FLY = ("PAIRLY_REDIS_URL", "PAIRLY_S3_ACCESS_KEY", "PAIRLY_S3_SECRET_KEY")
+
+
+def fly_secrets(prefix: str = "pairly-demo") -> dict[str, dict[str, str]]:
+    """Fresh secrets for each hosted demo Fly app, by app (see the module docstring)."""
+    if not prefix or not all(c.islower() or c.isdigit() or c == "-" for c in prefix):
+        raise ValueError("the app prefix is lower case letters, digits and dashes")
+    pw = {role: secrets.token_hex(24) for role in ("postgres", "owner", "app", "auth")}
+    host = f"{prefix}-db.internal:5432"
+
+    def url(scheme: str, role: str, password: str) -> str:
+        return f"{scheme}://{role}:{password}@{host}/{FLY_DATABASE}"
+
+    signing = _b64key()
+    shared = {
+        "PAIRLY_DATABASE_URL": url("postgresql+asyncpg", "pairly_app", pw["app"]),
+        "PAIRLY_KEK_1": _b64key(),
+        "PAIRLY_BLIND_INDEX_KEY": _b64key(),
+        "PAIRLY_API_KEY_PEPPER": _b64key(),
+        "PAIRLY_SIGNED_LINK_SECRET": secrets.token_hex(32),
+        "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY": _public_from_seed(signing),
+    }
+    auth_url = url("postgresql", "pairly_auth", pw["auth"])
+    return {
+        "db": {
+            "POSTGRES_PASSWORD": pw["postgres"],
+            "PAIRLY_OWNER_DB_PASSWORD": pw["owner"],
+            "PAIRLY_APP_DB_PASSWORD": pw["app"],
+            "PAIRLY_AUTH_DB_PASSWORD": pw["auth"],
+        },
+        "api": dict(shared),
+        "worker": {**shared, "PAIRLY_AUDIT_SIGNING_KEY": signing},
+        "web": {"BETTER_AUTH_SECRET": secrets.token_hex(32), "PAIRLY_AUTH_DATABASE_URL": auth_url},
+        "ops": {
+            **shared,
+            "PAIRLY_DATABASE_URL_OWNER": url("postgresql+asyncpg", "pairly_owner", pw["owner"]),
+            "PAIRLY_AUTH_DATABASE_URL": auth_url,
+        },
+    }
+
+
+def write_fly(directory: Path, prefix: str = "pairly-demo") -> int:
+    paths = {app: directory / f"{app}.env" for app in FLY_APPS}
+    taken = [str(p) for p in paths.values() if p.exists()]
+    if taken:
+        print(f"error: will not overwrite {', '.join(taken)}", file=sys.stderr)
+        return 1
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for app, values in fly_secrets(prefix).items():
+        text = "".join(f"{key}={value}\n" for key, value in values.items())
+        if not write_new(paths[app], text):
+            print(f"error: {paths[app]} appeared while writing", file=sys.stderr)
+            return 1
+        print(f"{paths[app]}: {', '.join(values)}")
+    print("")
+    print("Import each file into its app, then delete the folder:")
+    for app in FLY_APPS:
+        print(f"  fly secrets import --stage -a {prefix}-{app} < {paths[app]}")
+    print(f"Set by hand on api, worker and ops (values from Fly): {', '.join(FLY_FROM_FLY)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--example", type=Path, default=ROOT / ".env.example")
@@ -324,8 +400,21 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="for an existing .env: append every required key it lacks, change nothing else",
     )
+    parser.add_argument(
+        "--fly",
+        type=Path,
+        metavar="DIR",
+        help="hosted demo: write one secrets file per Fly app into DIR (no .env)",
+    )
+    parser.add_argument("--fly-prefix", default="pairly-demo", help="Fly app name prefix")
     args = parser.parse_args(argv)
 
+    if args.fly is not None:
+        try:
+            return write_fly(args.fly, args.fly_prefix)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
     if args.env.exists():
         return _update_existing(args.env, append=args.append_missing)
     try:

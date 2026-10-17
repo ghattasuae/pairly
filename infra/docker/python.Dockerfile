@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (c) 2026 Proofly Technology
 #
-# One image for the Python services. Compose picks the command:
+# One image for the Python services (the default target, `service`, is the runtime image;
+# target `demo` adds the hosted demo jobs). Compose picks the command:
 #   migrate  alembic -c /app/apps/api/alembic.ini upgrade heads  (owner role)
 #   api      uvicorn pairly_api.main:app                          (app role)
 #   worker   arq pairly_worker.main.WorkerSettings                (app role)
@@ -85,3 +86,23 @@ EXPOSE 8000
 
 # No default command on purpose: compose sets it per service.
 CMD ["python", "-c", "print('Set a command: uvicorn pairly_api.main:app or arq pairly_worker.main.WorkerSettings')"]
+
+# ---------------------------------------------------------------- demo (hosted demo jobs only)
+# The `pairly-demo-ops` Fly app (infra/fly/ops, docs/hosted-demo.md): migrations, the
+# nightly reset and the demo seed (scripts/hosted_demo.py). The runtime image plus the
+# seed scripts, the synthetic data generators (synth/) and the dev dependency group
+# they need (reportlab, faker). Never used for the api or worker.
+#   docker build -f infra/docker/python.Dockerfile --target demo .
+FROM build AS demo-build
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable
+
+FROM runtime AS demo
+COPY --from=demo-build --chown=root:root /app/.venv /app/.venv
+COPY --chown=root:root scripts /app/scripts
+COPY --chown=root:root synth /app/synth
+CMD ["python", "scripts/hosted_demo.py", "--help"]
+
+# ---------------------------------------------------------------- default
+# The last stage is what a build without --target makes (compose, CI): the runtime image.
+FROM runtime AS service
