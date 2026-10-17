@@ -133,6 +133,29 @@
     "disabled": "Two-step sign-in is off.",
     "freshSession": "For your safety, sign in again before changing this."
   },
+  "Demo": {
+    "title": "Try the Pairly demo",
+    "subtitle": "Pick a demo user to sign in as. No email needed. Everything here is synthetic and resets every night.",
+    "listLabel": "Demo users",
+    "signInAs": "Sign in",
+    "note": "These accounts are shared by every visitor. Account settings such as two-factor sign-in are turned off in the demo.",
+    "signInLink": "Exploring the demo? Sign in as a demo user",
+    "accounts": {
+      "recruiter": "Recruiter (Hire)",
+      "hiring_manager": "Hiring manager (Hire)",
+      "interviewer": "Interviewer (Hire)",
+      "ap_clerk": "Accounts payable clerk (Pay)",
+      "pay_approver": "Invoice approver (Pay)",
+      "finance_controller": "Finance controller (Pay)",
+      "expense_submitter": "Employee with expenses (Expense example)",
+      "expense_approver": "Expense approver (Expense example)"
+    },
+    "errors": {
+      "rate_limited": "Too many sign-ins from this address. Wait a few minutes and try again.",
+      "unknown_account": "That demo user is not available right now. Pick another one.",
+      "unavailable": "The demo sign-in is not available right now. Try again in a minute."
+    }
+  },
   "Home": {
     "greeting": "Good to see you, {name}.",
     "greetingNoName": "Good to see you.",

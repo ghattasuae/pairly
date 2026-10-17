@@ -614,6 +614,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/demo/signin-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signin Accounts */
+        get: operations["signin_accounts_v1_demo_signin_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documents": {
         parameters: {
             query?: never;
@@ -6625,6 +6642,24 @@ export type components = {
             response_code: number | null;
             /** Status */
             status: string;
+        };
+        /** DemoAccountOut */
+        DemoAccountOut: {
+            /** Email */
+            email: string;
+            /** Label */
+            label: string;
+            /** Role */
+            role: string;
+            /** Workflow */
+            workflow: string | null;
+        };
+        /** DemoAccountsOut */
+        DemoAccountsOut: {
+            /** Accounts */
+            accounts: components["schemas"]["DemoAccountOut"][];
+            /** Org Slug */
+            org_slug: string;
         };
         /** DocumentOut */
         DocumentOut: {
@@ -17459,6 +17494,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    signin_accounts_v1_demo_signin_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoAccountsOut"];
                 };
             };
         };

@@ -25,3 +25,29 @@ export function isBlockedAuthPath(pathname: string, basePath = "/api/auth"): boo
   const normalised = rest.toLowerCase();
   return BLOCKED_EXACT.has(normalised) || BLOCKED_PREFIXES.some((p) => `${normalised}/`.startsWith(p));
 }
+
+/**
+ * Hosted demo only (`PAIRLY_DEMO_PUBLIC_SIGNIN`, lib/demo/policy.ts): many visitors share
+ * each demo account, so no visitor may change the account for the others. Turning
+ * two-factor on would lock everybody else out until the nightly reset; changing the
+ * address, the name or the linked accounts, deleting the account and signing the other
+ * sessions out are closed the same way.
+ */
+const DEMO_BLOCKED_EXACT = new Set([
+  "/two-factor/enable",
+  "/two-factor/disable",
+  "/two-factor/generate-backup-codes",
+  "/change-email",
+  "/update-user",
+  "/delete-user",
+  "/revoke-sessions",
+  "/revoke-other-sessions",
+  "/link-social",
+  "/unlink-account",
+]);
+
+export function isDemoBlockedAuthPath(pathname: string, demoSignin: boolean, basePath = "/api/auth"): boolean {
+  if (!demoSignin || !pathname.startsWith(`${basePath}/`)) return false;
+  const rest = (pathname.slice(basePath.length).replace(/\/+$/, "") || "/").toLowerCase();
+  return DEMO_BLOCKED_EXACT.has(rest) || rest.startsWith("/delete-user/");
+}

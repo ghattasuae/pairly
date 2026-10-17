@@ -24,6 +24,8 @@ let transporter: Transporter | undefined;
 
 async function deliver(mail: { to: string; subject: string; text: string; html: string }): Promise<void> {
   const env = serverEnv();
+  // The hosted demo: nothing leaves the server (lib/env.ts refuses it in production).
+  if (env.email.transport === "fake") return;
   const message = { from: env.smtp.from, ...mail };
   if (env.email.transport === "outbox" && env.email.outboxDir) {
     await writeOutboxMessage(env.email.outboxDir, message);

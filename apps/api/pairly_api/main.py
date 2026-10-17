@@ -49,6 +49,7 @@ from pairly_api.routes import (
     compliance,
     dashboards,
     decisions,
+    demo,
     dev_objects,
     flags,
     health,
@@ -342,6 +343,7 @@ def create_app(
     v1.include_router(proposals.router)
     v1.include_router(dashboards.router)
     v1.include_router(ops.router)
+    v1.include_router(demo.router)
     if _serves_dev_objects(settings, documents):
         # Signed URLs of the filesystem object store (native development, no MinIO).
         v1.include_router(dev_objects.router)

@@ -5,9 +5,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AuthCard, FormError } from "@/components/auth/auth-card";
 import { SignInForm } from "@/components/auth/sign-in-form";
-import { redirect } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { getSession } from "@/lib/auth/server";
+import { demoSigninOn } from "@/lib/demo/server";
 import { ssoAvailability } from "@/lib/env";
 import { safeNextPath } from "@/lib/safe-path";
 
@@ -38,10 +39,19 @@ export default async function SignInPage({ params, searchParams }: Props) {
   const raw = query.error;
   const code = typeof raw === "string" ? raw : undefined;
   const errorKey = code && KNOWN_ERRORS.has(code) ? code : code ? "generic" : undefined;
+  // The hosted demo: visitors sign in as a demo user instead (lib/demo/policy.ts).
+  const demoLink = demoSigninOn() ? (await getTranslations("Demo"))("signInLink") : null;
 
   return (
     <AuthCard title={t("signInTitle")} subtitle={t("signInSubtitle")}>
       {errorKey && <FormError id="sign-in-link-error">{t(`errors.${errorKey}` as "errors.generic")}</FormError>}
+      {demoLink && (
+        <p className="text-sm">
+          <Link href="/demo" className="underline underline-offset-4">
+            {demoLink}
+          </Link>
+        </p>
+      )}
       <SignInForm sso={ssoAvailability()} next={next} />
       <p className="text-xs text-muted-foreground">{t("footnote")}</p>
     </AuthCard>
