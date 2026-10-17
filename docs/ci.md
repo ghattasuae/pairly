@@ -6,24 +6,38 @@ CI runs on GitHub Actions for every pull request and every push to `main`. The w
 
 | Job | What it checks | Run it locally |
 |---|---|---|
-| `python` | ruff lint and format, import contracts, mypy (strict on `packages/core`), Alembic migrations, pytest with coverage against a real Postgres | `make lint typecheck ci-test` |
+| `python` | ruff lint and format, import contracts, mypy (strict on `packages/core`, `expense`, `hire`, `pay`), Alembic `upgrade heads` and `check` against a real Postgres | `make lint typecheck` |
+| `python tests (SHARD)` | pytest with coverage against a real Postgres, one job per shard (`scripts/ci_shards.py`), run in parallel | `make local-test-shard SHARD=api-1` (one shard), `make ci-test` or `make local-test` (all) |
+| `python coverage` | combines the coverage data of every shard and enforces the coverage threshold on the whole suite | `make local-test` |
 | `js` | pnpm install from the lockfile, eslint, typecheck, vitest, Next.js build of `apps/web` | `pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test` |
 | `text` | no em dashes in docs and UI text, SPDX header in every source file with the license its folder needs (`scripts/spdx_headers.py`, see LICENSING.md), workflow lint (actionlint) | `make lint ci-actionlint` |
 | `security` | Bandit, pip-audit, pnpm audit, gitleaks over the full git history | `make ci-security` |
 | `licenses` | every dependency has a license compatible with AGPL-3.0 and commercial relicensing | `make ci-licenses` |
 | `evals` | placeholder that runs `make evals`; becomes the eval merge gate in WP2.10 | `make evals` |
 | `docker` | builds `infra/docker/python.Dockerfile` (no push) | `docker build -f infra/docker/python.Dockerfile .` |
-| `ci-ok` | passes only when every job above passed | |
+| `ci-ok` | passes only when every job above passed, every test shard included | |
 
 ### Python tests and the database
 
-The `python` job starts a throwaway Postgres with `scripts/ci_postgres.sh`. It uses the same image as `infra/docker-compose.yml` and runs the same init SQL from `infra/postgres/init`, so the `pairly_owner`, `pairly_app` and `pairly_auth` roles match the dev stack. All passwords are random and masked in the logs.
+The suite (about 3,100 tests) runs as parallel shards, the `python-tests` matrix. `scripts/ci_shards.py` defines the shards by test file path: one for the fast unit tests (`packages`, the MCP server, the worker, the Python SDK, `scripts/tests`, `evals/tests`) and seven for the API tests (`apps/api/tests`), which take most of the time because each test seeds tenants in Postgres. `scripts/tests/test_ci_shards.py` checks that every test file pytest collects is in exactly one shard and that the workflow matrix lists every shard, so CI runs exactly the tests `make ci-test` runs. To rebalance, move globs between shards in `scripts/ci_shards.py` and update the matrix to match.
 
-Alembic runs `upgrade heads` (core plus every workflow branch) as `pairly_owner` first. Then pytest runs. Database tests connect as `pairly_app`, so Row Level Security applies to them. If the database tests are skipped for any reason, the job fails: CI never passes with the database tests silently turned off.
+Each shard starts its own throwaway Postgres with `scripts/ci_postgres.sh`. It uses the same image as `infra/docker-compose.yml` and runs the same init SQL from `infra/postgres/init`, so the `pairly_owner`, `pairly_app` and `pairly_auth` roles match the dev stack. All passwords are random and masked in the logs. The `python` job runs Alembic `upgrade heads` (core plus every workflow branch) and `alembic check` as `pairly_owner`; the API test fixtures migrate each shard's database the same way. Database tests connect as `pairly_app`, so Row Level Security applies to them. If the database tests or the OCR tests are skipped for any reason (missing database env or tesseract), the shard fails: CI never passes with them silently turned off.
 
-The coverage threshold comes from `[tool.coverage.report] fail_under` in `pyproject.toml`. Change it there, not in the workflow.
+Coverage: each shard writes its coverage data with no threshold of its own. The `python coverage` job checks that every shard's data arrived, combines them and enforces the threshold on the whole suite, on every pull request. The threshold comes from `[tool.coverage.report] fail_under` in `pyproject.toml`. Change it there, not in the workflow. The combined `coverage.xml` is uploaded as the `coverage-python` artifact.
 
-`make ci-test` does the same on your machine with Docker (port 55432, `CI_PG_PORT` to change it; stop the native cluster first, it uses the same port). Without Docker, `make local-test` runs the same steps against fresh test databases in the native Postgres cluster (`scripts/local_pg.sh`).
+`make ci-test` runs the whole suite on your machine with Docker (port 55432, `CI_PG_PORT` to change it; stop the native cluster first, it uses the same port). Without Docker, `make local-test` runs the same steps against fresh test databases in the native Postgres cluster (`scripts/local_pg.sh`), and `make local-test-shard SHARD=name` runs one shard that way, as CI does.
+
+### Timeouts
+
+| Job | Timeout | Usual run time |
+|---|---|---|
+| `python` | 15 minutes | about 2 minutes |
+| `python tests (SHARD)` | 25 minutes | about 3 to 8 minutes each |
+| `python coverage` | 10 minutes | about 1 minute |
+| `js` | 20 minutes | about 4 minutes |
+| `evals` | 30 minutes | about 4 minutes |
+| `docker` | 25 minutes | a few minutes |
+| `text`, `security`, `licenses` | 10 to 15 minutes | under 1 minute |
 
 ### Web build
 
@@ -75,7 +89,7 @@ Set these when the repository is on GitHub (Settings, Rules, Rulesets, or Branch
 2. Require status checks to pass before merging.
    1. Require branches to be up to date before merging.
    2. Required checks:
-      1. `ci-ok` (from the CI workflow). It already depends on every CI job, so new jobs need no settings change.
+      1. `ci-ok` (from the CI workflow). It already depends on every CI job, including every test shard and the combined coverage gate, so new jobs and new shards need no settings change. Do not add the individual jobs (`python tests (api-1)` and so on) as required checks: their names change when shards change.
       2. `cla` (from the CLA Assistant workflow), so unsigned contributions cannot merge.
 3. Require conversation resolution before merging.
 4. Require linear history.

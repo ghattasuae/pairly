@@ -45,7 +45,7 @@ $(error STACK must be native or docker)
 endif
 
 .PHONY: help install hooks env dev demo demo-expense demo-hire down logs ps test evals lint format typecheck
-.PHONY: local-up local-down local-status local-test local-logs
+.PHONY: local-up local-down local-status local-test local-test-shard local-logs
 .PHONY: docker-dev docker-demo docker-down docker-logs docker-ps
 .PHONY: bootstrap-org dev-seed-approval dev-seed-hire-screening audit-anchor-now inbound-drop
 .PHONY: ci-licenses ci-security ci-actionlint ci-test
@@ -92,6 +92,11 @@ local-status: ## Show the native processes and their health
 
 local-test: ## pytest with coverage against fresh local test databases (no Docker)
 	$(LOCAL) test
+
+# The coverage gate applies to the whole suite (CI combines the shards), not to one shard.
+local-test-shard: ## One CI test shard (SHARD=name, from scripts/ci_shards.py) against fresh local test databases
+	@files="$$($(UV) run --frozen python scripts/ci_shards.py files '$(SHARD)')" || exit 1; \
+	$(LOCAL) test --cov-fail-under=0 $$files
 
 local-logs: ## Follow the native logs (SERVICE=api|worker|web to filter)
 	$(LOCAL) logs $(SERVICE)
