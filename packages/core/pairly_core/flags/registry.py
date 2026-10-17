@@ -22,6 +22,10 @@ WEBHOOKS_OUTBOUND: Final = "webhooks.outbound"
 # Parsed document text is indexed for search (PII redacted first). Off by default: it
 # copies document text into the search index and costs an embedding call per document.
 SEARCH_DOCUMENTS: Final = "search.documents"
+# Hosted demo only: visitors may sign in as the organisation's seeded demo users without
+# an email (``pairly_core.demo_signin``). Off by default, and it also needs the
+# deployment switch ``PAIRLY_DEMO_PUBLIC_SIGNIN`` and a non-production environment.
+DEMO_PUBLIC_SIGNIN: Final = "demo.public_signin"
 
 
 class FlagError(ValueError):
@@ -44,6 +48,7 @@ class FlagSpec:
 CORE_FLAGS: tuple[FlagSpec, ...] = (
     FlagSpec(WEBHOOKS_OUTBOUND, "Deliver outbound webhooks", default=True),
     FlagSpec(SEARCH_DOCUMENTS, "Index parsed documents for search (PII redacted)"),
+    FlagSpec(DEMO_PUBLIC_SIGNIN, "Hosted demo: visitors sign in as the seeded demo users"),
 )
 
 

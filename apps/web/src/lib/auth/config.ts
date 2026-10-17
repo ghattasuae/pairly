@@ -37,6 +37,7 @@ import { type ServerEnv, serverEnv } from "../env";
 import { safeNextPath } from "../safe-path";
 
 import { amrClaim, amrForPath } from "./amr";
+import { captureFor } from "./demo-capture";
 import { COOKIE_PREFIX } from "./constants";
 import { magicLinkLimitSchema, takeMagicLinkQuota } from "./magic-link-limit";
 import { twoFactorGate } from "./two-factor-gate";
@@ -155,13 +156,21 @@ function createAuth(env: ServerEnv) {
         // Invite-only: never create a user from a magic link.
         disableSignUp: true,
         sendMagicLink: async ({ email, url, token, metadata }, ctx) => {
+          const requested = (metadata as { locale?: unknown } | undefined)?.locale;
+          const locale = isLocale(requested) ? requested : defaultLocale;
+          // Hosted demo sign-in (lib/demo/policy.ts): this request captures the link for
+          // an address the API offered. Nothing is emailed; the page redirects to it.
+          const capture = captureFor(email);
+          if (capture) {
+            const user = await ctx?.context.internalAdapter.findUserByEmail(email);
+            if (user) capture.keep(confirmUrl(env.baseUrl, locale, token, callbackFromVerifyUrl(url)));
+            return;
+          }
           // Same answer for every request (Better Auth returns {status: true} after this):
           // over the per-address limit, or no such user, means no email and no error.
           if (!(await takeMagicLinkQuota(pool, email))) return;
           const user = await ctx?.context.internalAdapter.findUserByEmail(email);
           if (!user) return;
-          const requested = (metadata as { locale?: unknown } | undefined)?.locale;
-          const locale = isLocale(requested) ? requested : defaultLocale;
           const link = confirmUrl(env.baseUrl, locale, token, callbackFromVerifyUrl(url));
           await sendMagicLinkEmail({ to: email, url: link, locale });
         },

@@ -27,11 +27,14 @@ const schema = z.object({
   jwtAudience: z.string().min(1),
   apiInternalUrl: url,
   /**
-   * `smtp` (any relay; Mailpit for the Docker stack) or `outbox` (native development and
-   * tests only: each message is written as files to `outboxDir`, see `outbox.ts`).
+   * `smtp` (any relay; Mailpit for the Docker stack), `outbox` (native development and
+   * tests only: each message is written as files to `outboxDir`, see `outbox.ts`) or
+   * `fake` (sends nothing; the hosted demo, whose visitors sign in through the demo page
+   * and must never make it email anyone; refused when `PAIRLY_ENV` is production, as
+   * the API's `fake` transport is).
    */
   email: z.object({
-    transport: z.enum(["smtp", "outbox"]),
+    transport: z.enum(["smtp", "outbox", "fake"]),
     outboxDir: z.string().optional(),
   }),
   smtp: z.object({
@@ -181,6 +184,12 @@ export function readServerEnv(): ServerEnv {
     }
     if (!env.email.outboxDir) {
       throw new Error("Invalid web server configuration:\n  email.outboxDir: PAIRLY_OUTBOX_DIR is required");
+    }
+  }
+  if (env.email.transport === "fake") {
+    const pairlyEnv = get("PAIRLY_ENV") ?? "production";
+    if (pairlyEnv === "production") {
+      throw new Error("PAIRLY_EMAIL_TRANSPORT=fake is not allowed in production (PAIRLY_ENV)");
     }
   }
   if (env.nodeEnv === "production" && !env.baseUrl.startsWith("https://")) {

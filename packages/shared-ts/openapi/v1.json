@@ -1864,6 +1864,62 @@
         "title": "DeliveryOut",
         "type": "object"
       },
+      "DemoAccountOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow"
+          }
+        },
+        "required": [
+          "email",
+          "label",
+          "role",
+          "workflow"
+        ],
+        "title": "DemoAccountOut",
+        "type": "object"
+      },
+      "DemoAccountsOut": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccountOut"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "org_slug": {
+            "title": "Org Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org_slug",
+          "accounts"
+        ],
+        "title": "DemoAccountsOut",
+        "type": "object"
+      },
       "DocumentOut": {
         "properties": {
           "created_at": {
@@ -33137,6 +33193,27 @@
         "summary": "Get Replays",
         "tags": [
           "decisions"
+        ]
+      }
+    },
+    "/v1/demo/signin-accounts": {
+      "get": {
+        "operationId": "signin_accounts_v1_demo_signin_accounts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccountsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Signin Accounts",
+        "tags": [
+          "demo"
         ]
       }
     },

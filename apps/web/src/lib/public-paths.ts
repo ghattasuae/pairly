@@ -20,6 +20,8 @@
 // is for and can sign in from there (the token stays in the fragment, see the page).
 // `/vendor-portal` is the vendor portal (Pairly Pay): a vendor's contacts never have a staff
 // session either; its own HTTP-only cookie, and the API decides every access.
+// `/demo` is the hosted demo's sign-in page; it answers 404 unless the demo sign-in is on
+// (lib/demo/policy.ts).
 const PUBLIC_PATHS = [
   "/sign-in",
   "/check-email",
@@ -37,6 +39,7 @@ const PUBLIC_PATHS = [
   "/vendor-onboarding",
   "/vendor-portal",
   "/integrations/slack/connect",
+  "/demo",
 ];
 
 export function isPublicPath(pathAfterLocale: string): boolean {
