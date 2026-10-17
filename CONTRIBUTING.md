@@ -40,7 +40,7 @@ plain local processes at low priority, and needs no containers; see `infra/READM
 | `make local-status`, `make local-logs SERVICE=api`, `make local-down` | Inspect and stop the native stack |
 | `make test` | Python tests with coverage, then JS tests |
 | `make local-test` | pytest against fresh local test databases (migrations and `alembic check` first) |
-| `make lint` | ruff, import-linter contracts, the em dash check, the translations check, eslint |
+| `make lint` | ruff, import-linter contracts, the SPDX header policy, the em dash check, the translations check, eslint |
 | `make typecheck` | mypy (strict on the engine and the workflows) and tsc |
 | `make evals` | The eval suites and the threshold gate, offline |
 | `make docs` | Regenerate the workflow graph diagrams and the model cards |
@@ -79,14 +79,21 @@ Never commit real personal data. That means no real CVs, invoices, names, email 
 
 ### License headers
 
-Every source file starts with this header, in the comment syntax of the file type:
+Every source file starts with an SPDX header, in the comment syntax of the file type. The license depends on the folder (see [LICENSING.md](LICENSING.md)). Server and web app files (everything except the folders below):
 
 ```
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 Copyright (c) 2026 Proofly Technology
 ```
 
-Check and fix headers with:
+Files in `sdks/python`, `sdks/typescript` and `docs/quickstarts`:
+
+```
+SPDX-License-Identifier: Apache-2.0
+Copyright (c) 2026 Proofly Technology
+```
+
+`make lint` and CI fail when a header is missing or names the wrong license for its folder. Check and fix headers with:
 
 ```sh
 uv run python scripts/spdx_headers.py --check
@@ -113,14 +120,14 @@ This applies to UI text, emails, docs, comments meant for users, and the README:
 
 ### Why we ask for it
 
-Pairly is open source (AGPL-3.0) with a commercial license option. Proofly Technology offers the same code under both licenses. That only works if Proofly Technology has the right to relicense every part of the code, including your contribution.
+Pairly is open source (AGPL-3.0) with a commercial license option. Proofly Technology offers the same server code under both licenses, and the SDKs and quickstart examples under Apache-2.0. That only works if Proofly Technology has the right to relicense every part of the code, including your contribution.
 
-Without a CLA, your contribution would be available under AGPL-3.0 only. Proofly Technology could not include it in the commercial license, and the dual licensing model would break.
+Without a CLA, your contribution would be available only under the license of its folder. Proofly Technology could not include it in the commercial license, and the dual licensing model would break.
 
 ### What the CLA does
 
 1. **You keep your copyright.** You do not transfer ownership of your contribution.
-2. You grant Proofly Technology a broad license to use your contribution, including the right to sublicense it and to relicense it under other terms, such as the commercial license.
+2. You grant Proofly Technology a broad license to use your contribution, including the right to sublicense it and to relicense it under other terms, such as the commercial license, and under Apache-2.0 for contributions to the SDKs and the quickstart examples.
 3. You confirm that you have the right to contribute the code.
 
 The full text is in [CLA.md](CLA.md). The CLA bot asks you to sign it on your first pull request. You sign once, by posting a comment on the pull request.

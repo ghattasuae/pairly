@@ -504,8 +504,11 @@ pledge that Pairly stays available under AGPL-3.0. Please read the
 ## License
 
 Pairly is open source (AGPL-3.0) with a commercial license option from Proofly
-Technology. Using it at your company is free under the AGPL. See
-[LICENSING.md](LICENSING.md) and [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+Technology: the server and the web app are `AGPL-3.0-only OR LicenseRef-Proofly-Commercial`.
+Using it at your company is free under the AGPL. The SDKs (`sdks/`) and the quickstart
+examples (`docs/quickstarts/`) are Apache-2.0, so you can embed them anywhere. See
+[LICENSING.md](LICENSING.md), [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) and
+[NOTICE.md](NOTICE.md) for third-party components.
 
 ## Built by
 
