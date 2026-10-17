@@ -120,6 +120,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The packages shard runs scripts/tests, which checks that the commit named in
+          # the README stats exists; that commit is an ancestor of HEAD, so this shard
+          # fetches the full history (the other shards keep the shallow default). The
+          # depths are strings because the number 0 is falsy in an expression.
+          fetch-depth: ${{ matrix.shard == 'packages' && '0' || '1' }}
 
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
