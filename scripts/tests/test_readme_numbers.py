@@ -49,6 +49,18 @@ def test_values_come_from_the_sources() -> None:
         assert value in report
 
 
+def test_the_live_gate_sentence_counts_the_thresholds_file() -> None:
+    from evals.gate import THRESHOLDS, load_thresholds
+
+    live = [
+        m
+        for m in load_thresholds(THRESHOLDS)
+        if m.get("live") is True and not m.get("informational")
+    ]
+    assert live
+    assert f"{len(live)} of the live numbers gate merges" in readme_numbers.section()
+
+
 def test_no_em_dash_in_the_section() -> None:
     assert "—" not in readme_numbers.section()
 

@@ -331,7 +331,7 @@
  },
  "pdf_parse_seconds": {
   "documents": 185,
-  "mean": 0.116,
-  "max": 0.498
+  "mean": 0.062,
+  "max": 0.128
  }
 }
