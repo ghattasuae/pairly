@@ -16,8 +16,8 @@ from typing import Any, Final
 
 _PLACEHOLDER: Final = re.compile(r"\{([a-z_]{1,40})\}")
 # First strong isolate and pop directional isolate: an id or number inside Arabic text.
-_FSI: Final = "⁨"
-_PDI: Final = "⁩"
+_FSI: Final = "\u2068"  # first strong isolate, as an escape (no literal bidi controls)
+_PDI: Final = "\u2069"  # pop directional isolate, as an escape
 
 MESSAGES: Final[dict[str, tuple[str, str]]] = {
     # ---------------------------------------------------------------- arithmetic

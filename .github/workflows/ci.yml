@@ -38,7 +38,6 @@ defaults:
 
 env:
   # Never re-resolve the lockfile in CI; fail if uv.lock is out of date.
-  UV_FROZEN: "1"
   UV_VERSION: "0.9.28"
   NODE_VERSION: "22"
   NEXT_TELEMETRY_DISABLED: "1"

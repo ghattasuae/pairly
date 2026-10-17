@@ -164,7 +164,7 @@ def upgrade() -> None:
         sa.Column("commands", postgresql.ARRAY(sa.Text()), nullable=True),
     )
     op.execute(
-        "UPDATE portal_guard_rules SET commands = "  # noqa: S608 (constant SQL, never user input)
+        "UPDATE portal_guard_rules SET commands = "  # noqa: S608  # nosec B608 (constant SQL, never user input)
         + _DERIVED.format(using="using_sql", check="check_sql")
     )
     op.alter_column("portal_guard_rules", "commands", nullable=False)
