@@ -69,9 +69,15 @@ def test_the_repository_stats_are_generated_and_name_their_commit() -> None:
     readme = readme_numbers.README.read_text(encoding="utf-8")
     start = readme.index(readme_numbers.STATS_BEGIN)
     block = readme[start : readme.index(readme_numbers.STATS_END)]
-    commit = re.search(r"at commit `([0-9a-f]{7,})`", block)
+    commit = re.search(r"at commit `([0-9a-f]{7,40})`", block)
     assert commit is not None
-    readme_numbers._git("cat-file", "-e", f"{commit.group(1)}^{{commit}}")
+    # The block names the commit it was generated at, which is the parent of the commit
+    # that adds it. A shallow clone (the default CI checkout) does not hold that parent,
+    # so there the test can only check the hash is well formed; a full clone also checks
+    # that the commit exists.
+    shallow = readme_numbers._git("rev-parse", "--is-shallow-repository").strip()
+    if shallow != "true":
+        readme_numbers._git("cat-file", "-e", f"{commit.group(1)}^{{commit}}")
     # Every row the generator makes today is in the block (the values move with each
     # commit; rerun the script to refresh them).
     for what, _ in readme_numbers.stats():

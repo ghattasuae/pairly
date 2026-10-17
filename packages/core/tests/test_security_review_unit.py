@@ -38,10 +38,16 @@ async def test_numeric_host_spellings_of_internal_addresses_are_refused(url: str
 
 
 async def test_an_octal_looking_host_is_checked_as_the_address_it_resolves_to() -> None:
-    """``0177.0.0.1`` is 127.0.0.1 to some resolvers and 177.0.0.1 to others. Whatever
-    this one says, the request goes to the address that was checked (the URL is rewritten
-    to it), so no second resolution can reach loopback."""
+    """``0177.0.0.1`` is 127.0.0.1 to some resolvers (glibc on Linux) and 177.0.0.1 to
+    others (macOS). Both outcomes are acceptable because both fail closed: if it
+    resolves to loopback the URL is refused, and if it resolves to a public address the
+    request goes to the address that was checked (the URL is rewritten to it), so no
+    second resolution can reach loopback."""
     target = parse_target("https://0177.0.0.1/x")
-    ip = await resolve_target(target, system_resolver)
+    try:
+        ip = await resolve_target(target, system_resolver)
+    except UnsafeWebhookUrlError:
+        return
     assert not ip.is_loopback
+    assert not ip.is_private
     assert target.url_for(ip) == f"https://{ip}:443/x"
