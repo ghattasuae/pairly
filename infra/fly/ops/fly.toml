@@ -15,8 +15,8 @@
 #
 # Secrets (from scripts/gen_dev_env.py --fly): PAIRLY_DATABASE_URL_OWNER,
 # PAIRLY_DATABASE_URL, PAIRLY_AUTH_DATABASE_URL, the encryption keys, the pepper, the
-# signed link secret, PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY; by hand: PAIRLY_REDIS_URL,
-# PAIRLY_S3_ACCESS_KEY, PAIRLY_S3_SECRET_KEY.
+# signed link secret, PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY. Set by hand with fly secrets set:
+# the Redis URL and the two Tigris storage credentials.
 #
 #   fly deploy . --config infra/fly/ops/fly.toml --dockerfile infra/docker/python.Dockerfile \
 #     --build-target demo --build-only --push --image-label demo
