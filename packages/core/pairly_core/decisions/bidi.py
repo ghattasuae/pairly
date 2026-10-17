@@ -39,7 +39,8 @@ _MIRROR: Final = {
     "»": "«",
 }
 # Explicit directional formatting characters (dropped, see the module docstring).
-_EXPLICIT: Final = frozenset("‎‏‪‫‬‭‮⁦⁧⁨⁩")
+# Written as escapes: literal bidirectional controls in source are a "trojan source" risk.
+_EXPLICIT: Final = frozenset("\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
 
 _RESHAPER = arabic_reshaper.ArabicReshaper(
     configuration={"delete_harakat": False, "support_ligatures": True}

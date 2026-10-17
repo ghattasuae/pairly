@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import http.client
 import json
 import re
 import sys
@@ -142,11 +143,22 @@ def with_locked_python(installed: list[Component], root: Path) -> list[Component
     return sorted([*installed, *extra], key=lambda c: c.name.lower())
 
 
+def _open_https(url: str, timeout: float) -> http.client.HTTPResponse:
+    """Open ``url`` only when it is https to a known registry host; refuse anything else.
+
+    The scheme and host are checked here so the fetch can never be pointed at a file:
+    or custom-scheme URL, which is what Bandit's B310 warns about."""
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or parts.netloc not in {"pypi.org", "registry.npmjs.org"}:
+        raise ValueError(f"refusing to fetch {url!r}: only https to pypi.org or registry.npmjs.org")
+    return urllib.request.urlopen(url, timeout=timeout)  # noqa: S310  # nosec B310 (https-only, host checked above)
+
+
 def pypi_license(name: str, version: str, *, timeout: float = 15.0) -> str:
     """The license a PyPI release declares (expression, field or classifiers), or ""."""
     url = f"https://pypi.org/pypi/{urllib.parse.quote(name)}/{urllib.parse.quote(version)}/json"
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
+        with _open_https(url, timeout) as response:
             info = json.loads(response.read().decode("utf-8")).get("info") or {}
     except (OSError, ValueError):
         return ""
@@ -257,7 +269,7 @@ def registry_license(name: str, version: str, *, timeout: float = 15.0) -> str:
     """The license an npm package version declares in the public registry, or ""."""
     url = f"{NPM_REGISTRY}/{urllib.parse.quote(name, safe='@')}/{urllib.parse.quote(version)}"
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 - fixed https host
+        with _open_https(url, timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
     except (OSError, ValueError):
         return ""
