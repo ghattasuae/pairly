@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -28,14 +30,82 @@ notices = _load()
 
 
 def test_bundled_components_are_listed() -> None:
-    text = notices.render([], [], notices.bundled_components())
-    assert "## Bundled components (4)" in text
+    text = notices.render([], [], notices.bundled_components(ROOT))
+    assert "## Bundled components (8)" in text
     assert "| PDFium |" in text
     assert "pypdfium2" in text
     assert "DejaVu Sans" in text
-    assert "LICENSE_DEJAVU" in text
+    assert "(packages/core/pairly_core/decisions/fonts/LICENSE_DEJAVU)" in text
     assert "| disposable-email-domains (subset) | curated 2026-10 | CC0-1.0 |" in text
     assert "| Redoc (standalone bundle) | 2.5.4 | MIT;" in text
+    assert "| React (inside the Redoc bundle) |" in text
+    assert "| DOMPurify (inside the Redoc bundle) |" in text
+    assert "| pdf.js (pdfjs-dist worker and standard fonts) |" in text
+    assert "(LICENSES/third-party/pdfjs/LICENSE_LIBERATION.txt)" in text
+    assert "(LICENSES/third-party/pdfium/pdfium.txt)" in text
+
+
+def test_the_repository_passes_validation() -> None:
+    bundled = notices.bundled_components(ROOT)
+    text = notices.render([], [], bundled)
+    assert notices.validate(ROOT, bundled, text) == []
+
+
+def test_every_linked_license_text_exists() -> None:
+    for entry in notices.bundled_components(ROOT):
+        assert entry.texts, entry.name
+        for _, target in entry.texts:
+            if not target.startswith("https://"):
+                assert (ROOT / target).is_file(), target
+
+
+def _fake_repo(tmp_path: Path) -> Path:
+    font_dir = tmp_path / notices.FONT_DIR
+    font_dir.mkdir(parents=True)
+    (font_dir / "DejaVuSans.ttf").write_bytes(b"\0font")
+    (font_dir / "LICENSE_DEJAVU").write_text("Bitstream Vera\n")
+    return tmp_path
+
+
+def test_a_known_asset_missing_from_the_output_fails(tmp_path: Path) -> None:
+    root = _fake_repo(tmp_path)
+    bundled = [b for b in notices.bundled_components(root) if b.key != "dejavu"]
+    problems = notices.validate(root, bundled, notices.render([], [], bundled))
+    assert any("'dejavu'" in p for p in problems)
+
+
+def test_a_missing_license_text_fails(tmp_path: Path) -> None:
+    root = _fake_repo(tmp_path)
+    (root / notices.FONT_DIR / "LICENSE_DEJAVU").unlink()
+    bundled = [b for b in notices.bundled_components(root) if b.key == "dejavu"]
+    problems = notices.validate(root, bundled, notices.render([], [], bundled))
+    assert any("LICENSE_DEJAVU" in p for p in problems)
+
+
+def test_an_unlisted_asset_fails(tmp_path: Path) -> None:
+    root = _fake_repo(tmp_path)
+    stray = root / "apps" / "web" / "public" / "Inter.woff2"
+    stray.parent.mkdir(parents=True)
+    stray.write_bytes(b"\0")
+    tess = root / "infra" / "tessdata" / "ara.traineddata"
+    tess.parent.mkdir(parents=True)
+    tess.write_bytes(b"\0")
+    bundled = [b for b in notices.bundled_components(root) if b.key == "dejavu"]
+    problems = notices.validate(root, bundled, notices.render([], [], bundled))
+    assert any("Inter.woff2" in p for p in problems)
+    assert any("ara.traineddata" in p for p in problems)
+    assert not any("DejaVuSans.ttf" in p for p in problems)
+
+
+def test_main_writes_nothing_when_validation_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _fake_repo(tmp_path)
+    (root / notices.FONT_DIR / "LICENSE_DEJAVU").unlink()
+    out = tmp_path / "NOTICE.md"
+    monkeypatch.setattr(notices, "python_components", list)
+    assert notices.main(["--root", str(root), "-o", str(out)]) == 1
+    assert not out.exists()
 
 
 def test_lock_only_packages_are_listed_and_filled(tmp_path: Path) -> None:
