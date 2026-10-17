@@ -1384,5 +1384,5 @@ def next_steps(seed: PaySeed, web_url: str) -> list[str]:
         f"  - Vendor portal: {seed.portal_email} has access. Sign in as that vendor contact",
         f"    with {web_url.rstrip('/')}/en/vendor-portal/login#{seed.portal_token}",
         "    (works once, for 3 days): invoice statuses, a question and its answer, details,",
-        "    contacts and a bank change request (held, never applied).",
+        "    contacts (read only) and a bank change request (held, never applied).",
     ]

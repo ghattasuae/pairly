@@ -2,7 +2,7 @@
 
 A review of every threat in [security.md](security.md) (BRIEF 6 and 11): for each STRIDE threat the named control and its test were read, then attacked with a concrete attempt in a test, run against the test database only (never an external system, never a real model call). The three changes made just before the review (response reuse, blind-placeholder credit, label-plus-value table evidence) and the Row Level Security and portal guard were read again from scratch.
 
-Every high finding is fixed in code with a test. Medium and low findings are fixed when the fix was small and safe; the rest are listed with a proposed fix.
+Every finding is fixed in code with a test, except L-07 and L-08, which are accepted risks with the reason given. Short commit hashes in this document refer to the development history before the repository was published as a single commit; the named tests are the lasting reference.
 
 ## Findings
 
