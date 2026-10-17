@@ -101,9 +101,16 @@ from pairly_hire.scheduling.models import HireInterview, InterviewStatus
 from pairly_hire.screening.models import HireScreening, ScreeningStatus
 
 ROOT: Final = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    # The synthetic data package lives at the repository root (run as a plain script).
-    sys.path.insert(0, str(ROOT))
+SCRIPTS: Final = ROOT / "scripts"
+# The synthetic data package (synth) lives at the repository root, and the sibling Pay
+# seed (demo_pay) lives next to this file. A plain script run only puts scripts/ on the
+# path, and an import as scripts.demo_seed (the API tests) only has the root, so both go
+# on the path here. demo_pay is always imported under that one name, the same name
+# scripts/tests/test_demo_pay.py registers it under, so one process never holds two
+# copies of it.
+for _path in (ROOT, SCRIPTS):
+    if str(_path) not in sys.path:
+        sys.path.insert(0, str(_path))
 
 from demo_pay import PEOPLE as PAY_PEOPLE  # noqa: E402
 from demo_pay import next_steps as pay_next_steps  # noqa: E402
