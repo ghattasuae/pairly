@@ -34,7 +34,7 @@ It can only add findings. In Hire a failure flags the CV for a person (`on_failu
 
 ## Evals
 
-Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the gated files (`hire.json`, `pay.json`) a model metric stays pending until thresholds are set for it; live numbers are read from the `*_live.json` files, which do not gate.
+Numbers come only from result files committed in `evals/results/`, exactly as written there. See [evals.md](../evals.md) for what each run measures. In the scripted files (`hire.json`, `pay.json`) a model metric stays pending; live numbers are read from the committed `*_live.json` files, and the ones with a founder-approved threshold (`live: true` in `evals/thresholds.yaml`) gate.
 
 | Metric | Value | Over | Run | Source |
 |---|---|---|---|---|

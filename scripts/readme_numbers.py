@@ -103,6 +103,23 @@ def _results(name: str) -> dict[str, Any]:
     return data
 
 
+def _live_gates() -> str:
+    """One sentence on the live metrics the gate reads, counted from the thresholds file."""
+    from evals.gate import THRESHOLDS, load_thresholds
+
+    live = [
+        m
+        for m in load_thresholds(THRESHOLDS)
+        if m.get("live") is True and not m.get("informational")
+    ]
+    if not live:
+        return "The live numbers do not gate yet."
+    return (
+        f"{len(live)} of the live numbers gate merges (`live: true`, read from the committed "
+        "`*_live.json` files); `python -m evals.gate` marks them LIVE."
+    )
+
+
 def rows() -> tuple[list[Row], dict[str, str]]:
     report = REPORT.read_text(encoding="utf-8")
     section = _live_section(report)
@@ -206,7 +223,7 @@ def section() -> str:
         f"- Live baseline date (UTC): {facts['date']}",
         f"- Model ids (calls): {facts['models']}",
         f"- Total live spend, smoke runs included: {facts['spend']}",
-        "- Thresholds and the gate: `evals/thresholds.yaml`. The live numbers do not gate yet.",
+        f"- Thresholds and the gate: `evals/thresholds.yaml`. {_live_gates()}",
         "",
         END,
     ]

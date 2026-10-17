@@ -60,7 +60,8 @@ scoring agreement with the synthetic labels (the scripted answers are made from 
 labels, so agreement on them means nothing), model score changes across fairness pairs,
 the classifier's share of injection detection, model latency and cost per CV. They are
 measured with a real model by `python -m evals.live` (below), in separate result files
-that do not gate until the founder sets their thresholds.
+(`hire_live.json`, `pay_live.json`). The ones the founder set a threshold for gate from
+those committed files (`live: true` in `thresholds.yaml`; the gate marks them LIVE).
 
 Options: `--count`, `--seed`, `--limit N` (first N documents), `--include-scans`,
 `--out`, `--report`.

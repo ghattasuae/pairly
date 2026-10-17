@@ -13,6 +13,11 @@ prints one line per metric:
 * ``INFO``: an ``informational: true`` metric (no bound); its value is listed, never
   gating. It must still be present in its result file (missing fails closed).
 
+A metric marked ``live: true`` is read from a committed live baseline file
+(``*_live.json``, written by ``python -m evals.live``): a real model answered. Its line
+says ``LIVE`` with the run date, and the summary counts the live values. It fails closed
+when its suite (the first part of its path) is not a complete live run.
+
 Exit code 1 when any metric fails, else 0. ``--json`` prints the verdicts as JSON.
 """
 
@@ -34,8 +39,9 @@ THRESHOLDS: Final = ROOT / "thresholds.yaml"
 RESULTS: Final = ROOT / "results"
 PENDING: Final = "pending_live_run"
 AFTER_BASELINE: Final = "after_first_live_baseline"
+LIVE_SUFFIX: Final = "_live.json"
 _KEYS: Final = frozenset(
-    {"id", "file", "path", "min", "max", "equals", "threshold", "informational", "why"}
+    {"id", "file", "path", "min", "max", "equals", "threshold", "informational", "live", "why"}
 )
 
 Status = Literal["PASS", "FAIL", "PENDING", "INFO"]
@@ -52,6 +58,8 @@ class Verdict:
     value: Any
     threshold: str
     detail: str
+    live: bool = False
+    run_date: str = ""
 
 
 def load_thresholds(path: Path) -> list[dict[str, Any]]:
@@ -71,6 +79,16 @@ def load_thresholds(path: Path) -> list[dict[str, Any]]:
         if item["id"] in seen:
             raise ThresholdsError(f"thresholds: duplicate id {item['id']}")
         seen.add(item["id"])
+        if "live" in item and (
+            item["live"] is not True or not str(item["file"]).endswith(LIVE_SUFFIX)
+        ):
+            raise ThresholdsError(
+                f"thresholds: {item['id']}: live: true reads a *{LIVE_SUFFIX} file"
+            )
+        if str(item["file"]).endswith(LIVE_SUFFIX) and item.get("live") is not True:
+            raise ThresholdsError(
+                f"thresholds: {item['id']}: a *{LIVE_SUFFIX} metric says live: true"
+            )
         has_bound = any(k in item for k in ("min", "max", "equals"))
         if "informational" in item:
             if item["informational"] is not True or has_bound or "threshold" in item:
@@ -100,7 +118,7 @@ def lookup(data: Any, path: str) -> tuple[bool, Any]:
     return True, data
 
 
-def _describe(item: Mapping[str, Any]) -> str:
+def describe(item: Mapping[str, Any]) -> str:
     if item.get("informational") is True:
         return "informational, not gating"
     if "equals" in item:
@@ -113,37 +131,68 @@ def _describe(item: Mapping[str, Any]) -> str:
     return ", ".join(parts) or "set after the first live baseline"
 
 
+def _is_number(value: Any) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _live_run(data: Any, path: str) -> tuple[str, str]:
+    """(run date, problem) of the live suite holding ``path``; problem is "" when sound."""
+    suite = path.split(".", 1)[0]
+    found, block = lookup(data, suite)
+    if not found or not isinstance(block, Mapping):
+        return "", f"no live suite {suite!r}"
+    run = block.get("run")
+    date = str(run.get("date", "")) if isinstance(run, Mapping) else ""
+    if not isinstance(run, Mapping) or run.get("mode") != "live":
+        return date, f"suite {suite!r} is not a live run"
+    if block.get("status") != "complete":
+        return date, f"suite {suite!r} is {block.get('status', 'not run')!s}, not complete"
+    return date, ""
+
+
 def judge(item: Mapping[str, Any], results_dir: Path) -> Verdict:
     metric_id = str(item["id"])
-    threshold = _describe(item)
+    threshold = describe(item)
+    live = item.get("live") is True
+
+    def verdict(status: Status, value: Any, detail: str = "", date: str = "") -> Verdict:
+        return Verdict(metric_id, status, value, threshold, detail, live, date)
+
     path = results_dir / str(item["file"])
     if not path.exists():
-        return Verdict(metric_id, "FAIL", None, threshold, f"missing result file {item['file']}")
+        return verdict("FAIL", None, f"missing result file {item['file']}")
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except ValueError:
-        return Verdict(metric_id, "FAIL", None, threshold, f"{item['file']} is not JSON")
+        return verdict("FAIL", None, f"{item['file']} is not JSON")
     found, value = lookup(data, str(item["path"]))
     if not found:
-        return Verdict(metric_id, "FAIL", None, threshold, f"missing {item['path']}")
+        return verdict("FAIL", None, f"missing {item['path']}")
+    date = ""
+    if live:
+        date, problem = _live_run(data, str(item["path"]))
+        if problem:
+            return verdict("FAIL", value, problem, date)
     if isinstance(value, Mapping) and value.get("status") == PENDING:
-        return Verdict(metric_id, "PENDING", PENDING, threshold, str(value.get("reason", "")))
+        return verdict("PENDING", PENDING, str(value.get("reason", "")), date)
     if item.get("informational") is True:
-        return Verdict(metric_id, "INFO", value, threshold, "")
+        return verdict("INFO", value, "", date)
     if item.get("threshold") == AFTER_BASELINE:
-        return Verdict(
-            metric_id, "FAIL", value, threshold, "measured, but no threshold is set yet (ASK)"
-        )
+        return verdict("FAIL", value, "measured, but no threshold is set yet (ASK)", date)
     if "equals" in item:
-        ok = value == item["equals"] and type(value) is type(item["equals"])
-        return Verdict(metric_id, "PASS" if ok else "FAIL", value, threshold, "")
-    if isinstance(value, bool) or not isinstance(value, int | float) or math.isnan(value):
-        return Verdict(metric_id, "FAIL", value, threshold, "not a number")
+        expected = item["equals"]
+        if _is_number(expected) and _is_number(value):
+            ok = not math.isnan(value) and value == expected
+        else:  # ``1`` is not ``True``: outside numbers, types must match too.
+            ok = value == expected and type(value) is type(expected)
+        return verdict("PASS" if ok else "FAIL", value, "", date)
+    if not _is_number(value) or math.isnan(value):
+        return verdict("FAIL", value, "not a number", date)
     if "min" in item and value < item["min"]:
-        return Verdict(metric_id, "FAIL", value, threshold, "below threshold")
+        return verdict("FAIL", value, "below threshold", date)
     if "max" in item and value > item["max"]:
-        return Verdict(metric_id, "FAIL", value, threshold, "above threshold")
-    return Verdict(metric_id, "PASS", value, threshold, "")
+        return verdict("FAIL", value, "above threshold", date)
+    return verdict("PASS", value, "", date)
 
 
 def gate(thresholds: Path = THRESHOLDS, results_dir: Path = RESULTS) -> list[Verdict]:
@@ -171,11 +220,19 @@ def main(argv: list[str] | None = None) -> int:
         for v in verdicts:
             value = "" if v.status == "PENDING" else f" value={v.value!r}"
             note = f" ({v.detail})" if v.detail else ""
-            print(f"{v.status:<7} {v.id:<{width}} {v.threshold}{value}{note}")
+            source = f" [LIVE model, run {v.run_date or 'unknown'}]" if v.live else ""
+            print(f"{v.status:<7} {v.id:<{width}} {v.threshold}{value}{source}{note}")
+        live = [v for v in verdicts if v.live and v.status != "INFO"]
+        live_passed = sum(1 for v in live if v.status == "PASS")
         print(
             f"\n{len(verdicts) - len(failed) - len(pending) - len(info)} passed, "
             f"{len(failed)} failed, {len(pending)} pending a live run (listed, not gating), "
             f"{len(info)} informational (not gating)"
+        )
+        print(
+            f"Live values: {len(live)} gated metrics are live model results read from the "
+            f"committed *{LIVE_SUFFIX} files ({live_passed} passed); every other value is "
+            "deterministic or from scripted answers."
         )
     return 1 if failed else 0
 

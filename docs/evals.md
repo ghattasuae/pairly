@@ -51,10 +51,25 @@ After a run, regenerate the cards: `make docs`.
 | `PENDING` | The file says `{"status": "pending_live_run"}`: it needs a real model | no, listed |
 | `INFO` | Marked `informational: true` with a reason | no, but a missing value still fails |
 
+Live metrics carry `live: true` and are read from the committed live baseline files (`hire_live.json`, `pay_live.json`): a real model answered, and the committed recordings replay those answers for free. The gate prints `[LIVE model, run <date>]` on their lines and a closing `Live values:` line that counts them; every other value is deterministic or from scripted answers. A live metric fails closed when its suite is not a complete live run (`run.mode` is not `live`, or the status is not `complete`).
+
+The live gates, approved by the founder on 2026-10-17:
+
+| Metric | Gate |
+|---|---|
+| CV field extraction accuracy | >= 0.95 |
+| Rubric scoring within one point of the labels (final score) | >= 0.80 (exact agreement is reported, not gated) |
+| Fairness, pairs with identical scoring input: max score change | == 0 |
+| Fairness, pairs with different scoring input: pairs whose change is above the model noise | == 0 |
+| Injection classifier recall (payload removed) | >= 0.8 (4 of 5 on the current set) |
+| Injection classifier false-positive rate | <= 0.02 |
+| Invoice header, line-item and total accuracy | >= 95% each |
+| Invoice VAT accuracy | >= 85% |
+
 Rules for thresholds:
 
-* The first values are initial. Lowering one needs the founder's approval (brief 7.2).
-* A metric that needs a model has `threshold: after_first_live_baseline` until the founder sets one. Until then the gated files keep `pending_live_run` for it, and the live numbers stay in `*_live.json`, which the gate does not read.
+* Thresholds may only be lowered with the founder's written approval (the note at the top of `thresholds.yaml`).
+* A metric that needs a model and has no threshold yet (model cost and latency per CV, and the classifier share of `hire.json`) has `threshold: after_first_live_baseline`. The scripted files keep `pending_live_run` for it.
 * A metric with no threshold cannot pass with a number: the gate fails on an ungated measurement, so nothing is measured silently.
 
 The AI governance board shows each result file with its PASS, FAIL, PENDING and INFO counts and the failing metrics (`pairly_core.dashboards.evals`).
@@ -75,4 +90,4 @@ Changing a prompt, a schema or a parser changes the request hashes. Rebuild the 
 * **Scripted recordings are not model output.** The offline runs prove everything deterministic around the model. They never report model accuracy, agreement, fairness or recall: those are `pending_live_run` in the gated files.
 * **Pending until measured.** A metric that needs a model says so. It is never estimated, and a partial live run is marked `partial` with its sample size.
 * **Numbers come from files.** The README, the docs and the model cards quote numbers only from `evals/results/` and `evals/report.md`. The model card generator reads only result files that git tracks, so a local, uncommitted run never reaches the docs.
-* **The gate never moves silently.** Thresholds change only with the founder's approval, and a measured metric without a threshold fails the gate.
+* **The gate never moves silently.** Thresholds are lowered only with the founder's written approval, and a measured metric without a threshold fails the gate.
