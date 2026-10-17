@@ -6,8 +6,8 @@
  * Prove `@pairly/sdk` works on its own, outside the monorepo:
  *
  * 1. build it, then `pnpm pack` the tarball;
- * 2. check the tarball's package.json has no `workspace:` dependency and that the
- *    generated types are inside it;
+ * 2. check the tarball's package.json has no `workspace:` dependency, that the
+ *    generated types are inside it, and that it ships the Apache-2.0 LICENSE and NOTICE;
  * 3. in a fresh temp project (`$PAIRLY_PACK_DIR`, default the OS temp folder), `npm
  *    install` the tarball, then import it with ESM and CommonJS and typecheck a small
  *    TypeScript file against its declarations.
@@ -46,10 +46,26 @@ try {
   const tgz = join(packs, tarball);
 
   const listing = run("tar", ["-tzf", tgz], work, { capture: true });
-  for (const needed of ["package/dist/esm/generated/api.d.ts", "package/dist/cjs/index.js"]) {
+  for (const needed of [
+    "package/dist/esm/generated/api.d.ts",
+    "package/dist/cjs/index.js",
+    "package/LICENSE",
+    "package/NOTICE",
+  ]) {
     if (!listing.includes(needed)) throw new Error(`the tarball lacks ${needed}`);
   }
   const manifest = JSON.parse(run("tar", ["-xzOf", tgz, "package/package.json"], work, { capture: true }));
+  if (manifest.license !== "Apache-2.0") {
+    throw new Error(`the packed package.json license is ${manifest.license}, expected Apache-2.0`);
+  }
+  const licenseText = run("tar", ["-xzOf", tgz, "package/LICENSE"], work, { capture: true });
+  if (!licenseText.includes("Apache License") || !licenseText.includes("Version 2.0, January 2004")) {
+    throw new Error("the packed LICENSE is not the Apache-2.0 text");
+  }
+  const generated = run("tar", ["-xzOf", tgz, "package/dist/esm/generated/api.js"], work, { capture: true });
+  if (/SPDX-License-Identifier: (?!Apache-2\.0$)/m.test(generated)) {
+    throw new Error("the packed generated types carry a license other than Apache-2.0");
+  }
   const deps = { ...manifest.dependencies, ...manifest.peerDependencies, ...manifest.optionalDependencies };
   for (const [name, range] of Object.entries(deps)) {
     if (String(range).startsWith("workspace:") || name.startsWith("@pairly/")) {

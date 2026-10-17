@@ -5,7 +5,9 @@ Typed from the OpenAPI spec (types generated in `@pairly/shared-ts`, copied into
 at build time, through `openapi-fetch`), retries with
 backoff, pagination, idempotency keys and webhook verification. ESM and CommonJS
 builds; Node 20+, Deno, Bun and edge runtimes (Web Crypto and `fetch` only, no Node
-APIs). Version 0.1.0, AGPL-3.0-only (commercial license available, see `LICENSING.md`).
+APIs). Version 0.1.0, licensed under Apache-2.0 (see `LICENSE` and `NOTICE`), so you can
+embed it in software under any license. The Pairly server it talks to is
+AGPL-3.0-only OR LicenseRef-Proofly-Commercial; see `LICENSING.md` at the repository root.
 
 People decide in Pairly. An API key can read, propose and upload; it can never approve,
 reject, pay or delete.

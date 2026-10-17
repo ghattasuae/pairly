@@ -1,0 +1,7 @@
+pairly (Python SDK for the Pairly API)
+Copyright (c) 2026 Proofly Technology
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This package contains no third-party code. Its one runtime dependency, httpx
+(BSD-3-Clause), is installed separately and keeps its own license.
