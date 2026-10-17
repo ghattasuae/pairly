@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """``make api-docs``: the page is self-contained and fetches nothing at run time, the
 spec round-trips, and the vendored Redoc bundle is the reviewed one (license, checksum),

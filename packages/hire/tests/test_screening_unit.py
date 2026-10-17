@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Screening without a database: blind redaction, no evidence no credit, the overall
 score, knockouts and claim checks, on the synthetic Hire data (``synth.hire``).

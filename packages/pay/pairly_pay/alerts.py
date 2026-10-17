@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Urgent alert when a bank-detail change ticket opens: an invoice check opens or joins
 one (``alert_bank_change``), or a vendor's contact asks for new bank details in the

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 // Copyright (c) 2026 Proofly Technology
 
 // Shared steps of the Pay demo specs (18-pay-demo, 19-pay-ux-budgets, 20-pay-a11y,

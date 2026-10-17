@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Bias reporting routes (M3, brief 3.10): the bias and adverse-impact report and its
 audit pack. The one place staff see anything derived from self-identification, and only

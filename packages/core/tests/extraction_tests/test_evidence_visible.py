@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Blind placeholder credit (security review 2026-10, L-05): a visible part of a quote
 counts as evidence only when it holds one real word, a run of at least three letters or

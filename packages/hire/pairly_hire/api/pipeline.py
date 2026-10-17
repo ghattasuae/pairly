@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Pipeline routes (WP2.5): board, stages, moves, undo, bulk, profile, notes, tags,
 waiting list, talent rediscovery and referrals.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 #
 # Next.js web app (apps/web), pnpm workspace, standalone output.
@@ -45,7 +45,7 @@ RUN pnpm --filter "@pairly/web..." run --if-present build
 FROM ${NODE_IMAGE} AS runtime
 
 LABEL org.opencontainers.image.title="pairly-web" \
-      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.licenses="AGPL-3.0-only OR LicenseRef-Proofly-Commercial" \
       org.opencontainers.image.vendor="Proofly Technology"
 
 ENV NODE_ENV=production \

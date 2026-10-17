@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Recorded model responses for the Pay invoice extraction: an eval subset and the
 demo trio (a recordings bundle). **The answers are scripted, not model output.**

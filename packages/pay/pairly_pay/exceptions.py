@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The exceptions queue (brief 4.5.4): invoices waiting for a person, by category, each
 with the explanation the checks already wrote and a suggested resolution, plus drafted

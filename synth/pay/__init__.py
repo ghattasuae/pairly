@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Synthetic Pay data (WP4.1): vendors, invoices, purchase orders, goods receipts,
 matching cases, attack invoices and inbound emails.

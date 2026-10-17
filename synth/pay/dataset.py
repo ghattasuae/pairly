@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Build the synthetic Pay dataset: vendors, regular invoices with purchase orders,
 goods receipts and matching cases, attack invoices and inbound emails.

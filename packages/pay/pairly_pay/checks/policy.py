@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Policy checks (brief 4.4.8): the deterministic ``pay.invoice`` rule set and the
 tenant's spend policy documents.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """``docs/model-cards`` is generated: regenerating it changes nothing, every number in
 a card is read from a committed result file, and an uncommitted file is never read."""

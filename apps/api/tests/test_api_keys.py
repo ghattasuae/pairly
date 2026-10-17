@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """API keys over HTTP on real Postgres: create, scopes, use, revoke, expiry, sandbox,
 rate limit, tenant isolation, audit attribution and ``Idempotency-Key`` on uploads.

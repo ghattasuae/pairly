@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Structured e-invoices (UBL 2.1, Peppol BIS 3 and PINT AE; UN/CEFACT CII, also inside a
 Factur-X PDF) to Pay's invoice fields, no model.

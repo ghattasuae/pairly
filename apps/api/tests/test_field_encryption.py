@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Field encryption against a real Postgres: ciphertext at rest, row and tenant binding,
 blind index lookups, key rotation (resumable, audited), the 0008 data migration, and

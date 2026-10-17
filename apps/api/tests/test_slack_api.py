@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Slack over HTTP against Postgres (WP1.9): configuration, the signed connect flow,
 approval messages with link buttons, native "remind me", idempotency and signatures.

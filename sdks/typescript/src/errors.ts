@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 Proofly Technology
 
 /** Errors raised by the Pairly client. API errors carry RFC 9457 problem details. */

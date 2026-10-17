@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The hosted demo's Fly.io files (infra/fly, docs/hosted-demo.md), checked without an
 account or Docker: TOML syntax, Dockerfile paths, targets and build args, what the build
@@ -47,7 +47,9 @@ def test_every_app_parses_and_is_named_for_the_demo(app: str) -> None:
     assert data["app"] == f"pairly-demo-{app}"
     assert re.fullmatch(r"[a-z]{3}", data["primary_region"])
     text = (FLY / app / "fly.toml").read_text(encoding="utf-8")
-    assert text.startswith("# SPDX-License-Identifier: AGPL-3.0-only")
+    assert text.startswith(
+        "# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial\n"
+    )
     assert "—" not in text
 
 

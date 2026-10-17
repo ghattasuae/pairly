@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Checklist tables (migration ``hire_0015``). Org scoped, Row Level Security forced,
 a candidate's portal session reaches only their own items (to attach an upload to the

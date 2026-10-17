@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The expense plugin without a database: discovery, permissions, policies as code, what
 counts as a usable value, and the synthetic files being up to date."""

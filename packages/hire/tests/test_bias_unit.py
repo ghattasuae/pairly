@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The bias and adverse-impact report: four-fifths math, small samples, suppression,
 the exact statistics, and the audit pack's contents."""

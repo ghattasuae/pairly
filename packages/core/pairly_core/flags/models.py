@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """``feature_flags`` (migration 0013): an organisation's flag overrides. Org scoped, RLS
 forced; SELECT, INSERT, UPDATE, DELETE for the application role (deleting a row puts the

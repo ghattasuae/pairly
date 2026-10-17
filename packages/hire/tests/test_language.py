@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # ruff: noqa: RUF001  (Arabic test text)
 """The inclusive-language checker and the requirements sanity check, English and Arabic."""

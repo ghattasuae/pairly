@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # ruff: noqa: RUF001 (the confusables table maps lookalike letters on purpose)
 """Lookalike sender domains.

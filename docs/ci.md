@@ -8,7 +8,7 @@ CI runs on GitHub Actions for every pull request and every push to `main`. The w
 |---|---|---|
 | `python` | ruff lint and format, import contracts, mypy (strict on `packages/core`), Alembic migrations, pytest with coverage against a real Postgres | `make lint typecheck ci-test` |
 | `js` | pnpm install from the lockfile, eslint, typecheck, vitest, Next.js build of `apps/web` | `pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test` |
-| `text` | no em dashes in docs and UI text, SPDX header in every source file, workflow lint (actionlint) | `make lint ci-actionlint` |
+| `text` | no em dashes in docs and UI text, SPDX header in every source file with the license its folder needs (`scripts/spdx_headers.py`, see LICENSING.md), workflow lint (actionlint) | `make lint ci-actionlint` |
 | `security` | Bandit, pip-audit, pnpm audit, gitleaks over the full git history | `make ci-security` |
 | `licenses` | every dependency has a license compatible with AGPL-3.0 and commercial relicensing | `make ci-licenses` |
 | `evals` | placeholder that runs `make evals`; becomes the eval merge gate in WP2.10 | `make evals` |

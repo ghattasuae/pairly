@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """A workflow approval that binds one message (``allow_bound_message``): it covers only
 the registered template, only the exact message hash its intact payload names."""

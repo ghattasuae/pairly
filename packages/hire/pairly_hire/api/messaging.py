@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Messaging routes (WP2.7): templates, drafts, AI drafts, preview, send, submit for
 approval, bulk updates, the SLA setting and the candidates' own preferences.

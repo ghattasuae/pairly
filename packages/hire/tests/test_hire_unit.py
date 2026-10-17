@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Unit tests of the Hire plugin: permissions, rubric and form models, answers and
 knockouts, the plugin's extension points, retention and the recordings bundle."""

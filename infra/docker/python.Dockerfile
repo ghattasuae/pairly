@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 #
 # One image for the Python services (the default target, `service`, is the runtime image;
@@ -57,7 +57,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM ${PYTHON_IMAGE} AS runtime
 
 LABEL org.opencontainers.image.title="pairly-python-app" \
-      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.licenses="AGPL-3.0-only OR LicenseRef-Proofly-Commercial" \
       org.opencontainers.image.vendor="Proofly Technology"
 
 ENV PATH=/app/.venv/bin:$PATH \

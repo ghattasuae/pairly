@@ -2,7 +2,7 @@
   "name": "pairly",
   "version": "0.0.0",
   "private": true,
-  "license": "AGPL-3.0-only",
+  "license": "(AGPL-3.0-only OR LicenseRef-Proofly-Commercial)",
   "type": "module",
   "packageManager": "pnpm@10.34.6",
   "engines": {

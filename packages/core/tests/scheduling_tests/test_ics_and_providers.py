@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Calendar files (RFC 5545), the fake calendar, the Google provider against a mocked
 transport (never Google itself), and calendar attachments on email."""

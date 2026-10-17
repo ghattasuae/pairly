@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Analytics tables. Org scoped, Row Level Security forced, hidden from candidates'
 portal sessions; the application role gets SELECT, INSERT and UPDATE, never DELETE.

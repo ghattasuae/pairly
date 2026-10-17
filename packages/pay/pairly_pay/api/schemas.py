@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Request and response models of the Pay routes. Every name starts with ``Pay``:
 OpenAPI schema names are global, and a plugin's model must never rename a core one."""

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 # Synthetic sample job (WP2.1). `rubric` is a Pairly Hire rubric (pairly_hire.rubric), the
 # same YAML a recruiter locks. `label_guide` is synthetic-data only: what each score 0 to

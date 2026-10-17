@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Pay role dashboards on Home (brief 5.1 items 8 to 10; the vendor portal home, item
 11, is the portal's own). Each is built from the services the Pay pages already use;

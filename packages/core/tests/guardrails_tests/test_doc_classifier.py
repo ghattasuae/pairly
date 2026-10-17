@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Whole-document classifier: sampling, data-only framing, offsets that must exist,
 add-only findings, fail closed, and an offline run against recorded responses."""

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Notifications against Postgres (WP1.9): approval messages, preferences, digests,
 unsubscribe, delivery retries, sensitive templates, the in-app feed, live updates and

@@ -18,7 +18,7 @@
 - [ ] No secrets in code, config or logs.
 - [ ] Agents still only propose. Final actions still need a human approval.
 - [ ] Copy follows the style rules: plain short sentences, no hype words, no em dashes.
-- [ ] New source files have the SPDX header (`uv run python scripts/spdx_headers.py --check`).
+- [ ] New source files have the SPDX header with the license their folder needs (`uv run python scripts/spdx_headers.py --check`).
 - [ ] New dependencies use a compatible license, and `NOTICE.md` is updated.
 - [ ] I have signed the CLA (the bot will ask on your first pull request).
 

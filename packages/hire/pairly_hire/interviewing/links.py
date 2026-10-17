@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The interviewer's one-click scorecard link (brief 5.3: "a one-click link to the
 scorecard, mobile friendly, no login wall beyond a magic link").

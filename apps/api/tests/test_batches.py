@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The batch API on real Postgres: files and URLs, outcomes, ``batch.completed``,
 SSRF refusals, idempotency, the per-caller documents-per-minute limit, permissions and

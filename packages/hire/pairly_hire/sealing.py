@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Read an encrypted column whether it was loaded from the database (``Sealed``) or set
 in this transaction and not reloaded yet (``Plaintext`` from ``seal``)."""

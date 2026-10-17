@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The Bruno collection (infra/bruno) follows the API: every request is a route of the
 OpenAPI document with that method, "person" requests use the person token, and no

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The hosted demo's database jobs (docs/hosted-demo.md). Runs in the ``pairly-demo-ops``
 Fly app, from the ``demo`` image target of ``infra/docker/python.Dockerfile``.

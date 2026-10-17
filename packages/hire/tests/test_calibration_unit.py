@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Calibration mode: agreement statistics per criterion, low-agreement rules, the
 deterministic suggestion from the anchors, and the model suggestion's checks."""

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Tests for scripts/spdx_headers.py."""
 
@@ -28,7 +28,9 @@ def _load() -> ModuleType:
 
 spdx = _load()
 
-SPDX = "SPDX-License-Identifier: AGPL-3.0-only"
+SPDX = "SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial"
+APACHE = "SPDX-License-Identifier: Apache-2.0"
+LEGACY = "SPDX-License-Identifier: AGPL-3.0-only"
 COPY = "Copyright (c) 2026 Proofly Technology"
 
 
@@ -131,6 +133,7 @@ def test_other_license_is_reported_and_not_changed() -> None:
         ("apps/web/dist/bundle.min.js", False),
         ("apps/api/openapi.gen.ts", False),
         ("image.png", False),
+        ("LICENSES/third-party/react.js", False),
     ],
 )
 def test_is_candidate(path: str, expected: bool) -> None:
@@ -185,3 +188,133 @@ def test_explicit_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     assert spdx.main(["--check", str(target)]) == 1
     assert spdx.main(["--fix", str(target)]) == 0
     assert spdx.main(["--check", str(target)]) == 0
+
+
+# ---------------------------------------------------------------- per-directory policy
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("apps/api/pairly_api/main.py", spdx.DUAL),
+        ("packages/core/pairly_core/x.py", spdx.DUAL),
+        ("scripts/spdx_headers.py", spdx.DUAL),
+        ("sdks/python/pairly/client.py", spdx.APACHE),
+        ("sdks/typescript/src/client.ts", spdx.APACHE),
+        ("docs/quickstarts/fastapi/app.py", spdx.APACHE),
+        ("./sdks/python/pairly/client.py", spdx.APACHE),
+        ("docs/other/example.py", spdx.DUAL),
+        ("sdks/pythonic/x.py", spdx.DUAL),
+    ],
+)
+def test_expected_license(path: str, expected: str) -> None:
+    assert spdx.expected_license(PurePosixPath(path)) == expected
+
+
+def test_wrong_license_for_the_folder_is_reported() -> None:
+    agpl_only = f"# {LEGACY}\n# {COPY}\nx = 1\n"
+    dual = f"# {SPDX}\n# {COPY}\nx = 1\n"
+    apache = f"# {APACHE}\n# {COPY}\nx = 1\n"
+    assert spdx.inspect_text(dual, spdx.DUAL) == ("ok", "")
+    assert spdx.inspect_text(apache, spdx.APACHE) == ("ok", "")
+    assert spdx.inspect_text(agpl_only, spdx.DUAL)[0] == "wrong-license"
+    assert spdx.inspect_text(apache, spdx.DUAL)[0] == "wrong-license"
+    assert spdx.inspect_text(dual, spdx.APACHE)[0] == "wrong-license"
+
+
+def test_fix_rewrites_the_license_and_keeps_the_rest() -> None:
+    src = f"#!/usr/bin/env python3\n# {SPDX}\n# {COPY}\n\nx = 1\n"
+    out = spdx.add_header(src, ".py", spdx.APACHE)
+    assert out == f"#!/usr/bin/env python3\n# {APACHE}\n# {COPY}\n\nx = 1\n"
+    css = f"/* {APACHE} */\n/* {COPY} */\nbody {{}}\n"
+    assert spdx.add_header(css, ".css", spdx.DUAL).splitlines()[0] == f"/* {SPDX} */"
+
+
+def test_secondary_files_are_retagged() -> None:
+    toml = f"# {LEGACY}\n# {COPY}\n\n[project]\n"
+    assert spdx.retag_text(toml, spdx.DUAL) == f"# {SPDX}\n# {COPY}\n\n[project]\n"
+    mako = f"## {LEGACY}\n## {COPY}\n# {LEGACY}\n# {COPY}\n"
+    assert spdx.retag_text(mako, spdx.DUAL) == f"## {SPDX}\n## {COPY}\n# {SPDX}\n# {COPY}\n"
+
+
+def test_license_texts_are_never_secondary_files() -> None:
+    assert not spdx.is_secondary(PurePosixPath("LICENSES/LicenseRef-Proofly-Commercial.txt"))
+    assert spdx.is_secondary(PurePosixPath("infra/docker/python.Dockerfile"))
+
+
+def test_hash_pinned_prompt_files_keep_their_header() -> None:
+    prompt = "packages/core/pairly_core/llm/prompts/core_smoke/v1.md"
+    assert spdx.accepted_licenses(prompt) == {spdx.DUAL, spdx.LEGACY_AGPL}
+    assert spdx.accepted_licenses("packages/core/pairly_core/x.py") == {spdx.DUAL}
+
+
+def _git_repo(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)  # noqa: S607
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_a_file_with_the_wrong_license_for_its_folder_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _git_repo(tmp_path)
+    sdk = tmp_path / "sdks" / "python" / "pairly"
+    sdk.mkdir(parents=True)
+    server = tmp_path / "apps" / "api"
+    server.mkdir(parents=True)
+    # The server's dual license inside the Apache-2.0 SDK folder, and the reverse.
+    (sdk / "client.py").write_text(f"# {SPDX}\n# {COPY}\n\nx = 1\n")
+    (server / "main.py").write_text(f"# {APACHE}\n# {COPY}\n\ny = 2\n")
+    # A legacy AGPL-only TOML header outside the SDK folders.
+    (tmp_path / "pyproject.toml").write_text(f"# {LEGACY}\n# {COPY}\n\n[project]\n")
+    # Correct files and a hash-pinned prompt.
+    (sdk / "ok.py").write_text(f"# {APACHE}\n# {COPY}\n\nz = 3\n")
+    (server / "ok.py").write_text(f"# {SPDX}\n# {COPY}\n\nz = 3\n")
+    prompt = tmp_path / "packages" / "core" / "prompts" / "smoke" / "v1.md"
+    prompt.parent.mkdir(parents=True)
+    prompt.write_text(f"---\n# {LEGACY}\n# {COPY}\ntask: smoke\n---\nHello\n")
+    monkeypatch.chdir(tmp_path)
+
+    assert spdx.main(["--check"]) == 1
+    out = capsys.readouterr().out
+    assert "wrong license for this folder" in out
+    assert "client.py" in out
+    assert "main.py" in out
+    assert "pyproject.toml" in out
+    assert "ok.py" not in out
+    assert "v1.md" not in out
+
+    assert spdx.main(["--fix"]) == 0
+    assert (sdk / "client.py").read_text().startswith(f"# {APACHE}\n# {COPY}\n")
+    assert (server / "main.py").read_text().startswith(f"# {SPDX}\n# {COPY}\n")
+    assert (tmp_path / "pyproject.toml").read_text().startswith(f"# {SPDX}\n")
+    assert prompt.read_text().startswith(f"---\n# {LEGACY}\n")
+    assert spdx.main(["--check"]) == 0
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_a_third_party_license_is_never_rewritten(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _git_repo(tmp_path)
+    target = tmp_path / "sdks" / "typescript" / "src" / "x.ts"
+    target.parent.mkdir(parents=True)
+    target.write_text("// SPDX-License-Identifier: MIT\nexport {};\n")
+    monkeypatch.chdir(tmp_path)
+    assert spdx.main(["--check"]) == 1
+    assert spdx.main(["--fix"]) == 1
+    assert target.read_text() == "// SPDX-License-Identifier: MIT\nexport {};\n"
+
+
+def test_repository_headers_follow_the_policy() -> None:
+    """The real repository passes the policy check (what `make lint` runs)."""
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
+    root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, str(SCRIPT), "--check"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

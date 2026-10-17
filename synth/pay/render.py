@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Render an ``InvoiceDoc``: digital PDF (reportlab), scan (Pillow), DOCX (python-docx)
 and structured e-invoice XML (UBL 2.1 in the Peppol PINT AE shape).

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Reference check tables (migration ``hire_0013``). All org scoped, Row Level Security
 forced, hidden from candidates' portal sessions; the application role gets SELECT,

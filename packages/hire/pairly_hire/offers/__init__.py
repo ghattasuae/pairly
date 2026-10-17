@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """Offers (brief 3.8.3, M3). No e-signature integration (ASK open): an offer is a PDF
 plus the candidate's accept or decline in the portal, audited.
