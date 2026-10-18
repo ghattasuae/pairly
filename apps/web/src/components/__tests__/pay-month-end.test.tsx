@@ -123,6 +123,39 @@ describe("PayMonthEndView", () => {
     ]);
   });
 
+  it("exports the journal in an accounting system format with the account matches", async () => {
+    const download = vi.fn().mockResolvedValue({ ok: false, code: "journal_account_unmapped" });
+    renderWithIntl(<PayMonthEndView data={data()} download={download} />);
+    const select = screen.getByLabelText("Journal format");
+    expect(select).toHaveValue("generic");
+    expect(document.querySelector("[data-journal-accounts]")).toBeNull();
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Generic CSV", "Xero", "QuickBooks Online", "Zoho Books"]);
+
+    await userEvent.selectOptions(select, "xero");
+    expect(screen.getByText("Accounts in Xero")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Account for AP_CONTROL"), "800");
+    await userEvent.type(screen.getByLabelText("Account for BANK"), " 090 ");
+    await userEvent.type(screen.getByLabelText("Xero tax rate for every line (optional)"), "No VAT");
+    await userEvent.click(screen.getByRole("button", { name: "Export the journal (CSV)" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("no matching account"));
+    expect(download.mock.calls).toEqual([
+      ["journal", "2026-09", { format: "xero", accounts: { AP_CONTROL: "800", BANK: "090" }, tax_rate: "No VAT" }],
+    ]);
+
+    // Zoho Books keeps the accounts but takes no tax rate.
+    await userEvent.selectOptions(select, "zoho_books");
+    expect(screen.queryByLabelText("Xero tax rate for every line (optional)")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Export the journal (CSV)" }));
+    await waitFor(() => expect(download).toHaveBeenCalledTimes(2));
+    expect(download.mock.calls[1]).toEqual(["journal", "2026-09", { format: "zoho_books", accounts: { AP_CONTROL: "800", BANK: "090" } }]);
+  });
+
+  it("offers the formats in Arabic", () => {
+    renderWithIntl(<PayMonthEndView data={data()} download={vi.fn()} />, "ar");
+    expect(screen.getByLabelText("صيغة ملف القيود")).toHaveValue("generic");
+    expect(screen.getByRole("option", { name: "CSV عام" })).toBeInTheDocument();
+  });
+
   it("lists the journal exports of the month with their digest", () => {
     const sha = "ab".repeat(32);
     renderWithIntl(
@@ -144,6 +177,7 @@ describe("PayMonthEndView", () => {
       />,
     );
     expect(screen.getByText("4 entries, 12 lines")).toBeInTheDocument();
+    expect(document.querySelector('[data-export-format="generic"]')).toHaveTextContent("Generic CSV");
     expect(screen.getByTitle(sha)).toBeInTheDocument();
   });
 

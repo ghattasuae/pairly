@@ -34,6 +34,9 @@ const PAY_CODES = new Set([
   "statement_already_imported",
   "callback_source_required",
   "callback_source_missing",
+  "journal_unbalanced",
+  "journal_account_unmapped",
+  "journal_value_unrepresentable",
 ]);
 
 export function ErrorText({ code, className }: { code: string | null; className?: string }) {

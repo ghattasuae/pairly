@@ -3046,7 +3046,10 @@
       "invalid_statement": "في الكشف مشكلات. لم يُستورد شيء.",
       "statement_already_imported": "تم استيراد ملف الكشف هذا من قبل.",
       "callback_source_required": "سجل رقم هاتف المورد من مصدر مستقل مع مرجع قبل القبول. لا يتم الاتصال أبدا بالرقم الوارد في نموذج المورد.",
-      "callback_source_missing": "سجل رقم الاتصال من مصدر مستقل أولا. بعد ذلك يمكن لشخص آخر التحقق من التغيير."
+      "callback_source_missing": "سجل رقم الاتصال من مصدر مستقل أولا. بعد ذلك يمكن لشخص آخر التحقق من التغيير.",
+      "journal_unbalanced": "لم يُنشأ الملف لأن أحد القيود غير متوازن.",
+      "journal_account_unmapped": "لم يُنشأ الملف لأن حسابًا في القيود ليس له حساب مقابل. أدخل الحسابات ثم أعد المحاولة.",
+      "journal_value_unrepresentable": "لم يُنشأ الملف لأن قيمة لا تناسب هذه الصيغة، مثل مبلغ بثلاث خانات عشرية، أو أكثر من عملة واحدة في Xero."
     },
     "vendorStatus": {
       "pending": "بانتظار المراجعة",
@@ -4229,7 +4232,18 @@
         "other": "أخرى"
       },
       "exportsTitle": "تصديرات القيود لهذا الشهر",
-      "exportCounts": "{entries, plural, one {قيد واحد} two {قيدان} few {# قيود} many {# قيدًا} other {# قيد}}، {lines, plural, one {سطر واحد} two {سطران} few {# أسطر} many {# سطرًا} other {# سطر}}"
+      "exportCounts": "{entries, plural, one {قيد واحد} two {قيدان} few {# قيود} many {# قيدًا} other {# قيد}}، {lines, plural, one {سطر واحد} two {سطران} few {# أسطر} many {# سطرًا} other {# سطر}}",
+      "journalFormat": "صيغة ملف القيود",
+      "format": {
+        "generic": "CSV عام",
+        "xero": "Xero",
+        "quickbooks": "QuickBooks Online",
+        "zoho_books": "Zoho Books"
+      },
+      "accountsTitle": "الحسابات في {system}",
+      "accountsHelp": "الحساب الذي يذهب إليه كل حساب مؤقت في Pairly. تُطابَق رموز دليل الحسابات المعمول به تلقائيًا. يُرفض الملف إذا بقي حساب بلا مقابل.",
+      "accountFor": "الحساب المقابل لـ {code}",
+      "taxRate": "نسبة الضريبة في Xero لكل سطر (اختياري)"
     }
   },
   "VendorOnboarding": {

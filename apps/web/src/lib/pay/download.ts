@@ -5,10 +5,18 @@ export type DownloadResult = { ok: true } | { ok: false; code: string };
 
 /**
  * POST to one of our own download routes (which add the token server side) and save
- * the file. The `X-Pairly-Export` header proves the request came from our page.
+ * the file. The `X-Pairly-Export` header proves the request came from our page. `body`,
+ * when given, is sent as JSON.
  */
-export async function saveDownload(url: string, fallbackName: string): Promise<DownloadResult> {
-  const response = await fetch(url, { method: "POST", headers: { "X-Pairly-Export": "1" }, credentials: "same-origin" });
+export async function saveDownload(url: string, fallbackName: string, body?: unknown): Promise<DownloadResult> {
+  const headers: Record<string, string> = { "X-Pairly-Export": "1" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    credentials: "same-origin",
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
   if (!response.ok) {
     let code = "unavailable";
     try {
