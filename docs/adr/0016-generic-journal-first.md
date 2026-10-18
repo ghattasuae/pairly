@@ -20,3 +20,7 @@ Approved invoices and payments must reach the accounting system. Xero, QuickBook
 
 * Any accounting system that imports a journal CSV works today, with a mapping step.
 * The later formats are a rendering of entries that are already balanced and tested.
+
+## Amendments
+
+* 2026-10-19: the Xero, QuickBooks Online and Zoho Books formats landed as renderers of the same entries, see [ADR 0017](0017-accounting-system-journal-formats.md).
