@@ -21,6 +21,9 @@ Recorded model mode, no API key. Everything is synthetic (``synth.pay``).
    template fingerprint), so the amount, duplicate and template checks have history.
    Each was paid to the vendor's account on file in a closed history run per currency
    (``HIST-<currency>``), so every paid invoice names its run like a live one does.
+   The bank statement of those payments is imported by the AP clerk and matched, all but
+   three (``STATEMENT_LEFT_OUT``), next to two debits and a credit no payment explains
+   (``STATEMENT_EXTRA``): the reconciliation page shows a few exceptions, not the history.
 4. Recorded invoices driven to every status: ready, needs review, awaiting approval,
    approved, scheduled (in a payment run awaiting the finance controller), paid
    (approved, exported and marked paid) and rejected; and one just received (the
@@ -48,9 +51,11 @@ then it can be scheduled in a new payment run proposal.
 from __future__ import annotations
 
 import asyncio
+import csv
 import dataclasses
 import datetime as dt
 import hashlib
+import io
 import json
 import random
 import tempfile
@@ -88,6 +93,7 @@ from pairly_core.rbac import RoleRegistry
 from pairly_pay.ai_recordings import import_ai_recordings
 from pairly_pay.checks.document import document_facts
 from pairly_pay.checks.run import keys_of
+from pairly_pay.checks.settings import amount_text
 from pairly_pay.checks.types import InvoiceFacts, Line
 from pairly_pay.coding_demo import cc_csv, gl_csv
 from pairly_pay.common import By, audit
@@ -109,6 +115,7 @@ from pairly_pay.portal.auth import issue_login_token
 from pairly_pay.portal.contacts import contact_email
 from pairly_pay.portal.models import PayPortalContact
 from pairly_pay.recordings import import_pay_recordings
+from pairly_pay.statements import CSV_COLUMNS
 from pairly_pay.vendors import active_account
 from synth.pay.banking import BANK_BY_KEY, make_iban
 from synth.pay.dataset import Dataset, DocSpec, build
@@ -147,6 +154,21 @@ RULE_LIMIT: Final = "10000"
 # 2-way services, the first invoice of a PO with two).
 CLEAN_DOC: Final = "inv-0165"
 PO_DOCS: Final = (CLEAN_DOC, "inv-0001", "inv-0030", "inv-0037", "inv-0047", "inv-0073")
+# The history's bank statement (``history_statement``) shows every history payment
+# except these three (end-to-end ids: the 7th AED, 3rd USD and 2nd EUR payment, all paid
+# months before the cut-off), so the reconciliation page lists three paid invoices that
+# no statement line explains, as when a bank booked a payment on a statement nobody has
+# imported yet. Every other history payment is matched, so the page opens with exactly
+# these exceptions instead of the whole history.
+STATEMENT_LEFT_OUT: Final = frozenset({"HIST-AED-00007", "HIST-USD-00003", "HIST-EUR-00002"})
+# Lines no Pay payment explains: two debits (a bank charge and a utility direct debit)
+# that stay unmatched for a person to look at, and a customer receipt (a credit, which
+# reconciliation ignores). (booking date, signed amount, currency, reference)
+STATEMENT_EXTRA: Final = (
+    ("2026-08-31", "-157.50", "AED", "BANK CHARGES AUG 2026 ACCOUNT MAINTENANCE"),
+    ("2026-08-14", "-4280.00", "AED", "DEWA DIRECT DEBIT 2002114471"),
+    ("2026-08-20", "36750.00", "AED", "CUSTOMER RECEIPT SO-2026-0412"),
+)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -710,6 +732,17 @@ async def seed_history(
     return [f"pay history: {added} past invoices imported, {known} already there"]
 
 
+def history_times(invoice_date: str, due_date: str) -> tuple[dt.datetime, dt.datetime, dt.datetime]:
+    """When a history invoice was received, approved and paid: the day after its date,
+    the day after that, and on its due date (never before it was approved)."""
+    received = dt.datetime.combine(
+        dt.date.fromisoformat(invoice_date) + dt.timedelta(days=1), dt.time(9), dt.UTC
+    )
+    approved = received + dt.timedelta(days=1)
+    due = dt.datetime.combine(dt.date.fromisoformat(due_date), dt.time(10), dt.UTC)
+    return received, approved, max(due, approved + dt.timedelta(hours=1))
+
+
 async def _paid_history(
     session: AsyncSession,
     org_id: uuid.UUID,
@@ -745,9 +778,7 @@ async def _paid_history(
     )
     date = dt.date.fromisoformat(truth.invoice_date)
     due = dt.date.fromisoformat(truth.due_date)
-    received = dt.datetime.combine(date + dt.timedelta(days=1), dt.time(9), dt.UTC)
-    approved = received + dt.timedelta(days=1)
-    paid = max(dt.datetime.combine(due, dt.time(10), dt.UTC), approved + dt.timedelta(hours=1))
+    received, approved, paid = history_times(truth.invoice_date, truth.due_date)
     vendor_id = vendors[truth.vendor_id or ""]
     account = await active_account(session, vendor_id)
     if account is None:
@@ -817,6 +848,113 @@ async def _paid_history(
             updated_at=paid,
         )
     )
+
+
+# ------------------------------------------------------------------ bank statement
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class HistoryPayment:
+    """A paid history run item, as the bank statement shows it."""
+
+    end_to_end_id: str
+    invoice_number: str | None
+    amount: Decimal
+    currency: str
+    paid_on: dt.date
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class HistoryStatement:
+    csv: str
+    lines: int
+    # The end-to-end ids of the history payments the statement leaves out.
+    left_out: tuple[str, ...]
+
+
+def history_statement(payments: Sequence[HistoryPayment]) -> HistoryStatement:
+    """The synthetic bank statement (``pairly_pay.statements`` CSV) of the history runs.
+
+    Each history payment is a debit of its exact amount, booked one to four days after
+    it was marked paid (from ``random.Random`` seeded with its end-to-end id, so a rerun
+    writes the same file), with the end-to-end id and the invoice number as the bank's
+    reference: the reconciliation matches it on amount and reference. The payments in
+    ``STATEMENT_LEFT_OUT`` are left out and the ``STATEMENT_EXTRA`` lines, which no
+    payment explains, are added. Pure: the same payments always give the same file."""
+    rows: list[tuple[dt.date, str, str, str, str]] = []
+    left_out: list[str] = []
+    for p in sorted(payments, key=lambda x: x.end_to_end_id):
+        if p.end_to_end_id in STATEMENT_LEFT_OUT:
+            left_out.append(p.end_to_end_id)
+            continue
+        rng = random.Random(f"demo-statement-{p.end_to_end_id}")  # noqa: S311 (synthetic data)
+        booked = p.paid_on + dt.timedelta(days=rng.randint(1, 4))
+        reference = " ".join(x for x in (p.end_to_end_id, p.invoice_number) if x)
+        rows.append((booked, f"-{amount_text(p.amount, p.currency)}", p.currency, reference, ""))
+    for day, amount, currency, reference in STATEMENT_EXTRA:
+        rows.append((dt.date.fromisoformat(day), amount, currency, reference, ""))
+    rows.sort(key=lambda r: (r[0], r[3]))
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(CSV_COLUMNS)
+    writer.writerows((d.isoformat(), a, c, ref, iban) for d, a, c, ref, iban in rows)
+    return HistoryStatement(out.getvalue(), len(rows), tuple(left_out))
+
+
+async def _history_payments(
+    sessionmaker: async_sessionmaker[AsyncSession], org_id: uuid.UUID
+) -> list[HistoryPayment]:
+    rows = await _rows(
+        sessionmaker,
+        org_id,
+        "SELECT i.end_to_end_id, v.invoice_number, i.amount, i.currency, i.paid_at"
+        " FROM pay_payment_run_items i"
+        " JOIN pay_payment_runs r ON r.id = i.payment_run_id"
+        " JOIN pay_invoices v ON v.id = i.invoice_id"
+        " WHERE r.reference LIKE 'HIST-%' AND i.status = 'paid'"
+        " AND i.end_to_end_id IS NOT NULL AND i.paid_at IS NOT NULL"
+        " ORDER BY i.end_to_end_id",
+    )
+    return [
+        HistoryPayment(
+            str(r.end_to_end_id),
+            r.invoice_number,
+            Decimal(r.amount),
+            str(r.currency),
+            r.paid_at.date(),
+        )
+        for r in rows
+    ]
+
+
+async def seed_statement(api: PayApi, sessionmaker: async_sessionmaker[AsyncSession]) -> list[str]:
+    """The history's bank statement, imported by the AP clerk through the API (parsed,
+    stored and matched by Pay's own code). The same file is imported once: a rerun finds
+    it by its digest and moves on."""
+    statement = history_statement(await _history_payments(sessionmaker, api.org_id))
+    if statement.lines == len(STATEMENT_EXTRA):
+        return ["pay bank statement: no history payments to show"]
+    left = ", ".join(statement.left_out) or "none"
+    digest = hashlib.sha256(statement.csv.encode()).hexdigest()
+    known = await _rows(
+        sessionmaker,
+        api.org_id,
+        "SELECT id FROM pay_bank_statements WHERE file_sha256 = :d",
+        {"d": digest},
+    )
+    if known:
+        return [f"pay bank statement: already there (left unexplained: {left})"]
+    result = await api.ok(
+        "POST",
+        "/v1/pay/reconciliation/statements",
+        CLERK,
+        status=201,
+        json={"format": "csv", "content": statement.csv},
+    )
+    return [
+        f"pay bank statement: {statement.lines} lines, {result['matched']} matched,"
+        f" {result['unmatched']} unmatched (left unexplained: {left})"
+    ]
 
 
 # ------------------------------------------------------------------ invoices
@@ -1328,6 +1466,7 @@ async def seed_pay(
         paid = await payment_run(api, sessionmaker, [ids[d] for d in PAID], pay=True)
         pending = await payment_run(api, sessionmaker, [ids[d] for d in SCHEDULED], pay=False)
         seed.lines.append(f"pay payment runs: one {paid}, one {pending}")
+        seed.lines += await seed_statement(api, sessionmaker)
 
         by_synth = {v.id: v for v in ds.vendors}
         waiting = await ticket(
@@ -1381,6 +1520,9 @@ def next_steps(seed: PaySeed, web_url: str) -> list[str]:
         "  - Payment runs: one awaits the finance controller (demo-pay-finance@example.test);",
         "    one was approved, exported and marked paid.",
         "  - Approvals: the approver (demo-pay-approver@example.test) has an invoice waiting.",
+        "  - Reconciliation: the history's bank statement is imported and matched; the page",
+        f"    lists {len(STATEMENT_LEFT_OUT)} paid invoices no statement line explains and two"
+        " debits Pay did not make.",
         f"  - Vendor portal: {seed.portal_email} has access. Sign in as that vendor contact",
         f"    with {web_url.rstrip('/')}/en/vendor-portal/login#{seed.portal_token}",
         "    (works once, for 3 days): invoice statuses, a question and its answer, details,",
