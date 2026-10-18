@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 /**
  * `/<locale>/vendor-portal`: the vendor's invoices, or the sign-in form (a magic link by
- * email) when there is no portal session. `?org=<organisation id>` names the organisation
- * for the sign-in form (accounts payable shares that link).
+ * email) when there is no portal session. `?org=<organisation slug or id>` names the
+ * organisation for the sign-in form (accounts payable shares that link).
  */
 export default async function VendorPortalPage({ params, searchParams }: Props) {
   const locale = toLocale((await params).locale);
