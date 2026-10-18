@@ -4,10 +4,13 @@
 
 import { Download, Loader2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/form-controls";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Link } from "@/i18n/navigation";
 import { saveDownload, type DownloadResult } from "@/lib/pay/download";
 import type { PayAgingBucket, PayJournalExport, PayMonthEnd } from "@/lib/pay/types";
@@ -65,22 +68,34 @@ function BucketCell({ bucket, currency }: { bucket: PayAgingBucket; currency: st
   );
 }
 
-export type MonthEndDownload = (kind: "report" | "journal", period: string) => Promise<DownloadResult>;
+export const JOURNAL_FORMATS = ["generic", "xero", "quickbooks", "zoho_books"] as const;
+export type JournalFormat = (typeof JOURNAL_FORMATS)[number];
+/** The journal accounts that never come from the chart of accounts: each needs a match. */
+export const JOURNAL_PLACEHOLDERS = ["AP_CONTROL", "VAT_INPUT", "BANK", "DISCOUNT_RECEIVED", "SUSPENSE"] as const;
 
-function defaultDownload(kind: "report" | "journal", period: string): Promise<DownloadResult> {
-  const url = kind === "report" ? `/api/pay/month-end/export?period=${period}` : `/api/pay/journal/export?period=${period}`;
-  return saveDownload(url, kind === "report" ? `month-end-${period}.csv` : `journal-${period}.csv`);
+/** An accounting system format of the journal, with its account matches. */
+export type JournalOptions = { format: Exclude<JournalFormat, "generic">; accounts: Record<string, string>; tax_rate?: string };
+
+export type MonthEndDownload = (kind: "report" | "journal", period: string, options?: JournalOptions) => Promise<DownloadResult>;
+
+function defaultDownload(kind: "report" | "journal", period: string, options?: JournalOptions): Promise<DownloadResult> {
+  if (kind === "report") return saveDownload(`/api/pay/month-end/export?period=${period}`, `month-end-${period}.csv`);
+  if (!options) return saveDownload(`/api/pay/journal/export?period=${period}`, `journal-${period}.csv`);
+  const { format, ...body } = options;
+  return saveDownload(`/api/pay/journal/export?period=${period}&format=${format}`, `journal-${period}-${format}.csv`, body);
 }
 
 function DownloadButton({
   kind,
   period,
   download,
+  options,
   children,
 }: {
   kind: "report" | "journal";
   period: string;
   download: MonthEndDownload;
+  options?: JournalOptions | undefined;
   children: React.ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
@@ -88,7 +103,8 @@ function DownloadButton({
   async function run() {
     setBusy(true);
     setError(null);
-    const result = await download(kind, period);
+    // The generic journal is asked for exactly as before: no options at all.
+    const result = options ? await download(kind, period, options) : await download(kind, period);
     setBusy(false);
     if (!result.ok) setError(result.code);
   }
@@ -99,6 +115,84 @@ function DownloadButton({
         {children}
       </Button>
       <ErrorText code={error} />
+    </div>
+  );
+}
+
+/**
+ * The journal export with its format: the generic CSV (the default) or the import file
+ * of Xero, QuickBooks Online or Zoho Books, which needs the account each placeholder
+ * goes to (GL codes are matched from the chart of accounts by the API).
+ */
+function JournalExport({ period, download }: { period: string; download: MonthEndDownload }) {
+  const t = useTranslations("Pay.monthEnd");
+  const id = useId();
+  const [format, setFormat] = useState<JournalFormat>("generic");
+  const [accounts, setAccounts] = useState<Record<string, string>>({});
+  const [taxRate, setTaxRate] = useState("");
+  const options: JournalOptions | undefined =
+    format === "generic"
+      ? undefined
+      : {
+          format,
+          accounts: Object.fromEntries(
+            Object.entries(accounts)
+              .map(([code, account]) => [code, account.trim()] as const)
+              .filter(([, account]) => account !== ""),
+          ),
+          ...(format === "xero" && taxRate.trim() !== "" ? { tax_rate: taxRate.trim() } : {}),
+        };
+  return (
+    <div className="space-y-2" data-journal-export>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`${id}-format`}>{t("journalFormat")}</Label>
+          <Select
+            id={`${id}-format`}
+            value={format}
+            onChange={(e) => setFormat((JOURNAL_FORMATS as readonly string[]).includes(e.target.value) ? (e.target.value as JournalFormat) : "generic")}
+            data-journal-format
+          >
+            {JOURNAL_FORMATS.map((f) => (
+              <option key={f} value={f}>
+                {t(`format.${f}`)}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <DownloadButton kind="journal" period={period} download={download} options={options}>
+          {t("downloadJournal")}
+        </DownloadButton>
+      </div>
+      {format !== "generic" && (
+        <fieldset className="space-y-2 rounded-lg border p-3" data-journal-accounts>
+          <legend className="px-1 text-sm font-medium">{t("accountsTitle", { system: t(`format.${format}`) })}</legend>
+          <p className="text-xs text-muted-foreground">{t("accountsHelp")}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {JOURNAL_PLACEHOLDERS.map((code) => (
+              <div key={code} className="space-y-1">
+                <Label htmlFor={`${id}-${code}`}>
+                  {t("accountFor", { code })}
+                </Label>
+                <Input
+                  id={`${id}-${code}`}
+                  value={accounts[code] ?? ""}
+                  maxLength={150}
+                  dir="auto"
+                  onChange={(e) => setAccounts((prev) => ({ ...prev, [code]: e.target.value }))}
+                  data-journal-account={code}
+                />
+              </div>
+            ))}
+            {format === "xero" && (
+              <div className="space-y-1">
+                <Label htmlFor={`${id}-tax`}>{t("taxRate")}</Label>
+                <Input id={`${id}-tax`} value={taxRate} maxLength={150} dir="auto" onChange={(e) => setTaxRate(e.target.value)} data-journal-tax-rate />
+              </div>
+            )}
+          </div>
+        </fieldset>
+      )}
     </div>
   );
 }
@@ -128,11 +222,7 @@ export function PayMonthEndView({
         <DownloadButton kind="report" period={data.period} download={download}>
           {t("downloadReport")}
         </DownloadButton>
-        {data.can_export_journal && (
-          <DownloadButton kind="journal" period={data.period} download={download}>
-            {t("downloadJournal")}
-          </DownloadButton>
-        )}
+        {data.can_export_journal && <JournalExport period={data.period} download={download} />}
       </div>
 
       {exports.length > 0 && (
@@ -143,6 +233,9 @@ export function PayMonthEndView({
               <li key={e.id} className="flex flex-wrap gap-x-3">
                 <span>{format.dateTime(new Date(e.created_at), { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })}</span>
                 <span>{t("exportCounts", { entries: e.entry_count, lines: e.line_count })}</span>
+                <span data-export-format={e.format}>
+                  {(JOURNAL_FORMATS as readonly string[]).includes(e.format) ? t(`format.${e.format as JournalFormat}`) : e.format}
+                </span>
                 <code className="font-mono" dir="ltr" title={e.sha256}>
                   SHA-256 {e.sha256.slice(0, 16)}
                 </code>
