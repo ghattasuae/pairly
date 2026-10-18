@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 # Copyright (c) 2026 Proofly Technology
 """The generic journal export: approved invoices and payments of a period as journal
-lines, one balanced entry each (Xero, QuickBooks and Zoho formats come later).
+lines, one balanced entry each. The Xero, QuickBooks Online and Zoho Books files are
+renderings of the same lines (``pairly_pay.journal_formats``).
 
 **Invoice entries** (journal ``AP_INVOICE``, dated the approval day) for invoices
 approved in the period (a rejected invoice was never approved):
@@ -295,7 +296,9 @@ def build_journal(
     return out
 
 
-def _cell(value: str | None) -> str:
+def safe_cell(value: str | None) -> str:
+    """A text cell a spreadsheet will not run: one starting with ``=``, ``+``, ``-``,
+    ``@``, a tab or a carriage return gets a leading apostrophe."""
     text = value or ""
     return "'" + text if text.startswith(_FORMULA) else text
 
@@ -314,15 +317,15 @@ def to_csv(lines: Sequence[JournalLine]) -> bytes:
                 str(x.entry),
                 x.day.isoformat(),
                 x.journal,
-                _cell(x.account),
-                _cell(x.cost_centre),
+                safe_cell(x.account),
+                safe_cell(x.cost_centre),
                 _amount(x.debit, x.currency),
                 _amount(x.credit, x.currency),
                 x.currency,
                 x.tax_code or "",
                 _amount(x.vat_amount, x.currency),
-                _cell(x.vendor),
-                _cell(x.reference),
+                safe_cell(x.vendor),
+                safe_cell(x.reference),
                 str(x.document_id),
             ]
         )
