@@ -21950,10 +21950,51 @@
       "PayJournalExportIn": {
         "additionalProperties": false,
         "properties": {
+          "accounts": {
+            "anyOf": [
+              {
+                "patternProperties": {
+                  "^[^\\x00-\\x1f\\x7f]+$": {
+                    "maxLength": 150,
+                    "minLength": 1,
+                    "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                    "type": "string"
+                  }
+                },
+                "propertyNames": {
+                  "maxLength": 32,
+                  "minLength": 1
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accounts"
+          },
+          "format": {
+            "$ref": "#/components/schemas/PayJournalFormat",
+            "default": "generic"
+          },
           "period": {
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
             "title": "Period",
             "type": "string"
+          },
+          "tax_rate": {
+            "anyOf": [
+              {
+                "maxLength": 150,
+                "minLength": 1,
+                "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Rate"
           }
         },
         "required": [
@@ -22012,6 +22053,16 @@
         ],
         "title": "PayJournalExportOut",
         "type": "object"
+      },
+      "PayJournalFormat": {
+        "enum": [
+          "generic",
+          "xero",
+          "quickbooks",
+          "zoho_books"
+        ],
+        "title": "PayJournalFormat",
+        "type": "string"
       },
       "PayLineCodingIn": {
         "additionalProperties": false,
