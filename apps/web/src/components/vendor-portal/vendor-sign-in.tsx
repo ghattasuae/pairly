@@ -12,7 +12,7 @@ import { requestVendorPortalLink } from "@/lib/actions/vendor-portal";
 
 /**
  * Ask for a magic link to the vendor portal (no password). The organisation comes from the
- * link AP shared (`?org=<id>`) or from an expired link. The answer is the same whether or
+ * link AP shared (`?org=<slug>`, or an id in older links) or from an expired link. The answer is the same whether or
  * not the address has access.
  */
 export function VendorPortalSignIn({

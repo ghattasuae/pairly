@@ -37,13 +37,14 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import re
 import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Final
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pairly_core.audit import ActorType, append_audit
@@ -67,6 +68,9 @@ INVITE_TTL: Final = timedelta(days=3)
 SESSION_TTL: Final = timedelta(hours=8)
 SEEN_EVERY: Final = timedelta(minutes=5)
 MAX_TOKEN: Final = 240
+# An organisation slug (the same rule as the database lookup, core migration 0035).
+ORG_SLUG_PATTERN: Final = r"^[a-z0-9][a-z0-9-]{1,62}$"
+_ORG_SLUG: Final = re.compile(ORG_SLUG_PATTERN)
 ENTITY: Final = "pay.portal_contact"
 # What a vendor portal actor holds (``pairly_core.rbac.vendor_may_hold``).
 PORTAL_READ: Final = "pay.vendor_portal.read"
@@ -158,6 +162,44 @@ def parse_hex_uuid(value: str) -> uuid.UUID | None:
         return uuid.UUID(hex=value)
     except ValueError:
         return None
+
+
+def org_ref(value: str) -> uuid.UUID | str | None:
+    """What a portal link's ``org`` names: the organisation id (32 lowercase hex
+    characters, as a link AP shared before slugs, or an expired magic link, names it), a
+    slug to look up (``org_by_slug``), or ``None`` when it is neither. An id wins over a
+    slug that happens to look like one."""
+    found = parse_hex_uuid(value)
+    if found is not None:
+        return found
+    return value if _ORG_SLUG.fullmatch(value) else None
+
+
+def org_param(org_id: uuid.UUID, slug: str | None) -> str:
+    """What a shared portal link names the organisation by: its slug, unless it has none
+    or the slug would read as another id (``org_ref``); then its id in hex."""
+    return slug if slug and org_ref(slug) == slug else org_id.hex
+
+
+async def org_by_slug(session: AsyncSession, slug: str) -> uuid.UUID | None:
+    """The active organisation with ``slug``, through ``portal_org_id_by_slug`` (core
+    migration 0035, SECURITY DEFINER, returns the id only), or ``None``. Opens a
+    transaction on ``session`` with no tenant and commits it, so the caller can bind the
+    session to the organisation afterwards."""
+    if not _ORG_SLUG.fullmatch(slug):
+        return None
+    found = await session.scalar(text("SELECT portal_org_id_by_slug(:slug)"), {"slug": slug})
+    await session.commit()
+    return found if isinstance(found, uuid.UUID) else None
+
+
+async def resolve_org(session: AsyncSession, value: str) -> uuid.UUID | None:
+    """The organisation a portal link's ``org`` names (``org_ref``), or ``None``. An id
+    is taken as given (the sign-in sender finds nothing for an unknown one)."""
+    ref = org_ref(value)
+    if ref is None or isinstance(ref, uuid.UUID):
+        return ref
+    return await org_by_slug(session, ref)
 
 
 def parse(prefix: str, token: str) -> Claim | None:

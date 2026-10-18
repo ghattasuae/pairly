@@ -11,7 +11,7 @@ import type {
   VendorPortalInvoiceDetail,
   VendorPortalMe,
 } from "@/lib/vendor-portal/types";
-import { orgFromVendorToken, stepViews } from "@/lib/vendor-portal/types";
+import { ORG_RE, orgFromVendorToken, stepViews } from "@/lib/vendor-portal/types";
 
 import { renderWithIntl } from "../../../test/intl";
 import { navigationMock, routerSpies } from "../../../test/navigation-mock";
@@ -112,6 +112,13 @@ describe("vendor portal helpers", () => {
   it("reads the organisation from a link, never from anything else", () => {
     expect(orgFromVendorToken(TOKEN)).toBe(ORG);
     expect(orgFromVendorToken(`pl1.${ORG}.x`)).toBeNull();
+  });
+
+  it("accepts the organisation's slug or its id in a shared link", () => {
+    for (const org of [ORG, "acme-trading", "demo"]) expect(ORG_RE.test(org)).toBe(true);
+    for (const org of ["", "a", "-acme", "Acme", "acme_trading", "acme trading", ORG.toUpperCase(), "a".repeat(64)]) {
+      expect(ORG_RE.test(org)).toBe(false);
+    }
   });
 });
 

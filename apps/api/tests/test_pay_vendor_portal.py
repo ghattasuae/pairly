@@ -6,7 +6,9 @@
   opens a portal session once; expired, reused and tampered links (another vendor's id,
   another organisation's) fail alike; a revoked contact loses its session; the portal
   session never works on staff routes or on the candidate portal, and staff credentials
-  never work on portal routes; asking for a link answers the same for every address.
+  never work on portal routes; asking for a link answers the same for every address,
+  and for an organisation named by its slug, by its id or by a slug nobody has (only
+  the sender, after the answer, finds out); the shared link names the slug.
 * Isolation: one vendor's contact never reaches another vendor's invoices, messages or
   details, in the same organisation or another; in the database itself the restrictive
   Row Level Security layer shows a vendor portal session only its own vendor's rows and
@@ -43,7 +45,14 @@ from pairly_core.db import create_sessionmaker, set_portal_subject, set_tenant
 from pairly_core.integrations.slack.transport import FakeSlackTransport
 from pairly_core.notifications.delivery import Transports, deliver_org
 from pairly_core.notifications.outbox import OutboxTransport
-from pairly_pay.portal.auth import REQUEST_TTL, issue_login_token, portal_subject
+from pairly_pay.api import vendor_portal as vendor_portal_api
+from pairly_pay.portal.auth import (
+    REQUEST_TTL,
+    issue_login_token,
+    org_param,
+    org_ref,
+    portal_subject,
+)
 from pairly_pay.portal.models import PayPortalContact
 
 from .notify_support import WEB_URL, notifications, notify_settings, text_of
@@ -196,7 +205,7 @@ async def test_magic_link_is_single_use_bound_and_never_a_staff_credential(
     # The access email carries the link; the API never returns it.
     listed = await flow.ok("GET", f"/v1/pay/vendors/{vendor_a}/portal-contacts", fworld, "clerk")
     assert [c["email"] for c in listed["items"]] == [email]
-    assert listed["portal_path"] == f"/vendor-portal?org={fworld.org_id.hex}"
+    assert listed["portal_path"] == f"/vendor-portal?org={fworld.slug}"
     assert "vl1." not in json.dumps(listed)
     token = _link(await _deliver(flow, fworld, tmp_path), email)
 
@@ -258,6 +267,104 @@ async def test_magic_link_is_single_use_bound_and_never_a_staff_credential(
         "clerk",
     )
     assert (await flow.client.get(f"{PORTAL}/me", headers=second)).status_code == 401
+
+
+_ORG_ID = uuid.UUID("0123456789abcdef0123456789abcdef")
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (_ORG_ID.hex, _ORG_ID),
+        ("acme-trading", "acme-trading"),
+        ("demo", "demo"),
+        ("a1", "a1"),
+        ("0123456789abcdef0123456789abcde", "0123456789abcdef0123456789abcde"),
+        ("", None),
+        ("a", None),
+        ("-acme", None),
+        ("Acme", None),
+        ("acme_trading", None),
+        ("acme trading", None),
+        (_ORG_ID.hex.upper(), None),
+        # A dashed id is not how links name an organisation: only a slug nobody has.
+        (str(_ORG_ID), str(_ORG_ID)),
+        ("a" * 64, None),
+    ],
+)
+def test_a_portal_link_names_the_organisation_by_slug_or_id(
+    value: str, expected: uuid.UUID | str | None
+) -> None:
+    assert org_ref(value) == expected
+
+
+def test_the_shared_link_uses_the_slug_unless_it_would_read_as_an_id() -> None:
+    assert org_param(_ORG_ID, "acme-trading") == "acme-trading"
+    assert org_param(_ORG_ID, None) == _ORG_ID.hex
+    assert org_param(_ORG_ID, "") == _ORG_ID.hex
+    assert org_param(_ORG_ID, uuid.uuid4().hex) == _ORG_ID.hex
+
+
+async def test_portal_org_lookup_returns_an_active_organisation_id_only(
+    flow: Flow, fworld: PayWorld
+) -> None:
+    async with flow.engine.connect() as conn:
+        found = await conn.scalar(text("SELECT portal_org_id_by_slug(:s)"), {"s": fworld.slug})
+        assert found == fworld.org_id
+        for slug in ("no-such-org-anywhere", "Bad Slug!", ""):
+            assert await conn.scalar(text("SELECT portal_org_id_by_slug(:s)"), {"s": slug}) is None
+
+
+async def test_login_link_by_slug_or_id_answers_the_same_and_sends_to_the_contact(
+    flow: Flow,
+    fworld: PayWorld,
+    fother: PayWorld,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vendor = await make_vendor(flow, fworld, "inv-0001")
+    email = await _grant(flow, fworld, vendor)
+    await _deliver(flow, fworld, tmp_path / "access")
+    jobs: list[tuple[Any, Any]] = []
+
+    async def record(sessionmaker: Any, job: Any) -> None:
+        jobs.append((sessionmaker, job))
+
+    monkeypatch.setattr(vendor_portal_api, "LINK_SENDER", [record])
+
+    async def ask(org: str) -> httpx.Response:
+        # Not the rate limits: a fresh limiter store for each request.
+        if hasattr(flow.app.state, "pay_vendor_portal_limiters"):
+            del flow.app.state.pay_vendor_portal_limiters
+        return await flow.client.post(
+            f"{PORTAL}/login-link", json={"org": org, "email": email, "locale": "en"}
+        )
+
+    answers = {
+        org: await ask(org)
+        for org in (fworld.slug, fworld.org_id.hex, fother.slug, "no-such-org-anywhere")
+    }
+    for org, answer in answers.items():
+        assert answer.status_code == 202, (org, answer.text)
+        assert answer.json() == {"sent": True}
+        assert answer.headers["cache-control"] == "no-store"
+    # The slug and the id name the same organisation; a slug nobody has schedules nothing
+    # (the answer above did not say so).
+    assert [j.org_id for _, j in jobs] == [fworld.org_id, fworld.org_id, fother.org_id]
+    # Not a slug and not an id: refused by shape, as before.
+    for bad in ("Acme Trading", fworld.org_id.hex.upper(), "-x"):
+        refused = await ask(bad)
+        assert refused.status_code == 422, (bad, refused.text)
+
+    # The real sender: the slug's job reaches the contact; the other organisation has no
+    # such contact, so its job sends nothing.
+    sessionmaker, by_slug = jobs[0]
+    await vendor_portal_api.send_login_link(sessionmaker, by_slug)
+    await vendor_portal_api.send_login_link(sessionmaker, jobs[2][1])
+    token = _link(await _deliver(flow, fworld, tmp_path / "links"), email)
+    assert token.startswith(f"vl1.{fworld.org_id.hex}.")
+    other = await _deliver(flow, fother, tmp_path / "other")
+    assert not [m for m in other if email in m["to"]]
 
 
 # ------------------------------------------------------------------ isolation
