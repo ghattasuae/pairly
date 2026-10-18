@@ -1704,8 +1704,9 @@ JOURNAL_EXPORTS: Final = "pay_journal_exports"
 
 
 class PayJournalExport(Base, OrgScoped):
-    """One download of the generic journal of a period: who, when and the file's
-    digest (the file itself is not kept). Insert only."""
+    """One download of the journal of a period: its format (``generic``, ``xero``,
+    ``quickbooks`` or ``zoho_books``), who, when and the file's digest (the file itself
+    is not kept). Insert only."""
 
     __tablename__ = JOURNAL_EXPORTS
     __table_args__ = (
