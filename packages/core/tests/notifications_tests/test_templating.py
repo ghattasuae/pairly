@@ -351,6 +351,12 @@ def test_email_has_one_saffron_button_with_ink_text_and_escaped_links() -> None:
     assert "a=1&b=2" not in html
     # Ink text on saffron, never white.
     assert "color:#ffffff" not in html.split('class="pl-btn-a"', 1)[1].split(">", 1)[0]
+    # Only the spelled-out URL may break anywhere, never the words of the sentence.
+    fallback = html.split("If the button does not work", 1)[0].rsplit("<p ", 1)[1]
+    assert "word-break" not in fallback
+    assert (
+        'word-break:break-all;overflow-wrap:anywhere">https://app.example/s?a=1&amp;b=2</a>' in html
+    )
     # A later link stays a plain link.
     assert ">Not now? Remind me later</a>" in html
 

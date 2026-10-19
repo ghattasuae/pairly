@@ -814,8 +814,10 @@ def email_button(url: str, label: str, locale: str = "en") -> str:
         'style="border-collapse:separate;margin:8px 0 12px"><tr>'
         f"{_saffron_cell(str(href), label, _sans(locale))}</tr></table>"
         f'<p class="pl-muted" style="margin:0 0 16px;font-size:13px;line-height:20px;'
-        f'color:{_EMAIL_MUTED};word-break:break-all">{escape(_copy(locale)["fallback"])} '
-        f'<a class="pl-link" href="{href}" style="color:{_EMAIL_LINK}">{href}</a></p>'
+        f'color:{_EMAIL_MUTED}">{escape(_copy(locale)["fallback"])} '
+        # Only the URL may break anywhere; the words around it wrap normally.
+        f'<a class="pl-link" href="{href}" style="color:{_EMAIL_LINK};'
+        f'word-break:break-all;overflow-wrap:anywhere">{href}</a></p>'
     )
 
 
