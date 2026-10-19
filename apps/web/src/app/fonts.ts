@@ -16,9 +16,6 @@
  */
 import localFont from "next/font/local";
 
-const ARABIC_RANGES =
-  "U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF";
-
 export const fontUi = localFont({
   src: [
     { path: "../fonts/ibm-plex-sans/IBMPlexSans-Regular-Latin1.woff2", weight: "400", style: "normal" },
@@ -40,7 +37,14 @@ export const fontArabic = localFont({
   variable: "--font-arabic",
   display: "swap",
   preload: false,
-  declarations: [{ prop: "unicode-range", value: ARABIC_RANGES }],
+  // Arabic, Arabic Supplement and Extended, presentation forms, joiners and marks.
+  // (next/font needs a literal here.)
+  declarations: [
+    {
+      prop: "unicode-range",
+      value: "U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF",
+    },
+  ],
   fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 

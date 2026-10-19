@@ -2,9 +2,11 @@
 // Copyright (c) 2026 Proofly Technology
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { HomeSummary } from "@/components/home/home-summary";
 import { ActionNeeded } from "@/components/states/action-needed";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { Button } from "@/components/ui/button";
 import { visibleNav } from "@/lib/nav";
 
 import { AppShell } from "./app-shell";
@@ -26,8 +28,28 @@ const meta = {
     onSignOut: () => undefined,
     onSwitchOrg: async () => undefined,
     children: (
-      <div className="mx-auto max-w-5xl space-y-10 px-8 py-10">
-        <PageHeader eyebrow="Acme Trading LLC" title="Good to see you, Layla." />
+      <div className="page space-y-10">
+        <PageHeader
+          eyebrow="Acme Trading LLC"
+          title="Good to see you, Layla."
+          actions={
+            <>
+              <Button variant="outline">Export</Button>
+              <Button>New requisition</Button>
+            </>
+          }
+        >
+          You are working in Acme Trading LLC.
+        </PageHeader>
+        <HomeSummary
+          total={5}
+          now={new Date("2026-10-19T09:00:00Z")}
+          tiles={[
+            { anchor: "dash-recruiter", title: "Recruiting", count: 3, lists: 2 },
+            { anchor: "pay-dash-approver", title: "Your Pay approvals", count: 2, lists: 1 },
+            { anchor: "sys-dash-auditor", title: "Audit and assurance", count: 0, lists: 1 },
+          ]}
+        />
         <ActionNeeded count={0} />
       </div>
     ),
@@ -52,7 +74,7 @@ export const NotProvisionedState: Story = {
     orgs: [],
     activeOrgId: null,
     children: (
-      <div className="mx-auto max-w-5xl px-8 py-10">
+      <div className="page">
         <NotProvisioned email="layla@acme.example" code="forbidden" />
       </div>
     ),
