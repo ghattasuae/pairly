@@ -5,23 +5,22 @@
 // read-only. Two backends, chosen with PAIRLY_E2E_MAIL:
 //
 // - `outbox` (default): the native stack (`make dev`) writes every message to files in
-//   `.local/mail` (PAIRLY_OUTBOX_DIR overrides it): `index.jsonl` plus `<id>.json` and
-//   `<id>.eml` per message, written by both the web app (src/lib/outbox.ts) and the
-//   worker (pairly_core.notifications.outbox).
+//   `<PAIRLY_LOCAL_DIR or .local>/mail`, as scripts/local_lib.sh sets it (PAIRLY_OUTBOX_DIR
+//   overrides it): `index.jsonl` plus `<id>.json` and `<id>.eml` per message, written by
+//   both the web app (src/lib/outbox.ts) and the worker (pairly_core.notifications.outbox).
 // - `mailpit`: the Docker stack (`make docker-dev`), through Mailpit's HTTP API at
 //   MAILPIT_URL.
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { BASE_URL, EMAILED_HOST } from "./origin";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(here, "../../../..");
+import { LOCAL_DIR, REPO_ROOT } from "./stack";
 
 export const MAIL_BACKEND = (process.env.PAIRLY_E2E_MAIL ?? "outbox") as "outbox" | "mailpit";
 export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
-export const OUTBOX_DIR = process.env.PAIRLY_OUTBOX_DIR ?? path.join(REPO_ROOT, ".local", "mail");
+export const OUTBOX_DIR = process.env.PAIRLY_OUTBOX_DIR
+  ? path.resolve(REPO_ROOT, process.env.PAIRLY_OUTBOX_DIR)
+  : path.join(LOCAL_DIR, "mail");
 
 if (MAIL_BACKEND !== "outbox" && MAIL_BACKEND !== "mailpit") {
   throw new Error(`PAIRLY_E2E_MAIL must be outbox or mailpit, not ${JSON.stringify(MAIL_BACKEND)}`);

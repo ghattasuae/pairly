@@ -18,7 +18,7 @@ import { expect, type Browser, type BrowserContext, type Page } from "@playwrigh
 
 import { extractLink, OUTBOX_DIR, toReachableUrl } from "./mail";
 import { AUTH_STATE_DIR } from "./report";
-import { makeArgs, REPO_ROOT } from "./stack";
+import { LOCAL_DIR, makeArgs, REPO_ROOT } from "./stack";
 import { totpFresh } from "./totp";
 import { demoViewport } from "./viewport";
 
@@ -37,7 +37,6 @@ export function payState(who: PayPerson): string {
 }
 
 /** The demo emails `make demo` wrote (scripts/demo_pay.py DEMO_FILES), in demo order. */
-export const LOCAL_DIR = process.env.PAIRLY_LOCAL_DIR ?? path.join(REPO_ROOT, ".local");
 export const DEMO_EMAILS = ["1-clean.eml", "2-near-duplicate.eml", "3-bank-change.eml"].map((f) =>
   path.join(LOCAL_DIR, "inbound-demo", f),
 );
