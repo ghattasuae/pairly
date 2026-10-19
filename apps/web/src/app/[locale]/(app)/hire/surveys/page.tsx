@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SurveyResults } from "@/components/hire/survey-results";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { filterApplyClass, filterFieldClass } from "@/components/ui/filter-bar";
 import { Unavailable } from "@/components/states/unavailable";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -35,7 +36,7 @@ export default async function SurveyResultsPage({ params, searchParams }: Props)
   const [viewer, session, raw] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -43,7 +44,7 @@ export default async function SurveyResultsPage({ params, searchParams }: Props)
   const retry = `/${locale}/hire/surveys`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -64,20 +65,20 @@ export default async function SurveyResultsPage({ params, searchParams }: Props)
   ]);
   if (!results.ok) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   const t = await getTranslations("HireSurveyResults");
-  const field = "rounded-md border bg-background px-2 py-1.5 text-sm";
+  const field = filterFieldClass;
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={t("title")}>
         <p>{t("intro", { min: results.data.min_group })}</p>
       </PageHeader>
-      <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border p-4 text-sm" aria-label={t("filters")}>
-        <label className="flex flex-col gap-1">
+      <form method="get" className="filter-bar" aria-label={t("filters")}>
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("job")}
           <select name="job_id" defaultValue={filters.job_id ?? ""} className={field}>
             <option value="">{t("allJobs")}</option>
@@ -88,11 +89,11 @@ export default async function SurveyResultsPage({ params, searchParams }: Props)
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("since")}
           <input type="date" name="since" defaultValue={filters.since ?? ""} className={field} />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={filterApplyClass}>
           {t("apply")}
         </button>
       </form>

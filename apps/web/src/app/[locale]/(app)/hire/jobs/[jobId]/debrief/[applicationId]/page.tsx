@@ -38,7 +38,7 @@ export default async function DebriefPage({ params, searchParams }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -46,7 +46,7 @@ export default async function DebriefPage({ params, searchParams }: Props) {
   const retry = `/${locale}/hire/jobs/${jobId}/debrief/${applicationId}`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -61,13 +61,13 @@ export default async function DebriefPage({ params, searchParams }: Props) {
   if (!debrief.ok) {
     if (debrief.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8">
+      <div className="page max-w-3xl space-y-4">
         {debrief.code === "permission_denied" ? <p role="alert">{t("submitFirst")}</p> : <Unavailable retryHref={retry} />}
       </div>
     );
   }
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8">
+    <div className="page max-w-3xl space-y-4">
       <Link href={`/hire/jobs/${jobId}/shortlist`} className="text-sm text-primary hover:underline">
         {t("back")}
       </Link>

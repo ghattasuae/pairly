@@ -33,7 +33,7 @@ export default async function ChecklistPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -41,7 +41,7 @@ export default async function ChecklistPage({ params }: Props) {
   const retry = `/${locale}/hire/applications/${applicationId}/checklist`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -53,7 +53,7 @@ export default async function ChecklistPage({ params }: Props) {
   if (!checklist.ok) {
     if (checklist.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -61,13 +61,13 @@ export default async function ChecklistPage({ params }: Props) {
   const config = await callApi((api) => api.GET("/v1/hire/jobs/{job_id}/checklist", { params: { path: { job_id: checklist.data.job_id } } }));
   if (!config.ok) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
+    <div className="page max-w-3xl">
       <ChecklistPanel initial={checklist.data} config={config.data} />
     </div>
   );

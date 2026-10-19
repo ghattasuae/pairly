@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PayAnalyticsView } from "@/components/pay/pay-analytics";
+import { buttonVariants } from "@/components/ui/button";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { payAnalyticsQuery } from "@/lib/pay/analytics";
@@ -47,7 +48,7 @@ export default async function PayAnalyticsPage({ params, searchParams }: Props) 
           {t("until")}
           <input type="date" name="until" defaultValue={query.until ?? ""} className={field} />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
           {t("apply")}
         </button>
       </form>

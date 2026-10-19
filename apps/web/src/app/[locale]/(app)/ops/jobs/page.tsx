@@ -35,7 +35,7 @@ export default async function OpsJobsPage({ params, searchParams }: Props) {
   const [viewer, query] = await Promise.all([resolveViewer(), searchParams]);
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/ops/jobs`} />
       </div>
     );
@@ -49,7 +49,7 @@ export default async function OpsJobsPage({ params, searchParams }: Props) {
   if (!runs.ok && runs.status === 404) notFound();
   const t = await getTranslations("OpsJobs");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">
+    <div className="page space-y-6">
       <PageHeader eyebrow={job ?? t("all")} title={t("title")}>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </PageHeader>

@@ -21,7 +21,7 @@ export function SettingsFrame({
 }) {
   const nav = useTranslations("Nav");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <Link
         href="/settings"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"

@@ -30,14 +30,14 @@ export default async function NewJobPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
   }
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <Unavailable retryHref={`/${locale}/hire/jobs/new`} />
       </div>
     );
@@ -46,7 +46,7 @@ export default async function NewJobPage({ params }: Props) {
   if (!permissions.includes("hire.job.write")) notFound();
   const t = await getTranslations("HireJob");
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page max-w-4xl space-y-8">
       <Link href="/hire" className="text-sm text-primary hover:underline">
         {t("back")}
       </Link>

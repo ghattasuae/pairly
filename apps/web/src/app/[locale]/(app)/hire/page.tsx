@@ -36,14 +36,14 @@ export default async function HirePage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
   }
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/hire`} />
       </div>
     );
@@ -61,7 +61,7 @@ export default async function HirePage({ params }: Props) {
   ]);
   if (!jobs.ok) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/hire`} />
       </div>
     );
@@ -69,7 +69,7 @@ export default async function HirePage({ params }: Props) {
   const working = jobs.data.items.filter((j) => j.status !== "closed");
   const open = jobs.data.items.filter((j) => j.status === "open");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={nav("hire")}>
         <p>{t("home.intro")}</p>
       </PageHeader>

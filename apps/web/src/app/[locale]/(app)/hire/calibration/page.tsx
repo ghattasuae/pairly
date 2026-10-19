@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CalibrationLabeller, CalibrationReportView } from "@/components/hire/calibration-workspace";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { filterApplyClass, filterFieldClass } from "@/components/ui/filter-bar";
 import { Unavailable } from "@/components/states/unavailable";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -35,7 +36,7 @@ export default async function CalibrationPage({ params, searchParams }: Props) {
   const [viewer, session, raw] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -43,7 +44,7 @@ export default async function CalibrationPage({ params, searchParams }: Props) {
   const retry = `/${locale}/hire/calibration`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -64,21 +65,21 @@ export default async function CalibrationPage({ params, searchParams }: Props) {
   ]);
   if (!jobs.ok || sample?.ok === false || report?.ok === false) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   const t = await getTranslations("HireCalibration");
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={t("title")}>
         <p>{t("intro")}</p>
       </PageHeader>
-      <form method="get" className="flex flex-wrap items-end gap-3 text-sm">
-        <label className="flex flex-col gap-1">
+      <form method="get" className="filter-bar">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("job")}
-          <select name="job_id" defaultValue={jobId ?? ""} className="rounded-md border bg-background px-2 py-1.5">
+          <select name="job_id" defaultValue={jobId ?? ""} className={filterFieldClass}>
             <option value="" disabled>
               {t("chooseJob")}
             </option>
@@ -89,7 +90,7 @@ export default async function CalibrationPage({ params, searchParams }: Props) {
             ))}
           </select>
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={filterApplyClass}>
           {t("open")}
         </button>
       </form>

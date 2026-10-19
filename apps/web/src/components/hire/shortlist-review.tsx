@@ -206,7 +206,7 @@ export function ShortlistReview({
   );
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-8" data-shortlist-review>
+    <div className="page max-w-4xl space-y-5" data-shortlist-review>
       <header className="space-y-2">
         <p className="eyebrow">{t("eyebrow")}</p>
         <h1 id={headingId} className="font-display text-2xl break-words">

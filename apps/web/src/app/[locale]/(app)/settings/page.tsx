@@ -46,7 +46,7 @@ export default async function SettingsPage({ params }: Props) {
   const links = SETTINGS_PAGES.filter((page) => page.visible(permissions ?? []));
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={nav("settings")}>
         <p>{t("subtitle")}</p>
       </PageHeader>

@@ -43,7 +43,7 @@ export default async function MembersPage({ params }: Props) {
   const need = canManage ? secondFactorNeed(me, twoFactorEnabled(session)) : null;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader eyebrow={me.org.name} title={t("title")}>
         <p>{t("subtitle", { org: me.org.name })}</p>
       </PageHeader>

@@ -262,7 +262,7 @@ export function DecisionView({ decisionId, receipt, replays, appeals, can, totpE
   const intact = integrity.intact === true;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
+    <div className="page space-y-10">
       <PageHeader eyebrow={`${t("eyebrow")} · ${workflowLabel}`} title={kindLabel}>
         <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
           <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-xs text-foreground" dir="ltr">

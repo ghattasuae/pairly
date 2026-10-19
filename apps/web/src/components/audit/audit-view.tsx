@@ -371,7 +371,7 @@ export function AuditView({
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page max-w-7xl space-y-8">
       <PageHeader title={nav("audit")}>
         <p>{t("subtitle")}</p>
       </PageHeader>
