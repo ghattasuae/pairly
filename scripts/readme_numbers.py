@@ -7,9 +7,10 @@
     uv run python -m scripts.readme_numbers --check   # exit 1 if "Real numbers" is stale
 
 "By the numbers" counts the repository (lines by language, tests, migrations, specs,
-gated metrics, UI languages) from the files git tracks at HEAD and names that commit.
-It changes with every commit, so ``--check`` does not compare it; rerun the script to
-refresh it before a release.
+gated metrics, UI languages) from the files git tracks at HEAD and names the date of
+that commit, not its hash: pull requests are squash merged, so the hash of the commit a
+branch counted at never reaches main. It changes with every commit, so ``--check`` does
+not compare it; rerun the script to refresh it before a release.
 
 Nothing in the section is typed by hand (BRIEF rule 9). Live numbers come from the
 "Live baseline" table and header of ``evals/report.md`` (written by
@@ -303,12 +304,12 @@ def stats() -> list[tuple[str, str]]:
 
 
 def stats_section() -> str:
-    commit = _git("rev-parse", "--short", "HEAD").strip()
+    day = _git("log", "-1", "--format=%cs", "HEAD").strip()
     return "\n".join(
         [
             STATS_BEGIN,
             "",
-            f"Counted from the files git tracks at commit `{commit}`. Lines are non-blank",
+            f"Counted on {day} from the files git tracks. Lines are non-blank",
             "lines; generated API types and lock files are left out.",
             "",
             "| What | Count |",

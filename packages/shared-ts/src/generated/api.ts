@@ -13365,8 +13365,16 @@ export type components = {
         };
         /** PayJournalExportIn */
         PayJournalExportIn: {
+            /** Accounts */
+            accounts?: {
+                [key: string]: string;
+            } | null;
+            /** @default generic */
+            format: components["schemas"]["PayJournalFormat"];
             /** Period */
             period: string;
+            /** Tax Rate */
+            tax_rate?: string | null;
         };
         /** PayJournalExportOut */
         PayJournalExportOut: {
@@ -13396,6 +13404,11 @@ export type components = {
             /** Sha256 */
             sha256: string;
         };
+        /**
+         * PayJournalFormat
+         * @enum {string}
+         */
+        PayJournalFormat: "generic" | "xero" | "quickbooks" | "zoho_books";
         /** PayLineCodingIn */
         PayLineCodingIn: {
             /** Cost Centre */

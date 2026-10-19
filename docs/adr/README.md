@@ -22,6 +22,7 @@ Each major decision gets a short record in this folder, named `NNNN-title.md`. E
 | [0014](0014-step-up-on-commitments.md) | A second factor for every approve, decide, manage, export, lock, publish and verify | accepted | 2026-10-07 |
 | [0015](0015-erasure-keeps-the-trail.md) | Erasure removes personal data and keeps only the decision trail | accepted | 2026-10-10 |
 | [0016](0016-generic-journal-first.md) | A generic journal export before accounting system formats | accepted | 2026-10-16 |
+| [0017](0017-accounting-system-journal-formats.md) | Xero, QuickBooks Online and Zoho Books journal files | accepted | 2026-10-19 |
 
 Records 0001 to 0007 and 0013 to 0016 were written in M6 for decisions taken earlier without a record; the date is when the decision landed in the code. Per-plugin Alembic branches have no record of their own: [ADR 0009](0009-generic-workflow-extension-points.md) (item 7 and its amendment) covers them.
 

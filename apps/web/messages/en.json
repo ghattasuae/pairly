@@ -3046,7 +3046,10 @@
       "invalid_statement": "The statement has problems. Nothing was imported.",
       "statement_already_imported": "This statement file was already imported.",
       "callback_source_required": "Record the vendor's phone number from an independent source, with a reference, before you accept. The number on the vendor's form is never called.",
-      "callback_source_missing": "Record the number to call from an independent source first. Then someone else can verify the change."
+      "callback_source_missing": "Record the number to call from an independent source first. Then someone else can verify the change.",
+      "journal_unbalanced": "The file was not made because an entry does not balance.",
+      "journal_account_unmapped": "The file was not made because a journal account has no matching account. Fill in the accounts and try again.",
+      "journal_value_unrepresentable": "The file was not made because a value does not fit this format, such as an amount with three decimals, or more than one currency for Xero."
     },
     "vendorStatus": {
       "pending": "Pending review",
@@ -4229,7 +4232,18 @@
         "other": "Other"
       },
       "exportsTitle": "Journal exports of this month",
-      "exportCounts": "{entries, plural, one {# entry} other {# entries}}, {lines, plural, one {# line} other {# lines}}"
+      "exportCounts": "{entries, plural, one {# entry} other {# entries}}, {lines, plural, one {# line} other {# lines}}",
+      "journalFormat": "Journal format",
+      "format": {
+        "generic": "Generic CSV",
+        "xero": "Xero",
+        "quickbooks": "QuickBooks Online",
+        "zoho_books": "Zoho Books"
+      },
+      "accountsTitle": "Accounts in {system}",
+      "accountsHelp": "The account each Pairly placeholder goes to. GL codes of the chart of accounts in force are matched for you. The file is refused if an account has no match.",
+      "accountFor": "Account for {code}",
+      "taxRate": "Xero tax rate for every line (optional)"
     }
   },
   "VendorOnboarding": {
