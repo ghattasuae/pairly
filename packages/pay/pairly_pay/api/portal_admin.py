@@ -3,6 +3,8 @@
 """The AP team's side of the vendor portal (staff routes under ``/v1/pay``).
 
 * ``GET  /vendors/{id}/portal-contacts``                who may sign in (``pay.vendor.read``)
+  and the portal link to share (``portal_path``, ``/vendor-portal?org=<slug>``: the
+  organisation's slug, or its id when the slug would read as one)
 * ``POST /vendors/{id}/portal-contacts``                ``{"email", "locale"}``: give a
   contact on file access and email them a sign-in link (``pay.vendor.write``, a person).
   The link itself is never returned: only the contact can use it.
@@ -55,7 +57,7 @@ from pairly_pay.permissions import (
     VENDOR_READ,
     VENDOR_WRITE,
 )
-from pairly_pay.portal.auth import INVITE_TTL
+from pairly_pay.portal.auth import INVITE_TTL, org_param
 from pairly_pay.portal.contacts import (
     add_contact,
     contact_email,
@@ -165,9 +167,10 @@ async def list_access(
     authorize(actor, VENDOR_READ)
     vendor = await get_vendor(session, vendor_id)
     rows = await contacts_of_vendor(session, vendor.id)
+    slug = await session.scalar(select(Organisation.slug).where(Organisation.id == actor.org_id))
     return PayPortalAccessList(
         items=[_access_out(c) for c in rows],
-        portal_path=f"/vendor-portal?org={actor.org_id.hex}",
+        portal_path=f"/vendor-portal?org={org_param(actor.org_id, slug)}",
     )
 
 

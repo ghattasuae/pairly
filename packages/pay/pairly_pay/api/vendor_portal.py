@@ -11,10 +11,14 @@ to the vendor portal and sends it in the ``X-Pairly-Vendor-Portal`` header
 Without a session (``Cache-Control: no-store``, rate limited per IP):
 
 * ``POST /vendor-portal/login-link`` ``{"org", "email", "locale"}`` (``org``: the
-  organisation id every portal link names, 32 hex characters): 202 whatever the address,
-  so nobody learns who has access. When the organisation has an active portal contact
-  with that address, a magic link goes to it (30 minutes, single use). 10 per hour per
-  IP, 5 per hour per address.
+  organisation's slug, as the link accounts payable shares names it, or its id, 32 hex
+  characters, as an older link or an expired magic link names it): 202 whatever the
+  organisation and the address, so nobody learns which organisations exist or who has
+  access. A slug is found with ``portal_org_id_by_slug`` (core migration 0035, SECURITY
+  DEFINER, the id of an active organisation and nothing else). When the organisation
+  has an active portal contact with that address, a magic link goes to it (30 minutes,
+  single use). 10 per hour per IP, 5 per hour per address and organisation (counted by
+  the organisation's id, so its slug and its id share the limit).
 * ``POST /vendor-portal/session`` ``{"token"}``: uses a magic link once; returns the
   portal session token (8 hours). 30 per hour per IP. Any link that is not valid: 404.
 
@@ -166,7 +170,9 @@ def _no_store(body: Any, status: int = 200) -> JSONResponse:
 class PayPortalLinkIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    org: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{32}$")]
+    # The organisation's slug, or its id (32 hex characters, as an older shared link or
+    # an expired magic link names it).
+    org: Annotated[str, StringConstraints(pattern=auth.ORG_SLUG_PATTERN)]
     email: Annotated[str, StringConstraints(max_length=320)]
     locale: Literal["en", "ar"] = "en"
 
@@ -507,17 +513,23 @@ LINK_SENDER: list[Any] = [send_login_link]
 
 @router.post("/login-link", status_code=202, response_model=PayPortalLinkOut)
 async def login_link(
-    body: PayPortalLinkIn, request: Request, background: BackgroundTasks
+    body: PayPortalLinkIn,
+    request: Request,
+    background: BackgroundTasks,
+    session: RequestSession,
 ) -> JSONResponse:
     """The same answer, after the same work, whether or not the address has access: the
-    request only checks the shape and schedules the sender, which looks the contact up
-    after the answer is sent (``send_login_link``)."""
+    request only checks the shape, finds the organisation a slug names (one lookup
+    whether or not it exists; nothing in the answer says which) and schedules the
+    sender, which looks the contact up after the answer is sent (``send_login_link``).
+    The per-address limit counts by organisation id, so the slug and the id of one
+    organisation share it."""
     await _hit(request, "link_ip", client_ip(request))
     email = normalize_email(body.email)
     if email is None:
         raise BadRequestError("please give a valid email address")
-    await _hit(request, "link_email", f"{body.org}|{email}")
-    org_id = auth.parse_hex_uuid(body.org)
+    org_id = await auth.resolve_org(session, body.org)
+    await _hit(request, "link_email", f"{org_id.hex if org_id else body.org}|{email}")
     if org_id is not None:
         job = LinkJob(org_id=org_id, email=email, locale=body.locale, web_url=web_url(request))
         background.add_task(LINK_SENDER[0], request.app.state.pairly.sessionmaker, job)
