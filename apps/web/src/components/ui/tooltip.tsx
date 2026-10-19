@@ -21,7 +21,10 @@ export function TooltipContent({
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 flex items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-xs text-background shadow-raised animate-in fade-in-0 zoom-in-95",
+          // Opens with a short zoom, no fade (text is never half transparent). Closing has no
+          // animation at all, so a tooltip leaves the moment focus or the pointer moves on
+          // and two never show at once while tabbing.
+          "z-50 flex items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-xs text-background shadow-raised animate-in zoom-in-95 data-[state=closed]:animate-none",
           className,
         )}
         {...props}
