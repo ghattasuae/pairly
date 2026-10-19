@@ -405,8 +405,11 @@
   /* The shared data table (components/ui/table.tsx). A hairline frame, a sticky header
      on sunken paper, hairline rows with a hover wash, mono tabular figures in numeric
      cells. Muted ink keeps 5.3:1 on the sunken header and on the hover wash. */
+  /* The frame scrolls sideways when the table is wider than the column (phones), so no
+     column is ever cut off the page; it keeps its rounded hairline (overflow clips the
+     corners) and, given a max-height, also scrolls down with the header stuck on top. */
   .table-frame {
-    @apply relative overflow-x-auto rounded-lg border border-border bg-surface;
+    @apply relative max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-border bg-surface;
   }
 
   .data-table {
