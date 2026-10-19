@@ -16,7 +16,7 @@ import { Link } from "@/i18n/navigation";
 import { saveDownload, type DownloadResult } from "@/lib/pay/download";
 import type { PayAgingBucket, PayJournalExport, PayMonthEnd } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 
 const CATEGORIES = new Set([
   "no_po",
@@ -50,7 +50,7 @@ function BucketCell({ bucket, currency }: { bucket: PayAgingBucket; currency: st
   }
   return (
     <details className="text-sm" data-aging={bucket.bucket}>
-      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
+      <summary className="cursor-pointer rounded-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         <Money currency={currency} amount={bucket.amount} />
       </summary>
       <p className="mt-1 text-xs text-muted-foreground">{t("invoices", { count: bucket.count })}</p>
@@ -255,7 +255,7 @@ export function PayMonthEndView({
         {data.aging.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noPayables")}</p>
         ) : (
-          <Table label={t("payablesTitle")}>
+          <Table label={t("payablesTitle")} frameClassName={PANEL_TABLE_FRAME}>
             <caption className="sr-only">{t("payablesTitle")}</caption>
             <thead>
               <tr>

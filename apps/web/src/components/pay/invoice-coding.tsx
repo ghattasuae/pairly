@@ -14,7 +14,7 @@ import { askModelCoding, codeInvoiceLines } from "@/lib/actions/pay";
 import { acceptHigh, applySuggestion, changesOf, draftsOf, percent, type Drafts } from "@/lib/pay/coding";
 import type { PayCodingEntry, PayCodingSuggestion, PayInvoiceCoding, PayModelLine } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 
 function entryName(entries: readonly PayCodingEntry[], code: string | null | undefined, locale: string): string {
   const entry = entries.find((e) => e.code === code);
@@ -135,7 +135,7 @@ export function InvoiceCoding({ initial, locale }: { initial: PayInvoiceCoding; 
       ) : coding.lines.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noLines")}</p>
       ) : (
-        <Table label={t("title")}>
+        <Table label={t("title")} frameClassName={PANEL_TABLE_FRAME}>
           <thead className="text-xs text-muted-foreground">
             <tr className="border-b">
               <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.line")}</th>

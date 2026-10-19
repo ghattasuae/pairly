@@ -107,7 +107,7 @@ export function BankChangeRequestForm({ vendor }: { vendor: PayVendorDetail }) {
         </div>
       </fieldset>
       <ErrorText code={error} />
-      <Button type="submit" disabled={busy} data-bank-change-submit>
+      <Button type="submit" variant="ink" disabled={busy} data-bank-change-submit>
         {busy && <Loader2 aria-hidden className="animate-spin" />}
         {t("submit")}
       </Button>

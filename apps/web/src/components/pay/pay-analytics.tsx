@@ -58,7 +58,7 @@ export function PayMetricRecords({ metric }: { metric: PayMetric }) {
   if (metric.records_total === 0) return null;
   return (
     <details className="text-xs" data-records={metric.key}>
-      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
+      <summary className="cursor-pointer rounded-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         {t("records", { count: metric.records_total })}
       </summary>
       <ul className="mt-2 flex flex-wrap gap-1.5">

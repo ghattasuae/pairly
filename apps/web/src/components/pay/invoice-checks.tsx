@@ -14,6 +14,8 @@ import { compareLines, compareRows, failedChecks, findingMessage, sortedFindings
 import type { PayCheck, PayCompare, PayRisk } from "@/lib/pay/types";
 import { cn } from "@/lib/utils";
 
+import { PANEL_TABLE_FRAME } from "./common";
+
 const LEVELS = new Set(["low", "medium", "high", "critical"]);
 
 /**
@@ -124,7 +126,7 @@ export function ComparePanel({ compare }: { compare: readonly PayCompare[] }) {
                 {t("openOriginal", { reference: pair.original.reference })}
               </Link>
             </p>
-            <Table label={t("caption")} className="table-fixed">
+            <Table label={t("caption")} className="sm:table-fixed" frameClassName={PANEL_TABLE_FRAME}>
               <caption className="sr-only">{t("caption")}</caption>
               <colgroup>
                 <col className="w-[28%]" />

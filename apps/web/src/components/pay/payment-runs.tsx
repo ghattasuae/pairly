@@ -20,7 +20,7 @@ import { previewRun, proposeRun, runAction } from "@/lib/actions/pay";
 import { RUN_STATUSES, runSums, type RunStatus } from "@/lib/pay/payments";
 import type { PayRunDetail, PayRunExcluded, PayRunPreview, PayRunSummary } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 import { ReasonText } from "./invoice-approval";
 
 export function RunStatusBadge({ status }: { status: string }) {
@@ -436,7 +436,7 @@ export function PaymentRunView({
       </section>
 
       <Panel title={t("items", { count: run.items.length })}>
-        <Table label={t("items", { count: run.items.length })} data-run-items>
+        <Table label={t("items", { count: run.items.length })} frameClassName={PANEL_TABLE_FRAME} data-run-items>
           <thead>
             <tr>
               <th>{t("col.invoice")}</th>
@@ -466,7 +466,7 @@ export function PaymentRunView({
                 <td className="text-end">
                   <Money currency={item.currency} amount={item.amount} />
                   {item.discount !== null && item.discount !== undefined && (
-                    <span className="block text-xs text-success-ink" data-discount={String(item.discount)}>
+                    <span className="block text-xs text-success-ink tabular-nums" data-discount={String(item.discount)}>
                       {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
                     </span>
                   )}

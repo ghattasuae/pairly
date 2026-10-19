@@ -16,7 +16,7 @@ import { importStatement, matchStatementsNow, type PayImportProblem } from "@/li
 import { statementFormat } from "@/lib/pay/reconciliation";
 import type { PayReconciliation, PayStatementLine, PayUnexplained } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 
 const PROBLEM_CODES = new Set([
   "invalid_date",
@@ -213,7 +213,7 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
 function LineTable({ lines, matched, caption }: { lines: PayStatementLine[]; matched: boolean; caption: string }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <Table label={caption}>
+    <Table label={caption} frameClassName={PANEL_TABLE_FRAME}>
       <caption className="sr-only">{caption}</caption>
       <thead>
         <tr>

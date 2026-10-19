@@ -94,6 +94,12 @@ export function HoldBadge({ reason }: { reason: string | null | undefined }) {
   );
 }
 
+/**
+ * For a shared `Table` inside a `Panel`: on phones the scroll frame runs to the card's
+ * edges, so the columns get the full card width; from `sm` it sits inside the padding.
+ */
+export const PANEL_TABLE_FRAME = "-mx-5 max-w-none rounded-none border-x-0 sm:mx-0 sm:max-w-full sm:rounded-lg sm:border-x";
+
 /** A Pay section card: the shared hairline `Section` with its heading. */
 export function Panel({
   title,

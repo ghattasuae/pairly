@@ -30,7 +30,7 @@ function Amount({ bucket, currency, testId }: { bucket: PayForecastBucket; curre
   }
   return (
     <details className="text-sm" data-bucket={testId}>
-      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
+      <summary className="cursor-pointer rounded-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         <Money currency={currency} amount={bucket.amount} />
       </summary>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -85,7 +85,7 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
   );
   return (
     <section className="space-y-3" data-forecast-currency={cur}>
-      <h2 className="font-display text-xl">{heading}</h2>
+      <h2 className="font-display text-xl [font-variant-numeric:lining-nums_tabular-nums]">{heading}</h2>
       <ForecastLegend />
       <Table label={heading}>
         <thead>

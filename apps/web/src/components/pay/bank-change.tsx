@@ -301,7 +301,7 @@ export function VerificationChecklist({
             {t("attest")}
           </label>
           <ErrorText code={error} />
-          <Button type="submit" disabled={busy || !result || !attested} data-record-call>
+          <Button type="submit" variant="ink" disabled={busy || !result || !attested} data-record-call>
             {busy && <Loader2 aria-hidden className="animate-spin" />}
             {t("record")}
           </Button>
@@ -346,7 +346,7 @@ function RecordCallbackForm({ ticket, onChange }: { ticket: PayTicketDetail; onC
       </p>
       <CallbackSourceFields value={callback} onChange={setCallback} />
       <ErrorText code={error} />
-      <Button type="submit" size="sm" disabled={busy || !callbackComplete(callback)}>
+      <Button type="submit" size="sm" variant="ink" disabled={busy || !callbackComplete(callback)}>
         {busy && <Loader2 aria-hidden className="animate-spin" />}
         {t("record")}
       </Button>
