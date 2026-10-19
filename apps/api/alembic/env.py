@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import pairly_core.models  # noqa: F401  (registers core tables on Base.metadata)
 from pairly_core.config import to_asyncpg_url
 from pairly_core.db import Base
+from pairly_core.dbconn import refuse_transaction_pooler
 from pairly_core.plugins import discover_plugins, plugin_migration_locations
 
 # Importing a plugin imports its table definitions (they register on Base.metadata).
@@ -55,6 +56,11 @@ def _owner_url() -> str:
     url = config.attributes.get("database_url") or os.environ.get(OWNER_URL_ENV)
     if not url:
         raise SystemExit(f"missing required setting: {OWNER_URL_ENV} (migration owner role URL)")
+    try:
+        # One session per migration: never through a transaction-mode pooler.
+        refuse_transaction_pooler(url, OWNER_URL_ENV)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
     return to_asyncpg_url(url)
 
 

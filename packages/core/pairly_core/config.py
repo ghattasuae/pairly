@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import uuid
 from enum import StrEnum
-from typing import Annotated, Any
-from urllib.parse import urlsplit
+from typing import Annotated, Any, Literal
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -33,12 +33,35 @@ class Environment(StrEnum):
     TEST = "test"
 
 
+def _libpq_ssl_to_asyncpg(url: str) -> str:
+    """libpq's ``sslmode=`` as asyncpg's ``ssl=`` (same mode names), so a provider's URL
+    (Supabase prints ``?sslmode=require``) works unchanged. Nothing else is touched."""
+    base, sep, query = url.partition("?")
+    if not sep:
+        return url
+    pairs = parse_qsl(query, keep_blank_values=True)
+    if not any(k == "sslmode" for k, _ in pairs):
+        return url
+    has_ssl = any(k == "ssl" for k, _ in pairs)
+    out = [(k, v) for k, v in pairs if k != "sslmode"]
+    if not has_ssl:
+        out.append(("ssl", next(v for k, v in pairs if k == "sslmode")))
+    return f"{base}?{urlencode(out)}" if out else base
+
+
 def to_asyncpg_url(url: str) -> str:
     """Normalise a Postgres URL to the SQLAlchemy asyncpg dialect."""
     for prefix in ("postgresql+asyncpg://", "postgresql://", "postgres://"):
         if url.startswith(prefix):
-            return "postgresql+asyncpg://" + url[len(prefix) :]
+            return _libpq_ssl_to_asyncpg("postgresql+asyncpg://" + url[len(prefix) :])
     raise ValueError("must be a postgresql:// or postgresql+asyncpg:// URL")
+
+
+# How the application role reaches Postgres (``PAIRLY_DATABASE_POOLER``):
+# ``none`` (direct), ``session`` (a session-mode pooler: Supavisor on port 5432) or
+# ``transaction`` (a transaction-mode pooler: Supavisor on port 6543, PgBouncer). See
+# ``pairly_core.dbconn``.
+DatabasePooler = Literal["none", "session", "transaction"]
 
 
 def _split_csv(value: Any) -> Any:
@@ -68,6 +91,11 @@ class Settings(BaseSettings):
     database_url: SecretStr
     db_pool_size: int = Field(default=5, ge=1, le=100)
     db_max_overflow: int = Field(default=5, ge=0, le=100)
+    # Behind a pooler (Supabase): ``transaction`` turns the prepared statement caches off
+    # and then needs ``checkpoint_database_url`` (direct or session mode) for the
+    # LangGraph checkpointer, whose tenant setting is per session.
+    database_pooler: DatabasePooler = "none"
+    checkpoint_database_url: SecretStr | None = None
 
     # Better Auth JWT plugin: JWKS endpoint, expected issuer and audience.
     auth_jwks_url: str
@@ -115,6 +143,22 @@ class Settings(BaseSettings):
     @classmethod
     def _db_url(cls, value: SecretStr) -> SecretStr:
         return SecretStr(to_asyncpg_url(value.get_secret_value()))
+
+    @field_validator("checkpoint_database_url", mode="before")
+    @classmethod
+    def _checkpoint_url(cls, value: Any) -> Any:
+        if isinstance(value, SecretStr):
+            value = value.get_secret_value()
+        if isinstance(value, str):
+            return to_asyncpg_url(value) if value.strip() else None
+        return value
+
+    @model_validator(mode="after")
+    def _pooler(self) -> Settings:
+        from pairly_core.dbconn import checkpoint_url
+
+        checkpoint_url(self.database_url, self.database_pooler, self.checkpoint_database_url)
+        return self
 
     @field_validator("auth_algorithms")
     @classmethod

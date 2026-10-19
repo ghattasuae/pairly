@@ -28,8 +28,12 @@ data). Tenant separation is enforced in four layers:
 
 Checkpoint data is deserialised in LangGraph's strict mode (safe types only).
 
-Deployment note: session-level settings need session pooling. Behind PgBouncer in
-transaction mode, point the checkpointer at a session-mode pool (or connect directly).
+Deployment note: session-level settings need session pooling. Behind a transaction-mode
+pooler (Supavisor on port 6543, PgBouncer), point the checkpointer at a session-mode
+pool or a direct connection: ``PAIRLY_CHECKPOINT_DATABASE_URL``, required by the
+settings when ``PAIRLY_DATABASE_POOLER=transaction`` (``pairly_core.dbconn``). The search
+path is set with a statement after connecting, not a startup option, so poolers that
+drop startup parameters still put the saver in ``lg_checkpoints``.
 """
 
 from __future__ import annotations
@@ -65,8 +69,17 @@ class CheckpointSchemaError(RuntimeError):
 
 
 def psycopg_conninfo(database_url: str) -> str:
-    """A libpq URL from a SQLAlchemy URL (``postgresql+asyncpg://`` included)."""
+    """A libpq URL from a SQLAlchemy URL (``postgresql+asyncpg://`` included).
+
+    asyncpg's ``ssl=`` (what ``to_asyncpg_url`` makes of ``sslmode=``) goes back to
+    libpq's ``sslmode=``; libpq would refuse ``ssl`` as an unknown option.
+    """
     url = make_url(database_url).set(drivername="postgresql")
+    if "ssl" in url.query:
+        mode = url.query["ssl"]
+        url = url.difference_update_query(["ssl"])
+        if "sslmode" not in url.query:
+            url = url.update_query_dict({"sslmode": mode if isinstance(mode, str) else mode[0]})
     return url.render_as_string(hide_password=False)
 
 
@@ -149,13 +162,19 @@ class TenantCheckpointer:
         self._conninfo = psycopg_conninfo(database_url)
 
     async def _connect(self) -> AsyncConnection[DictRow]:
-        return await AsyncConnection.connect(
+        conn = await AsyncConnection.connect(
             self._conninfo,
             autocommit=True,
             prepare_threshold=0,
             row_factory=dict_row,
-            options=f"-c search_path={CHECKPOINT_SCHEMA}",
         )
+        try:
+            # Session-level, on a connection this saver alone uses (never pooled here).
+            await conn.execute("SELECT set_config('search_path', %s, false)", (CHECKPOINT_SCHEMA,))
+        except BaseException:
+            await conn.close()
+            raise
+        return conn
 
     @asynccontextmanager
     async def bind(self, org_id: uuid.UUID) -> AsyncIterator[OrgBoundSaver]:

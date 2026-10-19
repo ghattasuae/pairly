@@ -16,11 +16,18 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, ValidationError, field_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pairly_core.audit_anchor.signing import SIGNING_KEY_ENV, load_signing_key
-from pairly_core.config import ENV_PREFIX, ConfigError, Environment, to_asyncpg_url
+from pairly_core.config import (
+    ENV_PREFIX,
+    ConfigError,
+    DatabasePooler,
+    Environment,
+    to_asyncpg_url,
+)
+from pairly_core.dbconn import checkpoint_url
 
 
 class WorkerConfig(BaseSettings):
@@ -35,6 +42,9 @@ class WorkerConfig(BaseSettings):
     # Non-owner application role (Row Level Security applies).
     database_url: SecretStr
     db_pool_size: int = Field(default=2, ge=1, le=20)
+    # Same variables and rules as the API (pairly_core.dbconn).
+    database_pooler: DatabasePooler = "none"
+    checkpoint_database_url: SecretStr | None = None
     # arq queue (Valkey / Redis protocol). Database 0; LangFuse uses database 1.
     redis_url: SecretStr
     log_level: str = "INFO"
@@ -58,6 +68,20 @@ class WorkerConfig(BaseSettings):
     @classmethod
     def _db_url(cls, value: SecretStr) -> SecretStr:
         return SecretStr(to_asyncpg_url(value.get_secret_value()))
+
+    @field_validator("checkpoint_database_url", mode="before")
+    @classmethod
+    def _checkpoint_url(cls, value: Any) -> Any:
+        if isinstance(value, SecretStr):
+            value = value.get_secret_value()
+        if isinstance(value, str):
+            return to_asyncpg_url(value) if value.strip() else None
+        return value
+
+    @model_validator(mode="after")
+    def _pooler(self) -> WorkerConfig:
+        checkpoint_url(self.database_url, self.database_pooler, self.checkpoint_database_url)
+        return self
 
     @field_validator("audit_signing_key")
     @classmethod

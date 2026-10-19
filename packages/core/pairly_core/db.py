@@ -265,11 +265,14 @@ event.listen(TenantSession, "before_flush", _guard_flush)
 
 
 def create_engine(settings: Settings) -> AsyncEngine:
+    from pairly_core.dbconn import engine_kwargs
+
     return create_async_engine(
         settings.database_url.get_secret_value(),
         pool_size=settings.db_pool_size,
         max_overflow=settings.db_max_overflow,
         pool_pre_ping=True,
+        **engine_kwargs(settings.database_pooler),
     )
 
 

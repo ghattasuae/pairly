@@ -51,6 +51,8 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "PAIRLY_AUDIT_VERIFY_HOUR",
         "PAIRLY_AUDIT_SIGNING_KEY",
         "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY",
+        "PAIRLY_DATABASE_POOLER",
+        "PAIRLY_CHECKPOINT_DATABASE_URL",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -61,6 +63,20 @@ def test_missing_settings_fail_closed() -> None:
     assert "PAIRLY_DATABASE_URL" in str(exc.value)
     assert "PAIRLY_REDIS_URL" in str(exc.value)
     assert "PAIRLY_AUDIT_SIGNING_KEY" in str(exc.value)
+
+
+def test_transaction_pooler_needs_a_session_checkpoint_url() -> None:
+    pooled = "postgresql://pairly_app.ref:pw@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+    session = "postgresql://pairly_app.ref:pw@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
+    base = {"database_url": pooled, "redis_url": REDIS, "audit_signing_key": SIGNING_KEY}
+    with pytest.raises(ConfigError, match="PAIRLY_CHECKPOINT_DATABASE_URL"):
+        load_worker_config(**base, database_pooler="transaction")
+    config = load_worker_config(
+        **base, database_pooler="transaction", checkpoint_database_url=session
+    )
+    assert config.database_pooler == "transaction"
+    assert config.checkpoint_database_url is not None
+    assert config.checkpoint_database_url.get_secret_value().startswith("postgresql+asyncpg://")
 
 
 def test_invalid_signing_key_is_rejected_without_echoing_it() -> None:
