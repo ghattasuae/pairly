@@ -24548,7 +24548,7 @@
             "type": "string"
           },
           "org": {
-            "pattern": "^[0-9a-f]{32}$",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,62}$",
             "title": "Org",
             "type": "string"
           }
@@ -46614,7 +46614,7 @@
     },
     "/v1/pay/vendor-portal/login-link": {
       "post": {
-        "description": "The same answer, after the same work, whether or not the address has access: the\nrequest only checks the shape and schedules the sender, which looks the contact up\nafter the answer is sent (``send_login_link``).",
+        "description": "The same answer, after the same work, whether or not the address has access: the\nrequest only checks the shape, finds the organisation a slug names (one lookup\nwhether or not it exists; nothing in the answer says which) and schedules the\nsender, which looks the contact up after the answer is sent (``send_login_link``).\nThe per-address limit counts by organisation id, so the slug and the id of one\norganisation share it.",
         "operationId": "login_link_v1_pay_vendor_portal_login_link_post",
         "requestBody": {
           "content": {

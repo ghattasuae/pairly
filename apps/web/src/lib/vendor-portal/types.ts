@@ -46,7 +46,8 @@ export function stepViews(invoice: Pick<VendorPortalInvoice, "steps" | "status">
 
 const LOGIN_RE = /^vl1\.([0-9a-f]{32})\.[0-9a-f]{32}\.[0-9a-f]{32}\.[0-9a-f]{32}\.[A-Za-z0-9_-]{43}$/;
 export const SESSION_RE = /^vs1\.[0-9a-f]{32}\.[0-9a-f]{32}\.[0-9a-f]{32}\.[0-9a-f]{32}\.[A-Za-z0-9_-]{43}$/;
-export const ORG_RE = /^[0-9a-f]{32}$/;
+/** The organisation a portal link names: its slug, or its id (32 hex characters, which the slug rule also accepts). */
+export const ORG_RE = /^[a-z0-9][a-z0-9-]{1,62}$/;
 
 export function isVendorLoginToken(value: string): boolean {
   return LOGIN_RE.test(value);

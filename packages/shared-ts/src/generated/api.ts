@@ -5215,8 +5215,11 @@ export type paths = {
         /**
          * Login Link
          * @description The same answer, after the same work, whether or not the address has access: the
-         *     request only checks the shape and schedules the sender, which looks the contact up
-         *     after the answer is sent (``send_login_link``).
+         *     request only checks the shape, finds the organisation a slug names (one lookup
+         *     whether or not it exists; nothing in the answer says which) and schedules the
+         *     sender, which looks the contact up after the answer is sent (``send_login_link``).
+         *     The per-address limit counts by organisation id, so the slug and the id of one
+         *     organisation share it.
          */
         post: operations["login_link_v1_pay_vendor_portal_login_link_post"];
         delete?: never;
