@@ -17,6 +17,7 @@ import { authClient } from "@/lib/auth/client";
 import type { NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
+import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { LocaleSwitcher } from "./locale-switcher";
 import { OrgSwitcher, type OrgOption } from "./org-switcher";
@@ -72,13 +73,18 @@ export function AppShell({
   const navigate = useCallback((href: string) => router.push(href), [router]);
   useGlobalShortcuts({ onTogglePalette: togglePalette, items, onNavigate: navigate });
 
-  const sidebar = <Sidebar items={items} onNavigate={() => setMenuOpen(false)} />;
+  const orgSwitcher = (
+    <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} {...(onSwitchOrg ? { onSwitch: onSwitchOrg } : {})} />
+  );
+  const sidebar = <Sidebar items={items} onNavigate={() => setMenuOpen(false)} footer={orgSwitcher} />;
+  const activeOrgName = orgs.find((org) => org.id === activeOrgId)?.name ?? null;
 
   return (
     <NotificationsProvider enabled={notifications}>
       <Toaster>
         <div className="flex min-h-dvh bg-background">
-          <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 border-e border-sidebar-border bg-sidebar lg:block">
+          {/* The desktop rail stays the first <aside> in the document (the RTL audit reads it). */}
+          <aside className="sticky top-0 hidden h-dvh w-[4.25rem] shrink-0 border-e border-sidebar-border bg-sidebar lg:block xl:w-60">
             {sidebar}
           </aside>
 
@@ -87,10 +93,10 @@ export function AppShell({
               <button
                 type="button"
                 aria-label={t("closeMenu")}
-                className="absolute inset-0 bg-foreground/25"
+                className="absolute inset-0 bg-foreground/30"
                 onClick={() => setMenuOpen(false)}
               />
-              <aside className="absolute inset-y-0 start-0 w-64 border-e bg-sidebar shadow-soft animate-in slide-in-from-start">
+              <aside className="absolute inset-y-0 start-0 w-64 border-e bg-sidebar shadow-raised animate-in slide-in-from-start">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -106,7 +112,7 @@ export function AppShell({
           )}
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-5">
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 sm:gap-3 sm:px-6">
               <Button
                 variant="ghost"
                 size="icon"
@@ -117,19 +123,19 @@ export function AppShell({
               >
                 <Menu aria-hidden />
               </Button>
-              <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} {...(onSwitchOrg ? { onSwitch: onSwitchOrg } : {})} />
+              <Breadcrumbs items={items} orgName={activeOrgName} />
               <div className="flex-1" />
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
                 aria-keyshortcuts={apple ? "Meta+K" : "Control+K"}
                 className={cn(
-                  "hidden h-9 w-64 items-center gap-2 rounded-md border bg-surface px-3 text-sm text-muted-foreground transition-colors hover:border-ring/50 md:flex",
+                  "hidden h-9 w-72 items-center gap-2.5 rounded-md border border-border bg-surface ps-3 pe-1.5 text-sm text-muted-foreground hover:border-foreground/30 hover:text-foreground md:flex",
                 )}
               >
-                <Search className="size-4" aria-hidden />
-                <span className="flex-1 text-start">{t("search")}</span>
-                <span className="flex gap-1" aria-hidden>
+                <Search className="size-4 shrink-0" aria-hidden />
+                <span className="flex-1 truncate text-start">{t("search")}</span>
+                <span className="flex gap-0.5" dir="ltr" aria-hidden>
                   <Kbd>{apple ? "⌘" : "Ctrl"}</Kbd>
                   <Kbd>K</Kbd>
                 </span>
@@ -143,9 +149,12 @@ export function AppShell({
               >
                 <Search aria-hidden />
               </Button>
-              {notifications && <NotificationBell />}
-              <LocaleSwitcher />
-              <ThemeToggle />
+              <div className="flex items-center gap-0.5">
+                {notifications && <NotificationBell />}
+                <LocaleSwitcher />
+                <ThemeToggle />
+              </div>
+              <span aria-hidden className="mx-1 hidden h-5 w-px bg-border sm:block" />
               <UserMenu user={user} onSignOut={() => void signOut()} />
             </header>
 

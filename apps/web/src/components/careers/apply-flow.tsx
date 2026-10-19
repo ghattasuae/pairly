@@ -19,7 +19,7 @@
  * moves to the heading of each step and to the first field with an error, targets are
  * at least 44 px high, and everything works with the keyboard alone.
  */
-import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { Check, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import type * as React from "react";
@@ -42,6 +42,7 @@ import {
 } from "@/lib/careers/apply";
 import { pick, type Locale, type PublicForm, type PublicNotice } from "@/lib/careers/format";
 import { UPLOAD_HEADER } from "@/lib/upload-guard";
+import { cn } from "@/lib/utils";
 
 import { HumanCheck } from "./human-check";
 
@@ -239,23 +240,32 @@ export function ApplyFlow({ orgSlug, orgName, jobSlug, locale, notice, form }: A
   return (
     <div className="space-y-8">
       <nav aria-label={t("stepLabel", { step: stepIndex + 1, total: steps.length })}>
-        <ol className="flex flex-wrap gap-2 text-sm">
-          {steps.map((s, i) => (
-            <li
-              key={s.key}
-              aria-current={s.key === step ? "step" : undefined}
-              className={
-                s.key === step
-                  ? "rounded-full bg-primary px-3 py-1 text-primary-foreground"
-                  : i < stepIndex
-                    ? "rounded-full bg-secondary px-3 py-1 text-secondary-foreground"
-                    : "rounded-full border border-border px-3 py-1 text-muted-foreground"
-              }
-            >
-              <span className="sr-only">{t("stepLabel", { step: i + 1, total: steps.length })}: </span>
-              {s.label}
-            </li>
-          ))}
+        <ol className="grid grid-cols-3 gap-3 border-b border-border pb-5 text-sm">
+          {steps.map((s, i) => {
+            const current = s.key === step;
+            const done = i < stepIndex;
+            return (
+              <li key={s.key} aria-current={current ? "step" : undefined} className="flex min-w-0 items-center gap-2.5">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-7 shrink-0 items-center justify-center rounded-full font-mono text-xs",
+                    current
+                      ? "bg-action font-medium text-action-foreground"
+                      : done
+                        ? "bg-foreground text-background"
+                        : "border border-input text-muted-foreground",
+                  )}
+                >
+                  {done ? <Check className="size-3.5" /> : i + 1}
+                </span>
+                <span className={cn("truncate", current ? "font-medium text-foreground" : "text-muted-foreground")}>
+                  <span className="sr-only">{t("stepLabel", { step: i + 1, total: steps.length })}: </span>
+                  {s.label}
+                </span>
+              </li>
+            );
+          })}
         </ol>
       </nav>
 
@@ -265,19 +275,22 @@ export function ApplyFlow({ orgSlug, orgName, jobSlug, locale, notice, form }: A
 
       {step === "notice" && (
         <section aria-labelledby={fid("notice-heading")} className="space-y-6">
-          <h2 id={fid("notice-heading")} ref={headingRef} tabIndex={-1} className="font-display text-2xl outline-none">
-            {notice.title}
-          </h2>
-          <ul className="space-y-3">
-            {notice.points.map((point, i) => (
-              <li key={i} className="flex gap-3 leading-relaxed">
-                <ShieldCheck aria-hidden className="mt-1 size-4 shrink-0 text-signal" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-5 rounded-lg border border-border bg-info-soft/60 p-6 sm:p-7">
+            <h2 id={fid("notice-heading")} ref={headingRef} tabIndex={-1} className="flex items-center gap-2.5 font-display text-2xl outline-none">
+              <ShieldCheck aria-hidden className="size-5 shrink-0 text-info" />
+              {notice.title}
+            </h2>
+            <ul className="space-y-3">
+              {notice.points.map((point, i) => (
+                <li key={i} className="flex gap-3 leading-relaxed">
+                  <span aria-hidden className="mt-[0.7em] size-1.5 shrink-0 rounded-full bg-info" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div className="space-y-2">
-            <label htmlFor={fid("consent")} className="flex min-h-11 items-start gap-3 rounded-lg border border-input bg-surface p-3">
+            <label htmlFor={fid("consent")} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-input bg-surface p-4 hover:border-foreground/35">
               <Checkbox
                 id={fid("consent")}
                 className="mt-0.5"
@@ -314,7 +327,7 @@ export function ApplyFlow({ orgSlug, orgName, jobSlug, locale, notice, form }: A
             {t("formStep")}
           </h2>
           {formError && (
-            <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+            <div role="alert" className="rounded-lg border border-destructive/40 bg-danger-soft p-4 text-sm text-danger-ink">
               {formError}
             </div>
           )}

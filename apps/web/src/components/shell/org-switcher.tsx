@@ -49,18 +49,31 @@ export function OrgSwitcher({
       router.refresh();
     });
 
+  const name = pending ? t("switching") : (active?.name ?? t("none"));
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={orgs.length === 0 || pending}
         aria-label={t("switch")}
-        className="flex h-9 max-w-56 min-w-0 items-center gap-2 rounded-md border border-transparent px-2.5 text-sm hover:bg-accent disabled:cursor-default disabled:hover:bg-transparent data-[state=open]:bg-accent"
+        className="group flex h-11 w-full min-w-0 items-center gap-2.5 rounded-md px-1.5 text-start text-sm hover:bg-sidebar-active/70 disabled:cursor-default disabled:hover:bg-transparent data-[state=open]:bg-sidebar-active lg:max-xl:justify-center lg:max-xl:px-0"
       >
-        <Building2 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="truncate font-medium">{pending ? t("switching") : (active?.name ?? t("none"))}</span>
-        {orgs.length > 0 && <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />}
+        <span
+          aria-hidden
+          className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-surface font-display text-sm font-medium text-foreground"
+        >
+          {active ? <span dir="auto">{active.name.trim().charAt(0).toUpperCase()}</span> : <Building2 className="size-3.5 text-muted-foreground" />}
+        </span>
+        <span className="min-w-0 flex-1 lg:max-xl:sr-only">
+          <span className="block text-[0.68rem] leading-tight text-muted-foreground">{t("label")}</span>
+          <span className="block truncate leading-tight font-medium" dir="auto">
+            {name}
+          </span>
+        </span>
+        {orgs.length > 0 && (
+          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground lg:max-xl:hidden" aria-hidden />
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" side="top" className="min-w-56">
         <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={activeOrgId ?? ""} onValueChange={switchTo}>
           {orgs.map((org) => (

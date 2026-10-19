@@ -2,6 +2,8 @@
 // Copyright (c) 2026 Proofly Technology
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import AuthLayout from "@/app/[locale]/(auth)/layout";
+
 import { AuthCard } from "./auth-card";
 import { SignInForm } from "./sign-in-form";
 import { TwoFactorVerify } from "./two-factor-verify";
@@ -31,6 +33,18 @@ export const MagicLink: Story = {};
 export const MagicLinkArabic: Story = { globals: { locale: "ar" } };
 export const WithSso: Story = { args: { sso: { google: true, microsoft: true } } };
 export const WithSsoArabicDark: Story = { ...WithSso, globals: { locale: "ar", theme: "dark" } };
+
+/** The whole sign-in page: the statement panel and the form (the panel shows from lg). */
+export const SignInPage: Story = {
+  render: (args) => (
+    <AuthLayout>
+      <AuthCard title="Sign in to Pairly" subtitle="We email you a link. No password needed.">
+        <SignInForm {...args} />
+      </AuthCard>
+    </AuthLayout>
+  ),
+};
+export const SignInPageArabicDark: Story = { ...SignInPage, globals: { locale: "ar", theme: "dark" } };
 
 export const TwoFactor: Story = {
   render: () => <TwoFactorVerify verify={async () => ({ ok: false })} />,

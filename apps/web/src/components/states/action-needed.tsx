@@ -15,13 +15,13 @@ export function ActionNeeded({ count = 0, children }: { count?: number; children
   return (
     <section
       aria-labelledby="action-needed-heading"
-      className="relative rounded-xl border bg-surface ps-6 pe-5 shadow-soft before:absolute before:inset-y-4 before:start-0 before:w-1 before:rounded-e-full before:bg-signal"
+      className="relative rounded-lg border bg-surface ps-6 pe-5 before:absolute before:inset-y-4 before:start-0 before:w-[3px] before:rounded-e-full before:bg-signal rtl:before:rounded-e-none rtl:before:rounded-s-full"
     >
       <header className="flex items-center gap-2 pt-5">
         <h2 id="action-needed-heading" className="eyebrow">
           {t("actionNeeded")}
         </h2>
-        <span className="rounded-full bg-signal-soft px-2 py-0.5 font-mono text-[0.7rem] text-signal-foreground dark:text-signal">
+        <span className="rounded-sm bg-signal-soft px-1.5 py-0.5 font-mono text-[0.7rem] text-signal-foreground dark:text-signal">
           {count}
         </span>
       </header>

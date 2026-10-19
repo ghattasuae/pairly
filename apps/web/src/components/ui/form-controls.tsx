@@ -24,7 +24,7 @@ export function Checkbox({ className, ...props }: Omit<React.ComponentProps<"inp
     <input
       type="checkbox"
       data-slot="checkbox"
-      className={cn("size-4 shrink-0 rounded-sm border-input accent-primary disabled:opacity-50", className)}
+      className={cn("size-4 shrink-0 rounded-sm border-input accent-[var(--signal-ink)] disabled:opacity-50", className)}
       {...props}
     />
   );

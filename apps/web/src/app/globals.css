@@ -2,14 +2,24 @@
 /* Copyright (c) 2026 Proofly Technology */
 
 /*
- * Pairly design tokens. Direction: "ledger and ink".
- * Warm paper surfaces, deep teal ink for primary actions, one amber signal colour that
- * means "this needs you". Hairline rules instead of heavy cards. Serif display type for
- * headings, a quiet grotesque for UI text, IBM Plex Sans Arabic for Arabic.
+ * Pairly design tokens. Direction: "ink and saffron", a refined editorial ledger.
+ *
+ * Decisions, evidence and money get the calm authority of a well-set document: warm bone
+ * paper, near-black warm ink, hairline rules instead of shadows, and ONE warm accent.
+ * Saffron (--signal, --action) is rare on purpose: primary actions, focus rings, the
+ * active nav marker, key numbers and small "needs you" highlights. Everything else is ink
+ * and paper. A cool slate (--primary, --info) carries links, chart lines and
+ * informational badges so the saffron stays rare.
  *
  * Every colour is a CSS variable, redefined for dark mode. Components use the semantic
- * names (bg-background, text-muted-foreground, border-border, bg-signal ...), never raw
- * colours. Layout uses logical properties only (ms/me, ps/pe, start/end) so RTL works.
+ * names (bg-background, text-muted-foreground, border-border, bg-action ...), never raw
+ * colours. Token names are stable: change values here, add tokens, never rename.
+ * Layout uses logical properties only (ms/me, ps/pe, start/end) so RTL mirrors.
+ *
+ * Contrast (WCAG 2.2, computed from these oklch values): body ink 16.9:1, muted ink 5.3:1
+ * or more on every light surface, slate links 6.1:1 or more, ink on saffron 7.0:1, the
+ * focus ring 4.3:1 against paper, field outlines (--input) 3.2:1 or more. Dark: bone 14:1,
+ * muted 6.3:1, slate 7.3:1 or more, field outlines 3.3:1 or more.
  */
 
 @import "tailwindcss";
@@ -18,102 +28,146 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --radius: 0.625rem;
+  --radius: 10px;
 
-  /* paper and ink */
-  --background: oklch(0.982 0.006 85);
-  --foreground: oklch(0.235 0.018 200);
-  --surface: oklch(0.995 0.003 85);
-  --surface-sunken: oklch(0.958 0.008 85);
+  /* paper */
+  --background: oklch(0.975 0.008 80);
+  --surface: oklch(0.988 0.005 80);
+  --surface-sunken: oklch(0.955 0.009 80);
   --card: var(--surface);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.995 0.003 85);
+  --popover: oklch(0.99 0.004 80);
   --popover-foreground: var(--foreground);
 
-  /* deep teal ink */
-  --primary: oklch(0.43 0.075 182);
-  --primary-foreground: oklch(0.985 0.006 85);
-  --secondary: oklch(0.945 0.012 170);
-  --secondary-foreground: oklch(0.3 0.05 182);
+  /* ink */
+  --foreground: oklch(0.2 0.012 60);
+  --muted: oklch(0.948 0.009 80);
+  /* 5.3:1 or more on paper, surface, sunken, muted and the hover wash. */
+  --muted-foreground: oklch(0.48 0.014 65);
 
-  --muted: oklch(0.948 0.008 85);
-  /* 0.45 keeps body-size muted text above 6:1 on every light surface (WCAG AA 4.5:1). */
-  --muted-foreground: oklch(0.45 0.016 200);
-  --accent: oklch(0.935 0.018 175);
-  --accent-foreground: oklch(0.27 0.045 182);
+  /* slate: links, selected chips, chart lines, informational badges */
+  --primary: oklch(0.45 0.05 250);
+  --primary-foreground: oklch(0.985 0.005 80);
+  --info: var(--primary);
+  --info-soft: oklch(0.95 0.015 250);
 
-  /* amber signal: "needs you" */
-  --signal: oklch(0.74 0.14 70);
-  --signal-foreground: oklch(0.27 0.06 60);
-  --signal-soft: oklch(0.955 0.04 80);
+  /* quiet neutrals: chips and the hover wash */
+  --secondary: oklch(0.94 0.01 80);
+  --secondary-foreground: oklch(0.3 0.015 60);
+  --accent: oklch(0.935 0.012 78);
+  --accent-foreground: oklch(0.2 0.012 60);
 
-  --destructive: oklch(0.55 0.19 27);
-  --destructive-foreground: oklch(0.985 0.006 85);
-  --success: oklch(0.55 0.11 155);
-  /* Text versions of danger and success: 4.5:1 or more on paper, surface and their tints. */
-  --danger-ink: oklch(0.47 0.17 27);
-  --success-ink: oklch(0.44 0.1 155);
+  /* saffron: the one accent. Ink text on it, never white. */
+  --signal: oklch(0.72 0.16 65);
+  --signal-foreground: oklch(0.22 0.04 55);
+  --signal-soft: oklch(0.95 0.045 75);
+  /* Saffron dark enough for text and big numbers on paper (5.3:1). */
+  --signal-ink: oklch(0.52 0.12 55);
+  --action: var(--signal);
+  --action-foreground: var(--foreground);
+  --action-hover: oklch(0.68 0.15 62);
 
-  --border: oklch(0.89 0.01 85);
-  --rule: oklch(0.86 0.012 85);
-  --input: oklch(0.86 0.012 85);
-  --ring: oklch(0.55 0.1 182);
+  /* status: semantic and muted */
+  --destructive: oklch(0.53 0.18 28);
+  --destructive-foreground: oklch(0.985 0.005 80);
+  --success: oklch(0.52 0.11 152);
+  --warning: oklch(0.83 0.14 95);
+  /* Text versions: 4.5:1 or more on paper, surface and their own soft tints. */
+  --danger-ink: oklch(0.47 0.16 28);
+  --success-ink: oklch(0.44 0.09 152);
+  --warning-ink: oklch(0.48 0.09 85);
+  --danger-soft: oklch(0.955 0.025 28);
+  --success-soft: oklch(0.95 0.03 152);
+  --warning-soft: oklch(0.955 0.05 95);
 
-  --sidebar: oklch(0.965 0.008 85);
+  /* rules */
+  --border: oklch(0.88 0.01 80);
+  --rule: oklch(0.86 0.012 80);
+  /* Field outlines (inputs, selects, the switch track, choice cards): 3:1 or more against
+     paper (3.4:1), surface (3.5:1) and sunken paper (3.2:1), WCAG 1.4.11. Cards keep the
+     lighter --border hairline. */
+  --input: oklch(0.62 0.012 75);
+  /* Darker saffron so the ring keeps 3:1 or more against every light surface. */
+  --ring: oklch(0.57 0.135 55);
+
+  /* the rail */
+  --sidebar: oklch(0.962 0.009 80);
   --sidebar-foreground: var(--foreground);
-  --sidebar-active: oklch(0.925 0.02 175);
+  --sidebar-active: oklch(0.93 0.012 78);
   --sidebar-border: var(--border);
 
-  --shadow-soft: 0 1px 0 oklch(0.2 0.02 200 / 0.04), 0 8px 24px -12px oklch(0.2 0.02 200 / 0.18);
+  /* depth: cards use the hairline; only raised layers (menus, palette, dialogs) cast */
+  --shadow-soft: 0 1px 0 oklch(0.35 0.03 60 / 0.04);
+  --shadow-raised:
+    0 1px 2px oklch(0.35 0.04 60 / 0.06), 0 12px 32px -12px oklch(0.35 0.05 60 / 0.22);
+
+  /* paper grain: a tiny tile of fractal noise, painted at under 4 percent */
+  --grain-opacity: 0.035;
 }
 
 .dark {
-  --background: oklch(0.185 0.012 205);
-  --foreground: oklch(0.93 0.008 85);
-  --surface: oklch(0.215 0.014 205);
-  --surface-sunken: oklch(0.165 0.011 205);
+  --background: oklch(0.18 0.008 70);
+  --surface: oklch(0.215 0.009 70);
+  --surface-sunken: oklch(0.16 0.007 70);
   --card: var(--surface);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.235 0.015 205);
+  --popover: oklch(0.235 0.01 70);
   --popover-foreground: var(--foreground);
 
-  --primary: oklch(0.74 0.09 180);
-  --primary-foreground: oklch(0.18 0.03 200);
-  --secondary: oklch(0.27 0.02 190);
-  --secondary-foreground: oklch(0.9 0.02 175);
+  --foreground: oklch(0.93 0.012 85);
+  --muted: oklch(0.24 0.009 70);
+  --muted-foreground: oklch(0.72 0.012 80);
 
-  --muted: oklch(0.25 0.012 205);
-  --muted-foreground: oklch(0.72 0.014 200);
-  --accent: oklch(0.29 0.03 185);
-  --accent-foreground: oklch(0.93 0.02 175);
+  --primary: oklch(0.76 0.06 250);
+  --primary-foreground: oklch(0.18 0.008 70);
+  --info: var(--primary);
+  --info-soft: oklch(0.27 0.03 250);
 
-  --signal: oklch(0.8 0.13 75);
-  --signal-foreground: oklch(0.22 0.05 60);
-  --signal-soft: oklch(0.29 0.05 70);
+  --secondary: oklch(0.26 0.01 70);
+  --secondary-foreground: oklch(0.9 0.012 85);
+  --accent: oklch(0.26 0.01 70);
+  --accent-foreground: oklch(0.93 0.012 85);
 
-  --destructive: oklch(0.68 0.17 25);
-  --destructive-foreground: oklch(0.18 0.03 25);
-  --success: oklch(0.72 0.12 155);
-  --danger-ink: oklch(0.76 0.14 25);
-  --success-ink: oklch(0.78 0.12 155);
+  --signal: oklch(0.79 0.135 70);
+  --signal-foreground: oklch(0.2 0.03 60);
+  --signal-soft: oklch(0.28 0.05 65);
+  --signal-ink: oklch(0.8 0.13 72);
+  --action: var(--signal);
+  --action-foreground: oklch(0.2 0.03 60);
+  --action-hover: oklch(0.83 0.12 72);
 
-  --border: oklch(0.3 0.014 205);
-  --rule: oklch(0.33 0.016 205);
-  --input: oklch(0.34 0.016 205);
-  --ring: oklch(0.74 0.09 180);
+  --destructive: oklch(0.68 0.16 27);
+  --destructive-foreground: oklch(0.17 0.02 27);
+  --success: oklch(0.72 0.11 152);
+  --warning: oklch(0.85 0.13 95);
+  --danger-ink: oklch(0.76 0.13 27);
+  --success-ink: oklch(0.78 0.11 152);
+  --warning-ink: oklch(0.86 0.12 95);
+  --danger-soft: oklch(0.27 0.04 27);
+  --success-soft: oklch(0.27 0.04 152);
+  --warning-soft: oklch(0.28 0.04 95);
 
-  --sidebar: oklch(0.165 0.011 205);
+  --border: oklch(0.3 0.01 70);
+  --rule: oklch(0.33 0.011 70);
+  /* 3.7:1 on the page, 3.5:1 on surface, 3.3:1 on popovers. */
+  --input: oklch(0.54 0.012 70);
+  --ring: oklch(0.79 0.135 70);
+
+  --sidebar: oklch(0.16 0.007 70);
   --sidebar-foreground: var(--foreground);
-  --sidebar-active: oklch(0.27 0.03 185);
+  --sidebar-active: oklch(0.25 0.012 70);
   --sidebar-border: var(--border);
 
-  --shadow-soft: 0 1px 0 oklch(0 0 0 / 0.2), 0 12px 32px -16px oklch(0 0 0 / 0.6);
+  --shadow-soft: 0 1px 0 oklch(0 0 0 / 0.2);
+  --shadow-raised: 0 1px 2px oklch(0 0 0 / 0.3), 0 16px 40px -16px oklch(0 0 0 / 0.7);
+
+  --grain-opacity: 0.03;
 }
 
 @theme inline {
   --font-sans: var(--font-ui), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-serif), var(--font-arabic), ui-serif, Georgia, serif;
-  --font-mono: var(--font-code), ui-monospace, SFMono-Regular, monospace;
+  --font-mono: var(--font-code), var(--font-arabic), ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -134,11 +188,22 @@
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
   --color-signal-soft: var(--signal-soft);
+  --color-signal-ink: var(--signal-ink);
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+  --color-action-hover: var(--action-hover);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-danger-ink: var(--danger-ink);
   --color-success-ink: var(--success-ink);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger-soft: var(--danger-soft);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
   --color-border: var(--border);
   --color-rule: var(--rule);
   --color-input: var(--input);
@@ -148,12 +213,19 @@
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-border: var(--sidebar-border);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* 6px on controls (rounded-md), 10px on cards (rounded-lg and rounded-xl). */
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: var(--radius);
 
   --shadow-soft: var(--shadow-soft);
+  --shadow-raised: var(--shadow-raised);
+  /* Tailwind's own small shadows, warm and quieter, for the few places that use them. */
+  --shadow-xs: 0 1px 1px oklch(0.35 0.03 60 / 0.05);
+  --shadow-sm: 0 1px 2px oklch(0.35 0.03 60 / 0.07);
+
+  --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 @layer base {
@@ -168,10 +240,30 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "kern", "liga";
   }
 
-  /* Arabic: a little more line height, no letter spacing tricks. */
+  /* Fraunces is variable: optical size follows the font size, the quirky "wonky"
+     alternates stay off and a little softness keeps it warm, not bookish. */
+  .font-display,
+  .figure {
+    font-optical-sizing: auto;
+    font-variation-settings:
+      "SOFT" 40,
+      "WONK" 0;
+    letter-spacing: -0.012em;
+  }
+
+  /* Numbers line up in tables, amounts and anything set in mono. */
+  table,
+  .font-mono,
+  [data-amount],
+  [data-value] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Arabic: a little more line height, no letter spacing tricks; display headings fall
+     through to Plex Sans Arabic, set heavier so they still read as headings. */
   :lang(ar) body {
     line-height: 1.7;
   }
@@ -181,51 +273,126 @@
     letter-spacing: 0;
   }
 
-  /* One visible focus style everywhere (WCAG 2.2 focus appearance). */
+  /* Colour changes on anything interactive take 120 ms (utilities can override). */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"] {
+    transition-property: color, background-color, border-color, text-decoration-color, outline-color, box-shadow;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* One visible focus style everywhere (WCAG 2.2 focus appearance): a saffron ring. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
 
+  /* In-page jumps land below the sticky top bar. */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+
   ::selection {
-    background: color-mix(in oklch, var(--primary) 22%, transparent);
+    background: color-mix(in oklch, var(--signal) 30%, transparent);
+    color: var(--foreground);
   }
 }
 
 @layer components {
-  /* Ruled paper: faint horizontal lines, used behind the sign-in pages. */
+  /* Calm paper for the public and sign-in frames (portals, careers, sign-in). The class
+     name stays from the first design; it is plain paper with a faint warm glow now. */
   .bg-ledger {
     background-color: var(--background);
-    background-image:
-      linear-gradient(to bottom, transparent calc(100% - 1px), color-mix(in oklch, var(--rule) 55%, transparent) 0),
-      radial-gradient(120% 80% at 100% 0%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 60%);
-    background-size:
-      100% 2rem,
-      100% 100%;
+    background-image: radial-gradient(
+      90% 60% at 100% 0%,
+      color-mix(in oklch, var(--signal) 7%, transparent),
+      transparent 65%
+    );
+  }
+
+  /* The paper grain: one fixed, click-through layer above the page. It is not in the
+     hit-test stack, so axe still measures contrast on the real colours below it. */
+  .paper-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+
+  .dark .paper-grain {
+    mix-blend-mode: screen;
+  }
+
+  @media print {
+    .paper-grain {
+      display: none;
+    }
   }
 
   /* A link inside running text: always underlined, so it never relies on colour alone
      (WCAG 1.4.1, axe link-in-text-block). Focus uses the global :focus-visible ring. */
   .link-inline {
     @apply text-primary underline decoration-1 underline-offset-4;
+    text-decoration-color: color-mix(in oklch, var(--primary) 45%, transparent);
   }
 
   .link-inline:hover {
     @apply decoration-2;
+    text-decoration-color: currentColor;
   }
 
   /* Small-caps label above sections. */
   .eyebrow {
-    @apply text-[0.7rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase;
+    @apply text-[0.7rem] font-medium tracking-[0.14em] text-muted-foreground uppercase;
   }
 
   :lang(ar) .eyebrow {
     @apply text-xs tracking-normal normal-case;
   }
 
+  /* A hairline card: border, no shadow wall. Raised layers use shadow-raised instead. */
+  .card-hairline {
+    @apply rounded-lg border border-border bg-surface;
+  }
+
+  /* A quiet hover lift for cards and rows that open something. */
+  .lift {
+    transition:
+      transform 160ms var(--ease-out-soft),
+      border-color 120ms ease-out,
+      background-color 120ms ease-out;
+  }
+
+  .lift:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in oklch, var(--foreground) 22%, var(--border));
+  }
+
+  /* A big number: Fraunces, lining tabular figures. */
+  .figure {
+    @apply font-display tracking-tight;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum", "tnum";
+  }
+
+  /* The content column of a signed-in page: about 1200px, tables may break out wider. */
+  .page {
+    @apply mx-auto w-full max-w-[75rem] px-5 py-8 sm:px-8 sm:py-10;
+  }
+
   /* Document viewer: a guardrail finding is striped and dashed, never only a colour, so it
-     reads differently from an evidence highlight (solid, teal) in every theme. */
+     reads differently from an evidence highlight (solid) in every theme. */
   .highlight-guardrail {
     border: 2px dashed var(--destructive);
     background-image: repeating-linear-gradient(
@@ -242,15 +409,17 @@
     animation: highlight-pulse 900ms ease-out 1;
   }
 
-  /* Staggered entrance for page sections. */
+  /* The page-load reveal: main blocks rise 6px in a short stagger (60 ms apart, 280 ms
+     each). Set --rise-index on each block. */
   .rise {
-    animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    animation-delay: calc(var(--rise-index, 0) * 70ms);
+    animation: rise 280ms var(--ease-out-soft) both;
+    animation-delay: calc(var(--rise-index, 0) * 60ms);
   }
 }
 
 /* Movement only, no fade: text is never rendered at partial opacity, so contrast holds
-   from the first frame (axe and real readers both see full-strength colour). */
+   from the first frame (axe runs without reduced motion and would otherwise catch a
+   half-faded block; real readers see full-strength colour too). */
 @keyframes rise {
   from {
     transform: translateY(6px);
@@ -278,5 +447,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .lift:hover {
+    transform: none;
   }
 }

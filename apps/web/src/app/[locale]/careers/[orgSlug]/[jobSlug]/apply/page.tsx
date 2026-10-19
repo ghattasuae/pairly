@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ApplyFlow } from "@/components/careers/apply-flow";
@@ -38,18 +39,22 @@ export default async function ApplyPage({ params }: Props) {
   const notice = job.notice[locale] ?? job.notice.en;
   if (!notice) notFound();
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-2xl space-y-10">
       <nav>
         <Link
           href={`/careers/${orgSlug}/${jobSlug}`}
-          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
+          <ArrowLeft className="size-3.5 rtl:-scale-x-100" aria-hidden />
           {t("back")}
         </Link>
       </nav>
-      <h1 className="font-display text-3xl leading-tight text-balance sm:text-4xl">
-        {t("applyTitle", { title: localTitle(job, locale) })}
-      </h1>
+      <header className="rise space-y-3">
+        <p className="eyebrow">{job.organisation.name}</p>
+        <h1 className="font-display text-4xl leading-[1.1] font-normal text-balance sm:text-5xl">
+          {t("applyTitle", { title: localTitle(job, locale) })}
+        </h1>
+      </header>
       <ApplyFlow
         orgSlug={orgSlug}
         orgName={job.organisation.name}

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import type * as React from "react";
 
 import "../src/app/globals.css";
+import { fontVariables } from "../src/app/fonts";
 import { withAppRouter } from "./app-router";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import ar from "../messages/ar.json";
@@ -23,6 +24,8 @@ function Frame({ locale, theme, children }: { locale: Locale; theme: string; chi
     root.lang = locale;
     root.dir = locale === "ar" ? "rtl" : "ltr";
     root.classList.toggle("dark", theme === "dark");
+    // The self-hosted typefaces (next/font/local), as on the real <html>.
+    root.classList.add(...fontVariables.split(" "));
   }, [locale, theme]);
   return (
     <NextIntlClientProvider locale={locale} messages={locale === "ar" ? ar : en} timeZone="UTC">

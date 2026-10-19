@@ -7,7 +7,7 @@
  * Semantic HTML first (lists, a description list, headings in order) so screen readers
  * and search engines read the same structure people see.
  */
-import { BriefcaseBusiness, MapPin, Users, Wallet } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, MapPin, Users, Wallet } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type * as React from "react";
 
@@ -73,31 +73,58 @@ export function JobFacts({ job, className }: { job: PublicJob; className?: strin
   );
 }
 
-/** The organisation's open jobs, newest first, each a link to its page. */
+/** Column spans for the asymmetric two-column grid: 3/2, then 2/3, and so on. */
+function spanFor(index: number, total: number): string {
+  if (index === total - 1 && total % 2 === 1) return "md:col-span-5";
+  const row = Math.floor(index / 2);
+  const first = index % 2 === 0;
+  return (row % 2 === 0) === first ? "md:col-span-3" : "md:col-span-2";
+}
+
+/**
+ * The organisation's open jobs, newest first: hairline cards in an asymmetric
+ * two-column grid. The title is the card's link (it covers the card); the saffron
+ * "Apply" goes straight to the form.
+ */
 export function JobList({ orgSlug, jobs }: { orgSlug: string; jobs: PublicJob[] }) {
   const t = useTranslations("Careers");
   const locale = useLocal();
   if (jobs.length === 0) {
-    return <p className="rounded-lg border border-dashed border-border p-6 text-muted-foreground">{t("noRoles")}</p>;
+    return <p className="rounded-lg border border-dashed border-border p-8 text-muted-foreground">{t("noRoles")}</p>;
   }
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-xs">
-      {jobs.map((job) => {
+    <ul className="grid gap-4 md:grid-cols-5">
+      {jobs.map((job, index) => {
         const title = localTitle(job, locale);
         return (
-          <li key={job.slug} className="group relative p-5 transition-colors focus-within:bg-accent/60 hover:bg-accent/40 sm:p-6">
-            <h3 className="font-display text-xl leading-snug">
+          <li
+            key={job.slug}
+            className={`lift group relative flex flex-col justify-between gap-8 rounded-lg border border-border bg-surface p-6 focus-within:border-foreground/40 sm:p-7 ${spanFor(index, jobs.length)}`}
+          >
+            <div className="space-y-4">
+              <h3 className="font-display text-2xl leading-snug text-balance">
+                <Link
+                  href={`/careers/${orgSlug}/${job.slug}`}
+                  className="outline-none after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:underline focus-visible:underline-offset-4"
+                >
+                  {title}
+                </Link>
+              </h3>
+              <JobFacts job={job} className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground" />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span aria-hidden className="inline-flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-foreground">
+                {t("viewRole")}
+                <ArrowRight className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+              </span>
               <Link
-                href={`/careers/${orgSlug}/${job.slug}`}
-                className="outline-none after:absolute after:inset-0 after:content-[''] focus-visible:underline"
+                href={`/careers/${orgSlug}/${job.slug}/apply`}
+                aria-label={t("applyFor", { title })}
+                className="relative z-10 inline-flex h-9 items-center rounded-md bg-action px-4 text-sm font-medium text-action-foreground hover:bg-action-hover"
               >
-                {title}
+                {t("applyShort")}
               </Link>
-            </h3>
-            <JobFacts job={job} className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground" />
-            <span aria-hidden className="mt-3 inline-block text-sm font-medium text-primary group-hover:underline">
-              {t("viewRole")}
-            </span>
+            </div>
           </li>
         );
       })}
@@ -109,18 +136,18 @@ export function JobList({ orgSlug, jobs }: { orgSlug: string; jobs: PublicJob[] 
 export function JobDescription({ text, headingLevel = 2 }: { text: string; headingLevel?: 2 | 3 }) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
-    <div className="space-y-4 text-base leading-relaxed">
+    <div className="space-y-5 text-[1.0625rem] leading-[1.75]">
       {descriptionBlocks(text).map((block, index) => {
         if (block.kind === "heading") {
           return (
-            <Heading key={index} className="pt-2 font-display text-xl">
+            <Heading key={index} className="pt-4 font-display text-2xl leading-snug">
               {block.text}
             </Heading>
           );
         }
         if (block.kind === "list") {
           return (
-            <ul key={index} className="list-disc space-y-1.5 ps-6 marker:text-signal">
+            <ul key={index} className="list-disc space-y-2 ps-6 marker:text-signal">
               {block.items.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}

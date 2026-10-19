@@ -38,7 +38,7 @@ export function UserMenu({ user, onSignOut }: { user: ShellUser; onSignOut: () =
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t("account")}
-        className="flex size-9 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground ring-offset-2 ring-offset-background hover:ring-2 hover:ring-ring/40"
+        className="flex size-8 items-center justify-center rounded-full border border-border bg-surface font-mono text-[0.7rem] font-medium text-foreground hover:border-foreground/40 data-[state=open]:border-foreground/40"
       >
         <span dir="ltr">{initials(user)}</span>
       </DropdownMenuTrigger>

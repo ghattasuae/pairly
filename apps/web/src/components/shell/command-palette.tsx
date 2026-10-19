@@ -169,7 +169,7 @@ function PaletteItem({
 }: React.ComponentProps<typeof Command.Item> & { icon: React.ReactNode; keys?: string[] }) {
   return (
     <Command.Item
-      className="flex cursor-default items-center gap-3 rounded-md px-3 py-2 text-sm select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground"
+      className="flex cursor-default items-center gap-3 rounded-md px-3 py-2 text-sm select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=true]:shadow-[inset_3px_0_0_var(--signal)] rtl:data-[selected=true]:shadow-[inset_-3px_0_0_var(--signal)] [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground"
       {...props}
     >
       {icon}

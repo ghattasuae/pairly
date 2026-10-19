@@ -3,8 +3,8 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The Pairly mark: two rings that overlap. One is the AI, one is the person. The shared
- * lens in the middle is where decisions happen.
+ * The Pairly mark: two rings that overlap, drawn in ink. One is the AI, one is the person.
+ * The shared lens in the middle, in saffron, is where decisions happen.
  */
 export function BrandMark({ className, title }: { className?: string; title?: string }) {
   return (
@@ -24,7 +24,7 @@ export function BrandMark({ className, title }: { className?: string; title?: st
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span dir="ltr" className={cn("inline-flex items-center gap-2 text-primary", className)}>
+    <span dir="ltr" className={cn("inline-flex items-center gap-2 text-foreground", className)}>
       <BrandMark />
       <span className="font-display text-xl font-medium tracking-tight text-foreground">Pairly</span>
     </span>

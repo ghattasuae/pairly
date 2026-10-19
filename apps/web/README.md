@@ -299,17 +299,80 @@ never answer.
 
 ## Design system
 
-"Ledger and ink": warm paper surfaces, deep teal ink for primary actions, one amber signal
-colour that always means "this needs you", hairline rules, a serif display face for
-headings. Tokens are CSS variables in `src/app/globals.css`, redefined for dark mode.
+**Direction: "ink and saffron", a refined editorial ledger.** Decisions, evidence and money
+get the calm authority of a well-set document: warm bone paper, near-black warm ink,
+hairline rules instead of shadows, serif display type, and one warm accent used sparingly.
+Wave 1 covers the tokens, the primitives, the shell, Home, sign-in and the public careers
+pages; everything else inherits the tokens (wave 2 restyles the inbox, screening mode,
+the Pay viewers, the portals and the emails).
 
-Typefaces (all SIL Open Font License, self-hosted at build time by `next/font`):
-Instrument Sans (UI), IBM Plex Sans Arabic (Arabic), Newsreader (headings), IBM Plex Mono
-(keys and codes).
+**Tokens** are CSS variables in `src/app/globals.css`, redefined under `.dark`, and mapped
+to Tailwind colours in `@theme inline` (`bg-background`, `text-muted-foreground`,
+`bg-action` ...). Names are stable: change values or add tokens, never rename one, so
+every component keeps working.
 
-Rules: logical CSS properties only (`ms`/`me`, `ps`/`pe`, `start`/`end`) so RTL just works;
-every string lives in `messages/*.json`; plain short sentences, never em dashes;
-a visible focus ring on everything; animations switch off with `prefers-reduced-motion`.
+| Role | Tokens | Light | Dark |
+| --- | --- | --- | --- |
+| Paper | `background`, `surface` (cards), `surface-sunken`, `popover` | oklch(0.975 0.008 80), 0.988, 0.955, 0.99 | oklch(0.18 0.008 70), 0.215, 0.16, 0.235 |
+| Ink | `foreground`, `muted-foreground` | oklch(0.2 0.012 60), oklch(0.48 0.014 65) | oklch(0.93 0.012 85), oklch(0.72 0.012 80) |
+| Saffron (the one accent) | `signal`, `action`, `action-hover`, `signal-soft`, `signal-ink` (text), `ring` | oklch(0.72 0.16 65), ink text on it; ring oklch(0.57 0.135 55) | oklch(0.79 0.135 70) |
+| Slate (links, data, info) | `primary`, `info`, `info-soft` | oklch(0.45 0.05 250) | oklch(0.76 0.06 250) |
+| Status | `success`/`success-ink`/`success-soft`, `warning`/`warning-ink`/`warning-soft`, `destructive`/`danger-ink`/`danger-soft` | muted green, a yellower and lighter amber than saffron, red | lighter versions |
+| Rules | `border`, `rule` (card hairlines), `input` (field outlines, 3:1 or more) | oklch(0.88 0.01 80), input oklch(0.62 0.012 75) | oklch(0.3 0.01 70), input oklch(0.54 0.012 70) |
+
+Every text pairing is AA or better in both themes (computed from the oklch values; the
+numbers are in the header comment of `globals.css`). The Foundations/Tokens story reads
+every token live and shows the type scale.
+
+**Type** (all SIL Open Font License 1.1, committed under `src/fonts/` with each OFL text
+next to the files and listed in `NOTICE.md`; `next/font/local` serves them, so no request
+goes to a font CDN and the offline demo looks the same):
+
+- IBM Plex Sans 400, 500, 600 (Latin-1 subset from the IBM release): body and UI.
+- IBM Plex Sans Arabic 400 to 700 (`--font-arabic`): Arabic in every stack, limited to the
+  Arabic ranges with `unicode-range` and never preloaded, so English pages skip it.
+- Fraunces, variable (Latin basic subset from the Fraunces release): `font-display` for h1,
+  h2 and big numbers (`.figure`), with WONK off and a little softness. Arabic headings fall
+  through to Plex Sans Arabic at 600.
+- IBM Plex Mono 400, 500: ids, hashes, amounts, code, keyboard hints. Tables, `.font-mono`
+  and `[data-amount]` use tabular figures.
+
+**Shape and depth**: `rounded-md` (6px) on controls, `rounded-lg` and `rounded-xl` (10px)
+on cards. Cards use the hairline (`.card-hairline`), not a shadow; only raised layers
+(menus, the command palette, dialogs, toasts) use `shadow-raised`. A paper grain sits in
+one fixed, click-through layer at under 4 percent opacity; it is outside the hit-test
+stack, so axe measures contrast on the real colours.
+
+**Motion**: one page-load reveal (`.rise` with `--rise-index`, 280 ms, 60 ms stagger, a 6px
+rise with no fade so text is never half-transparent), a 1px hover lift on cards that open
+something (`.lift`), 120 ms colour transitions on interactive elements. CSS only, and all
+of it switches off under `prefers-reduced-motion`.
+
+**Layout**: a slim rail (icons between lg and xl with labels on hover, labels from xl, a
+saffron bar on the current section, the organisation switcher at the bottom) and a quiet
+top bar (breadcrumbs, the "Search or jump to" palette trigger with its shortcut, language,
+theme, account). Pages use `.page` (about 1200px wide) and open with `PageHeader`: eyebrow,
+Fraunces title on the start side, actions on the end side, one muted line of context, a
+hairline below.
+
+Do:
+
+- Keep saffron rare: one primary `Button` per view, focus rings, the active marker, the one
+  key number. Links and charts are slate.
+- Use ink text on saffron (`text-action-foreground`), never white.
+- Use the `*-ink` tokens for status text and the `*-soft` tints behind it.
+- Use logical properties only (`ms`/`me`, `ps`/`pe`, `start`/`end`) so RTL mirrors.
+- Put every string in `messages/en.json` and `messages/ar.json`.
+
+Do not:
+
+- Add raw colours, new shadows on cards or gradients behind content.
+- Fade text in from transparent, or animate anything that ignores reduced motion.
+- Set Latin letter spacing or uppercase on Arabic text (`.eyebrow` already resets it).
+- Load fonts from a CDN; add a family by committing it with its licence and teaching
+  `scripts/third_party_notices.py` about it.
+
+Rules: plain short sentences, never em dashes; a visible focus ring on everything.
 
 Keyboard: `Cmd/Ctrl+K` opens the command palette, `G` then a letter jumps to a section
 (`G H` home, `G I` inbox, `G E` expenses, `G R` hire, `G P` pay, `G A` audit, `G S` settings). A skip link
