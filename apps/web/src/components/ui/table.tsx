@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
  * sticky header on sunken paper, hairline rows with a hover wash and mono tabular
  * numbers (`numeric` cells, or `data-num` on any cell). `dense` tightens rows for long
  * screening and audit lists. Give the frame a `maxHeight` (or a max-h class) when the
- * header should stay visible while the rows scroll.
+ * header should stay visible while the rows scroll. Give it a `label` whenever the table
+ * can be wider than a phone, so the scrolling frame is reachable by keyboard.
  *
  * The parts are plain elements with classes from `globals.css` (`.table-frame`,
  * `.data-table`), so an existing `<table>` can adopt the look by class alone.
@@ -31,7 +32,9 @@ export function Table({
 }) {
   return (
     <div
-      className={cn("table-frame", maxHeight && "overflow-y-auto", frameClassName)}
+      // Wide tables scroll sideways inside the frame (overflow-x), never off the page; with a
+      // maxHeight the frame scrolls both ways and the header sticks to its top edge.
+      className={cn("table-frame overflow-x-auto", maxHeight && "overflow-y-auto", frameClassName)}
       style={maxHeight ? { maxHeight } : undefined}
       // A scrolling region must be reachable by keyboard (axe scrollable-region-focusable).
       {...(label ? { role: "region", "aria-label": label, tabIndex: 0 } : {})}
