@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { Check, Circle, CircleDot, XCircle } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
@@ -10,8 +10,8 @@ import { stepViews, type VendorPortalInvoice } from "@/lib/vendor-portal/types";
 
 /**
  * Where an invoice stands: received, in review, approved, scheduled, paid (a credit note:
- * received, in review, applied), each with its date. Not colour alone: every state has an
- * icon and words.
+ * received, in review, applied), each with its date. Not colour alone: every state has its
+ * own mark (a tick, a dot, an empty ring, a cross) and words.
  */
 export function InvoiceSteps({ invoice, compact = false }: { invoice: VendorPortalInvoice; compact?: boolean }) {
   const t = useTranslations("VendorPortal");
@@ -23,7 +23,6 @@ export function InvoiceSteps({ invoice, compact = false }: { invoice: VendorPort
       data-invoice-steps={invoice.id}
     >
       {steps.map((s, i) => {
-        const Icon = s.step === "rejected" ? XCircle : s.state === "done" ? Check : s.state === "current" ? CircleDot : Circle;
         const last = i === steps.length - 1;
         return (
           <li
@@ -53,7 +52,13 @@ export function InvoiceSteps({ invoice, compact = false }: { invoice: VendorPort
                       : "border-input bg-surface text-muted-foreground",
               )}
             >
-              <Icon className="size-3.5" />
+              {s.step === "rejected" ? (
+                <X className="size-3.5" />
+              ) : s.state === "done" ? (
+                <Check className="size-3.5" />
+              ) : s.state === "current" ? (
+                <span className="size-2 rounded-full bg-foreground" />
+              ) : null}
             </span>
             <div className="min-w-0">
               <p className={cn("text-sm", s.state === "current" && "font-semibold", s.step === "rejected" && "text-danger-ink")}>
