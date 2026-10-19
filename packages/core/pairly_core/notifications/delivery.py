@@ -135,6 +135,8 @@ async def _send(transports: Transports, session: AsyncSession, row: Notification
             auto_submitted=str(content.get("auto_submitted") or "auto-generated"),
             in_reply_to=content.get("in_reply_to"),
             attachments=_attachments(content.get("attachments")),
+            reply_to=settings.email_reply_to,
+            tags=(("category", row.category),),
         )
         return await transports.email.send(email)
     if row.channel == "slack":
@@ -176,7 +178,11 @@ async def deliver_one(
         row.attempts += 1
         row.reason = exc.code[:64]
         if exc.transient and row.attempts < settings.delivery_max_attempts:
-            row.next_attempt_at = now + backoff(settings, row.attempts)
+            wait = backoff(settings, row.attempts)
+            if exc.retry_after is not None:
+                # The provider said when to come back (Resend's Retry-After): never earlier.
+                wait = max(wait, timedelta(seconds=min(exc.retry_after, MAX_BACKOFF_SECONDS)))
+            row.next_attempt_at = now + wait
             action = NotificationActions.RETRY
         else:
             row.status = NotificationStatus.FAILED.value

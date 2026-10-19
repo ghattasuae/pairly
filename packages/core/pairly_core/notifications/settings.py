@@ -51,7 +51,11 @@ class NotificationSettings(BaseSettings):
     smtp_require_tls: bool = False  # STARTTLS, refuse to send without it
     smtp_user: str | None = None
     smtp_password: SecretStr | None = None
+    # The From address for every transport (SMTP, Resend, outbox). With Resend it must be
+    # on a domain verified in the Resend dashboard.
     smtp_from: str = "Pairly <no-reply@pairly.localhost>"
+    # Optional Reply-To on outgoing mail (a monitored mailbox; unset: none).
+    email_reply_to: str | None = None
     smtp_timeout_seconds: float = Field(default=15.0, gt=0, le=120)
     resend_api_key: SecretStr | None = None
     resend_base_url: str = "https://api.resend.com"
@@ -110,8 +114,12 @@ class NotificationSettings(BaseSettings):
                 and not (self.smtp_secure or self.smtp_require_tls)
             ):
                 problems.append("SMTP must use TLS outside development and test")
-        if self.email_transport == "resend" and self.resend_api_key is None:
-            problems.append("resend_api_key is required for the resend transport")
+        if self.email_transport == "resend":
+            key = self.resend_api_key.get_secret_value().strip() if self.resend_api_key else ""
+            if not key:
+                problems.append("resend_api_key is required for the resend transport")
+            elif not key.startswith("re_") and not self.relaxed:
+                problems.append("resend_api_key must be a Resend API key (re_...)")
         if self.email_transport == "fake" and self.env is Environment.PRODUCTION:
             problems.append("the fake email transport is not allowed in production")
         if self.email_transport == "outbox":

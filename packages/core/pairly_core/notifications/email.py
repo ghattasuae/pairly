@@ -23,20 +23,28 @@ Transports:
 
 * ``SmtpTransport``: the standard library ``smtplib`` in a worker thread. Implicit TLS
   or STARTTLS with certificate checks when configured. Mailpit locally.
-* ``ResendTransport``: Resend's HTTP API through ``httpx``, with an ``Idempotency-Key``
-  (the notification's dedupe key) so a retry never sends twice on their side.
+* ``ResendTransport``: Resend's HTTP API (``POST /emails``) through ``httpx``, with an
+  ``Idempotency-Key`` (the notification's dedupe key, hashed when longer than Resend's
+  256 characters) so a retry within Resend's 24 hour window never sends twice. Reply-To
+  and tags (``category``) go in the JSON body. A ``rate_limit_exceeded`` 429 with a short
+  ``Retry-After`` is retried once in place (same key, so it cannot duplicate); longer
+  waits and quota errors become a transient ``DeliveryError`` carrying ``retry_after``,
+  which delivery uses as the earliest next attempt. A 409
+  ``concurrent_idempotent_requests`` is transient; ``invalid_idempotent_request`` is not.
 * ``FakeEmailTransport``: records messages, can fail on demand. Tests and demos.
 * ``OutboxTransport`` (``pairly_core.notifications.outbox``): writes each message to a
   folder. Native development and tests only (no Mailpit).
 
 Errors are ``DeliveryError`` with ``transient`` True (retry later: network, 4xx SMTP,
-HTTP 429 and 5xx) or False (give up: rejected recipient, HTTP 4xx).
+HTTP 429 and 5xx) or False (give up: rejected recipient, HTTP 4xx). ``retry_after`` is
+the provider's requested wait in seconds, when it gave one.
 """
 
 from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import re
 import smtplib
 import ssl
@@ -52,10 +60,11 @@ from pairly_core.notifications.settings import NotificationSettings
 
 
 class DeliveryError(Exception):
-    def __init__(self, code: str, *, transient: bool) -> None:
+    def __init__(self, code: str, *, transient: bool, retry_after: float | None = None) -> None:
         super().__init__(code)
         self.code = code
         self.transient = transient
+        self.retry_after = retry_after
 
 
 MAX_ATTACHMENTS = 3
@@ -63,6 +72,9 @@ MAX_ATTACHMENT_CHARS = 256 * 1024
 _FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _MIME_RE = re.compile(r"^text/[a-z0-9.+-]{1,40}$")
 _PARAM_RE = re.compile(r"^[A-Za-z0-9-]{1,32}$")
+# Resend tag names and values: ASCII letters, digits, underscore and dash, at most 256.
+_TAG_RE = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
+MAX_TAGS = 5
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +138,10 @@ class OutgoingEmail:
     auto_submitted: str = "auto-generated"
     in_reply_to: str | None = None
     attachments: tuple[Attachment, ...] = ()
+    reply_to: str | None = None
+    # Provider tags (name, value) for filtering in the provider's dashboard. Pairs that
+    # do not match Resend's character rules are dropped, never sent.
+    tags: tuple[tuple[str, str], ...] = ()
 
 
 def one_line(value: str, limit: int = 998) -> str:
@@ -147,6 +163,8 @@ def build_message(email: OutgoingEmail) -> EmailMessage:
     msg["Subject"] = one_line(email.subject)
     msg["Date"] = formatdate(usegmt=True)
     msg["Message-ID"] = f"<{one_line(email.message_id, 200)}>"
+    if email.reply_to:
+        msg["Reply-To"] = _address(email.reply_to)
     msg["Auto-Submitted"] = one_line(email.auto_submitted, 32)
     msg["X-Auto-Response-Suppress"] = "All"
     if email.list_unsubscribe:
@@ -238,8 +256,70 @@ class SmtpTransport:
 
 # ------------------------------------------------------------------ Resend
 
+RESEND_MAX_IDEMPOTENCY_KEY = 256
+# A rate limited send is retried once in place when Resend asks for at most this wait.
+RESEND_INLINE_RETRY_SECONDS = 2.0
+_RESEND_TRANSIENT_409 = frozenset({"concurrent_idempotent_requests", "resource_locked"})
+
+
+def resend_idempotency_key(key: str) -> str:
+    """The key as sent: one line, 1 to 256 characters (a SHA-256 hex digest if longer)."""
+    clean = one_line(key, 10_000)
+    if not clean:
+        raise DeliveryError("invalid_idempotency_key", transient=False)
+    if len(clean) > RESEND_MAX_IDEMPOTENCY_KEY:
+        return "sha256-" + hashlib.sha256(clean.encode("utf-8")).hexdigest()
+    return clean
+
+
+def resend_tags(tags: tuple[tuple[str, str], ...]) -> list[dict[str, str]]:
+    return [
+        {"name": name, "value": value}
+        for name, value in tags[:MAX_TAGS]
+        if _TAG_RE.match(name) and _TAG_RE.match(value)
+    ]
+
+
+def _retry_after(response: httpx.Response) -> float | None:
+    """Seconds from ``Retry-After`` (or ``ratelimit-reset``); None when absent or odd."""
+    for name in ("retry-after", "ratelimit-reset"):
+        raw = response.headers.get(name, "").strip()
+        if raw.isdigit():
+            return float(min(int(raw), 86_400))
+    return None
+
+
+def _error_name(response: httpx.Response) -> str:
+    """Resend's error ``name`` (``rate_limit_exceeded``...), only when it looks like one."""
+    try:
+        data = response.json()
+    except ValueError:
+        return ""
+    name = data.get("name") if isinstance(data, dict) else None
+    return name if isinstance(name, str) and re.fullmatch(r"[a-z_]{1,48}", name) else ""
+
+
+def resend_error(response: httpx.Response) -> DeliveryError:
+    """Map a non-2xx Resend answer to a ``DeliveryError`` (code, transient, retry_after).
+
+    See https://resend.com/docs/api-reference/errors. Retried later: 429 (rate limit,
+    daily or monthly quota), 5xx, and a 409 for a concurrent request with the same
+    idempotency key. Everything else (400 validation, 401 and 403 key problems, 404,
+    409 ``invalid_idempotent_request``, 422) is permanent.
+    """
+    status = response.status_code
+    name = _error_name(response)
+    code = f"resend_{status}_{name}" if name else f"resend_{status}"
+    if status == 429 or status >= 500:
+        return DeliveryError(code, transient=True, retry_after=_retry_after(response))
+    if status == 409 and name in _RESEND_TRANSIENT_409:
+        return DeliveryError(code, transient=True, retry_after=_retry_after(response))
+    return DeliveryError(code, transient=False)
+
 
 class ResendTransport:
+    """Resend's ``POST /emails``. Needs an API key with sending access only."""
+
     name = "resend"
 
     def __init__(
@@ -249,18 +329,21 @@ class ResendTransport:
         base_url: str = "https://api.resend.com",
         client: httpx.AsyncClient | None = None,
         timeout: float = 15.0,
+        inline_retry_seconds: float = RESEND_INLINE_RETRY_SECONDS,
     ) -> None:
         self._api_key = api_key
         self._base = base_url.rstrip("/")
         self._owns_client = client is None
         self._client = client or httpx.AsyncClient(timeout=timeout, follow_redirects=False)
+        self._inline_retry_seconds = inline_retry_seconds
 
     async def aclose(self) -> None:
         if self._owns_client:
             await self._client.aclose()
 
-    async def send(self, email: OutgoingEmail) -> str:
-        msg = build_message(email)
+    @staticmethod
+    def body(email: OutgoingEmail, msg: EmailMessage) -> dict[str, Any]:
+        """The JSON body for ``POST /emails`` (from the built, header-safe message)."""
         headers: dict[str, str] = {
             name: str(msg[name])
             for name in (
@@ -281,8 +364,13 @@ class ResendTransport:
             "text": email.text,
             "headers": headers,
         }
+        if msg["Reply-To"] is not None:
+            body["reply_to"] = [str(msg["Reply-To"])]
         if email.html:
             body["html"] = email.html
+        tags = resend_tags(email.tags)
+        if tags:
+            body["tags"] = tags
         if email.attachments:
             body["attachments"] = [
                 {
@@ -295,25 +383,42 @@ class ResendTransport:
                 }
                 for a in email.attachments
             ]
+        return body
+
+    async def send(self, email: OutgoingEmail) -> str:
+        msg = build_message(email)
+        body = self.body(email, msg)
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Idempotency-Key": resend_idempotency_key(email.idempotency_key),
+        }
+        for attempt in (1, 2):
+            try:
+                response = await self._client.post(
+                    f"{self._base}/emails", json=body, headers=headers
+                )
+            except httpx.HTTPError:
+                raise DeliveryError("resend_unavailable", transient=True) from None
+            if response.status_code < 400:
+                break
+            error = resend_error(response)
+            wait = error.retry_after
+            if (
+                attempt == 1
+                and response.status_code == 429
+                and error.code.endswith("rate_limit_exceeded")
+                and wait is not None
+                and wait <= self._inline_retry_seconds
+            ):
+                # Same Idempotency-Key: Resend sends at most once.
+                await asyncio.sleep(wait)
+                continue
+            raise error
         try:
-            response = await self._client.post(
-                f"{self._base}/emails",
-                json=body,
-                headers={
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Idempotency-Key": one_line(email.idempotency_key, 256),
-                },
-            )
-        except httpx.HTTPError:
-            raise DeliveryError("resend_unavailable", transient=True) from None
-        if response.status_code == 429 or response.status_code >= 500:
-            raise DeliveryError(f"resend_{response.status_code}", transient=True)
-        if response.status_code >= 400:
-            raise DeliveryError(f"resend_{response.status_code}", transient=False)
-        try:
-            provider_id = response.json().get("id")
+            data = response.json()
         except ValueError:
-            provider_id = None
+            data = None
+        provider_id = data.get("id") if isinstance(data, dict) else None
         return str(provider_id) if isinstance(provider_id, str) else str(msg["Message-ID"])
 
 
