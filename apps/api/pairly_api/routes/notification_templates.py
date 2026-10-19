@@ -28,6 +28,7 @@ from pairly_core.errors import BadRequestError
 from pairly_core.identity import OrgSession
 from pairly_core.notifications.models import Template
 from pairly_core.notifications.permissions import TEMPLATE_MANAGE, TEMPLATE_READ
+from pairly_core.notifications.service import org_display_name
 from pairly_core.notifications.templates import (
     TemplateLintError,
     create_template_version,
@@ -192,7 +193,8 @@ async def preview_template(body: PreviewIn, actor: Reader, session: OrgSession) 
             body_html=body.body_html,
             variables=specs,
         )
-    result = preview(source, body.values, tz=body.timezone)
+    org_name = await org_display_name(session) if source.channel == "email" else None
+    result = preview(source, body.values, tz=body.timezone, org_name=org_name)
     rendered = result.rendered
     return PreviewOut(
         subject=rendered.subject if rendered else None,

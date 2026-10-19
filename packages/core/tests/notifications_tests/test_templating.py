@@ -10,12 +10,15 @@ import pytest
 
 from pairly_core.notifications.defaults import ALL_SYSTEM_TEMPLATES as SYSTEM_TEMPLATES
 from pairly_core.notifications.templating import (
+    EMAIL_ACTION_BG,
     MAX_OUTPUT_CHARS,
+    UNSUBSCRIBE_SLOT,
     TemplateRenderError,
     TemplateSource,
     TemplateVariableError,
     check_syntax,
     coerce_variables,
+    fill_unsubscribe,
     lint_source,
     parse_declarations,
     render_part,
@@ -284,3 +287,152 @@ def test_system_defaults_are_clean_and_render() -> None:
         assert (key, channel, "ar") in keys
     sensitive = {t.key for t in SYSTEM_TEMPLATES if t.requires_approval}
     assert sensitive == {"hire.candidate.rejection", "hire.candidate.offer", "pay.vendor.message"}
+
+
+# ------------------------------------------------------------------ the email shell
+
+_LINK_VARS: dict[str, Any] = {
+    "name": {"type": "string"},
+    "note": {"type": "text", "required": False},
+    "open_url": {"type": "url"},
+    "later_url": {"type": "url", "required": False},
+}
+_LINK_BODY = (
+    "Hi {{ name }}.\n{% if note %}{{ note }}\n{% endif %}\nOpen your scorecard: {{ open_url }}"
+    "{% if later_url %}\n\nNot now? Remind me later: {{ later_url }}{% endif %}"
+)
+
+
+def _email(locale: str = "en", **values: Any) -> str:
+    src = _src(_LINK_BODY, locale=locale, variables=_LINK_VARS)
+    rendered = render_source(
+        src,
+        {"name": "Sam", "open_url": "https://app.example/s?a=1&b=2", **values},
+        org_name="Acme & Sons",
+    )
+    assert rendered.html is not None
+    return rendered.html
+
+
+def test_email_shell_structure() -> None:
+    html = _email(later_url="https://app.example/later")
+    # Table based, 600px wide at most, paper outside, a hairline card, no scripts or images.
+    assert html.startswith('<!doctype html><html lang="en" dir="ltr">')
+    assert 'role="presentation"' in html
+    assert "max-width:600px" in html
+    assert "border:1px solid" in html
+    assert "<script" not in html.lower()
+    assert "<img" not in html.lower()
+    assert "url(" not in html
+    assert "@import" not in html
+    # Dark mode friendly.
+    assert '<meta name="color-scheme" content="light dark">' in html
+    assert '<meta name="supported-color-schemes" content="light dark">' in html
+    assert "prefers-color-scheme:dark" in html
+    # The organisation heads it, escaped, and the footer says why the email came.
+    assert "Acme &amp; Sons" in html
+    assert "Acme &amp; Sons sent you this email through Pairly." in html
+    assert "Acme & Sons" not in html
+    # The title uses the serif stack with safe fallbacks, the body the sans stack.
+    assert "'Fraunces', Georgia, 'Times New Roman', serif" in html
+    assert "'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" in html
+    # The preheader carries the first line of the text, hidden.
+    assert "mso-hide:all" in html
+    assert ">Hi Sam.&#8203;" in html
+
+
+def test_email_has_one_saffron_button_with_ink_text_and_escaped_links() -> None:
+    html = _email(later_url="https://app.example/later")
+    assert html.count(f'bgcolor="{EMAIL_ACTION_BG}"') == 1
+    assert html.count('class="pl-btn-a"') == 1
+    # The first declared link is the button, labelled by its line; the URL is escaped.
+    assert 'href="https://app.example/s?a=1&amp;b=2"' in html
+    assert ">Open your scorecard</a>" in html
+    assert "a=1&b=2" not in html
+    # Ink text on saffron, never white.
+    assert "color:#ffffff" not in html.split('class="pl-btn-a"', 1)[1].split(">", 1)[0]
+    # A later link stays a plain link.
+    assert ">Not now? Remind me later</a>" in html
+
+
+def test_outsider_text_never_becomes_a_link_or_button() -> None:
+    html = _email(note="Pay now: https://evil.example/pay")
+    assert 'href="https://evil.example' not in html
+    assert "Pay now: https://evil.example/pay" in html
+    assert html.count('class="pl-btn-a"') == 1
+
+
+def test_email_without_links_has_no_button() -> None:
+    src = _src("Hi {{ name }}")
+    rendered = render_source(src, {"name": "Sam"})
+    assert rendered.html is not None
+    assert 'class="pl-btn-a"' not in rendered.html
+    # No organisation known: the header falls back to the product name.
+    assert ">Pairly</td>" in rendered.html
+
+
+def test_custom_html_body_is_kept_and_framed() -> None:
+    src = _src(
+        "Hi {{ name }}",
+        html='<p>Hi {{ name }} <a href="{{ u }}">open</a></p>',
+        variables={"name": {"type": "string"}, "u": {"type": "url"}},
+    )
+    rendered = render_source(src, {"name": "<i>x</i>", "u": "https://a.example/?q=1&r=2"})
+    assert rendered.html is not None
+    assert '<p>Hi &lt;i&gt;x&lt;/i&gt; <a href="https://a.example/?q=1&amp;r=2">open</a></p>' in (
+        rendered.html
+    )
+    assert 'class="pl-btn-a"' not in rendered.html
+
+
+def test_arabic_email_is_rtl_throughout() -> None:
+    html = _email("ar")
+    assert html.startswith('<!doctype html><html lang="ar" dir="rtl">')
+    assert '<body dir="rtl"' in html
+    assert 'dir="ltr"' not in html
+    assert 'align="left"' not in html
+    assert "text-align:left" not in html
+    assert 'align="right"' in html
+    # Arabic copy, no Latin capitals or letter spacing, the Arabic sans for the title.
+    assert "أرسلت Acme &amp; Sons إليك هذه الرسالة عبر Pairly." in html
+    assert "text-transform:uppercase" not in html
+    assert "'IBM Plex Sans Arabic'" in html
+
+
+def test_plain_text_part_is_unchanged_and_complete() -> None:
+    src = _src(_LINK_BODY, variables=_LINK_VARS)
+    rendered = render_source(
+        src,
+        {"name": "Sam", "open_url": "https://app.example/s", "later_url": "https://app.example/l"},
+        org_name="Acme",
+    )
+    assert rendered.text == (
+        "Hi Sam.\n\nOpen your scorecard: https://app.example/s\n\n"
+        "Not now? Remind me later: https://app.example/l"
+    )
+
+
+def test_render_is_deterministic_for_approval_hashes() -> None:
+    assert _email(later_url="https://app.example/later") == _email(
+        later_url="https://app.example/later"
+    )
+
+
+def test_unsubscribe_slot_is_filled_in_the_footer_only() -> None:
+    html = _email()
+    assert html.count(UNSUBSCRIBE_SLOT) == 1
+    assert fill_unsubscribe(html, None, "en") == html
+    filled = fill_unsubscribe(html, "https://api.example/u?token=a&b", "en")
+    assert filled is not None
+    assert UNSUBSCRIBE_SLOT not in filled
+    assert 'href="https://api.example/u?token=a&amp;b"' in filled
+    assert "Unsubscribe from emails like this" in filled
+    # A copy of the marker inside a body is never the one filled.
+    body = f"<p>{UNSUBSCRIBE_SLOT}</p>"
+    framed = render_source(
+        _src("x", html=body, variables={"name": {"type": "string"}}), {"name": "a"}
+    ).html
+    filled = fill_unsubscribe(framed, "https://api.example/u", "ar")
+    assert filled is not None
+    assert f"<p>{UNSUBSCRIBE_SLOT}</p>" in filled
+    assert "إلغاء الاشتراك في رسائل كهذه" in filled

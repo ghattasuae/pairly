@@ -274,7 +274,11 @@ class Preview:
 
 
 def preview(
-    source: TemplateSource, values: Mapping[str, Any] | None = None, *, tz: str | None = None
+    source: TemplateSource,
+    values: Mapping[str, Any] | None = None,
+    *,
+    tz: str | None = None,
+    org_name: str | None = None,
 ) -> Preview:
     """Lint and render with sample values (or the given ones). Never sends anything."""
     issues = lint_source(source)
@@ -284,7 +288,7 @@ def preview(
     if any(i.severity == "error" for i in issues):
         return Preview(None, issues, sample)
     try:
-        rendered = render_source(source, sample, tz=tz)
+        rendered = render_source(source, sample, tz=tz, org_name=org_name)
     except TemplateRenderError as exc:
         issues = [*issues, LintIssue("error", "render_failed", str(exc))]
         return Preview(None, issues, sample)
