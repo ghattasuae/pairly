@@ -436,3 +436,71 @@ def test_unsubscribe_slot_is_filled_in_the_footer_only() -> None:
     assert filled is not None
     assert f"<p>{UNSUBSCRIBE_SLOT}</p>" in filled
     assert "إلغاء الاشتراك في رسائل كهذه" in filled
+
+
+# ------------------------------------------------------------------ approval email v2
+
+# Template versions are immutable once seeded: version 1 by migration 0011, version 2 by
+# migration 0036. A change to either HTML needs a new version and its own migration.
+_PINNED_HTML = {
+    (1, "en"): "118a417724de16187f30d1cdb5c60b172d2d2a9fd21927d9d55b18d81d354f61",
+    (1, "ar"): "c30c0681c1f0c35374b28be93ecda7905c39757294c05b6426934d9cf38890d8",
+    (2, "en"): "5c1b3536053a6f59ccc8387c6d3d5c2a459733f6075f47580b3f3e07eb2013e1",
+    (2, "ar"): "69e3eb4ca27a8901c25d480c48e6f31e9607850bc4c83bed7f056f14b663451f",
+}
+
+
+def test_approval_email_versions_are_pinned() -> None:
+    import hashlib
+
+    from pairly_core.notifications.defaults import APPROVAL_REQUESTED, APPROVAL_REQUESTED_V2
+
+    for version, rows in ((1, APPROVAL_REQUESTED[:2]), (2, APPROVAL_REQUESTED_V2)):
+        for t in rows:
+            assert t.channel == "email"
+            digest = hashlib.sha256((t.body_html or "").encode("utf-8")).hexdigest()
+            assert digest == _PINNED_HTML[(version, t.locale)], (version, t.locale)
+    # Version 2 keeps everything but the HTML.
+    for v1, v2 in zip(APPROVAL_REQUESTED[:2], APPROVAL_REQUESTED_V2, strict=True):
+        assert (v1.key, v1.channel, v1.locale, v1.category, v1.subject, v1.body, v1.variables) == (
+            v2.key,
+            v2.channel,
+            v2.locale,
+            v2.category,
+            v2.subject,
+            v2.body,
+            v2.variables,
+        )
+        assert v2.requires_approval == v1.requires_approval
+
+
+@pytest.mark.parametrize("locale", ["en", "ar"])
+def test_approval_email_v2_has_one_saffron_button_and_a_danger_outline(locale: str) -> None:
+    from pairly_core.notifications.defaults import APPROVAL_REQUESTED_V2
+
+    t = next(t for t in APPROVAL_REQUESTED_V2 if t.locale == locale)
+    specs = parse_declarations(t.variables)
+    src = TemplateSource(t.channel, t.locale, t.subject, t.body, t.body_html, specs)  # type: ignore[arg-type]
+    assert lint_source(src) == []
+    values = dict(sample_variables(specs))
+    values["approve_url"] = "https://app.example/approvals/link?t=a&b=1#x"
+    values["reject_url"] = "https://app.example/approvals/link?t=r&b=2#y"
+    rendered = render_source(src, values, org_name="Acme")
+    html = rendered.html
+    assert html is not None
+    assert html.count(f'bgcolor="{EMAIL_ACTION_BG}"') == 1
+    assert html.count('class="pl-btn-a"') == 1
+    assert html.count('class="pl-btn-danger-a"') == 1
+    assert 'href="https://app.example/approvals/link?t=a&amp;b=1#x"' in html
+    assert 'href="https://app.example/approvals/link?t=r&amp;b=2#y"' in html
+    # No white text on a coloured fill anywhere.
+    assert "#ffffff;text" not in html
+    assert "color:#ffffff" not in html
+    assert "<script" not in html.lower()
+    assert f'dir="{"rtl" if locale == "ar" else "ltr"}"' in html
+    # Without the one-time links there are no buttons at all.
+    values.pop("approve_url")
+    values.pop("reject_url")
+    plain = render_source(src, values).html
+    assert plain is not None
+    assert "pl-btn" not in plain.split("</style>", 1)[1]

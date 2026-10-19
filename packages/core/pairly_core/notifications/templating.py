@@ -729,6 +729,7 @@ _EMAIL_RULE: Final = "#e2dcd2"
 _EMAIL_INK: Final = "#1a1511"
 _EMAIL_MUTED: Final = "#635c56"
 _EMAIL_LINK: Final = "#405870"
+_EMAIL_DANGER: Final = "#a12721"
 # Saffron with ink text on it: 7.0:1, never white text.
 EMAIL_ACTION_BG: Final = "#e78c08"
 
@@ -772,11 +773,14 @@ _EMAIL_STYLE: Final = (
     ".pl-rule{border-color:#312d28!important}"
     ".pl-body a,.pl-link{color:#95b5d6!important}"
     "a.pl-btn-a{color:#201308!important}"
-    ".pl-btn{background:#f1aa4f!important}}"
+    ".pl-btn{background:#f1aa4f!important}"
+    ".pl-btn-danger{border-color:#f98f84!important}"
+    "a.pl-btn-danger-a{color:#f98f84!important}}"
     "[data-ogsc] .pl-ink,[data-ogsc] .pl-body{color:#ebe7df!important}"
     "[data-ogsc] .pl-muted{color:#a9a49c!important}"
     "[data-ogsc] .pl-body a,[data-ogsc] .pl-link{color:#95b5d6!important}"
     "[data-ogsc] a.pl-btn-a{color:#201308!important}"
+    "[data-ogsc] a.pl-btn-danger-a{color:#f98f84!important}"
     "</style>"
 )
 
@@ -789,24 +793,53 @@ def _sans(locale: str) -> str:
     return _SANS_AR if locale in RTL_LOCALES else _SANS
 
 
-def email_button(url: str, label: str, locale: str = "en") -> str:
-    """The one main action: a bulletproof saffron button (a padded link inside a coloured
-    cell, so Outlook still shows the colour), with the link spelled out below it. The URL,
-    the label and the copy are escaped; everything else is a constant."""
-    href = escape(url)
-    sans = _sans(locale)
+def _saffron_cell(href: str, label: str, sans: str) -> str:
     return (
-        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
-        'style="border-collapse:separate;margin:8px 0 12px"><tr>'
         f'<td class="pl-btn" align="center" bgcolor="{EMAIL_ACTION_BG}" '
         f'style="border-radius:6px;background:{EMAIL_ACTION_BG}">'
         f'<a class="pl-btn-a" href="{href}" target="_blank" rel="noopener" '
         f'style="display:inline-block;padding:12px 24px;border-radius:6px;font-family:{sans};'
         f"font-size:15px;font-weight:600;line-height:20px;color:{_EMAIL_INK};"
-        f'text-decoration:none">{escape(label)}</a></td></tr></table>'
+        f'text-decoration:none">{escape(label)}</a></td>'
+    )
+
+
+def email_button(url: str, label: str, locale: str = "en") -> str:
+    """The one main action: a bulletproof saffron button (a padded link inside a coloured
+    cell, so Outlook still shows the colour), with the link spelled out below it. The URL,
+    the label and the copy are escaped; everything else is a constant."""
+    href = escape(url)
+    return (
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+        'style="border-collapse:separate;margin:8px 0 12px"><tr>'
+        f"{_saffron_cell(str(href), label, _sans(locale))}</tr></table>"
         f'<p class="pl-muted" style="margin:0 0 16px;font-size:13px;line-height:20px;'
         f'color:{_EMAIL_MUTED};word-break:break-all">{escape(_copy(locale)["fallback"])} '
         f'<a class="pl-link" href="{href}" style="color:{_EMAIL_LINK}">{href}</a></p>'
+    )
+
+
+def email_decision_buttons(
+    approve_url: str, approve_label: str, reject_url: str, reject_label: str, locale: str = "en"
+) -> str:
+    """Approve and reject side by side: approve is the one saffron button (ink text), reject
+    a danger outline (danger ink on the card, 7.4:1 light and 7.7:1 dark), never white text
+    on a colour. A spacer cell keeps the gap the same in both directions. Template
+    expressions such as ``{{ approve_url }}`` pass through unchanged (escaping leaves
+    braces alone), so system templates can build their HTML with this."""
+    sans = _sans(locale)
+    reject = escape(reject_url)
+    return (
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+        'style="border-collapse:separate;margin:8px 0 16px"><tr>'
+        f"{_saffron_cell(str(escape(approve_url)), approve_label, sans)}"
+        '<td width="12" style="width:12px;font-size:0;line-height:0">&nbsp;</td>'
+        f'<td class="pl-btn-danger" align="center" style="border-radius:6px;'
+        f'border:2px solid {_EMAIL_DANGER}">'
+        f'<a class="pl-btn-danger-a" href="{reject}" target="_blank" rel="noopener" '
+        f'style="display:inline-block;padding:10px 22px;border-radius:6px;font-family:{sans};'
+        f"font-size:15px;font-weight:600;line-height:20px;color:{_EMAIL_DANGER};"
+        f'text-decoration:none">{escape(reject_label)}</a></td></tr></table>'
     )
 
 

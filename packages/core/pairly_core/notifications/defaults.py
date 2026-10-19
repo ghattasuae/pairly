@@ -17,8 +17,10 @@ Copy style: short plain sentences, never an em dash (the lint refuses them).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Final
+
+from pairly_core.notifications.templating import email_decision_buttons
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +151,45 @@ APPROVAL_REQUESTED: Final = (
         subject="مطلوب موافقتك: {{ title }}",
         body="المرحلة {{ step }}. الموعد النهائي {{ due_at }}.",
         variables=_INAPP_APPROVAL_VARS,
+    ),
+)
+
+# Version 2 of the approval request email (migration 0036): the same text, subject and
+# variables, the HTML on the shared email shell. Approve is the one saffron button with ink
+# text, reject a danger outline, so no white text on a coloured fill. Versions are
+# immutable: a test pins this HTML, and a change needs version 3 and its own migration.
+_APPROVAL_NOTE_STYLE = (
+    'class="pl-muted" style="margin:0 0 16px;font-size:14px;line-height:22px;color:#635c56"'
+)
+APPROVAL_REQUESTED_V2: Final = (
+    replace(
+        APPROVAL_REQUESTED[0],
+        body_html=(
+            "<p>An item is waiting for your decision.</p>"
+            "<p><strong>{{ title }}</strong><br>Step: {{ step }}<br>Due: {{ due_at }}</p>"
+            "{% if approve_url %}"
+            + email_decision_buttons(
+                "{{ approve_url }}", "Approve", "{{ reject_url }}", "Reject", "en"
+            )
+            + f"<p {_APPROVAL_NOTE_STYLE}>These links work once, only for you, and expire in "
+            "{{ expires_minutes }} minutes. You confirm on the next page after signing in with "
+            "two-factor authentication.</p>{% endif %}"
+            '<p><a href="{{ inbox_url }}">Open the approval inbox</a></p>'
+        ),
+    ),
+    replace(
+        APPROVAL_REQUESTED[1],
+        body_html=(
+            "<p>يوجد عنصر بانتظار قرارك.</p>"
+            "<p><strong>{{ title }}</strong><br>المرحلة: {{ step }}<br>"
+            "الموعد النهائي: {{ due_at }}</p>"
+            "{% if approve_url %}"
+            + email_decision_buttons("{{ approve_url }}", "موافقة", "{{ reject_url }}", "رفض", "ar")
+            + f"<p {_APPROVAL_NOTE_STYLE}>هذه الروابط تعمل مرة واحدة ولك وحدك، وتنتهي "
+            "صلاحيتها بعد {{ expires_minutes }} دقيقة. ستؤكد قرارك في الصفحة التالية بعد "
+            "تسجيل الدخول بالتحقق الثنائي.</p>{% endif %}"
+            '<p><a href="{{ inbox_url }}">افتح صندوق الموافقات</a></p>'
+        ),
     ),
 )
 
@@ -587,7 +628,8 @@ RETENTION_FIRST_DELETION: Final = (
 )
 
 # Seeded by migration 0011. Later defaults are seeded by their own migration (0014 for
-# APPEAL_ESCALATED, 0031 for RETENTION_FIRST_DELETION) and listed in ALL_SYSTEM_TEMPLATES.
+# APPEAL_ESCALATED, 0031 for RETENTION_FIRST_DELETION, 0036 for APPROVAL_REQUESTED_V2 as
+# version 2) and listed in ALL_SYSTEM_TEMPLATES.
 SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *APPROVAL_REQUESTED,
     *APPROVAL_ESCALATED,
@@ -600,4 +642,5 @@ ALL_SYSTEM_TEMPLATES: Final[tuple[DefaultTemplate, ...]] = (
     *SYSTEM_TEMPLATES,
     *APPEAL_ESCALATED,
     *RETENTION_FIRST_DELETION,
+    *APPROVAL_REQUESTED_V2,
 )
