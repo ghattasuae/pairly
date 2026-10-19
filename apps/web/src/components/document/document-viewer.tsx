@@ -321,7 +321,7 @@ export function DocumentViewer({
         <ul aria-label={t("legend")} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {hasEvidence && (
             <li className="flex items-center gap-1.5">
-              <span aria-hidden className="inline-block h-3 w-5 rounded-[2px] border border-primary/70 bg-primary/20" />
+              <span aria-hidden className="inline-block h-3 w-5 rounded-[2px] border border-signal-ink/80 bg-signal/30" />
               {t("legendEvidence")}
             </li>
           )}
@@ -366,7 +366,7 @@ function Box({ box, scale, highlight, active }: { box: BBox; scale: number; high
       className={cn(
         "pointer-events-none absolute rounded-[2px]",
         highlight.kind === "evidence"
-          ? "border border-primary/70 bg-primary/20"
+          ? "border border-signal-ink/80 bg-signal/30"
           : "highlight-guardrail",
         active && "highlight-active",
       )}
@@ -533,8 +533,8 @@ function HighlightList({
               onClick={() => onSelect(h)}
               aria-pressed={active}
               className={cn(
-                "group w-full rounded-lg border bg-surface p-3 text-start text-sm transition-colors hover:bg-accent",
-                active && "border-ring ring-2 ring-ring/30",
+                "group w-full card-hairline p-3 text-start text-sm transition-colors hover:bg-accent",
+                active && "border-signal-ink bg-signal-soft hover:bg-signal-soft",
               )}
             >
               <span className="flex items-center gap-2">
@@ -567,7 +567,7 @@ function HighlightList({
                 </>
               ) : (
                 h.quote && (
-                  <q className="mt-1.5 block break-words text-muted-foreground">
+                  <q className="mt-2 block border-s-2 border-rule ps-2.5 leading-relaxed break-words text-foreground">
                     <bdi>{h.quote}</bdi>
                   </q>
                 )

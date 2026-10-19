@@ -27,7 +27,8 @@ describe("biasExportQuery", () => {
 
 describe("judgementTone", () => {
   it("makes only a result below four-fifths stand out", () => {
-    expect(judgementTone("below_four_fifths")).toBe("signal");
+    expect(judgementTone("below_four_fifths")).toBe("warning");
+    expect(judgementTone("meets_four_fifths")).toBe("default");
     expect(judgementTone("too_small_to_judge")).toBe("outline");
     expect(judgementTone("reference")).toBe("default");
   });

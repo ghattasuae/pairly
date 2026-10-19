@@ -61,7 +61,7 @@ function ConfigEditor({ initial, onSaved }: { initial: HireChecklistConfig; onSa
   }
 
   return (
-    <details className="rounded-xl border bg-surface p-5" data-checklist-config>
+    <details className="card-hairline p-5" data-checklist-config>
       <summary className="cursor-pointer font-medium">{t("configure")}</summary>
       <div className="mt-4 space-y-3">
         <ul className="space-y-2">
@@ -99,7 +99,7 @@ function ConfigEditor({ initial, onSaved }: { initial: HireChecklistConfig; onSa
           <p className="text-xs text-muted-foreground">{t("retentionHint")}</p>
         </div>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {tErrors(errorKey(error) as "generic")}
           </p>
         )}
@@ -152,7 +152,7 @@ export function ChecklistPanel({ initial, config }: { initial: HireChecklist; co
       ) : (
         <ul className="space-y-3">
           {data.items.map((item) => (
-            <li key={item.id} className="space-y-2 rounded-xl border bg-surface p-4 text-sm" data-checklist-item={item.status}>
+            <li key={item.id} className="space-y-2 card-hairline p-4 text-sm" data-checklist-item={item.status}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-medium">{locale === "ar" && item.label_ar ? item.label_ar : item.label}</p>
                 <Badge variant={item.status === "verified" ? "default" : "outline"}>{t(`status.${item.status}` as "status.requested")}</Badge>
@@ -193,12 +193,12 @@ export function ChecklistPanel({ initial, config }: { initial: HireChecklist; co
         </ul>
       )}
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
       {data.can_write && data.missing.length > 0 && (
-        <div className="space-y-2 rounded-xl border bg-surface p-5">
+        <div className="space-y-2 card-hairline p-5">
           <p className="text-sm">{t("missing", { list: data.missing.map((m) => (locale === "ar" && m.label_ar ? m.label_ar : m.label)).join(", ") })}</p>
           <Button disabled={busy !== null} onClick={() => void run("request", () => requestChecklist(data.application_id))} data-request-checklist>
             {busy === "request" ? <Loader2 aria-hidden className="animate-spin" /> : <Send aria-hidden />}

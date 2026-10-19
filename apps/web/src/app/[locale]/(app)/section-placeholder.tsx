@@ -21,7 +21,7 @@ export async function SectionPlaceholder({ section }: { section: Exclude<NavKey,
   const nav = await getTranslations("Nav");
   const t = await getTranslations("Placeholder");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">
+    <div className="page space-y-6">
       <PageHeader title={nav(section)} />
       <EmptyState icon={<Hourglass aria-hidden />} title={t("title", { section: nav(section) })} body={t("body")} />
     </div>

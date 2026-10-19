@@ -90,7 +90,7 @@ export default async function PortalReceiptPage({ params }: Props) {
           <h2 id="receipt-outcome" className="font-display text-xl">
             {t("privacy.outcome")}
           </h2>
-          <div className="rounded-xl border bg-surface p-4">
+          <div className="card-hairline p-4">
             <JsonView value={receipt.outcome} />
           </div>
         </section>

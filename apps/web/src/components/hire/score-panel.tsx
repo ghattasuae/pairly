@@ -42,7 +42,7 @@ function ScoreBar({ score, max, label }: { score: number; max: number; label: st
       {Array.from({ length: max }, (_, i) => (
         <span
           key={i}
-          className={cn("h-2 w-4 rounded-sm", i < score ? "bg-primary" : "bg-muted")}
+          className={cn("h-2 w-4 rounded-[2px]", i < score ? "bg-primary" : "border border-input")}
           aria-hidden
         />
       ))}
@@ -81,12 +81,12 @@ export function ScorePanel({
           {t("running")}
         </p>
       )}
-      <section aria-labelledby="overall-label" className="rounded-xl border bg-surface p-4">
+      <section aria-labelledby="overall-label" className="card-hairline flex items-end justify-between gap-3 p-4">
         <p id="overall-label" className="eyebrow">
           {t("score.overall")}
         </p>
         {screening.overall_score !== null && screening.overall_score !== undefined ? (
-          <p className="font-display text-4xl tabular-nums" data-overall>
+          <p className="figure text-5xl leading-none text-signal-ink" data-overall>
             {t("score.overallValue", { score: Math.round(screening.overall_score) })}
           </p>
         ) : (
@@ -119,7 +119,7 @@ export function ScorePanel({
           <p className="text-xs text-muted-foreground">{t("score.flagsInfo")}</p>
           <ul className="space-y-1.5 text-sm">
             {screening.flags.map((flag, index) => (
-              <li key={`${flag.code}-${index}`} className="border-s-2 border-signal ps-2" data-flag={flag.code}>
+              <li key={`${flag.code}-${index}`} className="border-s-2 border-primary ps-2.5" data-flag={flag.code}>
                 {t(`flags.${flagKey(flag.code)}` as "flags.unknown")}
               </li>
             ))}
@@ -137,7 +137,7 @@ export function ScorePanel({
             {screening.knockouts
               .filter((k) => !k.matches)
               .map((k) => (
-                <li key={k.id} className="border-s-2 border-signal ps-2">
+                <li key={k.id} className="border-s-2 border-warning-ink ps-2.5">
                   <span className="font-medium">{k.question}</span> {t("score.knockoutMismatch")}
                 </li>
               ))}
@@ -183,7 +183,7 @@ function CriterionItem({
   };
 
   return (
-    <li className="space-y-2 rounded-xl border bg-surface p-3" data-criterion={criterion.criterion_id}>
+    <li className="card-hairline space-y-3 p-4" data-criterion={criterion.criterion_id}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium" id={`${ids}-name`}>
@@ -198,14 +198,14 @@ function CriterionItem({
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-sm font-medium tabular-nums">{t("score.of", { score: criterion.score, max })}</span>
+          <span className="font-mono text-sm font-medium">{t("score.of", { score: criterion.score, max })}</span>
           <ScoreBar score={criterion.score} max={max} label={t("score.of", { score: criterion.score, max })} />
-          {criterion.overridden && <Badge variant="signal">{t("score.overridden")}</Badge>}
+          {criterion.overridden && <Badge variant="info">{t("score.overridden")}</Badge>}
         </div>
       </div>
 
       {criterion.evidence.length > 0 ? (
-        <ul className="space-y-1" aria-label={t("score.evidence")}>
+        <ul className="space-y-1.5" aria-label={t("score.evidence")}>
           {criterion.evidence.map((e, index) => {
             const id = evidenceId(criterion.criterion_id, index);
             return (
@@ -217,8 +217,10 @@ function CriterionItem({
                   aria-describedby={`${ids}-name`}
                   title={t("score.showInCv")}
                   className={cn(
-                    "flex w-full items-start gap-1.5 rounded-md px-2 py-1 text-start text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring",
-                    activeEvidence === id && "bg-signal-soft",
+                    // The shared evidence look: a quote on a ruled start edge; the one shown
+                    // in the CV gets the saffron-soft tint and a saffron rule.
+                    "flex w-full items-start gap-1.5 rounded-e-md border-s-2 border-rule py-1 ps-2.5 pe-2 text-start text-sm leading-relaxed hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring",
+                    activeEvidence === id && "border-signal-ink bg-signal-soft",
                   )}
                   data-quote={id}
                 >
@@ -253,7 +255,7 @@ function CriterionItem({
       )}
       {editing && (
         <form
-          className="space-y-2 rounded-lg border bg-background p-3"
+          className="space-y-2 rounded-lg border border-border bg-surface-sunken p-3"
           aria-label={t("override.title", { criterion: criterion.name })}
           onSubmit={(event) => {
             event.preventDefault();
@@ -284,7 +286,7 @@ function CriterionItem({
           </label>
           <p className="text-xs text-muted-foreground">{t("override.help")}</p>
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={saving || reason.trim().length < 10}>
+            <Button type="submit" size="sm" variant="ink" disabled={saving || reason.trim().length < 10}>
               {saving && <Loader2 className="animate-spin" aria-hidden />}
               {t("override.save")}
             </Button>

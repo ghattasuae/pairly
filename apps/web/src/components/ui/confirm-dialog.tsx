@@ -6,7 +6,16 @@ import { useTranslations } from "next-intl";
 import type * as React from "react";
 
 import { Button } from "./button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "./dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  dialogTitleClass,
+} from "./dialog";
 
 /**
  * Confirmation for actions that cannot be undone or that leave Pairly (brief 5.3:
@@ -40,24 +49,23 @@ export function ConfirmDialog({
   const t = useTranslations("Common");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md overflow-hidden">
         <form
-          className="space-y-5 p-6"
           onSubmit={(event) => {
             event.preventDefault();
             if (!pending && !confirmDisabled) onConfirm();
           }}
         >
-          <div className="space-y-2">
-            <DialogTitle className="font-display text-2xl leading-tight">{title}</DialogTitle>
+          <DialogHeader className={children ? undefined : "border-b-0 pb-2"}>
+            <DialogTitle className={dialogTitleClass}>{title}</DialogTitle>
             {description ? (
               <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription>
             ) : (
               <DialogDescription className="sr-only">{title}</DialogDescription>
             )}
-          </div>
-          {children}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          </DialogHeader>
+          {children && <DialogBody>{children}</DialogBody>}
+          <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={pending}>
               {t("cancel")}
             </Button>
@@ -69,7 +77,7 @@ export function ConfirmDialog({
             >
               {confirmLabel}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -79,7 +79,7 @@ export default async function DocumentPage({ params, searchParams }: Props) {
   if (!doc.ok) {
     if (doc.code === "not_found" || doc.code === "permission_denied") notFound();
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/documents/${id}`} />
       </div>
     );
@@ -112,7 +112,7 @@ export default async function DocumentPage({ params, searchParams }: Props) {
   const workflow = workflows.has(document.workflow as "pay") ? workflows(document.workflow as "pay") : document.workflow;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-8 sm:px-8">
+    <div className="page max-w-7xl space-y-6">
       <PageHeader eyebrow={workflow} title={<bdi>{document.original_filename ?? t("untitled")}</bdi>}>
         <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
           <Badge variant={document.needs_review ? "signal" : "outline"}>
@@ -138,7 +138,7 @@ export default async function DocumentPage({ params, searchParams }: Props) {
           <h2 id="doc-decisions" className="eyebrow">
             {t("decisions")}
           </h2>
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {records.map((record) => (
               <li key={record.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                 <span className="flex items-center gap-2">

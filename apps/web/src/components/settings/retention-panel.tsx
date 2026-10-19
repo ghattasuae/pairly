@@ -131,7 +131,7 @@ export function RetentionPanel({
           {t("rulesTitle")}
         </h2>
         <p className="text-sm text-muted-foreground">{t("rulesIntro", { days: settings.preview_days })}</p>
-        <ul className="divide-y rounded-xl border bg-surface">
+        <ul className="divide-y card-hairline">
           {settings.rules.map((rule) => {
             const editable = canManage && (rule.period !== null || rule.configurable_days);
             const value = periods[rule.key] ?? "";
@@ -244,7 +244,7 @@ export function RetentionPanel({
         {schedule.length === 0 ? (
           <EmptyState title={t("previewEmpty")} />
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {schedule.map((item) => {
               const isHeld = item.status === "held" || heldIds.has(`${item.subject_type}:${item.subject_id}`);
               return (
@@ -293,7 +293,7 @@ export function RetentionPanel({
         )}
         {holdFor && (
           <form
-            className="space-y-2 rounded-xl border bg-surface p-4"
+            className="space-y-2 card-hairline p-4"
             onSubmit={(e) => {
               e.preventDefault();
               if (!reason.trim()) return;
@@ -334,7 +334,7 @@ export function RetentionPanel({
         {holds.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("holdsEmpty")}</p>
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {holds.map((h) => (
               <li key={h.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-hold={h.id}>
                 <div className="min-w-0 space-y-0.5">

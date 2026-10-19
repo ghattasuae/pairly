@@ -175,7 +175,7 @@ export function CandidateSchedule({
   return (
     <div className="rise w-full max-w-md space-y-6" data-schedule-page>
       <div className="space-y-2">
-        <h1 className="font-display text-3xl leading-tight tracking-tight">
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">
           {booked && !changing ? t("bookedTitle") : t("title")}
         </h1>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
@@ -186,8 +186,8 @@ export function CandidateSchedule({
 
       {booked && !changing ? (
         <div className="space-y-4" data-booked>
-          <p className="flex items-start gap-2 rounded-lg border bg-surface px-4 py-3 text-sm" role="status">
-            <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+          <p className="flex items-start gap-2 card-hairline px-4 py-3 text-sm" role="status">
+            <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
             <span>
               {t("bookedBody", {
                 when: whenLabel(schedule.starts_at ?? "", zone, locale),
@@ -236,7 +236,7 @@ export function CandidateSchedule({
             <p className="text-xs text-muted-foreground">{t("zoneHelp")}</p>
           </div>
           {notice && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {notice}
             </p>
           )}
@@ -264,7 +264,7 @@ export function CandidateSchedule({
                             onClick={() => setPicked(slot)}
                             className={cn(
                               "rounded-md border px-3 py-1.5 text-sm tabular-nums",
-                              on ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-accent",
+                              on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface hover:bg-accent",
                             )}
                             title={slot.sociable ? undefined : t("early")}
                           >
@@ -280,7 +280,7 @@ export function CandidateSchedule({
             )}
           </section>
           {picked && (
-            <div className="space-y-2 rounded-lg border bg-surface px-4 py-3">
+            <div className="space-y-2 card-hairline px-4 py-3">
               <p className="text-sm" role="status">
                 {t("selected", {
                   when: `${dayLabel(localDate(picked.start, zone), locale)}, ${clock(picked.start, zone)}`,

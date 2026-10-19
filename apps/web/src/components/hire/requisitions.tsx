@@ -9,7 +9,7 @@ import type * as React from "react";
 
 import { EmptyState } from "@/components/states/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,7 +71,7 @@ export function RequisitionForm({ onCreated }: { onCreated: (r: HireRequisition)
 
   const field = (name: keyof RequisitionFormInput) => `${ids}-${name}`;
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-xl border bg-surface p-5" data-requisition-form>
+    <form onSubmit={submit} className="space-y-4 card-hairline p-5" data-requisition-form>
       <h2 className="font-display text-xl">{t("form.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("form.intro")}</p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -177,7 +177,7 @@ export function RequisitionForm({ onCreated }: { onCreated: (r: HireRequisition)
         />
       </div>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -189,9 +189,10 @@ export function RequisitionForm({ onCreated }: { onCreated: (r: HireRequisition)
   );
 }
 
-function statusVariant(status: string): "default" | "outline" | "signal" {
-  if (status === "approved") return "default";
-  if (status === "pending_approval") return "signal";
+function statusVariant(status: string): "success" | "outline" | "warning" | "danger" {
+  if (status === "approved" || status === "filled") return "success";
+  if (status === "pending_approval") return "warning";
+  if (status === "rejected") return "danger";
   return "outline";
 }
 
@@ -225,11 +226,11 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
   return (
     <div className="space-y-2">
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
-      <ul className="divide-y rounded-xl border bg-surface" data-requisition-list>
+      <ul className="card-hairline divide-y divide-border overflow-hidden" data-requisition-list>
         {items.map((r) => (
           <li key={r.id} className="flex flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center" data-requisition={r.reference}>
             <div className="min-w-0 flex-1 space-y-1">
@@ -240,7 +241,7 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
                 </Badge>
               </p>
               <p className="text-xs text-muted-foreground">
-                <bdi>{r.reference}</bdi> · {r.team} · {r.location} · {t(`workModel.${r.work_model}` as "workModel.onsite")} ·{" "}
+                <bdi className="font-mono">{r.reference}</bdi> · {r.team} · {r.location} · {t(`workModel.${r.work_model}` as "workModel.onsite")} ·{" "}
                 {t("list.headcount", { count: r.headcount })} ·{" "}
                 {format.number(Number(r.budget), { style: "currency", currency: r.currency, maximumFractionDigits: 0 })} ·{" "}
                 {t("list.start", { date: format.dateTime(new Date(`${r.start_date}T00:00:00`), { dateStyle: "medium" }) })}
@@ -253,7 +254,7 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               {r.status === "pending_approval" && !r.mine && r.approval_id && (
-                <Link href={`/inbox/${r.approval_id}`} className="inline-flex h-8 items-center rounded-md border px-3 text-[0.8rem] hover:bg-accent">
+                <Link href={`/inbox/${r.approval_id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                   {t("list.review")}
                 </Link>
               )}
@@ -263,12 +264,12 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
                 </Button>
               )}
               {r.can_open_job && (
-                <Button size="sm" disabled={busy === r.id} onClick={() => void openJob(r)} data-open-job>
+                <Button size="sm" variant="ink" disabled={busy === r.id} onClick={() => void openJob(r)} data-open-job>
                   {t("list.openJob")}
                 </Button>
               )}
               {r.job_id && (
-                <Link href={`/hire/jobs/${r.job_id}`} className="inline-flex h-8 items-center rounded-md border px-3 text-[0.8rem] hover:bg-accent">
+                <Link href={`/hire/jobs/${r.job_id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                   {t("list.viewJob")}
                 </Link>
               )}

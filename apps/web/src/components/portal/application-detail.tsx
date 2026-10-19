@@ -122,7 +122,7 @@ export function ApplicationDetail({
         {t("app.back")}
       </Link>
       <header className="space-y-1">
-        <h1 id={`${ids}-title`} className="font-display text-3xl leading-tight">
+        <h1 id={`${ids}-title`} className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">
           {locale === "ar" && app.job_title_ar ? app.job_title_ar : app.job_title}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -136,7 +136,7 @@ export function ApplicationDetail({
         {notice ?? ""}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error}
         </p>
       )}
@@ -158,7 +158,7 @@ export function ApplicationDetail({
         ) : (
           <ul className="space-y-2">
             {app.interviews.map((i) => (
-              <li key={i.id} className="space-y-2 rounded-xl border bg-surface p-4" data-interview={i.id} data-interview-status={i.status}>
+              <li key={i.id} className="space-y-2 card-hairline p-4" data-interview={i.id} data-interview-status={i.status}>
                 <p className="font-medium">{t("app.interviewFor", { job: i.title })}</p>
                 {i.starts_at ? (
                   <p className="text-sm text-muted-foreground">
@@ -199,7 +199,7 @@ export function ApplicationDetail({
       </section>
 
       {app.has_offer && (
-        <Link href={`/portal/applications/${app.id}/offer`} className="block rounded-xl border border-primary/40 bg-primary/5 p-4 font-medium text-primary" data-portal-offer-link>
+        <Link href={`/portal/applications/${app.id}/offer`} className="card-hairline lift block border-primary/40 bg-info-soft p-4 font-medium text-primary" data-portal-offer-link>
           {t("app.offer")}
         </Link>
       )}
@@ -216,7 +216,7 @@ export function ApplicationDetail({
             {app.document_requests.map((r) => {
               const label = locale === "ar" && r.label_ar ? r.label_ar : r.label;
               return (
-                <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-surface p-4" data-document-request={r.id}>
+                <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 card-hairline p-4" data-document-request={r.id}>
                   <span className="font-medium">{label}</span>
                   {r.status === "received" ? (
                     <Badge>
@@ -253,7 +253,7 @@ export function ApplicationDetail({
             {app.messages.map((m) => (
               <li
                 key={m.id}
-                className={m.direction === "from_you" ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 rounded-xl border bg-surface p-4"}
+                className={m.direction === "from_you" ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 card-hairline p-4"}
                 data-message={m.direction}
               >
                 <p className="text-xs text-muted-foreground">

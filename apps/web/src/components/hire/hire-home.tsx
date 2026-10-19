@@ -9,7 +9,7 @@ import type * as React from "react";
 
 import { EmptyState } from "@/components/states/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import { errorKey } from "@/lib/action-result";
@@ -21,8 +21,8 @@ export function WaitingCard({ waiting }: { waiting: HireWaitingList }) {
   const t = useTranslations("Hire");
   const ids = useId();
   return (
-    <section aria-labelledby={ids} className="space-y-3 rounded-xl border bg-surface p-5" data-waiting-card>
-      <div className="flex items-baseline justify-between gap-3">
+    <section aria-labelledby={ids} className="card-hairline space-y-3 p-5" data-waiting-card>
+      <div className="card-head">
         <h2 id={ids} className="font-display text-xl">
           {t("home.waitingTitle")}
         </h2>
@@ -31,12 +31,12 @@ export function WaitingCard({ waiting }: { waiting: HireWaitingList }) {
       {waiting.items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("home.nobodyWaiting")}</p>
       ) : (
-        <ol className="divide-y">
+        <ol className="-mx-5 divide-y divide-border border-t border-border">
           {waiting.items.map((item) => (
             <li key={item.application_id}>
               <Link
                 href={`/hire/jobs/${item.job_id}/pipeline?candidate=${item.application_id}`}
-                className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-primary"
+                className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm hover:bg-accent/60 focus-visible:-outline-offset-2"
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{item.label}</span>
@@ -46,7 +46,7 @@ export function WaitingCard({ waiting }: { waiting: HireWaitingList }) {
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {item.has_open_draft && <Badge variant="outline">{t("home.drafted")}</Badge>}
-                  <Badge variant={item.sla_overdue ? "signal" : "outline"}>
+                  <Badge variant={item.sla_overdue ? "danger" : "outline"}>
                     <Clock className="size-3" aria-hidden />
                     {t("card.waiting", { days: item.waiting_days })}
                   </Badge>
@@ -82,7 +82,7 @@ export function RediscoverySearch() {
   };
 
   return (
-    <section aria-labelledby={ids} className="space-y-3 rounded-xl border bg-surface p-5">
+    <section aria-labelledby={ids} className="card-hairline space-y-3 p-5">
       <div className="space-y-1">
         <h2 id={ids} className="font-display text-xl">
           {t("home.rediscoverTitle")}
@@ -97,13 +97,13 @@ export function RediscoverySearch() {
           aria-label={t("home.rediscoverPlaceholder")}
           maxLength={300}
         />
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant="outline" className="h-10" disabled={pending}>
           {pending ? <Loader2 className="animate-spin" aria-hidden /> : <Search aria-hidden />}
           {t("home.search")}
         </Button>
       </form>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -120,7 +120,7 @@ export function RediscoverySearch() {
                   {latest && (
                     <Link
                       href={`/hire/jobs/${latest.job_id}/pipeline?candidate=${latest.application_id}`}
-                      className="text-xs text-primary hover:underline"
+                      className="text-xs text-primary underline-offset-4 hover:underline"
                     >
                       {latest.job_title} · {latest.stage_label}
                     </Link>
@@ -161,7 +161,7 @@ export function Referrals({ jobs, referrals }: { jobs: HireJob[]; referrals: Hir
   };
 
   return (
-    <section aria-labelledby={ids} className="space-y-4 rounded-xl border bg-surface p-5">
+    <section aria-labelledby={ids} className="card-hairline space-y-4 p-5">
       <div className="space-y-1">
         <h2 id={ids} className="font-display text-xl">
           {t("home.referTitle")}
@@ -184,7 +184,7 @@ export function Referrals({ jobs, referrals }: { jobs: HireJob[]; referrals: Hir
         </ul>
       )}
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {t("home.linkFailed")}
         </p>
       )}
@@ -227,7 +227,7 @@ export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?:
         {canEdit && (
           <Link
             href="/hire/jobs/new"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-[0.8rem] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none"
+            className={buttonVariants({ size: "sm" })}
             data-new-job
           >
             <Plus aria-hidden className="size-4" />
@@ -238,26 +238,26 @@ export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?:
       {jobs.length === 0 ? (
         <EmptyState icon={<UsersRound aria-hidden />} title={t("home.noJobs")} />
       ) : (
-        <ul className="divide-y rounded-xl border bg-surface">
+        <ul className="card-hairline divide-y divide-border overflow-hidden">
           {jobs.map((job) => (
             <li key={job.id} className="flex items-stretch">
               <Link
                 href={`/hire/jobs/${job.id}/pipeline`}
-                className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-accent/40"
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-accent/60 focus-visible:-outline-offset-2"
                 data-job-link={job.slug}
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{locale === "ar" && job.title_ar ? job.title_ar : job.title}</span>
                   <span className="block truncate text-xs text-muted-foreground">{job.location}</span>
                 </span>
-                <Badge variant={job.status === "open" ? "default" : "outline"}>
+                <Badge variant={job.status === "open" ? "success" : "outline"}>
                   {t(`jobStatus.${job.status}` as "jobStatus.open")}
                 </Badge>
               </Link>
               {canEdit && (
                 <Link
                   href={`/hire/jobs/${job.id}`}
-                  className="flex items-center border-s px-4 text-sm text-primary hover:bg-accent/40"
+                  className="flex items-center border-s border-border px-4 text-sm text-primary hover:bg-accent/60 focus-visible:-outline-offset-2"
                   data-edit-link={job.slug}
                 >
                   {t("home.edit")}
@@ -265,7 +265,7 @@ export function JobsList({ jobs, canEdit = false }: { jobs: HireJob[]; canEdit?:
               )}
               <Link
                 href={`/hire/jobs/${job.id}/screen`}
-                className="flex items-center border-s px-4 text-sm text-primary hover:bg-accent/40"
+                className="flex items-center border-s border-border px-4 text-sm text-primary hover:bg-accent/60 focus-visible:-outline-offset-2"
                 data-screen-link={job.slug}
               >
                 {tScreen("open")}
@@ -296,9 +296,9 @@ export function HireReportLinks({
   const shown = REPORTS.filter((r) => permissions.includes(r.permission));
   if (shown.length === 0) return null;
   return (
-    <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" data-report-links>
+    <nav className="flex flex-wrap items-center gap-1" data-report-links>
       {shown.map((r) => (
-        <Link key={r.key} href={r.href} className="text-primary hover:underline">
+        <Link key={r.key} href={r.href} className={buttonVariants({ variant: "ghost", size: "sm", className: "text-primary" })}>
           {labels[r.key]}
         </Link>
       ))}

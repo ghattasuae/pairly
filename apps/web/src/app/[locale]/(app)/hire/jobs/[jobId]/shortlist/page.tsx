@@ -40,7 +40,7 @@ export default async function ShortlistPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -48,7 +48,7 @@ export default async function ShortlistPage({ params }: Props) {
   const retry = `/${locale}/hire/jobs/${jobId}/shortlist`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -68,7 +68,7 @@ export default async function ShortlistPage({ params }: Props) {
   if (!board.ok) {
     if (board.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <Unavailable retryHref={retry} />
       </div>
     );

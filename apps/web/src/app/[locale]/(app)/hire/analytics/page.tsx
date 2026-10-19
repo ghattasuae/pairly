@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { HiringAnalytics } from "@/components/hire/hiring-analytics";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
+import { filterApplyClass, filterFieldClass } from "@/components/ui/filter-bar";
 import { Unavailable } from "@/components/states/unavailable";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -35,7 +36,7 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
   const [viewer, session, raw] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -43,7 +44,7 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
   const retry = `/${locale}/hire/analytics`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -56,20 +57,20 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
   ]);
   if (!result.ok) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   const t = await getTranslations("HireAnalytics");
-  const field = "rounded-md border bg-background px-2 py-1.5 text-sm";
+  const field = filterFieldClass;
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={t("title")}>
         <p>{t("intro")}</p>
       </PageHeader>
-      <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border p-4 text-sm" aria-label={t("filters")}>
-        <label className="flex flex-col gap-1">
+      <form method="get" className="filter-bar" aria-label={t("filters")}>
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("job")}
           <select name="job_id" defaultValue={query.job_id ?? ""} className={field}>
             <option value="">{t("allJobs")}</option>
@@ -80,15 +81,15 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("since")}
           <input type="date" name="since" defaultValue={query.since ?? ""} className={field} />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("until")}
           <input type="date" name="until" defaultValue={query.until ?? ""} className={field} />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("ghostDays")}
           <input
             type="number"
@@ -99,7 +100,7 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
             className={`${field} w-24`}
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("threshold")}
           <input
             type="number"
@@ -110,7 +111,7 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
             className={`${field} w-24`}
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {t("minutes")}
           <input
             type="number"
@@ -121,7 +122,7 @@ export default async function HiringAnalyticsPage({ params, searchParams }: Prop
             className={`${field} w-24`}
           />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={filterApplyClass}>
           {t("apply")}
         </button>
       </form>

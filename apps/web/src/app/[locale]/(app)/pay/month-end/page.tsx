@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PayMonthEndView } from "@/components/pay/pay-month-end";
+import { buttonVariants } from "@/components/ui/button";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { monthEndPeriod } from "@/lib/pay/month-end";
@@ -51,7 +52,7 @@ export default async function PayMonthEndPage({ params, searchParams }: Props) {
             className="rounded-md border bg-background px-2 py-1.5 text-sm"
           />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
           {t("apply")}
         </button>
       </form>

@@ -11,19 +11,16 @@ import { cn } from "@/lib/utils";
 
 /**
  * SLA state of the active step. Colour is never the only signal: each state has its own
- * icon and word. Overdue uses the destructive ink, due soon the amber "needs you" signal.
+ * icon and word. Overdue uses the danger tint and ink, due soon the warning tint and ink,
+ * on track stays a quiet outline.
  */
 export function SlaBadge({ state, className }: { state: SlaState | null | undefined; className?: string }) {
   const t = useTranslations("Sla");
   if (!state) return null;
-  const styles: Record<SlaState, string> = {
-    overdue: "border-destructive/40 bg-destructive/10 text-danger-ink",
-    due_soon: "border-transparent bg-signal-soft text-signal-foreground dark:text-signal",
-    on_track: "text-muted-foreground",
-  };
+  const variants = { overdue: "danger", due_soon: "warning", on_track: "outline" } as const;
   const Icon = state === "overdue" ? AlarmClock : state === "due_soon" ? Clock : CircleDot;
   return (
-    <Badge variant="outline" className={cn(styles[state], "[&_svg]:size-3", className)}>
+    <Badge variant={variants[state]} className={cn("[&_svg]:size-3", className)}>
       <Icon aria-hidden />
       {t(state)}
     </Badge>
@@ -45,14 +42,10 @@ export function ApprovalStatusBadge({ status, className }: { status: string; cla
   const Icon = known ? STATUS_ICONS[status as keyof typeof STATUS_ICONS] : CircleDot;
   return (
     <Badge
-      variant="outline"
-      className={cn(
-        "[&_svg]:size-3",
-        status === "approved" && "border-success/40 text-success-ink",
-        status === "rejected" && "border-destructive/40 text-danger-ink",
-        status === "changes_requested" && "border-signal/50",
-        className,
-      )}
+      variant={
+        status === "approved" ? "success" : status === "rejected" ? "danger" : status === "changes_requested" ? "warning" : "outline"
+      }
+      className={cn("[&_svg]:size-3", className)}
     >
       <Icon aria-hidden />
       {known ? t(status as keyof typeof STATUS_ICONS) : status}

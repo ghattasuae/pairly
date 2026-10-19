@@ -109,7 +109,7 @@ export function FlagsPanel({
     <div className="space-y-4">
       {!canManage && <p className="text-sm text-muted-foreground">{t("readOnly")}</p>}
       <ActionError code={error} returnPath={`/${locale}/settings/flags`} totpEnabled={totpEnabled} />
-      <ul className="divide-y rounded-xl border bg-surface">
+      <ul className="divide-y card-hairline">
         {flags.map((flag) => (
           <li key={flag.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
@@ -218,7 +218,7 @@ export function ApiKeysPanel({
   return (
     <div className="space-y-8">
       {secret && <SecretOnce label={t("created")} secret={secret} onDone={() => setSecret(null)} />}
-      <form onSubmit={submit} className="space-y-4 rounded-xl border bg-surface p-5">
+      <form onSubmit={submit} className="space-y-4 card-hairline p-5">
         <div className="space-y-1">
           <h2 className="font-display text-xl">{t("createTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("createBody")}</p>
@@ -303,7 +303,7 @@ export function ApiKeysPanel({
         {keys.length === 0 ? (
           <EmptyState icon={<KeyRound aria-hidden />} title={t("empty")} />
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {keys.map((key) => {
               const revoked = key.revoked_at !== null;
               const expired = !revoked && new Date(key.expires_at) < new Date();

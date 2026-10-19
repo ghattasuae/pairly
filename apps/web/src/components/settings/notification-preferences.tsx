@@ -121,31 +121,31 @@ export function NotificationPreferences({
           </h2>
           <p className="text-sm text-muted-foreground">{t("channelsBody")}</p>
         </div>
-        <div className="relative overflow-x-auto rounded-xl border bg-surface">
-          <table className="w-full min-w-[36rem] text-sm">
+        <div className="table-frame">
+          <table className="data-table min-w-[36rem]">
             <caption className="sr-only">{t("channelsTitle")}</caption>
             <thead>
-              <tr className="border-b text-xs text-muted-foreground">
-                <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("category")}</th>
+              <tr>
+                <th scope="col">{t("category")}</th>
                 {CHANNELS.map((c) => (
-                  <th key={c} scope="col" className="px-3 py-2.5 text-center font-medium">
+                  <th key={c} scope="col" className="text-center">
                     {t(`channels.${c}`)}
                   </th>
                 ))}
-                <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("delivery")}</th>
+                <th scope="col">{t("delivery")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody>
               {prefs.categories.map((category) => {
                 const name = categories.has(category as "approvals") ? categories(category as "approvals") : category;
                 return (
                   <tr key={category}>
-                    <th scope="row" className="px-4 py-3 text-start font-normal">
+                    <th scope="row" className="font-normal">
                       <span className="block font-medium">{name}</span>
                       {category === "sla" && <span className="block text-xs text-muted-foreground">{t("alwaysUrgent")}</span>}
                     </th>
                     {CHANNELS.map((channel) => (
-                      <td key={channel} className="px-3 py-3 text-center">
+                      <td key={channel} className="text-center">
                         <Checkbox
                           checked={(prefs.channels[category] ?? []).includes(channel)}
                           onChange={(e) => toggle(category, channel, e.target.checked)}
@@ -153,7 +153,7 @@ export function NotificationPreferences({
                         />
                       </td>
                     ))}
-                    <td className="px-4 py-3">
+                    <td>
                       <Select
                         aria-label={t("deliveryFor", { category: name })}
                         value={prefs.digest[category] === "daily" ? "daily" : "realtime"}
@@ -176,7 +176,7 @@ export function NotificationPreferences({
       </section>
 
       <section aria-labelledby="pause-heading" className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3 rounded-xl border bg-surface p-5">
+        <div className="space-y-3 card-hairline p-5">
           <h2 id="pause-heading" className="flex items-center gap-2 font-display text-xl">
             <BellOff className="size-5 text-primary" aria-hidden />
             {t("snoozeTitle")}
@@ -204,7 +204,7 @@ export function NotificationPreferences({
           )}
         </div>
 
-        <div className="space-y-3 rounded-xl border bg-surface p-5">
+        <div className="space-y-3 card-hairline p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 font-display text-xl">
               <Moon className="size-5 text-primary" aria-hidden />

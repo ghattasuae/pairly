@@ -36,7 +36,7 @@ export default async function EditJobPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -44,7 +44,7 @@ export default async function EditJobPage({ params }: Props) {
   const retry = `/${locale}/hire/jobs/${jobId}`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -62,14 +62,14 @@ export default async function EditJobPage({ params }: Props) {
   if (!job.ok) {
     if (job.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+      <div className="page max-w-4xl">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   const t = await getTranslations("HireJob");
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page max-w-4xl space-y-8">
       <Link href="/hire" className="text-sm text-primary hover:underline">
         {t("back")}
       </Link>

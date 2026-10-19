@@ -25,7 +25,7 @@ export default async function SecurityPage({ params }: Props) {
   const nav = await getTranslations("Nav");
   const enabled = twoFactorEnabled(session);
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={nav("security")} />
       <TwoFactorSetup enabled={enabled} />
     </div>

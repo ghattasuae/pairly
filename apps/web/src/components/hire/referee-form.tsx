@@ -54,8 +54,8 @@ function Question({
                 data-option={option}
                 onClick={() => onChange(v)}
                 className={cn(
-                  "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                  on ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                  "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors",
+                  on ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                 )}
               >
                 {q.kind === "rating" ? option : t(`option.${option}` as "option.yes")}
@@ -125,7 +125,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
 
   if (page.status === "submitted") {
     return (
-      <section className="space-y-3 rounded-xl border bg-surface p-6" data-reference-submitted>
+      <section className="space-y-3 card-hairline p-6" data-reference-submitted>
         <p role="status" className="flex items-center gap-2 text-lg font-medium">
           <Check aria-hidden className="size-5 text-primary" />
           {t("thanks", { name: page.referee_name })}
@@ -139,7 +139,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
     <div className="space-y-6 pb-24" data-reference-form>
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground">{page.company}</p>
-        <h1 className="font-display text-2xl">{t("heading", { candidate: page.candidate_name })}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("heading", { candidate: page.candidate_name })}</h1>
         <p className="text-sm text-muted-foreground">
           {t("context", { name: page.referee_name, candidate: page.candidate_name, job: page.job_title, company: page.company })}
         </p>
@@ -168,7 +168,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
           />
         ))}
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {error === "invalid_input" ? t("checkAnswers") : tErrors(errorKey(error) as "generic")}
           </p>
         )}
@@ -238,7 +238,7 @@ export function RefereeApp() {
   }
   if (state.kind === "error") {
     return (
-      <div role="alert" className="space-y-2 rounded-xl border bg-surface p-5">
+      <div role="alert" className="space-y-2 card-hairline p-5">
         <p className="font-medium">{state.code === "link" ? t("linkInvalid") : tErrors(errorKey(state.code) as "generic")}</p>
         {state.code === "link" && <p className="text-sm text-muted-foreground">{t("linkHelp")}</p>}
       </div>

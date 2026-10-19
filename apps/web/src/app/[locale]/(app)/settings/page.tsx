@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 import { Archive, BellRing, CalendarClock, ChevronRight, Flag, KeyRound, ScrollText, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
+import type * as React from "react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -46,18 +47,18 @@ export default async function SettingsPage({ params }: Props) {
   const links = SETTINGS_PAGES.filter((page) => page.visible(permissions ?? []));
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={nav("settings")}>
         <p>{t("subtitle")}</p>
       </PageHeader>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="rise grid gap-3 sm:grid-cols-2" style={{ "--rise-index": 1 } as React.CSSProperties}>
         {links.map((link) => (
           <li key={link.key}>
             <Link
               href={link.href}
-              className="group flex items-start gap-4 rounded-xl border bg-surface p-5 shadow-soft transition-colors hover:bg-accent"
+              className="group card-hairline lift flex h-full items-start gap-4 p-5 hover:bg-accent/60"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-primary [&_svg]:size-5">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-sunken text-primary [&_svg]:size-5">
                 {ICONS[link.key]}
               </span>
               <span className="min-w-0 flex-1 space-y-1">

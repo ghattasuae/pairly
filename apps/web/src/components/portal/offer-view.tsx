@@ -48,12 +48,12 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
         <p className="text-sm text-muted-foreground">
           {offer.company} · {offer.reference}
         </p>
-        <h1 className="font-display text-2xl">{t("title", { job: offer.job_title })}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("title", { job: offer.job_title })}</h1>
         <p className="text-sm text-muted-foreground">
           {t("starts", { date: format.dateTime(new Date(`${offer.start_date}T00:00:00`), { dateStyle: "long" }) })} · {offer.template_name}
         </p>
       </header>
-      <section className="space-y-2 rounded-xl border bg-surface p-5">
+      <section className="space-y-2 card-hairline p-5">
         <h2 className="font-display text-lg">{tOffers("compensation")}</h2>
         <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
           {MONEY.filter((k) => Number(comp[k]) > 0).map((k) => (
@@ -77,7 +77,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
         </dl>
       </section>
       {offer.conditions.length > 0 && (
-        <section className="space-y-2 rounded-xl border bg-surface p-5">
+        <section className="space-y-2 card-hairline p-5">
           <h2 className="font-display text-lg">{tOffers("conditions")}</h2>
           <ol className="list-decimal space-y-1 ps-5 text-sm">
             {offer.conditions.map((c) => (
@@ -93,7 +93,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
         </a>
       </Button>
       {offer.status === "sent" ? (
-        <section className="space-y-3 rounded-xl border bg-surface p-5" data-offer-answer>
+        <section className="space-y-3 card-hairline p-5" data-offer-answer>
           <h2 className="font-display text-lg">{t("answerTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("answerHint")}</p>
           <label htmlFor={`${ids}-note`} className="text-sm font-medium">
@@ -105,7 +105,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
             <span>{t("confirm")}</span>
           </label>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}
@@ -121,7 +121,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
           </div>
         </section>
       ) : (
-        <p role="status" className="flex items-center gap-2 rounded-xl border bg-surface p-5 font-medium" data-offer-answered>
+        <p role="status" className="flex items-center gap-2 card-hairline p-5 font-medium" data-offer-answered>
           <Check aria-hidden className="size-5 text-primary" />
           {offer.status === "accepted" ? t("accepted") : t("declined")}
         </p>

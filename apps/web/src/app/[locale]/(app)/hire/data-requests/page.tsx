@@ -36,7 +36,7 @@ export default async function DataRequestsPage({ params, searchParams }: Props) 
   const [viewer, session, query] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -44,7 +44,7 @@ export default async function DataRequestsPage({ params, searchParams }: Props) 
   const retry = `/${locale}/hire/data-requests`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -53,7 +53,7 @@ export default async function DataRequestsPage({ params, searchParams }: Props) 
   const listed = await callApi((api) => api.GET("/v1/hire/data-requests"));
   if (!listed.ok) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -61,7 +61,7 @@ export default async function DataRequestsPage({ params, searchParams }: Props) 
   const raw = typeof query.request === "string" ? query.request : null;
   const t = await getTranslations("HireDataRequests");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-10 sm:px-8">
+    <div className="page space-y-8">
       <PageHeader title={t("title")}>
         <p>{t("intro")}</p>
       </PageHeader>

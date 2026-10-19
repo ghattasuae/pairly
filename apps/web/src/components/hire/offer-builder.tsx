@@ -40,7 +40,7 @@ function OfferCard({ offer, onChange }: { offer: HireOffer; onChange: (offer: Hi
 
   const comp = offer.compensation;
   return (
-    <li className="space-y-3 rounded-xl border bg-surface p-4 text-sm" data-offer={offer.status}>
+    <li className="space-y-3 card-hairline p-4 text-sm" data-offer={offer.status}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-medium">
           {offer.reference} · {offer.job_title}
@@ -94,7 +94,7 @@ function OfferCard({ offer, onChange }: { offer: HireOffer; onChange: (offer: Hi
       )}
       {offer.status === "sending" && !offer.sent && <p className="text-muted-foreground">{t("sendingNote")}</p>}
       {error && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -221,7 +221,7 @@ export function OfferBuilder({
         </ul>
       )}
       {initial.can_write && !open && (
-        <form onSubmit={(e) => void create(e)} className="space-y-4 rounded-xl border bg-surface p-5" data-new-offer>
+        <form onSubmit={(e) => void create(e)} className="space-y-4 card-hairline p-5" data-new-offer>
           <h2 className="font-display text-lg">{t("new")}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
@@ -322,7 +322,7 @@ export function OfferBuilder({
             <p className="text-xs text-muted-foreground">{t("conditionsHint")}</p>
           </div>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}

@@ -170,7 +170,7 @@ function Summary({ link }: { link: ApprovalLinkView }) {
   const workflows = useTranslations("Workflows");
   const format = useFormatter();
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-xl border bg-surface p-4 text-sm">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 card-hairline p-4 text-sm">
       <dt className="text-muted-foreground">{t("item")}</dt>
       <dd className="font-medium">
         <bdi>{link.title}</bdi>

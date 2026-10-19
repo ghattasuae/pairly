@@ -157,7 +157,7 @@ function UploadForm({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-xl border bg-surface p-5">
+    <form onSubmit={submit} className="space-y-4 card-hairline p-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl">{t("uploadTitle")}</h2>
         <p className="text-sm text-muted-foreground">{t("uploadBody")}</p>
@@ -250,7 +250,7 @@ function PolicyRow({
   };
 
   return (
-    <li id={`policy-${doc.id}`} className="scroll-mt-20 space-y-3 rounded-xl border bg-surface p-4">
+    <li id={`policy-${doc.id}`} className="scroll-mt-20 space-y-3 card-hairline p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <p className="font-medium">
@@ -521,14 +521,14 @@ function RuleSets({
       </form>
 
       {opened && versions && (
-        <div className="space-y-4 rounded-xl border bg-surface p-5">
+        <div className="space-y-4 card-hairline p-5">
           <h3 className="font-mono text-sm" dir="ltr">
             {opened}
           </h3>
           {versions.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noVersions")}</p>
           ) : (
-            <ul className="divide-y rounded-lg border">
+            <ul className="divide-y card-hairline">
               {versions.map((v) => (
                 <li key={v.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                   <span className="flex items-center gap-2">

@@ -408,13 +408,13 @@ export function InboxView({
       <section
         aria-labelledby="inbox-heading"
         className={cn(
-          "flex w-full min-w-0 flex-col border-e bg-background lg:w-[26rem] lg:shrink-0",
+          "flex w-full min-w-0 flex-col border-e border-border bg-surface lg:w-[26rem] lg:shrink-0",
           mobileDetail && "hidden lg:flex",
         )}
       >
-        <div className="space-y-3 border-b px-4 py-4">
+        <div className="space-y-3 border-b border-border px-4 pt-5 pb-4">
           <div className="flex items-center justify-between gap-2">
-            <h1 id="inbox-heading" className="font-display text-2xl">
+            <h1 id="inbox-heading" className="font-display text-[1.75rem] leading-tight">
               {t("title")}
             </h1>
             <div className="flex items-center gap-1">
@@ -504,7 +504,7 @@ export function InboxView({
               body={items.length === 0 ? t("emptyBody") : t("noMatchBody")}
             />
           ) : (
-            <ul ref={listRef} aria-label={t("listLabel")} className="divide-y">
+            <ul ref={listRef} aria-label={t("listLabel")} className="divide-y divide-border">
               {visible.map((item) => {
                 const optimistic = decided[item.id];
                 const status = optimistic?.state === "done" ? decidedStatus(optimistic.decision) : item.status;
@@ -521,19 +521,20 @@ export function InboxView({
                         select(item.id, true);
                       }}
                       className={cn(
-                        "relative block space-y-1.5 px-4 py-3 transition-colors hover:bg-accent/60",
+                        // The focus ring sits inside the row so the scrolling list never clips it.
+                        "relative block space-y-1.5 py-3 ps-5 pe-4 transition-colors hover:bg-accent/60 focus-visible:-outline-offset-2",
                         active && "bg-accent",
                         optimistic && "opacity-80",
                       )}
                     >
-                      {active && <span aria-hidden className="absolute inset-y-2 start-0 w-0.5 rounded-full bg-primary" />}
+                      {active && <span aria-hidden className="absolute inset-y-0 start-0 w-[3px] bg-signal" />}
                       <span className="flex items-start justify-between gap-2">
                         <span className={cn("line-clamp-2 text-sm font-medium", optimistic && "line-through decoration-muted-foreground/60")}>
                           <bdi>{item.title}</bdi>
                         </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
+                        <time dateTime={item.created_at} className="shrink-0 pt-0.5 text-xs text-muted-foreground">
                           {format.relativeTime(new Date(item.created_at), new Date())}
-                        </span>
+                        </time>
                       </span>
                       <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <span>{label(item.workflow)}</span>
@@ -563,7 +564,7 @@ export function InboxView({
             </div>
           )}
         </div>
-        <p className="hidden border-t px-4 py-2 text-xs text-muted-foreground lg:block">
+        <p className="hidden border-t border-border bg-surface-sunken px-4 py-2 text-xs text-muted-foreground lg:block">
           {t.rich("hint", { kbd: (chunks) => <Kbd>{chunks}</Kbd> })}
         </p>
       </section>
@@ -590,8 +591,8 @@ export function InboxView({
             headingId={headingId}
           />
         ) : (
-          <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
-            {t("pickOne")}
+          <div className="flex h-full items-center justify-center p-8">
+            <p className="max-w-xs text-center font-display text-xl leading-snug text-muted-foreground">{t("pickOne")}</p>
           </div>
         )}
       </section>

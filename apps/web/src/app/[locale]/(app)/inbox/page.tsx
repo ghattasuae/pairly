@@ -35,14 +35,14 @@ export default async function InboxPage({ params, searchParams }: Props) {
   const [viewer, session, query] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
   }
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/inbox`} />
       </div>
     );
@@ -62,7 +62,7 @@ export default async function InboxPage({ params, searchParams }: Props) {
   const detail = picked ?? (first ? await loadDetail(first) : null);
   if (!list.ok) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/inbox${toQuery(filters, item)}`} />
       </div>
     );

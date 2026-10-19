@@ -63,7 +63,7 @@ export function CalendarOrgSettings({
           .map((p) => (
             <li
               key={p.provider}
-              className="space-y-2 rounded-xl border bg-surface p-5 shadow-soft"
+              className="space-y-2 card-hairline p-5"
               data-org-provider={p.provider}
             >
               <div className="flex items-start justify-between gap-2">
@@ -130,7 +130,7 @@ function ZoomForm({
   return (
     <form
       aria-labelledby={`${ids}-title`}
-      className="space-y-4 rounded-xl border bg-surface p-5 shadow-soft"
+      className="space-y-4 card-hairline p-5"
       data-zoom-form
       onSubmit={async (e) => {
         e.preventDefault();
@@ -160,7 +160,7 @@ function ZoomForm({
           <p className="text-xs">{t("none")}</p>
         )}
         {zoom.last_error && (
-          <p className="flex items-center gap-1 text-xs text-destructive">
+          <p className="flex items-center gap-1 text-xs text-danger-ink">
             <AlertTriangle className="size-3" aria-hidden />
             {t("lastError", { code: zoom.last_error })}
           </p>
@@ -232,7 +232,7 @@ function ReviewList({ operations }: { operations: CalendarOperations }) {
       {operations.items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <ul className="divide-y rounded-xl border bg-surface">
+        <ul className="divide-y card-hairline">
           {operations.items.map((op) => (
             <li key={op.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
               <div className="space-y-0.5">

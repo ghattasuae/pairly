@@ -122,7 +122,7 @@ export function DataRequests({
                 <Badge variant={r.status === "open" ? "signal" : "outline"}>
                   {t(`status.${r.status === "open" || r.status === "completed" ? r.status : "declined"}`)}
                 </Badge>
-                {overdue(r) && <Badge className="text-destructive">{t("overdue")}</Badge>}
+                {overdue(r) && <Badge className="text-danger-ink">{t("overdue")}</Badge>}
                 {r.erasure_pending && <Badge variant="outline">{t("pendingTitle")}</Badge>}
               </span>
               <span className="text-muted-foreground">
@@ -166,7 +166,7 @@ export function DataRequests({
               <p className="font-medium">{t("pendingTitle")}</p>
               <p className="text-xs text-muted-foreground">{t("pendingHelp")}</p>
               {current.erasure_error && (
-                <p className="text-xs text-destructive" dir="ltr">
+                <p className="text-xs text-danger-ink" dir="ltr">
                   {t("pendingError", { error: current.erasure_error })}
                 </p>
               )}

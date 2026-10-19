@@ -37,7 +37,7 @@ export default async function KitPage({ params, searchParams }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      <div className="page max-w-2xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -45,7 +45,7 @@ export default async function KitPage({ params, searchParams }: Props) {
   const retry = `/${locale}/hire/applications/${applicationId}/kit?stage=${stage}`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      <div className="page max-w-2xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -59,13 +59,13 @@ export default async function KitPage({ params, searchParams }: Props) {
   if (!kit.ok) {
     if (kit.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      <div className="page max-w-2xl">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-8">
+    <div className="page max-w-2xl space-y-4">
       <header className="space-y-1">
         <p className="text-sm text-muted-foreground">
           {kit.data.job_title} · {kit.data.stage_name}

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PayReconciliationView } from "@/components/pay/pay-reconciliation";
+import { buttonVariants } from "@/components/ui/button";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { reconciliationDays } from "@/lib/pay/reconciliation";
@@ -50,7 +51,7 @@ export default async function PayReconciliationPage({ params, searchParams }: Pr
             className="w-24 rounded-md border bg-background px-2 py-1.5 text-sm"
           />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
           {t("apply")}
         </button>
       </form>

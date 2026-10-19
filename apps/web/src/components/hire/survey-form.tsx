@@ -41,8 +41,8 @@ function Choices({
             aria-checked={value === option}
             onClick={() => onChange(option)}
             className={cn(
-              "min-h-12 rounded-lg border px-2 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-              value === option ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+              "min-h-12 rounded-lg border px-2 text-sm font-medium transition-colors",
+              value === option ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
             )}
           >
             {render(option)}
@@ -80,7 +80,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
 
   if (done) {
     return (
-      <p role="status" className="flex items-center gap-2 rounded-xl border bg-surface p-6 text-lg font-medium" data-survey-done>
+      <p role="status" className="flex items-center gap-2 card-hairline p-6 text-lg font-medium" data-survey-done>
         <Check aria-hidden className="size-5 text-primary" />
         {t("thanks")}
       </p>
@@ -90,7 +90,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
     <form onSubmit={(e) => void submit(e)} className="space-y-6 pb-24" data-survey>
       <header className="space-y-1">
         <p className="text-sm text-muted-foreground">{form.company}</p>
-        <h1 className="font-display text-2xl">{t("heading", { job: form.job_title })}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("heading", { job: form.job_title })}</h1>
         <p className="text-sm text-muted-foreground">{t("anonymous")}</p>
       </header>
       {(["overall", "communication", "respect"] as const).map((key) => (
@@ -122,7 +122,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
         <span>{t("attachName")}</span>
       </label>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error === "not_found" ? t("linkInvalid") : tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -169,7 +169,7 @@ export function SurveyApp() {
   }
   if (state.kind === "error") {
     return (
-      <p role="alert" className="rounded-xl border bg-surface p-5 font-medium">
+      <p role="alert" className="card-hairline p-5 font-medium">
         {state.code === "link" ? t("linkInvalid") : tErrors(errorKey(state.code) as "generic")}
       </p>
     );

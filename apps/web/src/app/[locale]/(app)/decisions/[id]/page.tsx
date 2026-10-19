@@ -36,7 +36,7 @@ export default async function DecisionPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/decisions/${id}`} />
       </div>
     );
@@ -52,7 +52,7 @@ export default async function DecisionPage({ params }: Props) {
   if (!receipt.ok) {
     if (["not_found", "permission_denied", "invalid_input"].includes(receipt.code)) notFound();
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/decisions/${id}`} />
       </div>
     );

@@ -34,7 +34,7 @@ export default async function RequisitionsPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -42,7 +42,7 @@ export default async function RequisitionsPage({ params }: Props) {
   const retry = `/${locale}/hire/requisitions`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -52,14 +52,14 @@ export default async function RequisitionsPage({ params }: Props) {
   const list = await callApi((api) => api.GET("/v1/hire/requisitions", { params: { query: { limit: 100 } } }));
   if (!list.ok) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   const t = await getTranslations("Requisitions");
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">
+    <div className="page space-y-6">
       <PageHeader title={t("title")}>
         <p>{t("intro")}</p>
       </PageHeader>

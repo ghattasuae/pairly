@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/form-controls";
 import { Link } from "@/i18n/navigation";
 import { requestDeletion, requestHumanReview } from "@/lib/actions/portal";
@@ -82,19 +82,19 @@ export function PrivacyCentre({
     <div className="space-y-10" data-privacy-centre>
       <header className="space-y-2">
         <p className="eyebrow">{t("eyebrow")}</p>
-        <h1 className="font-display text-3xl leading-tight sm:text-4xl">{t("privacy.title")}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("privacy.title")}</h1>
         <p className="text-muted-foreground">{t("privacy.intro")}</p>
       </header>
       <p role="status" aria-live="polite" className="text-sm font-medium" data-portal-notice>
         {notice ?? ""}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error}
         </p>
       )}
 
-      <section aria-labelledby={`${ids}-download`} className="space-y-2 rounded-2xl border bg-surface p-5">
+      <section aria-labelledby={`${ids}-download`} className="space-y-2 card-hairline p-5">
         <h2 id={`${ids}-download`} className="flex items-center gap-2 font-display text-xl">
           <Download className="size-5" aria-hidden />
           {t("privacy.download")}
@@ -103,7 +103,7 @@ export function PrivacyCentre({
         <a
           href="/api/portal/export"
           download
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className={buttonVariants({ variant: "outline" })}
           data-export
         >
           <Download className="size-4" aria-hidden />
@@ -122,7 +122,7 @@ export function PrivacyCentre({
         ) : (
           <ul className="space-y-3">
             {privacy.decisions.map((d) => (
-              <li key={d.decision_id} className="space-y-2 rounded-xl border bg-surface p-4" data-decision={d.decision_id}>
+              <li key={d.decision_id} className="space-y-2 card-hairline p-4" data-decision={d.decision_id}>
                 <p className="font-medium">
                   {KINDS.has(d.kind) ? t(`privacy.kind.${d.kind}` as "privacy.kind.score") : d.kind}
                 </p>
@@ -195,7 +195,7 @@ export function PrivacyCentre({
         )}
       </section>
 
-      <section aria-labelledby={`${ids}-delete`} className="space-y-3 rounded-2xl border bg-surface p-5">
+      <section aria-labelledby={`${ids}-delete`} className="space-y-3 card-hairline p-5">
         <h2 id={`${ids}-delete`} className="flex items-center gap-2 font-display text-xl">
           <Trash2 className="size-5" aria-hidden />
           {t("privacy.deleteTitle")}

@@ -89,8 +89,9 @@ function ToastCard({ toast, onClose, closeLabel }: { toast: Toast; onClose: () =
     <div
       role={toast.tone === "error" ? "alert" : "status"}
       className={cn(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-raised animate-in fade-in-0 slide-in-from-bottom-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
-        toast.tone === "error" && "border-destructive/40",
+        // A raised layer (the one place a shadow is allowed), with the tone on a start rule.
+        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-s-[3px] bg-popover px-4 py-3 text-sm text-popover-foreground shadow-raised animate-in slide-in-from-bottom-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
+        toast.tone === "error" ? "border-s-destructive" : toast.tone === "success" ? "border-s-success" : "border-s-primary",
       )}
     >
       {ICONS[toast.tone ?? "info"]}
@@ -100,7 +101,7 @@ function ToastCard({ toast, onClose, closeLabel }: { toast: Toast; onClose: () =
         {toast.action && (
           <button
             type="button"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-medium text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
             onClick={() => {
               toast.action?.onClick();
               onClose();

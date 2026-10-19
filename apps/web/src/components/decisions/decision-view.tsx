@@ -48,7 +48,7 @@ function Section({ id, title, children, className }: { id: string; title: string
 }
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-xl border bg-surface p-4", className)}>{children}</div>;
+  return <div className={cn("card-hairline p-4", className)}>{children}</div>;
 }
 
 /** Confidence as a percentage and a quiet meter. */
@@ -111,30 +111,30 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
       {asArray(rule_results).length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">{t("ruleResults")}</h3>
-          <div className="relative overflow-x-auto rounded-xl border bg-surface">
-            <table className="w-full text-sm">
-              <thead className="text-start text-xs text-muted-foreground">
-                <tr className="border-b">
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("rule")}</th>
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("result")}</th>
-                  <th scope="col" className="px-4 py-2 text-start font-medium">{t("severity")}</th>
+          <div className="table-frame">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">{t("rule")}</th>
+                  <th scope="col">{t("result")}</th>
+                  <th scope="col">{t("severity")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody>
                 {asArray(rule_results)
                   .filter(isObject)
                   .map((r, i) => (
                     <tr key={`${asString(r.rule_id)}:${i}`}>
-                      <td className="px-4 py-2 font-mono text-xs" dir="ltr">
+                      <td className="font-mono text-xs" dir="ltr">
                         {asString(r.rule_id)}
                       </td>
-                      <td className="px-4 py-2">
+                      <td>
                         <Outcome outcome={asString(r.outcome)} />
                         {asString(r.error_code) && (
                           <span className="ms-2 font-mono text-xs text-muted-foreground">{asString(r.error_code)}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-muted-foreground">{sev(r.severity) ?? "-"}</td>
+                      <td className="text-muted-foreground">{sev(r.severity) ?? "-"}</td>
                     </tr>
                   ))}
               </tbody>
@@ -149,7 +149,7 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
             {asArray(risk_signals)
               .filter(isObject)
               .map((s, i) => (
-                <li key={`${asString(s.detector)}:${i}`} className="rounded-lg border bg-surface p-3 text-sm">
+                <li key={`${asString(s.detector)}:${i}`} className="card-hairline p-3 text-sm">
                   <p className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{explain(asString(s.explanation_key))}</span>
                   </p>
@@ -262,19 +262,38 @@ export function DecisionView({ decisionId, receipt, replays, appeals, can, totpE
   const intact = integrity.intact === true;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
-      <PageHeader eyebrow={`${t("eyebrow")} · ${workflowLabel}`} title={kindLabel}>
+    <div className="page space-y-10">
+      <PageHeader
+        eyebrow={`${t("eyebrow")} · ${workflowLabel}`}
+        title={kindLabel}
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/decisions/${decisionId}/receipt?lang=en`} download>
+                <Download aria-hidden />
+                {t("downloadEn")}
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/decisions/${decisionId}/receipt?lang=ar`} download>
+                <Download aria-hidden />
+                {t("downloadAr")}
+              </a>
+            </Button>
+          </>
+        }
+      >
         <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
           <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-xs text-foreground" dir="ltr">
             {decisionId}
           </code>
           {intact ? (
-            <Badge variant="outline" className="border-success/40 text-success-ink [&_svg]:size-3">
+            <Badge variant="success">
               <ShieldCheck aria-hidden />
               {t("intact")}
             </Badge>
           ) : (
-            <Badge variant="outline" className="border-destructive/40 text-danger-ink [&_svg]:size-3">
+            <Badge variant="danger">
               <ShieldAlert aria-hidden />
               {t("notIntact")}
             </Badge>
@@ -283,20 +302,6 @@ export function DecisionView({ decisionId, receipt, replays, appeals, can, totpE
         </div>
       </PageHeader>
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <a href={`/api/decisions/${decisionId}/receipt?lang=en`} download>
-            <Download aria-hidden />
-            {t("downloadEn")}
-          </a>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <a href={`/api/decisions/${decisionId}/receipt?lang=ar`} download>
-            <Download aria-hidden />
-            {t("downloadAr")}
-          </a>
-        </Button>
-      </div>
 
       <Section id="summary" title={t("summary")}>
         <Card>

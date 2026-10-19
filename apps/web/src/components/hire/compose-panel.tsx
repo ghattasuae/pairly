@@ -314,7 +314,7 @@ export function ComposePanel({
           </Button>
         </div>
       ) : (
-        <p className={cn("text-sm", message.status === "failed" && "text-destructive")}>
+        <p className={cn("text-sm", message.status === "failed" && "text-danger-ink")}>
           {t(`messageHelp.${message.status}` as "messageHelp.queued")}
         </p>
       )}

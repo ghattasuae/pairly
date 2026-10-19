@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PayForecastView } from "@/components/pay/pay-forecast";
+import { buttonVariants } from "@/components/ui/button";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
 import { forecastWeeks } from "@/lib/pay/forecast";
@@ -49,7 +50,7 @@ export default async function PayForecastPage({ params, searchParams }: Props) {
             className="w-24 rounded-md border bg-background px-2 py-1.5 text-sm"
           />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+        <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
           {t("apply")}
         </button>
       </form>

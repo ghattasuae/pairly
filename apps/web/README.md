@@ -305,8 +305,9 @@ never answer.
 get the calm authority of a well-set document: warm bone paper, near-black warm ink,
 hairline rules instead of shadows, serif display type, and one warm accent used sparingly.
 Wave 1 covers the tokens, the primitives, the shell, Home, sign-in and the public careers
-pages; everything else inherits the tokens (wave 2 restyles the inbox, screening mode,
-the Pay viewers, the portals and the emails).
+pages. Wave 2 adds the shared patterns below and applies them to the inbox, Hire (screening
+mode, the pipeline, reports), decisions, audit, settings and the candidate portal, with Pay,
+the vendor portal and the emails in a parallel pass.
 
 **Tokens** are CSS variables in `src/app/globals.css`, redefined under `.dark`, and mapped
 to Tailwind colours in `@theme inline` (`bg-background`, `text-muted-foreground`,
@@ -356,6 +357,22 @@ top bar (breadcrumbs, the "Search or jump to" palette trigger with its shortcut,
 theme, account). Pages use `.page` (about 1200px wide) and open with `PageHeader`: eyebrow,
 Fraunces title on the start side, actions on the end side, one muted line of context, a
 hairline below.
+
+**Shared patterns** (wave 2, `src/components/ui`, shown in the UI/Patterns story):
+
+- `Table` (or the `.table-frame` and `.data-table` classes on a plain table): hairline
+  frame, sticky header on sunken paper, hairline rows with a hover wash, `numeric` cells in
+  mono tabular figures aligned to the end, `dense` for long lists.
+- `FilterBar`, `FilterField`, `filterFieldClass`, `filterApplyClass`: one ruled strip of
+  fields above a list or report, the Apply button as an outline `buttonVariants`.
+- `Evidence` and `.evidence-mark`: a quote on a ruled start edge, matched words in
+  saffron-soft with a rule under them, the source as a slate link. Screening, the document
+  viewer and Pay all mark evidence this way.
+- `TabNav` and `tabClass` for link tabs (`aria-current="page"`), `Tabs` for panels in one
+  page; the current tab has a saffron-ink underline and medium weight.
+- `Section` for a hairline section card with a heading row; `.lane` for kanban columns.
+- `DialogHeader`, `DialogBody`, `DialogFooter` and `SheetContent` (slides in from the end
+  side) for dialogs and side sheets.
 
 Do:
 

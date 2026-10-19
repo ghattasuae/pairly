@@ -55,7 +55,7 @@ function Summary({ preview }: { preview: InvitePreview }) {
   const format = useFormatter();
   const role = roles.has(preview.role as "admin") ? roles(preview.role as "admin") : preview.role;
   return (
-    <div className="space-y-2 rounded-xl border bg-surface p-4 text-sm">
+    <div className="space-y-2 card-hairline p-4 text-sm">
       <p>{t("body", { org: preview.org_name, role })}</p>
       {preview.workflow && (
         <p className="text-muted-foreground">

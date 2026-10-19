@@ -91,7 +91,7 @@ export function ScreeningDocument({
         screening.text ? (
           <div
             ref={textRef}
-            className="min-h-0 flex-1 overflow-y-auto rounded-xl border bg-surface p-5 text-[0.95rem] leading-relaxed whitespace-pre-wrap"
+            className="card-hairline min-h-0 flex-1 overflow-y-auto p-5 text-[0.95rem] leading-relaxed whitespace-pre-wrap sm:px-7 sm:py-6"
             data-blind-text={screening.blind ? "true" : "false"}
             tabIndex={0}
             aria-label={t("document")}
@@ -101,7 +101,7 @@ export function ScreeningDocument({
                 return (
                   <span
                     key={index}
-                    className="mx-0.5 inline-flex items-center gap-1 rounded bg-muted px-1 font-sans text-xs text-muted-foreground"
+                    className="mx-0.5 inline-flex items-center gap-1 rounded-sm border border-dashed border-input bg-surface-sunken px-1 font-sans text-xs text-muted-foreground"
                     title={t("blind.placeholder")}
                   >
                     <EyeOff className="size-3" aria-hidden />
@@ -117,8 +117,10 @@ export function ScreeningDocument({
                   key={index}
                   data-evidence={piece.evidence.join(" ")}
                   className={cn(
-                    "rounded-sm bg-signal-soft/70 px-0.5 text-foreground",
-                    isActive && "bg-signal outline-2 outline-offset-1 outline-signal",
+                    // The shared evidence mark (saffron-soft with a rule under it); the
+                    // quote picked on the right turns full saffron with a ring.
+                    "evidence-mark",
+                    isActive && "bg-signal text-signal-foreground outline-2 outline-offset-1 outline-ring",
                   )}
                 >
                   {piece.text}
@@ -127,7 +129,7 @@ export function ScreeningDocument({
             })}
           </div>
         ) : (
-          <p className="flex items-center gap-2 rounded-xl border bg-surface p-5 text-sm text-muted-foreground">
+          <p className="card-hairline flex items-center gap-2 p-5 text-sm text-muted-foreground">
             <FileText className="size-4" aria-hidden />
             {t("cvUnavailable")}
           </p>

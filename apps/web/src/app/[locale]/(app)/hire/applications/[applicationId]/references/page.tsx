@@ -33,7 +33,7 @@ export default async function ReferencesPage({ params }: Props) {
   const [viewer, session] = await Promise.all([resolveViewer(), getSession()]);
   if (viewer.status === "not_provisioned") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <NotProvisioned email={session?.user.email ?? ""} code={viewer.code} />
       </div>
     );
@@ -41,7 +41,7 @@ export default async function ReferencesPage({ params }: Props) {
   const retry = `/${locale}/hire/applications/${applicationId}/references`;
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
@@ -55,13 +55,13 @@ export default async function ReferencesPage({ params }: Props) {
   if (!references.ok) {
     if (references.code === "not_found") notFound();
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8">
+      <div className="page max-w-3xl">
         <Unavailable retryHref={retry} />
       </div>
     );
   }
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
+    <div className="page max-w-3xl">
       <ReferencesPanel initial={references.data} />
     </div>
   );

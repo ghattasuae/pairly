@@ -32,7 +32,7 @@ export function StatusTimeline({ app, compact = false }: { app: PortalApplicatio
             <Icon
               className={cn(
                 "mt-0.5 size-5 shrink-0",
-                s.state === "current" ? "text-primary" : s.state === "done" ? "text-foreground" : "text-muted-foreground",
+                s.state === "current" ? "text-signal-ink" : s.state === "done" ? "text-success-ink" : "text-muted-foreground",
               )}
               aria-hidden
             />

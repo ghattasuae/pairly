@@ -65,7 +65,9 @@
     "signOut": "تسجيل الخروج",
     "hint": "اضغط {keys} في أي وقت لفتح هذه القائمة.",
     "searching": "جار البحث",
-    "results": "نتائج البحث"
+    "results": "نتائج البحث",
+    "hintMove": "تنقل",
+    "hintOpen": "فتح"
   },
   "Auth": {
     "signInTitle": "تسجيل الدخول إلى Pairly",

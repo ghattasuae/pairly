@@ -138,7 +138,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
         <p className="text-sm text-muted-foreground">
           {card.job_title} · {card.stage_name}
         </p>
-        <h1 className="font-display text-2xl" data-candidate-label>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]" data-candidate-label>
           {card.candidate_label}
         </h1>
         {card.starts_at && (
@@ -147,7 +147,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
           </p>
         )}
         {!submitted && card.due_at && (
-          <p className={cn("flex items-center gap-1.5 text-sm", card.sla_state === "overdue" ? "text-destructive" : "text-muted-foreground")}>
+          <p className={cn("flex items-center gap-1.5 text-sm", card.sla_state === "overdue" ? "text-danger-ink" : "text-muted-foreground")}>
             <Clock aria-hidden className="size-4" />
             {card.sla_state === "overdue"
               ? t("overdue")
@@ -157,7 +157,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
       </header>
 
       {page.kit && (
-        <details className="rounded-xl border bg-surface p-4">
+        <details className="card-hairline p-4">
           <summary className="cursor-pointer font-medium">{t("kit")}</summary>
           <div className="mt-3">
             <InterviewKit kit={page.kit} />
@@ -167,7 +167,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
 
       {submitted ? (
         <section className="space-y-4" aria-labelledby={`${ids}-done`}>
-          <p id={`${ids}-done`} role="status" className="flex items-center gap-2 rounded-xl border bg-surface p-4 font-medium" data-submitted>
+          <p id={`${ids}-done`} role="status" className="flex items-center gap-2 card-hairline p-4 font-medium" data-submitted>
             <Check aria-hidden className="size-5 text-primary" />
             {t("submitted")}
           </p>
@@ -177,7 +177,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
           ) : (
             <ul className="space-y-3" data-others>
               {(card.others ?? []).map((o) => (
-                <li key={o.interviewer_id} className="space-y-2 rounded-xl border bg-surface p-4 text-sm">
+                <li key={o.interviewer_id} className="space-y-2 card-hairline p-4 text-sm">
                   <p className="font-medium">
                     {o.interviewer_name} · {t(`recommendation.${o.recommendation}` as "recommendation.yes")}
                   </p>
@@ -223,8 +223,8 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
                       data-rating={value}
                       onClick={() => setRatings((r) => ({ ...r, [c.id]: value }))}
                       className={cn(
-                        "flex min-h-16 flex-col items-start gap-1 rounded-lg border p-2 text-start text-xs leading-snug transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                        on ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                        "flex min-h-16 flex-col items-start gap-1 card-hairline p-2 text-start text-xs leading-snug transition-colors",
+                        on ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                       )}
                     >
                       <span className="text-base font-semibold">{value}</span>
@@ -263,8 +263,8 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
                   data-recommendation={value}
                   onClick={() => setRecommendation(value)}
                   className={cn(
-                    "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                    recommendation === value ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                    "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors",
+                    recommendation === value ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                   )}
                 >
                   {t(`recommendation.${value}`)}
@@ -273,7 +273,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
             </div>
           </fieldset>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}
@@ -356,14 +356,14 @@ export function ScorecardApp() {
   }
   if (state.kind === "snoozed") {
     return (
-      <p role="status" className="rounded-xl border bg-surface p-5" data-snoozed>
+      <p role="status" className="card-hairline p-5" data-snoozed>
         {t("snoozed", { when: format.dateTime(new Date(state.until), { timeStyle: "short" }) })}
       </p>
     );
   }
   if (state.kind === "error") {
     return (
-      <div role="alert" className="space-y-2 rounded-xl border bg-surface p-5">
+      <div role="alert" className="space-y-2 card-hairline p-5">
         <p className="font-medium">{state.code === "link" ? t("linkInvalid") : tErrors(errorKey(state.code) as "generic")}</p>
         {state.code === "link" && <p className="text-sm text-muted-foreground">{t("linkHelp")}</p>}
       </div>

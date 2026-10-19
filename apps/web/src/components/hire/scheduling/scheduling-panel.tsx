@@ -247,7 +247,7 @@ export function SchedulingPanel({
       <div className="flex h-full flex-col">
         <PanelHeader title={t("title")} onClose={onClose} closeLabel={t("close")} />
         <div className="flex flex-1 items-center justify-center text-muted-foreground" role="status">
-          {error ? <p className="px-5 text-sm text-destructive">{errorText}</p> : <Loader2 className="animate-spin" aria-hidden />}
+          {error ? <p className="px-5 text-sm text-danger-ink">{errorText}</p> : <Loader2 className="animate-spin" aria-hidden />}
           <span className="sr-only">{t("loading")}</span>
         </div>
       </div>
@@ -322,7 +322,7 @@ export function SchedulingPanel({
                     title={member.timezone}
                     className={cn(
                       "rounded-full border px-2.5 py-0.5 text-xs",
-                      on ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
+                      on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface hover:bg-accent",
                     )}
                   >
                     {member.name}
@@ -359,7 +359,7 @@ export function SchedulingPanel({
         <p className="text-xs text-muted-foreground">{t("yourZone", { zone: viewerTz })}</p>
 
         {errorText && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {errorText}
           </p>
         )}
@@ -419,7 +419,7 @@ export function SchedulingPanel({
                           ? t("moveHere", { when })
                           : t("bookSlot", { when, candidate: theirs })
                       }
-                      className="flex w-full flex-col items-start rounded-md border bg-background px-3 py-2 text-start text-sm hover:border-primary hover:bg-accent disabled:opacity-50"
+                      className="flex w-full flex-col items-start rounded-md border border-input bg-surface px-3 py-2 text-start text-sm hover:border-foreground/40 hover:bg-accent disabled:opacity-50"
                     >
                       <span className="font-medium" dir="auto">
                         {when}
@@ -511,7 +511,7 @@ function CurrentInterview({
   const t = useTranslations("Scheduling");
   const locale = useLocale();
   return (
-    <div className="space-y-2 rounded-lg border bg-surface px-4 py-3 text-sm" data-current-interview={interview.id} data-status={interview.status}>
+    <div className="space-y-2 card-hairline px-4 py-3 text-sm" data-current-interview={interview.id} data-status={interview.status}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 font-medium">
           <CalendarClock className="size-4 text-primary" aria-hidden />
@@ -589,7 +589,7 @@ function EditForm({
   const [zone, setZone] = useState(interview.candidate_timezone);
   return (
     <form
-      className="space-y-3 rounded-lg border px-4 py-3"
+      className="space-y-3 card-hairline px-4 py-3"
       aria-label={t("form.title")}
       data-edit-form
       onSubmit={(e) => {

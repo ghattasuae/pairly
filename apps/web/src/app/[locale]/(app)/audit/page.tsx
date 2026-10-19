@@ -34,7 +34,7 @@ export default async function AuditPage({ params, searchParams }: Props) {
   const [viewer, session, query] = await Promise.all([resolveViewer(), getSession(), searchParams]);
   if (viewer.status !== "ready") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/audit`} />
       </div>
     );
@@ -52,7 +52,7 @@ export default async function AuditPage({ params, searchParams }: Props) {
   ]);
   if (!events.ok && events.code !== "invalid_input") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8">
+      <div className="page">
         <Unavailable retryHref={`/${locale}/audit${auditQuery(filters)}`} />
       </div>
     );

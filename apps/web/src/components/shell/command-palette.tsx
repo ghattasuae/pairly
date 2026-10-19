@@ -87,13 +87,16 @@ function PaletteBody({ onOpenChange, items, onSignOut, search = searchEverything
       label={t("title")}
       className="flex flex-col [&_[cmdk-group-heading]]:eyebrow [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5"
     >
-      <div className="flex items-center gap-2 border-b px-3">
+      {/* The input's focus shows as a 2px saffron rule under the search row (the ring
+          token, 3:1 or more on the popover), since a ring around it would sit on the
+          dialog's own edge. */}
+      <div className="flex items-center gap-2 border-b px-3 has-[input:focus-visible]:shadow-[inset_0_-2px_0_var(--ring)]">
         <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <Command.Input
           value={query}
           onValueChange={setQuery}
           placeholder={t("placeholder")}
-          className="h-12 w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
+          className="h-12 w-full bg-transparent text-base outline-none placeholder:text-muted-foreground focus-visible:outline-none md:text-sm"
         />
         <Kbd>Esc</Kbd>
       </div>
@@ -157,6 +160,20 @@ function PaletteBody({ onOpenChange, items, onSignOut, search = searchEverything
           </PaletteItem>
         </Command.Group>
       </Command.List>
+      <div
+        aria-hidden
+        className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-surface-sunken px-3 py-2 text-xs text-muted-foreground"
+      >
+        <span className="flex items-center gap-1.5">
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd>
+          {t("hintMove")}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>Enter</Kbd>
+          {t("hintOpen")}
+        </span>
+      </div>
     </Command>
   );
 }

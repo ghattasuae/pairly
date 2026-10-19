@@ -14,8 +14,8 @@ import { ThemeToggle } from "@/components/shell/theme-toggle";
 export default function ReferenceLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-ledger flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 pt-4 sm:px-6">
-        <Wordmark className="scale-75 opacity-80" />
+      <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 pt-5 sm:px-6">
+        <Wordmark className="origin-[0%_50%] scale-75 rtl:origin-[100%_50%]" />
         <div className="flex items-center gap-1">
           <LocaleSwitcher />
           <ThemeToggle />
