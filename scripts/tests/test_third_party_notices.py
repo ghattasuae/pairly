@@ -31,7 +31,11 @@ notices = _load()
 
 def test_bundled_components_are_listed() -> None:
     text = notices.render([], [], notices.bundled_components(ROOT))
-    assert "## Bundled components (8)" in text
+    assert "## Bundled components (12)" in text
+    # The web app's self-hosted fonts (apps/web/src/fonts), each with its OFL text.
+    for family in ("IBM Plex Sans (", "IBM Plex Sans Arabic (", "IBM Plex Mono (", "Fraunces ("):
+        assert f"| {family}" in text
+    assert "OFL-1.1 (SIL Open Font License 1.1" in text
     assert "| PDFium |" in text
     assert "pypdfium2" in text
     assert "DejaVu Sans" in text
