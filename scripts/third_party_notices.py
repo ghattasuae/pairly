@@ -306,6 +306,40 @@ REDOC_DIR = "infra/api-docs/vendor/redoc"
 FONT_DIR = "packages/core/pairly_core/decisions/fonts"
 DISPOSABLE_DOMAINS = "packages/hire/pairly_hire/data/disposable_domains.txt"
 PDFJS_COPY_SCRIPT = "apps/web/scripts/copy-pdfjs.mjs"
+# The web app's typefaces (next/font/local, see apps/web/src/app/fonts.ts). Each folder
+# keeps the OFL text next to the font files.
+WEB_FONT_DIR = "apps/web/src/fonts"
+WEB_FONTS: tuple[tuple[str, str, str, str, str], ...] = (
+    # (key, name, version, folder, what it is used for)
+    (
+        "ibm-plex-sans",
+        "IBM Plex Sans (Latin-1 subset, 400 500 600)",
+        "@ibm/plex-sans 1.1.0 (font 3.005)",
+        "ibm-plex-sans",
+        "body and interface text",
+    ),
+    (
+        "ibm-plex-sans-arabic",
+        "IBM Plex Sans Arabic (400 500 600 700)",
+        "@ibm/plex-sans-arabic 1.1.0 (font 1.005)",
+        "ibm-plex-sans-arabic",
+        "Arabic interface text",
+    ),
+    (
+        "ibm-plex-mono",
+        "IBM Plex Mono (Latin-1 subset, 400 500)",
+        "@ibm/plex-mono 2.5.0 (font 2.005)",
+        "ibm-plex-mono",
+        "ids, amounts, code and keyboard hints",
+    ),
+    (
+        "fraunces",
+        "Fraunces (variable, Latin basic subset)",
+        "1.000",
+        "fraunces",
+        "display headings and big numbers",
+    ),
+)
 
 # Committed files that look like third-party assets. Every match must be covered by a
 # bundled entry (Bundled.covers), so a new font, vendored bundle or OCR language file
@@ -418,6 +452,20 @@ def bundled_components(root: Path | None = None) -> list[Bundled]:
             (("Bitstream Vera and Arev licenses", f"{FONT_DIR}/LICENSE_DEJAVU"),),
             (f"{FONT_DIR}/*",),
         ),
+        *(
+            Bundled(
+                key,
+                name,
+                version,
+                "OFL-1.1 (SIL Open Font License 1.1"
+                + (', Reserved Font Name "Plex"' if key.startswith("ibm-plex") else "")
+                + "), unmodified files from the official release",
+                f"{WEB_FONT_DIR}/{folder}/, served by the web app ({use})",
+                (("OFL-1.1", f"{WEB_FONT_DIR}/{folder}/OFL.txt"),),
+                (f"{WEB_FONT_DIR}/{folder}/*",),
+            )
+            for key, name, version, folder, use in WEB_FONTS
+        ),
         Bundled(
             "disposable-domains",
             "disposable-email-domains (subset)",
@@ -515,6 +563,11 @@ def _js_locked(root: Path, name: str) -> bool:
     return lockfile.is_file() and any(n == name for n, _ in pnpm_packages(lockfile))
 
 
+def _web_font(folder: str) -> Callable[[Path], bool]:
+    """Detector for one web font folder: it ships when a woff2 file is committed there."""
+    return lambda root: any((root / WEB_FONT_DIR / folder).glob("*.woff2"))
+
+
 # Known bundled assets: key -> how to tell that this repository ships it. When the
 # detector finds the asset, the generated NOTICE.md must list it.
 KNOWN_ASSETS: dict[str, Callable[[Path], bool]] = {
@@ -523,6 +576,7 @@ KNOWN_ASSETS: dict[str, Callable[[Path], bool]] = {
     "dompurify": lambda root: _bundle_mentions(root, "DOMPurify"),
     "dejavu": lambda root: (root / FONT_DIR / "DejaVuSans.ttf").is_file(),
     "disposable-domains": lambda root: (root / DISPOSABLE_DOMAINS).is_file(),
+    **{key: _web_font(folder) for key, _name, _version, folder, _use in WEB_FONTS},
     "pdfjs": lambda root: (root / PDFJS_COPY_SCRIPT).is_file() or _js_locked(root, "pdfjs-dist"),
     "pdfium": lambda root: _uv_locked(root, "pypdfium2"),
     "caniuse-lite": lambda root: _js_locked(root, "caniuse-lite"),
