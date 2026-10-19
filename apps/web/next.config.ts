@@ -36,6 +36,14 @@ const nextConfig: NextConfig = {
   // Trace from the repo root so workspace packages end up in the standalone bundle.
   outputFileTracingRoot: repoRoot,
   turbopack: { root: repoRoot },
+  experimental: {
+    // No persistent Turbopack cache for `next dev` unless PAIRLY_NEXT_DEV_CACHE=1. A cache
+    // left by an earlier dev session can get out of step with the code (seen on 16.4.0 and
+    // 16.4.2): every HMR connection then answers with a restart of the client entry chunk
+    // list, and each page reloads itself over and over (the e2e suite failed on it). A cold
+    // start compiles each route once per session instead.
+    turbopackFileSystemCacheForDev: process.env.PAIRLY_NEXT_DEV_CACHE === "1",
+  },
   transpilePackages: ["@pairly/shared-ts"],
   poweredByHeader: false,
   // `next dev` would otherwise write AGENTS.md here (its copy contains em dashes).
