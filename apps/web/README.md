@@ -318,7 +318,7 @@ every component keeps working.
 | Saffron (the one accent) | `signal`, `action`, `action-hover`, `signal-soft`, `signal-ink` (text), `ring` | oklch(0.72 0.16 65), ink text on it; ring oklch(0.57 0.135 55) | oklch(0.79 0.135 70) |
 | Slate (links, data, info) | `primary`, `info`, `info-soft` | oklch(0.45 0.05 250) | oklch(0.76 0.06 250) |
 | Status | `success`/`success-ink`/`success-soft`, `warning`/`warning-ink`/`warning-soft`, `destructive`/`danger-ink`/`danger-soft` | muted green, a yellower and lighter amber than saffron, red | lighter versions |
-| Rules | `border`, `rule`, `input` | oklch(0.88 0.01 80) hairlines | oklch(0.3 0.01 70) |
+| Rules | `border`, `rule` (card hairlines), `input` (field outlines, 3:1 or more) | oklch(0.88 0.01 80), input oklch(0.62 0.012 75) | oklch(0.3 0.01 70), input oklch(0.54 0.012 70) |
 
 Every text pairing is AA or better in both themes (computed from the oklch values; the
 numbers are in the header comment of `globals.css`). The Foundations/Tokens story reads

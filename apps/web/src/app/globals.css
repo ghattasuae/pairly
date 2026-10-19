@@ -18,7 +18,8 @@
  *
  * Contrast (WCAG 2.2, computed from these oklch values): body ink 16.9:1, muted ink 5.3:1
  * or more on every light surface, slate links 6.1:1 or more, ink on saffron 7.0:1, the
- * focus ring 4.3:1 against paper. Dark: bone 14:1, muted 6.3:1, slate 7.3:1 or more.
+ * focus ring 4.3:1 against paper, field outlines (--input) 3.2:1 or more. Dark: bone 14:1,
+ * muted 6.3:1, slate 7.3:1 or more, field outlines 3.3:1 or more.
  */
 
 @import "tailwindcss";
@@ -82,7 +83,10 @@
   /* rules */
   --border: oklch(0.88 0.01 80);
   --rule: oklch(0.86 0.012 80);
-  --input: oklch(0.78 0.012 75);
+  /* Field outlines (inputs, selects, the switch track, choice cards): 3:1 or more against
+     paper (3.4:1), surface (3.5:1) and sunken paper (3.2:1), WCAG 1.4.11. Cards keep the
+     lighter --border hairline. */
+  --input: oklch(0.62 0.012 75);
   /* Darker saffron so the ring keeps 3:1 or more against every light surface. */
   --ring: oklch(0.57 0.135 55);
 
@@ -145,7 +149,8 @@
 
   --border: oklch(0.3 0.01 70);
   --rule: oklch(0.33 0.011 70);
-  --input: oklch(0.42 0.012 70);
+  /* 3.7:1 on the page, 3.5:1 on surface, 3.3:1 on popovers. */
+  --input: oklch(0.54 0.012 70);
   --ring: oklch(0.79 0.135 70);
 
   --sidebar: oklch(0.16 0.007 70);
