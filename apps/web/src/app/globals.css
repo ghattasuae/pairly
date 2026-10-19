@@ -27,6 +27,46 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Size-adjusted fallbacks, so text keeps its size and line height while the self-hosted
+ * fonts load (no layout shift on swap). The metrics come from each font file, computed the
+ * way next/font does it, and were checked against the real fonts in a browser. next/font's own fallback is off (adjustFontFallback: false in
+ * src/app/fonts.ts) because a plain local Arial would catch Arabic text before Plex Sans
+ * Arabic; these faces are limited to Latin ranges, so Arabic still falls through. The
+ * joiners and direction marks (U+200C-200F) are left out for the same reason.
+ */
+@font-face {
+  font-family: "Pairly Sans Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans");
+  size-adjust: 101.13%;
+  ascent-override: 101.35%;
+  descent-override: 27.19%;
+  line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-200B, U+2010-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Pairly Serif Fallback";
+  src: local("Times New Roman"), local("TimesNewRomanPSMT"), local("Liberation Serif");
+  /* Measured at display sizes (32 to 48px, weight 400, the optical size the browser picks):
+     the file's default instance is the 9pt, weight 900 master, far wider than headings. */
+  size-adjust: 112%;
+  ascent-override: 87.3%;
+  descent-override: 22.8%;
+  line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-200B, U+2010-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Pairly Mono Fallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono");
+  size-adjust: 100%;
+  ascent-override: 102.5%;
+  descent-override: 27.49%;
+  line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-200B, U+2010-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --radius: 10px;
 
@@ -165,9 +205,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-ui), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-serif), var(--font-arabic), ui-serif, Georgia, serif;
-  --font-mono: var(--font-code), var(--font-arabic), ui-monospace, SFMono-Regular, monospace;
+  --font-sans: var(--font-ui), "Pairly Sans Fallback", var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif), "Pairly Serif Fallback", var(--font-arabic), ui-serif, Georgia, serif;
+  --font-mono: var(--font-code), "Pairly Mono Fallback", var(--font-arabic), ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
