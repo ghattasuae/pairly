@@ -55,7 +55,7 @@ export default async function CareersPage({ params }: Props) {
         </div>
         <p className="flex items-baseline gap-3 lg:flex-col lg:items-end lg:gap-1">
           <span className="figure text-6xl leading-none sm:text-7xl">{careers.jobs.length}</span>
-          <span className="font-mono text-xs tracking-wide text-muted-foreground uppercase">{t("openRoles")}</span>
+          <span className="eyebrow">{t("openRoles")}</span>
         </p>
       </section>
       <section aria-labelledby="open-roles" className="rise space-y-6" style={{ "--rise-index": 1 } as React.CSSProperties}>

@@ -135,7 +135,7 @@ export function AppShell({
               >
                 <Search className="size-4 shrink-0" aria-hidden />
                 <span className="flex-1 truncate text-start">{t("search")}</span>
-                <span className="flex gap-0.5" aria-hidden>
+                <span className="flex gap-0.5" dir="ltr" aria-hidden>
                   <Kbd>{apple ? "⌘" : "Ctrl"}</Kbd>
                   <Kbd>K</Kbd>
                 </span>

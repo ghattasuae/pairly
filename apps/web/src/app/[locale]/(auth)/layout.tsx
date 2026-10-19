@@ -51,7 +51,7 @@ function LedgerRings() {
     <svg
       aria-hidden
       viewBox="0 0 400 220"
-      className="pointer-events-none absolute -end-24 -bottom-16 w-[34rem] text-foreground/15 rtl:-scale-x-100"
+      className="pointer-events-none absolute -end-32 -bottom-32 w-[30rem] text-foreground/15 rtl:-scale-x-100"
     >
       <circle cx="150" cy="110" r="96" fill="none" stroke="currentColor" strokeWidth="1" />
       <circle cx="250" cy="110" r="96" fill="none" stroke="currentColor" strokeWidth="1" />

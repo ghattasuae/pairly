@@ -424,7 +424,7 @@ export function SchedulingPanel({
                       <span className="font-medium" dir="auto">
                         {when}
                       </span>
-                      <span className={cn("text-xs text-muted-foreground", !slot.sociable && "text-signal-foreground")}>
+                      <span className={cn("text-xs text-muted-foreground", !slot.sociable && "text-signal-foreground dark:text-signal")}>
                         {t("candidateTime", { time: theirs })}
                         {!slot.sociable && ` · ${t("unsociable")}`}
                       </span>

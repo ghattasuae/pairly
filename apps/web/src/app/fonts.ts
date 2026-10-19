@@ -24,7 +24,9 @@ export const fontUi = localFont({
   ],
   variable: "--font-ui",
   display: "swap",
-  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+  // No fallback in the variable: globals.css puts Plex Sans Arabic next in every stack,
+  // and a metric fallback (Arial) would catch the Arabic glyphs first.
+  adjustFontFallback: false,
 });
 
 export const fontArabic = localFont({
@@ -45,14 +47,14 @@ export const fontArabic = localFont({
       value: "U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF",
     },
   ],
-  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+  adjustFontFallback: false,
 });
 
 export const fontSerif = localFont({
   src: [{ path: "../fonts/fraunces/Fraunces-latin-basic.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-serif",
   display: "swap",
-  fallback: ["ui-serif", "Georgia", "serif"],
+  adjustFontFallback: false,
 });
 
 export const fontCode = localFont({
@@ -62,7 +64,7 @@ export const fontCode = localFont({
   ],
   variable: "--font-code",
   display: "swap",
-  fallback: ["ui-monospace", "SFMono-Regular", "monospace"],
+  adjustFontFallback: false,
 });
 
 export const fontVariables = [fontUi, fontArabic, fontSerif, fontCode]

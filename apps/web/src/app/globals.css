@@ -240,7 +240,8 @@
 
   /* Fraunces is variable: optical size follows the font size, the quirky "wonky"
      alternates stay off and a little softness keeps it warm, not bookish. */
-  .font-display {
+  .font-display,
+  .figure {
     font-optical-sizing: auto;
     font-variation-settings:
       "SOFT" 40,
@@ -377,6 +378,7 @@
   .figure {
     @apply font-display tracking-tight;
     font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum", "tnum";
   }
 
   /* The content column of a signed-in page: about 1200px, tables may break out wider. */
