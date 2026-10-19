@@ -157,6 +157,20 @@ function PaletteBody({ onOpenChange, items, onSignOut, search = searchEverything
           </PaletteItem>
         </Command.Group>
       </Command.List>
+      <div
+        aria-hidden
+        className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-surface-sunken px-3 py-2 text-xs text-muted-foreground"
+      >
+        <span className="flex items-center gap-1.5">
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd>
+          {t("hintMove")}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>Enter</Kbd>
+          {t("hintOpen")}
+        </span>
+      </div>
     </Command>
   );
 }

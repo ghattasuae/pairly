@@ -4,7 +4,15 @@
 
 import { useTranslations } from "next-intl";
 
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  dialogTitleClass,
+} from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 
 export const INBOX_SHORTCUTS = [
@@ -24,13 +32,13 @@ export function ShortcutsHelp({ open, onOpenChange }: { open: boolean; onOpenCha
   const t = useTranslations("Inbox.shortcuts");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <div className="space-y-4 p-6">
-          <div className="space-y-1">
-            <DialogTitle className="font-display text-2xl">{t("title")}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">{t("body")}</DialogDescription>
-          </div>
-          <dl className="divide-y rounded-lg border">
+      <DialogContent className="max-w-sm overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className={dialogTitleClass}>{t("title")}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">{t("body")}</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <dl className="divide-y rounded-lg border bg-surface">
             {INBOX_SHORTCUTS.map((shortcut) => (
               <div key={shortcut.id} className="flex items-center justify-between gap-4 px-3 py-2 text-sm">
                 <dt>{t(shortcut.id)}</dt>
@@ -42,7 +50,7 @@ export function ShortcutsHelp({ open, onOpenChange }: { open: boolean; onOpenCha
               </div>
             ))}
           </dl>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

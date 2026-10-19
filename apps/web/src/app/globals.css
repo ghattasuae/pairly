@@ -391,6 +391,97 @@
     @apply mx-auto w-full max-w-[75rem] px-5 py-8 sm:px-8 sm:py-10;
   }
 
+  /* A section card's heading row: a small title on the start side, a quiet action or
+     count on the end side. */
+  .card-head {
+    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1;
+  }
+
+  /* The shared data table (components/ui/table.tsx). A hairline frame, a sticky header
+     on sunken paper, hairline rows with a hover wash, mono tabular figures in numeric
+     cells. Muted ink keeps 5.3:1 on the sunken header and on the hover wash. */
+  .table-frame {
+    @apply relative overflow-x-auto rounded-lg border border-border bg-surface;
+  }
+
+  .data-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .data-table > caption {
+    @apply px-3 py-2 text-start text-xs text-muted-foreground;
+  }
+
+  .data-table > thead > tr > th {
+    @apply sticky top-0 z-[1] border-b border-border bg-surface-sunken px-3 py-2 text-start align-bottom text-xs font-medium whitespace-nowrap text-muted-foreground;
+  }
+
+  .data-table > tbody > tr {
+    @apply border-b border-border last:border-b-0;
+  }
+
+  .data-table > tbody > tr:hover {
+    background-color: color-mix(in oklch, var(--accent) 70%, transparent);
+  }
+
+  .data-table > tbody > tr > td,
+  .data-table > tbody > tr > th {
+    @apply px-3 py-2.5 text-start align-top;
+  }
+
+  .data-table > tbody > tr > th {
+    @apply font-medium;
+  }
+
+  .data-table > tfoot > tr > td,
+  .data-table > tfoot > tr > th {
+    @apply border-t border-border bg-surface-sunken px-3 py-2 text-start font-medium;
+  }
+
+  /* Numbers: mono, tabular, aligned to the end so digits line up. */
+  .data-table .cell-num,
+  .data-table [data-num] {
+    @apply text-end font-mono whitespace-nowrap;
+  }
+
+  /* Dense rows for long screening and audit lists. */
+  .data-table-dense > tbody > tr > td,
+  .data-table-dense > tbody > tr > th {
+    @apply py-1.5;
+  }
+
+  /* Filter bars above lists and reports: one ruled strip of fields, the apply button last. */
+  .filter-bar {
+    @apply flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface-sunken p-3 text-sm sm:p-4;
+  }
+
+  /* A quoted piece of evidence (CV text, a document line, an invoice field). The quote
+     sits on a ruled start edge; the matched words get a saffron-soft mark (ink text on it,
+     never colour alone: the mark also carries a bottom rule). The source is a slate link. */
+  .evidence {
+    @apply space-y-1.5 border-s-2 border-rule ps-3 text-sm;
+  }
+
+  .evidence-quote {
+    @apply leading-relaxed text-foreground;
+  }
+
+  .evidence mark,
+  mark.evidence-mark {
+    @apply rounded-[2px] px-0.5 text-foreground;
+    background-color: var(--signal-soft);
+    box-shadow: inset 0 -1px 0 var(--signal-ink);
+  }
+
+  .evidence-source {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground;
+  }
+
+  /* Kanban and triage columns: sunken paper, hairline cards on top. */
+  .lane {
+    @apply rounded-lg border border-border bg-surface-sunken;
+  }
+
   /* Document viewer: a guardrail finding is striped and dashed, never only a colour, so it
      reads differently from an evidence highlight (solid) in every theme. */
   .highlight-guardrail {

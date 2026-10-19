@@ -65,7 +65,9 @@
     "signOut": "Sign out",
     "hint": "Press {keys} any time to open this menu.",
     "searching": "Searching",
-    "results": "Search results"
+    "results": "Search results",
+    "hintMove": "Move",
+    "hintOpen": "Open"
   },
   "Auth": {
     "signInTitle": "Sign in to Pairly",
