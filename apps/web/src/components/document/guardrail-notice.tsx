@@ -97,7 +97,7 @@ export function GuardrailBadge({ count, className }: { count: number | null | un
     <span
       data-guardrail-badge
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-dashed border-destructive/60 bg-destructive/5 px-2 py-0.5 text-xs font-medium text-danger-ink",
+        "inline-flex items-center gap-1 rounded-sm border border-dashed border-destructive/60 bg-danger-soft px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-danger-ink",
         className,
       )}
     >

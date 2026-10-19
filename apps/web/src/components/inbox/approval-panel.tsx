@@ -106,7 +106,7 @@ export function ApprovalPanel({
 
   return (
     <article aria-labelledby={headingId} className="flex min-h-full flex-col">
-      <header className="space-y-3 border-b px-5 py-5 sm:px-8">
+      <header className="space-y-3 border-b border-border px-5 pt-6 pb-5 sm:px-8">
         <Button variant="ghost" size="sm" className="-ms-2 lg:hidden" onClick={onBack}>
           <ArrowLeft className="rtl:rotate-180" aria-hidden />
           {t("backToList")}
@@ -165,7 +165,7 @@ export function ApprovalPanel({
             <Button onClick={() => onDecide("approve")} aria-keyshortcuts="A">
               <Check aria-hidden />
               {t("approve")}
-              <Kbd className="ms-1 border-primary-foreground/30 bg-transparent text-primary-foreground/80">A</Kbd>
+              <Kbd className="ms-1 border-action-foreground/25 bg-transparent text-action-foreground">A</Kbd>
             </Button>
             <Button
               variant="outline"
@@ -189,7 +189,7 @@ export function ApprovalPanel({
         )}
       </header>
 
-      <div className="flex-1 space-y-8 px-5 py-6 sm:px-8">
+      <div className="max-w-4xl flex-1 space-y-8 px-5 py-6 sm:px-8">
         {state.status === "loading" && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -208,7 +208,7 @@ export function ApprovalPanel({
               {(detail.masked_fields ?? []).length > 0 && (
                 <p
                   data-blind-masked
-                  className="flex items-start gap-2 rounded-xl border border-dashed border-signal/50 bg-signal-soft/60 p-3 text-sm"
+                  className="flex items-start gap-2 rounded-lg border border-dashed border-warning-ink/50 bg-warning-soft p-3 text-sm"
                 >
                   <EyeOff className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>{t("blindMasked")}</span>
@@ -283,10 +283,13 @@ export function ApprovalPanel({
                   <li
                     key={s.id}
                     className={cn(
-                      "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-surface px-4 py-2.5 text-sm",
-                      s.id === step?.id && detail.status === "pending" && "border-signal/60",
+                      "relative flex flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden rounded-lg border bg-surface px-4 py-2.5 text-sm",
+                      s.id === step?.id && detail.status === "pending" && "border-foreground/25",
                     )}
                   >
+                    {s.id === step?.id && detail.status === "pending" && (
+                      <span aria-hidden className="absolute inset-y-0 start-0 w-[3px] bg-signal" />
+                    )}
                     <span className="font-mono text-xs text-muted-foreground" dir="ltr">
                       {s.position + 1}
                     </span>
@@ -305,9 +308,13 @@ export function ApprovalPanel({
               {detail.history.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("noHistory")}</p>
               ) : (
-                <ol className="space-y-3 border-s ps-4">
+                <ol className="space-y-4 border-s border-border ps-5">
                   {detail.history.map((row) => (
-                    <li key={row.id} className="space-y-1 text-sm">
+                    <li key={row.id} className="relative space-y-1 text-sm">
+                      <span
+                        aria-hidden
+                        className="absolute -start-[1.6rem] top-1.5 size-2.5 rounded-full border-2 border-background bg-muted-foreground"
+                      />
                       <p>
                         <span className="font-medium">
                           {row.actor_user_id === meId ? t("you") : t("someone")}
@@ -322,7 +329,10 @@ export function ApprovalPanel({
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {format.dateTime(new Date(row.created_at), { dateStyle: "medium", timeStyle: "short" })} ·{" "}
+                        <time dateTime={row.created_at}>
+                          {format.dateTime(new Date(row.created_at), { dateStyle: "medium", timeStyle: "short" })}
+                        </time>{" "}
+                        ·{" "}
                         {t(`channel.${knownChannel(row.channel)}`)}
                       </p>
                     </li>
