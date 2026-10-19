@@ -107,7 +107,9 @@ alternative.
    ```
 
    It writes `api.env`, `worker.env`, `web.env`, `ops.env` and `supabase.env` (no
-   `db.env`), with session pooler URLs and the matching settings.
+   `db.env`), with session pooler URLs and the matching settings. `supabase.env` holds
+   the three roles' SCRAM-SHA-256 verifiers rather than their passwords, so the
+   passwords never appear in a statement Supabase could log.
 5. **Run the bootstrap once**, as the project's `postgres` role, over the session pooler
    (port 5432) or the direct connection, never port 6543:
 

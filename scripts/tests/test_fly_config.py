@@ -7,6 +7,7 @@ validation in ``staging``, the environment the demo runs as."""
 
 from __future__ import annotations
 
+import base64
 import fnmatch
 import importlib.util
 import re
@@ -201,16 +202,21 @@ SUPABASE = gen.SupabaseTarget("abcdefghijklmnopqrst", "aws-0-eu-central-1.pooler
 
 def test_supabase_secrets_use_the_session_pooler() -> None:
     secrets = gen.fly_secrets(supabase=SUPABASE)
-    # No db app: Supabase replaces it. The passwords are for the bootstrap only.
+    # No db app: Supabase replaces it. The verifiers are for the bootstrap only.
     assert set(secrets) == {"supabase", "api", "worker", "web", "ops"}
-    pw = secrets["supabase"]
+    verifiers = secrets["supabase"]
     urls = {
         "app": secrets["api"]["PAIRLY_DATABASE_URL"],
         "owner": secrets["ops"]["PAIRLY_DATABASE_URL_OWNER"],
         "auth": secrets["web"]["PAIRLY_AUTH_DATABASE_URL"],
     }
     for role, url in urls.items():
-        assert url.split("@")[0].endswith(pw[f"PAIRLY_{role.upper()}_DB_PASSWORD"])
+        password = url.split("@")[0].rsplit(":", 1)[1]
+        verifier = verifiers[f"PAIRLY_{role.upper()}_DB_PASSWORD"]
+        assert verifier.startswith("SCRAM-SHA-256$4096:")
+        assert password not in verifier
+        salt = base64.b64decode(verifier.split("$")[1].split(":")[1])
+        assert gen.scram_verifier(password, salt=salt) == verifier
         assert f"pairly_{role}.abcdefghijklmnopqrst:" in url
         assert "@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" in url
         assert ":6543" not in url

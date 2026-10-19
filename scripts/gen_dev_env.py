@@ -35,7 +35,8 @@ in them: the doc sets those by hand.
 With ``--supabase REF --supabase-pooler HOST`` (the project ref and the pooler host the
 Supabase dashboard shows, such as ``aws-0-eu-central-1.pooler.supabase.com``) the
 database is Supabase instead of the ``db`` Fly app: no ``db.env``; ``supabase.env``
-holds the three role passwords for ``infra/supabase/bootstrap.sql``; every URL uses the
+holds the three roles' SCRAM-SHA-256 verifiers for ``infra/supabase/bootstrap.sql`` (so
+the passwords themselves never reach Supabase's statement logs); every URL uses the
 session pooler (port 5432, IPv4, the user written ``<role>.<ref>``, ``sslmode=require``)
 and the apps get the matching settings (``PAIRLY_DATABASE_POOLER=session``,
 ``PAIRLY_AUTH_DB_SCHEMA=pairly_auth``, ``PAIRLY_HOSTED_DEMO_DATABASE=postgres``).
@@ -48,6 +49,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import hmac
 import os
 import secrets
 import sys
@@ -346,6 +348,24 @@ SUPABASE_DATABASE = "postgres"
 SUPABASE_AUTH_SCHEMA = "pairly_auth"
 
 
+def scram_verifier(password: str, *, iterations: int = 4096, salt: bytes | None = None) -> str:
+    """Postgres's SCRAM-SHA-256 verifier for ``password`` (RFC 5802, RFC 7677), the form
+    ``CREATE ROLE ... PASSWORD`` stores. Given a verifier, the server never sees the
+    password, so it cannot reach a statement log. ASCII passwords only (ours are hex)."""
+    if not password.isascii():
+        raise ValueError("only ASCII passwords")
+    salt = salt if salt is not None else secrets.token_bytes(16)
+    salted = hashlib.pbkdf2_hmac("sha256", password.encode("ascii"), salt, iterations)
+    client_key = hmac.new(salted, b"Client Key", hashlib.sha256).digest()
+    stored_key = hashlib.sha256(client_key).digest()
+    server_key = hmac.new(salted, b"Server Key", hashlib.sha256).digest()
+
+    def b64(data: bytes) -> str:
+        return base64.b64encode(data).decode("ascii")
+
+    return f"SCRAM-SHA-256${iterations}:{b64(salt)}${b64(stored_key)}:{b64(server_key)}"
+
+
 @dataclass(frozen=True)
 class SupabaseTarget:
     """A Supabase project: its ref and its (shared) pooler host."""
@@ -397,10 +417,12 @@ def fly_secrets(
     if supabase is not None:
         pooled = {"PAIRLY_DATABASE_POOLER": "session"}
         return {
+            # SCRAM verifiers, not the passwords: the bootstrap's CREATE and ALTER ROLE
+            # statements then hold nothing a statement log could leak.
             "supabase": {
-                "PAIRLY_OWNER_DB_PASSWORD": pw["owner"],
-                "PAIRLY_APP_DB_PASSWORD": pw["app"],
-                "PAIRLY_AUTH_DB_PASSWORD": pw["auth"],
+                "PAIRLY_OWNER_DB_PASSWORD": scram_verifier(pw["owner"]),
+                "PAIRLY_APP_DB_PASSWORD": scram_verifier(pw["app"]),
+                "PAIRLY_AUTH_DB_PASSWORD": scram_verifier(pw["auth"]),
             },
             "api": {**shared, **pooled},
             "worker": {**shared, **pooled, "PAIRLY_AUDIT_SIGNING_KEY": signing},

@@ -15,6 +15,11 @@
 --
 -- Optional: -v auth_schema=<name> (default pairly_auth; must match PAIRLY_AUTH_DB_SCHEMA).
 --
+-- The three variables may hold the passwords or, better, their SCRAM-SHA-256 verifiers
+-- (`SCRAM-SHA-256$4096:...`, what `scripts/gen_dev_env.py --fly DIR --supabase ...` writes
+-- to supabase.env): Postgres stores a verifier as it is, so the password itself is never
+-- part of a statement that a server log could keep.
+--
 -- Supabase's `postgres` role is not a superuser but has CREATEROLE, so it can create these
 -- roles with the attributes below (all NO*, which needs no special right) and, on Postgres
 -- 16 and later, administers the roles it creates (ALTER ROLE ... SET works).
