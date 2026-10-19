@@ -14,7 +14,8 @@ Fail closed:
   (``PAIRLY_SMTP_SECURE`` or ``PAIRLY_SMTP_REQUIRE_TLS``), public URLs must be https,
   and ``PAIRLY_SIGNED_LINK_SECRET`` (unsubscribe links) is required.
 * Without ``PAIRLY_SLACK_SIGNING_SECRET`` every Slack endpoint answers 503: no request
-  is ever accepted unsigned.
+  is ever accepted unsigned. The same holds for the Resend inbound webhook without
+  ``PAIRLY_RESEND_WEBHOOK_SECRET`` (and its ``PAIRLY_RESEND_INBOUND_API_KEY``).
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, ValidationError, model_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pairly_core.config import ENV_PREFIX, ConfigError, Environment
@@ -51,10 +52,19 @@ class NotificationSettings(BaseSettings):
     smtp_require_tls: bool = False  # STARTTLS, refuse to send without it
     smtp_user: str | None = None
     smtp_password: SecretStr | None = None
+    # The From address for every transport (SMTP, Resend, outbox). With Resend it must be
+    # on a domain verified in the Resend dashboard.
     smtp_from: str = "Pairly <no-reply@pairly.localhost>"
+    # Optional Reply-To on outgoing mail (a monitored mailbox; unset: none).
+    email_reply_to: str | None = None
     smtp_timeout_seconds: float = Field(default=15.0, gt=0, le=120)
     resend_api_key: SecretStr | None = None
     resend_base_url: str = "https://api.resend.com"
+    # Resend inbound email (Pay's intake address): the webhook signing secret (whsec_...)
+    # and a separate full-access key for the Receiving API. Both or neither; without
+    # them the inbound webhook answers 503.
+    resend_webhook_secret: SecretStr | None = None
+    resend_inbound_api_key: SecretStr | None = None
 
     # HMAC key for one-click unsubscribe links.
     signed_link_secret: SecretStr | None = None
@@ -75,6 +85,18 @@ class NotificationSettings(BaseSettings):
     # Server-sent events: database poll interval and the longest a stream stays open.
     sse_poll_seconds: float = Field(default=5.0, ge=0.05, le=60)
     sse_max_seconds: int = Field(default=300, ge=1, le=3600)
+
+    @field_validator(
+        "resend_api_key",
+        "resend_webhook_secret",
+        "resend_inbound_api_key",
+        "email_reply_to",
+        mode="before",
+    )
+    @classmethod
+    def _blank_is_unset(cls, value: Any) -> Any:
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        return None if isinstance(raw, str) and not raw.strip() else value
 
     @property
     def relaxed(self) -> bool:
@@ -110,8 +132,25 @@ class NotificationSettings(BaseSettings):
                 and not (self.smtp_secure or self.smtp_require_tls)
             ):
                 problems.append("SMTP must use TLS outside development and test")
-        if self.email_transport == "resend" and self.resend_api_key is None:
-            problems.append("resend_api_key is required for the resend transport")
+        if self.email_transport == "resend":
+            key = self.resend_api_key.get_secret_value().strip() if self.resend_api_key else ""
+            if not key:
+                problems.append("resend_api_key is required for the resend transport")
+            elif not key.startswith("re_") and not self.relaxed:
+                problems.append("resend_api_key must be a Resend API key (re_...)")
+        if (self.resend_webhook_secret is None) != (self.resend_inbound_api_key is None):
+            problems.append("resend_webhook_secret and resend_inbound_api_key are needed together")
+        if self.resend_webhook_secret is not None:
+            from pairly_core.integrations.resend.signature import decode_secret
+
+            try:
+                decode_secret(self.resend_webhook_secret.get_secret_value().strip())
+            except ValueError as exc:
+                problems.append(f"resend_webhook_secret: {exc}")
+        if self.resend_inbound_api_key is not None and not (
+            self.resend_inbound_api_key.get_secret_value().strip().startswith("re_")
+        ):
+            problems.append("resend_inbound_api_key must be a Resend API key (re_...)")
         if self.email_transport == "fake" and self.env is Environment.PRODUCTION:
             problems.append("the fake email transport is not allowed in production")
         if self.email_transport == "outbox":

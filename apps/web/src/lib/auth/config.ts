@@ -20,7 +20,8 @@
  *   `PAIRLY_AUTH_AUDIENCE`. Claims: `sub`, `amr` (`["otp"]` only after a TOTP code),
  *   `email` and `email_verified` (to bind invitations). The API decides every
  *   permission itself. Tokens are minted in-process only: `/token` is closed to HTTP.
- * - Postgres as role `pairly_auth`, whose search path is schema `auth`. IDs are UUIDs, so
+ * - Postgres as role `pairly_auth`, whose search path is the auth schema
+ *   (`PAIRLY_AUTH_DB_SCHEMA`: `auth` locally, `pairly_auth` on Supabase). IDs are UUIDs, so
  *   an organization id can be sent to the API as `X-Pairly-Org` unchanged.
  *
  * This module has no `server-only` import so the migration script (tsx) can load it. App

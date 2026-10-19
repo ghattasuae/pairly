@@ -2,7 +2,8 @@
 # Copyright (c) 2026 Proofly Technology
 #
 # Hosted demo web app (docs/hosted-demo.md): Next.js from infra/docker/web.Dockerfile,
-# Better Auth as pairly_auth (schema auth only). Public at https://pairly-demo-web.fly.dev.
+# Better Auth as pairly_auth (its schema only: auth on pairly-demo-db, pairly_auth on
+# Supabase, PAIRLY_AUTH_DB_SCHEMA). Public at https://pairly-demo-web.fly.dev.
 # Visitors sign in at /en/demo (or /ar/demo) as a seeded demo user: no email is sent and
 # no mailbox is shown (PAIRLY_DEMO_PUBLIC_SIGNIN, apps/web/src/lib/demo/policy.ts).
 #
@@ -10,7 +11,13 @@
 # PAIRLY_AUTH_DATABASE_URL.
 #
 #   fly deploy . --config infra/fly/web/fly.toml --dockerfile infra/docker/web.Dockerfile --ha=false
-
+#
+# Database on Supabase instead of pairly-demo-db (docs/hosted-demo.md): the secrets from
+# scripts/gen_dev_env.py --fly DIR --supabase REF --supabase-pooler HOST carry the session
+# pooler URL (sslmode=require&uselibpqcompat=true) and PAIRLY_AUTH_DB_SCHEMA=pairly_auth
+# (secrets override [env]). To verify the server certificate, store Supabase's CA as a
+# secret (SUPABASE_CA_CERT, base64), uncomment the [[files]] block below, set
+# NODE_EXTRA_CA_CERTS=/etc/pairly/supabase-ca.crt and use sslmode=verify-full alone.
 app = "pairly-demo-web"
 primary_region = "fra"
 
@@ -56,3 +63,8 @@ primary_region = "fra"
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"
+
+# Supabase only, see the header:
+# [[files]]
+#   guest_path = "/etc/pairly/supabase-ca.crt"
+#   secret_name = "SUPABASE_CA_CERT"

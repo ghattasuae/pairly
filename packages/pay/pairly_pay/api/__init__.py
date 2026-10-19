@@ -30,6 +30,8 @@
   requests, each limited to the contact's own vendor.
 * ``portal_admin``: the AP team's side: portal access for contacts on file, the portal
   thread and replies, and applying credit notes.
+* ``inbound``: Resend's signed ``email.received`` webhook for the intake address
+  (``pairly_pay.resend_inbound``); no sign-in, signature checked first.
 
 Imported only by the API process (the worker never loads routes).
 """
@@ -46,6 +48,7 @@ from pairly_pay.api import (
     dashboards,
     exceptions,
     forecast,
+    inbound,
     invoices,
     journal,
     month_end,
@@ -76,3 +79,4 @@ router.include_router(coding.router)
 router.include_router(exceptions.router)
 router.include_router(vendor_portal.router)
 router.include_router(portal_admin.router)
+router.include_router(inbound.router)

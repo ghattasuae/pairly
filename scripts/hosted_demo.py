@@ -11,12 +11,15 @@ Fly app, from the ``demo`` image target of ``infra/docker/python.Dockerfile``.
 whatever they did the day before:
 
 1. Wipe: every table, view, sequence, function and type the owner role owns in schema
-   ``public`` is dropped (Alembic's version table included). Extension objects (pgvector,
-   created by the superuser in ``infra/postgres/init``) and the schemas themselves stay,
-   so the owner role needs no extra right.
+   ``public`` is dropped (Alembic's version table included), and so is every other
+   schema the owner role owns (``lg_checkpoints``, which migration 0006 creates again).
+   Extension objects (pgvector, created by the superuser in ``infra/postgres/init`` or
+   by ``infra/supabase/bootstrap.sql``) and schema ``public`` itself stay, so the owner
+   role needs no extra right.
 2. Migrate: ``alembic upgrade heads`` on the empty schema.
-3. Sign-in data: every Better Auth table in schema ``auth`` is emptied (users, sessions,
-   magic link tokens, rate limit rows), as ``pairly_auth``. The signing keys (``jwks``)
+3. Sign-in data: every Better Auth table in the auth schema (``PAIRLY_AUTH_DB_SCHEMA``:
+   ``auth`` on the Fly Postgres, ``pairly_auth`` on Supabase) is emptied (users,
+   sessions, magic link tokens, rate limit rows), as ``pairly_auth``. The signing keys (``jwks``)
    stay, so the API's cached key set stays valid.
 4. Queue: the job queue's Valkey database is flushed (jobs of the old data would fail).
 5. Documents: every object in the documents bucket is deleted. The audit anchor bucket is
@@ -134,6 +137,29 @@ ORDER BY step, name
 """
 
 
+OWNED_SCHEMAS_SQL: Final = """
+SELECT n.nspname FROM pg_namespace n
+ WHERE n.nspowner = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+   AND n.nspname <> 'public'
+ ORDER BY n.nspname
+"""
+
+
+async def drop_owned_schemas(conn: Any) -> list[str]:
+    """Drop every schema the connected role owns except ``public`` (``lg_checkpoints``:
+    migration 0006 creates it, so it must not survive the wipe)."""
+    import re
+
+    from sqlalchemy import text
+
+    names = [str(r[0]) for r in (await conn.execute(text(OWNED_SCHEMAS_SQL))).all()]
+    for name in names:
+        if not re.fullmatch(SAFE_NAME, name):
+            raise RuntimeError("unexpected schema name owned by the owner role")
+        await conn.execute(text(f'DROP SCHEMA "{name}" CASCADE'))  # nosec B608
+    return names
+
+
 async def wipe_schema(conn: Any, schema: str = "public", *, passes: int = 5) -> int:
     """Drop everything the connected role owns in ``schema`` (not extension objects).
     Returns how many objects were dropped. Several passes, since a CASCADE in one pass
@@ -172,21 +198,48 @@ def migrate(env: Mapping[str, str]) -> None:
 # ------------------------------------------------------------------ 3. sign-in data
 
 
-async def empty_auth_tables(auth_url: str) -> list[str]:
+def auth_schema(env: Mapping[str, str]) -> str:
+    """Better Auth's schema (``PAIRLY_AUTH_DB_SCHEMA``, default ``auth``), validated."""
+    import re
+
+    name = env.get("PAIRLY_AUTH_DB_SCHEMA", "").strip() or "auth"
+    if not re.fullmatch(SAFE_NAME, name) or name == "public":
+        raise RefusedError("PAIRLY_AUTH_DB_SCHEMA must be a lower-case schema name")
+    return name
+
+
+def asyncpg_dsn(url: str) -> str:
+    """``url`` without the node-postgres only ``uselibpqcompat`` option (asyncpg would send
+    it to the server as a setting, which Postgres refuses)."""
+    from urllib.parse import parse_qsl, urlencode
+
+    base, sep, query = url.partition("?")
+    if not sep:
+        return url
+    kept = [(k, v) for k, v in parse_qsl(query, keep_blank_values=True) if k != "uselibpqcompat"]
+    return f"{base}?{urlencode(kept)}" if kept else base
+
+
+async def empty_auth_tables(auth_url: str, schema: str = "auth") -> list[str]:
+    import re
+
     import asyncpg  # type: ignore[import-untyped]
 
-    conn = await asyncpg.connect(auth_url)
+    if not re.fullmatch(SAFE_NAME, schema):
+        raise ValueError("invalid schema name")
+    conn = await asyncpg.connect(asyncpg_dsn(auth_url))
     try:
         names = [
             str(r["tablename"])
             for r in await conn.fetch(
-                "SELECT tablename FROM pg_tables WHERE schemaname = 'auth' "
-                "AND tableowner = current_user ORDER BY tablename"
+                "SELECT tablename FROM pg_tables WHERE schemaname = $1 "
+                "AND tableowner = current_user ORDER BY tablename",
+                schema,
             )
         ]
         targets = [n for n in names if n not in KEEP_AUTH_TABLES]
         if targets:
-            quoted = ", ".join(f'auth."{n}"' for n in targets if '"' not in n)
+            quoted = ", ".join(f'"{schema}"."{n}"' for n in targets if '"' not in n)
             await conn.execute(f"TRUNCATE {quoted} CASCADE")
         return targets
     finally:
@@ -302,12 +355,13 @@ async def reset(env: Mapping[str, str]) -> None:
     try:
         async with engine.begin() as conn:
             dropped = await wipe_schema(conn, "public")
+            schemas = await drop_owned_schemas(conn)
     finally:
         await engine.dispose()
-    print(f"1. wipe: {dropped} objects dropped from schema public")
+    print(f"1. wipe: {dropped} objects dropped from schema public, schemas {schemas} dropped")
     migrate(env)
     print("2. migrate: done")
-    emptied = await empty_auth_tables(_require(env, "PAIRLY_AUTH_DATABASE_URL"))
+    emptied = await empty_auth_tables(_require(env, "PAIRLY_AUTH_DATABASE_URL"), auth_schema(env))
     print(f"3. sign-in data: {len(emptied)} auth tables emptied (jwks kept)")
     await flush_queue(_require(env, "PAIRLY_REDIS_URL"))
     print("4. queue: flushed")

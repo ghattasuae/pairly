@@ -16,6 +16,13 @@
 # PAIRLY_S3_ACCESS_KEY and PAIRLY_S3_SECRET_KEY (Tigris).
 #
 #   fly deploy . --config infra/fly/api/fly.toml --dockerfile infra/docker/python.Dockerfile --ha=false
+#
+# Database on Supabase instead of pairly-demo-db (docs/hosted-demo.md): the secrets from
+# scripts/gen_dev_env.py --fly DIR --supabase REF --supabase-pooler HOST carry the session
+# pooler URLs and PAIRLY_DATABASE_POOLER=session (secrets override [env]). To verify the
+# server certificate, store Supabase's CA as a secret (fly secrets set
+# SUPABASE_CA_CERT="$(base64 < prod-ca-2021.crt)"), uncomment the [[files]] block below,
+# and set PGSSLROOTCERT=/etc/pairly/supabase-ca.crt and sslmode=verify-full in the URLs.
 
 app = "pairly-demo-api"
 primary_region = "fra"
@@ -97,3 +104,8 @@ primary_region = "fra"
   size = "shared-cpu-1x"
   memory = "512mb"
   processes = ["api"]
+
+# Supabase only, see the header:
+# [[files]]
+#   guest_path = "/etc/pairly/supabase-ca.crt"
+#   secret_name = "SUPABASE_CA_CERT"

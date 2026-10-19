@@ -8,6 +8,8 @@ Usage:
     uv run python scripts/gen_dev_env.py --append-missing  # also updates an existing one
     uv run python scripts/gen_dev_env.py --env PATH        # custom target (used by tests)
     uv run python scripts/gen_dev_env.py --fly DIR         # hosted demo secrets for Fly.io
+    uv run python scripts/gen_dev_env.py --fly DIR --supabase REF --supabase-pooler HOST
+                                                           # the same, database on Supabase
 
 Rules:
 - An existing `.env` is never overwritten: no line in it is changed or removed. Without
@@ -30,6 +32,15 @@ value. The database passwords go into the URLs of the apps that use them, so the
 files always match. Values Fly creates (the Upstash Redis URL, the Tigris keys) are not
 in them: the doc sets those by hand.
 
+With ``--supabase REF --supabase-pooler HOST`` (the project ref and the pooler host the
+Supabase dashboard shows, such as ``aws-0-eu-central-1.pooler.supabase.com``) the
+database is Supabase instead of the ``db`` Fly app: no ``db.env``; ``supabase.env``
+holds the three roles' SCRAM-SHA-256 verifiers for ``infra/supabase/bootstrap.sql`` (so
+the passwords themselves never reach Supabase's statement logs); every URL uses the
+session pooler (port 5432, IPv4, the user written ``<role>.<ref>``, ``sslmode=require``)
+and the apps get the matching settings (``PAIRLY_DATABASE_POOLER=session``,
+``PAIRLY_AUTH_DB_SCHEMA=pairly_auth``, ``PAIRLY_HOSTED_DEMO_DATABASE=postgres``).
+
 Standard library only.
 """
 
@@ -38,6 +49,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import hmac
 import os
 import secrets
 import sys
@@ -332,7 +344,48 @@ FLY_DATABASE = "pairly"
 FLY_FROM_FLY = ("PAIRLY_REDIS_URL", "PAIRLY_S3_ACCESS_KEY", "PAIRLY_S3_SECRET_KEY")
 
 
-def fly_secrets(prefix: str = "pairly-demo") -> dict[str, dict[str, str]]:
+SUPABASE_DATABASE = "postgres"
+SUPABASE_AUTH_SCHEMA = "pairly_auth"
+
+
+def scram_verifier(password: str, *, iterations: int = 4096, salt: bytes | None = None) -> str:
+    """Postgres's SCRAM-SHA-256 verifier for ``password`` (RFC 5802, RFC 7677), the form
+    ``CREATE ROLE ... PASSWORD`` stores. Given a verifier, the server never sees the
+    password, so it cannot reach a statement log. ASCII passwords only (ours are hex)."""
+    if not password.isascii():
+        raise ValueError("only ASCII passwords")
+    salt = salt if salt is not None else secrets.token_bytes(16)
+    salted = hashlib.pbkdf2_hmac("sha256", password.encode("ascii"), salt, iterations)
+    client_key = hmac.new(salted, b"Client Key", hashlib.sha256).digest()
+    stored_key = hashlib.sha256(client_key).digest()
+    server_key = hmac.new(salted, b"Server Key", hashlib.sha256).digest()
+
+    def b64(data: bytes) -> str:
+        return base64.b64encode(data).decode("ascii")
+
+    return f"SCRAM-SHA-256${iterations}:{b64(salt)}${b64(stored_key)}:{b64(server_key)}"
+
+
+@dataclass(frozen=True)
+class SupabaseTarget:
+    """A Supabase project: its ref and its (shared) pooler host."""
+
+    ref: str
+    pooler_host: str
+
+    def __post_init__(self) -> None:
+        if not self.ref or not all(c.islower() or c.isdigit() for c in self.ref):
+            raise ValueError("the Supabase project ref is lower case letters and digits")
+        host = self.pooler_host
+        if not host.endswith(".pooler.supabase.com") or not all(
+            c.islower() or c.isdigit() or c in ".-" for c in host
+        ):
+            raise ValueError("the pooler host looks like aws-0-<region>.pooler.supabase.com")
+
+
+def fly_secrets(
+    prefix: str = "pairly-demo", supabase: SupabaseTarget | None = None
+) -> dict[str, dict[str, str]]:
     """Fresh secrets for each hosted demo Fly app, by app (see the module docstring)."""
     if not prefix or not all(c.islower() or c.isdigit() or c == "-" for c in prefix):
         raise ValueError("the app prefix is lower case letters, digits and dashes")
@@ -340,6 +393,15 @@ def fly_secrets(prefix: str = "pairly-demo") -> dict[str, dict[str, str]]:
     host = f"{prefix}-db.internal:5432"
 
     def url(scheme: str, role: str, password: str) -> str:
+        if supabase is not None:
+            # Session pooler: IPv4, prepared statements and session settings work, and the
+            # role is named <role>.<project ref>. Never port 6543 (transaction mode) here.
+            # node-postgres reads sslmode=require as verify-full unless uselibpqcompat.
+            extra = "&uselibpqcompat=true" if scheme == "postgresql" else ""
+            return (
+                f"{scheme}://{role}.{supabase.ref}:{password}@{supabase.pooler_host}:5432/"
+                f"{SUPABASE_DATABASE}?sslmode=require{extra}"
+            )
         return f"{scheme}://{role}:{password}@{host}/{FLY_DATABASE}"
 
     signing = _b64key()
@@ -352,6 +414,32 @@ def fly_secrets(prefix: str = "pairly-demo") -> dict[str, dict[str, str]]:
         "PAIRLY_AUDIT_ANCHOR_PUBLIC_KEY": _public_from_seed(signing),
     }
     auth_url = url("postgresql", "pairly_auth", pw["auth"])
+    if supabase is not None:
+        pooled = {"PAIRLY_DATABASE_POOLER": "session"}
+        return {
+            # SCRAM verifiers, not the passwords: the bootstrap's CREATE and ALTER ROLE
+            # statements then hold nothing a statement log could leak.
+            "supabase": {
+                "PAIRLY_OWNER_DB_PASSWORD": scram_verifier(pw["owner"]),
+                "PAIRLY_APP_DB_PASSWORD": scram_verifier(pw["app"]),
+                "PAIRLY_AUTH_DB_PASSWORD": scram_verifier(pw["auth"]),
+            },
+            "api": {**shared, **pooled},
+            "worker": {**shared, **pooled, "PAIRLY_AUDIT_SIGNING_KEY": signing},
+            "web": {
+                "BETTER_AUTH_SECRET": secrets.token_hex(32),
+                "PAIRLY_AUTH_DATABASE_URL": auth_url,
+                "PAIRLY_AUTH_DB_SCHEMA": SUPABASE_AUTH_SCHEMA,
+            },
+            "ops": {
+                **shared,
+                **pooled,
+                "PAIRLY_DATABASE_URL_OWNER": url("postgresql+asyncpg", "pairly_owner", pw["owner"]),
+                "PAIRLY_AUTH_DATABASE_URL": auth_url,
+                "PAIRLY_AUTH_DB_SCHEMA": SUPABASE_AUTH_SCHEMA,
+                "PAIRLY_HOSTED_DEMO_DATABASE": SUPABASE_DATABASE,
+            },
+        }
     return {
         "db": {
             "POSTGRES_PASSWORD": pw["postgres"],
@@ -370,23 +458,34 @@ def fly_secrets(prefix: str = "pairly-demo") -> dict[str, dict[str, str]]:
     }
 
 
-def write_fly(directory: Path, prefix: str = "pairly-demo") -> int:
-    paths = {app: directory / f"{app}.env" for app in FLY_APPS}
+def write_fly(
+    directory: Path, prefix: str = "pairly-demo", supabase: SupabaseTarget | None = None
+) -> int:
+    planned = fly_secrets(prefix, supabase)
+    paths = {app: directory / f"{app}.env" for app in planned}
     taken = [str(p) for p in paths.values() if p.exists()]
     if taken:
         print(f"error: will not overwrite {', '.join(taken)}", file=sys.stderr)
         return 1
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    for app, values in fly_secrets(prefix).items():
+    for app, values in planned.items():
         text = "".join(f"{key}={value}\n" for key, value in values.items())
         if not write_new(paths[app], text):
             print(f"error: {paths[app]} appeared while writing", file=sys.stderr)
             return 1
         print(f"{paths[app]}: {', '.join(values)}")
     print("")
-    print("Import each file into its app, then delete the folder:")
-    for app in FLY_APPS:
-        print(f"  fly secrets import --stage -a {prefix}-{app} < {paths[app]}")
+    if supabase is not None:
+        print("Run infra/supabase/bootstrap.sql with the passwords in supabase.env first:")
+        print(f"  set -a; . {paths['supabase']}; set +a")
+        print(
+            '  psql "<session pooler URL as postgres, from the dashboard>" '
+            "-v ON_ERROR_STOP=1 -f infra/supabase/bootstrap.sql"
+        )
+    print("Import each app file into its app, then delete the folder:")
+    for app in planned:
+        if app != "supabase":
+            print(f"  fly secrets import --stage -a {prefix}-{app} < {paths[app]}")
     print(f"Set by hand on api, worker and ops (values from Fly): {', '.join(FLY_FROM_FLY)}")
     return 0
 
@@ -407,11 +506,27 @@ def main(argv: list[str] | None = None) -> int:
         help="hosted demo: write one secrets file per Fly app into DIR (no .env)",
     )
     parser.add_argument("--fly-prefix", default="pairly-demo", help="Fly app name prefix")
+    parser.add_argument("--supabase", metavar="REF", help="with --fly: the Supabase project ref")
+    parser.add_argument(
+        "--supabase-pooler",
+        metavar="HOST",
+        help="with --supabase: the pooler host, such as aws-0-eu-central-1.pooler.supabase.com",
+    )
     args = parser.parse_args(argv)
 
+    if (args.supabase is None) != (args.supabase_pooler is None) or (
+        args.supabase is not None and args.fly is None
+    ):
+        print("error: --supabase and --supabase-pooler go together, with --fly", file=sys.stderr)
+        return 1
     if args.fly is not None:
         try:
-            return write_fly(args.fly, args.fly_prefix)
+            target = (
+                SupabaseTarget(args.supabase, args.supabase_pooler)
+                if args.supabase is not None
+                else None
+            )
+            return write_fly(args.fly, args.fly_prefix, target)
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1

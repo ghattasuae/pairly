@@ -7,6 +7,7 @@ validation in ``staging``, the environment the demo runs as."""
 
 from __future__ import annotations
 
+import base64
 import fnmatch
 import importlib.util
 import re
@@ -196,9 +197,57 @@ def test_write_fly_never_prints_or_overwrites(
     assert (out / "db.env").read_text() == before
 
 
-def _environment(app: str) -> dict[str, str]:
+SUPABASE = gen.SupabaseTarget("abcdefghijklmnopqrst", "aws-0-eu-central-1.pooler.supabase.com")
+
+
+def test_supabase_secrets_use_the_session_pooler() -> None:
+    secrets = gen.fly_secrets(supabase=SUPABASE)
+    # No db app: Supabase replaces it. The verifiers are for the bootstrap only.
+    assert set(secrets) == {"supabase", "api", "worker", "web", "ops"}
+    verifiers = secrets["supabase"]
+    urls = {
+        "app": secrets["api"]["PAIRLY_DATABASE_URL"],
+        "owner": secrets["ops"]["PAIRLY_DATABASE_URL_OWNER"],
+        "auth": secrets["web"]["PAIRLY_AUTH_DATABASE_URL"],
+    }
+    for role, url in urls.items():
+        password = url.split("@")[0].rsplit(":", 1)[1]
+        verifier = verifiers[f"PAIRLY_{role.upper()}_DB_PASSWORD"]
+        assert verifier.startswith("SCRAM-SHA-256$4096:")
+        assert password not in verifier
+        salt = base64.b64decode(verifier.split("$")[1].split(":")[1])
+        assert gen.scram_verifier(password, salt=salt) == verifier
+        assert f"pairly_{role}.abcdefghijklmnopqrst:" in url
+        assert "@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" in url
+        assert ":6543" not in url
+    assert urls["auth"].endswith("&uselibpqcompat=true")
+    assert secrets["api"]["PAIRLY_DATABASE_POOLER"] == "session"
+    assert secrets["worker"]["PAIRLY_DATABASE_POOLER"] == "session"
+    assert secrets["web"]["PAIRLY_AUTH_DB_SCHEMA"] == "pairly_auth"
+    assert secrets["ops"]["PAIRLY_AUTH_DB_SCHEMA"] == "pairly_auth"
+    assert secrets["ops"]["PAIRLY_HOSTED_DEMO_DATABASE"] == "postgres"
+    assert all("PAIRLY_DATABASE_URL_OWNER" not in secrets[a] for a in ("api", "worker", "web"))
+    for bad in (("Bad", SUPABASE.pooler_host), ("abc", "db.abc.supabase.co")):
+        with pytest.raises(ValueError, match=r"Supabase|pooler"):
+            gen.SupabaseTarget(*bad)
+
+
+def test_write_fly_for_supabase(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    out = tmp_path / "fly"
+    args = ["--fly", str(out), "--supabase", SUPABASE.ref]
+    args += ["--supabase-pooler", SUPABASE.pooler_host]
+    assert gen.main(args) == 0
+    printed = capsys.readouterr().out
+    assert not (out / "db.env").exists()
+    assert (out / "supabase.env").stat().st_mode & 0o777 == 0o600
+    assert "infra/supabase/bootstrap.sql" in printed
+    assert "pairly-demo-supabase" not in printed
+    assert gen.main(["--fly", str(out), "--supabase", SUPABASE.ref]) == 1
+
+
+def _environment(app: str, supabase: bool = False) -> dict[str, str]:
     env = dict(config(app)["env"])
-    env.update(gen.fly_secrets()[app])
+    env.update(gen.fly_secrets(supabase=SUPABASE if supabase else None)[app])
     env.update(
         {
             "PAIRLY_REDIS_URL": "rediss://default:pw@fly-pairly-demo-redis.upstash.io:6379",
@@ -209,10 +258,14 @@ def _environment(app: str) -> dict[str, str]:
     return env
 
 
+@pytest.mark.parametrize("supabase", [False, True], ids=["fly-db", "supabase"])
 @pytest.mark.parametrize("app", ["api", "worker", "ops"])
-def test_settings_validate_as_staging(app: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_settings_validate_as_staging(
+    app: str, supabase: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Every settings class the services load accepts the demo environment in staging,
-    with all the production checks on (https URLs, TLS, no fake scanner)."""
+    with all the production checks on (https URLs, TLS, no fake scanner), with the
+    database on the Fly Postgres app or on Supabase."""
     from pairly_core.audit_anchor.store import load_anchor_settings
     from pairly_core.config import Environment, load_settings
     from pairly_core.demo_signin import load_demo_signin_settings
@@ -221,9 +274,10 @@ def test_settings_validate_as_staging(app: str, monkeypatch: pytest.MonkeyPatch)
     from pairly_core.notifications.settings import load_notification_settings
     from pairly_hire.antispam import CloudflareTurnstileVerifier, turnstile_from_env
 
-    for key, value in _environment(app).items():
+    for key, value in _environment(app, supabase).items():
         monkeypatch.setenv(key, value)
     settings = load_settings()
+    assert settings.database_pooler == ("session" if supabase else "none")
     assert settings.env is Environment.STAGING
     assert settings.is_production
     notify = load_notification_settings()

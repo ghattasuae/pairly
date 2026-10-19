@@ -3,14 +3,18 @@
 
 /**
  * Transactional email for auth flows (magic links, invitations). SMTP (Mailpit for the
- * Docker stack, any SMTP relay in production) or, for the native development stack and
- * tests only, the file outbox (`outbox.ts`, `PAIRLY_EMAIL_TRANSPORT=outbox`). Bodies are built from the locale's message file,
+ * Docker stack, any SMTP relay in production), Resend's HTTP API (`resend.ts`,
+ * `PAIRLY_EMAIL_TRANSPORT=resend`, the hosted deployment) or, for the native development
+ * stack and tests only, the file outbox (`outbox.ts`, `PAIRLY_EMAIL_TRANSPORT=outbox`).
+ * Bodies are built from the locale's message file,
  * plain text plus a minimal HTML version with every interpolated value escaped.
  *
  * Invitation emails are sent here, by the web server, right after the API returns the new
  * invitation's token: the raw token then never has to be stored anywhere (a worker job
  * would have to put it in the queue), and the link points at this app.
  */
+import { randomUUID } from "node:crypto";
+
 import nodemailer, { type Transporter } from "nodemailer";
 import { createTranslator } from "next-intl";
 
@@ -19,10 +23,13 @@ import { type Locale, localeDirection } from "@/i18n/routing";
 
 import { serverEnv } from "./env";
 import { writeOutboxMessage } from "./outbox";
+import { sendWithResend } from "./resend";
 
 let transporter: Transporter | undefined;
 
-async function deliver(mail: { to: string; subject: string; text: string; html: string }): Promise<void> {
+type Mail = { to: string; subject: string; text: string; html: string };
+
+async function deliver(mail: Mail, kind: "magic_link" | "invitation"): Promise<void> {
   const env = serverEnv();
   // The hosted demo: nothing leaves the server (lib/env.ts refuses it in production).
   if (env.email.transport === "fake") return;
@@ -31,7 +38,15 @@ async function deliver(mail: { to: string; subject: string; text: string; html: 
     await writeOutboxMessage(env.email.outboxDir, message);
     return;
   }
-  await getTransporter().sendMail(message);
+  if (env.email.transport === "resend" && env.resend.apiKey) {
+    // A fresh key per email: it only makes this function's own retries safe.
+    await sendWithResend(
+      { ...message, replyTo: env.email.replyTo, tags: { category: kind } },
+      { apiKey: env.resend.apiKey, baseUrl: env.resend.baseUrl, idempotencyKey: `web-${randomUUID()}` },
+    );
+    return;
+  }
+  await getTransporter().sendMail(env.email.replyTo ? { ...message, replyTo: env.email.replyTo } : message);
 }
 
 function getTransporter(): Transporter {
@@ -94,7 +109,7 @@ export async function sendInvitationEmail(params: {
 ${button(params.url, t("button"))}
 <p style="color:#5b6766;font-size:14px">${escapeHtml(t("expires", { days: INVITATION_DAYS }))}<br>${escapeHtml(t("ignore"))}</p>
 </body></html>`;
-  await deliver({ to: params.to, subject, text, html });
+  await deliver({ to: params.to, subject, text, html }, "invitation");
 }
 
 export async function sendMagicLinkEmail(params: {
@@ -123,5 +138,5 @@ export async function sendMagicLinkEmail(params: {
 <p><a href="${escapeHtml(params.url)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#1d5c52;color:#ffffff;text-decoration:none">${escapeHtml(t("button"))}</a></p>
 <p style="color:#5b6766;font-size:14px">${escapeHtml(t("expires", { minutes }))}<br>${escapeHtml(t("ignore"))}</p>
 </body></html>`;
-  await deliver({ to: params.to, subject, text, html });
+  await deliver({ to: params.to, subject, text, html }, "magic_link");
 }

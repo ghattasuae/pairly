@@ -91,6 +91,55 @@ def test_schema_name_is_checked() -> None:
         asyncio.run(hd.wipe_schema(object(), "public; DROP"))
 
 
+def test_auth_schema_is_configurable_and_checked() -> None:
+    import asyncio
+
+    assert hd.auth_schema({}) == "auth"
+    assert hd.auth_schema({"PAIRLY_AUTH_DB_SCHEMA": " "}) == "auth"
+    assert hd.auth_schema({"PAIRLY_AUTH_DB_SCHEMA": "pairly_auth"}) == "pairly_auth"
+    for bad in ("public", "Pairly", 'a"b', "x; DROP"):
+        with pytest.raises(SystemExit):
+            hd.auth_schema({"PAIRLY_AUTH_DB_SCHEMA": bad})
+    with pytest.raises(ValueError, match="invalid schema"):
+        asyncio.run(hd.empty_auth_tables("postgresql://unused", 'auth"; DROP'))
+
+
+def test_asyncpg_dsn_drops_the_node_only_option() -> None:
+    url = "postgresql://u:p@h:5432/postgres?sslmode=require&uselibpqcompat=true"
+    assert hd.asyncpg_dsn(url) == "postgresql://u:p@h:5432/postgres?sslmode=require"
+    assert hd.asyncpg_dsn("postgresql://u:p@h/db?uselibpqcompat=true") == "postgresql://u:p@h/db"
+    assert hd.asyncpg_dsn("postgresql://u:p@h/db") == "postgresql://u:p@h/db"
+
+
+class _Rows:
+    def __init__(self, rows: list[tuple[str]]) -> None:
+        self._rows = rows
+
+    def all(self) -> list[tuple[str]]:
+        return self._rows
+
+
+class _Conn:
+    def __init__(self, owned: list[str]) -> None:
+        self.owned = owned
+        self.sql: list[str] = []
+
+    async def execute(self, statement: object) -> _Rows:
+        self.sql.append(str(statement))
+        return _Rows([(n,) for n in self.owned])
+
+
+def test_owned_schemas_are_dropped_but_not_public() -> None:
+    import asyncio
+
+    conn = _Conn(["lg_checkpoints"])
+    assert asyncio.run(hd.drop_owned_schemas(conn)) == ["lg_checkpoints"]
+    assert "n.nspname <> 'public'" in conn.sql[0]
+    assert conn.sql[1] == 'DROP SCHEMA "lg_checkpoints" CASCADE'
+    with pytest.raises(RuntimeError, match="unexpected schema"):
+        asyncio.run(hd.drop_owned_schemas(_Conn(['x"; DROP'])))
+
+
 @pytest.mark.skipif(
     not os.environ.get("PAIRLY_TEST_DATABASE_URL_OWNER"),
     reason="needs PAIRLY_TEST_DATABASE_URL_OWNER (the owner role of a test database)",

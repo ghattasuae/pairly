@@ -78,6 +78,7 @@ from pairly_core.config import ConfigError, Environment, Settings, load_settings
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.dashboards.model import build_section_registry
 from pairly_core.db import check_app_role, create_engine, create_sessionmaker
+from pairly_core.dbconn import checkpoint_url
 from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.flags.registry import build_flag_registry, install_flag_registry
 from pairly_core.guardrails import redaction_counts
@@ -203,7 +204,13 @@ def _lifespan(
             runtime = WorkflowRuntime.from_plugins(
                 plugins,
                 sessionmaker=sessionmaker,
-                checkpointer=TenantCheckpointer(settings.database_url.get_secret_value()),
+                checkpointer=TenantCheckpointer(
+                    checkpoint_url(
+                        settings.database_url,
+                        settings.database_pooler,
+                        settings.checkpoint_database_url,
+                    )
+                ),
                 registry=registry,
                 # Decision records first: a hook that raises aborts the change.
                 hooks=ApprovalHooks([DecisionRecordHook(), hooks]),

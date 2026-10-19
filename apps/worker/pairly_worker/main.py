@@ -37,6 +37,7 @@ from pairly_core.audit_anchor.store import anchor_store_from_settings, load_anch
 from pairly_core.config import ConfigError, Environment
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import check_app_role, create_sessionmaker
+from pairly_core.dbconn import checkpoint_url, engine_kwargs
 from pairly_core.decisions.hooks import DecisionRecordHook
 from pairly_core.flags.registry import build_flag_registry, install_flag_registry
 from pairly_core.guardrails import redaction_counts
@@ -151,6 +152,7 @@ async def startup(ctx: dict[str, Any]) -> None:
         pool_size=config.db_pool_size,
         max_overflow=0,
         pool_pre_ping=True,
+        **engine_kwargs(config.database_pooler),
     )
     try:
         await check_app_role(engine)
@@ -188,7 +190,13 @@ async def startup(ctx: dict[str, Any]) -> None:
         runtime = WorkflowRuntime.from_plugins(
             plugins,
             sessionmaker=sessionmaker,
-            checkpointer=TenantCheckpointer(config.database_url.get_secret_value()),
+            checkpointer=TenantCheckpointer(
+                checkpoint_url(
+                    config.database_url,
+                    config.database_pooler,
+                    config.checkpoint_database_url,
+                )
+            ),
             registry=registry,
             hooks=hooks,
             services=graph_services(ctx, sessionmaker),
