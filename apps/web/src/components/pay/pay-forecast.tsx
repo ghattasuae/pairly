@@ -7,7 +7,7 @@ import type { PayForecast, PayForecastBucket, PayForecastCurrency } from "@/lib/
 
 function Money({ currency, amount }: { currency: string; amount: string }) {
   return (
-    <span className="font-mono tabular-nums" dir="ltr">
+    <span className="font-mono tabular-nums" dir="ltr" data-amount>
       {currency} {amount}
     </span>
   );
@@ -29,7 +29,7 @@ function Amount({ bucket, currency, testId }: { bucket: PayForecastBucket; curre
   }
   return (
     <details className="text-sm" data-bucket={testId}>
-      <summary className="cursor-pointer text-primary hover:underline">
+      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
         <Money currency={currency} amount={bucket.amount} />
       </summary>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -71,8 +71,14 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
     { key: "later", label: t("later"), committed: data.later_committed, inReview: data.later_in_review },
     { key: "undated", label: t("undated"), committed: data.undated_committed, inReview: data.undated_in_review },
   ].filter((row) => row.committed.count > 0 || row.inReview.count > 0);
+  // Bars share one scale per currency: the largest week (committed plus in review).
+  const max = Math.max(
+    1,
+    ...data.weeks.map((w) => Number(w.committed.amount) + Number(w.in_review.amount)),
+    ...extra.map((r) => Number(r.committed.amount) + Number(r.inReview.amount)),
+  );
   return (
-    <section className="space-y-2" data-forecast-currency={cur}>
+    <section className="space-y-3" data-forecast-currency={cur}>
       <h2 className="font-display text-xl">
         {t("currency", {
           currency: cur,
@@ -80,20 +86,24 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
           review: `${cur} ${data.in_review_total}`,
         })}
       </h2>
-      <div className="overflow-x-auto rounded-lg border bg-surface">
+      <ForecastLegend />
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-muted-foreground">
+            <tr className="border-b border-border bg-surface-sunken text-xs text-muted-foreground">
               <th className="px-3 py-2 text-start font-medium">{t("col.week")}</th>
               <th className="px-3 py-2 text-start font-medium">{t("col.committed")}</th>
               <th className="px-3 py-2 text-start font-medium">{t("col.inReview")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border">
             {data.weeks.map((week) => (
               <tr key={week.index} data-week={week.index}>
                 <td className="px-3 py-2 align-top">
-                  {week.index === 0 ? t("thisWeek") : t("week", { start: day(week.start), end: day(week.end) })}
+                  <span className="block font-mono text-xs">
+                    {week.index === 0 ? t("thisWeek") : t("week", { start: day(week.start), end: day(week.end) })}
+                  </span>
+                  <WeekBar committed={Number(week.committed.amount)} inReview={Number(week.in_review.amount)} max={max} />
                 </td>
                 <td className="px-3 py-2 align-top">
                   <Amount bucket={week.committed} currency={cur} testId={`${cur}:${week.index}:committed`} />
@@ -105,7 +115,10 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
             ))}
             {extra.map((row) => (
               <tr key={row.key} data-week={row.key}>
-                <td className="px-3 py-2 align-top text-muted-foreground">{row.label}</td>
+                <td className="px-3 py-2 align-top text-muted-foreground">
+                  {row.label}
+                  <WeekBar committed={Number(row.committed.amount)} inReview={Number(row.inReview.amount)} max={max} />
+                </td>
                 <td className="px-3 py-2 align-top">
                   <Amount bucket={row.committed} currency={cur} testId={`${cur}:${row.key}:committed`} />
                 </td>
@@ -118,6 +131,40 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
         </table>
       </div>
     </section>
+  );
+}
+
+/**
+ * The two series, named once above the table. Same slate hue, told apart by fill: solid
+ * for committed, an outlined light tint for money still in review, so the pair reads in
+ * both themes and in greyscale.
+ */
+function ForecastLegend() {
+  const t = useTranslations("Pay.forecast");
+  return (
+    <p className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground" aria-hidden>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block h-2.5 w-4 rounded-sm bg-primary" />
+        {t("col.committed")}
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block h-2.5 w-4 rounded-sm border border-primary bg-info-soft" />
+        {t("col.inReview")}
+      </span>
+    </p>
+  );
+}
+
+/** A thin stacked bar for one week. Decorative: the numbers sit in the same row. */
+function WeekBar({ committed, inReview, max }: { committed: number; inReview: number; max: number }) {
+  const c = Number.isFinite(committed) ? Math.max(0, committed) : 0;
+  const r = Number.isFinite(inReview) ? Math.max(0, inReview) : 0;
+  if (c + r === 0) return null;
+  return (
+    <span aria-hidden className="mt-1.5 flex h-2 w-full max-w-48 gap-0.5" data-week-bar>
+      {c > 0 && <span className="rounded-sm bg-primary" style={{ inlineSize: `${(c / max) * 100}%` }} />}
+      {r > 0 && <span className="rounded-sm border border-primary bg-info-soft" style={{ inlineSize: `${(r / max) * 100}%` }} />}
+    </span>
   );
 }
 
@@ -142,7 +189,7 @@ export function PayForecastView({ data }: { data: PayForecast }) {
           <ul className="mt-1 flex flex-wrap gap-1.5">
             {data.unpriced.map((invoice) => (
               <li key={invoice.id}>
-                <Link href={`/pay/invoices/${invoice.id}`} className="rounded border px-1.5 py-0.5 font-mono" dir="ltr">
+                <Link href={`/pay/invoices/${invoice.id}`} className="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono hover:border-primary" dir="ltr">
                   {invoice.reference}
                 </Link>
               </li>

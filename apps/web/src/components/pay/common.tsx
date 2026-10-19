@@ -98,7 +98,7 @@ export function Panel({
   children,
   className,
   ...rest
-}: { title: React.ReactNode; children: React.ReactNode; className?: string } & Record<`data-${string}`, string | boolean>) {
+}: { title: React.ReactNode; children: React.ReactNode; className?: string | undefined } & Record<`data-${string}`, string | boolean>) {
   return (
     <section className={cn("card-hairline space-y-3 p-5 sm:p-6", className)} {...rest}>
       <h2 className="font-display text-xl leading-tight">{title}</h2>

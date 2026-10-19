@@ -72,7 +72,7 @@ export function VendorInvoiceDecisions({
       )}
       <ul className="space-y-3">
         {invoice.decisions.map((d) => (
-          <li key={d.decision_id} className="space-y-2 rounded-xl border bg-surface p-4" data-decision={d.decision_id} data-kind={d.kind}>
+          <li key={d.decision_id} className="space-y-2 card-hairline p-4" data-decision={d.decision_id} data-kind={d.kind}>
             <p className="text-sm font-medium">{t(`kind.${d.kind}`)}</p>
             <p className="text-xs text-muted-foreground">{t("decidedOn", { date: date(d.decided_at) })}</p>
             {d.appeal ? (

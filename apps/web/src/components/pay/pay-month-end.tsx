@@ -16,6 +16,7 @@ import { saveDownload, type DownloadResult } from "@/lib/pay/download";
 import type { PayAgingBucket, PayJournalExport, PayMonthEnd } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
+import { TABLE } from "./ledger";
 
 const CATEGORIES = new Set([
   "no_po",
@@ -31,7 +32,7 @@ const CATEGORIES = new Set([
 
 function Money({ currency, amount }: { currency: string; amount: string }) {
   return (
-    <span className="font-mono tabular-nums" dir="ltr">
+    <span className="font-mono tabular-nums" dir="ltr" data-amount>
       {currency} {amount}
     </span>
   );
@@ -49,7 +50,7 @@ function BucketCell({ bucket, currency }: { bucket: PayAgingBucket; currency: st
   }
   return (
     <details className="text-sm" data-aging={bucket.bucket}>
-      <summary className="cursor-pointer text-primary hover:underline">
+      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
         <Money currency={currency} amount={bucket.amount} />
       </summary>
       <p className="mt-1 text-xs text-muted-foreground">{t("invoices", { count: bucket.count })}</p>
@@ -165,7 +166,7 @@ function JournalExport({ period, download }: { period: string; download: MonthEn
         </DownloadButton>
       </div>
       {format !== "generic" && (
-        <fieldset className="space-y-2 rounded-lg border p-3" data-journal-accounts>
+        <fieldset className="space-y-3 rounded-lg border border-border bg-surface-sunken p-4" data-journal-accounts>
           <legend className="px-1 text-sm font-medium">{t("accountsTitle", { system: t(`format.${format}`) })}</legend>
           <p className="text-xs text-muted-foreground">{t("accountsHelp")}</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -217,21 +218,26 @@ export function PayMonthEndView({
   const buckets = ["current", "1_30", "31_60", "61_90", "90_plus", "undated"] as const;
   return (
     <div className="space-y-6" data-month-end={data.period}>
-      <div className="flex flex-wrap items-start gap-3">
-        <p className="me-auto text-sm text-muted-foreground">{t("asOf", { when: asOf })}</p>
+      <section className="card-hairline flex flex-wrap items-start gap-x-6 gap-y-4 p-5 sm:p-6">
+        <div className="me-auto space-y-1">
+          <p className="eyebrow">{t("exportsTitle")}</p>
+          <p className="font-mono text-sm text-muted-foreground">{t("asOf", { when: asOf })}</p>
+        </div>
         <DownloadButton kind="report" period={data.period} download={download}>
           {t("downloadReport")}
         </DownloadButton>
         {data.can_export_journal && <JournalExport period={data.period} download={download} />}
-      </div>
+      </section>
 
       {exports.length > 0 && (
-        <div className="rounded-lg border p-3 text-sm" data-journal-exports>
+        <div className="rounded-lg border border-border bg-surface-sunken p-4 text-sm" data-journal-exports>
           <p className="font-medium">{t("exportsTitle")}</p>
           <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
             {exports.map((e) => (
               <li key={e.id} className="flex flex-wrap gap-x-3">
-                <span>{format.dateTime(new Date(e.created_at), { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })}</span>
+                <span className="font-mono">
+                  {format.dateTime(new Date(e.created_at), { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })}
+                </span>
                 <span>{t("exportCounts", { entries: e.entry_count, lines: e.line_count })}</span>
                 <span data-export-format={e.format}>
                   {(JOURNAL_FORMATS as readonly string[]).includes(e.format) ? t(`format.${e.format as JournalFormat}`) : e.format}
@@ -249,30 +255,30 @@ export function PayMonthEndView({
         {data.aging.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noPayables")}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className={TABLE.wrap}>
+            <table className={TABLE.table}>
               <caption className="sr-only">{t("payablesTitle")}</caption>
-              <thead className="text-xs text-muted-foreground">
-                <tr>
-                  <th className="pb-1 pe-3 text-start font-normal">{t("currency")}</th>
+              <thead>
+                <tr className={TABLE.headRow}>
+                  <th className={TABLE.th}>{t("currency")}</th>
                   {buckets.map((b) => (
-                    <th key={b} className="pb-1 pe-3 text-start font-normal">
+                    <th key={b} className={TABLE.th}>
                       {t(`bucket.${b}`)}
                     </th>
                   ))}
-                  <th className="pb-1 text-start font-normal">{t("total")}</th>
+                  <th className={TABLE.th}>{t("total")}</th>
                 </tr>
               </thead>
               <tbody>
                 {data.aging.map((row) => (
-                  <tr key={row.currency} className="border-t align-top" data-aging-currency={row.currency}>
-                    <td className="py-1.5 pe-3 font-mono">{row.currency}</td>
+                  <tr key={row.currency} className={TABLE.row} data-aging-currency={row.currency}>
+                    <td className={`${TABLE.td} font-mono`}>{row.currency}</td>
                     {row.buckets.map((b) => (
-                      <td key={b.bucket} className="py-1.5 pe-3">
+                      <td key={b.bucket} className={TABLE.td}>
                         <BucketCell bucket={b} currency={row.currency} />
                       </td>
                     ))}
-                    <td className="py-1.5">
+                    <td className={`${TABLE.td} font-medium`}>
                       <Money currency={row.currency} amount={row.total} />
                       <span className="block text-xs text-muted-foreground">{t("invoices", { count: row.count })}</span>
                     </td>
@@ -308,7 +314,7 @@ export function PayMonthEndView({
               <p className="text-sm font-medium">
                 {t("accrualTotal")} <Money currency={acc.currency} amount={acc.total} />
               </p>
-              <ul className="divide-y rounded-lg border text-sm">
+              <ul className="divide-y divide-border rounded-lg border border-border text-sm">
                 {acc.lines.map((line) => (
                   <li key={`${line.po_id}-${line.line_no}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                     <Link href={`/pay/purchase-orders#po-${line.po_id}`} className="font-mono underline-offset-4 hover:underline" dir="ltr">
@@ -340,7 +346,7 @@ export function PayMonthEndView({
                 <li key={g.category}>
                   <Link
                     href={`/pay/exceptions?category=${g.category}`}
-                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 hover:bg-accent"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-warning-ink/35 bg-warning-soft px-2.5 py-1 text-warning-ink hover:border-warning-ink"
                     data-exception-group={g.category}
                   >
                     {CATEGORIES.has(g.category) ? t(`category.${g.category}` as "category.other") : g.category}
@@ -349,7 +355,7 @@ export function PayMonthEndView({
                 </li>
               ))}
             </ul>
-            <ul className="divide-y rounded-lg border text-sm">
+            <ul className="divide-y divide-border rounded-lg border border-border text-sm">
               {data.exceptions.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-center gap-x-3 px-3 py-2">
                   <Link href={`/pay/invoices/${e.id}`} className="font-mono underline-offset-4 hover:underline" dir="ltr">

@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { FileUp, Loader2, RefreshCw } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleHelp, FileUp, Loader2, RefreshCw } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import type * as React from "react";
@@ -15,6 +15,7 @@ import { statementFormat } from "@/lib/pay/reconciliation";
 import type { PayReconciliation, PayStatementLine, PayUnexplained } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
+import { TABLE, TONE, type Tone } from "./ledger";
 
 const PROBLEM_CODES = new Set([
   "invalid_date",
@@ -37,7 +38,7 @@ const REASONS = new Set(["amount", "reference", "iban"]);
 
 function Money({ currency, amount }: { currency: string; amount: string }) {
   return (
-    <span className="font-mono tabular-nums" dir="ltr">
+    <span className="font-mono tabular-nums" dir="ltr" data-amount>
       {currency} {amount}
     </span>
   );
@@ -117,7 +118,7 @@ function ImportPanel() {
             id={`${ids}-file`}
             type="file"
             accept=".csv,text/csv,.xml,application/xml,text/xml"
-            className="block text-sm"
+            className="block text-sm file:me-3 file:rounded-md file:border file:border-input file:bg-surface file:px-3 file:py-1.5 file:text-sm"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </div>
@@ -131,13 +132,13 @@ function ImportPanel() {
         </Button>
       </form>
       {done && (
-        <p role="status" className="text-sm" data-statement-done>
+        <p role="status" className="text-sm text-success-ink" data-statement-done>
           {done}
         </p>
       )}
       <ErrorText code={error} />
       {problems.length > 0 && (
-        <ul className="list-disc space-y-0.5 ps-5 text-sm text-destructive" data-statement-problems>
+        <ul className="list-disc space-y-0.5 ps-5 text-sm text-danger-ink" data-statement-problems>
           {problems.map((p, i) => (
             <Problem key={`${p.row}-${p.field ?? ""}-${p.code}-${i}`} problem={p} />
           ))}
@@ -169,14 +170,14 @@ function Target({ line }: { line: PayStatementLine }) {
 function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <tr className="border-t align-top" data-statement-line={line.status}>
-      <td className="py-1.5 pe-3">
+    <tr className={TABLE.row} data-statement-line={line.status}>
+      <td className={`${TABLE.td} font-mono text-xs whitespace-nowrap`}>
         <Day iso={line.booking_date} />
       </td>
-      <td className="py-1.5 pe-3">
+      <td className={`${TABLE.td} whitespace-nowrap`}>
         <Money currency={line.currency} amount={line.amount} />
       </td>
-      <td className="py-1.5 pe-3">
+      <td className={TABLE.td}>
         <bdi>{line.reference ?? "-"}</bdi>
         {line.counterparty_iban_masked && (
           <span className="block font-mono text-xs text-muted-foreground" dir="ltr">
@@ -184,10 +185,10 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
           </span>
         )}
       </td>
-      <td className="py-1.5 pe-3 font-mono text-xs" dir="ltr">
+      <td className={`${TABLE.td} font-mono text-xs`} dir="ltr">
         {line.statement_reference}
       </td>
-      <td className="py-1.5">
+      <td className={TABLE.td}>
         {matched ? (
           <>
             <Target line={line} />
@@ -199,7 +200,7 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
             </span>
           </>
         ) : (
-          <span className="text-xs" data-unmatched-reason={line.unmatched_reason ?? ""}>
+          <span className="text-xs text-danger-ink" data-unmatched-reason={line.unmatched_reason ?? ""}>
             {line.unmatched_reason === "ambiguous" ? t("ambiguous") : t("noCandidate")}
           </span>
         )}
@@ -211,16 +212,16 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
 function LineTable({ lines, matched, caption }: { lines: PayStatementLine[]; matched: boolean; caption: string }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className={TABLE.wrap}>
+      <table className={TABLE.table}>
         <caption className="sr-only">{caption}</caption>
-        <thead className="text-start text-xs text-muted-foreground">
-          <tr>
-            <th className="pb-1 pe-3 text-start font-normal">{t("col.date")}</th>
-            <th className="pb-1 pe-3 text-start font-normal">{t("col.amount")}</th>
-            <th className="pb-1 pe-3 text-start font-normal">{t("col.reference")}</th>
-            <th className="pb-1 pe-3 text-start font-normal">{t("col.statement")}</th>
-            <th className="pb-1 text-start font-normal">{matched ? t("col.matchedWith") : t("col.why")}</th>
+        <thead>
+          <tr className={TABLE.headRow}>
+            <th className={TABLE.th}>{t("col.date")}</th>
+            <th className={TABLE.th}>{t("col.amount")}</th>
+            <th className={TABLE.th}>{t("col.reference")}</th>
+            <th className={TABLE.th}>{t("col.statement")}</th>
+            <th className={TABLE.th}>{matched ? t("col.matchedWith") : t("col.why")}</th>
           </tr>
         </thead>
         <tbody>
@@ -236,7 +237,7 @@ function LineTable({ lines, matched, caption }: { lines: PayStatementLine[]; mat
 function UnexplainedTable({ rows }: { rows: PayUnexplained[] }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <ul className="divide-y rounded-lg border text-sm" data-unexplained>
+    <ul className="divide-y divide-border rounded-lg border border-border text-sm" data-unexplained>
       {rows.map((row) => (
         <li key={row.invoice_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
           <Link href={`/pay/invoices/${row.invoice_id}`} className="font-mono underline-offset-4 hover:underline" dir="ltr">
@@ -247,7 +248,7 @@ function UnexplainedTable({ rows }: { rows: PayUnexplained[] }) {
           <Link href={`/pay/payment-runs/${row.payment_run_id}`} className="font-mono text-xs underline-offset-4 hover:underline" dir="ltr">
             {row.payment_run_reference}
           </Link>
-          <span className="ms-auto text-xs text-muted-foreground">{t("paidAgo", { days: row.days_since_paid })}</span>
+          <span className="ms-auto text-xs text-warning-ink">{t("paidAgo", { days: row.days_since_paid })}</span>
         </li>
       ))}
     </ul>
@@ -261,10 +262,20 @@ function UnexplainedTable({ rows }: { rows: PayUnexplained[] }) {
  */
 export function PayReconciliationView({ data }: { data: PayReconciliation }) {
   const t = useTranslations("Pay.reconciliation");
+  // Matched reads as success, statement debits nothing explains as danger, paid
+  // invoices no line explains as warning; zero is always calm.
+  const tone = (key: "matched" | "unmatched" | "unexplained" | "ignored", value: number): Tone =>
+    value === 0 || key === "ignored"
+      ? "neutral"
+      : key === "matched"
+        ? "success"
+        : key === "unmatched"
+          ? "danger"
+          : "warning";
   return (
     <div className="space-y-6" data-reconciliation>
       {data.can_upload && <ImportPanel />}
-      <dl className="grid gap-3 sm:grid-cols-4" data-reconciliation-counts>
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-reconciliation-counts>
         {(
           [
             ["matched", data.matched_count],
@@ -272,19 +283,43 @@ export function PayReconciliationView({ data }: { data: PayReconciliation }) {
             ["unexplained", data.unexplained_count],
             ["ignored", data.ignored_count],
           ] as const
-        ).map(([key, value]) => (
-          <div key={key} className="rounded-lg border p-3">
-            <dt className="text-xs text-muted-foreground">{t(`count.${key}`, { days: data.days })}</dt>
-            <dd className="font-display text-2xl tabular-nums" data-count={key}>
-              <a href={`#${key}`} className="hover:underline">
-                {value}
-              </a>
-            </dd>
-          </div>
-        ))}
+        ).map(([key, value]) => {
+          const tn = tone(key, value);
+          return (
+            <div
+              key={key}
+              className={`card-hairline space-y-2 border-t-4 p-4 ${
+                tn === "success"
+                  ? "border-t-success"
+                  : tn === "danger"
+                    ? "border-t-destructive"
+                    : tn === "warning"
+                      ? "border-t-warning-ink"
+                      : "border-t-rule"
+              }`}
+              data-tone={tn}
+            >
+              <dt className="text-xs text-muted-foreground">{t(`count.${key}`, { days: data.days })}</dt>
+              <dd className={`figure text-4xl leading-none ${tn === "neutral" ? "" : TONE[tn].ink}`} data-count={key}>
+                <a href={`#${key}`} className="hover:underline">
+                  {value}
+                </a>
+              </dd>
+            </div>
+          );
+        })}
       </dl>
 
-      <Panel title={t("unmatchedTitle")} data-unmatched-lines>
+      <Panel
+        title={
+          <span className="inline-flex items-center gap-2">
+            <CircleAlert aria-hidden className="size-5 text-danger-ink" />
+            {t("unmatchedTitle")}
+          </span>
+        }
+        className={data.unmatched.length > 0 ? "border-destructive/45" : undefined}
+        data-unmatched-lines
+      >
         <span id="unmatched" />
         {data.unmatched.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noUnmatched")}</p>
@@ -293,7 +328,16 @@ export function PayReconciliationView({ data }: { data: PayReconciliation }) {
         )}
       </Panel>
 
-      <Panel title={t("unexplainedTitle", { days: data.days })} data-unexplained-panel>
+      <Panel
+        title={
+          <span className="inline-flex items-center gap-2">
+            <CircleHelp aria-hidden className="size-5 text-warning-ink" />
+            {t("unexplainedTitle", { days: data.days })}
+          </span>
+        }
+        className={data.unexplained.length > 0 ? "border-warning-ink/40" : undefined}
+        data-unexplained-panel
+      >
         <span id="unexplained" />
         <p className="text-sm text-muted-foreground">{t("unexplainedIntro", { days: data.days })}</p>
         {data.unexplained.length === 0 ? (
@@ -303,7 +347,15 @@ export function PayReconciliationView({ data }: { data: PayReconciliation }) {
         )}
       </Panel>
 
-      <Panel title={t("matchedTitle")} data-matched-lines>
+      <Panel
+        title={
+          <span className="inline-flex items-center gap-2">
+            <CircleCheck aria-hidden className="size-5 text-success-ink" />
+            {t("matchedTitle")}
+          </span>
+        }
+        data-matched-lines
+      >
         <span id="matched" />
         {data.matched.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noMatched")}</p>
@@ -317,7 +369,7 @@ export function PayReconciliationView({ data }: { data: PayReconciliation }) {
         {data.statements.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noStatements")}</p>
         ) : (
-          <ul className="divide-y rounded-lg border text-sm">
+          <ul className="divide-y divide-border rounded-lg border border-border text-sm">
             {data.statements.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2" data-statement={s.reference}>
                 <span className="font-mono" dir="ltr">

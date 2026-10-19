@@ -58,7 +58,7 @@ export function PayMetricRecords({ metric }: { metric: PayMetric }) {
   if (metric.records_total === 0) return null;
   return (
     <details className="text-xs" data-records={metric.key}>
-      <summary className="cursor-pointer text-primary hover:underline">
+      <summary className="cursor-pointer text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-2">
         {t("records", { count: metric.records_total })}
       </summary>
       <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -67,11 +67,11 @@ export function PayMetricRecords({ metric }: { metric: PayMetric }) {
           return (
             <li key={`${r.kind}:${r.id}`}>
               {href ? (
-                <Link href={href} className="rounded border px-1.5 py-0.5 font-mono hover:text-primary" dir="ltr">
+                <Link href={href} className="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono hover:border-primary hover:text-primary" dir="ltr">
                   {r.label}
                 </Link>
               ) : (
-                <span className="rounded border px-1.5 py-0.5 font-mono" dir="ltr">
+                <span className="rounded-sm border border-border px-1.5 py-0.5 font-mono" dir="ltr">
                   {r.label}
                 </span>
               )}
@@ -91,9 +91,9 @@ export function PayMetricRecords({ metric }: { metric: PayMetric }) {
 function Tile({ title, metric, note }: { title: string; metric: PayMetric; note?: string | undefined }) {
   const t = useTranslations("Pay.analytics");
   return (
-    <div className="space-y-1.5 rounded-lg border bg-surface p-4" data-metric={metric.key}>
+    <div className="card-hairline space-y-2 p-5" data-metric={metric.key}>
       <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="font-display text-2xl">
+      <p className="figure text-4xl leading-none">
         <PayMetricValue metric={metric} />
       </p>
       <p className="text-xs text-muted-foreground">{t("sample", { n: metric.n })}</p>
@@ -107,7 +107,7 @@ function Section({ title, intro, children }: { title: string; intro?: string; ch
   const id = useId();
   return (
     <section aria-labelledby={id} className="space-y-3">
-      <h2 id={id} className="font-display text-xl">
+      <h2 id={id} className="border-b border-border pb-2 font-display text-xl">
         {title}
       </h2>
       {intro && <p className="text-sm text-muted-foreground">{intro}</p>}
@@ -126,12 +126,12 @@ function Rows({ metrics, label }: { metrics: PayMetric[]; label: (m: PayMetric) 
     );
   }
   return (
-    <ul className="divide-y rounded-lg border bg-surface">
+    <ul className="card-hairline divide-y divide-border">
       {metrics.map((m) => (
-        <li key={m.key} className="space-y-1 p-3" data-metric={m.key}>
+        <li key={m.key} className="space-y-1 px-4 py-3" data-metric={m.key}>
           <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
             <span className="font-medium">{label(m)}</span>
-            <span className="font-display text-lg">
+            <span className="figure text-2xl leading-none">
               <PayMetricValue metric={m} />
             </span>
           </div>

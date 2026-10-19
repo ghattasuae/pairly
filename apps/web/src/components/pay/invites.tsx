@@ -100,7 +100,7 @@ export function InvitesView({ initial }: { initial: PayInvite[] }) {
           </Button>
         </form>
         {link && (
-          <div className="space-y-2 rounded-lg border bg-background p-3" data-invite-link>
+          <div className="space-y-2 rounded-lg border border-border bg-surface-sunken p-3" data-invite-link>
             <p className="text-sm font-medium">{t("linkOnce")}</p>
             <p className="break-all font-mono text-xs" dir="ltr">
               {link}
@@ -116,7 +116,7 @@ export function InvitesView({ initial }: { initial: PayInvite[] }) {
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="divide-y divide-border rounded-lg border border-border">
             {items.map((i) => (
               <li key={i.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm" data-invite={i.state}>
                 <span className="font-medium">{i.company_hint || t("noCompany")}</span>
@@ -125,13 +125,13 @@ export function InvitesView({ initial }: { initial: PayInvite[] }) {
                     {i.email}
                   </bdi>
                 )}
-                <Badge variant={i.state === "open" ? "signal" : "outline"}>{t(`state.${i.state}` as "state.open")}</Badge>
+                <Badge variant={i.state === "open" ? "info" : i.state === "used" ? "success" : "outline"}>{t(`state.${i.state}` as "state.open")}</Badge>
                 <span className="text-xs text-muted-foreground">
                   {t("expires", { when: format.dateTime(new Date(i.expires_at), { dateStyle: "medium" }) })}
                 </span>
                 <span className="ms-auto flex gap-2">
                   {i.vendor_id && (
-                    <Link href={`/pay/vendors/${i.vendor_id}`} className="inline-flex h-8 items-center rounded-md border px-3 text-[0.8rem] hover:bg-accent">
+                    <Link href={`/pay/vendors/${i.vendor_id}`} className="inline-flex h-8 items-center rounded-md border border-input bg-surface px-3 text-[0.8rem] hover:bg-accent">
                       {t("review")}
                     </Link>
                   )}

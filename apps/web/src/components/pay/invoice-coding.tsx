@@ -52,7 +52,7 @@ function SuggestionChip({
         )}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={suggestion.level === "high" ? "default" : suggestion.level === "medium" ? "signal" : "outline"}>
+        <Badge variant={suggestion.level === "high" ? "success" : suggestion.level === "medium" ? "warning" : "outline"}>
           {t(`level.${suggestion.level}`)}
           {suggestion.method === "history" ? ` ${t("percent", { value: percent(suggestion.confidence) })}` : ""}
         </Badge>
@@ -163,7 +163,7 @@ export function InvoiceCoding({ initial, locale }: { initial: PayInvoiceCoding; 
                       <select
                         aria-label={t("glFor", { line: line.line_index + 1 })}
                         id={`${id}-gl-${line.line_index}`}
-                        className="h-9 w-full min-w-40 rounded-md border bg-background px-2 text-sm"
+                        className="h-9 w-full min-w-40 rounded-md border border-input bg-surface px-2 text-sm"
                         value={draft.gl_code}
                         disabled={!editable || busy !== null}
                         onChange={(e) => set(line.line_index, { gl_code: e.target.value })}
@@ -179,7 +179,7 @@ export function InvoiceCoding({ initial, locale }: { initial: PayInvoiceCoding; 
                     <td className="px-2 py-2">
                       <select
                         aria-label={t("ccFor", { line: line.line_index + 1 })}
-                        className="h-9 w-full min-w-32 rounded-md border bg-background px-2 text-sm"
+                        className="h-9 w-full min-w-32 rounded-md border border-input bg-surface px-2 text-sm"
                         value={draft.cost_centre}
                         disabled={!editable || busy !== null || coding.cost_centres.length === 0}
                         onChange={(e) => set(line.line_index, { cost_centre: e.target.value })}

@@ -50,7 +50,7 @@ const PROBLEM_CODES = new Set([
 export function PoStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.purchaseOrders.status");
   return (
-    <Badge variant={status === "open" ? "default" : "outline"} data-po-status={status}>
+    <Badge variant={status === "open" ? "info" : status === "closed" ? "success" : status === "cancelled" ? "danger" : "outline"} data-po-status={status}>
       {t(status as "open")}
     </Badge>
   );
@@ -110,7 +110,7 @@ function ImportPanel() {
           <Label htmlFor={`${ids}-kind`}>{t("importKind")}</Label>
           <select
             id={`${ids}-kind`}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
             value={kind}
             onChange={(e) => setKind(e.target.value === "receipts" ? "receipts" : "orders")}
           >
@@ -140,7 +140,7 @@ function ImportPanel() {
       )}
       <ErrorText code={error} />
       {problems.length > 0 && (
-        <ul className="list-disc space-y-0.5 ps-5 text-sm text-destructive" data-import-problems>
+        <ul className="list-disc space-y-0.5 ps-5 text-sm text-danger-ink" data-import-problems>
           {problems.map((p, i) => (
             <Problem key={`${p.row}-${p.field ?? ""}-${p.code}-${i}`} problem={p} />
           ))}
@@ -205,7 +205,7 @@ function PoActions({
       <Label htmlFor={`${id}-why`}>{t("reason")}</Label>
       <input
         id={`${id}-why`}
-        className="h-8 w-full rounded-md border bg-background px-2 text-sm"
+        className="h-8 w-full rounded-md border border-input bg-surface px-2 text-sm"
         value={why}
         maxLength={500}
         onChange={(e) => setWhy(e.target.value)}
@@ -253,10 +253,10 @@ export function PurchaseOrderList({
       {items.length === 0 ? (
         <EmptyState icon={<ClipboardList aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-surface">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
           <table className="w-full text-sm" data-po-list>
-            <thead className="text-start text-xs text-muted-foreground">
-              <tr className="border-b">
+            <thead className="bg-surface-sunken text-start text-xs text-muted-foreground">
+              <tr className="border-b border-border">
                 <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.number")}</th>
                 <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.vendor")}</th>
                 <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.status")}</th>
@@ -272,7 +272,7 @@ export function PurchaseOrderList({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {items.map((po) => (
                 <tr key={po.id} id={`po-${po.id}`} data-po={po.po_number}>
                   <td className="px-3 py-2 font-mono" dir="ltr">
@@ -285,14 +285,14 @@ export function PurchaseOrderList({
                     <PoStatusBadge status={po.status} />
                   </td>
                   <td className="px-3 py-2">{t(po.match_type === "2-way" ? "twoWay" : "threeWay")}</td>
-                  <td className="px-3 py-2 tabular-nums" dir="ltr">
+                  <td className="px-3 py-2 font-mono text-xs tabular-nums" dir="ltr">
                     {po.order_date}
                   </td>
-                  <td className="px-3 py-2 text-end font-mono tabular-nums" dir="ltr">
+                  <td className="px-3 py-2 text-end font-mono font-medium tabular-nums" dir="ltr" data-amount>
                     {po.currency} {po.subtotal}
                   </td>
-                  <td className="px-3 py-2 text-end tabular-nums">{po.receipt_count}</td>
-                  <td className="px-3 py-2 text-end tabular-nums">{po.invoice_count}</td>
+                  <td className="px-3 py-2 text-end font-mono tabular-nums">{po.receipt_count}</td>
+                  <td className="px-3 py-2 text-end font-mono tabular-nums">{po.invoice_count}</td>
                   {(canClose || canCancel) && (
                     <td className="px-3 py-2 text-end">
                       <PoActions po={po} canClose={canClose} canCancel={canCancel} totpEnabled={totpEnabled} />

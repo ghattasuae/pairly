@@ -147,7 +147,7 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
   return (
     <form onSubmit={onSubmit} className="space-y-6" data-pay-settings aria-label={t("title")}>
       {!canManage && <p className="text-sm text-muted-foreground">{t("readOnly")}</p>}
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-bank`}>
+      <section className="card-hairline space-y-4 p-5 sm:p-6" aria-labelledby={`${id}-bank`}>
         <h2 id={`${id}-bank`} className="font-display text-lg">
           {t("bankTitle")}
         </h2>
@@ -155,7 +155,7 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
         {number("phone_change_window_days", t("phoneWindow"), t("phoneWindowHint"))}
       </section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-checks`}>
+      <section className="card-hairline space-y-4 p-5 sm:p-6" aria-labelledby={`${id}-checks`}>
         <h2 id={`${id}-checks`} className="font-display text-lg">
           {t("checksTitle")}
         </h2>
@@ -179,7 +179,7 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
         </label>
       </section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-coding`}>
+      <section className="card-hairline space-y-4 p-5 sm:p-6" aria-labelledby={`${id}-coding`}>
         <h2 id={`${id}-coding`} className="font-display text-lg">
           {t("codingTitle")}
         </h2>
@@ -199,7 +199,7 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
         {number("exception_sla_hours", t("slaHours"), t("slaHoursHint"))}
       </section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-rule`}>
+      <section className="card-hairline space-y-4 p-5 sm:p-6" aria-labelledby={`${id}-rule`}>
         <h2 id={`${id}-rule`} className="font-display text-lg">
           {t("ruleTitle")}
         </h2>

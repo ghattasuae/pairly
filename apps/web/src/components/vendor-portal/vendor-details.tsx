@@ -141,7 +141,7 @@ export function VendorDetails({
           ) : (
             <ul className="space-y-2">
               {details.open_requests.map((r) => (
-                <li key={r.reference} className="rounded-xl border bg-surface p-4 text-sm" data-open-request={r.reference}>
+                <li key={r.reference} className="card-hairline p-4 text-sm" data-open-request={r.reference}>
                   <p className="font-medium">
                     <span dir="ltr">{r.reference}</span>
                     {r.iban_last4 && (
@@ -216,7 +216,7 @@ export function VendorDetails({
         ) : (
           <ul className="space-y-3" data-contacts>
             {details.contacts.map((c, index) => (
-              <li key={index} className="rounded-xl border bg-surface p-4 text-sm" data-contact-row={index}>
+              <li key={index} className="card-hairline p-4 text-sm" data-contact-row={index}>
                 <dl className="grid gap-2 sm:grid-cols-2">
                   {fact(t("details.name"), c.name)}
                   {fact(t("details.role"), c.role)}

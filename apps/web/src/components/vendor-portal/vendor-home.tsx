@@ -185,7 +185,7 @@ export function VendorPortalHome({
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.xml,.docx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm file:me-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5"
+              className="block w-full text-sm file:me-3 file:rounded-md file:border file:border-input file:bg-surface file:px-3 file:py-1.5"
             />
           </div>
           <p role="status" aria-live="polite" className="text-sm font-medium" data-vendor-notice>

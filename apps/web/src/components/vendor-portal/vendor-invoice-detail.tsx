@@ -129,7 +129,7 @@ export function VendorInvoiceDetail({
             {invoice.thread.map((m) => (
               <li
                 key={m.id}
-                className={m.from_vendor ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 rounded-xl border bg-surface p-4"}
+                className={m.from_vendor ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 card-hairline p-4"}
                 data-message={m.from_vendor ? "from_vendor" : "from_ap"}
               >
                 <p className="text-xs text-muted-foreground">
