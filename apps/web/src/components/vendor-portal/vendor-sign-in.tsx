@@ -46,7 +46,7 @@ export function VendorPortalSignIn({
     <section aria-labelledby={`${ids}-title`} className="mx-auto max-w-md space-y-5" data-vendor-sign-in>
       <div className="space-y-2">
         <p className="eyebrow">{t("eyebrow")}</p>
-        <h1 id={`${ids}-title`} className="font-display text-3xl leading-tight">
+        <h1 id={`${ids}-title`} className="font-display text-[2rem] leading-[1.1] sm:text-[2.4rem]">
           {expired ? t("signIn.expiredTitle") : t("signIn.title")}
         </h1>
         <p className="text-muted-foreground">{expired ? t("signIn.expired") : t("signIn.intro")}</p>
@@ -55,7 +55,7 @@ export function VendorPortalSignIn({
         <p className="card-hairline p-4 text-sm">{t("signIn.needOrg")}</p>
       ) : state === "sent" ? (
         <p role="status" className="flex items-start gap-2 card-hairline p-4 text-sm" data-link-sent>
-          <MailCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          <MailCheck className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
           {t("signIn.sent")}
         </p>
       ) : (
@@ -71,7 +71,7 @@ export function VendorPortalSignIn({
           </label>
           <Input id={`${ids}-email`} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
           {state === "error" && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {t(`errors.${code === "rate_limited" || code === "invalid_input" ? code : "generic"}`)}
             </p>
           )}
