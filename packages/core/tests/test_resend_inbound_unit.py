@@ -105,6 +105,8 @@ def _settings(**kw: object) -> object:
 
 def test_inbound_settings_come_in_pairs() -> None:
     _settings()
+    # Blank values (an empty line in an env file) mean unset, not an invalid secret.
+    _settings(resend_webhook_secret=" ", resend_inbound_api_key="", email_reply_to="")
     _settings(resend_webhook_secret=SECRET, resend_inbound_api_key="re_placeholder_full")
     with pytest.raises(ConfigError, match="needed together"):
         _settings(resend_webhook_secret=SECRET)

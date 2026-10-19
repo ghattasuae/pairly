@@ -23,7 +23,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, ValidationError, model_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pairly_core.config import ENV_PREFIX, ConfigError, Environment
@@ -85,6 +85,18 @@ class NotificationSettings(BaseSettings):
     # Server-sent events: database poll interval and the longest a stream stays open.
     sse_poll_seconds: float = Field(default=5.0, ge=0.05, le=60)
     sse_max_seconds: int = Field(default=300, ge=1, le=3600)
+
+    @field_validator(
+        "resend_api_key",
+        "resend_webhook_secret",
+        "resend_inbound_api_key",
+        "email_reply_to",
+        mode="before",
+    )
+    @classmethod
+    def _blank_is_unset(cls, value: Any) -> Any:
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        return None if isinstance(raw, str) and not raw.strip() else value
 
     @property
     def relaxed(self) -> bool:

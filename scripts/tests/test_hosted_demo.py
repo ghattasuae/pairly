@@ -104,6 +104,13 @@ def test_auth_schema_is_configurable_and_checked() -> None:
         asyncio.run(hd.empty_auth_tables("postgresql://unused", 'auth"; DROP'))
 
 
+def test_asyncpg_dsn_drops_the_node_only_option() -> None:
+    url = "postgresql://u:p@h:5432/postgres?sslmode=require&uselibpqcompat=true"
+    assert hd.asyncpg_dsn(url) == "postgresql://u:p@h:5432/postgres?sslmode=require"
+    assert hd.asyncpg_dsn("postgresql://u:p@h/db?uselibpqcompat=true") == "postgresql://u:p@h/db"
+    assert hd.asyncpg_dsn("postgresql://u:p@h/db") == "postgresql://u:p@h/db"
+
+
 class _Rows:
     def __init__(self, rows: list[tuple[str]]) -> None:
         self._rows = rows

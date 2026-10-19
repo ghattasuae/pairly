@@ -208,6 +208,18 @@ def auth_schema(env: Mapping[str, str]) -> str:
     return name
 
 
+def asyncpg_dsn(url: str) -> str:
+    """``url`` without the node-postgres only ``uselibpqcompat`` option (asyncpg would send
+    it to the server as a setting, which Postgres refuses)."""
+    from urllib.parse import parse_qsl, urlencode
+
+    base, sep, query = url.partition("?")
+    if not sep:
+        return url
+    kept = [(k, v) for k, v in parse_qsl(query, keep_blank_values=True) if k != "uselibpqcompat"]
+    return f"{base}?{urlencode(kept)}" if kept else base
+
+
 async def empty_auth_tables(auth_url: str, schema: str = "auth") -> list[str]:
     import re
 
@@ -215,7 +227,7 @@ async def empty_auth_tables(auth_url: str, schema: str = "auth") -> list[str]:
 
     if not re.fullmatch(SAFE_NAME, schema):
         raise ValueError("invalid schema name")
-    conn = await asyncpg.connect(auth_url)
+    conn = await asyncpg.connect(asyncpg_dsn(auth_url))
     try:
         names = [
             str(r["tablename"])
