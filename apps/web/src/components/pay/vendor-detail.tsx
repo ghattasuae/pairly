@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 "use client";
 
-import { Landmark, Loader2, Phone } from "lucide-react";
+import { AlertTriangle, Landmark, Loader2, Lock, Phone } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import type * as React from "react";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Callout } from "@/components/ui/status";
 import { Link, useRouter } from "@/i18n/navigation";
 import { acceptOnboarding, requestBankChange, updatePaymentTerms, vendorAction } from "@/lib/actions/pay";
 import type { PayVendorDetail } from "@/lib/pay/types";
@@ -85,7 +86,7 @@ export function BankChangeRequestForm({ vendor }: { vendor: PayVendorDetail }) {
         <Label htmlFor={id("note")}>{t("field.note")}</Label>
         <Textarea id={id("note")} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
-      <fieldset className="space-y-2 rounded-lg border border-dashed p-3">
+      <fieldset className="space-y-2 rounded-lg border border-dashed border-input p-4">
         <legend className="px-1 text-sm font-medium">{t("contactTitle")}</legend>
         <p className="text-xs text-muted-foreground" data-request-contact-hint>
           {t("contactHint")}
@@ -106,7 +107,7 @@ export function BankChangeRequestForm({ vendor }: { vendor: PayVendorDetail }) {
         </div>
       </fieldset>
       <ErrorText code={error} />
-      <Button type="submit" disabled={busy} data-bank-change-submit>
+      <Button type="submit" variant="ink" disabled={busy} data-bank-change-submit>
         {busy && <Loader2 aria-hidden className="animate-spin" />}
         {t("submit")}
       </Button>
@@ -299,7 +300,7 @@ export function PaymentTermsPanel({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[10rem_1fr] gap-2 text-sm">
+    <div className="grid gap-x-4 gap-y-0.5 py-2 text-sm sm:grid-cols-[11rem_1fr]">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>
@@ -318,6 +319,7 @@ export function VendorDetailView({
 }) {
   const t = useTranslations("Pay.vendor");
   const tr = useTranslations("Pay.risk");
+  const tHold = useTranslations("Pay.hold");
   const format = useFormatter();
   const [vendor, setVendor] = useState(initial);
   const [stepUp, setStepUp] = useState(false);
@@ -330,10 +332,15 @@ export function VendorDetailView({
       <div className="flex flex-wrap items-center gap-2">
         <VendorStatusBadge status={vendor.status} />
         {vendor.payment_hold && <HoldBadge reason={vendor.hold_reason} />}
-        <span className="text-sm text-muted-foreground">
+        <span className="font-mono text-sm text-muted-foreground">
           <bdi>{vendor.reference}</bdi>
         </span>
       </div>
+      {vendor.payment_hold && (
+        <Callout tone="danger" icon={<Lock aria-hidden />} title={tHold("badge")} data-vendor-hold-notice>
+          {vendor.hold_reason && <p className="text-danger-ink">{tHold(`reason.${vendor.hold_reason}` as "reason.manual")}</p>}
+        </Callout>
+      )}
       {stepUp && <StepUpPrompt totpEnabled={totpEnabled} returnPath={returnPath} compact />}
 
       {vendor.status === "pending" && vendor.can_write && (
@@ -378,7 +385,7 @@ export function VendorDetailView({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title={t("record")}>
-          <dl className="space-y-2">
+          <dl className="divide-y divide-border">
             {vendor.legal_name_ar && (
               <Row label={t("field.legal_name_ar")}>
                 <bdi lang="ar">{vendor.legal_name_ar}</bdi>
@@ -394,7 +401,10 @@ export function VendorDetailView({
             <Row label={t("field.trn")}>
               {vendor.trn ? (
                 <>
-                  <bdi dir="ltr">{vendor.trn}</bdi> <span className="text-xs text-muted-foreground">({t(`trnStatus.${vendor.trn_status}` as "trnStatus.not_verified")})</span>
+                  <bdi dir="ltr" className="font-mono">
+                    {vendor.trn}
+                  </bdi>{" "}
+                  <span className="text-xs text-muted-foreground">({t(`trnStatus.${vendor.trn_status}` as "trnStatus.not_verified")})</span>
                 </>
               ) : (
                 t("none")
@@ -405,7 +415,9 @@ export function VendorDetailView({
               {vendor.phone_on_file ? (
                 <span className="inline-flex items-center gap-1">
                   <Phone aria-hidden className="size-3.5" />
-                  <bdi dir="ltr">{vendor.phone_on_file}</bdi>
+                  <bdi dir="ltr" className="font-mono">
+                    {vendor.phone_on_file}
+                  </bdi>
                 </span>
               ) : (
                 t("none")
@@ -438,15 +450,16 @@ export function VendorDetailView({
         </Panel>
 
         <Panel title={tr("title")} data-risk-profile>
-          <dl className="space-y-2">
+          <dl className="divide-y divide-border">
             <Row label={tr("age")}>{tr("days", { count: Number(vendor.risk.record_age_days ?? 0) })}</Row>
             <Row label={tr("requests")}>{String(vendor.risk.bank_change_requests_90d ?? 0)}</Row>
             <Row label={tr("payments")}>{tr("paymentsLater")}</Row>
           </dl>
           {Array.isArray(vendor.risk.signals) && vendor.risk.signals.length > 0 ? (
-            <ul className="list-disc ps-5 text-sm" data-signals>
+            <ul className="space-y-1.5 text-sm" data-signals>
               {(vendor.risk.signals as string[]).map((s) => (
-                <li key={s} data-signal={s}>
+                <li key={s} data-signal={s} className="flex items-start gap-2">
+                  <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                   {tr(`signal.${s}` as "signal.new_vendor")}
                 </li>
               ))}
@@ -464,9 +477,19 @@ export function VendorDetailView({
         {vendor.accounts.length === 0 ? (
           <p className="text-sm">{t("noAccounts")}</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="divide-y divide-border rounded-lg border border-border">
             {vendor.accounts.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm" data-account={a.status}>
+              <li
+                key={a.id}
+                className={
+                  a.status === "active"
+                    ? "flex flex-wrap items-center gap-2 border-s-[3px] border-s-success px-3 py-2.5 text-sm"
+                    : a.status === "proposed"
+                      ? "flex flex-wrap items-center gap-2 border-s-[3px] border-s-warning-ink bg-warning-soft/50 px-3 py-2.5 text-sm"
+                      : "flex flex-wrap items-center gap-2 border-s-[3px] border-s-transparent px-3 py-2.5 text-sm text-muted-foreground"
+                }
+                data-account={a.status}
+              >
                 <Landmark aria-hidden className="size-4 text-muted-foreground" />
                 <bdi dir="ltr" className="font-mono">
                   {a.iban_masked}
@@ -488,17 +511,17 @@ export function VendorDetailView({
 
       {vendor.tickets.length > 0 && (
         <Panel title={t("changesTitle")} data-vendor-tickets>
-          <ul className="divide-y rounded-lg border">
+          <ul className="divide-y divide-border rounded-lg border border-border">
             {vendor.tickets.map((ticket) => (
-              <li key={ticket.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
-                <Link href={`/pay/bank-changes/${ticket.id}`} className="font-medium hover:underline">
+              <li key={ticket.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm">
+                <Link href={`/pay/bank-changes/${ticket.id}`} className="font-mono font-medium hover:underline">
                   <bdi>{ticket.reference}</bdi>
                 </Link>
                 <TicketStatusBadge status={ticket.status} />
-                <bdi dir="ltr" className="text-muted-foreground">
+                <bdi dir="ltr" className="font-mono text-muted-foreground">
                   {ticket.new_iban_masked}
                 </bdi>
-                <span className="ms-auto text-xs text-muted-foreground">{date(ticket.created_at)}</span>
+                <span className="ms-auto font-mono text-xs text-muted-foreground">{date(ticket.created_at)}</span>
               </li>
             ))}
           </ul>
@@ -506,7 +529,7 @@ export function VendorDetailView({
       )}
 
       {vendor.can_manage_hold && (
-        <Panel title={t("holdTitle")} data-hold-panel>
+        <Panel title={t("holdTitle")} className={vendor.payment_hold ? "border-destructive/45" : undefined} data-hold-panel>
           <p className="text-sm text-muted-foreground">{vendor.payment_hold ? t("holdOn") : t("holdOff")}</p>
           {vendor.payment_hold ? (
             <ReasonAction label={t("release")} action="release" vendorId={vendor.id} onDone={setVendor} onStepUp={() => setStepUp(true)} />

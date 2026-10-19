@@ -11,6 +11,7 @@ import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Checkbox, FieldRow } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
+import { Section } from "@/components/ui/section";
 import { savePaySettings, type PaySettingsInput } from "@/lib/actions/pay";
 import type { PaySettings } from "@/lib/pay/types";
 
@@ -147,18 +148,20 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
   return (
     <form onSubmit={onSubmit} className="space-y-6" data-pay-settings aria-label={t("title")}>
       {!canManage && <p className="text-sm text-muted-foreground">{t("readOnly")}</p>}
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-bank`}>
-        <h2 id={`${id}-bank`} className="font-display text-lg">
-          {t("bankTitle")}
-        </h2>
+      <Section
+        className="space-y-4"
+        aria-labelledby={`${id}-bank`}
+        title={<span id={`${id}-bank`}>{t("bankTitle")}</span>}
+      >
         {number("cooling_off_hours", t("coolingOff"), t("coolingOffHint"))}
         {number("phone_change_window_days", t("phoneWindow"), t("phoneWindowHint"))}
-      </section>
+      </Section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-checks`}>
-        <h2 id={`${id}-checks`} className="font-display text-lg">
-          {t("checksTitle")}
-        </h2>
+      <Section
+        className="space-y-4"
+        aria-labelledby={`${id}-checks`}
+        title={<span id={`${id}-checks`}>{t("checksTitle")}</span>}
+      >
         {number("duplicate_window_days", t("duplicateWindow"), t("duplicateWindowHint"))}
         {number("match_price_pct", t("pricePct"), t("pricePctHint"))}
         {number("match_quantity_pct", t("quantityPct"), t("quantityPctHint"))}
@@ -177,12 +180,13 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
             <span className="block text-xs text-muted-foreground">{t("requirePoHint")}</span>
           </span>
         </label>
-      </section>
+      </Section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-coding`}>
-        <h2 id={`${id}-coding`} className="font-display text-lg">
-          {t("codingTitle")}
-        </h2>
+      <Section
+        className="space-y-4"
+        aria-labelledby={`${id}-coding`}
+        title={<span id={`${id}-coding`}>{t("codingTitle")}</span>}
+      >
         <label className="flex items-start gap-2 text-sm">
           <Checkbox
             name="auto_code_high_confidence"
@@ -197,12 +201,13 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
           </span>
         </label>
         {number("exception_sla_hours", t("slaHours"), t("slaHoursHint"))}
-      </section>
+      </Section>
 
-      <section className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby={`${id}-rule`}>
-        <h2 id={`${id}-rule`} className="font-display text-lg">
-          {t("ruleTitle")}
-        </h2>
+      <Section
+        className="space-y-4"
+        aria-labelledby={`${id}-rule`}
+        title={<span id={`${id}-rule`}>{t("ruleTitle")}</span>}
+      >
         <label className="flex items-start gap-2 text-sm">
           <Checkbox
             name="auto_approve_low_risk"
@@ -231,7 +236,7 @@ export function PaySettingsView({ initial, totpEnabled }: { initial: PaySettings
             required
           />
         </FieldRow>
-      </section>
+      </Section>
 
       {canManage && (
         <div className="space-y-2">

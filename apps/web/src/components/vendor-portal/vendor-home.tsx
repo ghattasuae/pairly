@@ -96,13 +96,15 @@ export function VendorPortalHome({
 
   return (
     <div className="space-y-10" data-vendor-home>
-      <header className="space-y-2">
+      <header className="space-y-2 border-b border-border pb-6">
         <p className="eyebrow">{me.organisation}</p>
-        <h1 className="font-display text-3xl leading-tight sm:text-4xl">{me.vendor_name}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] text-balance sm:text-[2.6rem]">{me.vendor_name}</h1>
         <p className="text-sm text-muted-foreground">
           {t("home.signedInAs", { name: me.contact_name || me.email })}
           {" · "}
-          <span dir="ltr">{me.vendor_reference}</span>
+          <span dir="ltr" className="font-mono">
+            {me.vendor_reference}
+          </span>
         </p>
       </header>
 
@@ -110,16 +112,18 @@ export function VendorPortalHome({
         <h2 id={`${ids}-now`} className="sr-only">
           {t("home.now")}
         </h2>
-        <div className="rounded-2xl border bg-surface p-4">
-          <p className="text-xs text-muted-foreground">{t("home.inReview")}</p>
-          <p className="font-display text-2xl">{format.number(inReview)}</p>
+        <div className="card-hairline space-y-2 p-5">
+          <p className="eyebrow">{t("home.inReview")}</p>
+          <p className="figure text-4xl leading-none">{format.number(inReview)}</p>
         </div>
-        <div className="rounded-2xl border bg-surface p-4 sm:col-span-2">
-          <p className="text-xs text-muted-foreground">{t("home.nextPayment")}</p>
+        <div className="card-hairline space-y-2 p-5 sm:col-span-2">
+          <p className="eyebrow">{t("home.nextPayment")}</p>
           {upcoming[0] ? (
-            <p className="font-display text-xl">
-              {money(format, upcoming[0].amount_to_pay ?? upcoming[0].total, upcoming[0].currency)}
-              <span className="ms-2 text-sm text-muted-foreground">
+            <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="figure text-4xl leading-none" data-amount>
+                {money(format, upcoming[0].amount_to_pay ?? upcoming[0].total, upcoming[0].currency)}
+              </span>
+              <span className="font-mono text-sm text-muted-foreground">
                 {t("home.expectedOn", { date: format.dateTime(new Date(String(upcoming[0].expected_payment_date)), { dateStyle: "medium" }) })}
               </span>
             </p>
@@ -129,7 +133,7 @@ export function VendorPortalHome({
         </div>
         <Link
           href="/vendor-portal/details"
-          className="flex items-center gap-2 rounded-2xl border bg-surface p-4 text-sm font-medium text-primary underline-offset-4 hover:underline sm:col-span-3"
+          className="card-hairline lift flex items-center gap-2 p-4 text-sm font-medium text-primary underline-offset-4 hover:underline sm:col-span-3"
           data-vendor-details-link
         >
           <ShieldCheck className="size-4" aria-hidden />
@@ -138,7 +142,7 @@ export function VendorPortalHome({
         </Link>
       </section>
 
-      <section aria-labelledby={`${ids}-submit`} className="space-y-3 rounded-2xl border bg-surface p-5" data-vendor-submit>
+      <section aria-labelledby={`${ids}-submit`} className="card-hairline space-y-4 p-5 sm:p-6" data-vendor-submit>
         <h2 id={`${ids}-submit`} className="flex items-center gap-2 font-display text-xl">
           <FileUp className="size-5" aria-hidden />
           {t("submit.title")}
@@ -176,7 +180,7 @@ export function VendorPortalHome({
               {creditable.length === 0 && <p className="text-xs text-muted-foreground">{t("submit.noCreditable")}</p>}
             </div>
           )}
-          <div className="space-y-1">
+          <div className="space-y-2 rounded-lg border border-dashed border-input bg-surface-sunken p-4">
             <label htmlFor={`${ids}-file`} className="block text-sm font-medium">
               {t("submit.file")}
             </label>
@@ -185,14 +189,14 @@ export function VendorPortalHome({
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.xml,.docx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm file:me-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5"
+              className="block w-full text-sm file:me-3 file:rounded-md file:border file:border-input file:bg-surface file:px-3 file:py-1.5"
             />
           </div>
-          <p role="status" aria-live="polite" className="text-sm font-medium" data-vendor-notice>
+          <p role="status" aria-live="polite" className="text-sm font-medium text-success-ink" data-vendor-notice>
             {notice ?? ""}
           </p>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {error}
             </p>
           )}
@@ -215,19 +219,21 @@ export function VendorPortalHome({
               <li key={invoice.id}>
                 <article
                   aria-labelledby={`inv-${invoice.id}`}
-                  className="space-y-4 rounded-2xl border bg-surface p-5 shadow-soft"
+                  className="card-hairline space-y-4 p-5"
                   data-vendor-invoice={invoice.id}
                   data-status={invoice.status}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 space-y-1">
-                      <h3 id={`inv-${invoice.id}`} className="font-display text-lg leading-snug">
+                      <h3 id={`inv-${invoice.id}`} className="font-mono text-base font-medium leading-snug">
                         <span dir="ltr">{invoice.invoice_number ?? invoice.reference}</span>
                       </h3>
                       <p className="text-xs text-muted-foreground">
                         {t(`kind.${invoice.document_type === "credit_note" ? "credit_note" : "invoice"}`)}
                         {" · "}
-                        <span dir="ltr">{invoice.reference}</span>
+                        <span dir="ltr" className="font-mono">
+                          {invoice.reference}
+                        </span>
                         {invoice.credit_for && (
                           <>
                             {" · "}
@@ -237,28 +243,44 @@ export function VendorPortalHome({
                       </p>
                     </div>
                     <div className="text-end">
-                      <p className="font-medium">{money(format, invoice.total, invoice.currency)}</p>
-                      <Badge variant={invoice.status === "rejected" ? "outline" : invoice.status === "paid" ? "default" : "signal"}>{t(`status.${invoice.status}` as "status.received")}</Badge>
+                      <p className="font-mono font-medium tabular-nums" data-amount>
+                        {money(format, invoice.total, invoice.currency)}
+                      </p>
+                      <Badge
+                        variant={
+                          invoice.status === "rejected"
+                            ? "danger"
+                            : invoice.status === "paid" || invoice.status === "applied"
+                              ? "success"
+                              : invoice.status === "approved" || invoice.status === "scheduled"
+                                ? "info"
+                                : "default"
+                        }
+                      >
+                        {t(`status.${invoice.status}` as "status.received")}
+                      </Badge>
                     </div>
                   </div>
                   <InvoiceSteps invoice={invoice} compact />
-                  <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+                  <dl className="grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm sm:grid-cols-3">
                     {invoice.due_date && (
                       <div>
                         <dt className="text-xs text-muted-foreground">{t("home.dueDate")}</dt>
-                        <dd>{format.dateTime(new Date(invoice.due_date), { dateStyle: "medium" })}</dd>
+                        <dd className="font-mono">{format.dateTime(new Date(invoice.due_date), { dateStyle: "medium" })}</dd>
                       </div>
                     )}
                     {invoice.expected_payment_date && (
                       <div>
                         <dt className="text-xs text-muted-foreground">{invoice.status === "paid" ? t("home.paidOn") : t("home.expected")}</dt>
-                        <dd data-expected-payment>{format.dateTime(new Date(invoice.expected_payment_date), { dateStyle: "medium" })}</dd>
+                        <dd className="font-mono" data-expected-payment>{format.dateTime(new Date(invoice.expected_payment_date), { dateStyle: "medium" })}</dd>
                       </div>
                     )}
                     {Number(invoice.credit_total) > 0 && (
                       <div>
                         <dt className="text-xs text-muted-foreground">{t("home.toPay")}</dt>
-                        <dd>{money(format, invoice.amount_to_pay, invoice.currency)}</dd>
+                        <dd className="font-mono" data-amount>
+                          {money(format, invoice.amount_to_pay, invoice.currency)}
+                        </dd>
                       </div>
                     )}
                   </dl>

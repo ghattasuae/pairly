@@ -107,8 +107,8 @@ export function CallbackSourceView({ ticket }: { ticket: PayTicketDetail }) {
   const callback = ticket.verification.callback;
   if (!callback) return null;
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-background p-3 text-sm" data-callback-view>
-      <BookCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-primary" />
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface-sunken p-3 text-sm" data-callback-view>
+      <BookCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-info" />
       <div className="space-y-1">
         <p>
           <span className="font-medium">{t("from")}</span> {t(`sources.${callback.source as CallbackSourceName}`)}
@@ -118,8 +118,16 @@ export function CallbackSourceView({ ticket }: { ticket: PayTicketDetail }) {
             <bdi>{callback.reference}</bdi>
           </p>
         )}
-        {callback.matches_claim === false && <p data-callback-differs>{t("differs")}</p>}
-        {callback.matches_claim === true && <p data-callback-matches>{t("matches")}</p>}
+        {callback.matches_claim === false && (
+          <p className="font-medium text-danger-ink" data-callback-differs>
+            {t("differs")}
+          </p>
+        )}
+        {callback.matches_claim === true && (
+          <p className="text-success-ink" data-callback-matches>
+            {t("matches")}
+          </p>
+        )}
       </div>
     </div>
   );

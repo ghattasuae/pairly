@@ -14,7 +14,7 @@ function Yaml({ content }: { content: string }) {
   return (
     <pre
       dir="ltr"
-      className="max-h-[32rem] overflow-auto rounded-lg border bg-background p-3 text-start font-mono text-xs leading-relaxed"
+      className="max-h-[32rem] overflow-auto rounded-lg border border-border bg-surface-sunken p-3 text-start font-mono text-xs leading-relaxed"
       data-rules-yaml
     >
       {rulesLines(content).map((line, i) => (

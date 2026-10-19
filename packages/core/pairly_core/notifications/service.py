@@ -57,7 +57,7 @@ from pairly_core.db import current_org, outside_portal
 from pairly_core.errors import BadRequestError, ForbiddenError
 from pairly_core.integrations.slack.blocks import SlackButton, message_blocks
 from pairly_core.integrations.slack.links import active_slack, slack_link_for_user
-from pairly_core.models import User
+from pairly_core.models import Organisation, User
 from pairly_core.notifications.email import MAX_ATTACHMENTS, Attachment
 from pairly_core.notifications.links import is_app_path
 from pairly_core.notifications.models import (
@@ -227,7 +227,16 @@ async def _render(
     template = await resolve_template(session, key=template_key, channel=channel, locale=locale)
     if template is None:
         return None
-    return template, render_source(source_of(template), variables, tz=tz)
+    org_name = await org_display_name(session) if channel == "email" else None
+    return template, render_source(source_of(template), variables, tz=tz, org_name=org_name)
+
+
+async def org_display_name(session: AsyncSession) -> str | None:
+    """The current organisation's name, for the email header and footer."""
+    org_id = current_org(session)
+    if org_id is None:
+        return None
+    return await session.scalar(select(Organisation.name).where(Organisation.id == org_id))
 
 
 async def sensitive_message_payload(

@@ -44,7 +44,7 @@ export function PayApprovalEvidence({ context }: { context: unknown }) {
     const path = text(context.payment_run_path);
     return (
       <div className="space-y-3 text-sm" data-pay-evidence="payment_run">
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y divide-border rounded-lg border border-border">
           {items.map((item, i) => (
             <li key={i} className="flex flex-wrap justify-between gap-2 px-3 py-2">
               <span>
@@ -92,7 +92,7 @@ export function PayApprovalEvidence({ context }: { context: unknown }) {
       <div className="space-y-1" data-risk={level}>
         <p className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{t("risk")}</span>
-          <Badge variant={level === "low" ? "default" : "signal"}>{t(`level.${level}` as "level.low")}</Badge>
+          <Badge variant={level === "low" ? "success" : level === "medium" ? "warning" : "danger"}>{t(`level.${level}` as "level.low")}</Badge>
           {text(vendor.risk) && (
             <span className="text-muted-foreground">{t("vendorRisk", { level: t(`level.${text(vendor.risk)}` as "level.low") })}</span>
           )}
@@ -107,7 +107,7 @@ export function PayApprovalEvidence({ context }: { context: unknown }) {
             const message = isObject(f.message) ? f.message : {};
             return (
               <li key={i} className="flex items-start gap-2">
-                <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
+                <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                 <span>{text(locale === "ar" ? message.ar : message.en) ?? text(f.code)}</span>
               </li>
             );

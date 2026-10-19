@@ -57,6 +57,7 @@ from pairly_core.notifications.service import (
     notify,
 )
 from pairly_core.notifications.settings import NotificationSettings
+from pairly_core.notifications.templating import fill_unsubscribe
 from pairly_core.notifications.unsubscribe import UnsubscribeClaim, make_token
 
 log = structlog.get_logger(__name__)
@@ -120,18 +121,17 @@ async def _send(transports: Transports, session: AsyncSession, row: Notification
         raise DeliveryError("no_address", transient=False)
     if row.channel == "email":
         settings = transports.settings
+        unsubscribe = unsubscribe_url(settings, row) if content.get("list_unsubscribe") else None
         email = OutgoingEmail(
             to=address,
             sender=_from_address(settings),
             subject=str(content.get("subject") or content.get("title") or ""),
             text=str(content.get("text") or ""),
-            html=content.get("html"),
+            html=fill_unsubscribe(content.get("html"), unsubscribe, row.locale),
             locale=row.locale,
             message_id=f"{row.id}@{_message_domain(settings)}",
             idempotency_key=f"{row.org_id}:{row.dedupe_key}",
-            list_unsubscribe=unsubscribe_url(settings, row)
-            if content.get("list_unsubscribe")
-            else None,
+            list_unsubscribe=unsubscribe,
             auto_submitted=str(content.get("auto_submitted") or "auto-generated"),
             in_reply_to=content.get("in_reply_to"),
             attachments=_attachments(content.get("attachments")),

@@ -13,18 +13,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { chipClass } from "@/components/ui/chip";
+import { Table } from "@/components/ui/table";
 import { Link, useRouter } from "@/i18n/navigation";
 import { previewRun, proposeRun, runAction } from "@/lib/actions/pay";
 import { RUN_STATUSES, runSums, type RunStatus } from "@/lib/pay/payments";
 import type { PayRunDetail, PayRunExcluded, PayRunPreview, PayRunSummary } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 import { ReasonText } from "./invoice-approval";
 
 export function RunStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.runStatus");
   const variant =
-    status === "awaiting_approval" ? "signal" : status === "approved" || status === "exported" || status === "paid" ? "default" : "outline";
+    status === "awaiting_approval"
+      ? "info"
+      : status === "paid"
+        ? "success"
+        : status === "approved" || status === "exported"
+          ? "default"
+          : status === "cancelled" || status === "rejected"
+            ? "danger"
+            : "outline";
   return (
     <Badge variant={variant} data-run-status={status}>
       {t(status as "paid")}
@@ -34,7 +44,7 @@ export function RunStatusBadge({ status }: { status: string }) {
 
 function Money({ currency, amount }: { currency: string; amount: string | number }) {
   return (
-    <span className="font-mono tabular-nums" dir="ltr">
+    <span className="font-mono tabular-nums" dir="ltr" data-amount>
       {currency} {String(amount)}
     </span>
   );
@@ -46,15 +56,15 @@ function ExcludedList({ items }: { items: PayRunExcluded[] }) {
   return (
     <div className="space-y-2" data-excluded>
       <h3 className="text-sm font-medium">{t("excluded", { count: items.length })}</h3>
-      <ul className="divide-y rounded-lg border text-sm">
+      <ul className="divide-y divide-border rounded-lg border border-border text-sm">
         {items.map((item) => (
           <li key={item.invoice_id} className="space-y-1 px-3 py-2" data-excluded-invoice={item.reference ?? item.invoice_id}>
-            <Link href={`/pay/invoices/${item.invoice_id}`} className="font-medium underline-offset-4 hover:underline">
+            <Link href={`/pay/invoices/${item.invoice_id}`} className="font-mono font-medium underline-offset-4 hover:underline">
               {item.reference ?? item.invoice_id}
             </Link>
-            {item.amount && <span className="ms-2 text-muted-foreground">{item.amount}</span>}
+            {item.amount && <span className="ms-2 font-mono text-muted-foreground">{item.amount}</span>}
             {item.saving && item.pay_by && (
-              <p className="text-primary" data-saving={item.saving}>
+              <p className="text-success-ink" data-saving={item.saving}>
                 {t("saving", { amount: item.saving, when: item.pay_by })}
               </p>
             )}
@@ -110,10 +120,7 @@ export function PaymentRunList({
   const [busy, setBusy] = useState<"preview" | "propose" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const chip = (active: boolean) =>
-    active
-      ? "inline-flex h-8 items-center gap-1 rounded-md bg-secondary px-3 text-[0.8rem] font-medium"
-      : "inline-flex h-8 items-center gap-1 rounded-md border px-3 text-[0.8rem] hover:bg-accent";
+  const chip = chipClass;
 
   function set(patch: Partial<typeof form>) {
     setForm((f) => ({ ...f, ...patch }));
@@ -212,11 +219,12 @@ export function PaymentRunList({
                 {t("previewSummary", { count: preview.items.length })} <Money currency={preview.currency} amount={preview.total} />
               </p>
               {preview.items.length > 0 && (
-                <ul className="divide-y rounded-lg border text-sm" data-preview-items>
+                <ul className="divide-y divide-border rounded-lg border border-border text-sm" data-preview-items>
                   {preview.items.map((item) => (
                     <li key={String(item.invoice_id)} className="flex flex-wrap justify-between gap-2 px-3 py-2">
                       <span>
-                        {String(item.reference)} <bdi className="text-muted-foreground">{String(item.vendor_name ?? "")}</bdi>
+                        <span className="font-mono">{String(item.reference)}</span>{" "}
+                        <bdi className="text-muted-foreground">{String(item.vendor_name ?? "")}</bdi>
                       </span>
                       <span className="text-muted-foreground">
                         {item.due_date ? t("due", { when: String(item.due_date) }) : t("noDue")} ·{" "}
@@ -224,7 +232,7 @@ export function PaymentRunList({
                         {item.discount && <> · {t("discountTaken", { amount: item.discount })}</>}
                       </span>
                       {!item.discount && item.saving && item.pay_by && (
-                        <span className="w-full text-xs text-primary" data-saving={item.saving}>
+                        <span className="w-full text-xs text-success-ink" data-saving={item.saving}>
                           {t("saving", { amount: item.saving, when: item.pay_by })}
                         </span>
                       )}
@@ -233,7 +241,7 @@ export function PaymentRunList({
                 </ul>
               )}
               {Number(preview.savings) > 0 && (
-                <p className="text-sm text-primary" data-savings={String(preview.savings)}>
+                <p className="text-sm font-medium text-success-ink" data-savings={String(preview.savings)}>
                   {t("savingsTaken", { amount: `${preview.currency} ${String(preview.savings)}` })}
                 </p>
               )}
@@ -270,22 +278,22 @@ export function PaymentRunList({
       {items.length === 0 ? (
         <EmptyState icon={<Banknote aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
       ) : (
-        <ul className="divide-y rounded-xl border bg-surface" data-run-list>
+        <ul className="card-hairline divide-y divide-border" data-run-list>
           {items.map((run) => (
             <li key={run.id}>
               <Link
                 href={`/pay/payment-runs/${run.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-accent"
+                className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3.5 hover:bg-accent sm:px-5"
                 data-run={run.reference}
               >
                 <span className="space-y-0.5">
-                  <span className="block font-medium">{run.reference}</span>
+                  <span className="block font-mono font-medium">{run.reference}</span>
                   <span className="block text-xs text-muted-foreground">
                     {t("invoices", { count: run.item_count })} ·{" "}
                     {t("payOn", { when: format.dateTime(new Date(run.execution_date), { dateStyle: "medium" }) })}
                   </span>
                 </span>
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-4">
                   <Money currency={run.currency} amount={run.total} />
                   <RunStatusBadge status={run.status} />
                 </span>
@@ -390,15 +398,15 @@ export function PaymentRunView({
 
   return (
     <div className="space-y-6" data-run-view={run.status}>
-      <section className="space-y-2 rounded-xl border bg-surface p-5">
+      <section className="card-hairline space-y-3 p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <RunStatusBadge status={run.status} />
-          <span className="text-sm text-muted-foreground">
+          <span className="font-mono text-sm text-muted-foreground">
             {t("payOn", { when: format.dateTime(new Date(run.execution_date), { dateStyle: "medium" }) })}
           </span>
         </div>
-        <p className="font-display text-2xl">
-          <Money currency={run.currency} amount={run.total} />
+        <p className="figure text-5xl leading-none" dir="ltr" data-amount>
+          {run.currency} {String(run.total)}
         </p>
         <p className="text-sm text-muted-foreground">
           {t("limitLine", { count: run.item_count })} <Money currency={run.currency} amount={run.cash_limit} />
@@ -418,7 +426,7 @@ export function PaymentRunView({
           <p className="text-sm">
             {t("awaiting")}{" "}
             {run.can_approve && (
-              <Link href={`/inbox/${run.approval_id}`} className="text-primary underline-offset-4 hover:underline" data-open-approval>
+              <Link href={`/inbox/${run.approval_id}`} className="link-inline" data-open-approval>
                 {t("openInInbox")}
               </Link>
             )}
@@ -428,55 +436,53 @@ export function PaymentRunView({
       </section>
 
       <Panel title={t("items", { count: run.items.length })}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" data-run-items>
-            <thead>
-              <tr className="text-start text-xs text-muted-foreground">
-                <th className="py-1 pe-3 text-start font-medium">{t("col.invoice")}</th>
-                <th className="py-1 pe-3 text-start font-medium">{t("col.vendor")}</th>
-                <th className="py-1 pe-3 text-start font-medium">{t("col.due")}</th>
-                <th className="py-1 pe-3 text-start font-medium">{t("col.account")}</th>
-                <th className="py-1 pe-3 text-end font-medium">{t("col.amount")}</th>
-                <th className="py-1 text-start font-medium">{t("col.status")}</th>
+        <Table label={t("items", { count: run.items.length })} frameClassName={PANEL_TABLE_FRAME} data-run-items>
+          <thead>
+            <tr>
+              <th>{t("col.invoice")}</th>
+              <th>{t("col.vendor")}</th>
+              <th>{t("col.due")}</th>
+              <th>{t("col.account")}</th>
+              <th className="text-end">{t("col.amount")}</th>
+              <th>{t("col.status")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {run.items.map((item) => (
+              <tr key={item.id} data-run-item={item.invoice_reference ?? item.invoice_id}>
+                <td>
+                  <Link href={`/pay/invoices/${item.invoice_id}`} className="font-mono underline-offset-4 hover:underline">
+                    {item.invoice_reference ?? item.invoice_id}
+                  </Link>
+                  {item.invoice_number && <bdi className="block font-mono text-xs text-muted-foreground">{item.invoice_number}</bdi>}
+                </td>
+                <td>
+                  <bdi>{item.vendor_name ?? ""}</bdi>
+                </td>
+                <td className="font-mono text-xs">{item.due_date ?? t("noDue")}</td>
+                <td className="font-mono text-xs" dir="ltr">
+                  {item.bank_account_masked ?? t("accountChanged")}
+                </td>
+                <td className="text-end">
+                  <Money currency={item.currency} amount={item.amount} />
+                  {item.discount !== null && item.discount !== undefined && (
+                    <span className="block text-xs text-success-ink tabular-nums" data-discount={String(item.discount)}>
+                      {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {t(`itemStatus.${item.status}` as "itemStatus.paid")}
+                  {item.payment_reference && (
+                    <span className="ms-1 font-mono text-xs text-muted-foreground" dir="ltr">
+                      {item.payment_reference}
+                    </span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y">
-              {run.items.map((item) => (
-                <tr key={item.id} data-run-item={item.invoice_reference ?? item.invoice_id}>
-                  <td className="py-2 pe-3">
-                    <Link href={`/pay/invoices/${item.invoice_id}`} className="underline-offset-4 hover:underline">
-                      {item.invoice_reference ?? item.invoice_id}
-                    </Link>
-                    {item.invoice_number && <bdi className="block text-xs text-muted-foreground">{item.invoice_number}</bdi>}
-                  </td>
-                  <td className="py-2 pe-3">
-                    <bdi>{item.vendor_name ?? ""}</bdi>
-                  </td>
-                  <td className="py-2 pe-3">{item.due_date ?? t("noDue")}</td>
-                  <td className="py-2 pe-3 font-mono text-xs" dir="ltr">
-                    {item.bank_account_masked ?? t("accountChanged")}
-                  </td>
-                  <td className="py-2 pe-3 text-end">
-                    <Money currency={item.currency} amount={item.amount} />
-                    {item.discount !== null && item.discount !== undefined && (
-                      <span className="block text-xs text-primary" data-discount={String(item.discount)}>
-                        {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2">
-                    {t(`itemStatus.${item.status}` as "itemStatus.paid")}
-                    {item.payment_reference && (
-                      <span className="ms-1 font-mono text-xs text-muted-foreground" dir="ltr">
-                        {item.payment_reference}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
         <ExcludedList items={run.excluded} />
       </Panel>
 
@@ -501,7 +507,7 @@ export function PaymentRunView({
           {problems.length > 0 && (
             <div role="alert" className="space-y-1 text-sm" data-export-problems>
               <p className="flex items-center gap-2 font-medium">
-                <ShieldAlert aria-hidden className="size-4 text-signal" />
+                <ShieldAlert aria-hidden className="size-4 text-warning-ink" />
                 {t("refused")}
               </p>
               <ul className="space-y-0.5">

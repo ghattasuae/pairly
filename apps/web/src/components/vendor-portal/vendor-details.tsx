@@ -74,17 +74,17 @@ export function VendorDetails({
         <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
         {t("detail.back")}
       </Link>
-      <header className="space-y-2">
+      <header className="space-y-2 border-b border-border pb-6">
         <p className="eyebrow">{t("details.eyebrow")}</p>
-        <h1 className="font-display text-3xl leading-tight">{details.legal_name}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] text-balance sm:text-[2.6rem]">{details.legal_name}</h1>
         <p className="text-sm text-muted-foreground">{t("details.intro")}</p>
       </header>
 
-      <p role="status" aria-live="polite" className="text-sm font-medium" data-vendor-notice>
+      <p role="status" aria-live="polite" className="text-sm font-medium text-success-ink" data-vendor-notice>
         {notice ?? ""}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error}
         </p>
       )}
@@ -94,7 +94,7 @@ export function VendorDetails({
           <ShieldCheck className="size-5" aria-hidden />
           {t("details.verified")}
         </h2>
-        <dl className="grid grid-cols-1 gap-3 rounded-2xl border bg-surface p-5 text-sm sm:grid-cols-2">
+        <dl className="card-hairline grid grid-cols-1 gap-4 border-t-4 border-t-success p-5 text-sm sm:grid-cols-2 sm:p-6">
           {fact(t("details.legalName"), details.legal_name)}
           {fact(t("details.legalNameAr"), details.legal_name_ar ? <span dir="rtl">{details.legal_name_ar}</span> : null)}
           {fact(t("details.tradeName"), details.trade_name)}
@@ -102,15 +102,22 @@ export function VendorDetails({
             t("details.trn"),
             details.trn ? (
               <span>
-                <span dir="ltr">{details.trn}</span> <Badge variant="outline">{t(`trn.${details.trn_status}` as "trn.none")}</Badge>
+                <span dir="ltr" className="font-mono">
+                  {details.trn}
+                </span>{" "}
+                <Badge variant={details.trn_status === "verified" ? "success" : "outline"}>{t(`trn.${details.trn_status}` as "trn.none")}</Badge>
               </span>
             ) : null,
           )}
           {fact(t("details.address"), address || null)}
-          {fact(t("details.phoneOnFile"), details.phone_masked ? <span dir="ltr">{details.phone_masked}</span> : null)}
+          {fact(t("details.phoneOnFile"), details.phone_masked ? (
+              <span dir="ltr" className="font-mono">
+                {details.phone_masked}
+              </span>
+            ) : null)}
         </dl>
         {details.payment_hold && (
-          <p className="flex items-start gap-2 rounded-xl border border-signal/40 bg-signal-soft p-4 text-sm" data-vendor-hold>
+          <p className="flex items-start gap-2 rounded-lg border border-warning-ink/35 bg-warning-soft p-4 text-sm text-warning-ink" data-vendor-hold>
             <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
             {t("details.hold")}
           </p>
@@ -123,11 +130,20 @@ export function VendorDetails({
           {t("bank.title")}
         </h2>
         {details.account ? (
-          <dl className="grid grid-cols-1 gap-3 rounded-2xl border bg-surface p-5 text-sm sm:grid-cols-2" data-vendor-account>
-            {fact(t("bank.iban"), <span dir="ltr">{details.account.iban_masked}</span>)}
+          <dl className="card-hairline grid grid-cols-1 gap-4 p-5 text-sm sm:grid-cols-2 sm:p-6" data-vendor-account>
+            {fact(
+              t("bank.iban"),
+              <span dir="ltr" className="font-mono text-base font-medium">
+                {details.account.iban_masked}
+              </span>,
+            )}
             {fact(t("bank.accountName"), details.account.account_name)}
             {fact(t("bank.bankName"), details.account.bank_name)}
-            {fact(t("bank.swift"), details.account.swift ? <span dir="ltr">{details.account.swift}</span> : null)}
+            {fact(t("bank.swift"), details.account.swift ? (
+                <span dir="ltr" className="font-mono">
+                  {details.account.swift}
+                </span>
+              ) : null)}
             {fact(t("bank.since"), details.account.since ? format.dateTime(new Date(details.account.since), { dateStyle: "medium" }) : null)}
           </dl>
         ) : (
@@ -141,7 +157,7 @@ export function VendorDetails({
           ) : (
             <ul className="space-y-2">
               {details.open_requests.map((r) => (
-                <li key={r.reference} className="rounded-xl border bg-surface p-4 text-sm" data-open-request={r.reference}>
+                <li key={r.reference} className="card-hairline p-4 text-sm" data-open-request={r.reference}>
                   <p className="font-medium">
                     <span dir="ltr">{r.reference}</span>
                     {r.iban_last4 && (
@@ -160,7 +176,7 @@ export function VendorDetails({
         </div>
 
         <form
-          className="space-y-3 rounded-2xl border bg-surface p-5"
+          className="card-hairline space-y-3 p-5 sm:p-6"
           onSubmit={(e) => {
             e.preventDefault();
             void askChange();
@@ -216,7 +232,7 @@ export function VendorDetails({
         ) : (
           <ul className="space-y-3" data-contacts>
             {details.contacts.map((c, index) => (
-              <li key={index} className="rounded-xl border bg-surface p-4 text-sm" data-contact-row={index}>
+              <li key={index} className="card-hairline p-4 text-sm" data-contact-row={index}>
                 <dl className="grid gap-2 sm:grid-cols-2">
                   {fact(t("details.name"), c.name)}
                   {fact(t("details.role"), c.role)}

@@ -102,7 +102,7 @@ export function VendorOnboardingForm({
 
   if (done) {
     return (
-      <div role="status" className="space-y-2 rounded-xl border bg-surface p-6" data-onboarding-done>
+      <div role="status" className="card-hairline space-y-2 p-6" data-onboarding-done>
         <p className="flex items-center gap-2 font-display text-2xl">
           <Check aria-hidden className="size-6 text-primary" />
           {t("doneTitle")}
@@ -137,7 +137,7 @@ export function VendorOnboardingForm({
         <h1 className="font-display text-3xl">{t("heading", { company: page.company })}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </div>
-      <fieldset className="grid gap-4 rounded-xl border bg-surface p-5 sm:grid-cols-2">
+      <fieldset className="card-hairline grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <legend className="px-1 font-medium">{t("section.company")}</legend>
         {line(t("field.legal_name"), "legal_name", form.legal_name, (v) => set("legal_name", v), { required: true })}
         {line(t("field.legal_name_ar"), "legal_name_ar", form.legal_name_ar, (v) => set("legal_name_ar", v), { dir: "rtl" })}
@@ -157,7 +157,7 @@ export function VendorOnboardingForm({
         {line(t("field.line1"), "line1", form.address.line1, (v) => set("address", { ...form.address, line1: v }))}
         {line(t("field.city"), "city", form.address.city, (v) => set("address", { ...form.address, city: v }))}
       </fieldset>
-      <fieldset className="grid gap-4 rounded-xl border bg-surface p-5 sm:grid-cols-2">
+      <fieldset className="card-hairline grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <legend className="px-1 font-medium">{t("section.contact")}</legend>
         {line(t("field.phone_on_file"), "phone_on_file", form.phone_on_file, (v) => set("phone_on_file", v), { required: true, max: 40, dir: "ltr", type: "tel" })}
         {line(t("field.contact_name"), "contact_name", form.contact.name, (v) => set("contact", { ...form.contact, name: v }), { required: true, max: 120 })}
@@ -166,7 +166,7 @@ export function VendorOnboardingForm({
         {line(t("field.email_domain"), "email_domain", form.email_domain, (v) => set("email_domain", v), { max: 253, dir: "ltr" })}
         <p className="text-xs text-muted-foreground sm:col-span-2">{t("phoneHint")}</p>
       </fieldset>
-      <fieldset className="grid gap-4 rounded-xl border bg-surface p-5 sm:grid-cols-2">
+      <fieldset className="card-hairline grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <legend className="px-1 font-medium">{t("section.bank")}</legend>
         {line(t("field.iban"), "iban", form.bank.iban, (v) => set("bank", { ...form.bank, iban: v }), { required: true, max: 64, dir: "ltr" })}
         {line(t("field.account_name"), "account_name", form.bank.account_name, (v) => set("bank", { ...form.bank, account_name: v }), { required: true })}
@@ -179,7 +179,7 @@ export function VendorOnboardingForm({
         )}
         <p className="text-xs text-muted-foreground sm:col-span-2">{t("bankHint")}</p>
       </fieldset>
-      <fieldset className="space-y-3 rounded-xl border bg-surface p-5">
+      <fieldset className="card-hairline space-y-3 p-5 sm:p-6">
         <legend className="px-1 font-medium">{t("section.documents")}</legend>
         <p className="text-sm text-muted-foreground">{t("documentsHint", { max: page.max_documents })}</p>
         {page.documents.length > 0 && (
@@ -254,7 +254,7 @@ export function VendorOnboardingApp() {
   }
   if (state.kind === "error") {
     return (
-      <div role="alert" className="space-y-2 rounded-xl border bg-surface p-5" data-link-invalid>
+      <div role="alert" className="card-hairline space-y-2 p-5 sm:p-6" data-link-invalid>
         <p className="font-medium">{t("linkInvalid")}</p>
         <p className="text-sm text-muted-foreground">{t("linkHelp")}</p>
       </div>

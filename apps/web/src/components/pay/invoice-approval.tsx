@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Section } from "@/components/ui/section";
 import { Link } from "@/i18n/navigation";
 import { codeInvoice, invoiceAction } from "@/lib/actions/pay";
 import { parseReason, submitState, type ChecksState } from "@/lib/pay/payments";
@@ -43,7 +44,7 @@ export function ReasonText({ raw }: { raw: string }) {
 export function ChecksStateBadge({ state }: { state: ChecksState }) {
   const t = useTranslations("Pay.approval.checksState");
   return (
-    <Badge variant={state === "current" ? "default" : "signal"} data-checks-state={state}>
+    <Badge variant={state === "current" ? "success" : "warning"} data-checks-state={state}>
       {t(state)}
     </Badge>
   );
@@ -97,18 +98,17 @@ export function InvoiceApprovalPanel({
   }
 
   return (
-    <section className="space-y-3 rounded-xl border bg-surface p-4" aria-labelledby={`${ids}-title`} data-approval-panel={invoice.status}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={`${ids}-title`} className="eyebrow">
-          {t("title")}
-        </h2>
-        <ChecksStateBadge state={state} />
-      </div>
+    <Section
+      aria-labelledby={`${ids}-title`}
+      title={<span id={`${ids}-title`}>{t("title")}</span>}
+      actions={<ChecksStateBadge state={state} />}
+      data-approval-panel={invoice.status}
+    >
 
       {state !== "current" && open && (
         <div className="space-y-2 text-sm" data-checks-warning>
           <p className="flex items-start gap-2">
-            <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
+            <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-warning-ink" />
             {t(`checksHelp.${state}`)}
           </p>
           {invoice.can_process && (
@@ -160,7 +160,7 @@ export function InvoiceApprovalPanel({
               <ul className="space-y-1">
                 {submit.why.map((reason) => (
                   <li key={reason} className="flex items-start gap-2">
-                    <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
+                    <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                     <ReasonText raw={reason} />
                   </li>
                 ))}
@@ -199,7 +199,7 @@ export function InvoiceApprovalPanel({
 
       {approval?.approved_at && ["approved", "scheduled", "paid"].includes(invoice.status) && (
         <p className="flex items-start gap-2 text-sm" data-approved={approval.approved_by_rule ? "rule" : "people"}>
-          <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success-ink" />
           <span>
             {approval.approved_by_rule
               ? t("approvedByRule", { when: format.dateTime(new Date(approval.approved_at), { dateStyle: "medium" }) })
@@ -230,6 +230,6 @@ export function InvoiceApprovalPanel({
       )}
 
       <ErrorText code={error} />
-    </section>
+    </Section>
   );
 }

@@ -45,7 +45,7 @@ from jinja2 import StrictUndefined, TemplateError, TemplateSyntaxError, meta, no
 from jinja2.filters import FILTERS as DEFAULT_FILTERS
 from jinja2.runtime import Context, LoopContext, Undefined
 from jinja2.sandbox import ImmutableSandboxedEnvironment, SecurityError
-from markupsafe import Markup, escape
+from markupsafe import escape
 
 Channel = Literal["email", "slack", "in_app"]
 Locale = Literal["en", "ar"]
@@ -714,25 +714,295 @@ def _single_line(text: str) -> str:
     return " ".join(text.split())[:MAX_SUBJECT_CHARS]
 
 
-def _html_from_text(text: str) -> str:
-    paragraphs = [p for p in text.split("\n\n") if p.strip()]
-    return "".join(
-        f"<p>{Markup('<br>').join(escape(line) for line in p.splitlines())}</p>" for p in paragraphs
+# ------------------------------------------------------------------ the email shell
+#
+# Every email shares one layout: table based, inline styles only (a head style adds the
+# dark-mode and phone overrides that clients without it simply skip), at most 600px wide,
+# a warm paper background, a white card with a hairline border, the organisation name as
+# a small header, the subject as the title, then the body and a muted footer. No images,
+# no scripts and no web fonts are required: the stacks fall back to Georgia and the
+# system sans. Colours come from the "ink and saffron" tokens of the web app, as hex.
+
+_EMAIL_PAPER: Final = "#f4efe7"
+_EMAIL_CARD: Final = "#ffffff"
+_EMAIL_RULE: Final = "#e2dcd2"
+_EMAIL_INK: Final = "#1a1511"
+_EMAIL_MUTED: Final = "#635c56"
+_EMAIL_LINK: Final = "#405870"
+_EMAIL_DANGER: Final = "#a12721"
+# Saffron with ink text on it: 7.0:1, never white text.
+EMAIL_ACTION_BG: Final = "#e78c08"
+
+_SERIF: Final = "'Fraunces', Georgia, 'Times New Roman', serif"
+_SANS: Final = "'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
+_SANS_AR: Final = "'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif"
+
+# Where the delivery step puts the one-click unsubscribe link (only it knows the signed
+# URL, and only for mail people can turn off). An HTML comment, so it shows nothing when
+# no link is filled in.
+UNSUBSCRIBE_SLOT: Final = "<!--pairly:unsubscribe-->"
+
+_EMAIL_COPY: Final[dict[str, dict[str, str]]] = {
+    "en": {
+        "why": "{org} sent you this email through Pairly.",
+        "unsubscribe": "Unsubscribe from emails like this",
+        "fallback": "If the button does not work, copy this link into your browser:",
+        "open": "Open the link",
+    },
+    "ar": {
+        "why": "أرسلت {org} إليك هذه الرسالة عبر Pairly.",
+        "unsubscribe": "إلغاء الاشتراك في رسائل كهذه",
+        "fallback": "إذا لم يعمل الزر، انسخ هذا الرابط في المتصفح:",
+        "open": "افتح الرابط",
+    },
+}
+
+_EMAIL_STYLE: Final = (
+    "<style>"
+    ":root{color-scheme:light dark;supported-color-schemes:light dark}"
+    "body{margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}"
+    f".pl-body a{{color:{_EMAIL_LINK}}}"
+    ".pl-body p{margin:0 0 16px}"
+    "@media (max-width:620px){.pl-pad{padding-left:20px!important;padding-right:20px!important}"
+    ".pl-title{font-size:24px!important;line-height:30px!important}}"
+    "@media (prefers-color-scheme:dark){"
+    ".pl-bg{background:#14110e!important}"
+    ".pl-card{background:#1c1915!important;border-color:#312d28!important}"
+    ".pl-ink,.pl-body{color:#ebe7df!important}"
+    ".pl-muted{color:#a9a49c!important}"
+    ".pl-rule{border-color:#312d28!important}"
+    ".pl-body a,.pl-link{color:#95b5d6!important}"
+    "a.pl-btn-a{color:#201308!important}"
+    ".pl-btn{background:#f1aa4f!important}"
+    ".pl-btn-danger{border-color:#f98f84!important}"
+    "a.pl-btn-danger-a{color:#f98f84!important}}"
+    "[data-ogsc] .pl-ink,[data-ogsc] .pl-body{color:#ebe7df!important}"
+    "[data-ogsc] .pl-muted{color:#a9a49c!important}"
+    "[data-ogsc] .pl-body a,[data-ogsc] .pl-link{color:#95b5d6!important}"
+    "[data-ogsc] a.pl-btn-a{color:#201308!important}"
+    "[data-ogsc] a.pl-btn-danger-a{color:#f98f84!important}"
+    "</style>"
+)
+
+
+def _copy(locale: str) -> dict[str, str]:
+    return _EMAIL_COPY.get(locale, _EMAIL_COPY["en"])
+
+
+def _sans(locale: str) -> str:
+    return _SANS_AR if locale in RTL_LOCALES else _SANS
+
+
+def _saffron_cell(href: str, label: str, sans: str) -> str:
+    return (
+        f'<td class="pl-btn" align="center" bgcolor="{EMAIL_ACTION_BG}" '
+        f'style="border-radius:6px;background:{EMAIL_ACTION_BG}">'
+        f'<a class="pl-btn-a" href="{href}" target="_blank" rel="noopener" '
+        f'style="display:inline-block;padding:12px 24px;border-radius:6px;font-family:{sans};'
+        f"font-size:15px;font-weight:600;line-height:20px;color:{_EMAIL_INK};"
+        f'text-decoration:none">{escape(label)}</a></td>'
     )
 
 
-def html_document(inner: str, locale: str, title: str | None) -> str:
-    """The email HTML shell: language, direction (RTL for Arabic) and a plain style."""
+def email_button(url: str, label: str, locale: str = "en") -> str:
+    """The one main action: a bulletproof saffron button (a padded link inside a coloured
+    cell, so Outlook still shows the colour), with the link spelled out below it. The URL,
+    the label and the copy are escaped; everything else is a constant."""
+    href = escape(url)
+    return (
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+        'style="border-collapse:separate;margin:8px 0 12px"><tr>'
+        f"{_saffron_cell(str(href), label, _sans(locale))}</tr></table>"
+        f'<p class="pl-muted" style="margin:0 0 16px;font-size:13px;line-height:20px;'
+        f'color:{_EMAIL_MUTED}">{escape(_copy(locale)["fallback"])} '
+        # Only the URL may break anywhere; the words around it wrap normally.
+        f'<a class="pl-link" href="{href}" style="color:{_EMAIL_LINK};'
+        f'word-break:break-all;overflow-wrap:anywhere">{href}</a></p>'
+    )
+
+
+def email_decision_buttons(
+    approve_url: str, approve_label: str, reject_url: str, reject_label: str, locale: str = "en"
+) -> str:
+    """Approve and reject side by side: approve is the one saffron button (ink text), reject
+    a danger outline (danger ink on the card, 7.4:1 light and 7.7:1 dark), never white text
+    on a colour. A spacer cell keeps the gap the same in both directions. Template
+    expressions such as ``{{ approve_url }}`` pass through unchanged (escaping leaves
+    braces alone), so system templates can build their HTML with this."""
+    sans = _sans(locale)
+    reject = escape(reject_url)
+    return (
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+        'style="border-collapse:separate;margin:8px 0 16px"><tr>'
+        f"{_saffron_cell(str(escape(approve_url)), approve_label, sans)}"
+        '<td width="12" style="width:12px;font-size:0;line-height:0">&nbsp;</td>'
+        f'<td class="pl-btn-danger" align="center" style="border-radius:6px;'
+        f'border:2px solid {_EMAIL_DANGER}">'
+        f'<a class="pl-btn-danger-a" href="{reject}" target="_blank" rel="noopener" '
+        f'style="display:inline-block;padding:10px 22px;border-radius:6px;font-family:{sans};'
+        f"font-size:15px;font-weight:600;line-height:20px;color:{_EMAIL_DANGER};"
+        f'text-decoration:none">{escape(reject_label)}</a></td></tr></table>'
+    )
+
+
+def _email_link(url: str, label: str) -> str:
+    return (
+        f'<a class="pl-link" href="{escape(url)}" style="color:{_EMAIL_LINK}">{escape(label)}</a>'
+    )
+
+
+def _split_link(line: str, links: frozenset[str]) -> tuple[str | None, str] | None:
+    """``Label: URL`` or a bare ``URL`` on its own line, where the URL is the value of a
+    declared ``url`` variable. Text from outsiders can never become a button this way."""
+    stripped = line.strip()
+    if not stripped:
+        return None
+    if stripped in links:
+        return None, stripped
+    head, _, tail = stripped.rpartition(" ")
+    if tail in links and head.endswith(":") and head[:-1].strip():
+        return head[:-1].strip(), tail
+    return None
+
+
+def _html_from_text(text: str, links: frozenset[str] = frozenset(), locale: str = "en") -> str:
+    """HTML for a template without its own HTML body: paragraphs and line breaks from the
+    text, every line escaped. A line holding a declared link becomes a link; the first one
+    becomes the email's one button."""
+    blocks: list[str] = []
+    button_used = False
+    for paragraph in (p for p in text.split("\n\n") if p.strip()):
+        lines: list[str] = []
+        for line in paragraph.splitlines():
+            found = _split_link(line, links)
+            if found is None:
+                lines.append(str(escape(line)))
+                continue
+            label, url = found
+            if button_used:
+                lines.append(_email_link(url, label or url))
+                continue
+            button_used = True
+            if lines:
+                blocks.append(_paragraph(lines))
+                lines = []
+            blocks.append(email_button(url, label or _copy(locale)["open"], locale))
+        if lines:
+            blocks.append(_paragraph(lines))
+    return "".join(blocks)
+
+
+def _paragraph(lines: list[str]) -> str:
+    """One paragraph of already escaped lines."""
+    return "<p>" + "<br>".join(lines) + "</p>"
+
+
+def _preheader(text: str | None) -> str:
+    if not text:
+        return ""
+    first = next((line for line in text.splitlines() if line.strip()), "")
+    return " ".join(first.split())[:140]
+
+
+def html_document(
+    inner: str,
+    locale: str,
+    title: str | None,
+    *,
+    org_name: str | None = None,
+    preheader: str | None = None,
+) -> str:
+    """The email HTML shell: language, direction (RTL for Arabic, every cell aligned to
+    the start side and paddings symmetric so nothing needs flipping), the paper and card
+    layout, the organisation header, the title, the body and the footer."""
     direction = "rtl" if locale in RTL_LOCALES else "ltr"
     align = "right" if direction == "rtl" else "left"
-    return (
-        f'<!doctype html><html lang="{escape(locale)}" dir="{direction}">'
+    copy = _copy(locale)
+    sans = _sans(locale)
+    org = (org_name or "").strip() or "Pairly"
+    # Arabic has no glyphs in Fraunces or Georgia: the title stays in the Arabic sans,
+    # set heavier, like the web app's headings. No letter spacing or capitals on Arabic.
+    if direction == "rtl":
+        title_font = f"font-family:{sans};font-weight:600"
+        org_style = "font-size:13px;letter-spacing:0"
+    else:
+        title_font = f"font-family:{_SERIF};font-weight:400"
+        org_style = "font-size:12px;letter-spacing:0.12em;text-transform:uppercase"
+    hidden = (
+        "display:none!important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;"
+        "max-height:0;max-width:0;opacity:0;overflow:hidden"
+    )
+    pre = _preheader(preheader)
+    parts = [
+        f'<!doctype html><html lang="{escape(locale)}" dir="{direction}">',
         '<head><meta charset="utf-8"><meta name="viewport" '
         'content="width=device-width,initial-scale=1">'
-        f"<title>{escape(title or '')}</title></head>"
-        f'<body dir="{direction}" style="font-family:system-ui,sans-serif;line-height:1.5;'
-        f'color:#1f2a2a;text-align:{align}">{inner}</body></html>'
+        '<meta name="color-scheme" content="light dark">'
+        '<meta name="supported-color-schemes" content="light dark">'
+        '<meta name="x-apple-disable-message-reformatting">'
+        f"<title>{escape(title or '')}</title>{_EMAIL_STYLE}</head>",
+        f'<body dir="{direction}" class="pl-bg" style="margin:0;padding:0;'
+        f'background:{_EMAIL_PAPER};text-align:{align}">',
+    ]
+    if pre:
+        parts.append(f'<div style="{hidden}">{escape(pre)}' + "&#8203;&nbsp;" * 24 + "</div>")
+    parts.append(
+        f'<table role="presentation" class="pl-bg" width="100%" cellpadding="0" '
+        f'cellspacing="0" border="0" dir="{direction}" bgcolor="{_EMAIL_PAPER}" '
+        f'style="width:100%;background:{_EMAIL_PAPER}"><tr>'
+        '<td align="center" style="padding:32px 12px">'
+        '<!--[if mso]><table role="presentation" width="600" cellpadding="0" '
+        'cellspacing="0" border="0"><tr><td><![endif]-->'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'border="0" dir="{direction}" style="width:100%;max-width:600px">'
+        # The organisation, small, above the card.
+        f'<tr><td class="pl-pad pl-muted" align="{align}" style="padding:0 32px 14px;'
+        f"font-family:{sans};{org_style};line-height:18px;font-weight:600;"
+        f'color:{_EMAIL_MUTED};text-align:{align}">{escape(org)}</td></tr>'
+        # The card.
+        f'<tr><td class="pl-card" bgcolor="{_EMAIL_CARD}" style="background:{_EMAIL_CARD};'
+        f'border:1px solid {_EMAIL_RULE};border-radius:10px">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'border="0" dir="{direction}">'
     )
+    if title:
+        parts.append(
+            f'<tr><td class="pl-pad pl-ink pl-title" align="{align}" style="padding:32px 40px 4px;'
+            f"{title_font};font-size:28px;line-height:34px;color:{_EMAIL_INK};"
+            f'text-align:{align}">{escape(title)}</td></tr>'
+        )
+    parts.append(
+        f'<tr><td class="pl-pad pl-body" align="{align}" style="padding:'
+        f"{'20px' if title else '32px'} 40px 20px;font-family:{sans};font-size:16px;"
+        f'line-height:25px;color:{_EMAIL_INK};text-align:{align}">{inner}</td></tr>'
+        "</table></td></tr>"
+        # The footer: why this email came, and the unsubscribe link when there is one.
+        f'<tr><td class="pl-pad pl-muted" align="{align}" style="padding:18px 32px 0;'
+        f"font-family:{sans};font-size:12px;line-height:18px;color:{_EMAIL_MUTED};"
+        f'text-align:{align}">'
+        f'<p style="margin:0 0 6px">{escape(copy["why"].format(org=org))}</p>'
+        f"{UNSUBSCRIBE_SLOT}</td></tr>"
+        "</table>"
+        "<!--[if mso]></td></tr></table><![endif]-->"
+        "</td></tr></table></body></html>"
+    )
+    return "".join(parts)
+
+
+def fill_unsubscribe(html: str | None, url: str | None, locale: str) -> str | None:
+    """Put the signed one-click unsubscribe link in the footer slot (the last one, so a
+    copy of the marker inside a template body is never the one filled)."""
+    if not html or not url:
+        return html
+    head, sep, tail = html.rpartition(UNSUBSCRIBE_SLOT)
+    if not sep:
+        return html
+    link = (
+        f'<p style="margin:0"><a class="pl-muted" href="{escape(url)}" '
+        f'style="color:{_EMAIL_MUTED};text-decoration:underline">'
+        f"{escape(_copy(locale)['unsubscribe'])}</a></p>"
+    )
+    return head + link + tail
 
 
 def render_source(
@@ -740,10 +1010,13 @@ def render_source(
     values: Mapping[str, Any],
     *,
     tz: str | None = None,
+    org_name: str | None = None,
 ) -> Rendered:
     """Render every part of a template version for one recipient.
 
     The whole version is linted again first: a stored row can never skip the checks.
+    ``org_name`` heads the email; the result is a pure function of its inputs, so a
+    sensitive message renders to the same bytes when it is approved and when it is sent.
     """
     errors = [i for i in lint_source(src) if i.severity == "error"]
     if errors:
@@ -756,10 +1029,15 @@ def render_source(
     text = render_part(src.body, body_fmt, clean, locale=src.locale, tz=tz).strip()
     html = None
     if src.channel == "email":
+        links = frozenset(
+            value
+            for name, spec in src.variables.items()
+            if spec.type == "url" and isinstance(value := clean.get(name), str) and value
+        )
         inner = (
             render_part(src.body_html, "html", clean, locale=src.locale, tz=tz)
             if src.body_html
-            else _html_from_text(text)
+            else _html_from_text(text, links, src.locale)
         )
-        html = html_document(inner, src.locale, subject)
+        html = html_document(inner, src.locale, subject, org_name=org_name, preheader=text)
     return Rendered(subject=subject, text=text, html=html, locale=src.locale)

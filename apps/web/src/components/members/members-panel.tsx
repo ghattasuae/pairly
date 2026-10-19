@@ -160,7 +160,7 @@ function InviteForm({
   };
 
   const select =
-    "h-10 w-full rounded-md border border-input bg-surface px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:opacity-50";
+    "h-10 w-full rounded-md border border-input bg-surface px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-ring disabled:opacity-50";
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4 card-hairline p-5">

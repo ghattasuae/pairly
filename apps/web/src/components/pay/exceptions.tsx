@@ -32,11 +32,14 @@ function Age({ hours, overdue }: { hours: number; overdue: boolean }) {
   const t = useTranslations("Pay.exceptions");
   const parts = ageParts(hours);
   return (
-    <span className="inline-flex items-center gap-1 text-xs tabular-nums" data-age={hours}>
+    <span
+      className={cn("inline-flex items-center gap-1.5 font-mono text-xs tabular-nums", overdue ? "text-danger-ink" : "text-muted-foreground")}
+      data-age={hours}
+    >
       <AlarmClock aria-hidden className="size-3" />
       {parts.days > 0 ? t("ageDays", parts) : t("ageHours", { hours: parts.hours })}
       {overdue && (
-        <Badge variant="signal" data-overdue>
+        <Badge variant="danger" data-overdue>
           {t("overdue")}
         </Badge>
       )}
@@ -93,21 +96,25 @@ function Composer({ item, onClose }: { item: PayExceptionItem; onClose: () => vo
 
   if (sent) {
     return (
-      <div role="status" className="flex items-center gap-2 rounded-lg border p-3 text-sm" data-message-sent={sent.status}>
-        <CheckCircle2 aria-hidden className="size-4" />
+      <div
+        role="status"
+        className="flex items-center gap-2 rounded-lg border border-info/30 bg-info-soft p-3 text-sm"
+        data-message-sent={sent.status}
+      >
+        <CheckCircle2 aria-hidden className="size-4 text-info" />
         {sent.status === "awaiting_approval" ? t("awaitingApproval", { reference: sent.reference }) : t("messageFailed")}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 rounded-lg border bg-background p-4" data-composer={item.reference}>
+    <div className="space-y-3 rounded-lg border border-border bg-surface-sunken p-4" data-composer={item.reference}>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <Label htmlFor={`${id}-template`}>{t("template")}</Label>
           <select
             id={`${id}-template`}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
             value={choice}
             onChange={(e) => {
               setChoice(e.target.value);
@@ -125,7 +132,7 @@ function Composer({ item, onClose }: { item: PayExceptionItem; onClose: () => vo
           <Label htmlFor={`${id}-lang`}>{t("language")}</Label>
           <select
             id={`${id}-lang`}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
             value={lang}
             onChange={(e) => {
               setLang(e.target.value === "ar" ? "ar" : "en");
@@ -161,7 +168,7 @@ function Composer({ item, onClose }: { item: PayExceptionItem; onClose: () => vo
             <textarea
               id={`${id}-text`}
               dir={draft.locale === "ar" ? "rtl" : "ltr"}
-              className="min-h-40 w-full rounded-md border bg-background p-2 text-sm"
+              className="min-h-40 w-full rounded-md border border-input bg-surface p-2.5 text-sm leading-relaxed"
               value={text}
               maxLength={3000}
               onChange={(e) => setText(e.target.value)}
@@ -177,7 +184,7 @@ function Composer({ item, onClose }: { item: PayExceptionItem; onClose: () => vo
               ) : (
                 <select
                   id={`${id}-to`}
-                  className="h-9 rounded-md border bg-background px-2 text-sm"
+                  className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                 >
@@ -194,7 +201,7 @@ function Composer({ item, onClose }: { item: PayExceptionItem; onClose: () => vo
                   id={`${id}-to`}
                   type="email"
                   dir="ltr"
-                  className="h-9 w-full max-w-sm rounded-md border bg-background px-2 text-sm"
+                  className="h-9 w-full max-w-sm rounded-md border border-input bg-surface px-2 text-sm"
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                 />
@@ -270,12 +277,14 @@ export function ExceptionsQueue({
 
   return (
     <div className="space-y-5" data-exceptions>
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <span data-exceptions-total>{t("total", { count: data.total })}</span>
-        <span className="text-muted-foreground" data-exceptions-overdue>
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm">
+        <span className="font-medium" data-exceptions-total>
+          {t("total", { count: data.total })}
+        </span>
+        <span className={data.overdue > 0 ? "text-danger-ink" : "text-muted-foreground"} data-exceptions-overdue>
           {t("overdueCount", { count: data.overdue, hours: data.sla_hours })}
         </span>
-        <span className="text-xs text-muted-foreground">{t("keys")}</span>
+        <span className="text-xs text-muted-foreground sm:ms-auto">{t("keys")}</span>
       </div>
       <div role="group" aria-label={t("filter")} className="flex flex-wrap gap-2">
         <Button type="button" size="sm" variant={category === null ? "secondary" : "outline"} aria-pressed={category === null} onClick={() => choose(null)}>
@@ -310,17 +319,20 @@ export function ExceptionsQueue({
               data-exception={item.reference}
               onClick={() => setSelected(index)}
               className={cn(
-                "space-y-3 rounded-xl border bg-surface p-4",
+                "card-hairline space-y-3 border-s-[3px] p-5",
+                item.overdue ? "border-s-destructive" : "border-s-warning-ink/60",
                 index === selected && "ring-2 ring-ring",
               )}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div className="space-y-0.5">
-                  <Link href={`/pay/invoices/${item.id}`} className="font-medium underline-offset-4 hover:underline">
+                  <Link href={`/pay/invoices/${item.id}`} className="font-mono font-medium underline-offset-4 hover:underline">
                     <bdi>{item.invoice_number ?? item.reference}</bdi>
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    <span dir="ltr">{item.reference}</span>
+                    <span dir="ltr" className="font-mono">
+                      {item.reference}
+                    </span>
                     {item.vendor_name && (
                       <>
                         {" · "}
@@ -331,7 +343,7 @@ export function ExceptionsQueue({
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   {item.total !== null && item.total !== undefined && (
-                    <span className="font-mono text-sm tabular-nums" dir="ltr">
+                    <span className="font-mono text-sm font-medium tabular-nums" dir="ltr" data-amount>
                       {item.currency} {item.total}
                     </span>
                   )}
@@ -341,7 +353,7 @@ export function ExceptionsQueue({
               <div className="space-y-2">
                 {item.categories.map((c) => (
                   <div key={c.category} className="space-y-1" data-category={c.category}>
-                    <Badge variant={c.category === "bank_mismatch" ? "signal" : "outline"}>{t(`category.${c.category}`)}</Badge>
+                    <Badge variant={c.category === "bank_mismatch" ? "danger" : "warning"}>{t(`category.${c.category}`)}</Badge>
                     {c.explanations.length > 0 && (
                       <ul className="list-disc space-y-0.5 ps-5 text-sm">
                         {c.explanations.map((e, i) => (

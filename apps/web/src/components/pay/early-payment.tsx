@@ -23,12 +23,12 @@ export function EarlyPaymentNote({ offer }: { offer: PayEarlyPayment | null | un
     <section
       className={
         offer.available
-          ? "flex gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm"
-          : "flex gap-3 rounded-lg border p-4 text-sm text-muted-foreground"
+          ? "flex gap-3 rounded-lg border border-success/35 bg-success-soft p-4 text-sm"
+          : "flex gap-3 rounded-lg border border-border bg-surface-sunken p-4 text-sm text-muted-foreground"
       }
       data-early-payment={offer.available ? "available" : "expired"}
     >
-      <BadgePercent aria-hidden className="mt-0.5 size-5 shrink-0" />
+      <BadgePercent aria-hidden className={offer.available ? "mt-0.5 size-5 shrink-0 text-success-ink" : "mt-0.5 size-5 shrink-0"} />
       <div className="space-y-1">
         <h2 className="font-medium">{t("title")}</h2>
         <p>

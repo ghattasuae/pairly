@@ -72,13 +72,17 @@ export function VendorInvoiceDetail({
         <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
         {t("detail.back")}
       </Link>
-      <header className="space-y-1">
+      <header className="space-y-2 border-b border-border pb-6">
         <p className="eyebrow">{t(`kind.${invoice.document_type === "credit_note" ? "credit_note" : "invoice"}`)}</p>
-        <h1 id={`${ids}-title`} className="font-display text-3xl leading-tight">
-          <span dir="ltr">{invoice.invoice_number ?? invoice.reference}</span>
+        <h1 id={`${ids}-title`} className="font-display text-[2rem] leading-[1.1] sm:text-[2.6rem]">
+          <span dir="ltr" className="tabular-nums">
+            {invoice.invoice_number ?? invoice.reference}
+          </span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          <span dir="ltr">{invoice.reference}</span>
+          <span dir="ltr" className="font-mono">
+            {invoice.reference}
+          </span>
           {" · "}
           {t("detail.receivedOn", { date: date(invoice.received_at) ?? "" })}
         </p>
@@ -88,7 +92,9 @@ export function VendorInvoiceDetail({
         <h2 id={`${ids}-status`} className="font-display text-xl">
           {t("detail.status")}
         </h2>
-        <InvoiceSteps invoice={invoice} />
+        <div className="card-hairline p-5 sm:p-6">
+          <InvoiceSteps invoice={invoice} />
+        </div>
         <p className="text-sm text-muted-foreground">{t(`help.${invoice.status}` as "help.received")}</p>
       </section>
 
@@ -96,13 +102,13 @@ export function VendorInvoiceDetail({
         <h2 id={`${ids}-facts`} className="font-display text-xl">
           {t("detail.facts")}
         </h2>
-        <dl className="grid grid-cols-1 gap-3 rounded-2xl border bg-surface p-5 text-sm sm:grid-cols-2">
+        <dl className="card-hairline grid grid-cols-1 gap-4 p-5 text-sm sm:grid-cols-2 sm:p-6">
           {facts
             .filter(([, value]) => value)
             .map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd>{value}</dd>
+                <dd className="font-mono">{value}</dd>
               </div>
             ))}
         </dl>
@@ -114,11 +120,11 @@ export function VendorInvoiceDetail({
         <h2 id={`${ids}-messages`} className="font-display text-xl">
           {t("detail.messages")}
         </h2>
-        <p role="status" aria-live="polite" className="text-sm font-medium" data-vendor-notice>
+        <p role="status" aria-live="polite" className="text-sm font-medium text-success-ink" data-vendor-notice>
           {notice ?? ""}
         </p>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {error}
           </p>
         )}
@@ -129,13 +135,17 @@ export function VendorInvoiceDetail({
             {invoice.thread.map((m) => (
               <li
                 key={m.id}
-                className={m.from_vendor ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 rounded-xl border bg-surface p-4"}
+                className={
+                  m.from_vendor
+                    ? "ms-8 rounded-lg rounded-se-sm border border-border bg-surface-sunken p-4"
+                    : "me-8 rounded-lg rounded-ss-sm border border-border border-s-[3px] border-s-primary bg-surface p-4"
+                }
                 data-message={m.from_vendor ? "from_vendor" : "from_ap"}
               >
                 <p className="text-xs text-muted-foreground">
                   {m.from_vendor ? m.author || t("detail.fromYou") : t("detail.fromAp")}
                   {" · "}
-                  {format.dateTime(new Date(m.at), { dateStyle: "medium", timeStyle: "short" })}
+                  <span className="font-mono">{format.dateTime(new Date(m.at), { dateStyle: "medium", timeStyle: "short" })}</span>
                 </p>
                 <p className="mt-1 text-sm whitespace-pre-wrap">{m.text}</p>
               </li>

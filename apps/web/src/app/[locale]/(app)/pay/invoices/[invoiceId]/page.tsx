@@ -65,12 +65,12 @@ export default async function InvoicePage({ params }: Props) {
   const isCredit = invoice.data.document_type === "credit_note";
   const t = await getTranslations("Pay.invoice");
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-8 sm:px-8">
+    <div className="page max-w-[88rem] space-y-6">
       <PageHeader
         eyebrow={t("eyebrow")}
         title={<bdi>{invoice.data.invoice_number ?? invoice.data.reference}</bdi>}
       >
-        <p className="text-sm text-muted-foreground">{invoice.data.reference}</p>
+        <p className="font-mono text-sm text-muted-foreground">{invoice.data.reference}</p>
       </PageHeader>
       <EarlyPaymentNote offer={invoice.data.early_payment} />
       <InvoiceReview

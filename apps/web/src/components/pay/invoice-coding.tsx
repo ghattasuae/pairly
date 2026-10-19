@@ -8,12 +8,13 @@ import { useId, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Table } from "@/components/ui/table";
 import { useRouter } from "@/i18n/navigation";
 import { askModelCoding, codeInvoiceLines } from "@/lib/actions/pay";
 import { acceptHigh, applySuggestion, changesOf, draftsOf, percent, type Drafts } from "@/lib/pay/coding";
 import type { PayCodingEntry, PayCodingSuggestion, PayInvoiceCoding, PayModelLine } from "@/lib/pay/types";
 
-import { ErrorText, Panel } from "./common";
+import { ErrorText, PANEL_TABLE_FRAME, Panel } from "./common";
 
 function entryName(entries: readonly PayCodingEntry[], code: string | null | undefined, locale: string): string {
   const entry = entries.find((e) => e.code === code);
@@ -52,7 +53,7 @@ function SuggestionChip({
         )}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={suggestion.level === "high" ? "default" : suggestion.level === "medium" ? "signal" : "outline"}>
+        <Badge variant={suggestion.level === "high" ? "success" : suggestion.level === "medium" ? "warning" : "outline"}>
           {t(`level.${suggestion.level}`)}
           {suggestion.method === "history" ? ` ${t("percent", { value: percent(suggestion.confidence) })}` : ""}
         </Badge>
@@ -134,97 +135,95 @@ export function InvoiceCoding({ initial, locale }: { initial: PayInvoiceCoding; 
       ) : coding.lines.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noLines")}</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-muted-foreground">
-              <tr className="border-b">
-                <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.line")}</th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.gl")}</th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.costCentre")}</th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.suggestion")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {coding.lines.map((line) => {
-                const draft = drafts[line.line_index] ?? { gl_code: "", cost_centre: "" };
-                const fromModel = model[line.line_index];
-                return (
-                  <tr key={line.line_index} data-coding-line={line.line_index} className="align-top">
-                    <td className="px-2 py-2">
-                      <span className="text-muted-foreground tabular-nums">{line.line_index + 1}.</span>{" "}
-                      <bdi>{line.description ?? t("noDescription")}</bdi>
-                      {line.source === "auto" && (
-                        <Badge variant="outline" className="ms-2" data-coding-auto>
-                          {t("auto")}
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-2 py-2">
-                      <select
-                        aria-label={t("glFor", { line: line.line_index + 1 })}
-                        id={`${id}-gl-${line.line_index}`}
-                        className="h-9 w-full min-w-40 rounded-md border bg-background px-2 text-sm"
-                        value={draft.gl_code}
+        <Table label={t("title")} frameClassName={PANEL_TABLE_FRAME}>
+          <thead className="text-xs text-muted-foreground">
+            <tr className="border-b">
+              <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.line")}</th>
+              <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.gl")}</th>
+              <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.costCentre")}</th>
+              <th scope="col" className="px-2 py-2 text-start font-medium">{t("col.suggestion")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {coding.lines.map((line) => {
+              const draft = drafts[line.line_index] ?? { gl_code: "", cost_centre: "" };
+              const fromModel = model[line.line_index];
+              return (
+                <tr key={line.line_index} data-coding-line={line.line_index} className="align-top">
+                  <td className="px-2 py-2">
+                    <span className="text-muted-foreground tabular-nums">{line.line_index + 1}.</span>{" "}
+                    <bdi>{line.description ?? t("noDescription")}</bdi>
+                    {line.source === "auto" && (
+                      <Badge variant="outline" className="ms-2" data-coding-auto>
+                        {t("auto")}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-2 py-2">
+                    <select
+                      aria-label={t("glFor", { line: line.line_index + 1 })}
+                      id={`${id}-gl-${line.line_index}`}
+                      className="h-9 w-full min-w-40 rounded-md border border-input bg-surface px-2 text-sm"
+                      value={draft.gl_code}
+                      disabled={!editable || busy !== null}
+                      onChange={(e) => set(line.line_index, { gl_code: e.target.value })}
+                    >
+                      <option value="">{t("uncoded")}</option>
+                      {coding.gl_accounts.map((e) => (
+                        <option key={e.code} value={e.code}>
+                          {e.code} {locale === "ar" && e.name_ar ? e.name_ar : e.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2">
+                    <select
+                      aria-label={t("ccFor", { line: line.line_index + 1 })}
+                      className="h-9 w-full min-w-32 rounded-md border border-input bg-surface px-2 text-sm"
+                      value={draft.cost_centre}
+                      disabled={!editable || busy !== null || coding.cost_centres.length === 0}
+                      onChange={(e) => set(line.line_index, { cost_centre: e.target.value })}
+                    >
+                      <option value="">{t("uncoded")}</option>
+                      {coding.cost_centres.map((e) => (
+                        <option key={e.code} value={e.code}>
+                          {e.code} {locale === "ar" && e.name_ar ? e.name_ar : e.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="space-y-2 px-2 py-2">
+                    {line.suggestion ? (
+                      <SuggestionChip
+                        suggestion={line.suggestion}
+                        coding={coding}
+                        locale={locale}
+                        onUse={() => line.suggestion && use(line.line_index, line.suggestion)}
                         disabled={!editable || busy !== null}
-                        onChange={(e) => set(line.line_index, { gl_code: e.target.value })}
-                      >
-                        <option value="">{t("uncoded")}</option>
-                        {coding.gl_accounts.map((e) => (
-                          <option key={e.code} value={e.code}>
-                            {e.code} {locale === "ar" && e.name_ar ? e.name_ar : e.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-2 py-2">
-                      <select
-                        aria-label={t("ccFor", { line: line.line_index + 1 })}
-                        className="h-9 w-full min-w-32 rounded-md border bg-background px-2 text-sm"
-                        value={draft.cost_centre}
-                        disabled={!editable || busy !== null || coding.cost_centres.length === 0}
-                        onChange={(e) => set(line.line_index, { cost_centre: e.target.value })}
-                      >
-                        <option value="">{t("uncoded")}</option>
-                        {coding.cost_centres.map((e) => (
-                          <option key={e.code} value={e.code}>
-                            {e.code} {locale === "ar" && e.name_ar ? e.name_ar : e.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="space-y-2 px-2 py-2">
-                      {line.suggestion ? (
-                        <SuggestionChip
-                          suggestion={line.suggestion}
-                          coding={coding}
-                          locale={locale}
-                          onUse={() => line.suggestion && use(line.line_index, line.suggestion)}
-                          disabled={!editable || busy !== null}
-                        />
-                      ) : (
-                        !fromModel && <span className="text-xs text-muted-foreground">{t("noSuggestion")}</span>
-                      )}
-                      {fromModel?.suggestion && (
-                        <SuggestionChip
-                          suggestion={fromModel.suggestion}
-                          coding={coding}
-                          locale={locale}
-                          onUse={() => fromModel.suggestion && use(line.line_index, fromModel.suggestion)}
-                          disabled={!editable || busy !== null}
-                        />
-                      )}
-                      {fromModel && !fromModel.suggestion && (
-                        <span className="text-xs text-muted-foreground" data-model-problem={fromModel.problem ?? ""}>
-                          {fromModel.problem === "model_unavailable" ? t("modelUnavailable") : t("modelNothing")}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      />
+                    ) : (
+                      !fromModel && <span className="text-xs text-muted-foreground">{t("noSuggestion")}</span>
+                    )}
+                    {fromModel?.suggestion && (
+                      <SuggestionChip
+                        suggestion={fromModel.suggestion}
+                        coding={coding}
+                        locale={locale}
+                        onUse={() => fromModel.suggestion && use(line.line_index, fromModel.suggestion)}
+                        disabled={!editable || busy !== null}
+                      />
+                    )}
+                    {fromModel && !fromModel.suggestion && (
+                      <span className="text-xs text-muted-foreground" data-model-problem={fromModel.problem ?? ""}>
+                        {fromModel.problem === "model_unavailable" ? t("modelUnavailable") : t("modelNothing")}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
       )}
       {coding.auto_coding && <p className="text-xs text-muted-foreground">{t("autoOn")}</p>}
       {editable && hasList && coding.lines.length > 0 && (

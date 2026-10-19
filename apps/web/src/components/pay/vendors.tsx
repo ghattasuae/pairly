@@ -87,7 +87,7 @@ function toInput(f: FormState): PayVendorInput {
 export function CheckResult({ check }: { check: PayVendorCheck }) {
   const t = useTranslations("Pay.form");
   return (
-    <div className="space-y-2 rounded-lg border bg-background p-3 text-sm" data-vendor-check>
+    <div className="space-y-2 rounded-lg border border-border bg-surface-sunken p-4 text-sm" data-vendor-check>
       {check.iban && (
         <p data-iban-check={check.iban.valid ? "valid" : check.iban.error}>
           {check.iban.valid
@@ -107,7 +107,7 @@ export function CheckResult({ check }: { check: PayVendorCheck }) {
           <ul className="list-disc ps-5">
             {check.duplicates.map((d) => (
               <li key={d.vendor_id}>
-                <Link href={`/pay/vendors/${d.vendor_id}`} className="underline">
+                <Link href={`/pay/vendors/${d.vendor_id}`} className="link-inline">
                   <bdi>{d.legal_name}</bdi>
                 </Link>{" "}
                 (<bdi>{d.reference}</bdi>): {d.reasons.map((r) => t(`duplicateReason.${r}` as "duplicateReason.name")).join(", ")}
@@ -183,8 +183,8 @@ export function VendorForm({ onCreated }: { onCreated: (id: string) => void }) {
   );
   const nameOnly = check !== null && check.duplicates.length > 0 && check.duplicates.every((d) => d.reasons.every((r) => r === "name"));
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-xl border bg-surface p-5" data-vendor-form>
-      <h2 className="font-display text-xl">{t("title")}</h2>
+    <form onSubmit={submit} className="card-hairline space-y-5 p-5 sm:p-6" data-vendor-form>
+      <h2 className="font-display text-xl leading-tight">{t("title")}</h2>
       <p className="text-sm text-muted-foreground">{t("intro")}</p>
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="eyebrow mb-2">{t("company")}</legend>
@@ -222,7 +222,7 @@ export function VendorForm({ onCreated }: { onCreated: (id: string) => void }) {
         {text("bank_name", { max: 160 })}
         {text("swift", { max: 16, dir: "ltr" })}
         {form.iban && (
-          <p className="text-xs text-muted-foreground sm:col-span-2" dir="ltr">
+          <p className="font-mono text-xs text-muted-foreground sm:col-span-2" dir="ltr">
             {groupIban(form.iban)}
           </p>
         )}
@@ -316,9 +316,17 @@ export function VendorsView({ initial, canWrite }: { initial: PayVendorSummary[]
       {shown.length === 0 ? (
         <EmptyState icon={<Building2 aria-hidden />} title={t("empty")} body={canWrite ? t("emptyHelp") : undefined} />
       ) : (
-        <ul className="divide-y rounded-xl border bg-surface" data-vendor-list>
+        <ul className="card-hairline divide-y divide-border" data-vendor-list>
           {shown.map((v) => (
-            <li key={v.id} className="flex flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center" data-vendor={v.reference}>
+            <li
+              key={v.id}
+              className={
+                v.payment_hold
+                  ? "flex flex-col gap-2 border-s-[3px] border-s-destructive px-4 py-3.5 text-sm sm:flex-row sm:items-center sm:px-5"
+                  : "flex flex-col gap-2 border-s-[3px] border-s-transparent px-4 py-3.5 text-sm sm:flex-row sm:items-center sm:px-5"
+              }
+              data-vendor={v.reference}
+            >
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="flex flex-wrap items-center gap-2">
                   <Link href={`/pay/vendors/${v.id}`} className="font-medium hover:underline">
@@ -328,17 +336,17 @@ export function VendorsView({ initial, canWrite }: { initial: PayVendorSummary[]
                   {v.payment_hold && <HoldBadge reason={v.hold_reason} />}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <bdi>{v.reference}</bdi> · {v.country}
+                  <bdi className="font-mono">{v.reference}</bdi> · {v.country}
                   {v.trn && (
                     <>
                       {" "}
-                      · {t("trn")} <bdi>{v.trn}</bdi>
+                      · {t("trn")} <bdi className="font-mono">{v.trn}</bdi>
                     </>
                   )}
                   {v.iban_masked && (
                     <>
                       {" "}
-                      · <bdi dir="ltr">{v.iban_masked}</bdi>
+                      · <bdi dir="ltr" className="font-mono">{v.iban_masked}</bdi>
                     </>
                   )}
                 </p>
@@ -346,7 +354,7 @@ export function VendorsView({ initial, canWrite }: { initial: PayVendorSummary[]
               {v.open_ticket_id && (
                 <Link
                   href={`/pay/bank-changes/${v.open_ticket_id}`}
-                  className="inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-[0.8rem] hover:bg-accent"
+                  className="inline-flex h-8 shrink-0 items-center rounded-md border border-destructive/45 bg-danger-soft px-3 text-[0.8rem] font-medium text-danger-ink hover:bg-danger-soft/70"
                   data-open-ticket
                 >
                   {t("openChange")}

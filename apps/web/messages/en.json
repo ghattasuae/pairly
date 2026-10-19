@@ -3033,7 +3033,8 @@
       "exceptions": "Exceptions",
       "forecast": "Cash forecast",
       "reconciliation": "Reconciliation",
-      "monthEnd": "Month end"
+      "monthEnd": "Month end",
+      "eyebrow": "Pay"
     },
     "errors": {
       "bank_change_already_open": "This vendor already has an open bank detail change. Finish or cancel it first.",
@@ -3319,7 +3320,17 @@
       "startApproval": "Start the approvals again",
       "coolingOff": "Approved. The new details become active on {when}, after a {hours, plural, one {# hour} other {# hours}} cooling-off period. Payments stay on hold until then.",
       "activated": "The new details became active on {when}.",
-      "cancelTitle": "Cancel this change"
+      "cancelTitle": "Cancel this change",
+      "lock": {
+        "lockedTitle": "Payments to this vendor are locked",
+        "lockedBody": "Nothing is paid to the new account until someone calls the number already on file, the vendor confirms, and two other people approve.",
+        "approvalsTitle": "Waiting for two approvals",
+        "approvalsBody": "The call back confirmed the new details. Two different people must now approve before anything changes.",
+        "coolingTitle": "Approved, cooling off",
+        "coolingBody": "The new details are not used yet. Payments stay on hold until the cooling-off period ends.",
+        "activeTitle": "The new details are active",
+        "activeHeld": "Payments are still on hold until finance releases them."
+      }
     },
     "verify": {
       "title": "Call back checklist",

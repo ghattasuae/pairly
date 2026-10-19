@@ -21,29 +21,31 @@ export default async function VendorPortalLayout({ children }: { children: React
   const signedIn = (await readVendorPortalToken()) !== null;
   return (
     <div className="bg-ledger flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-6">
-        <span className="text-sm tracking-wide text-muted-foreground uppercase">{t("eyebrow")}</span>
-        <div className="flex items-center gap-1">
-          {signedIn && (
-            <nav aria-label={t("nav.label")} className="flex items-center gap-1 text-sm">
-              <Link href="/vendor-portal" className="rounded-md px-2 py-1 hover:bg-accent">
-                {t("nav.invoices")}
-              </Link>
-              <Link href="/vendor-portal/details" className="rounded-md px-2 py-1 hover:bg-accent">
-                {t("nav.details")}
-              </Link>
-              <VendorPortalSignOut />
-            </nav>
-          )}
-          <LocaleSwitcher />
-          <ThemeToggle />
+      <header className="border-b border-border">
+        <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+          <span className="eyebrow">{t("eyebrow")}</span>
+          <div className="flex items-center gap-1">
+            {signedIn && (
+              <nav aria-label={t("nav.label")} className="flex items-center gap-1 text-sm">
+                <Link href="/vendor-portal" className="rounded-md px-2.5 py-1.5 hover:bg-accent">
+                  {t("nav.invoices")}
+                </Link>
+                <Link href="/vendor-portal/details" className="rounded-md px-2.5 py-1.5 hover:bg-accent">
+                  {t("nav.details")}
+                </Link>
+                <VendorPortalSignOut />
+              </nav>
+            )}
+            <LocaleSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main id={MAIN_CONTENT_ID} tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-12">
         {children}
       </main>
-      <footer className="mx-auto w-full max-w-3xl px-4 pb-8 text-xs text-muted-foreground sm:px-6">
-        <Wordmark className="scale-75 opacity-70" />
+      <footer className="mx-auto w-full max-w-3xl border-t border-border px-4 py-6 text-xs text-muted-foreground sm:px-6">
+        <Wordmark className="origin-[0%_50%] scale-75 rtl:origin-[100%_50%]" />
       </footer>
     </div>
   );

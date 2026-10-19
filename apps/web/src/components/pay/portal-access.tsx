@@ -84,7 +84,7 @@ export function PortalAccessPanel({
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("none")}</p>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y divide-border rounded-lg border border-border">
           {items.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" data-portal-contact={a.status}>
               <span className="min-w-0">
