@@ -45,7 +45,7 @@ export function CalibrationReportView({
       <p className="text-sm text-muted-foreground">
         {t("reportScope", { labels: report.labels, overrides: report.overrides })}
       </p>
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-y card-hairline">
         {report.criteria.map((c) => {
           const state = asked[c.criterion_id] ?? {};
           return (
@@ -72,7 +72,7 @@ export function CalibrationReportView({
                     {t("askModel")}
                   </Button>
                   {state.text && (
-                    <p className="rounded-md bg-muted p-2" data-model-suggestion>
+                    <p className="rounded-md border border-border bg-surface-sunken p-2" data-model-suggestion>
                       {t("modelSays")} {state.text}
                     </p>
                   )}
@@ -103,7 +103,7 @@ function ScoreRow({
 }) {
   const id = useId();
   return (
-    <fieldset className="space-y-1.5 rounded-lg border p-3" aria-labelledby={id}>
+    <fieldset className="space-y-1.5 card-hairline p-3" aria-labelledby={id}>
       <legend id={id} className="px-1 text-sm font-medium">
         {criterion.name}
       </legend>
@@ -197,7 +197,7 @@ export function CalibrationLabeller({
       )}
       {item && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="max-h-[32rem] overflow-y-auto whitespace-pre-wrap rounded-lg border p-3 text-sm" data-cv-text>
+          <div className="max-h-[32rem] overflow-y-auto whitespace-pre-wrap card-hairline p-3 text-sm" data-cv-text>
             {item.text ?? t("noText")}
           </div>
           <div className="space-y-3">

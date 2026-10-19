@@ -133,7 +133,7 @@ export function CalendarSettings({
             return (
               <li
                 key={provider.provider}
-                className="space-y-3 rounded-xl border bg-surface p-5 shadow-soft"
+                className="space-y-3 card-hairline p-5"
                 data-calendar-provider={provider.provider}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -227,7 +227,7 @@ function AvailabilityForm({
         <p className="text-sm text-muted-foreground">{t("availabilityHelp")}</p>
       </div>
       <form
-        className="space-y-4 rounded-xl border bg-surface p-5 shadow-soft"
+        className="space-y-4 card-hairline p-5"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);

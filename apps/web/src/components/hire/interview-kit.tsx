@@ -23,7 +23,7 @@ export function InterviewKit({ kit }: { kit: HireKit }) {
       </div>
       <ol className="space-y-3">
         {kit.items.map((item, n) => (
-          <li key={item.criterion_id} className="space-y-2 rounded-xl border bg-surface p-4 text-[0.95rem] leading-relaxed" data-kit-item={item.criterion_id}>
+          <li key={item.criterion_id} className="space-y-2 card-hairline p-4 text-[0.95rem] leading-relaxed" data-kit-item={item.criterion_id}>
             <p className="flex flex-wrap items-center gap-2">
               <span className="font-medium">
                 {n + 1}. {item.criterion_name}

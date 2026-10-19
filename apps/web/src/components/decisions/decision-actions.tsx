@@ -93,7 +93,7 @@ export function ReplayPanel({
           {replays.map((r) => {
             const Icon = r.status === "match" ? CircleCheck : r.status === "differs" ? CircleAlert : CircleX;
             return (
-              <li key={r.id} className="space-y-2 rounded-xl border bg-surface p-4 text-sm">
+              <li key={r.id} className="space-y-2 card-hairline p-4 text-sm">
                 <p className="flex flex-wrap items-center gap-2">
                   <Icon
                     className={cn(
@@ -113,7 +113,7 @@ export function ReplayPanel({
                 </p>
                 {r.reason && <p className="text-muted-foreground">{r.reason}</p>}
                 {r.diff.length > 0 && (
-                  <div className="relative overflow-x-auto rounded-lg border">
+                  <div className="relative overflow-x-auto card-hairline">
                     <table className="w-full text-xs">
                       <caption className="sr-only">{t("diffCaption")}</caption>
                       <thead>
@@ -183,7 +183,7 @@ export function AppealsPanel({
       ) : (
         <ul className="space-y-3">
           {appeals.map((appeal) => (
-            <li key={appeal.id} className="space-y-3 rounded-xl border bg-surface p-4 text-sm">
+            <li key={appeal.id} className="space-y-3 card-hairline p-4 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <MessageSquareWarning className="size-4 text-primary" aria-hidden />
                 <Badge variant={appeal.status === "open" ? "signal" : "outline"}>
@@ -306,7 +306,7 @@ function FileForm({
         event.preventDefault();
         if (ready) void submit();
       }}
-      className="space-y-4 rounded-xl border bg-surface p-5"
+      className="space-y-4 card-hairline p-5"
     >
       <div className="space-y-1">
         <h3 className="font-display text-xl">{t("fileTitle")}</h3>

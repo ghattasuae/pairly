@@ -16,27 +16,27 @@ function GroupRow({ group }: { group: HireBiasGroup }) {
   const pct = (v: number | null) =>
     v === null ? "" : format.number(v, { style: "percent", maximumFractionDigits: 1 });
   return (
-    <tr className="border-t" data-group={group.group}>
-      <th scope="row" className="py-2 pe-3 text-start font-medium">
+    <tr data-group={group.group}>
+      <th scope="row">
         {label}
       </th>
       {group.suppressed ? (
-        <td colSpan={4} className="py-2 text-muted-foreground">
+        <td colSpan={4} className="text-muted-foreground">
           {t("suppressed")}
         </td>
       ) : (
         <>
-          <td className="py-2 pe-3 tabular-nums">{t("counts", { selected: group.selected ?? 0, base: group.base ?? 0 })}</td>
-          <td className="py-2 pe-3 tabular-nums">{pct(group.rate)}</td>
-          <td className="py-2 pe-3 tabular-nums">
+          <td className="cell-num">{t("counts", { selected: group.selected ?? 0, base: group.base ?? 0 })}</td>
+          <td className="cell-num">{pct(group.rate)}</td>
+          <td className="cell-num">
             {group.impact_ratio === null ? "" : format.number(group.impact_ratio, { maximumFractionDigits: 2 })}
           </td>
-          <td className="py-2 pe-3 tabular-nums">
+          <td className="cell-num">
             {group.fisher_p === null ? "" : format.number(group.fisher_p, { maximumFractionDigits: 3 })}
           </td>
         </>
       )}
-      <td className="py-2">
+      <td>
         <Badge variant={judgementTone(group.judgement)}>{t(`judgement.${group.judgement}` as "judgement.reference")}</Badge>
       </td>
     </tr>
@@ -46,29 +46,29 @@ function GroupRow({ group }: { group: HireBiasGroup }) {
 function Step({ step, stageLabel }: { step: HireBiasStep; stageLabel: (key: string) => string }) {
   const t = useTranslations("HireBias");
   return (
-    <div className="overflow-x-auto rounded-lg border p-3" data-step={`${step.from_stage}:${step.to_stage}`}>
-      <h4 className="pb-2 text-sm font-medium">
+    <div className="table-frame" data-step={`${step.from_stage}:${step.to_stage}`}>
+      <h4 className="border-b border-border px-3 py-2.5 text-sm font-medium">
         {t("step", { from: stageLabel(step.from_stage), to: stageLabel(step.to_stage) })}
       </h4>
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground">
+      <table className="data-table">
+        <thead>
           <tr>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col">
               {t("col.group")}
             </th>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col" className="text-end">
               {t("col.counts")}
             </th>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col" className="text-end">
               {t("col.rate")}
             </th>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col" className="text-end">
               {t("col.ratio")}
             </th>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col" className="text-end">
               {t("col.p")}
             </th>
-            <th scope="col" className="pb-1 text-start font-normal">
+            <th scope="col">
               {t("col.result")}
             </th>
           </tr>
@@ -115,7 +115,7 @@ function FairnessSummary({ summary, action }: { summary: Record<string, unknown>
   const t = useTranslations("HireBias.fairness");
   const run = summary as FairnessRunSummary | null;
   return (
-    <div className="space-y-2 rounded-lg border p-4 text-sm" data-fairness>
+    <div className="space-y-2 card-hairline p-4 text-sm" data-fairness>
       <h2 className="font-display text-xl">{t("title")}</h2>
       {run ? (
         <>
@@ -163,7 +163,7 @@ export function BiasReport({
   const resultsId = useId();
   return (
     <div className="space-y-8" data-bias-report>
-      <div className="space-y-2 rounded-lg border p-4 text-sm">
+      <div className="space-y-2 card-hairline p-4 text-sm">
         <p>{t("scope", { count: report.applications })}</p>
         <p className="text-muted-foreground">{t("method", { min: report.settings.min_sample, group: report.settings.min_group })}</p>
         <p className="text-muted-foreground">{t("notLegal")}</p>

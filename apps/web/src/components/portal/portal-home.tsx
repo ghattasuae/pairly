@@ -127,7 +127,7 @@ export function PortalHome({
         {others.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("jobs.none")}</p>
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {others.map((job) => (
               <li key={job.slug} className="flex items-center justify-between gap-3 px-4 py-3">
                 <span className="min-w-0">

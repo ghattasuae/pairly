@@ -138,7 +138,7 @@ export default async function DocumentPage({ params, searchParams }: Props) {
           <h2 id="doc-decisions" className="eyebrow">
             {t("decisions")}
           </h2>
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {records.map((record) => (
               <li key={record.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                 <span className="flex items-center gap-2">

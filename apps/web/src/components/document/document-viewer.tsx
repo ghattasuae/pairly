@@ -533,7 +533,7 @@ function HighlightList({
               onClick={() => onSelect(h)}
               aria-pressed={active}
               className={cn(
-                "group w-full rounded-lg border bg-surface p-3 text-start text-sm transition-colors hover:bg-accent",
+                "group w-full card-hairline p-3 text-start text-sm transition-colors hover:bg-accent",
                 active && "border-ring ring-2 ring-ring/30",
               )}
             >

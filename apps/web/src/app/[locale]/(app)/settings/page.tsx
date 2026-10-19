@@ -55,7 +55,7 @@ export default async function SettingsPage({ params }: Props) {
           <li key={link.key}>
             <Link
               href={link.href}
-              className="group flex items-start gap-4 rounded-xl border bg-surface p-5 shadow-soft transition-colors hover:bg-accent"
+              className="group flex items-start gap-4 card-hairline p-5 transition-colors hover:bg-accent"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-primary [&_svg]:size-5">
                 {ICONS[link.key]}

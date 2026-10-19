@@ -314,7 +314,7 @@ export function JobEditor({
   return (
     <div className="space-y-8" data-job-editor>
       {/* ---------------------------------------------------------- brief */}
-      <section aria-labelledby={`${ids}-brief`} className="space-y-3 rounded-xl border bg-surface p-5">
+      <section aria-labelledby={`${ids}-brief`} className="space-y-3 card-hairline p-5">
         <h2 id={`${ids}-brief`} className="eyebrow">
           {t("brief.title")}
         </h2>
@@ -336,7 +336,7 @@ export function JobEditor({
       </section>
 
       {/* ---------------------------------------------------------- job */}
-      <section aria-labelledby={`${ids}-job`} className="space-y-5 rounded-xl border bg-surface p-5">
+      <section aria-labelledby={`${ids}-job`} className="space-y-5 card-hairline p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id={`${ids}-job`} className="eyebrow">
             {t("job.title")}
@@ -514,7 +514,7 @@ export function JobEditor({
 
       {/* ---------------------------------------------------------- rubric */}
       {canRubric && (
-        <section aria-labelledby={`${ids}-rubric`} className="space-y-5 rounded-xl border bg-surface p-5" data-rubric>
+        <section aria-labelledby={`${ids}-rubric`} className="space-y-5 card-hairline p-5" data-rubric>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id={`${ids}-rubric`} className="eyebrow">
               {t("rubric.title")}
@@ -794,7 +794,7 @@ function CriterionCard({
   const id = useId();
   const anchors = c.anchors.length === SCALE_LEVELS ? c.anchors : Array.from({ length: SCALE_LEVELS }, (_, i) => c.anchors[i] ?? "");
   return (
-    <div className="space-y-3 rounded-lg border p-4" data-criterion-editor={c.id}>
+    <div className="space-y-3 card-hairline p-4" data-criterion-editor={c.id}>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
         <FieldRow label={t("name")} htmlFor={`${id}-name`}>
           <Input
@@ -881,7 +881,7 @@ function KnockoutCard({
   const t = useTranslations("HireJob.rubric");
   const id = useId();
   return (
-    <div className="space-y-3 rounded-lg border p-4" data-knockout-editor={k.id}>
+    <div className="space-y-3 card-hairline p-4" data-knockout-editor={k.id}>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
         <FieldRow label={t("question")} htmlFor={`${id}-q`}>
           <Input

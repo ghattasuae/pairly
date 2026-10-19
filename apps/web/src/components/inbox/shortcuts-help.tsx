@@ -38,7 +38,7 @@ export function ShortcutsHelp({ open, onOpenChange }: { open: boolean; onOpenCha
           <DialogDescription className="text-sm text-muted-foreground">{t("body")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <dl className="divide-y rounded-lg border bg-surface">
+          <dl className="divide-y card-hairline">
             {INBOX_SHORTCUTS.map((shortcut) => (
               <div key={shortcut.id} className="flex items-center justify-between gap-4 px-3 py-2 text-sm">
                 <dt>{t(shortcut.id)}</dt>

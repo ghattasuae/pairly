@@ -43,7 +43,7 @@ export function Records({ metric }: { metric: HireMetric }) {
   if (metric.records_total === 0) return null;
   return (
     <details className="text-xs" data-records={metric.key}>
-      <summary className="cursor-pointer text-primary hover:underline">
+      <summary className="cursor-pointer text-primary underline-offset-4 hover:underline">
         {t("records", { count: metric.records_total })}
       </summary>
       <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -74,12 +74,12 @@ export function Records({ metric }: { metric: HireMetric }) {
 function Tile({ title, metric, note }: { title: string; metric: HireMetric; note?: string | undefined }) {
   const t = useTranslations("HireAnalytics");
   return (
-    <div className="space-y-1.5 rounded-lg border p-4" data-metric={metric.key}>
+    <div className="space-y-1.5 card-hairline p-4" data-metric={metric.key}>
       <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="font-display text-2xl">
+      <p className="figure text-3xl leading-none">
         <MetricValue metric={metric} />
       </p>
-      <p className="text-xs text-muted-foreground">{t("sample", { n: metric.n })}</p>
+      <p className="font-mono text-xs text-muted-foreground">{t("sample", { n: metric.n })}</p>
       {note && <p className="text-xs text-muted-foreground">{note}</p>}
       <Records metric={metric} />
     </div>
@@ -111,12 +111,12 @@ function Rows({
   const t = useTranslations("HireAnalytics");
   if (metrics.length === 0) return <p className="text-sm text-muted-foreground">{t("noData")}</p>;
   return (
-    <ul className="divide-y rounded-lg border">
+    <ul className="divide-y card-hairline">
       {metrics.map((m) => (
         <li key={m.key} className="space-y-1 p-3" data-metric={m.key}>
           <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
             <span className="font-medium">{label(m)}</span>
-            <span className="font-display text-lg">
+            <span className="figure text-lg">
               <MetricValue metric={m} />
             </span>
           </div>
@@ -140,9 +140,9 @@ export function SurveySummary({ survey }: { survey: HireSurveyResults }) {
   const format = useFormatter();
   const overall = survey.overall.averages.overall;
   return (
-    <div className="space-y-1.5 rounded-lg border p-4" data-metric="survey">
+    <div className="space-y-1.5 card-hairline p-4" data-metric="survey">
       <p className="text-sm text-muted-foreground">{t("survey.overall")}</p>
-      <p className="font-display text-2xl">
+      <p className="figure text-3xl leading-none">
         {survey.overall.suppressed || overall === null || overall === undefined ? (
           <span className="text-muted-foreground">{t("survey.hidden", { min: survey.min_group })}</span>
         ) : (

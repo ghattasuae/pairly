@@ -48,7 +48,7 @@ function Section({ id, title, children, className }: { id: string; title: string
 }
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-xl border bg-surface p-4", className)}>{children}</div>;
+  return <div className={cn("card-hairline p-4", className)}>{children}</div>;
 }
 
 /** Confidence as a percentage and a quiet meter. */
@@ -111,7 +111,7 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
       {asArray(rule_results).length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">{t("ruleResults")}</h3>
-          <div className="relative overflow-x-auto rounded-xl border bg-surface">
+          <div className="relative overflow-x-auto card-hairline">
             <table className="w-full text-sm">
               <thead className="text-start text-xs text-muted-foreground">
                 <tr className="border-b">
@@ -149,7 +149,7 @@ function Evidence({ evidence, workflow }: { evidence: unknown; workflow: string 
             {asArray(risk_signals)
               .filter(isObject)
               .map((s, i) => (
-                <li key={`${asString(s.detector)}:${i}`} className="rounded-lg border bg-surface p-3 text-sm">
+                <li key={`${asString(s.detector)}:${i}`} className="card-hairline p-3 text-sm">
                   <p className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{explain(asString(s.explanation_key))}</span>
                   </p>

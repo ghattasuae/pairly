@@ -122,7 +122,7 @@ export function PrivacyCentre({
         ) : (
           <ul className="space-y-3">
             {privacy.decisions.map((d) => (
-              <li key={d.decision_id} className="space-y-2 rounded-xl border bg-surface p-4" data-decision={d.decision_id}>
+              <li key={d.decision_id} className="space-y-2 card-hairline p-4" data-decision={d.decision_id}>
                 <p className="font-medium">
                   {KINDS.has(d.kind) ? t(`privacy.kind.${d.kind}` as "privacy.kind.score") : d.kind}
                 </p>

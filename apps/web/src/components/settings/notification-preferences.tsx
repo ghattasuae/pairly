@@ -121,7 +121,7 @@ export function NotificationPreferences({
           </h2>
           <p className="text-sm text-muted-foreground">{t("channelsBody")}</p>
         </div>
-        <div className="relative overflow-x-auto rounded-xl border bg-surface">
+        <div className="relative overflow-x-auto card-hairline">
           <table className="w-full min-w-[36rem] text-sm">
             <caption className="sr-only">{t("channelsTitle")}</caption>
             <thead>
@@ -176,7 +176,7 @@ export function NotificationPreferences({
       </section>
 
       <section aria-labelledby="pause-heading" className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3 rounded-xl border bg-surface p-5">
+        <div className="space-y-3 card-hairline p-5">
           <h2 id="pause-heading" className="flex items-center gap-2 font-display text-xl">
             <BellOff className="size-5 text-primary" aria-hidden />
             {t("snoozeTitle")}
@@ -204,7 +204,7 @@ export function NotificationPreferences({
           )}
         </div>
 
-        <div className="space-y-3 rounded-xl border bg-surface p-5">
+        <div className="space-y-3 card-hairline p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 font-display text-xl">
               <Moon className="size-5 text-primary" aria-hidden />

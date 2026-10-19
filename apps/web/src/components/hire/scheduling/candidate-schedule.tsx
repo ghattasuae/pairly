@@ -186,7 +186,7 @@ export function CandidateSchedule({
 
       {booked && !changing ? (
         <div className="space-y-4" data-booked>
-          <p className="flex items-start gap-2 rounded-lg border bg-surface px-4 py-3 text-sm" role="status">
+          <p className="flex items-start gap-2 card-hairline px-4 py-3 text-sm" role="status">
             <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
             <span>
               {t("bookedBody", {
@@ -264,7 +264,7 @@ export function CandidateSchedule({
                             onClick={() => setPicked(slot)}
                             className={cn(
                               "rounded-md border px-3 py-1.5 text-sm tabular-nums",
-                              on ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-accent",
+                              on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface hover:bg-accent",
                             )}
                             title={slot.sociable ? undefined : t("early")}
                           >
@@ -280,7 +280,7 @@ export function CandidateSchedule({
             )}
           </section>
           {picked && (
-            <div className="space-y-2 rounded-lg border bg-surface px-4 py-3">
+            <div className="space-y-2 card-hairline px-4 py-3">
               <p className="text-sm" role="status">
                 {t("selected", {
                   when: `${dayLabel(localDate(picked.start, zone), locale)}, ${clock(picked.start, zone)}`,

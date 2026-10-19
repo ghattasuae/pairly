@@ -30,7 +30,7 @@ export function ReceiptCriteria({ criteria, versions }: { criteria: ReceiptCrite
       </h2>
       <ul className="space-y-3">
         {criteria.map((c) => (
-          <li key={c.criterion_id} className="space-y-2 rounded-xl border bg-surface p-4" data-criterion={c.criterion_id}>
+          <li key={c.criterion_id} className="space-y-2 card-hairline p-4" data-criterion={c.criterion_id}>
             <p className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="font-medium">{c.name}</span>
               <span className="text-sm text-muted-foreground">{t("criterionScore", { score: c.score, max: c.scale_max })}</span>

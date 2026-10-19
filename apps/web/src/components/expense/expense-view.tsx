@@ -75,7 +75,7 @@ export function ExpenseView({ notes, canSubmit, canReview, totpEnabled, submit =
     <div className="space-y-10">
       <ActionError code={error} returnPath={`/${locale}/expense`} totpEnabled={totpEnabled} />
       {canSubmit && (
-        <form onSubmit={onSubmit} className="space-y-4 rounded-xl border bg-surface p-5" aria-labelledby="expense-upload">
+        <form onSubmit={onSubmit} className="space-y-4 card-hairline p-5" aria-labelledby="expense-upload">
           <div className="space-y-1">
             <h2 id="expense-upload" className="font-display text-xl">
               {t("uploadTitle")}
@@ -117,7 +117,7 @@ export function ExpenseView({ notes, canSubmit, canReview, totpEnabled, submit =
         {notes.length === 0 ? (
           <EmptyState icon={<Receipt aria-hidden />} title={t("empty")} body={t("emptyBody")} />
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {notes.map((note) => (
               <li key={note.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0 space-y-0.5">

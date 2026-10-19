@@ -24,7 +24,7 @@ function Group({
   const id = useId();
   const Heading = level;
   return (
-    <section aria-labelledby={id} className="space-y-2 rounded-lg border p-4" data-survey-group>
+    <section aria-labelledby={id} className="space-y-2 card-hairline p-4" data-survey-group>
       <Heading id={id} className={level === "h2" ? "font-display text-xl" : "font-medium"}>
         {title}
       </Heading>
@@ -72,17 +72,17 @@ export function SurveyResults({ results, named }: { results: HireSurveyResults; 
   return (
     <div className="space-y-8" data-survey-results>
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border p-4">
+        <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("invited")}</p>
-          <p className="font-display text-2xl">{results.invited}</p>
+          <p className="figure text-3xl leading-none">{results.invited}</p>
         </div>
-        <div className="rounded-lg border p-4">
+        <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("responses")}</p>
-          <p className="font-display text-2xl">{results.responses}</p>
+          <p className="figure text-3xl leading-none">{results.responses}</p>
         </div>
-        <div className="rounded-lg border p-4">
+        <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("rate")}</p>
-          <p className="font-display text-2xl">
+          <p className="figure text-3xl leading-none">
             {results.response_rate === null
               ? t("noAnswer")
               : format.number(results.response_rate, { style: "percent", maximumFractionDigits: 0 })}
@@ -106,7 +106,7 @@ export function SurveyResults({ results, named }: { results: HireSurveyResults; 
           {named.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noNamed")}</p>
           ) : (
-            <ul className="divide-y rounded-lg border">
+            <ul className="divide-y card-hairline">
               {named.map((n) => (
                 <li key={n.response_id} className="space-y-1 p-3 text-sm">
                   <p className="text-muted-foreground">

@@ -232,7 +232,7 @@ export function ShortlistReview({
       )}
 
       {candidates.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-5 text-sm text-muted-foreground">{t("empty")}</p>
+        <p className="card-hairline p-5 text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <ol
           ref={list}

@@ -115,7 +115,7 @@ export function WebhooksPanel({
       {secret && <SecretOnce label={t("secretTitle")} secret={secret} onDone={() => setSecret(null)} />}
       <ActionError code={error} returnPath={`/${locale}/settings/webhooks`} totpEnabled={totpEnabled} />
       {canManage ? (
-        <form onSubmit={submit} className="space-y-4 rounded-xl border bg-surface p-5">
+        <form onSubmit={submit} className="space-y-4 card-hairline p-5">
           <div className="space-y-1">
             <h2 className="font-display text-xl">{t("createTitle")}</h2>
             <p className="text-sm text-muted-foreground">{t("createBody")}</p>
@@ -243,7 +243,7 @@ function EndpointRow({
   };
 
   return (
-    <li className="space-y-3 rounded-xl border bg-surface p-4">
+    <li className="space-y-3 card-hairline p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <p className="break-all font-mono text-sm" dir="ltr">
@@ -295,7 +295,7 @@ function EndpointRow({
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label={t("loading")} />}
           {deliveries?.length === 0 && <p className="text-sm text-muted-foreground">{t("noDeliveries")}</p>}
           {deliveries && deliveries.length > 0 && (
-            <div className="relative overflow-x-auto rounded-lg border">
+            <div className="relative overflow-x-auto card-hairline">
               <table className="w-full min-w-[36rem] text-xs">
                 <caption className="sr-only">{t("deliveries")}</caption>
                 <thead>

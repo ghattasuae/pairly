@@ -125,7 +125,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
 
   if (page.status === "submitted") {
     return (
-      <section className="space-y-3 rounded-xl border bg-surface p-6" data-reference-submitted>
+      <section className="space-y-3 card-hairline p-6" data-reference-submitted>
         <p role="status" className="flex items-center gap-2 text-lg font-medium">
           <Check aria-hidden className="size-5 text-primary" />
           {t("thanks", { name: page.referee_name })}
@@ -238,7 +238,7 @@ export function RefereeApp() {
   }
   if (state.kind === "error") {
     return (
-      <div role="alert" className="space-y-2 rounded-xl border bg-surface p-5">
+      <div role="alert" className="space-y-2 card-hairline p-5">
         <p className="font-medium">{state.code === "link" ? t("linkInvalid") : tErrors(errorKey(state.code) as "generic")}</p>
         {state.code === "link" && <p className="text-sm text-muted-foreground">{t("linkHelp")}</p>}
       </div>

@@ -158,7 +158,7 @@ export function ApplicationDetail({
         ) : (
           <ul className="space-y-2">
             {app.interviews.map((i) => (
-              <li key={i.id} className="space-y-2 rounded-xl border bg-surface p-4" data-interview={i.id} data-interview-status={i.status}>
+              <li key={i.id} className="space-y-2 card-hairline p-4" data-interview={i.id} data-interview-status={i.status}>
                 <p className="font-medium">{t("app.interviewFor", { job: i.title })}</p>
                 {i.starts_at ? (
                   <p className="text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export function ApplicationDetail({
             {app.document_requests.map((r) => {
               const label = locale === "ar" && r.label_ar ? r.label_ar : r.label;
               return (
-                <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-surface p-4" data-document-request={r.id}>
+                <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 card-hairline p-4" data-document-request={r.id}>
                   <span className="font-medium">{label}</span>
                   {r.status === "received" ? (
                     <Badge>
@@ -253,7 +253,7 @@ export function ApplicationDetail({
             {app.messages.map((m) => (
               <li
                 key={m.id}
-                className={m.direction === "from_you" ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 rounded-xl border bg-surface p-4"}
+                className={m.direction === "from_you" ? "ms-6 rounded-xl border bg-accent/40 p-4" : "me-6 card-hairline p-4"}
                 data-message={m.direction}
               >
                 <p className="text-xs text-muted-foreground">

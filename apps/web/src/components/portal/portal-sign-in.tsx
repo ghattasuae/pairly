@@ -52,9 +52,9 @@ export function PortalSignIn({
         <p className="text-muted-foreground">{expired ? t("signIn.expired") : t("signIn.intro")}</p>
       </div>
       {!org ? (
-        <p className="rounded-xl border bg-surface p-4 text-sm">{t("signIn.needOrg")}</p>
+        <p className="card-hairline p-4 text-sm">{t("signIn.needOrg")}</p>
       ) : state === "sent" ? (
-        <p role="status" className="flex items-start gap-2 rounded-xl border bg-surface p-4 text-sm" data-link-sent>
+        <p role="status" className="flex items-start gap-2 card-hairline p-4 text-sm" data-link-sent>
           <MailCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t("signIn.sent")}
         </p>

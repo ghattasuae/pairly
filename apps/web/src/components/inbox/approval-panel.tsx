@@ -214,14 +214,14 @@ export function ApprovalPanel({
                   <span>{t("blindMasked")}</span>
                 </p>
               )}
-              <div className="rounded-xl border bg-surface p-4">
+              <div className="card-hairline p-4">
                 <JsonView value={detail.payload} />
               </div>
             </Section>
 
             {isPayContext(detail.context) && (
               <Section title={t("payEvidence")} id={`${headingId}-pay`}>
-                <div className="rounded-xl border bg-surface p-4">
+                <div className="card-hairline p-4">
                   <PayApprovalEvidence context={detail.context} />
                 </div>
               </Section>
@@ -247,7 +247,7 @@ export function ApprovalPanel({
 
             {Object.keys(detail.context).length > 0 && (
               <Section title={t("context")} id={`${headingId}-context`}>
-                <div className="rounded-xl border bg-surface p-4">
+                <div className="card-hairline p-4">
                   <JsonView
                     value={detail.context}
                     renderValue={(key) => {
@@ -283,7 +283,7 @@ export function ApprovalPanel({
                   <li
                     key={s.id}
                     className={cn(
-                      "relative flex flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden rounded-lg border bg-surface px-4 py-2.5 text-sm",
+                      "relative flex flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden card-hairline px-4 py-2.5 text-sm",
                       s.id === step?.id && detail.status === "pending" && "border-foreground/25",
                     )}
                   >

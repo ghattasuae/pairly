@@ -58,7 +58,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
       </header>
 
       {debrief.status === "waiting" ? (
-        <section className="space-y-2 rounded-xl border bg-surface p-5" data-debrief-waiting>
+        <section className="space-y-2 card-hairline p-5" data-debrief-waiting>
           <p className="font-medium">{t("waiting", { submitted: debrief.submitted, expected: debrief.expected })}</p>
           {debrief.waiting_for.length > 0 && (
             <p className="text-sm text-muted-foreground">{t("waitingFor", { names: debrief.waiting_for.join(", ") })}</p>
@@ -68,7 +68,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
       ) : (
         <>
           {debrief.summary && (
-            <section className="space-y-2 rounded-xl border bg-surface p-5">
+            <section className="space-y-2 card-hairline p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-lg">{t("summary")}</h2>
                 <span className="text-xs text-muted-foreground">{debrief.source === "model" ? t("aiNote") : t("numbersNote")}</span>
@@ -81,7 +81,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
             <h2 id={`${ids}-criteria`} className="font-display text-lg">
               {t("criteria")}
             </h2>
-            <ul className="divide-y rounded-xl border bg-surface">
+            <ul className="divide-y card-hairline">
               {debrief.criteria.map((c) => (
                 <li key={c.id} className="space-y-1 p-4 text-sm" data-debrief-criterion={c.id}>
                   <p className="flex flex-wrap items-center gap-2">
@@ -137,7 +137,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
             <h2 className="font-display text-lg">{t("recommendations")}</h2>
             <ul className="space-y-2">
               {debrief.voices.map((v) => (
-                <li key={v.label} className="rounded-xl border bg-surface p-4 text-sm">
+                <li key={v.label} className="card-hairline p-4 text-sm">
                   <p className="font-medium">
                     {v.interviewer}: {tRec(`recommendation.${v.recommendation}` as "recommendation.yes")}
                   </p>
@@ -148,7 +148,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
           </section>
 
           {debrief.decision ? (
-            <p role="status" className="flex items-start gap-2 rounded-xl border bg-surface p-4" data-debrief-decision={debrief.decision.decision}>
+            <p role="status" className="flex items-start gap-2 card-hairline p-4" data-debrief-decision={debrief.decision.decision}>
               <Check aria-hidden className="mt-0.5 size-5 text-primary" />
               <span>
                 <span className="font-medium">{t(`decision.${debrief.decision.decision}` as "decision.advance")}</span>
@@ -158,7 +158,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
               </span>
             </p>
           ) : debrief.can_decide ? (
-            <form onSubmit={decide} className="space-y-3 rounded-xl border bg-surface p-5" data-debrief-form>
+            <form onSubmit={decide} className="space-y-3 card-hairline p-5" data-debrief-form>
               <h2 className="font-display text-lg">{t("decide")}</h2>
               <p className="text-sm text-muted-foreground">{t("decideHint")}</p>
               <div role="radiogroup" aria-label={t("decide")} className="grid grid-cols-3 gap-2">

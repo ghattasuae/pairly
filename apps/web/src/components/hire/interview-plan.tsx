@@ -40,7 +40,7 @@ export function InterviewPlanEditor({ jobId, initial }: { jobId: string; initial
 
   if (!plan) {
     return (
-      <section className="space-y-2 rounded-xl border bg-surface p-5" data-interview-plan>
+      <section className="space-y-2 card-hairline p-5" data-interview-plan>
         <h2 className="font-display text-xl">{t("title")}</h2>
         <p className="text-sm text-muted-foreground">{view.rubric_locked ? t("needCriteria") : t("lockFirst")}</p>
       </section>
@@ -95,7 +95,7 @@ export function InterviewPlanEditor({ jobId, initial }: { jobId: string; initial
 
   const anchors = locale === "ar" ? view.default_anchors_ar : view.default_anchors;
   return (
-    <section className="space-y-5 rounded-xl border bg-surface p-5" data-interview-plan>
+    <section className="space-y-5 card-hairline p-5" data-interview-plan>
       <div className="space-y-1">
         <h2 className="font-display text-xl">{t("title")}</h2>
         <p className="text-sm text-muted-foreground">{t("intro")}</p>
@@ -110,7 +110,7 @@ export function InterviewPlanEditor({ jobId, initial }: { jobId: string; initial
         </ol>
       </details>
       {plan.stages.map((stage, si) => (
-        <fieldset key={`${stage.key}-${si}`} className="space-y-4 rounded-lg border p-4" data-plan-stage={stage.key}>
+        <fieldset key={`${stage.key}-${si}`} className="space-y-4 card-hairline p-4" data-plan-stage={stage.key}>
           <legend className="px-1 text-sm font-medium">{t("stage", { n: si + 1 })}</legend>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
@@ -177,7 +177,7 @@ export function InterviewPlanEditor({ jobId, initial }: { jobId: string; initial
           </div>
           <ol className="space-y-3">
             {stage.questions.map((q, qi) => (
-              <li key={`${q.criterion_id}-${qi}`} className="space-y-2 rounded-md bg-muted/40 p-3" data-plan-question={q.criterion_id}>
+              <li key={`${q.criterion_id}-${qi}`} className="space-y-2 rounded-md border border-border bg-surface-sunken p-3" data-plan-question={q.criterion_id}>
                 <div className="flex flex-wrap items-end gap-2">
                   <div className="min-w-48 flex-1 space-y-1.5">
                     <Label htmlFor={`${ids}-${si}-${qi}-c`}>{t("criterion")}</Label>

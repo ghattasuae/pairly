@@ -107,7 +107,7 @@ function FilterForm({ filters }: { filters: AuditFilters }) {
         event.preventDefault();
         startTransition(() => router.push(`/audit${auditQuery(draft)}`));
       }}
-      className="rounded-xl border bg-surface"
+      className="card-hairline"
     >
       <button
         type="button"
@@ -246,7 +246,7 @@ function ChainCard({
   const latest = anchors?.[0] ?? null;
 
   return (
-    <section aria-labelledby="chain-heading" className="space-y-4 rounded-xl border bg-surface p-5">
+    <section aria-labelledby="chain-heading" className="space-y-4 card-hairline p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h2 id="chain-heading" className="font-display text-xl">
@@ -416,7 +416,7 @@ export function AuditView({
         {shown.length === 0 ? (
           <EmptyState icon={<Search aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
         ) : (
-          <div className="relative overflow-x-auto rounded-xl border bg-surface">
+          <div className="relative overflow-x-auto card-hairline">
             <table className="w-full min-w-[48rem] text-sm">
               <caption className="sr-only">{t("tableCaption")}</caption>
               <thead>

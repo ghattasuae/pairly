@@ -80,7 +80,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
 
   if (done) {
     return (
-      <p role="status" className="flex items-center gap-2 rounded-xl border bg-surface p-6 text-lg font-medium" data-survey-done>
+      <p role="status" className="flex items-center gap-2 card-hairline p-6 text-lg font-medium" data-survey-done>
         <Check aria-hidden className="size-5 text-primary" />
         {t("thanks")}
       </p>
@@ -169,7 +169,7 @@ export function SurveyApp() {
   }
   if (state.kind === "error") {
     return (
-      <p role="alert" className="rounded-xl border bg-surface p-5 font-medium">
+      <p role="alert" className="card-hairline p-5 font-medium">
         {state.code === "link" ? t("linkInvalid") : tErrors(errorKey(state.code) as "generic")}
       </p>
     );

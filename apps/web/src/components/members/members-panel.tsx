@@ -163,7 +163,7 @@ function InviteForm({
     "h-10 w-full rounded-md border border-input bg-surface px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:opacity-50";
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-4 rounded-xl border bg-surface p-5 shadow-soft">
+    <form onSubmit={onSubmit} noValidate className="space-y-4 card-hairline p-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl">{t("inviteHeading")}</h2>
         <p className="text-sm text-muted-foreground">{t("inviteBody")}</p>
@@ -295,7 +295,7 @@ export function MembersPanel({
         {members.length === 0 ? (
           <EmptyState icon={<UserRound aria-hidden />} title={t("membersEmpty")} />
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {members.map((member) => (
               <li key={member.user_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
@@ -327,7 +327,7 @@ export function MembersPanel({
         {invitations.length === 0 ? (
           <EmptyState icon={<MailPlus aria-hidden />} title={t("invitationsEmpty")} />
         ) : (
-          <ul className="divide-y rounded-xl border bg-surface">
+          <ul className="divide-y card-hairline">
             {invitations.map((inv) => (
               <li key={inv.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 space-y-1">

@@ -71,7 +71,7 @@ export function ReferencesPanel({ initial }: { initial: HireReferences }) {
       </header>
 
       {data.summary && (
-        <section className="space-y-3 rounded-xl border bg-surface p-5" data-reference-summary>
+        <section className="space-y-3 card-hairline p-5" data-reference-summary>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display text-lg">{t("summary")}</h2>
             <span className="text-xs text-muted-foreground">{data.summary.source === "model" ? t("aiNote") : t("answersNote")}</span>
@@ -136,7 +136,7 @@ export function ReferencesPanel({ initial }: { initial: HireReferences }) {
           {data.items.map((item) => {
             const open = item.status === "requested" || item.status === "in_progress";
             return (
-              <li key={item.id} className="space-y-2 rounded-xl border bg-surface p-4 text-sm" data-reference={item.status}>
+              <li key={item.id} className="space-y-2 card-hairline p-4 text-sm" data-reference={item.status}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium">
                     {item.label}
@@ -185,7 +185,7 @@ export function ReferencesPanel({ initial }: { initial: HireReferences }) {
       </section>
 
       {data.can_write && (
-        <form onSubmit={(e) => void ask(e)} className="space-y-3 rounded-xl border bg-surface p-5" data-ask-referee>
+        <form onSubmit={(e) => void ask(e)} className="space-y-3 card-hairline p-5" data-ask-referee>
           <h2 className="font-display text-lg">{t("ask")}</h2>
           <p className="text-sm text-muted-foreground">{t("askHint")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
