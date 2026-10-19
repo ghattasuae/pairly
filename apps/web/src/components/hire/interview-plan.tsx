@@ -310,7 +310,7 @@ export function InterviewPlanEditor({ jobId, initial }: { jobId: string; initial
         )}
       </div>
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={message.ok ? "text-sm text-muted-foreground" : "text-sm text-destructive"}>
+        <p role={message.ok ? "status" : "alert"} className={message.ok ? "text-sm text-muted-foreground" : "text-sm text-danger-ink"}>
           {message.text}
         </p>
       )}

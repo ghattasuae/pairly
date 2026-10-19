@@ -338,7 +338,7 @@ function CandidateReview({
       ref={self}
       tabIndex={-1}
       aria-labelledby={`${ids}-name`}
-      className="space-y-4 rounded-xl border bg-surface p-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 sm:p-5"
+      className="card-hairline space-y-4 p-4 sm:p-5"
       data-shortlist-candidate={card.application_id}
       data-decided={outcome ? outcome.kind : undefined}
     >
@@ -496,7 +496,7 @@ function CandidateReview({
                 <label
                   key={d}
                   className={cn(
-                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/25",
+                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm border-input bg-surface has-[:checked]:border-primary has-[:checked]:bg-info-soft has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring",
                   )}
                 >
                   <input
@@ -549,7 +549,7 @@ function CandidateReview({
             </div>
           )}
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {error}
             </p>
           )}

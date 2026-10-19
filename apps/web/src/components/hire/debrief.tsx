@@ -171,8 +171,8 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
                     onClick={() => setDecision(d)}
                     data-decision={d}
                     className={cn(
-                      "min-h-11 rounded-lg border px-3 text-sm font-medium focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                      decision === d ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                      "min-h-11 rounded-lg border px-3 text-sm font-medium",
+                      decision === d ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                     )}
                   >
                     {t(`decision.${d}`)}
@@ -198,7 +198,7 @@ export function DebriefView({ initial, totpEnabled }: { initial: HireDebrief; to
                 />
               ) : (
                 error && (
-                  <p role="alert" className="text-sm text-destructive">
+                  <p role="alert" className="text-sm text-danger-ink">
                     {tErrors(errorKey(error) as "generic")}
                   </p>
                 )

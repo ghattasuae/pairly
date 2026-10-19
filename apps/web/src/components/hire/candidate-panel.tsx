@@ -132,7 +132,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
       className="flex h-full min-h-0 flex-col"
       data-candidate-panel={profile.application_id}
     >
-      <header className="space-y-3 border-b px-5 pt-5 pb-4">
+      <header className="space-y-3 border-b border-border px-5 pt-5 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <p className="eyebrow">{profile.job_title}</p>
@@ -165,7 +165,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
               <Button type="button" size="sm" onClick={onAdvance} disabled={busy} title={t("keys.advance")}>
                 <ArrowRight aria-hidden className="rtl:rotate-180" />
                 {t("panel.moveTo", { stage: profile.next_stage.label })}
-                <Kbd className="ms-1 border-primary-foreground/30 bg-transparent text-primary-foreground/80">A</Kbd>
+                <Kbd className="ms-1 border-action-foreground/25 bg-transparent text-action-foreground">A</Kbd>
               </Button>
             )}
             {profile.stage_key !== "rejected" && (
@@ -190,7 +190,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
 
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-4">
         {profile.identity_hidden && (
-          <p role="note" className="flex items-start gap-2 rounded-md border bg-surface-sunken/60 px-3 py-2 text-sm">
+          <p role="note" className="flex items-start gap-2 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm">
             <EyeOff className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
             {t("panel.blind")}
           </p>
@@ -247,7 +247,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
                         }
                         className={cn(
                           "rounded-full border px-2.5 py-0.5 text-xs",
-                          on ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
+                          on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface hover:bg-accent",
                         )}
                       >
                         @{member.name}
@@ -272,7 +272,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
                     <button
                       type="button"
                       onClick={() => onOpenMessage(m.id)}
-                      className="flex w-full items-center justify-between gap-2 rounded-md border bg-signal-soft/50 px-3 py-2 text-start text-sm hover:bg-signal-soft"
+                      className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-surface px-3 py-2 text-start text-sm hover:border-foreground/30 hover:bg-accent"
                       data-open-message={m.id}
                     >
                       <span className="truncate font-medium">{m.label}</span>
@@ -384,7 +384,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
                   <li key={f.document_id}>
                     <Link
                       href={`/documents/${f.document_id}`}
-                      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      className="inline-flex items-center gap-1 rounded-md border border-input bg-surface px-2 py-1 text-xs hover:bg-accent"
                     >
                       <FileText className="size-3.5" aria-hidden />
                       {f.field === "cv" ? t("panel.cv") : f.field}
@@ -402,11 +402,11 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
               {t("panel.screening")}
             </h3>
             <p>{profile.screening.overall ?? profile.screening.status}</p>
-            <ul className="space-y-1">
+            <ul className="divide-y divide-border rounded-md border border-border bg-surface">
               {profile.screening.criteria.map((c) => (
-                <li key={c.criterion} className="flex justify-between gap-2">
+                <li key={c.criterion} className="flex justify-between gap-2 px-3 py-1.5">
                   <span>{c.criterion}</span>
-                  <span className="text-muted-foreground">{c.result.replaceAll("_", " ")}</span>
+                  <span className="shrink-0 text-muted-foreground">{c.result.replaceAll("_", " ")}</span>
                 </li>
               ))}
             </ul>
@@ -419,7 +419,7 @@ export const CandidatePanel = forwardRef<CandidatePanelHandle, CandidatePanelPro
           <h3 id={`${ids}-timeline`} className="eyebrow">
             {t("panel.timeline")}
           </h3>
-          <ol className="relative space-y-3 border-s ps-4" data-timeline>
+          <ol className="relative ms-2.5 space-y-4 border-s border-border ps-5" data-timeline>
             {profile.timeline.map((event, index) => (
               <TimelineItem
                 key={`${event.kind}-${event.at}-${index}`}
@@ -491,7 +491,7 @@ function TimelineItem({
   }
   return (
     <li className="relative text-sm" data-event={event.kind}>
-      <span className="absolute -start-[1.4rem] top-0.5 flex size-5 items-center justify-center rounded-full border bg-background text-muted-foreground [&_svg]:size-3">
+      <span className="absolute -start-[1.95rem] top-0 flex size-5 items-center justify-center rounded-full border border-border bg-surface text-muted-foreground [&_svg]:size-3">
         {icon}
       </span>
       <p className="font-medium">

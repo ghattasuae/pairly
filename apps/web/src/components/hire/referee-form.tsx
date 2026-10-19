@@ -54,8 +54,8 @@ function Question({
                 data-option={option}
                 onClick={() => onChange(v)}
                 className={cn(
-                  "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                  on ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                  "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors",
+                  on ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                 )}
               >
                 {q.kind === "rating" ? option : t(`option.${option}` as "option.yes")}
@@ -168,7 +168,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
           />
         ))}
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {error === "invalid_input" ? t("checkAnswers") : tErrors(errorKey(error) as "generic")}
           </p>
         )}

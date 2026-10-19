@@ -521,11 +521,11 @@ export function ScreeningMode({
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex min-h-0 flex-1 flex-col" data-screening-mode>
-        <header className="space-y-3 border-b px-4 pt-5 pb-3 sm:px-6">
+        <header className="space-y-3 border-b border-border px-4 pt-5 pb-3 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <p className="eyebrow">{t("eyebrow")}</p>
-              <h1 className="font-display text-2xl leading-tight tracking-tight sm:text-3xl">{queue.job_title}</h1>
+              <h1 className="font-display text-[1.75rem] leading-[1.1] text-balance sm:text-[2.2rem]">{queue.job_title}</h1>
             </div>
             <BlindStatus
               enabled={queue.blind_mode}
@@ -591,7 +591,7 @@ export function ScreeningMode({
           </div>
           {selection.length > 0 && (
             <div
-              className="flex flex-wrap items-center gap-2 rounded-lg border bg-surface px-3 py-2 text-sm shadow-soft"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-foreground/20 bg-surface px-3 py-2 text-sm"
               role="region"
               aria-label={tHire("bulk.title")}
               data-bulk-bar
@@ -610,7 +610,7 @@ export function ScreeningMode({
                   </option>
                 ))}
               </Select>
-              <Button type="button" size="sm" disabled={!bulkStage || busy || !canMove} onClick={() => void bulkPreview()}>
+              <Button type="button" size="sm" variant="ink" disabled={!bulkStage || busy || !canMove} onClick={() => void bulkPreview()}>
                 {t("bulk.apply")}
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={openCompare} disabled={selection.length < 2}>
@@ -632,14 +632,14 @@ export function ScreeningMode({
             id="screen-queue"
             aria-label={t("queue")}
             className={cn(
-              "min-h-0 overflow-y-auto border-e bg-surface-sunken/40",
+              "min-h-0 overflow-y-auto border-e border-border bg-surface-sunken",
               queueOpen ? "block md:col-span-2 lg:col-span-1" : "hidden lg:block",
             )}
           >
             {visible.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">{queue.items.length === 0 ? t("empty") : t("noMatch")}</p>
             ) : (
-              <ol className="divide-y">
+              <ol className="divide-y divide-border">
                 {visible.map((entry) => (
                   <QueueRow
                     key={entry.application_id}
@@ -669,7 +669,7 @@ export function ScreeningMode({
                 </span>
                 <Badge variant="outline">{t("stage", { stage: stageLabel(profile.stage_key) })}</Badge>
                 {profile.tags.map((tag) => (
-                  <Badge key={tag} variant={tag === HOLD_TAG ? "signal" : "default"}>
+                  <Badge key={tag} variant={tag === HOLD_TAG ? "warning" : "default"}>
                     {tag}
                   </Badge>
                 ))}
@@ -688,7 +688,7 @@ export function ScreeningMode({
 
           <aside
             aria-label={t("scores")}
-            className="min-h-0 overflow-y-auto border-s bg-background p-4 sm:p-5"
+            className="min-h-0 overflow-y-auto border-s border-border bg-surface p-4 sm:p-5"
             data-screen-right
             data-candidate={current ?? ""}
           >
@@ -729,7 +729,7 @@ export function ScreeningMode({
               <div className="space-y-4">
                 {panel.mode === "note" && (
                   <form
-                    className="space-y-2 rounded-xl border bg-surface p-3"
+                    className="card-hairline space-y-2 bg-surface-sunken p-3"
                     onSubmit={(e) => {
                       e.preventDefault();
                       void saveNote();
@@ -755,7 +755,7 @@ export function ScreeningMode({
                       />
                     </label>
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" disabled={busy || !noteText.trim()}>
+                      <Button type="submit" size="sm" variant="ink" disabled={busy || !noteText.trim()}>
                         {t("note.save")}
                       </Button>
                       <Button type="button" size="sm" variant="ghost" onClick={() => setPanel({ mode: "none" })}>
@@ -766,7 +766,7 @@ export function ScreeningMode({
                 )}
                 {panel.mode === "tag" && (
                   <form
-                    className="space-y-2 rounded-xl border bg-surface p-3"
+                    className="card-hairline space-y-2 bg-surface-sunken p-3"
                     onSubmit={(e) => {
                       e.preventDefault();
                       void saveTag();
@@ -787,7 +787,7 @@ export function ScreeningMode({
                       />
                     </label>
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" disabled={busy || !tagText.trim()}>
+                      <Button type="submit" size="sm" variant="ink" disabled={busy || !tagText.trim()}>
                         {t("tag.save")}
                       </Button>
                       <Button type="button" size="sm" variant="ghost" onClick={() => setPanel({ mode: "none" })}>
@@ -873,11 +873,11 @@ function BlindStatus({
   return (
     <section
       aria-label={enabled ? t("blind.on") : t("blind.off")}
-      className="max-w-xl space-y-1 rounded-lg border bg-surface px-3 py-2 text-sm"
+      className="card-hairline max-w-xl space-y-1 px-3 py-2 text-sm"
       data-blind-status={enabled ? "on" : "off"}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={enabled ? "signal" : "outline"}>
+        <Badge variant={enabled ? "ink" : "outline"}>
           {enabled ? <EyeOff className="size-3" aria-hidden /> : <Eye className="size-3" aria-hidden />}
           {enabled ? t("blind.on") : t("blind.off")}
         </Badge>
@@ -923,12 +923,13 @@ function QueueRow({
   const t = useTranslations("Screen");
   return (
     <li
-      className={cn("flex items-start gap-2 px-3 py-2", current && "bg-accent")}
+      className={cn("relative flex items-start gap-2 px-3 py-2.5 hover:bg-accent/60", current && "bg-accent")}
       data-queue-item={entry.application_id}
       data-stage={entry.stage_key}
       data-screening-status={entry.screening_status ?? "none"}
       aria-current={current ? "true" : undefined}
     >
+      {current && <span aria-hidden className="absolute inset-y-0 start-0 w-[3px] bg-signal" />}
       <Checkbox
         checked={selected}
         onChange={onToggle}
@@ -941,7 +942,7 @@ function QueueRow({
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{stageLabel(entry.stage_key)}</span>
           {entry.overall_score !== null && entry.overall_score !== undefined && (
-            <span className="tabular-nums">{Math.round(entry.overall_score)}</span>
+            <span className="font-mono">{Math.round(entry.overall_score)}</span>
           )}
           {entry.tags.includes(HOLD_TAG) && <Hand className="size-3" aria-label={HOLD_TAG} />}
         </span>
@@ -958,6 +959,7 @@ function ActionButton({
   disabled,
   hint,
   data,
+  primary = false,
 }: {
   label: string;
   keyName: string;
@@ -966,11 +968,13 @@ function ActionButton({
   disabled: boolean;
   hint?: string;
   data: string;
+  /** The one saffron action of the view (advance); the rest stay outline. */
+  primary?: boolean;
 }) {
   const button = (
     <Button
       type="button"
-      variant="outline"
+      variant={primary ? "default" : "outline"}
       size="sm"
       onClick={onClick}
       disabled={disabled}
@@ -980,7 +984,14 @@ function ActionButton({
     >
       {icon}
       {label}
-      <Kbd className="ms-1 hidden sm:inline-flex">{keyName.toUpperCase()}</Kbd>
+      <Kbd
+        className={cn(
+          "ms-1 hidden sm:inline-flex",
+          primary && "border-action-foreground/25 bg-transparent text-action-foreground",
+        )}
+      >
+        {keyName.toUpperCase()}
+      </Kbd>
     </Button>
   );
   if (!hint) return button;
@@ -1031,11 +1042,11 @@ function ActionBar({
   const t = useTranslations("Screen");
   return (
     <footer
-      className="flex flex-wrap items-center gap-2 border-t bg-surface px-4 py-2 sm:px-6"
+      className="flex flex-wrap items-center gap-2 border-t border-border bg-surface-sunken px-4 py-2.5 sm:px-6"
       aria-label={t("actions.label")}
       data-action-bar
     >
-      <ActionButton data="advance" label={t("actions.advance")} keyName="a" icon={<ArrowRight className="rtl:rotate-180" aria-hidden />} onClick={onAdvance} disabled={disabled || !canMove} />
+      <ActionButton primary data="advance" label={t("actions.advance")} keyName="a" icon={<ArrowRight className="rtl:rotate-180" aria-hidden />} onClick={onAdvance} disabled={disabled || !canMove} />
       <ActionButton data="hold" label={t("actions.hold")} keyName="h" icon={<Hand aria-hidden />} onClick={onHold} disabled={disabled || !canNote} />
       <ActionButton data="reject" label={t("actions.reject")} keyName="r" icon={<UserRoundX aria-hidden />} onClick={onReject} disabled={disabled || !canMove || !canMessage} />
       <ActionButton data="note" label={t("actions.note")} keyName="n" icon={<MessageSquareText aria-hidden />} onClick={onNote} disabled={disabled || !canNote} />

@@ -8,6 +8,7 @@ import { HireReportLinks, JobsList, RediscoverySearch, Referrals, WaitingCard } 
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
+import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { toLocale } from "@/i18n/routing";
 import { callApi } from "@/lib/api/call";
@@ -70,23 +71,34 @@ export default async function HirePage({ params }: Props) {
   const open = jobs.data.items.filter((j) => j.status === "open");
   return (
     <div className="page space-y-8">
-      <PageHeader title={nav("hire")}>
+      <PageHeader
+        title={nav("hire")}
+        actions={
+          <>
+            <HireReportLinks
+              permissions={permissions}
+              labels={{
+                analytics: t("home.analytics"),
+                bias: t("home.bias"),
+                surveys: t("home.surveys"),
+                calibration: t("home.calibration"),
+              }}
+            />
+            {permissions.includes("hire.requisition.read") && (
+              <Link
+                href="/hire/requisitions"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+                data-requisitions-link
+              >
+                {t("home.requisitions")}
+              </Link>
+            )}
+          </>
+        }
+      >
         <p>{t("home.intro")}</p>
       </PageHeader>
       {team && waiting?.ok && <WaitingCard waiting={waiting.data} />}
-      {permissions.includes("hire.requisition.read") && (
-        <p className="text-sm">
-          <Link href="/hire/requisitions" className="text-primary hover:underline" data-requisitions-link>
-            {t("home.requisitions")}
-          </Link>
-        </p>
-      )}
-      <HireReportLinks permissions={permissions} labels={{
-        analytics: t("home.analytics"),
-        bias: t("home.bias"),
-        surveys: t("home.surveys"),
-        calibration: t("home.calibration"),
-      }} />
       {team && <JobsList jobs={working} canEdit={permissions.includes("hire.job.write")} />}
       {team && <RediscoverySearch />}
       {refers && <Referrals jobs={open} referrals={referrals?.ok ? referrals.data : []} />}

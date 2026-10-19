@@ -13,6 +13,7 @@ import {
   FilePen,
   Filter,
   Flag,
+  GripVertical,
   Hourglass,
   Loader2,
   Mail,
@@ -567,7 +568,7 @@ export function PipelineBoard({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
             <p className="eyebrow">{t("pipeline")}</p>
-            <h1 className="font-display text-3xl leading-tight tracking-tight">{board.job_title}</h1>
+            <h1 className="font-display text-[2rem] leading-[1.1] text-balance sm:text-[2.4rem]">{board.job_title}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Link href={`/hire/jobs/${jobId}/screen`} className="text-sm text-primary underline-offset-4 hover:underline" data-screen-link>
@@ -623,7 +624,7 @@ export function PipelineBoard({
                 onClick={() => setFilter({ flag: state.flag === flag ? null : (flag as BoardFlag) })}
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-xs",
-                  state.flag === flag ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
+                  state.flag === flag ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface hover:bg-accent",
                 )}
               >
                 {t(`filters.${flag}`)}
@@ -633,7 +634,7 @@ export function PipelineBoard({
         </div>
         {bulk.size > 0 && (
           <div
-            className="flex flex-wrap items-center gap-2 rounded-lg border bg-surface px-3 py-2 text-sm shadow-soft"
+            className="flex flex-wrap items-center gap-2 rounded-lg border border-foreground/20 bg-surface px-3 py-2 text-sm"
             role="region"
             aria-label={t("bulk.title")}
           >
@@ -651,7 +652,7 @@ export function PipelineBoard({
                 </option>
               ))}
             </Select>
-            <Button type="button" size="sm" disabled={!bulkStage || busy || !canMove} onClick={() => void bulkMove(bulkStage)}>
+            <Button type="button" size="sm" variant="ink" disabled={!bulkStage || busy || !canMove} onClick={() => void bulkMove(bulkStage)}>
               {t("bulk.move")}
             </Button>
             {canMessage && (
@@ -668,13 +669,13 @@ export function PipelineBoard({
         {error === "second_factor_required" ? (
           <StepUpPrompt totpEnabled={totpEnabled} returnPath={returnPath} compact />
         ) : error ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {tErrors(errorKey(error) as "generic")}
           </p>
         ) : null}
       </div>
 
-      <div className="flex min-h-0 flex-1 gap-0 border-t">
+      <div className="flex min-h-0 flex-1 gap-0 border-t border-border">
         <div
           ref={scroller}
           className="min-w-0 flex-1 overflow-x-auto px-5 py-4 sm:px-8"
@@ -688,9 +689,11 @@ export function PipelineBoard({
                 <li
                   key={stage.key}
                   className={cn(
-                    "flex w-64 shrink-0 flex-col rounded-xl border bg-surface-sunken/50 transition-colors",
-                    dragOver === stage.key && "border-primary bg-accent/50",
-                    stage.kind !== "active" && "bg-surface-sunken/25",
+                    // A lane: sunken paper with a hairline. Terminal stages are open paper,
+                    // and a drop target gets a dashed saffron edge (shape, not only colour).
+                    "lane flex w-64 shrink-0 flex-col transition-colors",
+                    stage.kind !== "active" && "border-dashed bg-background",
+                    dragOver === stage.key && "border-dashed border-ring bg-signal-soft/50",
                   )}
                   data-column={stage.key}
                   aria-label={stageLabel(stage.key)}
@@ -709,13 +712,13 @@ export function PipelineBoard({
                     else void moveTo(card, stage.key);
                   }}
                 >
-                  <h2 className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 text-sm font-medium">
+                  <h2 className="flex items-center justify-between gap-2 border-b border-border px-3 pt-3 pb-2 text-sm font-medium">
                     <span>{stageLabel(stage.key)}</span>
-                    <span className="rounded-full bg-background px-2 text-xs text-muted-foreground tabular-nums">
+                    <span className="rounded-sm border border-border bg-surface px-1.5 font-mono text-xs text-muted-foreground">
                       {cards.length}
                     </span>
                   </h2>
-                  <ul className="flex flex-1 flex-col gap-2 px-2 pb-3">
+                  <ul className="flex flex-1 flex-col gap-2 p-2">
                     {cards.map((card) => (
                       <CardItem
                         key={card.application_id}
@@ -744,7 +747,7 @@ export function PipelineBoard({
 
         {panelOpen && (
           <div
-            className="fixed inset-0 z-40 overflow-hidden border-s bg-background md:static md:z-auto md:w-[26rem] md:shrink-0 xl:w-[30rem]"
+            className="fixed inset-0 z-40 overflow-hidden border-s border-border bg-surface md:static md:z-auto md:w-[26rem] md:shrink-0 xl:w-[30rem]"
             data-side-panel
           >
             {panel.mode === "loading" ? (
@@ -931,13 +934,23 @@ function CardItem({
           onSelect();
         }}
         className={cn(
-          "group relative cursor-pointer rounded-lg border bg-background p-3 text-sm shadow-xs outline-none transition-[box-shadow,border-color] hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-ring/30",
-          selected && "border-primary/60",
-          open && "ring-2 ring-primary/40",
-          inBulk && "bg-accent/60",
+          // A hairline card on the lane, no shadow. The global saffron focus ring shows the
+          // keyboard row; the open card also gets a saffron start bar.
+          "group relative cursor-pointer overflow-hidden rounded-md border border-border bg-surface p-3 text-sm transition-[border-color,background-color] hover:border-foreground/30",
+          canMove && "cursor-grab active:cursor-grabbing",
+          selected && "border-foreground/40",
+          open && "border-foreground/50",
+          inBulk && "bg-accent",
         )}
       >
+        {open && <span aria-hidden className="absolute inset-y-0 start-0 w-[3px] bg-signal" />}
         <div className="flex items-start gap-2">
+          {canMove && (
+            <GripVertical
+              className="-ms-1.5 mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+              aria-hidden
+            />
+          )}
           <Checkbox
             checked={inBulk}
             onChange={onToggleBulk}
@@ -960,7 +973,7 @@ function CardItem({
               disabled={busy}
               aria-label={t("card.advance", { name: card.label, stage: nextLabel(next.key) })}
               title={t("card.advanceTitle", { stage: nextLabel(next.key) })}
-              className="flex size-7 shrink-0 items-center justify-center rounded-md border text-muted-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-input bg-surface text-muted-foreground hover:border-foreground/40 hover:bg-accent hover:text-foreground disabled:opacity-50"
               data-advance
             >
               <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
@@ -969,7 +982,7 @@ function CardItem({
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {card.sla_overdue && (
-            <Badge variant="signal" title={t("card.waitingTitle", { days: card.waiting_days })}>
+            <Badge variant="danger" title={t("card.waitingTitle", { days: card.waiting_days })}>
               <Clock className="size-3" aria-hidden />
               {t("card.waiting", { days: card.waiting_days })}
             </Badge>
@@ -1040,7 +1053,10 @@ export function OfferStatusBadge({ status }: { status: string }) {
   const Icon = Object.hasOwn(OFFER_ICONS, status) ? OFFER_ICONS[status] : undefined;
   if (!Icon) return null;
   return (
-    <Badge variant={status === "accepted" ? "default" : "outline"} data-offer-state={status}>
+    <Badge
+      variant={status === "accepted" ? "success" : status === "declined" || status === "rejected" || status === "failed" ? "danger" : "outline"}
+      data-offer-state={status}
+    >
       <Icon className="size-3" aria-hidden />
       {t(`offerStatus.${status}` as "offerStatus.draft")}
     </Badge>
@@ -1083,7 +1099,7 @@ function InterviewChip({
       aria-label={aria(when || label(when))}
       data-interview={interview.id}
       data-interview-status={interview.status}
-      className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+      className="inline-flex items-center gap-1 rounded-sm border border-primary/30 bg-info-soft px-1.5 py-0.5 text-xs font-medium text-info hover:border-primary/60"
     >
       {content}
     </button>

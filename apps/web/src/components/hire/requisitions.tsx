@@ -177,7 +177,7 @@ export function RequisitionForm({ onCreated }: { onCreated: (r: HireRequisition)
         />
       </div>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -225,7 +225,7 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
   return (
     <div className="space-y-2">
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}

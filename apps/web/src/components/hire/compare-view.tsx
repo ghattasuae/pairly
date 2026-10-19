@@ -4,7 +4,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, dialogTitleClass } from "@/components/ui/dialog";
 import type { CandidateDetail } from "@/lib/hire/screening";
 
 /**
@@ -32,18 +32,18 @@ export function CompareView({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="top-[6vh] max-h-[88vh] max-w-5xl overflow-y-auto" data-compare>
         <div className="space-y-4 p-6">
-          <DialogTitle className="font-display text-2xl">{t("compare.title")}</DialogTitle>
+          <DialogTitle className={dialogTitleClass}>{t("compare.title")}</DialogTitle>
           <DialogDescription className="sr-only">{t("compare.title")}</DialogDescription>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
+          <div className="table-frame">
+            <table className="data-table">
               <caption className="sr-only">{t("compare.title")}</caption>
               <thead>
                 <tr>
-                  <th scope="col" className="border-b p-2 text-start font-medium">
+                  <th scope="col">
                     {t("compare.criterion")}
                   </th>
                   {candidates.map((c) => (
-                    <th key={c.id} scope="col" className="border-b p-2 text-start font-medium" data-compare-candidate={c.id}>
+                    <th key={c.id} scope="col" className="text-foreground" data-compare-candidate={c.id}>
                       {c.label}
                     </th>
                   ))}
@@ -51,13 +51,13 @@ export function CompareView({
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row" className="border-b p-2 text-start font-medium">
+                  <th scope="row">
                     {t("score.overall")}
                   </th>
                   {candidates.map((c) => {
                     const overall = c.detail?.screening?.overall_score;
                     return (
-                      <td key={c.id} className="border-b p-2 font-display text-xl tabular-nums">
+                      <td key={c.id} className="figure text-2xl leading-none">
                         {overall === null || overall === undefined
                           ? t("why.notScored")
                           : t("score.overallValue", { score: Math.round(overall) })}
@@ -67,20 +67,20 @@ export function CompareView({
                 </tr>
                 {[...rows.entries()].map(([id, name]) => (
                   <tr key={id} data-compare-row={id}>
-                    <th scope="row" className="border-b p-2 text-start align-top font-medium">
+                    <th scope="row">
                       {name}
                     </th>
                     {candidates.map((c) => {
                       const criterion = c.detail?.screening?.criteria.find((x) => x.criterion_id === id);
                       const max = c.detail?.screening?.scale.max ?? 4;
                       return (
-                        <td key={c.id} className="border-b p-2 align-top">
+                        <td key={c.id}>
                           {criterion ? (
                             <div className="space-y-1">
-                              <p className="font-medium tabular-nums">
+                              <p className="font-mono font-medium">
                                 {t("score.of", { score: criterion.score, max })}
                               </p>
-                              <p className="line-clamp-3 text-xs text-muted-foreground">
+                              <p className="line-clamp-3 border-s-2 border-rule ps-2 text-xs leading-relaxed text-muted-foreground">
                                 {criterion.evidence[0]?.quote ?? t("score.noEvidence")}
                               </p>
                             </div>

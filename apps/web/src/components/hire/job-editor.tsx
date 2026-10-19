@@ -600,7 +600,7 @@ function NoticeLine({ notice, data }: { notice: Notice; data: string }) {
       data-tone={notice.tone}
       className={cn(
         "rounded-md px-3 py-2 text-sm",
-        notice.tone === "error" && "bg-destructive/10 text-destructive",
+        notice.tone === "error" && "bg-destructive/10 text-danger-ink",
         notice.tone === "ok" && "bg-accent/50",
         notice.tone === "info" && "bg-signal/10",
       )}
@@ -771,7 +771,7 @@ function RubricForm({
         </Button>
       </fieldset>
       {problem && (problem.kind === "no_must_haves" || problem.kind === "too_many") && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {t(problem.kind === "no_must_haves" ? "needMust" : "tooMany")}
         </p>
       )}

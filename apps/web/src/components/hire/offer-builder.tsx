@@ -94,7 +94,7 @@ function OfferCard({ offer, onChange }: { offer: HireOffer; onChange: (offer: Hi
       )}
       {offer.status === "sending" && !offer.sent && <p className="text-muted-foreground">{t("sendingNote")}</p>}
       {error && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}
@@ -322,7 +322,7 @@ export function OfferBuilder({
             <p className="text-xs text-muted-foreground">{t("conditionsHint")}</p>
           </div>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}

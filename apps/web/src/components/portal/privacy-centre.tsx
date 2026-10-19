@@ -89,7 +89,7 @@ export function PrivacyCentre({
         {notice ?? ""}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error}
         </p>
       )}

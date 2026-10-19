@@ -187,7 +187,7 @@ export function CandidateSchedule({
       {booked && !changing ? (
         <div className="space-y-4" data-booked>
           <p className="flex items-start gap-2 rounded-lg border bg-surface px-4 py-3 text-sm" role="status">
-            <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+            <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
             <span>
               {t("bookedBody", {
                 when: whenLabel(schedule.starts_at ?? "", zone, locale),
@@ -236,7 +236,7 @@ export function CandidateSchedule({
             <p className="text-xs text-muted-foreground">{t("zoneHelp")}</p>
           </div>
           {notice && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {notice}
             </p>
           )}

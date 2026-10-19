@@ -79,7 +79,7 @@ export function PortalSignIn({
             dir="ltr"
           />
           {state === "error" && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {t(`errors.${code === "rate_limited" || code === "invalid_input" ? code : "generic"}`)}
             </p>
           )}

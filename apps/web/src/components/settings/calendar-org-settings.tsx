@@ -160,7 +160,7 @@ function ZoomForm({
           <p className="text-xs">{t("none")}</p>
         )}
         {zoom.last_error && (
-          <p className="flex items-center gap-1 text-xs text-destructive">
+          <p className="flex items-center gap-1 text-xs text-danger-ink">
             <AlertTriangle className="size-3" aria-hidden />
             {t("lastError", { code: zoom.last_error })}
           </p>

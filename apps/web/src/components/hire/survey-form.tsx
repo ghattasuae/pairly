@@ -41,8 +41,8 @@ function Choices({
             aria-checked={value === option}
             onClick={() => onChange(option)}
             className={cn(
-              "min-h-12 rounded-lg border px-2 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-              value === option ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+              "min-h-12 rounded-lg border px-2 text-sm font-medium transition-colors",
+              value === option ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
             )}
           >
             {render(option)}
@@ -122,7 +122,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
         <span>{t("attachName")}</span>
       </label>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {error === "not_found" ? t("linkInvalid") : tErrors(errorKey(error) as "generic")}
         </p>
       )}

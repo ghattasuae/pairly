@@ -105,7 +105,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
             <span>{t("confirm")}</span>
           </label>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}

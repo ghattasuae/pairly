@@ -99,7 +99,7 @@ function ConfigEditor({ initial, onSaved }: { initial: HireChecklistConfig; onSa
           <p className="text-xs text-muted-foreground">{t("retentionHint")}</p>
         </div>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {tErrors(errorKey(error) as "generic")}
           </p>
         )}
@@ -193,7 +193,7 @@ export function ChecklistPanel({ initial, config }: { initial: HireChecklist; co
         </ul>
       )}
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-danger-ink">
           {tErrors(errorKey(error) as "generic")}
         </p>
       )}

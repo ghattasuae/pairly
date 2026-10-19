@@ -147,7 +147,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
           </p>
         )}
         {!submitted && card.due_at && (
-          <p className={cn("flex items-center gap-1.5 text-sm", card.sla_state === "overdue" ? "text-destructive" : "text-muted-foreground")}>
+          <p className={cn("flex items-center gap-1.5 text-sm", card.sla_state === "overdue" ? "text-danger-ink" : "text-muted-foreground")}>
             <Clock aria-hidden className="size-4" />
             {card.sla_state === "overdue"
               ? t("overdue")
@@ -223,8 +223,8 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
                       data-rating={value}
                       onClick={() => setRatings((r) => ({ ...r, [c.id]: value }))}
                       className={cn(
-                        "flex min-h-16 flex-col items-start gap-1 rounded-lg border p-2 text-start text-xs leading-snug transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                        on ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                        "flex min-h-16 flex-col items-start gap-1 rounded-lg border p-2 text-start text-xs leading-snug transition-colors",
+                        on ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                       )}
                     >
                       <span className="text-base font-semibold">{value}</span>
@@ -263,8 +263,8 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
                   data-recommendation={value}
                   onClick={() => setRecommendation(value)}
                   className={cn(
-                    "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none",
-                    recommendation === value ? "border-primary bg-primary/10" : "bg-surface hover:bg-accent",
+                    "min-h-12 rounded-lg border px-3 text-sm font-medium transition-colors",
+                    recommendation === value ? "border-primary bg-info-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-accent",
                   )}
                 >
                   {t(`recommendation.${value}`)}
@@ -273,7 +273,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
             </div>
           </fieldset>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-danger-ink">
               {tErrors(errorKey(error) as "generic")}
             </p>
           )}

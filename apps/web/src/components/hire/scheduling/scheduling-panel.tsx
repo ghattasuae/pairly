@@ -247,7 +247,7 @@ export function SchedulingPanel({
       <div className="flex h-full flex-col">
         <PanelHeader title={t("title")} onClose={onClose} closeLabel={t("close")} />
         <div className="flex flex-1 items-center justify-center text-muted-foreground" role="status">
-          {error ? <p className="px-5 text-sm text-destructive">{errorText}</p> : <Loader2 className="animate-spin" aria-hidden />}
+          {error ? <p className="px-5 text-sm text-danger-ink">{errorText}</p> : <Loader2 className="animate-spin" aria-hidden />}
           <span className="sr-only">{t("loading")}</span>
         </div>
       </div>
@@ -359,7 +359,7 @@ export function SchedulingPanel({
         <p className="text-xs text-muted-foreground">{t("yourZone", { zone: viewerTz })}</p>
 
         {errorText && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-danger-ink">
             {errorText}
           </p>
         )}
