@@ -32,7 +32,8 @@
     "closeMenu": "Close menu",
     "search": "Search or jump to",
     "account": "Account",
-    "signedInAs": "Signed in as {email}"
+    "signedInAs": "Signed in as {email}",
+    "breadcrumb": "Breadcrumb"
   },
   "Org": {
     "label": "Organisation",
@@ -86,7 +87,10 @@
       "new_user_signup_disabled": "This email has no Pairly account. Ask your admin for an invite.",
       "signInRequired": "Sign in to continue.",
       "originMismatch": "This address ({origin}) is not trusted by the auth server. Open Pairly at the address in BETTER_AUTH_URL, or add this origin to PAIRLY_AUTH_TRUSTED_ORIGINS. You only see this message in development."
-    }
+    },
+    "statementEyebrow": "Decisions, with receipts",
+    "statement": "AI does the reading. Humans decide.",
+    "statementBody": "Pairly reads, drafts and checks. People approve with the evidence in front of them, and every call leaves a receipt."
   },
   "CheckEmail": {
     "title": "Check your email",
@@ -165,7 +169,10 @@
     "emptyBody": "New approvals, flags and drafts will show up here first.",
     "rolesLabel": "Your roles",
     "dashboardsUnavailable": "Part of your dashboard could not load. Try again in a moment.",
-    "noDashboards": "Your roles have no dashboard here yet. Use the menu to open your work."
+    "noDashboards": "Your roles have no dashboard here yet. Use the menu to open your work.",
+    "waitingOnYou": "Waiting on you",
+    "summary": "Summary",
+    "tileLists": "{count, plural, =0 {No lists} one {# list} other {# lists}}"
   },
   "NotProvisioned": {
     "eyebrow": "Almost there",
@@ -1340,7 +1347,9 @@
       "invalid_input": "Something in the form is not right. Please check it and try again.",
       "cross_site": "Please apply from this page.",
       "unavailable": "We could not send your application. Please try again in a moment."
-    }
+    },
+    "applyShort": "Apply",
+    "applyFor": "Apply for {title}"
   },
   "Hire": {
     "pipeline": "Pipeline",
