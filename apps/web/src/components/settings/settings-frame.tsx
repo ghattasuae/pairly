@@ -12,11 +12,14 @@ export function SettingsFrame({
   title,
   subtitle,
   eyebrow,
+  actions,
   children,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   eyebrow?: React.ReactNode;
+  /** Page actions on the end side of the header. */
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const nav = useTranslations("Nav");
@@ -29,7 +32,7 @@ export function SettingsFrame({
         <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
         {nav("settings")}
       </Link>
-      <PageHeader eyebrow={eyebrow} title={title}>
+      <PageHeader eyebrow={eyebrow} title={title} actions={actions}>
         {subtitle && <p>{subtitle}</p>}
       </PageHeader>
       {children}

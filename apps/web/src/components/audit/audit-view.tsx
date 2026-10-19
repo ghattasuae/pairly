@@ -372,7 +372,23 @@ export function AuditView({
 
   return (
     <div className="page max-w-7xl space-y-8">
-      <PageHeader title={nav("audit")}>
+      <PageHeader
+        title={nav("audit")}
+        actions={
+          canExport ? (
+            <>
+              <Button size="sm" variant="outline" onClick={() => runExport("csv")} disabled={exporting !== null}>
+                {exporting === "csv" ? <Loader2 className="animate-spin" aria-hidden /> : <Download aria-hidden />}
+                {t("exportCsv")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => runExport("json")} disabled={exporting !== null}>
+                {exporting === "json" ? <Loader2 className="animate-spin" aria-hidden /> : <Download aria-hidden />}
+                {t("exportJson")}
+              </Button>
+            </>
+          ) : undefined
+        }
+      >
         <p>{t("subtitle")}</p>
       </PageHeader>
 
@@ -394,18 +410,6 @@ export function AuditView({
               className="h-9 ps-9"
             />
           </div>
-          {canExport && (
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => runExport("csv")} disabled={exporting !== null}>
-                {exporting === "csv" ? <Loader2 className="animate-spin" aria-hidden /> : <Download aria-hidden />}
-                {t("exportCsv")}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => runExport("json")} disabled={exporting !== null}>
-                {exporting === "json" ? <Loader2 className="animate-spin" aria-hidden /> : <Download aria-hidden />}
-                {t("exportJson")}
-              </Button>
-            </div>
-          )}
         </div>
         {exportError === "second_factor_required" ? (
           <StepUpPrompt totpEnabled={totpEnabled} returnPath={`/${locale}/audit`} />
@@ -416,18 +420,18 @@ export function AuditView({
         {shown.length === 0 ? (
           <EmptyState icon={<Search aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
         ) : (
-          <div className="relative overflow-x-auto card-hairline">
-            <table className="w-full min-w-[48rem] text-sm">
+          <div className="table-frame">
+            <table className="data-table min-w-[48rem]">
               <caption className="sr-only">{t("tableCaption")}</caption>
               <thead>
-                <tr className="border-b text-xs text-muted-foreground">
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">#</th>
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("columns.when")}</th>
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("columns.action")}</th>
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("columns.actor")}</th>
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("columns.entity")}</th>
-                  <th scope="col" className="px-4 py-2.5 text-start font-medium">{t("columns.workflow")}</th>
-                  <th scope="col" className="px-4 py-2.5 text-end font-medium">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">{t("columns.when")}</th>
+                  <th scope="col">{t("columns.action")}</th>
+                  <th scope="col">{t("columns.actor")}</th>
+                  <th scope="col">{t("columns.entity")}</th>
+                  <th scope="col">{t("columns.workflow")}</th>
+                  <th scope="col" className="text-end">
                     <span className="sr-only">{t("columns.details")}</span>
                   </th>
                 </tr>
@@ -487,28 +491,28 @@ function AuditRow({
   const detailsId = `audit-${event.id}`;
   return (
     <>
-      <tr className={cn("border-b align-top last:border-b-0", expanded && "bg-accent/40")}>
-        <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-muted-foreground" dir="ltr">
+      <tr className={cn(expanded && "bg-accent/60")}>
+        <td className="font-mono text-xs text-muted-foreground" dir="ltr">
           {event.seq}
         </td>
-        <td className="px-4 py-2.5 whitespace-nowrap">{when}</td>
-        <td className="px-4 py-2.5 font-mono text-xs" dir="ltr">
+        <td className="font-mono text-xs whitespace-nowrap">{when}</td>
+        <td className="font-mono text-xs" dir="ltr">
           {event.action}
         </td>
-        <td className="px-4 py-2.5">
+        <td>
           <span className="block text-xs text-muted-foreground">{t(`filters.actorTypes.${knownActor(event.actor_type)}`)}</span>
           <bdi className="block max-w-48 truncate font-mono text-xs" title={event.actor_id ?? ""}>
             {event.actor_id ?? "-"}
           </bdi>
         </td>
-        <td className="px-4 py-2.5">
+        <td>
           <span className="block text-xs text-muted-foreground">{event.entity_type ?? "-"}</span>
           <bdi className="block max-w-56 truncate font-mono text-xs" title={event.entity_id ?? ""}>
             {event.entity_id ?? ""}
           </bdi>
         </td>
-        <td className="px-4 py-2.5 text-xs">{event.workflow ?? "-"}</td>
-        <td className="px-4 py-2.5 text-end">
+        <td className="text-xs">{event.workflow ?? "-"}</td>
+        <td className="text-end">
           <Button
             variant="ghost"
             size="sm"
@@ -522,8 +526,8 @@ function AuditRow({
         </td>
       </tr>
       {expanded && (
-        <tr id={detailsId} className="border-b bg-surface-sunken/50">
-          <td colSpan={7} className="space-y-3 px-4 py-4">
+        <tr id={detailsId} className="bg-surface-sunken hover:bg-surface-sunken">
+          <td colSpan={7} className="space-y-3 py-4">
             <JsonView value={event.payload} />
             <dl className="grid gap-x-6 gap-y-1 text-xs sm:grid-cols-[10rem_1fr]">
               <dt className="text-muted-foreground">{t("hash")}</dt>

@@ -295,34 +295,34 @@ function EndpointRow({
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label={t("loading")} />}
           {deliveries?.length === 0 && <p className="text-sm text-muted-foreground">{t("noDeliveries")}</p>}
           {deliveries && deliveries.length > 0 && (
-            <div className="relative overflow-x-auto card-hairline">
-              <table className="w-full min-w-[36rem] text-xs">
+            <div className="table-frame">
+              <table className="data-table min-w-[36rem] text-xs">
                 <caption className="sr-only">{t("deliveries")}</caption>
                 <thead>
-                  <tr className="border-b text-muted-foreground">
-                    <th scope="col" className="px-3 py-2 text-start font-medium">{t("event")}</th>
-                    <th scope="col" className="px-3 py-2 text-start font-medium">{t("status")}</th>
-                    <th scope="col" className="px-3 py-2 text-start font-medium">{t("response")}</th>
-                    <th scope="col" className="px-3 py-2 text-start font-medium">{t("when")}</th>
+                  <tr>
+                    <th scope="col">{t("event")}</th>
+                    <th scope="col">{t("status")}</th>
+                    <th scope="col">{t("response")}</th>
+                    <th scope="col">{t("when")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody>
                   {deliveries.map((d) => (
                     <tr key={d.id}>
-                      <td className="px-3 py-2 font-mono" dir="ltr">
+                      <td className="font-mono" dir="ltr">
                         {d.event_type}
                       </td>
-                      <td className="px-3 py-2">
-                        <Badge variant="outline" className={cn(d.status === "delivered" && "border-success/40 text-success-ink", d.status === "failed" && "border-destructive/40 text-danger-ink")}>
+                      <td>
+                        <Badge variant={d.status === "delivered" ? "success" : d.status === "failed" ? "danger" : "outline"}>
                           {d.status}
                         </Badge>
                         <span className="ms-2 text-muted-foreground">{t("attempts", { count: d.attempts })}</span>
                       </td>
-                      <td className="px-3 py-2 font-mono" dir="ltr">
+                      <td className="font-mono" dir="ltr">
                         {d.response_code ?? "-"}
                         {d.latency_ms !== null && <span className="text-muted-foreground"> · {d.latency_ms} ms</span>}
                       </td>
-                      <td className="px-3 py-2">{format.dateTime(new Date(d.created_at), { dateStyle: "short", timeStyle: "short" })}</td>
+                      <td>{format.dateTime(new Date(d.created_at), { dateStyle: "short", timeStyle: "short" })}</td>
                     </tr>
                   ))}
                 </tbody>

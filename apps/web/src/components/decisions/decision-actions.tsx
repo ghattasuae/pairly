@@ -113,22 +113,22 @@ export function ReplayPanel({
                 </p>
                 {r.reason && <p className="text-muted-foreground">{r.reason}</p>}
                 {r.diff.length > 0 && (
-                  <div className="relative overflow-x-auto card-hairline">
-                    <table className="w-full text-xs">
+                  <div className="table-frame">
+                    <table className="data-table text-xs">
                       <caption className="sr-only">{t("diffCaption")}</caption>
                       <thead>
-                        <tr className="border-b text-muted-foreground">
-                          <th scope="col" className="px-3 py-2 text-start font-medium">{t("path")}</th>
-                          <th scope="col" className="px-3 py-2 text-start font-medium">{t("original")}</th>
-                          <th scope="col" className="px-3 py-2 text-start font-medium">{t("replayed")}</th>
+                        <tr>
+                          <th scope="col">{t("path")}</th>
+                          <th scope="col">{t("original")}</th>
+                          <th scope="col">{t("replayed")}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y font-mono" dir="ltr">
+                      <tbody className="font-mono" dir="ltr">
                         {r.diff.slice(0, 100).map((d, i) => (
                           <tr key={i}>
-                            <td className="px-3 py-1.5 break-all">{shown(d.path)}</td>
-                            <td className="px-3 py-1.5 break-all text-danger-ink">{shown(d.original)}</td>
-                            <td className="px-3 py-1.5 break-all text-success-ink">{shown(d.replayed)}</td>
+                            <td className="break-all">{shown(d.path)}</td>
+                            <td className="break-all text-danger-ink">{shown(d.original)}</td>
+                            <td className="break-all text-success-ink">{shown(d.replayed)}</td>
                           </tr>
                         ))}
                       </tbody>
