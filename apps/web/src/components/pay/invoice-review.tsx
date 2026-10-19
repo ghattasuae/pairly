@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { ErrorText, VendorStatusBadge } from "./common";
 import { InvoiceApprovalPanel } from "./invoice-approval";
 import { ComparePanel, InvoiceChecks } from "./invoice-checks";
+import { ConfidenceMeter, type Tone } from "./ledger";
 
 const KNOWN_REASONS = new Set([
   "extraction",
@@ -68,12 +69,20 @@ const KNOWN_REASONS = new Set([
 
 export function InvoiceStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.invoiceStatus");
+  // Status reads in the semantic tones: work for a person (warning), waiting on
+  // approvers (info), done (success), refused (danger). Saffron stays for actions.
   const variant =
-    status === "needs_review" || status === "awaiting_approval"
-      ? "signal"
-      : status === "ready" || status === "approved" || status === "paid"
-        ? "default"
-        : "outline";
+    status === "needs_review"
+      ? "warning"
+      : status === "awaiting_approval" || status === "scheduled"
+        ? "info"
+        : status === "approved" || status === "paid"
+          ? "success"
+          : status === "rejected"
+            ? "danger"
+            : status === "ready"
+              ? "default"
+              : "outline";
   return (
     <Badge variant={variant} data-invoice-status={status}>
       {t(status as "ready")}
@@ -111,7 +120,7 @@ export function ReviewReasons({
               : reason);
         return (
           <li key={reason} className="flex items-start gap-2" data-reason={reason}>
-            <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
+            <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-warning-ink" />
             <span>
               {text}
               {(known || explanation) && code && (
@@ -255,13 +264,29 @@ export function InvoiceReview({
     const doubtful = needsLook(field);
     const isActive = index === active;
     const editing = edit?.path === field.path;
+    const missing = field.flags.includes("missing");
+    // A subtle semantic tint per field: doubtful (warning), missing (danger), corrected by
+    // a person (info), read with high confidence (success), else plain paper.
+    const tone: Tone = doubtful
+      ? missing
+        ? "danger"
+        : "warning"
+      : field.corrected
+        ? "info"
+        : field.confidence >= 0.9
+          ? "success"
+          : "neutral";
     return (
-      <li key={field.path} data-field={field.path} data-needs-look={doubtful || undefined}>
+      <li key={field.path} data-field={field.path} data-needs-look={doubtful || undefined} data-tone={tone}>
         <div
           className={cn(
-            "rounded-lg border bg-surface p-2.5 text-sm",
-            doubtful && "border-signal bg-signal-soft/40",
-            isActive && "ring-2 ring-ring/40",
+            "rounded-md border border-border border-s-[3px] bg-surface p-2.5 text-sm",
+            tone === "danger" && "border-destructive/40 border-s-destructive bg-danger-soft/60",
+            tone === "warning" && "border-warning-ink/30 border-s-warning-ink bg-warning-soft/60",
+            tone === "info" && "border-s-info",
+            tone === "success" && "border-s-success/70",
+            tone === "neutral" && "border-s-rule",
+            isActive && "ring-2 ring-ring/50",
           )}
         >
           <div className="flex items-start gap-2">
@@ -279,9 +304,9 @@ export function InvoiceReview({
             >
               <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                 <FieldLabel path={field.path} />
-                {field.corrected && <Badge variant="outline">{t("corrected")}</Badge>}
+                {field.corrected && <Badge variant="info">{t("corrected")}</Badge>}
                 {doubtful && (
-                  <Badge variant="signal" data-low-confidence>
+                  <Badge variant={missing ? "danger" : "warning"} data-low-confidence>
                     {field.flags.includes("missing") ? t("missing") : t("check")}
                   </Badge>
                 )}
@@ -293,8 +318,10 @@ export function InvoiceReview({
                   <span className="text-muted-foreground">{t("empty")}</span>
                 )}
               </span>
-              <span className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                <span>{t("confidence", { value: percent(field.confidence) })}</span>
+              <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                <ConfidenceMeter value={field.confidence} tone={tone === "info" ? "neutral" : tone}>
+                  {t("confidence", { value: percent(field.confidence) })}
+                </ConfidenceMeter>
                 {field.spans.length === 0 && <span>{t("noSource")}</span>}
                 {field.flags.length > 0 && !field.corrected && (
                   <span>{field.flags.map((f) => t.has(`flag.${f}` as "flag.missing") ? t(`flag.${f}` as "flag.missing") : f).join(", ")}</span>
@@ -352,8 +379,8 @@ export function InvoiceReview({
   const doubtfulCount = order.filter(needsLook).length;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_26rem]" data-invoice-review={invoice.status}>
-      <div className="min-w-0 space-y-3">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_27rem] lg:gap-8" data-invoice-review={invoice.status}>
+      <div className="min-w-0 space-y-3 lg:sticky lg:top-20 lg:self-start">
         {drawn ? (
           <DocumentViewer documentId={document.id} highlights={highlights} focus={focus} subject="invoice" notice />
         ) : document.text ? (
@@ -365,7 +392,7 @@ export function InvoiceReview({
             aria-label={t("text")}
             tabIndex={0}
             dir="auto"
-            className="max-h-[75vh] overflow-auto whitespace-pre-wrap rounded-xl border bg-surface p-4 font-mono text-sm"
+            className="max-h-[75vh] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-surface p-5 font-mono text-sm leading-relaxed"
             data-text-view
           >
             {textPieces(document.text, fields).map((piece, i) =>
@@ -374,8 +401,8 @@ export function InvoiceReview({
                   key={i}
                   data-source={piece.paths.join(" ")}
                   className={cn(
-                    "rounded-sm bg-primary/15 text-inherit",
-                    activeField && piece.paths.includes(activeField.path) && "bg-primary/40 ring-1 ring-primary",
+                    "rounded-sm bg-info-soft text-inherit",
+                    activeField && piece.paths.includes(activeField.path) && "bg-primary/25 ring-1 ring-primary",
                   )}
                 >
                   {piece.text}
@@ -387,17 +414,17 @@ export function InvoiceReview({
           </div>
           </>
         ) : (
-          <p className="rounded-xl border bg-surface p-6 text-sm text-muted-foreground">{t("noText")}</p>
+          <p className="card-hairline p-6 text-sm text-muted-foreground">{t("noText")}</p>
         )}
         <ComparePanel compare={invoice.compare ?? []} />
-        <Link href={`/documents/${document.id}`} className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline">
+        <Link href={`/documents/${document.id}`} className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
           <ScanSearch aria-hidden className="size-4" />
           {t("openDocument")}
         </Link>
       </div>
 
       <div className="min-w-0 space-y-5" onKeyDown={onKeyDown}>
-        <section className="space-y-2 rounded-xl border bg-surface p-4" aria-labelledby={`${ids}-summary`}>
+        <section className="card-hairline space-y-3 p-5" aria-labelledby={`${ids}-summary`}>
           <h2 id={`${ids}-summary`} className="sr-only">
             {t("summary")}
           </h2>
@@ -424,7 +451,7 @@ export function InvoiceReview({
             )}
           </p>
           {invoice.total && invoice.currency && (
-            <p className="font-display text-2xl" dir="ltr">
+            <p className="figure text-4xl leading-none" dir="ltr" data-amount>
               {invoice.currency} {invoice.total}
             </p>
           )}
@@ -433,7 +460,7 @@ export function InvoiceReview({
               {t("receivedByEmail", { reference: invoice.email.reference })}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             {format.dateTime(new Date(invoice.created_at), { dateStyle: "medium", timeStyle: "short" })}
           </p>
           <ReviewReasons reasons={invoice.review_reasons} checks={invoice.checks ?? []} />
@@ -483,7 +510,7 @@ export function InvoiceReview({
         <ErrorText code={error} />
 
         {invoice.can_process && (invoice.status === "needs_review" || invoice.status === "ready") && (
-          <section className="space-y-3 rounded-xl border bg-surface p-4" aria-labelledby={`${ids}-actions`}>
+          <section className="card-hairline space-y-3 p-5" aria-labelledby={`${ids}-actions`}>
             <h2 id={`${ids}-actions`} className="eyebrow">
               {t("actions")}
             </h2>

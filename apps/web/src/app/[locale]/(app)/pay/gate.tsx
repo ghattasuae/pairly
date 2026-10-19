@@ -7,6 +7,7 @@ import type * as React from "react";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
+import { tabClass } from "@/components/pay/ledger";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getSession, twoFactorEnabled } from "@/lib/auth/server";
@@ -43,7 +44,7 @@ export async function payGate(locale: Locale, permission: string, retryPath: str
 }
 
 export function PayFrame({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">{children}</div>;
+  return <div className="page space-y-6">{children}</div>;
 }
 
 export function PayUnavailable({ retry }: { retry: string }) {
@@ -104,19 +105,20 @@ export async function PayHeader({
     { key: "settings" as const, href: "/pay/settings", show: permissions.includes("pay.settings.manage") },
   ].filter((tab) => tab.show);
   return (
-    <div className="space-y-4">
-      <PageHeader title={title}>{intro && <p>{intro}</p>}</PageHeader>
-      <nav aria-label={t("label")} className="flex flex-wrap gap-2">
+    <div className="space-y-0">
+      <PageHeader eyebrow={t("eyebrow")} title={title} className="border-b-0 pb-4">
+        {intro && <p className="max-w-2xl">{intro}</p>}
+      </PageHeader>
+      <nav
+        aria-label={t("label")}
+        className="-mx-1 flex gap-x-5 overflow-x-auto border-b border-border px-1 [scrollbar-width:thin]"
+      >
         {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={tab.href}
             aria-current={current === tab.key ? "page" : undefined}
-            className={
-              current === tab.key
-                ? "inline-flex h-8 items-center rounded-md bg-secondary px-3 text-[0.8rem] font-medium"
-                : "inline-flex h-8 items-center rounded-md border px-3 text-[0.8rem] hover:bg-accent"
-            }
+            className={tabClass(current === tab.key)}
           >
             {t(tab.key)}
           </Link>

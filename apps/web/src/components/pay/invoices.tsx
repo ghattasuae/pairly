@@ -11,6 +11,7 @@ import { INVOICE_STATUSES, type InvoiceStatus } from "@/lib/pay/invoices";
 import type { PayInvoiceSummary } from "@/lib/pay/types";
 
 import { InvoiceStatusBadge } from "./invoice-review";
+import { chipClass } from "./ledger";
 
 /** The invoice list (brief 4.2): filter chips by status, newest first. */
 export function InvoiceList({
@@ -26,10 +27,7 @@ export function InvoiceList({
   const tStatus = useTranslations("Pay.invoiceStatus");
   const format = useFormatter();
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const chip = (active: boolean) =>
-    active
-      ? "inline-flex h-8 items-center gap-1 rounded-md bg-secondary px-3 text-[0.8rem] font-medium"
-      : "inline-flex h-8 items-center gap-1 rounded-md border px-3 text-[0.8rem] hover:bg-accent";
+  const chip = chipClass;
   return (
     <div className="space-y-4">
       <nav aria-label={t("filter")} className="flex flex-wrap gap-2" data-status-filter={status ?? "all"}>
@@ -50,26 +48,32 @@ export function InvoiceList({
       {items.length === 0 ? (
         <EmptyState icon={<FileText aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
       ) : (
-        <ul className="divide-y rounded-xl border bg-surface" data-invoice-list>
+        <ul className="card-hairline divide-y divide-border overflow-hidden" data-invoice-list>
           {items.map((item) => (
             <li key={item.id}>
               <Link
                 href={`/pay/invoices/${item.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-accent"
+                className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3.5 hover:bg-accent sm:px-5"
                 data-invoice={item.reference}
               >
                 <span className="min-w-0 space-y-0.5">
-                  <span className="block font-medium">
+                  <span className="block truncate font-medium">
                     <bdi>{item.vendor?.legal_name ?? item.vendor_name ?? t("unknownVendor")}</bdi>
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    <bdi>{item.invoice_number ?? t("noNumber")}</bdi> · {item.reference} · {t(`source.${item.source}` as "source.email")}
-                    {item.invoice_date && <> · {format.dateTime(new Date(item.invoice_date), { dateStyle: "medium" })}</>}
+                    <bdi className="font-mono">{item.invoice_number ?? t("noNumber")}</bdi> ·{" "}
+                    <span className="font-mono">{item.reference}</span> · {t(`source.${item.source}` as "source.email")}
+                    {item.invoice_date && (
+                      <>
+                        {" "}
+                        · <span className="font-mono">{format.dateTime(new Date(item.invoice_date), { dateStyle: "medium" })}</span>
+                      </>
+                    )}
                   </span>
                 </span>
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-4">
                   {item.total && item.currency && (
-                    <span className="font-mono text-sm tabular-nums" dir="ltr">
+                    <span className="font-mono text-sm font-medium tabular-nums" dir="ltr" data-amount>
                       {item.currency} {item.total}
                     </span>
                   )}

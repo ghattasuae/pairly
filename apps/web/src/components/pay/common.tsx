@@ -44,7 +44,7 @@ export function ErrorText({ code, className }: { code: string | null; className?
   const tErrors = useTranslations("Errors");
   if (!code) return null;
   return (
-    <p role="alert" className={cn("text-sm text-destructive", className)} data-error={code}>
+    <p role="alert" className={cn("text-sm text-danger-ink", className)} data-error={code}>
       {PAY_CODES.has(code) ? t(code as "vendor_duplicate") : tErrors(errorKey(code) as "generic")}
     </p>
   );
@@ -53,7 +53,10 @@ export function ErrorText({ code, className }: { code: string | null; className?
 export function VendorStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.vendorStatus");
   return (
-    <Badge variant={status === "active" ? "default" : status === "pending" ? "signal" : "outline"} data-vendor-status={status}>
+    <Badge
+      variant={status === "active" ? "success" : status === "pending" ? "warning" : status === "blocked" ? "danger" : "outline"}
+      data-vendor-status={status}
+    >
       {t(status as "active")}
     </Badge>
   );
@@ -61,9 +64,18 @@ export function VendorStatusBadge({ status }: { status: string }) {
 
 export function TicketStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.ticketStatus");
-  const open = status === "awaiting_verification" || status === "awaiting_approval" || status === "cooling_off";
+  // The fraud defence reads in danger and warning, never in the saffron of an action:
+  // locked until the call back (danger), then waiting on people or the clock (warning).
+  const variant =
+    status === "awaiting_verification"
+      ? "danger"
+      : status === "awaiting_approval" || status === "cooling_off"
+        ? "warning"
+        : status === "completed"
+          ? "success"
+          : "outline";
   return (
-    <Badge variant={open ? "signal" : status === "completed" ? "default" : "outline"} data-ticket-status={status}>
+    <Badge variant={variant} data-ticket-status={status}>
       {t(status as "completed")}
     </Badge>
   );
@@ -73,7 +85,7 @@ export function TicketStatusBadge({ status }: { status: string }) {
 export function HoldBadge({ reason }: { reason: string | null | undefined }) {
   const t = useTranslations("Pay.hold");
   return (
-    <Badge variant="signal" data-hold={reason ?? "hold"}>
+    <Badge variant="danger" data-hold={reason ?? "hold"}>
       <ShieldAlert aria-hidden className="size-3" />
       {t("badge")}
       {reason ? `: ${t(`reason.${reason}` as "reason.manual")}` : ""}
@@ -88,8 +100,8 @@ export function Panel({
   ...rest
 }: { title: React.ReactNode; children: React.ReactNode; className?: string } & Record<`data-${string}`, string | boolean>) {
   return (
-    <section className={cn("space-y-3 rounded-xl border bg-surface p-5", className)} {...rest}>
-      <h2 className="font-display text-xl">{title}</h2>
+    <section className={cn("card-hairline space-y-3 p-5 sm:p-6", className)} {...rest}>
+      <h2 className="font-display text-xl leading-tight">{title}</h2>
       {children}
     </section>
   );
