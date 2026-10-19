@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import type * as React from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { HomeSummary, type SummaryTile } from "@/components/home/home-summary";
 import { PayRoleDashboard } from "@/components/home/pay-dashboards";
 import { RoleDashboard } from "@/components/home/role-dashboards";
 import { SystemRoleDashboard } from "@/components/home/system-dashboards";
@@ -92,9 +93,39 @@ export default async function HomePage({ params }: Props) {
   });
   const failed = loaded.some((result) => !result.ok) || payLoaded.some((result) => !result.ok) || sysFailed;
   const shown = boards.length + payBoards.length + sysBoards.length;
+  const total =
+    actionTotal(boards.map((b) => b.data)) +
+    payActionTotal(payBoards.map((b) => b.data)) +
+    systemActionTotal(sysBoards.map((b) => b.data));
+  // One stat tile per dashboard, in the order the dashboards follow below.
+  const [hireTitles, payTitles, sysTitles] = await Promise.all([
+    getTranslations("Dashboards"),
+    getTranslations("PayDashboards"),
+    getTranslations("SystemDashboards"),
+  ]);
+  const tiles: SummaryTile[] = [
+    ...boards.map((b) => ({
+      anchor: `dash-${b.key}`,
+      title: hireTitles(`title.${b.key}`),
+      count: actionTotal([b.data]),
+      lists: b.data.action.length,
+    })),
+    ...payBoards.map((b) => ({
+      anchor: `pay-dash-${b.key}`,
+      title: payTitles(`title.${b.key}`),
+      count: payActionTotal([b.data]),
+      lists: b.data.action.length,
+    })),
+    ...sysBoards.map((b) => ({
+      anchor: `sys-dash-${b.key}`,
+      title: sysTitles.has(`title.${b.key}` as "title.auditor") ? sysTitles(`title.${b.key}` as "title.auditor") : b.key.replace(/_/g, " "),
+      count: systemActionTotal([b.data]),
+      lists: b.data.action.length,
+    })),
+  ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-10 sm:px-8">
+    <div className="page space-y-10">
       {viewer.status === "ready" && (
         <>
           <PageHeader
@@ -123,25 +154,22 @@ export default async function HomePage({ params }: Props) {
               {t("dashboardsUnavailable")}
             </p>
           )}
+          {shown > 0 && <HomeSummary total={total} tiles={tiles} now={new Date()} />}
           {shown > 0 && (
             <p
               className="sr-only"
-              data-action-total={
-                actionTotal(boards.map((b) => b.data)) +
-                payActionTotal(payBoards.map((b) => b.data)) +
-                systemActionTotal(sysBoards.map((b) => b.data))
-              }
+              data-action-total={total}
             >
               {t("actionNeeded")}
             </p>
           )}
           {boards.map((board, index) => (
-            <div key={board.key} className="rise" style={{ "--rise-index": index + 1 } as React.CSSProperties}>
+            <div key={board.key} className="rise" style={{ "--rise-index": index + 2 } as React.CSSProperties}>
               <RoleDashboard dashboard={board.key} data={board.data} />
             </div>
           ))}
           {payBoards.map((board, index) => (
-            <div key={`pay-${board.key}`} className="rise" style={{ "--rise-index": boards.length + index + 1 } as React.CSSProperties}>
+            <div key={`pay-${board.key}`} className="rise" style={{ "--rise-index": boards.length + index + 2 } as React.CSSProperties}>
               <PayRoleDashboard dashboard={board.key} data={board.data} />
             </div>
           ))}
@@ -149,7 +177,7 @@ export default async function HomePage({ params }: Props) {
             <div
               key={`sys-${board.key}`}
               className="rise"
-              style={{ "--rise-index": boards.length + payBoards.length + index + 1 } as React.CSSProperties}
+              style={{ "--rise-index": boards.length + payBoards.length + index + 2 } as React.CSSProperties}
             >
               <SystemRoleDashboard dashboard={board.key} data={board.data} />
             </div>

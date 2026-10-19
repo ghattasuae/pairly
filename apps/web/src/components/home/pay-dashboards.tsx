@@ -139,14 +139,14 @@ function SectionCard({ board, section, prominent }: { board: PayDashboardKey; se
   const key = section.key as "to_review";
   const id = `pay-dash-${board}-${section.key}`.replace(/_/g, "-");
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-2 rounded-xl border bg-surface p-4 shadow-soft" data-pay-section={section.key}>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-2 rounded-lg border bg-surface p-5" data-pay-section={section.key}>
       <header className="flex items-baseline justify-between gap-2">
         <h3 id={`${id}-title`} className="text-sm font-medium">
           {t(`section.${key}`)}
         </h3>
         <To
           href={section.href}
-          className={`font-display ${prominent ? "text-2xl" : "text-xl"} hover:text-primary hover:underline`}
+          className={`figure leading-none ${prominent ? `text-3xl ${section.count > 0 ? "text-signal-ink" : ""}` : "text-2xl"} hover:text-primary hover:underline`}
           aria-label={t("countLink", { count: section.count, what: t(`section.${key}`) })}
           data-pay-count={section.count}
         >
@@ -181,9 +181,9 @@ function Amounts({ amounts }: { amounts: PayDashAmount[] }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {shown.map((a) => (
-        <li key={`${a.key}:${a.currency}`} className="space-y-1 rounded-lg border bg-surface p-3" data-pay-amount={a.key}>
+        <li key={`${a.key}:${a.currency}`} className="space-y-1.5 rounded-lg border bg-surface p-4" data-pay-amount={a.key}>
           <p className="text-xs text-muted-foreground">{t(`amount.${a.key as "payables"}`)}</p>
-          <To href={a.href} className="font-display text-xl hover:text-primary hover:underline">
+          <To href={a.href} className="text-xl font-medium hover:text-primary hover:underline">
             <span className="font-mono tabular-nums" dir="ltr">
               {a.currency} {a.amount}
             </span>
@@ -202,9 +202,9 @@ function Metrics({ metrics }: { metrics: PayMetric[] }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {shown.map((m) => (
-        <li key={m.key} className="space-y-1 rounded-lg border bg-surface p-3" data-pay-metric={m.key}>
+        <li key={m.key} className="space-y-1.5 rounded-lg border bg-surface p-4" data-pay-metric={m.key}>
           <p className="text-xs text-muted-foreground">{t(`metric.${m.key.replace(".", "_") as "touchless_rate"}`)}</p>
-          <p className="font-display text-xl">
+          <p className="figure text-2xl leading-tight">
             <PayMetricValue metric={m} />
           </p>
           <PayMetricRecords metric={m} />
@@ -225,7 +225,7 @@ export function PayRoleDashboard({ dashboard, data }: { dashboard: PayDashboardK
   return (
     <section aria-labelledby={`pay-dash-${dashboard}`} className="space-y-5" data-pay-dashboard={dashboard}>
       <header className="space-y-1">
-        <h2 id={`pay-dash-${dashboard}`} className="font-display text-2xl">
+        <h2 id={`pay-dash-${dashboard}`} className="font-display text-[1.75rem] leading-tight">
           {t(`title.${dashboard}`)}
         </h2>
       </header>

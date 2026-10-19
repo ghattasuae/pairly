@@ -142,7 +142,7 @@ function ItemLine({ item }: { item: DashItem }) {
       </span>
       <span className="flex items-center gap-2">
         {overdue && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-signal-soft px-2 py-0.5 text-[0.7rem] text-signal-foreground dark:text-signal">
+          <span className="inline-flex items-center gap-1 rounded-sm bg-signal-soft px-1.5 py-0.5 text-[0.7rem] font-medium text-signal-foreground dark:text-signal">
             <CircleAlert className="size-3" aria-hidden />
             {t("detail.overdue")}
           </span>
@@ -205,14 +205,14 @@ function SectionCard({ dashboard, section, prominent }: { dashboard: DashboardKe
   const id = anchor(dashboard, section.key);
   const href = sectionHref(dashboard, section);
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-2 rounded-xl border bg-surface p-4 shadow-soft" data-dash-section={section.key}>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-2 rounded-lg border bg-surface p-5" data-dash-section={section.key}>
       <header className="flex items-baseline justify-between gap-2">
         <h3 id={`${id}-title`} className="text-sm font-medium">
           {t(`section.${key}`)}
         </h3>
         <To
           href={href}
-          className={`font-display ${prominent ? "text-2xl" : "text-xl"} hover:text-primary hover:underline`}
+          className={`figure leading-none ${prominent ? `text-3xl ${section.count > 0 ? "text-signal-ink" : ""}` : "text-2xl"} hover:text-primary hover:underline`}
           aria-label={t("countLink", { count: section.count, what: t(`section.${key}`) })}
           data-dash-count={section.count}
         >
@@ -282,14 +282,14 @@ function Metrics({ metrics }: { metrics: DashMetric[] }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {metrics.map((m) => (
-        <li key={m.key} className="space-y-1 rounded-lg border bg-surface p-3" data-metric={m.key}>
+        <li key={m.key} className="space-y-1.5 rounded-lg border bg-surface p-4" data-metric={m.key}>
           <p className="text-xs text-muted-foreground" dir="auto">
             <MetricTitle metric={m} />
           </p>
-          <p className="font-display text-xl">
+          <p className="figure text-2xl leading-tight">
             <MetricValue metric={m} />
           </p>
-          <p className="text-xs text-muted-foreground">{t("sample", { n: m.n })}</p>
+          <p className="font-mono text-[0.7rem] text-muted-foreground">{t("sample", { n: m.n })}</p>
           <Records metric={m} />
         </li>
       ))}
@@ -309,7 +309,7 @@ export function RoleDashboard({ dashboard, data }: { dashboard: DashboardKey; da
   return (
     <section aria-labelledby={`dash-${dashboard}`} className="space-y-5" data-dashboard={dashboard}>
       <header className="space-y-1">
-        <h2 id={`dash-${dashboard}`} className="font-display text-2xl">
+        <h2 id={`dash-${dashboard}`} className="font-display text-[1.75rem] leading-tight">
           {t(`title.${dashboard}`)}
         </h2>
         <p className="text-sm text-muted-foreground">

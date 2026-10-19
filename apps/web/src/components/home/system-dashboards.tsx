@@ -116,7 +116,7 @@ function SectionCard({ board, section, prominent }: { board: SystemDashboardKey;
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="min-w-0 scroll-mt-24 space-y-2 rounded-xl border bg-surface p-4 shadow-soft"
+      className="min-w-0 scroll-mt-24 space-y-2 rounded-lg border bg-surface p-5"
       data-sys-section={section.key}
     >
       <header className="flex items-baseline justify-between gap-2">
@@ -130,7 +130,7 @@ function SectionCard({ board, section, prominent }: { board: SystemDashboardKey;
         ) : (
           <To
             href={section.href}
-            className={`font-display ${prominent ? "text-2xl" : "text-xl"} hover:text-primary hover:underline`}
+            className={`figure leading-none ${prominent ? `text-3xl ${section.count > 0 ? "text-signal-ink" : ""}` : "text-2xl"} hover:text-primary hover:underline`}
             aria-label={t("countLink", { count: section.count, what: title })}
             data-sys-count={section.count}
           >
@@ -180,7 +180,7 @@ export function SystemRoleDashboard({ dashboard, data }: { dashboard: SystemDash
   return (
     <section aria-labelledby={`sys-dash-${dashboard}`} className="space-y-5" data-sys-dashboard={dashboard}>
       <header className="space-y-1">
-        <h2 id={`sys-dash-${dashboard}`} className="font-display text-2xl">
+        <h2 id={`sys-dash-${dashboard}`} className="font-display text-[1.75rem] leading-tight">
           {t(`title.${dashboard}`)}
         </h2>
         <p className="text-sm text-muted-foreground">{t(`intro.${dashboard}`)}</p>
