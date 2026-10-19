@@ -138,7 +138,7 @@ export function ScorecardForm({ initial }: { initial: HireScorecardPage }) {
         <p className="text-sm text-muted-foreground">
           {card.job_title} · {card.stage_name}
         </p>
-        <h1 className="font-display text-2xl" data-candidate-label>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]" data-candidate-label>
           {card.candidate_label}
         </h1>
         {card.starts_at && (

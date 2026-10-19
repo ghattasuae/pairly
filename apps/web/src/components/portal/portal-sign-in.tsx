@@ -46,7 +46,7 @@ export function PortalSignIn({
     <section aria-labelledby={`${ids}-title`} className="mx-auto max-w-md space-y-5" data-portal-sign-in>
       <div className="space-y-2">
         <p className="eyebrow">{t("eyebrow")}</p>
-        <h1 id={`${ids}-title`} className="font-display text-3xl leading-tight">
+        <h1 id={`${ids}-title`} className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">
           {expired ? t("signIn.expiredTitle") : t("signIn.title")}
         </h1>
         <p className="text-muted-foreground">{expired ? t("signIn.expired") : t("signIn.intro")}</p>

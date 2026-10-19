@@ -175,7 +175,7 @@ export function CandidateSchedule({
   return (
     <div className="rise w-full max-w-md space-y-6" data-schedule-page>
       <div className="space-y-2">
-        <h1 className="font-display text-3xl leading-tight tracking-tight">
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">
           {booked && !changing ? t("bookedTitle") : t("title")}
         </h1>
         <p className="text-sm text-muted-foreground">{subtitle}</p>

@@ -70,7 +70,7 @@ export function PortalHome({
     <div className="space-y-10" data-portal-home>
       <header className="space-y-2">
         <p className="eyebrow">{me.organisation}</p>
-        <h1 className="font-display text-3xl leading-tight sm:text-4xl">{t("title")}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("app.live")}</p>
         <p role="status" aria-live="polite" className="text-sm font-medium" data-live-status>
           {changed ? t("app.updated") : ""}
@@ -82,7 +82,7 @@ export function PortalHome({
           <li key={app.id}>
             <article
               aria-labelledby={`app-${app.id}`}
-              className="space-y-4 rounded-2xl border bg-surface p-5 shadow-soft"
+              className="space-y-4 card-hairline p-5"
               data-portal-application={app.id}
               data-status={app.status}
             >

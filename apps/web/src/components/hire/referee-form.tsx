@@ -139,7 +139,7 @@ export function RefereeForm({ initial }: { initial: HireRefereePage }) {
     <div className="space-y-6 pb-24" data-reference-form>
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground">{page.company}</p>
-        <h1 className="font-display text-2xl">{t("heading", { candidate: page.candidate_name })}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("heading", { candidate: page.candidate_name })}</h1>
         <p className="text-sm text-muted-foreground">
           {t("context", { name: page.referee_name, candidate: page.candidate_name, job: page.job_title, company: page.company })}
         </p>

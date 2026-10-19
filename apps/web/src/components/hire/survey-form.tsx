@@ -90,7 +90,7 @@ export function SurveyForm({ token, form }: { token: string; form: HireSurveyFor
     <form onSubmit={(e) => void submit(e)} className="space-y-6 pb-24" data-survey>
       <header className="space-y-1">
         <p className="text-sm text-muted-foreground">{form.company}</p>
-        <h1 className="font-display text-2xl">{t("heading", { job: form.job_title })}</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("heading", { job: form.job_title })}</h1>
         <p className="text-sm text-muted-foreground">{t("anonymous")}</p>
       </header>
       {(["overall", "communication", "respect"] as const).map((key) => (

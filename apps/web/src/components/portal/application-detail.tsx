@@ -122,7 +122,7 @@ export function ApplicationDetail({
         {t("app.back")}
       </Link>
       <header className="space-y-1">
-        <h1 id={`${ids}-title`} className="font-display text-3xl leading-tight">
+        <h1 id={`${ids}-title`} className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">
           {locale === "ar" && app.job_title_ar ? app.job_title_ar : app.job_title}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -199,7 +199,7 @@ export function ApplicationDetail({
       </section>
 
       {app.has_offer && (
-        <Link href={`/portal/applications/${app.id}/offer`} className="block rounded-xl border border-primary/40 bg-primary/5 p-4 font-medium text-primary" data-portal-offer-link>
+        <Link href={`/portal/applications/${app.id}/offer`} className="card-hairline lift block border-primary/40 bg-info-soft p-4 font-medium text-primary" data-portal-offer-link>
           {t("app.offer")}
         </Link>
       )}
