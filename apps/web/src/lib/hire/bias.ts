@@ -40,11 +40,15 @@ export function biasExportQuery(params: URLSearchParams): string {
   return text ? `?${text}` : "";
 }
 
-export type Tone = "default" | "outline" | "signal";
+export type Tone = "default" | "outline" | "warning";
 
-/** Below the four-fifths rule of thumb stands out; everything else stays quiet. */
+/**
+ * Below the four-fifths rule of thumb is a fairness warning (the warning tint and ink, not
+ * saffron, which stays for the primary action); the reference group and results that meet
+ * the rule are neutral; anything else (too small, hidden, not compared) stays an outline.
+ */
 export function judgementTone(judgement: string): Tone {
-  if (judgement === "below_four_fifths") return "signal";
+  if (judgement === "below_four_fifths") return "warning";
   if (judgement === "reference" || judgement === "meets_four_fifths") return "default";
   return "outline";
 }
