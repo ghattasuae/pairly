@@ -9,9 +9,18 @@ the email id:
 1. ``GET /emails/receiving/{id}`` returns the email, with ``raw.download_url``: a
    pre-signed, time-limited (about an hour) link to the original ``.eml``.
 2. That URL is downloaded with a hard size limit (the intake engine's
-   ``max_email_bytes``), https only, redirects followed by hand (https only, at most
-   three), so the bytes handed to intake are exactly what the sender's server sent and
-   Pairly's own MIME parser (``pairly_core.ingestion.email``) does every check.
+   ``max_email_bytes``), so the bytes handed to intake are exactly what the sender's
+   server sent and Pairly's own MIME parser (``pairly_core.ingestion.email``) does every
+   check. The URL comes from a third party's response, so the download takes the same
+   SSRF-safe path as webhook delivery and URL ingestion (``pairly_core.webhooks.ssrf``):
+   https only, no credentials, no local names, every address the host resolves to must
+   be public (no private, loopback, link-local, metadata or NAT64-mapped address), and
+   the request goes to the exact address that passed the check (``Host`` and TLS SNI
+   keep the name, so the certificate is still verified), so a second DNS answer cannot
+   redirect it. Redirects are followed by hand, at most three, each target checked the
+   same way. Proxy variables are ignored, the body is never decompressed (``identity``
+   only), and the API key is never sent to the download host (a separate client with
+   no credentials).
 
 The Receiving API needs a Resend API key with full access (a sending-access key is refused
 with ``restricted_api_key``). That key is kept apart from the sending key
@@ -28,10 +37,18 @@ https://resend.com/docs/webhooks/emails/received.
 from __future__ import annotations
 
 import re
-from typing import Final
+from typing import Any, Final
 from urllib.parse import urljoin, urlsplit
 
 import httpx
+
+from pairly_core.webhooks.ssrf import (
+    Resolver,
+    UnsafeWebhookUrlError,
+    parse_target,
+    resolve_target,
+    system_resolver,
+)
 
 _UUID_RE: Final = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 MAX_REDIRECTS: Final = 3
@@ -66,13 +83,24 @@ class ResendReceivingClient:
         base_url: str = "https://api.resend.com",
         client: httpx.AsyncClient | None = None,
         timeout: float = 20.0,
+        resolver: Resolver = system_resolver,
+        download_transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._api_key = api_key
         self._base = base_url.rstrip("/")
         self._owns_client = client is None
         self._client = client or httpx.AsyncClient(timeout=timeout, follow_redirects=False)
+        self._resolver = resolver
+        # Downloads: no credentials, no proxies from the environment, no redirects.
+        self._downloads = httpx.AsyncClient(
+            transport=download_transport,
+            timeout=timeout,
+            follow_redirects=False,
+            trust_env=False,
+        )
 
     async def aclose(self) -> None:
+        await self._downloads.aclose()
         if self._owns_client:
             await self._client.aclose()
 
@@ -102,21 +130,37 @@ class ResendReceivingClient:
     async def _download(self, url: str, max_bytes: int) -> bytes:
         for _ in range(MAX_REDIRECTS + 1):
             try:
-                async with self._client.stream("GET", url) as response:
+                target = parse_target(url)
+                ip = await resolve_target(target, self._resolver)
+            except UnsafeWebhookUrlError:
+                raise ReceivingError("unsafe_download_url", transient=False) from None
+            headers = {
+                "Host": target.host_header,
+                "Accept": "*/*",
+                "Accept-Encoding": "identity",
+            }
+            extensions: dict[str, Any] = {"sni_hostname": target.host}
+            try:
+                async with self._downloads.stream(
+                    "GET", target.url_for(ip), headers=headers, extensions=extensions
+                ) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
-                        target = urljoin(url, response.headers.get("location", ""))
-                        if not _https(target):
+                        target_url = urljoin(url, response.headers.get("location", ""))
+                        if not _https(target_url):
                             raise ReceivingError("download_redirect_refused", transient=False)
-                        url = target
+                        url = target_url
                         continue
                     if response.status_code >= 400:
                         raise _status_error("download", response)
+                    encoding = response.headers.get("content-encoding", "identity")
+                    if encoding.strip().lower() not in ("", "identity"):
+                        raise ReceivingError("content_encoding_refused", transient=False)
                     length = response.headers.get("content-length", "")
                     if length.isdigit() and int(length) > max_bytes:
                         raise ReceivingError("too_large", transient=False)
                     chunks: list[bytes] = []
                     size = 0
-                    async for chunk in response.aiter_bytes():
+                    async for chunk in response.aiter_raw():
                         size += len(chunk)
                         if size > max_bytes:
                             raise ReceivingError("too_large", transient=False)

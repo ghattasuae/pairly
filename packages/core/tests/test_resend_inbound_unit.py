@@ -128,67 +128,142 @@ def test_inbound_settings_come_in_pairs() -> None:
 
 # ------------------------------------------------------------------ Receiving API
 
+API_KEY = "re_placeholder_full"
+# A fake DNS: names to addresses (no real lookup). Documentation ranges such as
+# 203.0.113.0/24 are not global, so public-looking addresses stand in for public hosts.
+DNS = {
+    "inbound.resend.example": ["93.184.215.14"],
+    "cdn.resend.example": ["151.101.1.1"],
+    "loopback.example": ["127.0.0.1"],
+    "metadata.example": ["169.254.169.254"],
+    "private.example": ["10.0.0.5"],
+    "nat64.example": ["64:ff9b::a9fe:a9fe"],
+    "mixed.example": ["151.101.65.1", "192.168.1.1"],
+}
 
-def _client(handler: Callable[[httpx.Request], httpx.Response]) -> httpx.AsyncClient:
+
+async def fake_resolver(host: str, port: int) -> list[str]:
+    if host not in DNS:
+        raise OSError("no such host")
+    return DNS[host]
+
+
+def _api_client(download_url: str) -> httpx.AsyncClient:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "api.resend.com"
+        assert request.url.path == f"/emails/receiving/{EMAIL_ID}"
+        assert request.headers["Authorization"] == f"Bearer {API_KEY}"
+        return httpx.Response(200, json={"id": EMAIL_ID, "raw": {"download_url": download_url}})
+
     return httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
 
-def _api(download: str) -> Callable[[httpx.Request], httpx.Response | None]:
-    def answer(request: httpx.Request) -> httpx.Response | None:
-        if request.url.host == "api.resend.com":
-            assert request.url.path == f"/emails/receiving/{EMAIL_ID}"
-            assert request.headers["Authorization"] == "Bearer re_placeholder_full"
-            return httpx.Response(200, json={"id": EMAIL_ID, "raw": {"download_url": download}})
-        return None
+def _receiver(
+    download_url: str, handler: Callable[[httpx.Request], httpx.Response]
+) -> ResendReceivingClient:
+    return ResendReceivingClient(
+        api_key=API_KEY,
+        client=_api_client(download_url),
+        resolver=fake_resolver,
+        download_transport=httpx.MockTransport(handler),
+    )
 
-    return answer
+
+async def _raw(receiver: ResendReceivingClient, max_bytes: int = 1024) -> bytes:
+    try:
+        return await receiver.raw_message(EMAIL_ID, max_bytes=max_bytes)
+    finally:
+        await receiver.aclose()
 
 
-async def test_raw_message_follows_https_redirects() -> None:
-    api = _api("https://inbound.resend.example/raw/1")
+async def test_public_download_goes_to_the_checked_address_without_the_key() -> None:
+    seen: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        found = api(request)
-        if found is not None:
-            return found
+        seen.append(request)
         if request.url.path == "/raw/1":
             return httpx.Response(302, headers={"location": "https://cdn.resend.example/raw/2"})
-        return httpx.Response(200, content=b"From: a@example.test\r\n\r\nhi")
+        return httpx.Response(200, stream=httpx.ByteStream(b"From: a@example.test\r\n\r\nhi"))
 
-    async with _client(handler) as http:
-        raw = await ResendReceivingClient(api_key="re_placeholder_full", client=http).raw_message(
-            EMAIL_ID, max_bytes=1024
-        )
+    raw = await _raw(_receiver("https://inbound.resend.example/raw/1", handler))
     assert raw.startswith(b"From: a@example.test")
+    # Pinned to the resolved address; the name stays in Host and TLS SNI.
+    assert [r.url.host for r in seen] == ["93.184.215.14", "151.101.1.1"]
+    assert [r.headers["Host"] for r in seen] == ["inbound.resend.example", "cdn.resend.example"]
+    assert seen[0].extensions["sni_hostname"] == "inbound.resend.example"
+    assert all("Authorization" not in r.headers for r in seen)
+    assert all(r.headers["Accept-Encoding"] == "identity" for r in seen)
 
 
 @pytest.mark.parametrize(
-    ("download", "redirect", "code"),
+    "download",
     [
-        ("http://inbound.resend.example/raw", None, "no_raw_download"),
-        (
-            "https://inbound.resend.example/raw",
-            "http://evil.example/x",
-            "download_redirect_refused",
-        ),
+        "https://loopback.example/raw",
+        "https://metadata.example/latest/meta-data",
+        "https://private.example/raw",
+        "https://nat64.example/raw",
+        "https://mixed.example/raw",
+        "https://127.0.0.1/raw",
+        "https://[::1]/raw",
+        "https://169.254.169.254/latest/meta-data",
+        "https://localhost/raw",
+        "https://unknown.example/raw",
     ],
 )
-async def test_plain_http_is_refused(download: str, redirect: str | None, code: str) -> None:
-    api = _api(download)
+async def test_unsafe_download_hosts_are_never_contacted(download: str) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError(f"contacted {request.url}")
+
+    with pytest.raises(ReceivingError) as exc:
+        await _raw(_receiver(download, handler))
+    assert exc.value.code == "unsafe_download_url"
+    assert exc.value.transient is False
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "https://private.example/x",
+        "https://metadata.example/latest/meta-data",
+        "https://10.1.2.3/x",
+        "http://cdn.resend.example/x",
+    ],
+)
+async def test_redirect_to_an_unsafe_target_is_refused(location: str) -> None:
+    hosts: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        found = api(request)
-        if found is not None:
-            return found
-        return httpx.Response(302, headers={"location": redirect or ""})
+        hosts.append(request.url.host)
+        return httpx.Response(302, headers={"location": location})
 
-    async with _client(handler) as http:
-        with pytest.raises(ReceivingError) as exc:
-            await ResendReceivingClient(api_key="re_placeholder_full", client=http).raw_message(
-                EMAIL_ID, max_bytes=1024
-            )
-    assert exc.value.code == code
-    assert exc.value.transient is False
+    with pytest.raises(ReceivingError) as exc:
+        await _raw(_receiver("https://inbound.resend.example/raw", handler))
+    assert exc.value.code in {"unsafe_download_url", "download_redirect_refused"}
+    assert hosts == ["93.184.215.14"]
+
+
+async def test_redirect_loop_stops() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": "https://cdn.resend.example/again"})
+
+    with pytest.raises(ReceivingError, match="too_many_redirects"):
+        await _raw(_receiver("https://inbound.resend.example/raw", handler))
+
+
+async def test_compressed_body_is_refused() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"x", headers={"content-encoding": "gzip"})
+
+    with pytest.raises(ReceivingError, match="content_encoding_refused"):
+        await _raw(_receiver("https://inbound.resend.example/raw", handler))
+
+
+async def test_plain_http_download_url_is_refused() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("no download expected")
+
+    with pytest.raises(ReceivingError, match="no_raw_download"):
+        await _raw(_receiver("http://inbound.resend.example/raw", handler))
 
 
 async def _chunks(*parts: bytes) -> AsyncIterator[bytes]:
@@ -198,34 +273,29 @@ async def _chunks(*parts: bytes) -> AsyncIterator[bytes]:
 
 @pytest.mark.parametrize("declared", [True, False])
 async def test_size_limit(declared: bool) -> None:
-    api = _api("https://inbound.resend.example/raw")
     big = b"x" * 2048
 
     def handler(request: httpx.Request) -> httpx.Response:
-        found = api(request)
-        if found is not None:
-            return found
         if declared:
-            return httpx.Response(200, content=big)
+            return httpx.Response(
+                200, headers={"content-length": str(len(big))}, stream=httpx.ByteStream(big)
+            )
         return httpx.Response(200, content=_chunks(big[:1000], big[1000:]))
 
-    async with _client(handler) as http:
-        with pytest.raises(ReceivingError) as exc:
-            await ResendReceivingClient(api_key="re_placeholder_full", client=http).raw_message(
-                EMAIL_ID, max_bytes=1024
-            )
-    assert exc.value.code == "too_large"
+    with pytest.raises(ReceivingError, match="too_large"):
+        await _raw(_receiver("https://inbound.resend.example/raw", handler))
 
 
 @pytest.mark.parametrize(
     ("status", "transient"), [(404, False), (401, False), (429, True), (503, True)]
 )
 async def test_api_errors(status: int, transient: bool) -> None:
-    async with _client(lambda r: httpx.Response(status, json={"name": "x"})) as http:
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda r: httpx.Response(status, json={"name": "x"}))
+    ) as http:
+        receiver = ResendReceivingClient(api_key=API_KEY, client=http, resolver=fake_resolver)
         with pytest.raises(ReceivingError) as exc:
-            await ResendReceivingClient(api_key="re_placeholder_full", client=http).raw_message(
-                EMAIL_ID, max_bytes=1024
-            )
+            await _raw(receiver)
     assert exc.value.transient is transient
 
 
@@ -233,8 +303,9 @@ async def test_bad_email_id_makes_no_request() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         raise AssertionError("no request expected")
 
-    async with _client(handler) as http:
+    receiver = _receiver("https://inbound.resend.example/raw", handler)
+    try:
         with pytest.raises(ReceivingError, match="bad_email_id"):
-            await ResendReceivingClient(api_key="re_placeholder_full", client=http).raw_message(
-                "../../domains", max_bytes=1024
-            )
+            await receiver.raw_message("../../domains", max_bytes=1024)
+    finally:
+        await receiver.aclose()

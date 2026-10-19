@@ -230,3 +230,41 @@ def test_route_outcomes(
         assert response.json()["outcome"] == outcome
     assert seen
     assert seen[0].msg_id == "msg_1"
+
+
+def test_route_is_rate_limited_per_client_address_including_bad_signatures(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    async def fake(event: ReceivedEvent, **kw: Any) -> str:
+        return "ingested"
+
+    monkeypatch.setattr(inbound_route, "handle_received", fake)
+    monkeypatch.setattr(inbound_route, "LIMITS", {"webhook": (3, 60.0)})
+    other = "whsec_" + base64.b64encode(b"pairly-test-only-signing-key-0005").decode()
+    body = _event_body(subject="secret invoice text")
+    with TestClient(_app()) as client:
+        statuses = [_post(client, body, secret=other).status_code for _ in range(2)]
+        statuses.append(_post(client, body).status_code)
+        # The fourth request from the same address is refused, signed or not.
+        limited = _post(client, body)
+    assert statuses == [401, 401, 200]
+    assert limited.status_code == 429
+    assert limited.headers.get("Retry-After")
+
+
+def test_signature_failures_are_logged_without_the_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logged: list[tuple[str, dict[str, Any]]] = []
+
+    class _Log:
+        def warning(self, event: str, **kw: Any) -> None:
+            logged.append((event, kw))
+
+    monkeypatch.setattr(inbound_route, "log", _Log())
+    other = "whsec_" + base64.b64encode(b"pairly-test-only-signing-key-0006").decode()
+    body = _event_body(subject="secret invoice text")
+    with TestClient(_app()) as client:
+        assert _post(client, body, secret=other).status_code == 401
+    assert logged == [("resend_signature_rejected", {"reason": "signature_mismatch"})]
+    assert "secret invoice text" not in repr(logged)

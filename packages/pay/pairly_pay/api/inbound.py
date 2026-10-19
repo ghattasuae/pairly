@@ -4,7 +4,12 @@
 address (``pairly_pay.resend_inbound``).
 
 No bearer token: every request must carry a valid Resend (Svix) signature over the raw
-body, at most five minutes old, or it gets 401 before anything is parsed. Without
+body, at most five minutes old, or it gets 401 before anything is parsed. Every request,
+signed or not, first counts against a per-client-address limit (``LIMIT`` a minute),
+shared between API processes through Valkey like the other unauthenticated routes
+(``pairly_core.ratelimit``, with this process's window as the fallback); over it, 429.
+Resend retries a 429 later. A rejected signature is logged with its reason only, never
+the body or the headers. Without
 ``PAIRLY_RESEND_WEBHOOK_SECRET`` and ``PAIRLY_RESEND_INBOUND_API_KEY`` it answers 503.
 Not in the public OpenAPI document: it is a provider callback, not part of the API.
 
@@ -31,6 +36,8 @@ from pairly_core.integrations.resend.signature import (
     ResendSignatureError,
     verify,
 )
+from pairly_core.ratelimit import window_limiters
+from pairly_pay.api.onboarding import _Window, client_ip
 from pairly_pay.resend_inbound import handle_received, parse_event
 
 log = structlog.get_logger(__name__)
@@ -38,6 +45,15 @@ log = structlog.get_logger(__name__)
 router = APIRouter(prefix="/inbound", tags=["pay"], include_in_schema=False)
 
 RECEIVING_STATE: Final = "resend_receiving_client"
+LIMITER_STATE: Final = "pay_resend_inbound_limiters"
+# Requests a minute per client address. Behind a proxy that does not pass the client
+# address (PAIRLY_TRUSTED_PROXIES), this is one limit for every caller together.
+LIMITS: Final = {"webhook": (300, 60.0)}
+
+
+async def _limit(request: Request) -> None:
+    store = window_limiters(request, LIMITER_STATE, LIMITS, "pay.resend_inbound", local=_Window)
+    await store["webhook"].hit(client_ip(request))
 
 
 async def _limited_body(request: Request) -> bytes:
@@ -60,6 +76,8 @@ async def resend_received(request: Request, ctx: Context, settings: NotifySettin
     key = settings.resend_inbound_api_key
     if secret is None or key is None:
         raise ServiceUnavailableError("Resend inbound email is not configured")
+    # Before anything is read or verified, so unsigned floods count too.
+    await _limit(request)
     body = await _limited_body(request)
     try:
         msg_id = verify(

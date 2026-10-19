@@ -117,17 +117,25 @@ metadata only; the body and attachments are fetched from its Receiving API.
 How it works in Pairly (`POST /v1/pay/inbound/resend`, `packages/pay/pairly_pay/api/inbound.py`
 and `packages/pay/pairly_pay/resend_inbound.py`):
 
-1. The signature is checked before anything is parsed: HMAC-SHA256 with the endpoint's
+1. Every request first counts against a per-client-address limit (300 a minute),
+   shared between API processes through Valkey like the other unauthenticated routes;
+   over it, 429 (Resend retries). Then the signature is checked before anything is
+   parsed: HMAC-SHA256 with the endpoint's
    `whsec_` secret over `<svix-id>.<svix-timestamp>.<raw body>`, compared in constant
    time with every `v1` signature in `svix-signature`, and the timestamp must be within
-   five minutes (`pairly_core/integrations/resend/signature.py`). Anything else is 401.
+   five minutes (`pairly_core/integrations/resend/signature.py`). Anything else is 401,
+   logged with the reason only, never the body.
 2. Only `email.received` events are handled; others get 200 and are ignored.
 3. The recipients (`to`, `received_for`) are routed with the same rules as every inbound
    email (`<workflow>+<org-slug>.<token>@<PAIRLY_INBOUND_EMAIL_DOMAIN>`). An unknown
    address, organisation or token is dropped with 200, nothing is fetched, and no bounce
    is sent.
 4. The raw message is downloaded (`GET /emails/receiving/{id}`, then its
-   `raw.download_url`), https only, within the intake size limit
+   `raw.download_url`) within the intake size limit, through the same SSRF checks as
+   webhook delivery and URL ingestion (`pairly_core.webhooks.ssrf`): https only, every
+   resolved address public (no private, loopback, link-local, metadata or NAT64
+   address), the connection made to the checked address, each redirect checked the same
+   way, and the API key never sent to the download host
    (`pairly_core/integrations/resend/receiving.py`).
 5. The event id (`svix-id`, the same on every retry) is recorded in `inbound_events` in
    the organisation, in the same transaction that runs `pairly_pay.intake.receive_email`,
