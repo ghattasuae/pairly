@@ -20,6 +20,13 @@
 #
 #   fly deploy . --config infra/fly/ops/fly.toml --dockerfile infra/docker/python.Dockerfile \
 #     --build-target demo --build-only --push --image-label demo
+#
+# Database on Supabase instead of pairly-demo-db (docs/hosted-demo.md): the secrets from
+# scripts/gen_dev_env.py --fly DIR --supabase REF --supabase-pooler HOST carry the session
+# pooler URLs and PAIRLY_DATABASE_POOLER=session (secrets override [env]). To verify the
+# server certificate, store Supabase's CA as a secret (fly secrets set
+# SUPABASE_CA_CERT="$(base64 < prod-ca-2021.crt)"), uncomment the [[files]] block below,
+# and set PGSSLROOTCERT=/etc/pairly/supabase-ca.crt and sslmode=verify-full in the URLs.
 
 app = "pairly-demo-ops"
 primary_region = "fra"
@@ -76,3 +83,8 @@ primary_region = "fra"
   PAIRLY_HOSTED_DEMO = "1"
   # reset refuses unless this is the database in PAIRLY_DATABASE_URL_OWNER.
   PAIRLY_HOSTED_DEMO_DATABASE = "pairly"
+
+# Supabase only, see the header:
+# [[files]]
+#   guest_path = "/etc/pairly/supabase-ca.crt"
+#   secret_name = "SUPABASE_CA_CERT"

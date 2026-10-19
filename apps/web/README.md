@@ -85,7 +85,7 @@ messages/en.json, ar.json  every UI string
 
 ## Auth
 
-- **Magic link** through SMTP (Mailpit in the Docker stack; the file outbox in the native stack). The email links to
+- **Magic link** through SMTP (Mailpit in the Docker stack; the file outbox in the native stack; Resend's HTTP API with `PAIRLY_EMAIL_TRANSPORT=resend`, docs/email.md). The email links to
   `/<locale>/sign-in/confirm#token=...`. The token sits in the URL fragment, so it never
   reaches server logs, and it is only spent when the person presses "Sign in", so mail
   scanners that open links cannot use it up. Tokens are stored hashed and expire after
@@ -102,8 +102,10 @@ messages/en.json, ar.json  every UI string
   Issuer and audience come from `PAIRLY_AUTH_ISSUER` and `PAIRLY_AUTH_AUDIENCE`, the same
   variables the API checks. Tokens hold `sub`, `iat`, `exp`, `iss`, `aud`, `amr`, `email` and `email_verified`. IDs are
   UUIDs, so an organization id goes to the API unchanged as `X-Pairly-Org`.
-- **Database**: Postgres as role `pairly_auth`, whose search path is schema `auth`. It has
-  no rights on the Pairly tables.
+- **Database**: Postgres as role `pairly_auth`, whose search path is the auth schema
+  (`PAIRLY_AUTH_DB_SCHEMA`: `auth` by default, `pairly_auth` on Supabase, whose own
+  Supabase Auth owns `auth`; see docs/hosted-demo.md). The migration checks the search
+  path first. It has no rights on the Pairly tables.
 - **Protections**: secure, http-only, SameSite=Lax cookies (prefix `pairly`), Better Auth's
   origin checks on state-changing requests, rate limits stored in the database (magic link:
   5 per 5 minutes per IP plus 3 per 15 minutes per address; 2FA: 5 per minute), a nonce-based Content Security Policy, and
