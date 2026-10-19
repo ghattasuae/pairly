@@ -9,13 +9,14 @@ import type * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { TONE, type Tone } from "@/components/ui/status";
+import { Table } from "@/components/ui/table";
 import { Link, useRouter } from "@/i18n/navigation";
 import { importStatement, matchStatementsNow, type PayImportProblem } from "@/lib/actions/pay";
 import { statementFormat } from "@/lib/pay/reconciliation";
 import type { PayReconciliation, PayStatementLine, PayUnexplained } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
-import { TABLE, TONE, type Tone } from "./ledger";
 
 const PROBLEM_CODES = new Set([
   "invalid_date",
@@ -170,14 +171,14 @@ function Target({ line }: { line: PayStatementLine }) {
 function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <tr className={TABLE.row} data-statement-line={line.status}>
-      <td className={`${TABLE.td} font-mono text-xs whitespace-nowrap`}>
+    <tr data-statement-line={line.status}>
+      <td className="font-mono text-xs whitespace-nowrap">
         <Day iso={line.booking_date} />
       </td>
-      <td className={`${TABLE.td} whitespace-nowrap`}>
+      <td className="whitespace-nowrap">
         <Money currency={line.currency} amount={line.amount} />
       </td>
-      <td className={TABLE.td}>
+      <td>
         <bdi>{line.reference ?? "-"}</bdi>
         {line.counterparty_iban_masked && (
           <span className="block font-mono text-xs text-muted-foreground" dir="ltr">
@@ -185,10 +186,10 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
           </span>
         )}
       </td>
-      <td className={`${TABLE.td} font-mono text-xs`} dir="ltr">
+      <td className="font-mono text-xs" dir="ltr">
         {line.statement_reference}
       </td>
-      <td className={TABLE.td}>
+      <td>
         {matched ? (
           <>
             <Target line={line} />
@@ -212,25 +213,23 @@ function LineRow({ line, matched }: { line: PayStatementLine; matched: boolean }
 function LineTable({ lines, matched, caption }: { lines: PayStatementLine[]; matched: boolean; caption: string }) {
   const t = useTranslations("Pay.reconciliation");
   return (
-    <div className={TABLE.wrap}>
-      <table className={TABLE.table}>
-        <caption className="sr-only">{caption}</caption>
-        <thead>
-          <tr className={TABLE.headRow}>
-            <th className={TABLE.th}>{t("col.date")}</th>
-            <th className={TABLE.th}>{t("col.amount")}</th>
-            <th className={TABLE.th}>{t("col.reference")}</th>
-            <th className={TABLE.th}>{t("col.statement")}</th>
-            <th className={TABLE.th}>{matched ? t("col.matchedWith") : t("col.why")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line) => (
-            <LineRow key={line.id} line={line} matched={matched} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table label={caption}>
+      <caption className="sr-only">{caption}</caption>
+      <thead>
+        <tr>
+          <th>{t("col.date")}</th>
+          <th>{t("col.amount")}</th>
+          <th>{t("col.reference")}</th>
+          <th>{t("col.statement")}</th>
+          <th>{matched ? t("col.matchedWith") : t("col.why")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lines.map((line) => (
+          <LineRow key={line.id} line={line} matched={matched} />
+        ))}
+      </tbody>
+    </Table>
   );
 }
 

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Section } from "@/components/ui/section";
 import { errorKey } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +94,7 @@ export function HoldBadge({ reason }: { reason: string | null | undefined }) {
   );
 }
 
+/** A Pay section card: the shared hairline `Section` with its heading. */
 export function Panel({
   title,
   children,
@@ -100,9 +102,8 @@ export function Panel({
   ...rest
 }: { title: React.ReactNode; children: React.ReactNode; className?: string | undefined } & Record<`data-${string}`, string | boolean>) {
   return (
-    <section className={cn("card-hairline space-y-3 p-5 sm:p-6", className)} {...rest}>
-      <h2 className="font-display text-xl leading-tight">{title}</h2>
+    <Section title={title} className={className} {...rest}>
       {children}
-    </section>
+    </Section>
   );
 }

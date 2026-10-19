@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Callout } from "@/components/ui/status";
 import { Link, useRouter } from "@/i18n/navigation";
 import { acceptOnboarding, requestBankChange, updatePaymentTerms, vendorAction } from "@/lib/actions/pay";
 import type { PayVendorDetail } from "@/lib/pay/types";
 
 import { CallbackSourceFields, type CallbackValue, EMPTY_CALLBACK, callbackComplete } from "./callback-source";
 import { ErrorText, HoldBadge, Panel, TicketStatusBadge, VendorStatusBadge } from "./common";
-import { Callout } from "./ledger";
 
 const SOURCES = ["email", "staff", "invoice", "vendor_portal"] as const;
 

@@ -7,7 +7,7 @@ import type * as React from "react";
 import { NotProvisioned } from "@/components/states/not-provisioned";
 import { PageHeader } from "@/components/states/page-header";
 import { Unavailable } from "@/components/states/unavailable";
-import { tabClass } from "@/components/pay/ledger";
+import { TabNav, tabClass } from "@/components/ui/tab-nav";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getSession, twoFactorEnabled } from "@/lib/auth/server";
@@ -109,10 +109,7 @@ export async function PayHeader({
       <PageHeader eyebrow={t("eyebrow")} title={title} className="border-b-0 pb-4">
         {intro && <p className="max-w-2xl">{intro}</p>}
       </PageHeader>
-      <nav
-        aria-label={t("label")}
-        className="-mx-1 flex gap-x-5 overflow-x-auto border-b border-border px-1 [scrollbar-width:thin]"
-      >
+      <TabNav aria-label={t("label")}>
         {tabs.map((tab) => (
           <Link
             key={tab.key}
@@ -123,7 +120,7 @@ export async function PayHeader({
             {t(tab.key)}
           </Link>
         ))}
-      </nav>
+      </TabNav>
     </div>
   );
 }

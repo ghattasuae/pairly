@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { chipClass } from "@/components/ui/chip";
+import { Table } from "@/components/ui/table";
 import { Link, useRouter } from "@/i18n/navigation";
 import { previewRun, proposeRun, runAction } from "@/lib/actions/pay";
 import { RUN_STATUSES, runSums, type RunStatus } from "@/lib/pay/payments";
@@ -20,7 +22,6 @@ import type { PayRunDetail, PayRunExcluded, PayRunPreview, PayRunSummary } from 
 
 import { ErrorText, Panel } from "./common";
 import { ReasonText } from "./invoice-approval";
-import { chipClass, TABLE } from "./ledger";
 
 export function RunStatusBadge({ status }: { status: string }) {
   const t = useTranslations("Pay.runStatus");
@@ -435,55 +436,53 @@ export function PaymentRunView({
       </section>
 
       <Panel title={t("items", { count: run.items.length })}>
-        <div className={TABLE.wrap}>
-          <table className={TABLE.table} data-run-items>
-            <thead>
-              <tr className={TABLE.headRow}>
-                <th className={TABLE.th}>{t("col.invoice")}</th>
-                <th className={TABLE.th}>{t("col.vendor")}</th>
-                <th className={TABLE.th}>{t("col.due")}</th>
-                <th className={TABLE.th}>{t("col.account")}</th>
-                <th className={TABLE.thEnd}>{t("col.amount")}</th>
-                <th className={TABLE.th}>{t("col.status")}</th>
+        <Table label={t("items", { count: run.items.length })} data-run-items>
+          <thead>
+            <tr>
+              <th>{t("col.invoice")}</th>
+              <th>{t("col.vendor")}</th>
+              <th>{t("col.due")}</th>
+              <th>{t("col.account")}</th>
+              <th className="text-end">{t("col.amount")}</th>
+              <th>{t("col.status")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {run.items.map((item) => (
+              <tr key={item.id} data-run-item={item.invoice_reference ?? item.invoice_id}>
+                <td>
+                  <Link href={`/pay/invoices/${item.invoice_id}`} className="font-mono underline-offset-4 hover:underline">
+                    {item.invoice_reference ?? item.invoice_id}
+                  </Link>
+                  {item.invoice_number && <bdi className="block font-mono text-xs text-muted-foreground">{item.invoice_number}</bdi>}
+                </td>
+                <td>
+                  <bdi>{item.vendor_name ?? ""}</bdi>
+                </td>
+                <td className="font-mono text-xs">{item.due_date ?? t("noDue")}</td>
+                <td className="font-mono text-xs" dir="ltr">
+                  {item.bank_account_masked ?? t("accountChanged")}
+                </td>
+                <td className="text-end">
+                  <Money currency={item.currency} amount={item.amount} />
+                  {item.discount !== null && item.discount !== undefined && (
+                    <span className="block text-xs text-success-ink" data-discount={String(item.discount)}>
+                      {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {t(`itemStatus.${item.status}` as "itemStatus.paid")}
+                  {item.payment_reference && (
+                    <span className="ms-1 font-mono text-xs text-muted-foreground" dir="ltr">
+                      {item.payment_reference}
+                    </span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {run.items.map((item) => (
-                <tr key={item.id} className={TABLE.row} data-run-item={item.invoice_reference ?? item.invoice_id}>
-                  <td className={TABLE.td}>
-                    <Link href={`/pay/invoices/${item.invoice_id}`} className="font-mono underline-offset-4 hover:underline">
-                      {item.invoice_reference ?? item.invoice_id}
-                    </Link>
-                    {item.invoice_number && <bdi className="block font-mono text-xs text-muted-foreground">{item.invoice_number}</bdi>}
-                  </td>
-                  <td className={TABLE.td}>
-                    <bdi>{item.vendor_name ?? ""}</bdi>
-                  </td>
-                  <td className={`${TABLE.td} font-mono text-xs`}>{item.due_date ?? t("noDue")}</td>
-                  <td className={`${TABLE.td} font-mono text-xs`} dir="ltr">
-                    {item.bank_account_masked ?? t("accountChanged")}
-                  </td>
-                  <td className={`${TABLE.td} text-end`}>
-                    <Money currency={item.currency} amount={item.amount} />
-                    {item.discount !== null && item.discount !== undefined && (
-                      <span className="block text-xs text-success-ink" data-discount={String(item.discount)}>
-                        {t("discountTaken", { amount: `${item.currency} ${String(item.discount)}` })}
-                      </span>
-                    )}
-                  </td>
-                  <td className={TABLE.td}>
-                    {t(`itemStatus.${item.status}` as "itemStatus.paid")}
-                    {item.payment_reference && (
-                      <span className="ms-1 font-mono text-xs text-muted-foreground" dir="ltr">
-                        {item.payment_reference}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
         <ExcludedList items={run.excluded} />
       </Panel>
 

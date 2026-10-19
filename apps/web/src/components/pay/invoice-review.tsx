@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Select, Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfidenceMeter, type Tone } from "@/components/ui/status";
+import { Section } from "@/components/ui/section";
 import { Link } from "@/i18n/navigation";
 import { correctInvoiceField, invoiceAction } from "@/lib/actions/pay";
 import { highlightsFromFields, highlightsFromFindings } from "@/lib/evidence";
@@ -37,7 +39,6 @@ import { cn } from "@/lib/utils";
 import { ErrorText, VendorStatusBadge } from "./common";
 import { InvoiceApprovalPanel } from "./invoice-approval";
 import { ComparePanel, InvoiceChecks } from "./invoice-checks";
-import { ConfidenceMeter, type Tone } from "./ledger";
 
 const KNOWN_REASONS = new Set([
   "extraction",
@@ -401,8 +402,10 @@ export function InvoiceReview({
                   key={i}
                   data-source={piece.paths.join(" ")}
                   className={cn(
-                    "rounded-sm bg-info-soft text-inherit",
-                    activeField && piece.paths.includes(activeField.path) && "bg-primary/25 ring-1 ring-primary",
+                    // The shared evidence mark (saffron-soft with a bottom rule); the field
+                    // being looked at also gets a slate ring.
+                    "evidence-mark",
+                    activeField && piece.paths.includes(activeField.path) && "ring-1 ring-primary",
                   )}
                 >
                   {piece.text}
@@ -510,10 +513,7 @@ export function InvoiceReview({
         <ErrorText code={error} />
 
         {invoice.can_process && (invoice.status === "needs_review" || invoice.status === "ready") && (
-          <section className="card-hairline space-y-3 p-5" aria-labelledby={`${ids}-actions`}>
-            <h2 id={`${ids}-actions`} className="eyebrow">
-              {t("actions")}
-            </h2>
+          <Section aria-labelledby={`${ids}-actions`} title={<span id={`${ids}-actions`}>{t("actions")}</span>}>
             {(invoice.vendor === null || invoice.vendor_match.conflict === true) && vendors.length > 0 && (
               <form
                 className="flex flex-wrap items-end gap-2"
@@ -564,7 +564,7 @@ export function InvoiceReview({
                 </Button>
               </form>
             )}
-          </section>
+          </Section>
         )}
       </div>
     </div>

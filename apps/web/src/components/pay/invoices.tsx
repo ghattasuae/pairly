@@ -6,12 +6,12 @@ import { FileText } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { EmptyState } from "@/components/states/empty-state";
+import { chipClass } from "@/components/ui/chip";
 import { Link } from "@/i18n/navigation";
 import { INVOICE_STATUSES, type InvoiceStatus } from "@/lib/pay/invoices";
 import type { PayInvoiceSummary } from "@/lib/pay/types";
 
 import { InvoiceStatusBadge } from "./invoice-review";
-import { chipClass } from "./ledger";
 
 /** The invoice list (brief 4.2): filter chips by status, newest first. */
 export function InvoiceList({

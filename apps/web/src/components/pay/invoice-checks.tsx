@@ -7,6 +7,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Table } from "@/components/ui/table";
+import { Section } from "@/components/ui/section";
 import { Link } from "@/i18n/navigation";
 import { compareLines, compareRows, failedChecks, findingMessage, sortedFindings } from "@/lib/pay/checks";
 import type { PayCheck, PayCompare, PayRisk } from "@/lib/pay/types";
@@ -28,10 +30,7 @@ export function InvoiceChecks({ checks, risk }: { checks: readonly PayCheck[]; r
   const failed = failedChecks(checks);
   const level = risk && LEVELS.has(risk.level) ? risk.level : "high";
   return (
-    <section aria-labelledby={`${id}-title`} className="card-hairline space-y-3 p-5" data-invoice-checks>
-      <h2 id={`${id}-title`} className="eyebrow">
-        {t("title")}
-      </h2>
+    <Section aria-labelledby={`${id}-title`} title={<span id={`${id}-title`}>{t("title")}</span>} data-invoice-checks>
       {risk && (
         <div className="flex flex-wrap items-center gap-2" data-risk-level={level}>
           <Badge variant={level === "low" ? "success" : level === "medium" ? "warning" : "danger"}>
@@ -94,7 +93,7 @@ export function InvoiceChecks({ checks, risk }: { checks: readonly PayCheck[]; r
           ))}
         </ul>
       )}
-    </section>
+    </Section>
   );
 }
 
@@ -125,59 +124,57 @@ export function ComparePanel({ compare }: { compare: readonly PayCompare[] }) {
                 {t("openOriginal", { reference: pair.original.reference })}
               </Link>
             </p>
-            <div className="overflow-x-auto rounded-md border border-border">
-              <table className="w-full table-fixed text-sm">
-                <caption className="sr-only">{t("caption")}</caption>
-                <colgroup>
-                  <col className="w-[28%]" />
-                  <col />
-                  <col />
-                </colgroup>
-                <thead>
-                  <tr className="border-b border-border bg-surface-sunken text-start text-xs text-muted-foreground">
-                    <th scope="col" className="px-3 py-2 text-start font-medium">
-                      {t("field")}
-                    </th>
-                    <th scope="col" className="border-s border-border px-3 py-2 text-start font-medium">
-                      {t("thisInvoice")}
-                    </th>
-                    <th scope="col" className="border-s border-border px-3 py-2 text-start font-medium">
-                      {t("original")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr
-                      key={row.field}
-                      data-compare-row={row.field}
-                      data-same={row.same}
-                      className={cn("border-b border-border last:border-0", !row.same && "bg-warning-soft")}
+            <Table label={t("caption")} className="table-fixed">
+              <caption className="sr-only">{t("caption")}</caption>
+              <colgroup>
+                <col className="w-[28%]" />
+                <col />
+                <col />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-border bg-surface-sunken text-start text-xs text-muted-foreground">
+                  <th scope="col" className="px-3 py-2 text-start font-medium">
+                    {t("field")}
+                  </th>
+                  <th scope="col" className="border-s border-border px-3 py-2 text-start font-medium">
+                    {t("thisInvoice")}
+                  </th>
+                  <th scope="col" className="border-s border-border px-3 py-2 text-start font-medium">
+                    {t("original")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.field}
+                    data-compare-row={row.field}
+                    data-same={row.same}
+                    className={cn("border-b border-border last:border-0", !row.same && "bg-warning-soft")}
+                  >
+                    <th
+                      scope="row"
+                      className={cn(
+                        "border-s-[3px] px-3 py-2 text-start font-normal text-muted-foreground",
+                        row.same ? "border-s-transparent" : "border-s-warning-ink text-warning-ink",
+                      )}
                     >
-                      <th
-                        scope="row"
-                        className={cn(
-                          "border-s-[3px] px-3 py-2 text-start font-normal text-muted-foreground",
-                          row.same ? "border-s-transparent" : "border-s-warning-ink text-warning-ink",
-                        )}
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          {!row.same && <AlertTriangle aria-hidden className="size-3.5 shrink-0" />}
-                          {fields.has(row.field as "total") ? fields(row.field as "total") : row.field}
-                        </span>
-                      </th>
-                      <td className={cn("border-s border-border px-3 py-2 font-mono break-words", !row.same && "font-medium")}>
-                        <bdi>{row.invoice ?? t("empty")}</bdi>
-                      </td>
-                      <td className={cn("border-s border-border px-3 py-2 font-mono break-words", !row.same && "font-medium")}>
-                        <bdi>{row.original ?? t("empty")}</bdi>
-                        {!row.same && <span className="sr-only"> {t("differs")}</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      <span className="inline-flex items-center gap-1.5">
+                        {!row.same && <AlertTriangle aria-hidden className="size-3.5 shrink-0" />}
+                        {fields.has(row.field as "total") ? fields(row.field as "total") : row.field}
+                      </span>
+                    </th>
+                    <td className={cn("border-s border-border px-3 py-2 font-mono break-words", !row.same && "font-medium")}>
+                      <bdi>{row.invoice ?? t("empty")}</bdi>
+                    </td>
+                    <td className={cn("border-s border-border px-3 py-2 font-mono break-words", !row.same && "font-medium")}>
+                      <bdi>{row.original ?? t("empty")}</bdi>
+                      {!row.same && <span className="sr-only"> {t("differs")}</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
             {lines.length > 0 && (
               <div className="space-y-1">
                 <h3 className="text-sm font-medium">{t("lines")}</h3>

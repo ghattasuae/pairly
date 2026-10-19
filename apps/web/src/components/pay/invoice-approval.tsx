@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Section } from "@/components/ui/section";
 import { Link } from "@/i18n/navigation";
 import { codeInvoice, invoiceAction } from "@/lib/actions/pay";
 import { parseReason, submitState, type ChecksState } from "@/lib/pay/payments";
@@ -97,13 +98,12 @@ export function InvoiceApprovalPanel({
   }
 
   return (
-    <section className="card-hairline space-y-3 p-5" aria-labelledby={`${ids}-title`} data-approval-panel={invoice.status}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={`${ids}-title`} className="eyebrow">
-          {t("title")}
-        </h2>
-        <ChecksStateBadge state={state} />
-      </div>
+    <Section
+      aria-labelledby={`${ids}-title`}
+      title={<span id={`${ids}-title`}>{t("title")}</span>}
+      actions={<ChecksStateBadge state={state} />}
+      data-approval-panel={invoice.status}
+    >
 
       {state !== "current" && open && (
         <div className="space-y-2 text-sm" data-checks-warning>
@@ -230,6 +230,6 @@ export function InvoiceApprovalPanel({
       )}
 
       <ErrorText code={error} />
-    </section>
+    </Section>
   );
 }

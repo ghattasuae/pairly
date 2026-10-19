@@ -12,6 +12,7 @@ import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Table } from "@/components/ui/table";
 import { useRouter } from "@/i18n/navigation";
 import { endPurchaseOrder, importPurchaseCsv, type PayImportProblem } from "@/lib/actions/pay";
 import type { PayPoSummary } from "@/lib/pay/types";
@@ -253,56 +254,54 @@ export function PurchaseOrderList({
       {items.length === 0 ? (
         <EmptyState icon={<ClipboardList aria-hidden />} title={t("emptyTitle")} body={t("emptyBody")} />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-          <table className="w-full text-sm" data-po-list>
-            <thead className="bg-surface-sunken text-start text-xs text-muted-foreground">
-              <tr className="border-b border-border">
-                <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.number")}</th>
-                <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.vendor")}</th>
-                <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.status")}</th>
-                <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.match")}</th>
-                <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.ordered")}</th>
-                <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.amount")}</th>
-                <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.receipts")}</th>
-                <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.invoices")}</th>
+        <Table label={t("title")} data-po-list>
+          <thead className="bg-surface-sunken text-start text-xs text-muted-foreground">
+            <tr className="border-b border-border">
+              <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.number")}</th>
+              <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.vendor")}</th>
+              <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.status")}</th>
+              <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.match")}</th>
+              <th scope="col" className="px-3 py-2 text-start font-medium">{t("col.ordered")}</th>
+              <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.amount")}</th>
+              <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.receipts")}</th>
+              <th scope="col" className="px-3 py-2 text-end font-medium">{t("col.invoices")}</th>
+              {(canClose || canCancel) && (
+                <th scope="col" className="px-3 py-2 text-end font-medium">
+                  {t("col.actions")}
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((po) => (
+              <tr key={po.id} id={`po-${po.id}`} data-po={po.po_number}>
+                <td className="px-3 py-2 font-mono" dir="ltr">
+                  {po.po_number}
+                </td>
+                <td className="px-3 py-2">
+                  <bdi>{po.vendor_name ?? po.vendor_reference ?? ""}</bdi>
+                </td>
+                <td className="px-3 py-2">
+                  <PoStatusBadge status={po.status} />
+                </td>
+                <td className="px-3 py-2">{t(po.match_type === "2-way" ? "twoWay" : "threeWay")}</td>
+                <td className="px-3 py-2 font-mono text-xs tabular-nums" dir="ltr">
+                  {po.order_date}
+                </td>
+                <td className="px-3 py-2 text-end font-mono font-medium tabular-nums" dir="ltr" data-amount>
+                  {po.currency} {po.subtotal}
+                </td>
+                <td className="px-3 py-2 text-end font-mono tabular-nums">{po.receipt_count}</td>
+                <td className="px-3 py-2 text-end font-mono tabular-nums">{po.invoice_count}</td>
                 {(canClose || canCancel) && (
-                  <th scope="col" className="px-3 py-2 text-end font-medium">
-                    {t("col.actions")}
-                  </th>
+                  <td className="px-3 py-2 text-end">
+                    <PoActions po={po} canClose={canClose} canCancel={canCancel} totpEnabled={totpEnabled} />
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {items.map((po) => (
-                <tr key={po.id} id={`po-${po.id}`} data-po={po.po_number}>
-                  <td className="px-3 py-2 font-mono" dir="ltr">
-                    {po.po_number}
-                  </td>
-                  <td className="px-3 py-2">
-                    <bdi>{po.vendor_name ?? po.vendor_reference ?? ""}</bdi>
-                  </td>
-                  <td className="px-3 py-2">
-                    <PoStatusBadge status={po.status} />
-                  </td>
-                  <td className="px-3 py-2">{t(po.match_type === "2-way" ? "twoWay" : "threeWay")}</td>
-                  <td className="px-3 py-2 font-mono text-xs tabular-nums" dir="ltr">
-                    {po.order_date}
-                  </td>
-                  <td className="px-3 py-2 text-end font-mono font-medium tabular-nums" dir="ltr" data-amount>
-                    {po.currency} {po.subtotal}
-                  </td>
-                  <td className="px-3 py-2 text-end font-mono tabular-nums">{po.receipt_count}</td>
-                  <td className="px-3 py-2 text-end font-mono tabular-nums">{po.invoice_count}</td>
-                  {(canClose || canCancel) && (
-                    <td className="px-3 py-2 text-end">
-                      <PoActions po={po} canClose={canClose} canCancel={canCancel} totpEnabled={totpEnabled} />
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   );

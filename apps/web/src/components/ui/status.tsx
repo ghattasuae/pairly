@@ -5,8 +5,9 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 /*
- * Small "ink and saffron" pieces the Pay screens share. They live here until the shared
- * set in src/components/ui has an equivalent; each one is marked as a candidate.
+ * Status patterns in the "ink and saffron" style: one tone map (soft tint, hairline, ink,
+ * icon and bar colour per status), a boxed callout, a labelled big number, a confidence
+ * meter and a vertical step list. Tones are semantic only; saffron stays for actions.
  */
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
@@ -20,26 +21,6 @@ export const TONE = {
   danger: { box: "border-destructive/45 bg-danger-soft", ink: "text-danger-ink", icon: "text-danger-ink", bar: "bg-destructive" },
 } as const satisfies Record<Tone, { box: string; ink: string; icon: string; bar: string }>;
 
-// candidate for src/components/ui
-/** A filter chip: an ink outline on the quiet wash when current, a hairline otherwise. */
-export function chipClass(active: boolean): string {
-  return active
-    ? "inline-flex h-8 items-center gap-1.5 rounded-md border border-foreground/70 bg-accent px-3 text-[0.8rem] font-medium text-foreground"
-    : "inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-[0.8rem] text-foreground hover:border-foreground/35 hover:bg-accent";
-}
-
-// candidate for src/components/ui
-/** A section tab with an ink underline when current (the Pay section's own tabs). */
-export function tabClass(active: boolean): string {
-  return cn(
-    "inline-flex h-10 items-center border-b-2 px-1 text-sm whitespace-nowrap",
-    active
-      ? "border-foreground font-medium text-foreground"
-      : "border-transparent text-muted-foreground hover:border-rule hover:text-foreground",
-  );
-}
-
-// candidate for src/components/ui
 /**
  * A boxed note in one status tone: an icon, an optional title and the body. The tone is
  * carried by the icon and the words as well as the tint, never by colour alone.
@@ -72,7 +53,6 @@ export function Callout({
   );
 }
 
-// candidate for src/components/ui
 /** A labelled big number: Fraunces, lining tabular figures, optional tone for the value. */
 export function Figure({
   label,
@@ -99,7 +79,6 @@ export function Figure({
   );
 }
 
-// candidate for src/components/ui
 /**
  * How sure the reader was, as a thin meter next to the words. The tone follows the
  * review state (doubtful is warning, missing is danger, confident is success), so the
@@ -126,7 +105,6 @@ const STEP_DOT: Record<StepState, string> = {
   todo: "border-input bg-surface text-muted-foreground",
 };
 
-// candidate for src/components/ui
 /**
  * A vertical list of steps with a hairline between them: done (filled), current (ink
  * ring), blocked (danger) and still to come (outline). The state is also given in the
@@ -172,15 +150,3 @@ export function StepList({
     </ol>
   );
 }
-
-/** Classes for the Pay tables: a quiet header row on sunken paper, hairline rows. */
-export const TABLE = {
-  wrap: "overflow-x-auto rounded-lg border border-border bg-surface",
-  table: "w-full text-sm",
-  headRow: "border-b border-border bg-surface-sunken text-xs text-muted-foreground",
-  th: "px-3 py-2 text-start font-medium",
-  thEnd: "px-3 py-2 text-end font-medium",
-  row: "border-b border-border last:border-0",
-  td: "px-3 py-2 align-top",
-  tdEnd: "px-3 py-2 text-end align-top font-mono tabular-nums",
-} as const;

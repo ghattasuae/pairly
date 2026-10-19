@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Proofly Technology
 import { useFormatter, useTranslations } from "next-intl";
 
+import { Table } from "@/components/ui/table";
 import { Link } from "@/i18n/navigation";
 import type { PayForecast, PayForecastBucket, PayForecastCurrency } from "@/lib/pay/types";
 
@@ -71,6 +72,11 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
     { key: "later", label: t("later"), committed: data.later_committed, inReview: data.later_in_review },
     { key: "undated", label: t("undated"), committed: data.undated_committed, inReview: data.undated_in_review },
   ].filter((row) => row.committed.count > 0 || row.inReview.count > 0);
+  const heading = t("currency", {
+    currency: cur,
+    committed: `${cur} ${data.committed_total}`,
+    review: `${cur} ${data.in_review_total}`,
+  });
   // Bars share one scale per currency: the largest week (committed plus in review).
   const max = Math.max(
     1,
@@ -79,57 +85,49 @@ function CurrencyTable({ data }: { data: PayForecastCurrency }) {
   );
   return (
     <section className="space-y-3" data-forecast-currency={cur}>
-      <h2 className="font-display text-xl">
-        {t("currency", {
-          currency: cur,
-          committed: `${cur} ${data.committed_total}`,
-          review: `${cur} ${data.in_review_total}`,
-        })}
-      </h2>
+      <h2 className="font-display text-xl">{heading}</h2>
       <ForecastLegend />
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-surface-sunken text-xs text-muted-foreground">
-              <th className="px-3 py-2 text-start font-medium">{t("col.week")}</th>
-              <th className="px-3 py-2 text-start font-medium">{t("col.committed")}</th>
-              <th className="px-3 py-2 text-start font-medium">{t("col.inReview")}</th>
+      <Table label={heading}>
+        <thead>
+          <tr className="border-b border-border bg-surface-sunken text-xs text-muted-foreground">
+            <th className="px-3 py-2 text-start font-medium">{t("col.week")}</th>
+            <th className="px-3 py-2 text-start font-medium">{t("col.committed")}</th>
+            <th className="px-3 py-2 text-start font-medium">{t("col.inReview")}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {data.weeks.map((week) => (
+            <tr key={week.index} data-week={week.index}>
+              <td className="px-3 py-2 align-top">
+                <span className="block font-mono text-xs">
+                  {week.index === 0 ? t("thisWeek") : t("week", { start: day(week.start), end: day(week.end) })}
+                </span>
+                <WeekBar committed={Number(week.committed.amount)} inReview={Number(week.in_review.amount)} max={max} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Amount bucket={week.committed} currency={cur} testId={`${cur}:${week.index}:committed`} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Amount bucket={week.in_review} currency={cur} testId={`${cur}:${week.index}:in_review`} />
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {data.weeks.map((week) => (
-              <tr key={week.index} data-week={week.index}>
-                <td className="px-3 py-2 align-top">
-                  <span className="block font-mono text-xs">
-                    {week.index === 0 ? t("thisWeek") : t("week", { start: day(week.start), end: day(week.end) })}
-                  </span>
-                  <WeekBar committed={Number(week.committed.amount)} inReview={Number(week.in_review.amount)} max={max} />
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <Amount bucket={week.committed} currency={cur} testId={`${cur}:${week.index}:committed`} />
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <Amount bucket={week.in_review} currency={cur} testId={`${cur}:${week.index}:in_review`} />
-                </td>
-              </tr>
-            ))}
-            {extra.map((row) => (
-              <tr key={row.key} data-week={row.key}>
-                <td className="px-3 py-2 align-top text-muted-foreground">
-                  {row.label}
-                  <WeekBar committed={Number(row.committed.amount)} inReview={Number(row.inReview.amount)} max={max} />
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <Amount bucket={row.committed} currency={cur} testId={`${cur}:${row.key}:committed`} />
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <Amount bucket={row.inReview} currency={cur} testId={`${cur}:${row.key}:in_review`} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+          {extra.map((row) => (
+            <tr key={row.key} data-week={row.key}>
+              <td className="px-3 py-2 align-top text-muted-foreground">
+                {row.label}
+                <WeekBar committed={Number(row.committed.amount)} inReview={Number(row.inReview.amount)} max={max} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Amount bucket={row.committed} currency={cur} testId={`${cur}:${row.key}:committed`} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Amount bucket={row.inReview} currency={cur} testId={`${cur}:${row.key}:in_review`} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </section>
   );
 }

@@ -24,6 +24,7 @@ import { StepUpPrompt } from "@/components/states/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Textarea } from "@/components/ui/form-controls";
 import { Label } from "@/components/ui/label";
+import { Callout } from "@/components/ui/status";
 import { Link } from "@/i18n/navigation";
 import { cancelBankChange, recordCall, recordCallbackNumber, startApproval } from "@/lib/actions/pay";
 import { CHANGE_STEPS, changeStepIndex, groupIban, isOpenTicket } from "@/lib/pay/format";
@@ -32,7 +33,6 @@ import { cn } from "@/lib/utils";
 
 import { CallbackSourceFields, CallbackSourceView, type CallbackValue, EMPTY_CALLBACK, callbackComplete } from "./callback-source";
 import { ErrorText, HoldBadge, Panel, TicketStatusBadge } from "./common";
-import { Callout } from "./ledger";
 
 type CallResult = "confirmed" | "not_confirmed" | "no_answer";
 

@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Table } from "@/components/ui/table";
 import { Link } from "@/i18n/navigation";
 import { saveDownload, type DownloadResult } from "@/lib/pay/download";
 import type { PayAgingBucket, PayJournalExport, PayMonthEnd } from "@/lib/pay/types";
 
 import { ErrorText, Panel } from "./common";
-import { TABLE } from "./ledger";
 
 const CATEGORIES = new Set([
   "no_po",
@@ -255,38 +255,36 @@ export function PayMonthEndView({
         {data.aging.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noPayables")}</p>
         ) : (
-          <div className={TABLE.wrap}>
-            <table className={TABLE.table}>
-              <caption className="sr-only">{t("payablesTitle")}</caption>
-              <thead>
-                <tr className={TABLE.headRow}>
-                  <th className={TABLE.th}>{t("currency")}</th>
-                  {buckets.map((b) => (
-                    <th key={b} className={TABLE.th}>
-                      {t(`bucket.${b}`)}
-                    </th>
-                  ))}
-                  <th className={TABLE.th}>{t("total")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.aging.map((row) => (
-                  <tr key={row.currency} className={TABLE.row} data-aging-currency={row.currency}>
-                    <td className={`${TABLE.td} font-mono`}>{row.currency}</td>
-                    {row.buckets.map((b) => (
-                      <td key={b.bucket} className={TABLE.td}>
-                        <BucketCell bucket={b} currency={row.currency} />
-                      </td>
-                    ))}
-                    <td className={`${TABLE.td} font-medium`}>
-                      <Money currency={row.currency} amount={row.total} />
-                      <span className="block text-xs text-muted-foreground">{t("invoices", { count: row.count })}</span>
-                    </td>
-                  </tr>
+          <Table label={t("payablesTitle")}>
+            <caption className="sr-only">{t("payablesTitle")}</caption>
+            <thead>
+              <tr>
+                <th>{t("currency")}</th>
+                {buckets.map((b) => (
+                  <th key={b}>
+                    {t(`bucket.${b}`)}
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                <th>{t("total")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.aging.map((row) => (
+                <tr key={row.currency} data-aging-currency={row.currency}>
+                  <td className="font-mono">{row.currency}</td>
+                  {row.buckets.map((b) => (
+                    <td key={b.bucket}>
+                      <BucketCell bucket={b} currency={row.currency} />
+                    </td>
+                  ))}
+                  <td className="font-medium">
+                    <Money currency={row.currency} amount={row.total} />
+                    <span className="block text-xs text-muted-foreground">{t("invoices", { count: row.count })}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
         )}
         {data.unpriced.length > 0 && (
           <div className="text-sm" data-unpriced>
