@@ -8,7 +8,7 @@ import { buttonVariants } from "./button";
 
 /** The class for a compact field inside a filter bar (native select or input). */
 export const filterFieldClass =
-  "h-9 rounded-md border border-input bg-surface px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none";
+  "h-9 rounded-md border border-input bg-surface px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-ring";
 
 /** The class for the submit button that applies a filter bar (outline, never saffron). */
 export const filterApplyClass = buttonVariants({ variant: "outline", size: "sm", className: "h-9" });
