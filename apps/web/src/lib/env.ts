@@ -16,6 +16,23 @@ import { z } from "zod";
 
 const url = z.url({ protocol: /^https?$/ });
 
+/** Schemas the Better Auth tables must never go to (Supabase's own and Postgres'). */
+const RESERVED_SCHEMAS = new Set([
+  "public",
+  "information_schema",
+  "extensions",
+  "storage",
+  "realtime",
+  "graphql",
+  "graphql_public",
+  "vault",
+  "supabase_functions",
+  "supabase_migrations",
+  "net",
+  "pgbouncer",
+  "lg_checkpoints",
+]);
+
 const schema = z.object({
   nodeEnv: z.enum(["development", "production", "test"]),
   baseUrl: url,
@@ -23,6 +40,18 @@ const schema = z.object({
   trustedOrigins: z.array(z.string()).min(1),
   secret: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   databaseUrl: z.string().regex(/^postgres(ql)?:\/\//, "PAIRLY_AUTH_DATABASE_URL must be a postgres URL"),
+  /**
+   * The schema Better Auth's tables live in (`PAIRLY_AUTH_DB_SCHEMA`). `auth` locally and
+   * in compose; `pairly_auth` on Supabase, whose own Supabase Auth already owns `auth`.
+   * Better Auth's queries are unqualified, so the role's search path decides where they
+   * go: the migration script checks that it points here before it changes anything.
+   */
+  authSchema: z
+    .string()
+    .regex(/^[a-z_][a-z0-9_]{0,62}$/, "PAIRLY_AUTH_DB_SCHEMA must be a lower-case SQL identifier")
+    .refine((name) => !name.startsWith("pg_") && !RESERVED_SCHEMAS.has(name), {
+      message: "PAIRLY_AUTH_DB_SCHEMA must not be a system or shared schema",
+    }),
   jwtIssuer: z.string().min(1),
   jwtAudience: z.string().min(1),
   apiInternalUrl: url,
@@ -31,11 +60,17 @@ const schema = z.object({
    * tests only: each message is written as files to `outboxDir`, see `outbox.ts`) or
    * `fake` (sends nothing; the hosted demo, whose visitors sign in through the demo page
    * and must never make it email anyone; refused when `PAIRLY_ENV` is production, as
-   * the API's `fake` transport is).
+   * the API's `fake` transport is) or `resend` (Resend's HTTP API, `resend.ts`; needs
+   * `PAIRLY_RESEND_API_KEY`). The From address is `PAIRLY_SMTP_FROM` for every transport.
    */
   email: z.object({
-    transport: z.enum(["smtp", "outbox", "fake"]),
+    transport: z.enum(["smtp", "outbox", "fake", "resend"]),
     outboxDir: z.string().optional(),
+    replyTo: z.string().optional(),
+  }),
+  resend: z.object({
+    apiKey: z.string().optional(),
+    baseUrl: url,
   }),
   smtp: z.object({
     host: z.string().optional(),
@@ -54,6 +89,9 @@ const schema = z.object({
 });
 
 export type ServerEnv = z.infer<typeof schema>;
+
+/** Better Auth's schema when `PAIRLY_AUTH_DB_SCHEMA` is unset (local and compose). */
+export const DEFAULT_AUTH_SCHEMA = "auth";
 
 function value(name: string): string | undefined {
   const raw = process.env[name];
@@ -144,10 +182,19 @@ export function readServerEnv(): ServerEnv {
     trustedOrigins: [...new Set([...baseOrigin, ...extraOrigins])],
     secret: get("BETTER_AUTH_SECRET"),
     databaseUrl: get("PAIRLY_AUTH_DATABASE_URL"),
+    authSchema: get("PAIRLY_AUTH_DB_SCHEMA") ?? DEFAULT_AUTH_SCHEMA,
     jwtIssuer: get("PAIRLY_AUTH_ISSUER"),
     jwtAudience: get("PAIRLY_AUTH_AUDIENCE"),
     apiInternalUrl: get("PAIRLY_API_INTERNAL_URL"),
-    email: { transport: emailTransport, outboxDir: get("PAIRLY_OUTBOX_DIR") },
+    email: {
+      transport: emailTransport,
+      outboxDir: get("PAIRLY_OUTBOX_DIR"),
+      replyTo: get("PAIRLY_EMAIL_REPLY_TO"),
+    },
+    resend: {
+      apiKey: get("PAIRLY_RESEND_API_KEY"),
+      baseUrl: get("PAIRLY_RESEND_BASE_URL") ?? "https://api.resend.com",
+    },
     smtp: {
       host: get("PAIRLY_SMTP_HOST"),
       port: get("PAIRLY_SMTP_PORT") ?? "587",
@@ -184,6 +231,18 @@ export function readServerEnv(): ServerEnv {
     }
     if (!env.email.outboxDir) {
       throw new Error("Invalid web server configuration:\n  email.outboxDir: PAIRLY_OUTBOX_DIR is required");
+    }
+  }
+  if (env.email.transport === "resend") {
+    // Fail closed: no key, no mail (never a silent fallback to another transport).
+    if (!env.resend.apiKey) {
+      throw new Error("Invalid web server configuration:\n  resend.apiKey: PAIRLY_RESEND_API_KEY is required");
+    }
+    if (!env.resend.apiKey.startsWith("re_")) {
+      throw new Error("Invalid web server configuration:\n  resend.apiKey: PAIRLY_RESEND_API_KEY is not a Resend key");
+    }
+    if (env.nodeEnv === "production" && !env.resend.baseUrl.startsWith("https://")) {
+      throw new Error("PAIRLY_RESEND_BASE_URL must use https");
     }
   }
   if (env.email.transport === "fake") {
