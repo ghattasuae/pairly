@@ -89,7 +89,7 @@ function ToastCard({ toast, onClose, closeLabel }: { toast: Toast; onClose: () =
     <div
       role={toast.tone === "error" ? "alert" : "status"}
       className={cn(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-soft animate-in fade-in-0 slide-in-from-bottom-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
+        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-raised animate-in fade-in-0 slide-in-from-bottom-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
         toast.tone === "error" && "border-destructive/40",
       )}
     >
