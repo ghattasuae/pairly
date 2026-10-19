@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f5ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#121a1b" },
+    { media: "(prefers-color-scheme: light)", color: "#faf6f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#14110e" },
   ],
 };
 
@@ -51,6 +51,8 @@ export default async function LocaleLayout({ children, params }: Props) {
             <SkipLink />
             {children}
           </Providers>
+          {/* Paper grain: decorative, click-through, under 4 percent (globals.css). */}
+          <div aria-hidden className="paper-grain" />
         </NextIntlClientProvider>
       </body>
     </html>
