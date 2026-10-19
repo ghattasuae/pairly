@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 // Copyright (c) 2026 Proofly Technology
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useTranslations } from "next-intl";
 
 import { HomeSummary } from "@/components/home/home-summary";
 import { ActionNeeded } from "@/components/states/action-needed";
@@ -10,6 +11,43 @@ import { Button } from "@/components/ui/button";
 import { visibleNav } from "@/lib/nav";
 
 import { AppShell } from "./app-shell";
+
+/** The Home page body as it renders for Layla, every string from the messages. */
+function HomePreview() {
+  const home = useTranslations("Home");
+  const hire = useTranslations("Hire");
+  const audit = useTranslations("Audit");
+  const hireTitles = useTranslations("Dashboards");
+  const payTitles = useTranslations("PayDashboards");
+  const sysTitles = useTranslations("SystemDashboards");
+  const org = orgs[0]!.name;
+  return (
+    <div className="page space-y-10">
+      <PageHeader
+        eyebrow={org}
+        title={home("greeting", { name: "Layla" })}
+        actions={
+          <>
+            <Button variant="outline">{audit("exportCsv")}</Button>
+            <Button>{hire("home.newJob")}</Button>
+          </>
+        }
+      >
+        {home("orgLine", { org })}
+      </PageHeader>
+      <HomeSummary
+        total={5}
+        now={new Date("2026-10-19T09:00:00Z")}
+        tiles={[
+          { anchor: "dash-recruiter", title: hireTitles("title.recruiter"), count: 3, lists: 2 },
+          { anchor: "pay-dash-approver", title: payTitles("title.approver"), count: 2, lists: 1 },
+          { anchor: "sys-dash-auditor", title: sysTitles("title.auditor"), count: 0, lists: 1 },
+        ]}
+      />
+      <ActionNeeded count={0} />
+    </div>
+  );
+}
 
 const orgs = [
   { id: "0b9d0b6e-0000-4000-8000-000000000001", name: "Acme Trading LLC" },
@@ -27,32 +65,7 @@ const meta = {
     activeOrgId: orgs[0]!.id,
     onSignOut: () => undefined,
     onSwitchOrg: async () => undefined,
-    children: (
-      <div className="page space-y-10">
-        <PageHeader
-          eyebrow="Acme Trading LLC"
-          title="Good to see you, Layla."
-          actions={
-            <>
-              <Button variant="outline">Export</Button>
-              <Button>New requisition</Button>
-            </>
-          }
-        >
-          You are working in Acme Trading LLC.
-        </PageHeader>
-        <HomeSummary
-          total={5}
-          now={new Date("2026-10-19T09:00:00Z")}
-          tiles={[
-            { anchor: "dash-recruiter", title: "Recruiting", count: 3, lists: 2 },
-            { anchor: "pay-dash-approver", title: "Your Pay approvals", count: 2, lists: 1 },
-            { anchor: "sys-dash-auditor", title: "Audit and assurance", count: 0, lists: 1 },
-          ]}
-        />
-        <ActionNeeded count={0} />
-      </div>
-    ),
+    children: <HomePreview />,
   },
 } satisfies Meta<typeof AppShell>;
 
