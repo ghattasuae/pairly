@@ -4627,7 +4627,7 @@
     "seeAll": "See all {count}",
     "source": "Source: {source}",
     "ofN": "of {count}",
-    "pages": "Pages",
+    "pages": "Pages: {board}",
     "title": {
       "auditor": "Audit and assurance",
       "admin": "Organisation admin",
