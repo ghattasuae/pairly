@@ -244,7 +244,7 @@ export function RequisitionList({ items, onChange }: { items: HireRequisition[];
                 <bdi className="font-mono">{r.reference}</bdi> · {r.team} · {r.location} · {t(`workModel.${r.work_model}` as "workModel.onsite")} ·{" "}
                 {t("list.headcount", { count: r.headcount })} ·{" "}
                 {format.number(Number(r.budget), { style: "currency", currency: r.currency, maximumFractionDigits: 0 })} ·{" "}
-                {t("list.start", { date: format.dateTime(new Date(`${r.start_date}T00:00:00`), { dateStyle: "medium" }) })}
+                {t("list.start", { date: format.dateTime(new Date(`${r.start_date}T00:00:00Z`), { dateStyle: "medium", timeZone: "UTC" }) })}
               </p>
               {(r.steps ?? []).length > 0 && (
                 <p className="text-xs text-muted-foreground" data-steps>

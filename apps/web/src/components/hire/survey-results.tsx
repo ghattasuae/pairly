@@ -111,7 +111,7 @@ export function SurveyResults({ results, named }: { results: HireSurveyResults; 
                 <li key={n.response_id} className="space-y-1 p-3 text-sm">
                   <p className="text-muted-foreground">
                     {t(`outcome.${n.outcome}` as "outcome.hired")} ·{" "}
-                    {t("answeredOn", { date: format.dateTime(new Date(`${n.answered_on}T00:00:00Z`), { dateStyle: "medium" }) })}
+                    {t("answeredOn", { date: format.dateTime(new Date(`${n.answered_on}T00:00:00Z`), { dateStyle: "medium", timeZone: "UTC" }) })}
                   </p>
                   <p>
                     {QUESTIONS.filter((q) => typeof n.answers[q] === "number")
