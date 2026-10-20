@@ -111,3 +111,36 @@ def test_plugin_sections_are_checked() -> None:
         DashboardSectionSpec(Board.PLATFORM_OPS, "x", "pay.invoice.read", _build)
     with pytest.raises(DashboardSectionError, match="invalid"):
         DashboardSectionSpec(Board.ADMIN, "Bad Key", "pay.invoice.read", _build)
+
+
+def test_a_live_file_the_thresholds_name_is_listed_once(tmp_path: Path) -> None:
+    # Like evals/thresholds.yaml: hire.json and hire_live.json (live: true) are both named.
+    root = _write(
+        tmp_path / "evals",
+        "version: 1\nmetrics:\n"
+        "  - {id: r, file: h.json, path: x.rate, min: 0.9, why: w}\n"
+        "  - {id: l, file: h_live.json, path: x.model, live: true, min: 0.8, why: w}\n"
+        "  - {id: s, file: s.json, path: x.rate, min: 0.9, why: w}\n"
+        "  - {id: gone, file: gone_live.json, path: x, live: true, min: 1, why: w}\n",
+        {
+            "h.json": {"x": {"rate": 0.95}},
+            "h_live.json": {"x": {"model": 0.85}},
+            "s.json": {"x": {"rate": 0.95}},
+            "s_live.json": {"x": {"rate": 0.5}},
+        },
+    )
+    summary = read_evals(root)
+    names = [f.name for f in summary.files]
+    assert sorted(names) == ["gone_live.json", "h.json", "h_live.json", "s.json", "s_live.json"]
+    by_file = {f.name: f for f in summary.files}
+    # The named live file: live mode, its own metric only, judged as the gate does.
+    assert by_file["h_live.json"].mode == "live"
+    assert [(v.id, v.status) for v in by_file["h_live.json"].verdicts] == [("l", "PASS")]
+    assert [(v.id, v.status) for v in by_file["h.json"].verdicts] == [("r", "PASS")]
+    # A recorded file with no named live file still gets its live companion.
+    assert [(v.id, v.status) for v in by_file["s_live.json"].verdicts] == [("s", "FAIL")]
+    # A named live file that is missing fails closed, as in the gate.
+    assert by_file["gone_live.json"].present is False
+    assert [v.detail for v in by_file["gone_live.json"].verdicts] == ["missing_file"]
+    assert summary.gate("recorded") == "pass"
+    assert summary.gate("live") == "fail"

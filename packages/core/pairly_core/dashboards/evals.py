@@ -7,7 +7,9 @@ The evals directory (``PAIRLY_EVALS_DIR``, default the repository's ``evals/``) 
 and, when a live run happened, ``results/<name>_live.json``. Each metric of the gate is
 judged here the way ``python -m evals.gate`` judges it (same rules, read only, nothing
 recomputed): PASS, FAIL (out of bounds, missing, or measured with no threshold yet),
-PENDING (needs a live run, not gating) or INFO (informational).
+PENDING (needs a live run, not gating) or INFO (informational). Each result file is listed
+once: a ``*_live.json`` file the thresholds name (``live: true`` metrics) carries its own
+metrics, as in the gate, and is not also shown as a recorded file's live companion.
 
 Nothing is invented: a missing directory, thresholds file or result file is reported as
 such (a missing result file fails its metrics, as in the gate), and every value shown is
@@ -173,12 +175,22 @@ def read_evals(directory: Path | None) -> EvalSummary:
     results = directory / "results"
     summary = EvalSummary(available=True)
     names = sorted({str(m["file"]) for m in items})
+    # A live baseline file the thresholds name itself (``live: true`` metrics) is shown
+    # once, with its own metrics, as the gate judges it. A recorded file whose live file
+    # is not named gets that file as a companion: its metrics judged on the live values.
+    named_live = {n for n in names if n.endswith(f"{LIVE_SUFFIX}.json")}
     for name in names:
-        for mode in ("recorded", "live"):
-            file_name = name if mode == "recorded" else name.replace(".json", f"{LIVE_SUFFIX}.json")
+        if name in named_live:
+            modes: tuple[Literal["recorded", "live"], ...] = ("live",)
+        else:
+            companion = name.replace(".json", f"{LIVE_SUFFIX}.json")
+            modes = ("recorded",) if companion in named_live else ("recorded", "live")
+        for mode in modes:
+            derived = mode == "live" and name not in named_live
+            file_name = name.replace(".json", f"{LIVE_SUFFIX}.json") if derived else name
             path = results / file_name
             data, problem = _read(path)
-            if mode == "live" and problem == "missing_file":
+            if derived and problem == "missing_file":
                 continue  # no live run of this suite yet: nothing to show, nothing failed
             at, at_source = _when(path, data) if problem is None else (None, None)
             entry = ResultFile(
