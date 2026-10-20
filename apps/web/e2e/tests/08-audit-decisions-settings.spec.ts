@@ -145,6 +145,8 @@ test("settings: API key shown once, then revoked", async ({ browser }) => {
 test("command palette and notification bell", async ({ browser }) => {
   const { context, page } = await adminContext(browser);
   await page.goto("/en");
+  // The shortcut listens only once the shell has hydrated (app-shell.tsx sets this).
+  await page.locator("[data-shell-ready]").waitFor({ state: "attached", timeout: 30_000 });
   await page.keyboard.press("ControlOrMeta+k");
   const palette = page.getByRole("dialog", { name: "Command menu" });
   await expect(palette).toBeVisible();

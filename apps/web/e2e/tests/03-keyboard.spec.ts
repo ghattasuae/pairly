@@ -97,7 +97,8 @@ test.describe("Keyboard", () => {
     const context = await browser.newContext({ storageState: file });
     const page = await context.newPage();
     await page.goto("/en");
-    await page.waitForLoadState("load");
+    // The shortcut listens only once the shell has hydrated (app-shell.tsx sets this).
+    await page.locator("[data-shell-ready]").waitFor({ state: "attached", timeout: 30_000 });
 
     await page.keyboard.press("Control+k");
     const dialog = page.getByRole("dialog");
