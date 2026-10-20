@@ -4627,7 +4627,7 @@
     "seeAll": "عرض الكل ({count})",
     "source": "المصدر: {source}",
     "ofN": "من {count}",
-    "pages": "الصفحات",
+    "pages": "الصفحات: {board}",
     "title": {
       "auditor": "التدقيق والضمان",
       "admin": "إدارة المؤسسة",

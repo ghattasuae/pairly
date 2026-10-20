@@ -491,7 +491,7 @@ test("5. analytics, bias report and survey results show values or no data, never
     await expect(p.locator("[data-survey-results]")).toBeVisible({ timeout: 30_000 });
   });
   const survey = page.locator("[data-survey-results]");
-  const tiles = survey.locator(":scope > div").first().locator("p.font-display");
+  const tiles = survey.locator("[data-survey-stat]");
   await expect(tiles.nth(0)).toHaveText(/^\d+$/);
   await expect(tiles.nth(1)).toHaveText(/^\d+$/);
   await expect(tiles.nth(2)).toHaveText(/^(\d+%|No answers)$/);

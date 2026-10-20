@@ -156,7 +156,11 @@ test("2. invoice 1: read with evidence, matched to its PO, approved by the rule,
 
   // Send for approval: the rule approves it (matched, low risk, AED under 10,000).
   await page.goto(invoiceUrl);
+  // Click only once the page has hydrated (a click on the server-rendered button would be
+  // lost), and reload only once the submission has answered: the panel leaves "ready".
+  await page.locator("[data-shell-ready]").waitFor({ state: "attached", timeout: 30_000 });
   await page.locator("[data-submit]").getByRole("button", { name: "Send for approval" }).click();
+  await expect(page.locator("[data-approval-panel]")).not.toHaveAttribute("data-approval-panel", "ready", { timeout: 30_000 });
   await expect(async () => {
     await page.goto(invoiceUrl);
     await expect(page.locator('[data-approved="rule"]')).toBeVisible({ timeout: 3_000 });

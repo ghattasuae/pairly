@@ -50,7 +50,7 @@ function OfferCard({ offer, onChange }: { offer: HireOffer; onChange: (offer: Hi
         </Badge>
       </div>
       <p className="text-muted-foreground">
-        {t("starts", { date: format.dateTime(new Date(`${offer.start_date}T00:00:00`), { dateStyle: "medium" }) })}
+        {t("starts", { date: format.dateTime(new Date(`${offer.start_date}T00:00:00Z`), { dateStyle: "medium", timeZone: "UTC" }) })}
       </p>
       {comp ? (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3" data-compensation>

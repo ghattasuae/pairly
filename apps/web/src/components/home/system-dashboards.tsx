@@ -115,7 +115,8 @@ function SectionCard({ board, section, prominent }: { board: SystemDashboardKey;
   return (
     <section
       id={id}
-      aria-labelledby={`${id}-title`}
+      // With the dashboard's title: two dashboards on one Home can share a section title.
+      aria-labelledby={`${id}-title sys-dash-${board}`}
       className="min-w-0 scroll-mt-24 space-y-2 rounded-lg border bg-surface p-5"
       data-sys-section={section.key}
     >
@@ -205,7 +206,7 @@ export function SystemRoleDashboard({ dashboard, data }: { dashboard: SystemDash
         </div>
       )}
       {data.links.length > 0 && (
-        <nav aria-label={t("pages")} className="flex flex-wrap gap-3 text-sm">
+        <nav aria-label={t("pages", { board: t(`title.${dashboard}`) })} className="flex flex-wrap gap-3 text-sm">
           {data.links.map((l) =>
             safeHref(l.href) ? (
               <Link key={l.key} href={l.href} className="inline-flex items-center gap-1 text-primary hover:underline" data-sys-link={l.key}>

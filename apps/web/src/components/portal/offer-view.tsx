@@ -50,7 +50,7 @@ export function OfferView({ initial }: { initial: HirePortalOffer }) {
         </p>
         <h1 className="font-display text-[2rem] leading-[1.1] font-normal text-balance sm:text-[2.6rem]">{t("title", { job: offer.job_title })}</h1>
         <p className="text-sm text-muted-foreground">
-          {t("starts", { date: format.dateTime(new Date(`${offer.start_date}T00:00:00`), { dateStyle: "long" }) })} · {offer.template_name}
+          {t("starts", { date: format.dateTime(new Date(`${offer.start_date}T00:00:00Z`), { dateStyle: "long", timeZone: "UTC" }) })} · {offer.template_name}
         </p>
       </header>
       <section className="space-y-2 card-hairline p-5">
