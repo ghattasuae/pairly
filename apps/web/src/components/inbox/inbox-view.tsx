@@ -532,7 +532,12 @@ export function InboxView({
                         <span className={cn("line-clamp-2 text-sm font-medium", optimistic && "line-through decoration-muted-foreground/60")}>
                           <bdi>{item.title}</bdi>
                         </span>
-                        <time dateTime={item.created_at} className="shrink-0 pt-0.5 text-xs text-muted-foreground">
+                        {/* "6 seconds ago" can tick between the server render and hydration. */}
+                        <time
+                          dateTime={item.created_at}
+                          className="shrink-0 pt-0.5 text-xs text-muted-foreground"
+                          suppressHydrationWarning
+                        >
                           {format.relativeTime(new Date(item.created_at), new Date())}
                         </time>
                       </span>

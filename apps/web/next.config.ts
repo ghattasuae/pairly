@@ -49,6 +49,8 @@ const nextConfig: NextConfig = {
   // `next dev` would otherwise write AGENTS.md here (its copy contains em dashes).
   agentRules: false,
   reactStrictMode: true,
+  // No Next.js dev badge in the corner: demos and the README recordings run `next dev`.
+  devIndicators: false,
   // pg and nodemailer are Node-only; keep them out of the bundler.
   serverExternalPackages: ["pg", "nodemailer"],
   // Server actions keep the default 1 MB body limit. Policy documents (up to 25 MB) go
