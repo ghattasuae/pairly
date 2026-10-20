@@ -103,6 +103,40 @@ describe("SystemRoleDashboard", () => {
     expect(cards.textContent).toContain("docs/model-cards/");
   });
 
+  it("lists each eval file once, live baselines included, with unique keys", () => {
+    // The API used to list hire_live.json and pay_live.json twice (as a file the thresholds
+    // name and as a recorded file's live companion), so React saw duplicate keys on Home.
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const data = governance();
+    const file = (id: string, mode: string) => ({
+      kind: "eval_file",
+      id,
+      label: id,
+      href: null,
+      at: "2026-10-17T10:00:00Z",
+      status: "pass",
+      detail: { mode, pass: 3, fail: 0 },
+    });
+    data.sections[0]!.items = [
+      file("hire.json", "recorded"),
+      file("hire_live.json", "live"),
+      file("pay.json", "recorded"),
+      file("pay_live.json", "live"),
+    ];
+    renderWithIntl(<SystemRoleDashboard dashboard="ai_governance" data={data} />);
+    const evals = document.querySelector('[data-sys-section="evals"]') as HTMLElement;
+    const rows = Array.from(evals.querySelectorAll('[data-sys-item="eval_file"]'));
+    expect(rows.map((r) => r.textContent?.match(/\w+(_live)?\.json/)?.[0])).toEqual([
+      "hire.json",
+      "hire_live.json",
+      "pay.json",
+      "pay_live.json",
+    ]);
+    const keyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes("same key"));
+    expect(keyWarnings).toEqual([]);
+    errors.mockRestore();
+  });
+
   it("links every count and record to its page", () => {
     const board: SystemDashboard = {
       board: "auditor",

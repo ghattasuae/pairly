@@ -16,7 +16,8 @@
 #   LOCAL_PG_PORT (55432), LOCAL_VALKEY_PORT (56379), LOCAL_PG_BIN, LOCAL_VALKEY_BIN,
 #   PAIRLY_LOCAL_DIR (.local), LOCAL_API_PORT / LOCAL_WEB_PORT (or PAIRLY_API_PORT /
 #   PAIRLY_WEB_PORT; 8000 and 3100): set in the environment, they also derive the public
-#   URLs, auth issuer and audience and CORS origin (see local_settings). Secrets and the rest come from the repo-root .env
+#   URLs, auth issuer and audience and CORS origin (see local_settings),
+#   PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT (web only, for the e2e suite; docs/ci.md). Secrets and the rest come from the repo-root .env
 #   (`make env`); a variable already set in the environment wins over .env.
 
 LOCAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -255,6 +256,11 @@ local_web_env() {
     "MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID:-common}"
     "NEXT_TELEMETRY_DISABLED=1"
   )
+  # Development and test only (the web app refuses it otherwise): more magic link
+  # requests per IP for the e2e suite, which signs many people in from 127.0.0.1.
+  if [ -n "${PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT:-}" ]; then
+    LOCAL_ENV+=("PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT=$PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT")
+  fi
 }
 
 local_require_app_secrets() {

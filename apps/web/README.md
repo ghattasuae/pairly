@@ -150,7 +150,10 @@ user, and access comes only from accepting an invitation in the API.
 - **Magic link limits**: 5 per 5 minutes per IP (Better Auth) and 3 per 15 minutes per
   address (`lib/auth/magic-link-limit.ts`, which also prunes expired rows in the same
   statement). Over the limit, or for an unknown address, the response is the same and no
-  email is sent.
+  email is sent. `PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT` raises the per-IP number (per 5
+  minutes) for the e2e suite, which signs many people in from 127.0.0.1 back to back. It
+  is honoured only when `PAIRLY_ENV` is `development` or `test`; with any other
+  `PAIRLY_ENV` (or none) the server refuses to start. The per-address limit never changes.
 - **Backup codes** count as a second factor: the session's `amr` claim is
   `["otp", "backup"]`. The sign-in is logged as a structured warning
   (`auth.backup_code_sign_in`, user id only) and Home tells the user how many codes remain.
@@ -191,6 +194,10 @@ because the flows need the API, the worker and Postgres too. It is not part of C
 The suite reads email from the outbox (`e2e/utils/mail.ts`, `.local/mail`, or
 `PAIRLY_OUTBOX_DIR`). The `make` calls it makes (`bootstrap-org`, `demo-expense`,
 `dev-seed-approval`, `audit-anchor-now`) run against the native stack.
+
+For a full run of every spec on an isolated stack, as one copy-paste, see
+[Web end-to-end suite](../../docs/ci.md#web-end-to-end-suite-on-your-machine) in
+docs/ci.md.
 
 Order matters: `01-full-flow` bootstraps an organisation (`make bootstrap-org`), accepts
 the invite, turns on TOTP and saves sessions (and `run-state.json`) that the later specs

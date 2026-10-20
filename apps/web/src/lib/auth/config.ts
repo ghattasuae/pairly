@@ -45,6 +45,18 @@ import { twoFactorGate } from "./two-factor-gate";
 
 /** Seconds a magic link stays valid. The email copy says 5 minutes. */
 export const MAGIC_LINK_SECONDS = 300;
+/** Magic link requests per IP per window (Better Auth's rate limiter). */
+export const MAGIC_LINK_IP_MAX = 5;
+export const MAGIC_LINK_IP_WINDOW_SECONDS = 300;
+
+/**
+ * The per-IP magic link rule: 5 per 5 minutes, or `PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT`
+ * per 5 minutes where `readServerEnv` allowed it (development and test only).
+ */
+export function magicLinkIpRule(env: Pick<ServerEnv, "magicLinkRateLimit">): { window: number; max: number } {
+  return { window: MAGIC_LINK_IP_WINDOW_SECONDS, max: env.magicLinkRateLimit ?? MAGIC_LINK_IP_MAX };
+}
+
 /** Lifetime of an API token. The API allows 10 seconds of clock skew on top. */
 export const API_TOKEN_LIFETIME = "5m";
 
@@ -103,7 +115,7 @@ function createAuth(env: ServerEnv) {
       window: 60,
       max: 60,
       customRules: {
-        "/sign-in/magic-link": { window: 300, max: 5 },
+        "/sign-in/magic-link": magicLinkIpRule(env),
         "/magic-link/verify": { window: 60, max: 10 },
         "/two-factor/*": { window: 60, max: 5 },
         "/jwks": { window: 60, max: 300 },

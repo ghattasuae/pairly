@@ -82,6 +82,13 @@ const schema = z.object({
     from: z.string().min(3),
   }),
   migrateOnStart: z.boolean(),
+  /**
+   * Development and test only: magic link requests allowed per IP per 5 minutes
+   * (`PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT`), for the e2e suite, which signs many people in
+   * from 127.0.0.1 back to back. Unset means Better Auth's limit of 5. Refused at startup
+   * unless `PAIRLY_ENV` is development or test, so production always keeps 5.
+   */
+  magicLinkRateLimit: z.coerce.number().int().min(1).max(10_000).optional(),
   google: z.object({ clientId: z.string(), clientSecret: z.string() }).optional(),
   microsoft: z
     .object({ clientId: z.string(), clientSecret: z.string(), tenantId: z.string() })
@@ -206,6 +213,7 @@ export function readServerEnv(): ServerEnv {
       from: get("PAIRLY_SMTP_FROM") ?? "Pairly <no-reply@pairly.localhost>",
     },
     migrateOnStart: flag("PAIRLY_AUTH_MIGRATE_ON_START", false),
+    magicLinkRateLimit: get("PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT"),
     // SSO stays off unless both halves of the credential exist.
     google:
       googleId && googleSecret ? { clientId: googleId, clientSecret: googleSecret } : undefined,
@@ -219,6 +227,14 @@ export function readServerEnv(): ServerEnv {
     throw new Error(`Invalid web server configuration:\n  ${fields.join("\n  ")}`);
   }
   const env = parsed.data;
+  if (env.magicLinkRateLimit !== undefined) {
+    // Fail closed: the per-IP sign-in limit is a security control. Only the local stack
+    // and tests may change it; any other PAIRLY_ENV (or none) refuses to start.
+    const pairlyEnv = get("PAIRLY_ENV") ?? "production";
+    if (pairlyEnv !== "development" && pairlyEnv !== "test") {
+      throw new Error("PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT is for development and test only (PAIRLY_ENV)");
+    }
+  }
   if (env.email.transport === "smtp" && !env.smtp.host) {
     throw new Error("Invalid web server configuration:\n  smtp.host: PAIRLY_SMTP_HOST is required");
   }

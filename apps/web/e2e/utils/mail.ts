@@ -10,7 +10,7 @@
 //   both the web app (src/lib/outbox.ts) and the worker (pairly_core.notifications.outbox).
 // - `mailpit`: the Docker stack (`make docker-dev`), through Mailpit's HTTP API at
 //   MAILPIT_URL.
-import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { BASE_URL, EMAILED_HOST } from "./origin";
@@ -59,7 +59,7 @@ function outboxEntries(): OutboxEntry[] {
     if (!line.trim()) continue;
     try {
       const entry = JSON.parse(line) as OutboxEntry;
-      if (/^[0-9]{13}-[0-9a-f]{16}$/.test(entry.id)) entries.push(entry);
+      if (/^[0-9]{13}-[0-9a-f]{16}$/.test(entry.id) && Number(entry.id.slice(0, 13)) >= clearedAt) entries.push(entry);
     } catch {
       // Partial last line: the writer is still appending it.
     }
@@ -112,18 +112,27 @@ async function message(id: string): Promise<MailMessage> {
   return MAIL_BACKEND === "mailpit" ? mailpitMessage(id) : outboxMessage(id);
 }
 
-/** Delete every stored message (call before triggering an email, to avoid stale matches). */
+/** Outbox messages older than this (ms) are hidden from the helpers here (clearMailbox). */
+let clearedAt = 0;
+
+/** When clearMailbox last ran (ms, 0 if never): older outbox messages count as gone. */
+export function mailboxClearedAt(): number {
+  return clearedAt;
+}
+
+/**
+ * Forget every message sent so far (call before triggering an email, to avoid stale
+ * matches). On the outbox nothing is deleted: the messages this run's helpers read are
+ * only those sent from now on. Deleting the files took mail later specs still need with
+ * them (the `make demo` seed's application acknowledgements carry the candidate portal
+ * links spec 14 opens) and the first message, which marks when the stack was seeded.
+ */
 export async function clearMailbox(): Promise<void> {
   if (MAIL_BACKEND === "mailpit") {
     await fetch(`${MAILPIT_URL}/api/v1/messages`, { method: "DELETE" });
     return;
   }
-  if (!existsSync(OUTBOX_DIR)) return;
-  for (const name of readdirSync(OUTBOX_DIR)) {
-    if (name === "index.jsonl" || /^[0-9]{13}-[0-9a-f]{16}\.(json|eml)$/.test(name)) {
-      rmSync(path.join(OUTBOX_DIR, name), { force: true });
-    }
-  }
+  clearedAt = Date.now();
 }
 
 const sentTo = (to: string[], target: string) => to.some((address) => address.toLowerCase() === target);

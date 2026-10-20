@@ -4,7 +4,7 @@
 
 import { Menu, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type * as React from "react";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -72,6 +72,13 @@ export function AppShell({
   const togglePalette = useCallback(() => setPaletteOpen((open) => !open), []);
   const navigate = useCallback((href: string) => router.push(href), [router]);
   useGlobalShortcuts({ onTogglePalette: togglePalette, items, onNavigate: navigate });
+  // Marks the shell hydrated once the shortcuts above listen (effects run in order). The
+  // e2e suite waits for `data-shell-ready` before pressing Ctrl+K, which a page that is
+  // still hydrating (next dev compiles on first request) would miss.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.setAttribute("data-shell-ready", "");
+  }, []);
 
   const orgSwitcher = (
     <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} {...(onSwitchOrg ? { onSwitch: onSwitchOrg } : {})} />
@@ -82,7 +89,7 @@ export function AppShell({
   return (
     <NotificationsProvider enabled={notifications}>
       <Toaster>
-        <div className="flex min-h-dvh bg-background">
+        <div ref={rootRef} className="flex min-h-dvh bg-background">
           {/* The desktop rail stays the first <aside> in the document (the RTL audit reads it). */}
           <aside className="sticky top-0 hidden h-dvh w-[4.25rem] shrink-0 border-e border-sidebar-border bg-sidebar lg:block xl:w-60">
             {sidebar}
