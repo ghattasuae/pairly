@@ -50,6 +50,8 @@ const recruiterState = staffState(RECRUITER_EMAIL);
 const adminState = staffState(ADMIN_EMAIL);
 
 let candidateEmail = "";
+// The demo organisation's id (hex), from the scheduling link of step 4 (`hs1.<org>....`).
+let demoOrgHex = "";
 const candidateFile = path.join(AUTH_STATE_DIR, `demo-${ORG}-candidate.txt`); // step 4 to step 5
 
 interface Outboxed {
@@ -229,7 +231,6 @@ test("4. shortlist, the personalised email, the candidate books, a meeting link"
   await expect(page.getByText("Link sent to the candidate.")).toBeVisible({ timeout: 20_000 });
   const mail = await newestMessage((m) => m.text.includes("/schedule#hs1."), since, 120_000);
   candidateEmail = mail.to[0]!;
-  writeFileSync(candidateFile, candidateEmail);
   expect(mail.text).not.toContain("\u2014"); // no em dash
   const greeting = mail.text.split("\n").find((l) => l.trim().length > 0) ?? "";
   expect(greeting, mail.text).toMatch(/^(Hello|Hi|Dear) \S+/);
@@ -237,6 +238,9 @@ test("4. shortlist, the personalised email, the candidate books, a meeting link"
 
   const link = mail.text.match(/https?:\/\/\S+\/en\/schedule#hs1\.\S+/)?.[0] ?? "";
   expect(link, mail.text).not.toBe("");
+  demoOrgHex = /#hs1\.([0-9a-f]{32})\./.exec(link)?.[1] ?? "";
+  expect(demoOrgHex, link).not.toBe("");
+  writeFileSync(candidateFile, `${candidateEmail}\n${demoOrgHex}`);
   const visitor = await browser.newContext({ timezoneId: "Asia/Dubai", viewport: demoViewport({ width: 1280, height: 900 }) });
   const candidate = await visitor.newPage();
   await candidate.goto(toReachableUrl(link));
@@ -254,10 +258,16 @@ test("4. shortlist, the personalised email, the candidate books, a meeting link"
 
 test("5. the candidate portal from an emailed link shows the interview", async ({ browser }) => {
   test.setTimeout(150_000);
-  if (!candidateEmail && existsSync(candidateFile)) candidateEmail = readFileSync(candidateFile, "utf8").trim();
+  if ((!candidateEmail || !demoOrgHex) && existsSync(candidateFile)) {
+    [candidateEmail = "", demoOrgHex = ""] = readFileSync(candidateFile, "utf8").trim().split("\n");
+  }
   expect(candidateEmail, "step 4 found the candidate").not.toBe("");
+  expect(demoOrgHex, "step 4 found the organisation").not.toBe("");
+  // The seed's acknowledgement in the demo organisation. Specs 10 to 13 apply the same
+  // synthetic people in organisations of their own, so the address alone can match an
+  // acknowledgement from another organisation's portal.
   const mail = await newestMessage(
-    (m) => m.to.some((to) => to.toLowerCase() === candidateEmail.toLowerCase()) && /\/en\/portal\/login#pl1\./.test(m.text),
+    (m) => m.to.some((to) => to.toLowerCase() === candidateEmail.toLowerCase()) && m.text.includes(`/en/portal/login#pl1.${demoOrgHex}.`),
   );
   const link = mail.text.match(/https?:\/\/\S+\/en\/portal\/login#pl1\.\S+/)?.[0] ?? "";
   const context = await browser.newContext({ viewport: demoViewport({ width: 1280, height: 900 }) });
