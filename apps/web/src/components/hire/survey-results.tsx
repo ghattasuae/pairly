@@ -74,15 +74,19 @@ export function SurveyResults({ results, named }: { results: HireSurveyResults; 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("invited")}</p>
-          <p className="figure text-3xl leading-none">{results.invited}</p>
+          <p className="figure text-3xl leading-none" data-survey-stat="invited">
+            {results.invited}
+          </p>
         </div>
         <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("responses")}</p>
-          <p className="figure text-3xl leading-none">{results.responses}</p>
+          <p className="figure text-3xl leading-none" data-survey-stat="responses">
+            {results.responses}
+          </p>
         </div>
         <div className="card-hairline p-4">
           <p className="text-sm text-muted-foreground">{t("rate")}</p>
-          <p className="figure text-3xl leading-none">
+          <p className="figure text-3xl leading-none" data-survey-stat="rate">
             {results.response_rate === null
               ? t("noAnswer")
               : format.number(results.response_rate, { style: "percent", maximumFractionDigits: 0 })}
