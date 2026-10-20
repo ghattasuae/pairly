@@ -50,7 +50,7 @@ Code, fonts and data shipped inside Pairly or inside one of its packages. The li
 | blinker | 1.9.0 | MIT License |
 | boto3 | 1.43.108 | Apache-2.0 |
 | botocore | 1.43.108 | Apache-2.0 |
-| certifi | 2026.7.22 | MPL-2.0 |
+| certifi | 2026.10.19 | MPL-2.0 |
 | cffi | 2.1.1 | MIT-0 |
 | cfgv | 3.5.0 | MIT |
 | charset-normalizer | 3.5.2 | MIT |
@@ -127,7 +127,7 @@ Code, fonts and data shipped inside Pairly or inside one of its packages. The li
 | pathspec | 1.1.1 | Mozilla Public License 2.0 (MPL 2.0) |
 | pdfminer.six | 20260107 | MIT |
 | pdfplumber | 0.11.10 | MIT License |
-| pillow | 12.3.0 | MIT-CMU |
+| pillow | 13.0.0 | MIT-CMU |
 | platformdirs | 4.12.3 | MIT |
 | pluggy | 1.6.0 | MIT |
 | pre_commit | 4.6.2 | MIT |
@@ -186,7 +186,7 @@ Code, fonts and data shipped inside Pairly or inside one of its packages. The li
 | xxhash | 4.0.1 | BSD-2-Clause |
 | zstandard | 0.25.0 | BSD-3-Clause |
 
-## JavaScript packages (802)
+## JavaScript packages (803)
 
 | Name | Version | License |
 | --- | --- | --- |
@@ -342,15 +342,16 @@ Code, fonts and data shipped inside Pairly or inside one of its packages. The li
 | @napi-rs/canvas-win32-x64-msvc | 1.0.10 | MIT (from the registry) |
 | @napi-rs/wasm-runtime | 1.2.5 | MIT (from the registry) |
 | @next/env | 16.4.0 | MIT |
-| @next/eslint-plugin-next | 16.4.0 | MIT |
-| @next/swc-darwin-arm64 | 16.4.0 | MIT |
-| @next/swc-darwin-x64 | 16.4.0 | MIT (from the registry) |
-| @next/swc-linux-arm64-gnu | 16.4.0 | MIT (from the registry) |
-| @next/swc-linux-arm64-musl | 16.4.0 | MIT (from the registry) |
-| @next/swc-linux-x64-gnu | 16.4.0 | MIT (from the registry) |
-| @next/swc-linux-x64-musl | 16.4.0 | MIT (from the registry) |
-| @next/swc-win32-arm64-msvc | 16.4.0 | MIT (from the registry) |
-| @next/swc-win32-x64-msvc | 16.4.0 | MIT (from the registry) |
+| @next/env | 16.4.2 | MIT |
+| @next/eslint-plugin-next | 16.4.2 | MIT |
+| @next/swc-darwin-arm64 | 16.4.2 | MIT |
+| @next/swc-darwin-x64 | 16.4.2 | MIT (from the registry) |
+| @next/swc-linux-arm64-gnu | 16.4.2 | MIT (from the registry) |
+| @next/swc-linux-arm64-musl | 16.4.2 | MIT (from the registry) |
+| @next/swc-linux-x64-gnu | 16.4.2 | MIT (from the registry) |
+| @next/swc-linux-x64-musl | 16.4.2 | MIT (from the registry) |
+| @next/swc-win32-arm64-msvc | 16.4.2 | MIT (from the registry) |
+| @next/swc-win32-x64-msvc | 16.4.2 | MIT (from the registry) |
 | @noble/ciphers | 2.4.0 | MIT |
 | @noble/hashes | 2.4.0 | MIT |
 | @nodelib/fs.scandir | 2.1.5 | MIT |
@@ -817,7 +818,7 @@ Code, fonts and data shipped inside Pairly or inside one of its packages. The li
 | natural-compare | 1.4.0 | MIT |
 | needle | 2.9.1 | MIT |
 | negotiator | 1.1.0 | MIT |
-| next | 16.4.0 | MIT |
+| next | 16.4.2 | MIT |
 | next-intl | 4.14.9 | MIT |
 | next-intl-swc-plugin-extractor | 4.14.9 | MIT |
 | next-themes | 0.4.6 | MIT |
