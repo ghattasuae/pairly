@@ -223,5 +223,5 @@ Without `PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT`, wait 5 minutes between the two spec
 sign staff in. The recordings use the light theme and English (the browser defaults).
 `scripts/demo_gif.py` keeps each GIF under 8 MB (`--max-mb`) by writing it narrower when
 needed. At 6 frames a second the GIFs stay that wide and under 8 MB (the October 21, 2026
-recordings: Hire 784 px and 7.4 MB, Pay 912 px and 6.4 MB); at the default 10 they come
+recordings: Hire 784 px and 7.7 MB, Pay 912 px and 5.3 MB); at the default 10 they come
 out narrower, which is harder to read at README width.
