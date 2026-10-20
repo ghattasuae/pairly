@@ -41,13 +41,13 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 import pairly_core.models  # noqa: F401  (registers every core table)
+import pairly_hire.plugin  # noqa: F401  (registers every Hire table, requisitions too)
 from pairly_core.audit import ActorType, append_audit
 from pairly_core.config import to_asyncpg_url
 from pairly_core.crypto.keys import init_crypto
 from pairly_core.db import create_sessionmaker, set_tenant
 from pairly_core.llm.bundle import import_recordings, parse_bundle
 from pairly_core.policy_versions import publish_policy_version
-from pairly_hire import models  # noqa: F401  (registers the Hire tables)
 from pairly_hire.forms import DEFAULT_FORM, form_validator
 from pairly_hire.forms import POLICY_KIND as FORM_KIND
 from pairly_hire.models import HireJob, JobStatus

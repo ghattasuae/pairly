@@ -14,6 +14,12 @@ import { AUTH_STATE_DIR } from "./report";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../../../..");
+/**
+ * The local stack's data directory, as scripts/local_lib.sh picks it: `PAIRLY_LOCAL_DIR`
+ * (relative to the repo root, where make runs) or `.local`. The outbox, the Pay demo
+ * emails and the inbound drop folder live under it.
+ */
+export const LOCAL_DIR = path.resolve(REPO_ROOT, process.env.PAIRLY_LOCAL_DIR || ".local");
 
 /**
  * Extra `make` variables for every make call. `PAIRLY_E2E_STACK=docker` runs the make
