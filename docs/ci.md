@@ -43,6 +43,43 @@ Coverage: each shard writes its coverage data with no threshold of its own. The 
 
 `apps/web` becomes a Next.js app in WP0.6. Until it has a `build` script, a `next` dependency and an `app` directory, the `js` job skips the build step and prints a notice. No change is needed when WP0.6 lands.
 
+## Web end-to-end suite on your machine
+
+The Playwright suite (`apps/web/e2e`, specs 01 to 21) is not part of CI yet. It runs
+against a native stack seeded by `make demo`, with one worker and no retries. From the
+repository root (or a worktree's root), in one shell:
+
+```bash
+# A data folder and ports of its own, so the run never touches your own stack (.local),
+# its database or its demo data. Use a fresh folder for every run.
+export PAIRLY_LOCAL_DIR="$PWD/.local/e2e-run"
+export LOCAL_PG_PORT=55631 LOCAL_VALKEY_PORT=56631 LOCAL_API_PORT=8631 LOCAL_WEB_PORT=3631
+export PAIRLY_E2E_SCRATCH="$PAIRLY_LOCAL_DIR/scratch"
+# Development and test only: the suite signs about 40 people in from 127.0.0.1, more
+# than the 5 magic links per IP per 5 minutes the web app allows (apps/web/README.md).
+export PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT=200
+
+make demo                                                     # stack up, demo org seeded
+pnpm --filter @pairly/web exec playwright install chromium    # once per machine
+(cd apps/web && nice -n 10 pnpm exec playwright test --config e2e/playwright.config.ts)
+
+make local-down                                               # same shell: same ports
+rm -rf "$PAIRLY_LOCAL_DIR"
+```
+
+- `make demo` takes a few minutes. The full run takes about 40 minutes in dev mode
+  (`next dev` compiles each page on first use).
+- Results: the list reporter in the terminal and `apps/web/e2e/report.json`. Screenshots,
+  saved sessions and the axe, copy and RTL findings go to `PAIRLY_E2E_SCRATCH`.
+- The demo specs (14 to 21) change the seeded data and share sessions
+  (`apps/web/e2e/utils/staff.ts`): run them once per `make demo`. For a second run, stop
+  the stack, delete the folder and start again.
+- One spec: `pnpm exec playwright test --config e2e/playwright.config.ts 14-hire-demo`.
+  Specs 03, 06, 07 and 08 need the sessions 01 saves, and 21 needs what 18 and 19 did.
+- `PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT` reaches only the web app of the native stack
+  (`scripts/local_lib.sh`). The web app refuses to start with it unless `PAIRLY_ENV` is
+  `development` or `test`, so it can never relax production.
+
 ## Security scans and thresholds
 
 1. **Bandit** (`scripts/bandit.yaml`): fails on findings of medium or higher severity with medium or higher confidence. Tests are excluded. Ruff also runs the same rule set (`S`) on every file. To accept one reviewed finding, add `# nosec BXXX` with a reason on that line.
