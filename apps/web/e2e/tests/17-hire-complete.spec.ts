@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 // Copyright (c) 2026 Proofly Technology
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
 import { auditA11y } from "../utils/axe";
-import { extractLink, OUTBOX_DIR, toReachableUrl } from "../utils/mail";
+import { OUTBOX_DIR, toReachableUrl } from "../utils/mail";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
-import { totpFresh } from "../utils/totp";
+import { signInStaff, staffState } from "../utils/staff";
 
 // The M3 Hire flows end to end on a fresh `make demo` stack (org "demo",
 // scripts/demo_seed.py), against the running native stack (LOCAL_WEB_PORT and
@@ -53,12 +53,12 @@ const OUT = path.join(SCRATCH_ROOT, "hire-complete.json");
 mkdirSync(SCRATCH_ROOT, { recursive: true });
 mkdirSync(AUTH_STATE_DIR, { recursive: true });
 
-const state = (who: string) => path.join(AUTH_STATE_DIR, `m3-${ORG}-${who}.json`);
+// One saved session per person, shared with the other demo specs (utils/staff.ts).
 const STATES = {
-  admin: state("admin"),
-  recruiter: state("recruiter"),
-  manager: state("manager"),
-  interviewer: state("interviewer"),
+  admin: staffState(ADMIN_EMAIL),
+  recruiter: staffState(RECRUITER_EMAIL),
+  manager: staffState(MANAGER_EMAIL),
+  interviewer: staffState(INTERVIEWER_EMAIL),
 };
 const shared = path.join(AUTH_STATE_DIR, `m3-${ORG}-shared.json`); // between tests
 
@@ -117,53 +117,7 @@ async function newestMessage(match: (m: Outboxed) => boolean, since = 0, timeout
 
 const sentTo = (m: Outboxed, email: string) => m.to.some((to) => to.toLowerCase() === email.toLowerCase());
 
-/** When this stack's outbox got its first message (the seed): older sessions are stale. */
-function seededAt(): number {
-  const index = path.join(OUTBOX_DIR, "index.jsonl");
-  const first = existsSync(index) ? readFileSync(index, "utf8").split("\n")[0] : "";
-  try {
-    return Number((JSON.parse(first ?? "") as { id: string }).id.slice(0, 13));
-  } catch {
-    return Date.now();
-  }
-}
-
 // ---------------------------------------------------------------- staff sessions
-
-/** Sign a seeded staff member in with a magic link from the outbox, turn on two-step
- *  sign-in (approvals and stage decisions need it, and Home asks for it), save the
- *  session. Reused for an hour on the same stack. */
-async function signIn(browser: Browser, email: string, file: string): Promise<void> {
-  if (existsSync(file) && statSync(file).mtimeMs > seededAt() && Date.now() - statSync(file).mtimeMs < 3_600_000) return;
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const since = Date.now() - 1000;
-  await page.goto("/en/sign-in");
-  await page.getByRole("textbox").first().fill(email);
-  await page.keyboard.press("Enter");
-  await page.waitForURL(/\/check-email/, { timeout: 30_000 });
-  const mail = await newestMessage((m) => sentTo(m, email) && m.html.includes("sign-in/confirm"), since, 30_000);
-  await page.goto(toReachableUrl(extractLink(mail.html, "sign-in/confirm")));
-  await page.getByRole("link", { name: /sign in/i }).click();
-  await page.waitForURL((u) => !/sign-in|check-email/.test(u.pathname), { timeout: 30_000 });
-
-  await page.goto("/en/settings/security");
-  const turnOn = page.getByRole("button", { name: /turn on/i });
-  if (await turnOn.isVisible().catch(() => false)) {
-    await turnOn.click();
-    await expect(page.locator("code")).toBeVisible();
-    const secret = ((await page.locator("code").textContent()) ?? "").replace(/\s+/g, "");
-    await page.getByLabel(/code from the app/i).fill(await totpFresh(secret));
-    await page.getByRole("button", { name: /confirm and turn on/i }).click();
-    await expect(page.getByText(/two-step sign-in is on/i)).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: /^done$/i }).click();
-    // The session picks up the second factor on its next refresh.
-    await page.waitForTimeout(20_000);
-    await page.waitForLoadState("load");
-  }
-  await context.storageState({ path: file });
-  await context.close();
-}
 
 async function as(browser: Browser, file: string): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({ storageState: file, viewport: { width: 1440, height: 1000 } });
@@ -218,10 +172,7 @@ function isoDate(daysAhead: number): string {
 
 test("set up: the admin, recruiter, hiring manager and interviewer sign in with two-step sign-in", async ({ browser }) => {
   test.setTimeout(6 * 60_000);
-  await signIn(browser, MANAGER_EMAIL, STATES.manager);
-  await signIn(browser, RECRUITER_EMAIL, STATES.recruiter);
-  await signIn(browser, ADMIN_EMAIL, STATES.admin);
-  await signIn(browser, INTERVIEWER_EMAIL, STATES.interviewer);
+  for (const email of [MANAGER_EMAIL, RECRUITER_EMAIL, ADMIN_EMAIL, INTERVIEWER_EMAIL]) await signInStaff(browser, email);
   logCheck({ name: "hire complete: staff signed in", status: "pass" });
 });
 

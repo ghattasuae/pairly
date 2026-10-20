@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Proofly-Commercial
 // Copyright (c) 2026 Proofly Technology
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 import { applyApi } from "../utils/hire";
-import { extractLink, OUTBOX_DIR, toReachableUrl } from "../utils/mail";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
-import { totpFresh } from "../utils/totp";
+import { signInStaff, staffState } from "../utils/staff";
 
 // Hire UX budgets (brief 5.3, UX acceptance targets) on a stack seeded by `make demo`
 // (org "demo", scripts/demo_seed.py), against the running native stack (LOCAL_WEB_PORT
@@ -43,8 +42,9 @@ const TALENT_SKILL = "gRPC"; // TALENT_SKILL: on the CV of the seeded talent poo
 const RUN = Date.now().toString(36);
 const OUT = path.join(SCRATCH_ROOT, "hire-ux-budgets.json");
 mkdirSync(AUTH_STATE_DIR, { recursive: true });
-const managerState = path.join(AUTH_STATE_DIR, `ux15-${ORG}-manager.json`);
-const recruiterState = path.join(AUTH_STATE_DIR, `ux15-${ORG}-recruiter.json`);
+// One saved session per person, shared with the other demo specs (utils/staff.ts).
+const managerState = staffState(MANAGER_EMAIL);
+const recruiterState = staffState(RECRUITER_EMAIL);
 const shortlistFile = path.join(AUTH_STATE_DIR, `ux15-${ORG}-shortlist.json`);
 const PHONE = { width: 375, height: 812 };
 const FIVE_MINUTES = 5 * 60_000;
@@ -126,88 +126,6 @@ class Budget {
   }
 }
 
-interface Outboxed {
-  id: string;
-  to: string[];
-  html: string;
-}
-
-/** The newest outbox message sent after `since` (ms) that passes `match`. */
-async function newestMessage(match: (m: Outboxed) => boolean, since: number, timeoutMs = 30_000): Promise<Outboxed> {
-  const deadline = Date.now() + timeoutMs;
-  const index = path.join(OUTBOX_DIR, "index.jsonl");
-  while (Date.now() < deadline) {
-    if (existsSync(index)) {
-      const lines = readFileSync(index, "utf8").split("\n").filter(Boolean).reverse();
-      for (const line of lines) {
-        try {
-          const entry = JSON.parse(line) as { id: string };
-          if (Number(entry.id.slice(0, 13)) < since) continue;
-          const full = JSON.parse(readFileSync(path.join(OUTBOX_DIR, `${entry.id}.json`), "utf8")) as {
-            to: string[];
-            html: string | null;
-          };
-          const message = { id: entry.id, to: full.to, html: full.html ?? "" };
-          if (match(message)) return message;
-        } catch {
-          // A line still being written.
-        }
-      }
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  throw new Error(`no matching outbox message in ${OUTBOX_DIR}`);
-}
-
-/** When this stack's outbox got its first message (the seed): older sessions are stale. */
-function seededAt(): number {
-  const index = path.join(OUTBOX_DIR, "index.jsonl");
-  const first = existsSync(index) ? readFileSync(index, "utf8").split("\n")[0] : "";
-  try {
-    return Number((JSON.parse(first ?? "") as { id: string }).id.slice(0, 13));
-  } catch {
-    return Date.now();
-  }
-}
-
-const fresh = (file: string) =>
-  existsSync(file) && statSync(file).mtimeMs > seededAt() && Date.now() - statSync(file).mtimeMs < 3_600_000;
-
-/** Sign a seeded staff member in with a magic link from the outbox, then turn on
- *  two-step sign-in (moves and approvals need a code sign-in); save the session. */
-async function signIn(browser: Browser, email: string, state: string): Promise<void> {
-  if (fresh(state) && existsSync(`${state}.totp`)) return;
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const since = Date.now() - 1000;
-  await page.goto("/en/sign-in");
-  await page.getByRole("textbox").first().fill(email);
-  await page.keyboard.press("Enter");
-  await page.waitForURL(/\/check-email/, { timeout: 30_000 });
-  const mail = await newestMessage(
-    (m) => m.to.some((to) => to.toLowerCase() === email) && m.html.includes("sign-in/confirm"),
-    since,
-  );
-  await page.goto(toReachableUrl(extractLink(mail.html, "sign-in/confirm")));
-  await page.getByRole("link", { name: /sign in/i }).click();
-  await page.waitForURL((u) => !/sign-in|check-email/.test(u.pathname), { timeout: 30_000 });
-  await page.goto("/en/settings/security");
-  await page.getByRole("button", { name: /turn on/i }).click();
-  await expect(page.locator("code")).toBeVisible();
-  const secret = ((await page.locator("code").textContent()) ?? "").replace(/\s+/g, "");
-  await page.getByLabel(/code from the app/i).fill(await totpFresh(secret));
-  await page.getByRole("button", { name: /confirm and turn on/i }).click();
-  await expect(page.getByText(/two-step sign-in is on/i)).toBeVisible({ timeout: 10_000 });
-  await page.getByRole("button", { name: /^done$/i }).click();
-  // Turning it on counts as a code sign-in; the pause keeps the next person's two-factor
-  // calls under that endpoint's limit.
-  await page.waitForTimeout(20_000);
-  await page.waitForLoadState("load");
-  await context.storageState({ path: state });
-  writeFileSync(`${state}.totp`, "on");
-  await context.close();
-}
-
 async function as(
   browser: Browser,
   state: string,
@@ -228,8 +146,8 @@ function loadShortlist(): Shortlist {
 
 test("set up: the manager and the recruiter sign in; five candidates on the shortlist", async ({ browser, request }) => {
   test.setTimeout(300_000);
-  await signIn(browser, MANAGER_EMAIL, managerState);
-  await signIn(browser, RECRUITER_EMAIL, recruiterState);
+  await signInStaff(browser, MANAGER_EMAIL);
+  await signInStaff(browser, RECRUITER_EMAIL);
 
   // Five synthetic applicants through the public careers API (one address each: the
   // apply limit is per address).
