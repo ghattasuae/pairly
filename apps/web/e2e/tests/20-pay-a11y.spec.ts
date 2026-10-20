@@ -148,8 +148,10 @@ test("axe: the vendor portal (login, home, invoice, details)", async ({ browser 
   await clerk.waitForURL(/\/pay\/vendors\/[0-9a-f-]{36}$/);
   const access = clerk.locator("[data-portal-access]");
   await expect(access).toBeVisible({ timeout: 30_000 });
-  const org = /org=([0-9a-f]{32})/.exec((await access.textContent()) ?? "")?.[1];
-  expect(org, "the portal link names the organisation").toBeTruthy();
+  // `/vendor-portal?org=<slug>` (the organisation's slug; its id in hex only when it has
+  // no usable slug, pairly_pay.portal.auth.org_param).
+  const org = /[?&]org=([a-z0-9][a-z0-9-]*)/.exec((await access.textContent()) ?? "")?.[1];
+  expect(org, "the portal link names the organisation").toBe("demo");
   await staff.close();
 
   // The vendor asks for a sign-in link and opens it from the email.
