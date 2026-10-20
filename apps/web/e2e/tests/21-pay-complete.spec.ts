@@ -361,11 +361,19 @@ test("5. reconciliation imports a synthetic statement and matches the paid run",
   const upload = view.locator("[data-statement-import]");
   await upload.getByLabel("Statement file").setInputFiles(statement);
   await upload.getByRole("button", { name: "Import" }).click();
-  await expect(upload.locator("[data-statement-done]")).toBeVisible({ timeout: 60_000 });
+  const done = upload.locator("[data-statement-done]");
+  await expect(done).toBeVisible({ timeout: 60_000 });
+  // "Statement <reference> imported: ...". `make demo` already imported the history's
+  // statement, so only the lines of this statement (its reference column) count here.
+  const statementReference = /Statement (\S+) imported/.exec((await done.textContent()) ?? "")?.[1] ?? "";
+  expect(statementReference).not.toBe("");
   await page.reload();
-  const matched = view.locator('[data-matched-lines] [data-statement-line="matched"]');
-  await expect(matched).toHaveCount(payments, { timeout: 30_000 });
-  await expect(view.locator('[data-unmatched-lines] [data-statement-line="unmatched"]')).toHaveCount(1);
+  const ofThisStatement = (state: "matched" | "unmatched") =>
+    view
+      .locator(`[data-${state}-lines] [data-statement-line="${state}"]`)
+      .filter({ has: page.getByRole("cell", { name: statementReference, exact: true }) });
+  await expect(ofThisStatement("matched")).toHaveCount(payments, { timeout: 30_000 });
+  await expect(ofThisStatement("unmatched")).toHaveCount(1);
   await shot(page, "5-reconciliation.png");
   logCheck({ name: "pay complete 5: statement imported, paid run matched", status: "pass", detail: `${runReference}: ${payments} matched` });
   await context.close();
