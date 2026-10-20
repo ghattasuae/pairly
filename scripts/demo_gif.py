@@ -13,10 +13,11 @@ set-up tests are left out and the rest are joined in the order they were made.
 
 Frames are sampled at ``--fps``. A frame that does not change the picture lengthens the
 previous one, up to ``--max-still`` seconds, and so does a frame caught in the middle
-of a change (a page loading), so waiting for the worker does not become
-minutes of a still page; the last frame of every video stays ``--hold`` seconds. One
-palette for the whole GIF and no dithering keep unchanged pixels unchanged, which keeps
-the file small. When the GIF is over ``--max-mb``, it is written again narrower.
+of a change (a page loading) or an empty page between two pages, so waiting for the
+worker does not become minutes of a still page; the last frame of every video stays
+``--hold`` seconds. One palette for the whole GIF and no dithering keep unchanged pixels
+unchanged, which keeps the file small. When the GIF is over ``--max-mb``, it is written
+again narrower.
 
 PyAV (BSD-3-Clause, with LGPL FFmpeg) decodes the videos; it is not a project
 dependency, ``uv run --with av`` brings it for this run only. Pillow writes the GIF.
@@ -33,9 +34,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 COLORS = 128  # one palette for the whole GIF; UI screens need few colours
+ACCENTS = 16  # of those, kept for saturated accent colours (buttons, badges)
 
 
 @dataclass
@@ -123,9 +125,12 @@ def _palette(parts: list[Segment], width: int, fps: float) -> Image.Image:
     for part in parts:
         for i, image in enumerate(_decoded(part.path, fps)):
             if i % every == 0:
+                # Nearest neighbour keeps real pixel colours: a smoothing resize
+                # averaged the text away, and the palette had no dark ink left.
                 sample.append(
                     _sized(image, width).resize(
-                        (width // 4, image.height * width // image.width // 4)
+                        (width // 4, image.height * width // image.width // 4),
+                        Image.Resampling.NEAREST,
                     )
                 )
     columns = 6
@@ -134,7 +139,26 @@ def _palette(parts: list[Segment], width: int, fps: float) -> Image.Image:
     sheet = Image.new("RGB", (w * columns, h * rows), "white")
     for i, image in enumerate(sample):
         sheet.paste(image, ((i % columns) * w, (i // columns) * h))
-    return sheet.quantize(colors=COLORS, method=Image.Quantize.MEDIANCUT)
+    # Median cut over the whole sheet gives every colour to the large neutral areas, so a
+    # small accent (a saffron button) turned grey. The accents get colours of their own,
+    # from the saturated pixels only; the neutrals keep median cut, which shades them
+    # smoothly (octree left visible tile edges on flat backgrounds).
+    hsv = sheet.convert("HSV")
+    accents = [
+        rgb
+        for rgb, (_, sat, val) in zip(sheet.getdata(), hsv.getdata(), strict=True)
+        if sat > 100 and val > 140
+    ]
+    neutral = sheet.quantize(colors=COLORS - ACCENTS, method=Image.Quantize.MEDIANCUT)
+    colours = (neutral.getpalette() or [])[: (COLORS - ACCENTS) * 3]
+    if accents:
+        strip = Image.new("RGB", (len(accents), 1))
+        strip.putdata(accents)
+        accent = strip.quantize(colors=ACCENTS, method=Image.Quantize.MEDIANCUT)
+        colours += (accent.getpalette() or [])[: ACCENTS * 3]
+    palette = Image.new("P", (1, 1))
+    palette.putpalette(colours)
+    return palette
 
 
 def _settled(
@@ -174,6 +198,11 @@ def _settled(
     return out if any_tile else None
 
 
+def _blank(image: Image.Image) -> bool:
+    """An empty page (a navigation before the first paint): nearly one colour."""
+    return ImageStat.Stat(image.convert("L")).stddev[0] < 3
+
+
 def _steady(images: Iterator[Image.Image], threshold: int) -> Iterator[Image.Image | None]:
     """Each frame that the next frame barely changes (a page at rest), else None. Frames
     caught mid-change (a page loading, a scroll) would cost a whole picture each and
@@ -206,7 +235,9 @@ def collect(
         # Compare at the recorded size, resize only what is shown: resizing first
         # turns the video noise into changes everywhere.
         for image in _steady(_decoded(part.path, fps), threshold):
-            if image is None:  # a frame in the middle of a change: its time goes on
+            # A frame in the middle of a change, or an empty page between two pages:
+            # its time goes on.
+            if image is None or _blank(image):
                 if out.durations:
                     out.durations[-1] = min(out.durations[-1] + frame_ms, round(max_still * 1000))
                 continue

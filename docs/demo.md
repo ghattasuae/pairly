@@ -192,17 +192,36 @@ has no LangFuse, so skip this step there and show the decision record instead
 
 ## Recording the GIFs
 
-The README GIFs come from the two demo specs, recorded on a fresh `make demo` stack:
+The README GIFs come from the two demo specs, recorded on a fresh `make demo` stack with
+a data folder and ports of its own, so your own stack (`.local`) and its demo data are
+never touched. In one shell, from the repository root:
 
 ```sh
+export PAIRLY_LOCAL_DIR="$PWD/.local/readme-gif"
+export LOCAL_PG_PORT=55661 LOCAL_VALKEY_PORT=56661 LOCAL_API_PORT=8661 LOCAL_WEB_PORT=3661
+export PAIRLY_E2E_SCRATCH="$PAIRLY_LOCAL_DIR/scratch"
+# Development only (docs/ci.md): lets both specs sign staff in without the 5 minute wait.
+export PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT=200
+make demo
+
 cd apps/web
-PAIRLY_E2E_VIEWPORT=1280x800 PAIRLY_E2E_VIDEO_DIR=/tmp/videos-hire \
-  npx playwright test --config e2e/playwright.record.config.ts 14-hire-demo
+PAIRLY_E2E_VIEWPORT=1280x800 PAIRLY_E2E_VIDEO_DIR="$PAIRLY_LOCAL_DIR/videos-hire" \
+  nice -n 10 pnpm exec playwright test --config e2e/playwright.record.config.ts 14-hire-demo
+PAIRLY_E2E_VIEWPORT=1280x800 PAIRLY_E2E_VIDEO_DIR="$PAIRLY_LOCAL_DIR/videos-pay" \
+  nice -n 10 pnpm exec playwright test --config e2e/playwright.record.config.ts 18-pay-demo
 cd ../..
-uv run --with av python -m scripts.demo_gif --videos /tmp/videos-hire \
-  --spec 14-hire-demo --out docs/media/hire-demo.gif
+uv run --with av python -m scripts.demo_gif --videos "$PAIRLY_LOCAL_DIR/videos-hire" \
+  --spec 14-hire-demo --out docs/media/hire-demo.gif --fps 6 --width 784
+uv run --with av python -m scripts.demo_gif --videos "$PAIRLY_LOCAL_DIR/videos-pay" \
+  --spec 18-pay-demo --out docs/media/pay-demo.gif --fps 6 --width 912
+
+make local-down                                               # same shell: same ports
+rm -rf "$PAIRLY_LOCAL_DIR"
 ```
 
-The same for `18-pay-demo` (wait 5 minutes between the two runs: both sign staff in).
-Set the stack's variables (`LOCAL_WEB_PORT`, `LOCAL_API_PORT`, `PAIRLY_OUTBOX_DIR`,
-`PAIRLY_LOCAL_DIR`) for Playwright too when the stack does not use the defaults.
+Without `PAIRLY_AUTH_MAGIC_LINK_RATE_LIMIT`, wait 5 minutes between the two specs: both
+sign staff in. The recordings use the light theme and English (the browser defaults).
+`scripts/demo_gif.py` keeps each GIF under 8 MB (`--max-mb`) by writing it narrower when
+needed. At 6 frames a second the GIFs stay that wide and under 8 MB (the October 21, 2026
+recordings: Hire 784 px and 7.4 MB, Pay 912 px and 6.4 MB); at the default 10 they come
+out narrower, which is harder to read at README width.
