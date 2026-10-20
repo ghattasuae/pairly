@@ -8,7 +8,7 @@ import path from "node:path";
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 import { auditA11y } from "../utils/axe";
-import { clearMailbox, extractLink, OUTBOX_DIR, toReachableUrl, waitForMessageTo } from "../utils/mail";
+import { clearMailbox, extractLink, mailboxClearedAt, OUTBOX_DIR, toReachableUrl, waitForMessageTo } from "../utils/mail";
 import { API_PORT } from "../utils/origin";
 import { AUTH_STATE_DIR, logCheck, SCRATCH_ROOT } from "../utils/report";
 import { makeArgs, REPO_ROOT } from "../utils/stack";
@@ -92,6 +92,7 @@ async function waitForText(address: string, needle: string, timeoutMs = 120_000)
       for (const line of lines) {
         try {
           const entry = JSON.parse(line) as { id: string; to: string[] };
+          if (Number(entry.id.slice(0, 13)) < mailboxClearedAt()) continue; // before clearMailbox()
           if (!entry.to.some((to) => to.toLowerCase() === address.toLowerCase())) continue;
           const full = JSON.parse(readFileSync(path.join(OUTBOX_DIR, `${entry.id}.json`), "utf8")) as { text: string };
           if (full.text.includes(needle)) return full.text;
