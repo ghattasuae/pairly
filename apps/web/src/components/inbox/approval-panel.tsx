@@ -128,7 +128,10 @@ export function ApprovalPanel({
             </span>
           )}
           {step?.due_at && status === "pending" && (
-            <span>· {t("due", { when: format.relativeTime(new Date(step.due_at), new Date()) })}</span>
+            // The relative time can tick between the server render and hydration.
+            <span suppressHydrationWarning>
+              · {t("due", { when: format.relativeTime(new Date(step.due_at), new Date()) })}
+            </span>
           )}
         </div>
 
